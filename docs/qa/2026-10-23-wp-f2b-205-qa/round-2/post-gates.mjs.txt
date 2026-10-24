@@ -1,0 +1,12 @@
+import {readFile,writeFile,copyFile,open} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {spawn} from 'node:child_process';
+import path from 'node:path';
+const out=path.resolve('docs/qa/2026-10-23-wp-f2b-205-qa/round-2');
+while(true){const gates=await readFile(path.join(out,'continued-gates.json'),'utf8').then(JSON.parse).catch(()=>[]);if(gates.length===10)break;await new Promise(r=>setTimeout(r,1000));}
+const results=[];
+async function execute(command,log){const fd=await open(path.join(out,log),'w');const started=Date.now();const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{stdio:['ignore',fd.fd,fd.fd],windowsHide:true});const code=await new Promise(r=>child.on('exit',r));await fd.close();results.push({command,code,log,seconds:(Date.now()-started)/1000});await writeFile(path.join(out,'post-gates.json'),JSON.stringify(results,null,2));}
+await execute('pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/model-effort-refresh.test.tsx --reporter=verbose','focused-refresh.log.txt');
+const script=path.join(tmpdir(),'gg-qa-f2b-205-2-timing-reruns.mjs');await copyFile(path.join(out,'timing-reruns.mjs.txt'),script);
+await execute('"'+process.execPath+'" "'+script+'"','timing-reruns.log.txt');
+console.log(JSON.stringify(results));

@@ -179,8 +179,7 @@ for (const [model, displayName, effort] of [
 
     await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
     const dialog = await openNode(page, 'infer');
-    // Model and effort currently sit under Advanced; #205 owns their placement.
-    await openAdvanced(dialog);
+    // Model and effort are visible on Settings with Advanced collapsed (#205).
     const modelField = dialog.getByLabel('Model', { exact: true });
     await expect(modelField).not.toHaveAttribute('aria-readonly', 'true');
     await expect(
@@ -191,7 +190,7 @@ for (const [model, displayName, effort] of [
     const effortField = dialog.getByLabel('Effort', { exact: true });
     // Exactly the catalog's supported efforts for this model; minimal is never offered for Claude.
     await expect(effortField.locator('option')).toHaveText([
-      '(inherited; the catalog suggests high)',
+      'Default (unavailable)',
       'low',
       'medium',
       'high',

@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawn,execFileSync} from 'node:child_process';
+const root=process.cwd(),out=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-3');
+const clean=s=>String(s).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const results=[];const save=()=>fs.writeFileSync(path.join(out,'gates.json'),clean(JSON.stringify(results,null,2)));
+const commands=[['typecheck','typecheck'],['lint','lint'],['format','format:check'],['layers','check:layers'],['deps','check:deps'],['tokens','check:tokens'],['docs','check:docs'],...['web','api','infrastructure','api-client'].map(p=>[p+'-coverage','--filter @graphgoblin/'+p+' test:coverage --maxWorkers=2'])];
+for(const [name,args] of commands){
+ const started=Date.now(),file=path.join(out,name+'.log.txt');let lock=false;
+ const code=await new Promise(resolve=>{const child=spawn('cmd.exe',['/d','/s','/c','pnpm.cmd '+args],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ for(const p of [child.stdout,child.stderr])p.on('data',b=>{const s=clean(b);if(s.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK'))lock=true;fs.appendFileSync(file,s);});child.on('exit',resolve);});
+ results.push({name,command:'pnpm.cmd '+args,code,ms:Date.now()-started,log:name+'.log.txt',lock});save();console.log(JSON.stringify(results.at(-1)));
+ if(lock) {console.log('Store lock encountered; driver stops for documented direct-binary fallback.');break;}
+}
+console.log('GATES_FINISHED');

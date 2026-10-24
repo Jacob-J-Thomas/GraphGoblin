@@ -1,0 +1,27 @@
+import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { test, expect, openNode, openAdvanced } from './fixtures.js';
+
+test('record #205 baseline placement', async ({ page, request }) => {
+  for (const kind of ['inference', 'llm', 'classifier'] as const) {
+    const source = minimalLoop();
+    const config = kind === 'inference'
+      ? { prompt: { template: 'baseline' } }
+      : kind === 'llm'
+        ? { kind, harness: 'codex', instructions: 'Choose', model: { mode: 'inherit' }, effort: { mode: 'inherit' }, routes: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }] }
+        : { kind, question: 'Choose', model: 'jev', answer: { type: 'choice', options: [{ id: 'yes', label: 'Yes', criteria: 'yes' }, { id: 'no', label: 'No', criteria: 'no' }] } };
+    const created = await request.post('/loops', { data: { definition: { ...source, name: `205 baseline ${kind}`, nodes: [source.nodes[0], { id: 'work', kind: kind === 'inference' ? kind : 'decision', label: 'Work', config, ui: { x: 260, y: 80 } }, source.nodes[1]], edges: [{ id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } }, ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map(port => ({ id: port, from: { node: 'work', port }, to: { node: 'done' } }))] } } });
+    expect(created.status()).toBe(201);
+    const { loop } = await created.json() as { loop: { id: string } };
+    await page.goto(`/app/loops/${loop.id}/edit`);
+    const dialog = await openNode(page, 'work');
+    await page.screenshot({ path: `../../docs/qa/2026-10-23-wp-f2b-205/before-${kind}.png` });
+    console.log(`${kind}: ${await dialog.innerText()}`);
+    if (kind === 'inference') {
+      await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
+      await openAdvanced(dialog);
+      await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
+      console.log(`inference effort: ${await dialog.getByLabel('Effort', { exact: true }).innerText()}`);
+      await page.screenshot({ path: '../../docs/qa/2026-10-23-wp-f2b-205/before-inference-advanced.png' });
+    }
+  }
+});

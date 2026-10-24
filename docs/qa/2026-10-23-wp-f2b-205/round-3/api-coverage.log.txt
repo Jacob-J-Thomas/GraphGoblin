@@ -1,0 +1,93 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage
+NODE: v22.14.0
+pnpm.cmd : $ vitest run --coverage
+At line:14 char:3
++   pnpm.cmd @arguments 2>&1 | Out-File -Encoding UTF8 -Append $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792832181008,"pid":35732,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5677"}
+{"level":30,"time":1792832181009,"pid":35732,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5677,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-f2b-205-round-3-gates-a6556215051f4cecafbde38ec47237d3\\gg-api-process-mzguKR","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792832181354,"pid":35732,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792832181362,"pid":35732,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.995100000000093,"msg":"request completed"}
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 214805ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 109135ms
+     × the built API recovers a child finished while down with one continuation per parent 73684ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child 
+completion leaves every parent one continuation after restart
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ expectOneContinuation src/subloop-restart.test.ts:123:65
+    121|   expect(count((event) => event.type === 'child_run.started')).toBe(1);
+    122|   expect(count((event) => event.type === 'run.woken')).toBe(1);
+    123|   expect(count((event) => event.type === 'child_run.finished')).toBe(1…
+       |                                                                 ^
+    124|   expect(count((event) => event.type === 'node.finished' && event.node…
+    125|   expect(count((event) => event.type === 'run.finished')).toBe(1);
+ ❯ src/subloop-restart.test.ts:180:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+AssertionError: expected undefined to be 'waiting' // Object.is equality
+
+- Expected:
+"waiting"
+
++ Received:
+undefined
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 65 passed | 2 skipped (68)
+      Tests  2 failed | 1329 passed | 8 skipped (1339)
+   Start at  03:55:56
+   Duration  434.77s (tests 77%, import 17%, transform 5%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\api
+
+RESULT: exit 1; seconds 441.68

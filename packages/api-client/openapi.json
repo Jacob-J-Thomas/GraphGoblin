@@ -17868,6 +17868,65 @@
     }
   },
   "paths": {
+    "/system/model-defaults": {
+      "get": {
+        "summary": "Process model and effort defaults, before loop and owner overrides",
+        "tags": [
+          "system"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "byHarness": {
+                      "default": {},
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "enum": [
+                          "codex",
+                          "claude"
+                        ]
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "model": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "effort": {
+                            "type": "string",
+                            "enum": [
+                              "minimal",
+                              "low",
+                              "medium",
+                              "high",
+                              "xhigh",
+                              "max"
+                            ]
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "byHarness"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/system/shutdown": {
       "get": {
         "summary": "Observe gateway drain and force-stop state",
@@ -21794,6 +21853,16 @@
             "in": "query",
             "name": "before",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "query",
+            "name": "anchor",
+            "required": false,
+            "description": "Re-read a page starting at this event, inclusive; mutually exclusive with cursor."
           },
           {
             "schema": {

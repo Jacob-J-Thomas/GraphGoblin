@@ -197,19 +197,18 @@ async function startApp(
 }
 
 const main = await startApp({}, false, false, { id: 'main' });
-const mainPort = Number(new URL(main.url).port);
 const workerPath = join(dist, 'sw.js');
 const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
 let workerBuild = 0;
 
 /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
-async function setApiListening(listening: boolean): Promise<void> {
-  const server = main.app.app.server;
+async function setApiListening(instance: E2eInstance, listening: boolean): Promise<void> {
+  const server = instance.app.app.server;
   if (listening === server.listening) return;
   if (listening) {
     await new Promise<void>((done, reject) => {
       server.once('error', reject);
-      server.listen(mainPort, '127.0.0.1', () => {
+      server.listen(Number(new URL(instance.url).port), '127.0.0.1', () => {
         server.removeListener('error', reject);
         done();
       });
@@ -292,7 +291,7 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       );
       return { ok: true };
     case '/api/listener':
-      await setApiListening(body['listening'] !== false);
+      await setApiListening(selectedInstance(body), body['listening'] !== false);
       return { ok: true };
     case '/worker/build':
       workerBuild += 1;
@@ -323,7 +322,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       const { harness, fake } = selectedHarness(instance, body);
       if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
         throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
-      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
+      if (body['state'] === 'ready')
+        fake.preflightResult = HarnessPreflightSchema.parse({
+          ...readyClaudePreflight,
+          ...(body['models'] !== undefined ? { models: body['models'] } : {}),
+        });
       else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
       else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
       return { ok: true };
@@ -344,6 +347,8 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
       return { ok: true };
+    case '/deciders/requests':
+      return { routes: selectedInstance(body).app.codex.routes };
     case '/deciders/route':
       target.jev.choose = (request) => {
         target.jev.choices.push(request);
@@ -365,7 +370,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { ok: true };
     }
     case '/catalog/upsert':
-      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
+      await selectedInstance(body).app.container.repos.catalog.upsert(
+        ModelCatalogEntrySchema.parse(
+          Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'instanceId')),
+        ),
+      );
       return { ok: true };
     case '/timers/poll':
       await target.container.timers.poll();
@@ -574,7 +583,7 @@ async function stop(): Promise<void> {
   if (stopping) return;
   stopping = true;
   controlServer.close();
-  await setApiListening(true);
+  for (const instance of instances.values()) await setApiListening(instance, true);
   await writeFile(workerPath, originalWorker);
   for (const app of apps) await app.close();
   for (const close of closers) await close();

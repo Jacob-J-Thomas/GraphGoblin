@@ -1,0 +1,275 @@
+
+Running 1 test using 1 worker
+
+pnpm.cmd : (node:20928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd exec playwright test e2e/model-effort.baseline.s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:20928) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+inference: Edit inference
+work
+
+Required fields are marked *
+
+Node id
+*
+Label
+*
+Settings
+Context
+Harness
+codex
+claude
+
+Harness that runs the session.
+
+Session
+Policy
+fresh
+resume-previous
+resume-named
+
+Start fresh, resume the previous session, or resume a named session.
+
+Prompt
+
+Liquid template rendered against the thread.
+
+Template
+*
+Liquid
+1
+baseline
+Preview (sample thread): baseline
+Earlier node outputs (1)
+Sandbox
+read-only
+workspace-write
+danger-full-access
+
+Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.
+
+Advanced
+Connections
+out → done
+Delete node
+Done
+inference effort: (inherited effort)
+minimal
+low
+medium
+high
+xhigh
+max
+llm: Edit decision
+work
+
+Required fields are marked *
+
+Node id
+*
+Label
+*
+Decision kind
+*
+expression
+Return one declared route ID from a JSONata expression.
+llm
+Give Codex Liquid instructions and readable routes. Confidence is informational.
+classifier
+Ask a configured classifier for Choice, Noul or Score.
+Settings
+Context
+Instructions
+*
+Liquid
+1
+Choose
+Preview (sample thread): Choose
+Earlier node outputs (1)
+
+Liquid instructions rendered against the full thread.
+
+Edit as JSON
+Routes *
+
+At least 2 items.
+
+Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.
+
+Routes 1
+Id
+*
+
+Stable route id and output port; changing display order does not change the route.
+
+Label
+*
+
+Unique readable route label, shown on the canvas and in Connections.
+
+Repeat route
+
+Only one route can repeat. Connect it back to earlier work in this gate.
+
+↑
+↓
+Routes 2
+Id
+*
+
+Stable route id and output port; changing display order does not change the route.
+
+Label
+*
+
+Unique readable route label, shown on the canvas and in Connections.
+
+Repeat route
+
+Only one route can repeat. Connect it back to earlier work in this gate.
+
+↑
+↓
+Add routes
+Harness: codex
+Model
+Mode
+*
+inherit
+explicit
+
+Inherit or explicitly select the model.
+
+Effort
+Mode
+*
+inherit
+explicit
+
+Inherit or explicitly select reasoning effort.
+
+Connections
+Yes (yes) → done
+No (no) → done
+Delete node
+Done
+classifier: Edit decision
+work
+
+Required fields are marked *
+
+Node id
+*
+Label
+*
+Decision kind
+*
+expression
+Return one declared route ID from a JSONata expression.
+llm
+Give Codex Liquid instructions and readable routes. Confidence is informational.
+classifier
+Ask a configured classifier for Choice, Noul or Score.
+Settings
+Context
+Question
+*
+Liquid
+1
+Choose
+Preview (sample thread): Choose
+Earlier node outputs (1)
+
+Liquid classifier question.
+
+Model
+*
+(choose a classifier)
+Jev (jev) (needs a key)
+
+Jev (jev) needs a key. Configure it in Settings, Secrets.
+
+Explicit classifier catalog id.
+
+Edit as JSON
+Answer
+Answer type
+*
+Choice
+Return one declared option. Each option ID is a stable output port.
+help
+Noul
+Return a strict true or false answer. Each side has its own stable output port.
+help
+Score
+Classifier only. Scores can fall between anchors, such as 1.25. Each band includes its starting value and stops just before its ending value; the last band also includes the rubric endpoint. Scores are never rounded.
+help
+
+Classifier answer and stable ports.
+
+Options *
+
+At least 2 items.
+
+Two to sixty-four uniquely labelled options, each with a unique stable id (its output port) and a nonblank criterion.
+
+Options 1
+Id
+*
+
+Stable provider key and output port; changing display order does not change the route.
+
+Label
+*
+
+Unique readable option label.
+
+Repeat route
+
+Only one route can repeat. Connect it back to earlier work in this gate.
+
+Criteria
+*
+
+Authored criterion sent to the selected evaluator.
+
+↑
+↓
+Options 2
+Id
+*
+
+Stable provider key and output port; changing display order does not change the route.
+
+Label
+*
+
+Unique readable option label.
+
+Repeat route
+
+Only one route can repeat. Connect it back to earlier work in this gate.
+
+Criteria
+*
+
+Authored criterion sent to the selected evaluator.
+
+↑
+↓
+Add options
+Advanced
+Connections
+Yes (yes) → done
+No (no) → done
+Delete node
+Done
+  ok 1 [chromium] › e2e\model-effort.baseline.spec.ts:4:1 › record #205 baseline placement (5.3s)
+
+  1 passed (1.1m)

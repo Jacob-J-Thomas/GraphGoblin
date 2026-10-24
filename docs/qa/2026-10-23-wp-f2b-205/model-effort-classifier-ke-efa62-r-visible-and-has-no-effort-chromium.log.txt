@@ -1,0 +1,567 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: model-effort.spec.ts >> classifier keeps Question, Model, Answer visible and has no effort
+- Location: e2e\model-effort.spec.ts:129:1
+
+# Error details
+
+```
+Error: expect(received).toEqual(expected) // deep equality
+
+- Expected  - 0
++ Received  + 1
+
+  Array [
+    "question",
+    "model",
+    "answer",
++   "answer",
+  ]
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - link "Loops" [ref=e33] [cursor=pointer]:
+        - /url: /app/loops
+      - generic [ref=e34]: /
+      - heading "205 classifier order" [level=1] [ref=e35]
+      - generic [ref=e36]: draft only
+      - generic [ref=e38]: All changes saved
+      - generic [ref=e42]:
+        - button "Undo" [disabled] [ref=e43]
+        - button "Redo" [disabled] [ref=e47]
+        - link "Open in Runs" [disabled] [ref=e51]
+        - generic [ref=e54]: "Publish the loop first: runs start from a published version."
+        - button "1 warning" [ref=e56] [cursor=pointer]
+        - button "Publish" [ref=e60] [cursor=pointer]
+    - generic [ref=e65]:
+      - complementary [ref=e66]:
+        - generic [ref=e67]:
+          - button "Hide palette" [expanded] [ref=e68] [cursor=pointer]
+          - heading "Palette" [level=2] [ref=e71]
+        - navigation "Node palette" [ref=e73]:
+          - button "Add Trigger node" [ref=e74]:
+            - generic [ref=e78]: Trigger
+            - generic [ref=e79]: Starts a run
+          - button "Add Decision node" [ref=e80]:
+            - generic [ref=e85]: Decision
+            - generic [ref=e86]: Chooses a route and can limit repeats
+          - button "Add Inference node" [ref=e87]:
+            - generic [ref=e92]: Inference
+            - generic [ref=e93]: Hands work to a harness
+          - button "Add Script node" [ref=e94]:
+            - generic [ref=e98]: Script
+            - generic [ref=e99]: Runs a program
+          - button "Add Mutate node" [ref=e100]:
+            - generic [ref=e105]: Mutate
+            - generic [ref=e106]: Changes the context thread
+          - button "Add Subloop node" [ref=e107]:
+            - generic [ref=e112]: Subloop
+            - generic [ref=e113]: Runs another loop
+          - button "Add Wait node" [ref=e114]:
+            - generic [ref=e118]: Wait
+            - generic [ref=e119]: Parks until input, time, or a signal
+          - button "Add Heartbeat node" [ref=e120]:
+            - generic [ref=e124]: Heartbeat
+            - generic [ref=e125]: Polls on an interval
+          - button "Add Exit node" [ref=e126]:
+            - generic [ref=e130]: Exit
+            - generic [ref=e131]: Finishes with an outcome and return value
+      - main [ref=e132]:
+        - application [ref=e134]:
+          - generic [ref=e136]:
+            - generic:
+              - generic:
+                - img:
+                  - group "start out to pick" [ref=e137] [cursor=pointer]
+                - img:
+                  - group "pick Yes (yes) to done" [ref=e140] [cursor=pointer]:
+                    - generic [ref=e143]: "Yes"
+                - img:
+                  - group "pick No (no) to done" [ref=e145] [cursor=pointer]:
+                    - generic [ref=e148]: "No"
+              - generic:
+                - group "Trigger Start (start)" [ref=e150]:
+                  - generic [ref=e151]:
+                    - generic [ref=e152]: Trigger
+                    - generic [ref=e157]:
+                      - generic [ref=e158]: Start
+                      - generic [ref=e159]: start
+                      - generic [ref=e161]:
+                        - text: out
+                        - generic "start output out (out)" [ref=e162]
+                - group "Decision Pick (pick)" [ref=e163]:
+                  - generic [ref=e164]:
+                    - generic "pick input" [ref=e165]
+                    - generic [ref=e166]:
+                      - generic [ref=e171]: Decision
+                      - button "1 issue on pick" [ref=e173] [cursor=pointer]
+                    - generic [ref=e177]:
+                      - generic [ref=e178]: Pick
+                      - generic [ref=e179]: pick
+                      - generic [ref=e180]:
+                        - generic [ref=e181]:
+                          - text: "Yes"
+                          - generic "pick output Yes (yes)" [ref=e182]
+                        - generic [ref=e183]:
+                          - text: "No"
+                          - generic "pick output No (no)" [ref=e184]
+                - group "Exit Done (done)" [ref=e185]:
+                  - generic [ref=e186]:
+                    - generic "done input" [ref=e187]
+                    - generic [ref=e188]: Exit
+                    - generic [ref=e193]:
+                      - generic [ref=e194]: Done
+                      - generic [ref=e195]: done
+          - generic "Control Panel" [ref=e196]:
+            - button "Zoom In" [ref=e197] [cursor=pointer]
+            - button "Zoom Out" [ref=e200] [cursor=pointer]
+            - button "Fit View" [ref=e203] [cursor=pointer]
+            - button "Toggle Interactivity" [ref=e206] [cursor=pointer]
+          - link "React Flow attribution" [ref=e210] [cursor=pointer]:
+            - /url: https://reactflow.dev?utm_source=attribution
+            - text: React Flow
+      - complementary [ref=e213]:
+        - generic [ref=e214]:
+          - heading "Loop settings" [level=2] [ref=e215]
+          - button "Hide loop settings" [expanded] [ref=e216] [cursor=pointer]
+        - region "Loop settings" [ref=e220]:
+          - paragraph [aria-hidden] [ref=e221]: Required fields are marked *
+          - generic [ref=e222]:
+            - generic [ref=e223]:
+              - generic [ref=e224]: Name
+              - generic [aria-hidden] [ref=e225]: "*"
+            - textbox "Name" [ref=e226]: 205 classifier order
+          - generic [ref=e227]:
+            - generic [ref=e228]: Description
+            - textbox "Description" [ref=e229]
+          - heading "Settings" [level=3] [ref=e230]
+          - paragraph [ref=e231]: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Visits and passes can be explicitly set to Unlimited; cancellation remains available.
+          - form "Loop settings form" [ref=e232]:
+            - generic [ref=e234]:
+              - group "Working directory" [ref=e235]:
+                - generic [ref=e237]:
+                  - generic [ref=e238]: Kind
+                  - combobox "Kind" [ref=e240] [cursor=pointer]:
+                    - option "fixed"
+                    - option "template"
+                    - option "temp" [selected]
+              - group "Defaults" [ref=e241]:
+                - group "By harness" [ref=e243]:
+                  - paragraph [ref=e245]: Defaults keyed by their harness; omitted fields inherit only within that harness.
+                  - button "Add entry" [ref=e247] [cursor=pointer]
+                  - status [ref=e251]
+              - generic [ref=e252]:
+                - generic [ref=e253]: Maximum node visits
+                - generic [ref=e255]:
+                  - spinbutton "Maximum node visits" [ref=e256]: "10"
+                  - combobox "Maximum node visits mode" [ref=e258] [cursor=pointer]:
+                    - option "Limited" [selected]
+                    - option "Unlimited"
+                - paragraph [ref=e259]: Fresh entries per node. Default 10; unlimited removes this cutoff.
+              - generic [ref=e260]:
+                - generic [ref=e261]: Run deadline seconds
+                - combobox "Run deadline seconds mode" [ref=e265] [cursor=pointer]:
+                  - option "Limited"
+                  - option "No run deadline" [selected]
+                - paragraph [ref=e266]: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+                - paragraph [ref=e267]: No deadline; set one to stop a forgotten run.
+              - generic [ref=e268]:
+                - generic [ref=e269]: Subloop depth limit
+                - spinbutton "Subloop depth limit" [ref=e271]: "8"
+          - generic [ref=e272]:
+            - heading "Variables" [level=3] [ref=e273]
+            - paragraph [ref=e274]: Each variable maps a name to a JSON Schema.
+          - form "Variables form" [ref=e275]:
+            - group "Variables" [ref=e278]:
+              - generic [ref=e279]: Variables *
+              - button "Add entry" [ref=e281] [cursor=pointer]
+              - status [ref=e285]
+    - dialog [ref=e286]:
+      - banner [ref=e287]:
+        - heading "Edit decision pick" [active] [level=2] [ref=e293]:
+          - text: Edit decision
+          - generic [ref=e294]: pick
+        - button "1 issue on pick" [ref=e297] [cursor=pointer]
+        - button "Close" [ref=e301] [cursor=pointer]
+      - region "Node properties" [ref=e305]:
+        - paragraph [aria-hidden] [ref=e306]: Required fields are marked *
+        - generic [ref=e307]:
+          - generic [ref=e308]:
+            - generic [ref=e309]:
+              - generic [ref=e310]: Node id
+              - generic [aria-hidden] [ref=e311]: "*"
+            - textbox "Node id" [ref=e312]: pick
+          - generic [ref=e313]:
+            - generic [ref=e314]:
+              - generic [ref=e315]: Label
+              - generic [aria-hidden] [ref=e316]: "*"
+            - textbox "Label" [ref=e317]: Pick
+        - group [ref=e319]:
+          - form "pick config" [ref=e320]:
+            - radiogroup "Decision kind" [ref=e322]:
+              - generic [ref=e323]:
+                - generic [ref=e324]: Decision kind
+                - generic [aria-hidden] [ref=e325]: "*"
+              - generic [ref=e326]:
+                - generic [ref=e327]:
+                  - radio "expression" [ref=e328]
+                  - generic [ref=e329] [cursor=pointer]:
+                    - generic [ref=e330]: expression
+                    - generic [ref=e331]: Return one declared route ID from a JSONata expression.
+                - generic [ref=e332]:
+                  - radio "llm" [ref=e333]
+                  - generic [ref=e334] [cursor=pointer]:
+                    - generic [ref=e335]: llm
+                    - generic [ref=e336]: Give Codex Liquid instructions and readable routes. Confidence is informational.
+                - generic [ref=e337]:
+                  - radio "classifier" [checked] [ref=e338]
+                  - generic [ref=e339] [cursor=pointer]:
+                    - generic [ref=e340]: classifier
+                    - generic [ref=e341]: Ask a configured classifier for Choice, Noul or Score.
+            - generic [ref=e342]:
+              - tablist "Node configuration" [ref=e343]:
+                - tab "Settings" [selected] [ref=e344] [cursor=pointer]
+                - tab "Context" [ref=e345] [cursor=pointer]
+              - tabpanel "Settings" [ref=e346]:
+                - generic [ref=e347]:
+                  - generic [ref=e348]:
+                    - generic [ref=e349]:
+                      - generic [ref=e350]: Question
+                      - generic [aria-hidden] [ref=e351]: "*"
+                    - generic [ref=e352]: Liquid
+                  - generic [ref=e353]:
+                    - generic [ref=e356]:
+                      - generic [ref=e358]: "1"
+                      - textbox "Question" [ref=e362]:
+                        - generic [ref=e363]: Choose
+                    - generic [ref=e364]: "Preview (sample thread): Choose"
+                    - button "Earlier node outputs (1)" [ref=e366] [cursor=pointer]
+                  - paragraph [ref=e371]: Liquid classifier question.
+                - generic [ref=e372]:
+                  - generic [ref=e374]:
+                    - generic [ref=e375]: Model
+                    - generic [aria-hidden] [ref=e376]: "*"
+                  - combobox "Model" [ref=e378] [cursor=pointer]:
+                    - option "(choose a classifier)"
+                    - option "Jev (jev) (needs a key)" [selected]
+                  - paragraph [ref=e379]: Jev (jev) needs a key. Configure it in Settings, Secrets.
+                  - paragraph [ref=e383]: Explicit classifier catalog id.
+                - generic [ref=e384]:
+                  - 'button "Edit as JSON: Answer" [ref=e386] [cursor=pointer]':
+                    - generic [ref=e387]: Edit as JSON
+                  - group "Answer" [ref=e389]:
+                    - generic [ref=e391]:
+                      - radiogroup "Answer type" [ref=e392]:
+                        - generic [ref=e393]:
+                          - generic [ref=e394]: Answer type
+                          - generic [aria-hidden] [ref=e395]: "*"
+                        - generic [ref=e396]:
+                          - generic [ref=e398]:
+                            - generic [ref=e399]:
+                              - radio "Choice" [checked] [ref=e400]
+                              - generic [ref=e401] [cursor=pointer]:
+                                - generic [ref=e402]: Choice
+                                - generic [ref=e403]: Return one declared option. Each option ID is a stable output port.
+                            - button "Choice help" [ref=e404] [cursor=pointer]:
+                              - generic [ref=e408]: help
+                          - generic [ref=e410]:
+                            - generic [ref=e411]:
+                              - radio "Noul" [ref=e412]
+                              - generic [ref=e413] [cursor=pointer]:
+                                - generic [ref=e414]: Noul
+                                - generic [ref=e415]: Return a strict true or false answer. Each side has its own stable output port.
+                            - button "Noul help" [ref=e416] [cursor=pointer]:
+                              - generic [ref=e420]: help
+                          - generic [ref=e422]:
+                            - generic [ref=e423]:
+                              - radio "Score" [ref=e424]
+                              - generic [ref=e425] [cursor=pointer]:
+                                - generic [ref=e426]: Score
+                                - generic [ref=e427]: Classifier only. Scores can fall between anchors, such as 1.25. Each band includes its starting value and stops just before its ending value; the last band also includes the rubric endpoint. Scores are never rounded.
+                            - button "Score help" [ref=e428] [cursor=pointer]:
+                              - generic [ref=e432]: help
+                      - paragraph [ref=e433]: Classifier answer and stable ports.
+                    - group "Options" [ref=e434]:
+                      - generic [ref=e435]: Options *
+                      - paragraph [ref=e436]: At least 2 items.
+                      - paragraph [ref=e437]: Two to sixty-four uniquely labelled options, each with a unique stable id (its output port) and a nonblank criterion.
+                      - generic [ref=e438]:
+                        - group "Options 1" [ref=e439]:
+                          - generic [ref=e441]:
+                            - generic [ref=e443]:
+                              - generic [ref=e444]: Id
+                              - generic [aria-hidden] [ref=e445]: "*"
+                            - textbox "Id" [ref=e446]: "yes"
+                            - paragraph [ref=e447]: Stable provider key and output port; changing display order does not change the route.
+                          - generic [ref=e448]:
+                            - generic [ref=e450]:
+                              - generic [ref=e451]: Label
+                              - generic [aria-hidden] [ref=e452]: "*"
+                            - textbox "Label" [ref=e453]: "Yes"
+                            - paragraph [ref=e454]: Unique readable option label.
+                          - generic [ref=e455]:
+                            - generic [ref=e456]: Repeat route
+                            - switch "Repeat route" [ref=e457] [cursor=pointer]
+                            - paragraph [ref=e459]: Only one route can repeat. Connect it back to earlier work in this gate.
+                          - generic [ref=e460]:
+                            - generic [ref=e462]:
+                              - generic [ref=e463]: Criteria
+                              - generic [aria-hidden] [ref=e464]: "*"
+                            - textbox "Criteria" [ref=e465]: "yes"
+                            - paragraph [ref=e466]: Authored criterion sent to the selected evaluator.
+                        - generic [ref=e467]:
+                          - button "Move options 1 up" [disabled]:
+                            - generic: ↑
+                          - button "Move options 1 down" [ref=e468] [cursor=pointer]:
+                            - generic [ref=e469]: ↓
+                          - button "Remove options 1" [ref=e470] [cursor=pointer]
+                      - generic [ref=e473]:
+                        - group "Options 2" [ref=e474]:
+                          - generic [ref=e476]:
+                            - generic [ref=e478]:
+                              - generic [ref=e479]: Id
+                              - generic [aria-hidden] [ref=e480]: "*"
+                            - textbox "Id" [ref=e481]: "no"
+                            - paragraph [ref=e482]: Stable provider key and output port; changing display order does not change the route.
+                          - generic [ref=e483]:
+                            - generic [ref=e485]:
+                              - generic [ref=e486]: Label
+                              - generic [aria-hidden] [ref=e487]: "*"
+                            - textbox "Label" [ref=e488]: "No"
+                            - paragraph [ref=e489]: Unique readable option label.
+                          - generic [ref=e490]:
+                            - generic [ref=e491]: Repeat route
+                            - switch "Repeat route" [ref=e492] [cursor=pointer]
+                            - paragraph [ref=e494]: Only one route can repeat. Connect it back to earlier work in this gate.
+                          - generic [ref=e495]:
+                            - generic [ref=e497]:
+                              - generic [ref=e498]: Criteria
+                              - generic [aria-hidden] [ref=e499]: "*"
+                            - textbox "Criteria" [ref=e500]: "no"
+                            - paragraph [ref=e501]: Authored criterion sent to the selected evaluator.
+                        - generic [ref=e502]:
+                          - button "Move options 2 up" [ref=e503] [cursor=pointer]:
+                            - generic [ref=e504]: ↑
+                          - button "Move options 2 down" [disabled]:
+                            - generic: ↓
+                          - button "Remove options 2" [ref=e505] [cursor=pointer]
+                      - button "Add options" [ref=e509] [cursor=pointer]
+                      - status [ref=e513]
+                - button "Advanced" [ref=e515] [cursor=pointer]
+        - region "Connections" [ref=e520]:
+          - heading "Connections" [level=3] [ref=e521]
+          - list [ref=e522]:
+            - listitem [ref=e523]:
+              - generic [ref=e524]:
+                - text: "Yes"
+                - code [ref=e525]: (yes)
+                - text: →
+                - code [ref=e526]: done
+              - button "Remove edge yes" [ref=e527] [cursor=pointer]
+            - listitem [ref=e530]:
+              - generic [ref=e531]:
+                - text: "No"
+                - code [ref=e532]: (no)
+                - text: →
+                - code [ref=e533]: done
+              - button "Remove edge no" [ref=e534] [cursor=pointer]
+      - contentinfo [ref=e537]:
+        - button "Delete node" [ref=e538] [cursor=pointer]
+        - button "Done" [ref=e542] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  87  |           dialog.getByLabel('Model', { exact: true }).locator('option').first(),
+  88  |         ).toHaveText(`(loop default) (${expectedModel})`);
+  89  |       if (level === 'loop')
+  90  |         await page.screenshot({ path: `../../docs/qa/2026-10-23-wp-f2b-205/after-${kind}.png` });
+  91  |       await closeNode(page);
+  92  |       await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  93  |       await expect(page.getByText('Published version 1.')).toBeVisible();
+  94  |       await page.reload();
+  95  |       const reopened = await openNode(page, 'work');
+  96  |       await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue(
+  97  |         level === 'explicit' ? 'high' : '',
+  98  |       );
+  99  |       await closeNode(page);
+  100 |       const saved = await request.get(url + `/loops/${loop.id}`);
+  101 |       const data = (await saved.json()) as { current: { definition: unknown } };
+  102 |       const config = LoopDefinitionSchema.parse(data.current.definition).nodes.find(
+  103 |         (node) => node.id === 'work',
+  104 |       )!.config;
+  105 |       if (level === 'explicit')
+  106 |         expect(config).toHaveProperty(
+  107 |           'effort',
+  108 |           kind === 'llm' ? { mode: 'explicit', value: 'high' } : 'high',
+  109 |         );
+  110 |       else if (kind === 'llm') expect(config).toHaveProperty('effort', { mode: 'inherit' });
+  111 |       else expect(config).not.toHaveProperty('effort');
+  112 |       expect(
+  113 |         (await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } })).status(),
+  114 |       ).toBe(202);
+  115 |       await expect
+  116 |         .poll(async () => {
+  117 |           const result = await control(
+  118 |             request,
+  119 |             kind === 'llm' ? '/deciders/requests' : '/harness/requests',
+  120 |             { instanceId },
+  121 |           );
+  122 |           return result[kind === 'llm' ? 'routes' : 'started'];
+  123 |         })
+  124 |         .toMatchObject([{ model: expectedModel, effort: expectedEffort }]);
+  125 |     });
+  126 |   }
+  127 | }
+  128 | 
+  129 | test('classifier keeps Question, Model, Answer visible and has no effort', async ({
+  130 |   page,
+  131 |   request,
+  132 | }) => {
+  133 |   const source = minimalLoop();
+  134 |   const created = await request.post('/loops', {
+  135 |     data: {
+  136 |       definition: {
+  137 |         ...source,
+  138 |         name: '205 classifier order',
+  139 |         nodes: [
+  140 |           source.nodes[0],
+  141 |           {
+  142 |             id: 'pick',
+  143 |             kind: 'decision',
+  144 |             label: 'Pick',
+  145 |             ui: { x: 260, y: 80 },
+  146 |             config: {
+  147 |               kind: 'classifier',
+  148 |               model: 'jev',
+  149 |               question: 'Choose',
+  150 |               answer: {
+  151 |                 type: 'choice',
+  152 |                 options: [
+  153 |                   { id: 'yes', label: 'Yes', criteria: 'yes' },
+  154 |                   { id: 'no', label: 'No', criteria: 'no' },
+  155 |                 ],
+  156 |               },
+  157 |             },
+  158 |           },
+  159 |           source.nodes[1],
+  160 |         ],
+  161 |         edges: [
+  162 |           { id: 'start-pick', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+  163 |           ...['yes', 'no'].map((port) => ({
+  164 |             id: port,
+  165 |             from: { node: 'pick', port },
+  166 |             to: { node: 'done' },
+  167 |           })),
+  168 |         ],
+  169 |       },
+  170 |     },
+  171 |   });
+  172 |   expect(created.status()).toBe(201);
+  173 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  174 |   await page.goto(`/app/loops/${loop.id}/edit`);
+  175 |   const dialog = await openNode(page, 'pick');
+  176 |   const fields = dialog.locator('[data-field-scope="config"]');
+  177 |   for (const name of ['question', 'model', 'answer'])
+  178 |     await expect(fields.locator(`[data-field="${name}"]`).first()).toBeVisible();
+  179 |   expect(
+  180 |     await fields
+  181 |       .locator('[data-field]')
+  182 |       .evaluateAll((elements) =>
+  183 |         elements
+  184 |           .map((element) => element.getAttribute('data-field'))
+  185 |           .filter((name) => ['question', 'model', 'answer'].includes(name ?? '')),
+  186 |       ),
+> 187 |   ).toEqual(['question', 'model', 'answer']);
+      |     ^ Error: expect(received).toEqual(expected) // deep equality
+  188 |   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
+  189 |   await page.screenshot({ path: '../../docs/qa/2026-10-23-wp-f2b-205/after-classifier.png' });
+  190 | });
+  191 | 
+  192 | test('a saved unsupported effort stays visible and is refused before the adapter', async ({
+  193 |   page,
+  194 |   request,
+  195 | }) => {
+  196 |   const instance = await control(request, '/apps');
+  197 |   const url = String(instance['url']);
+  198 |   const instanceId = String(instance['instanceId']);
+  199 |   const entry = {
+  200 |     instanceId,
+  201 |     harness: 'codex',
+  202 |     model: 'effort-limited',
+  203 |     displayName: 'Limited',
+  204 |     efforts: ['low', 'high'],
+  205 |     defaultEffort: 'low',
+  206 |     enabled: true,
+  207 |     source: 'harness',
+  208 |   };
+  209 |   await control(request, '/catalog/upsert', entry);
+  210 |   const source = minimalLoop();
+  211 |   const created = await request.post(url + '/loops', {
+  212 |     data: {
+  213 |       definition: {
+  214 |         ...source,
+  215 |         name: '205 unsupported effort',
+  216 |         nodes: [
+  217 |           source.nodes[0],
+  218 |           {
+  219 |             id: 'work',
+  220 |             kind: 'inference',
+  221 |             label: 'Work',
+  222 |             config: { model: entry.model, effort: 'high', prompt: { template: 'q' } },
+  223 |             ui: { x: 260, y: 80 },
+  224 |           },
+  225 |           source.nodes[1],
+  226 |         ],
+  227 |         edges: [
+  228 |           { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+  229 |           { id: 'work-done', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+  230 |         ],
+  231 |       },
+  232 |     },
+  233 |   });
+  234 |   expect(created.status()).toBe(201);
+  235 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  236 |   expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+  237 |   await control(request, '/catalog/upsert', { ...entry, efforts: ['low'] });
+  238 |   await page.goto(url + `/app/loops/${loop.id}/edit`);
+  239 |   const dialog = await openNode(page, 'work');
+  240 |   const effort = dialog.getByLabel('Effort', { exact: true });
+  241 |   await expect(effort).toHaveValue('high');
+  242 |   await expect(effort).toHaveAccessibleDescription(/not supported/);
+  243 |   await expect(effort.locator('option:checked')).toHaveText('high (not supported by this model)');
+  244 |   await closeNode(page);
+  245 |   await page.reload();
+  246 |   await expect((await openNode(page, 'work')).getByLabel('Effort', { exact: true })).toHaveValue(
+  247 |     'high',
+  248 |   );
+  249 |   const refused = await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } });
+  250 |   expect(refused.status()).toBe(422);
+  251 |   expect(await refused.text()).toContain('EFFORT_UNSUPPORTED');
+  252 |   expect((await control(request, '/harness/requests', { instanceId }))['started']).toEqual([]);
+  253 | });
+  254 | 
+```

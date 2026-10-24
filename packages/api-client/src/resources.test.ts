@@ -96,6 +96,27 @@ it('exposes opaque cursors and carries every unchanged filter into following his
   expect(requests[1]!.signal.aborted).toBe(false);
 });
 
+it('passes an inclusive event anchor with filters and a bounded limit', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://graphgoblin.test',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({ items: [], nextCursor: null }));
+    },
+  });
+  const query = {
+    anchor: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+    type: 'chosen',
+    before: '2099-01-01T00:00:00.000Z',
+    limit: 100,
+  };
+  await events.list(client, query);
+  const search = new URL(requests[0]!.url).searchParams;
+  expect(Object.fromEntries(search)).toEqual({ ...query, limit: '100' });
+  expect(search.has('cursor')).toBe(false);
+});
+
 it('forwards run observation cancellation to GET without cancelling the run', async () => {
   const requests: Request[] = [];
   const client = createGraphGoblinClient({

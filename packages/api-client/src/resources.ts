@@ -277,6 +277,8 @@ export const events = {
 };
 
 export const system = {
+  modelDefaults: async (client: GraphGoblinClient) =>
+    unwrap(await client.GET('/system/model-defaults')),
   health: async (client: GraphGoblinClient) => unwrap(await client.GET('/healthz')),
   version: async (client: GraphGoblinClient) => unwrap(await client.GET('/version')),
   /** Is each configured harness installed and authenticated? */
