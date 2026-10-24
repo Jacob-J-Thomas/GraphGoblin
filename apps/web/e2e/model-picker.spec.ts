@@ -189,7 +189,7 @@ test('catalog failure preserves the current values until retry and loop defaults
   await defaults.getByRole('textbox', { name: 'By harness key 1' }).fill('codex');
   const codexDefaults = settings.locator('[data-field="defaults.byHarness.codex"]');
   const defaultModel = codexDefaults.getByLabel('Model', { exact: true });
-  await expect(defaultModel.locator('option').first()).toHaveText('(owner default)');
+  await expect(defaultModel.locator('option').first()).toHaveText('(owner default) (gpt-6-luna)');
   await defaultModel.selectOption(chosen.model);
   await expect(codexDefaults.getByLabel('Effort', { exact: true }).locator('option')).toHaveCount(
     chosen.efforts.length + 1,

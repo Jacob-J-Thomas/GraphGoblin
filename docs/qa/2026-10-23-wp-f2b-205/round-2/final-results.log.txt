@@ -1,0 +1,70 @@
+WP-F2b #205 round 2
+Head/base: 47c697e618c3c1b3ef6238965d7bd7736f054cb7
+Branch: codex-wp-f2b-205
+Worktree: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205
+State: uncommitted; no commit, push, merge, rebase, stash, branch switch or manual directory deletion.
+Runtime for all gates: Node v22.14.0 first on PATH, pnpm.cmd.
+
+Required changes implemented:
+1. Public @graphgoblin/domain inheritedHarnessDefaults returns HarnessModelDefaults, resolving each field independently within the selected harness from loop, owner, then process. Exported through the existing index barrel. Callers: resolveHarnessModel and web useCatalogField. The loop-default form passes empty loop defaults.
+2. useCatalogField uses HarnessIdSchema.safeParse; unknown harnesses inherit nothing and render Default (unavailable), without throwing or writing values.
+3. Loop-default Model first option now names the inherited owner/process model, e.g. (owner default) (gpt-6-luna).
+
+Source/doc files changed:
+packages/domain/src/model-resolution.ts
+packages/domain/src/inherited-harness-defaults.test.ts
+apps/web/src/forms/fields/model.tsx
+apps/web/src/forms/fields/model.test.tsx
+apps/web/src/editor/model-effort.test.tsx
+apps/web/e2e/model-picker.spec.ts
+docs/09-frontend-and-pwa.md
+
+Regression evidence:
+regressions-before.log.txt: 3 failed, 48 filtered skips. Unknown harness threw ZodError: Invalid option: expected one of codex|claude. Loop-default cases could not find (owner default) (owner-model) or (owner default) (gpt-6-luna).
+Command: pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/model-effort.test.tsx src/forms/fields/model.test.tsx --maxWorkers=1 -t "unknown harness|registers loop defaults"
+web-targeted.log.txt: same two complete component files after the fix, 51/51 passed.
+Command: pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/model-effort.test.tsx src/forms/fields/model.test.tsx --maxWorkers=1
+New domain helper tests: 12 cases, covering both harnesses, all three levels, independent field inheritance and no borrowing across harnesses. All 12 passed in both full domain runs.
+All changed test files passed in the full package runs.
+
+Full package results (not clean gates):
+Domain required default-worker coverage: 31 files; 28 passed, 3 failed. 605 tests; 602 passed, 3 failed. Exit 1.
+- upgrade.test.ts: singleton codex conversion, 5000ms timeout.
+- convert-v3-v4/conversion.test.ts: re-review F1 two authored gates (explicit return false), 5000ms timeout.
+- adversarial.test.ts: 20 nested failing evals in a 128 MB process; child status null instead of 0, after approximately the 10000ms spawn limit.
+Focused single-worker diagnostic: 6 passed, 186 intentionally filtered skips. Original assertions and timeouts unchanged. This did not erase the failed required gate.
+Full domain coverage with --maxWorkers=1: 31 files; 30 passed, 1 failed. 605 tests; 604 passed, 1 failed. Exit 1.
+- adversarial.test.ts: nested-alternative isolated-process case; stdout empty instead of the expected rejection, about 10.9s with a 10000ms spawn limit.
+Web required coverage with --maxWorkers=1: 130 files; 126 passed, 4 failed. 1648 tests; 1639 passed, 9 failed. Exit 1; elapsed 5752.15s.
+- routing-review.test.ts: seeded sparse geometry stress case, 60000ms timeout.
+- ClassifierField.editor.test.tsx: quick picker changes as separate undo steps, 20000ms timeout.
+- EditorPage.restore.test.tsx: v1 draft conversion/first-save overwrite; missing legacy device copy heading.
+- TriggerEditor.test.tsx (6): manual/event save round trips saw zero saved triggers; cron round trip, five-type authoring, issues-poll undo, and keyboard webhook editing timed out at 20000ms.
+These four web files and all failing domain tests are untouched by this patch. Their failures remain unresolved; no claim is made that they are the known API sandbox artifact.
+Coverage percentages for domain and web: not emitted after failed tests; no fresh coverage-summary.json exists. Thresholds, exclusions, assertions and timeouts were not changed.
+
+Browser results after pnpm.cmd build:
+Default Playwright configuration, one worker, CI unset, zero retries.
+model-effort.spec.ts: 12/12 passed, including edit/save/reload, explicit/loop/Settings/ecosystem/process defaults, exact fake-adapter requests, unsupported effort refusal, and classifier Question -> Model -> Answer with no effort.
+model-picker.spec.ts: 8/8 passed. None of the four known main failures remains in this run.
+Total: 20/20 passed, exit 0, 127.92s.
+Fake-adapter evidence; no live provider turns.
+The browser temp root used the gg-wp-f2b-205- prefix. No owner app/store/ports were used.
+
+Gates:
+See gate-results.log.txt for each exact command, exit code and elapsed time.
+PASS: typecheck, lint, format, check:layers, check:deps, check:tokens, check:docs, build, requested browser specs.
+FAIL: required domain coverage; required web coverage; additional single-worker full domain coverage diagnostic.
+API coverage was not rerun in round 2; the brief assigns the known API sandbox artifact rerun outside the sandbox to the orchestrator.
+
+Docs and decisions:
+Updated docs/09 catalog controls paragraph for owner/process model ids and shared inheritance ownership.
+No contract, route, dependency, ADR, migration or generated-reference change in round 2. Existing Unreleased #205 entry retained.
+No product parameters changed. Worker limits were diagnostic/runtime settings only; no retry-to-green claim.
+
+Open items:
+Domain/web coverage gates remain failed and need disposition/reverification by the orchestrator/QA. This is not an all-green handoff.
+The orchestrator owns commit, PR creation and independent QA, plus the specified API coverage run outside the sandbox.
+All round-2 log paths are redacted to %USERPROFILE%; all retained captures are below 1000000 bytes.
+
+Screenshot provenance: default browser specs refreshed round-1 after-classifier.png and after-llm.png. Their new bytes are retained under round-2/ with the same basenames. The original round-1 files were restored byte-for-byte from HEAD to preserve the earlier evidence hashes.

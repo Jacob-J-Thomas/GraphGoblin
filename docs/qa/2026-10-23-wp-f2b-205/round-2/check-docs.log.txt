@@ -1,0 +1,12 @@
+COMMAND: pnpm.cmd check:docs
+pnpm.cmd : $ pnpm --filter @graphgoblin/contracts build && node tooling/scripts/gen-docs.mjs --check
+At line:20 char:3
++   & pnpm.cmd @round2Args *>> $round2LogPath
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ pnpm --filter...ocs.mjs --check:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+$ tsc -b tsconfig.build.json
+Generated docs are up to date.
+
+RESULT: pnpm.cmd check:docs : exit 0; elapsed 34.25s

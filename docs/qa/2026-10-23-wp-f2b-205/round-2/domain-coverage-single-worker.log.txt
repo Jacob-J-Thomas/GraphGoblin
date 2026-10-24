@@ -1,0 +1,58 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/domain test:coverage --maxWorkers=1
+REASON: The default-worker coverage run failed three timing cases. A focused single-worker diagnostic passed all six related cases. Run full coverage with V8 instrumentation and one worker, retaining all original assertions, timeouts and coverage thresholds. The original failed gate remains recorded.
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:18 char:3
++   & pnpm.cmd @round2Args 2>&1 | Out-File -Encoding UTF8 -Append $roun ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/packages/domain
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (41 tests | 1 failed) 39774ms
+   ❯ adversarial domain invariants (41)
+     × ADV-007 review: nested-alternative is rejected in an isolated process 10965ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial domain invariants > ADV-007 review: nested-alternative is rejected in an 
+isolated process
+AssertionError: expected '' to match /^rejected:.*can run without bound/
+
+- Expected:
+/^rejected:.*can run without bound/
+
++ Received:
+""
+
+ ❯ src/adversarial.test.ts:294:29
+    292|         encoding: 'utf8',
+    293|       });
+    294|       expect(result.stdout).toMatch(/^rejected:.*can run without bound…
+       |                             ^
+    295|     },
+    296|     15_000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 30 passed (31)
+      Tests  1 failed | 604 passed (605)
+   Start at  22:14:45
+   Duration  222.14s (tests 56%, import 32%, transform 9%, worker 3%)
+
+     Import  114 modules were evaluated 288 times · 50.95s total, 32% of tracked time
+             ~30.78s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\packages\domain
+
+
+RESULT: pnpm.cmd --filter @graphgoblin/domain test:coverage --maxWorkers=1 : exit 1; elapsed 228.7s

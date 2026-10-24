@@ -10,6 +10,32 @@ import { NODE_FIELD_CONTROLS } from './field-controls.js';
 import { vi } from 'vitest';
 import { problem } from '../__fixtures__/fake-api.js';
 
+it('renders an unknown harness without inventing inherited defaults', async () => {
+  const change = vi.fn();
+  renderWith(
+    <SchemaForm
+      schema={NodeConfigSchemas.inference}
+      value={{ harness: 'unknown-harness', prompt: { template: 'q' } }}
+      onChange={change}
+      label="Node"
+      controls={NODE_FIELD_CONTROLS}
+    />,
+    '/',
+    new FakeApi(),
+  );
+  await waitFor(() =>
+    expect(
+      within(screen.getByLabelText('Effort')).getByRole('option', {
+        name: 'Default (unavailable)',
+      }),
+    ).toBeInTheDocument(),
+  );
+  expect(
+    within(screen.getByLabelText('Model')).getByRole('option', { name: '(loop default)' }),
+  ).toBeInTheDocument();
+  expect(change).not.toHaveBeenCalled();
+});
+
 it.each(['loading', 'failed', 'invalid-owner'] as const)(
   'does not invent a default when defaults are %s',
   async (state) => {

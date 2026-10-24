@@ -846,30 +846,43 @@ describe('catalog field controls', () => {
     expect(model()).toHaveAccessibleDescription(/MODEL_DISABLED: Server warning for alpha/);
   });
 
-  it('registers loop defaults with Codex choices and an owner-default unset value', async () => {
-    const api = new FakeApi();
-    api.catalog = [entry('alpha'), entry('other', true, 'another')];
-    const change = vi.fn();
-    renderWith(
-      <SchemaForm
-        schema={LoopSettingsSchema}
-        value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
-        label="Settings"
-        onChange={change}
-        controls={LOOP_FIELD_CONTROLS}
-      />,
-      '/',
-      api,
-    );
-    await ready();
-    expect(within(model()).getByRole('option', { name: '(owner default)' })).toBeInTheDocument();
-    expect(within(model()).getAllByRole('option')).toHaveLength(2);
-    await userEvent.setup().selectOptions(model(), '');
-    expect(change.mock.lastCall?.[0]).toMatchObject({
-      defaults: { byHarness: { codex: {} } },
-    });
-    expect(within(effort()).getAllByRole('option')).toHaveLength(7);
-  });
+  it.each(['owner', 'process'] as const)(
+    'registers loop defaults with Codex choices and the inherited %s model',
+    async (level) => {
+      const api = new FakeApi();
+      api.catalog = [entry('alpha'), entry('other', true, 'another')];
+      if (level === 'owner')
+        api.settingsValues = {
+          defaults: { byHarness: { codex: { model: 'owner-model', effort: 'high' } } },
+        };
+      const change = vi.fn();
+      renderWith(
+        <SchemaForm
+          schema={LoopSettingsSchema}
+          value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
+          label="Settings"
+          onChange={change}
+          controls={LOOP_FIELD_CONTROLS}
+        />,
+        '/',
+        api,
+      );
+      await ready();
+      await waitFor(() =>
+        expect(
+          within(model()).getByRole('option', {
+            name: `(owner default) (${level === 'owner' ? 'owner-model' : 'gpt-6-luna'})`,
+          }),
+        ).toBeInTheDocument(),
+      );
+      expect(within(model()).getAllByRole('option')).toHaveLength(2);
+      await userEvent.setup().selectOptions(model(), '');
+      expect(change.mock.lastCall?.[0]).toMatchObject({
+        defaults: { byHarness: { codex: {} } },
+      });
+      expect(within(effort()).getAllByRole('option')).toHaveLength(7);
+    },
+  );
 
   it('uses the validated byHarness record key for mixed loop default model and effort choices', async () => {
     const api = new FakeApi();

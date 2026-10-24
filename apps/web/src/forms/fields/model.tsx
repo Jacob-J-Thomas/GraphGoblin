@@ -11,7 +11,7 @@ import { createContext, use, useId } from 'react';
 import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import { useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
-import { harnessDisplayName } from '@graphgoblin/domain';
+import { harnessDisplayName, inheritedHarnessDefaults } from '@graphgoblin/domain';
 import {
   keys,
   useModelCatalog,
@@ -278,17 +278,18 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
   const current = typeof selected === 'string' && !isUnset(selected) ? selected : undefined;
   const owner = HarnessDefaultsSchema.safeParse(settings.data?.['defaults'] ?? {});
   const loop = HarnessDefaultsSchema.safeParse(node?.definition.settings?.defaults ?? {});
-  const levels = [
-    ...(!defaultsField && loop.success ? [loop.data] : []),
-    ...(owner.success ? [owner.data] : []),
-    ...(processDefaults.data ? [processDefaults.data] : []),
-  ].map((defaults) => defaults.byHarness[HarnessIdSchema.parse(harnessId)]);
+  const parsedHarness = HarnessIdSchema.safeParse(harnessId);
   // Missing/failed Settings cannot certify that a lower-level fallback is effective.
   const defaultsKnown = settings.data !== undefined && owner.success && loop.success;
-  const inherited = {
-    model: defaultsKnown ? levels.find((level) => level?.model !== undefined)?.model : undefined,
-    effort: defaultsKnown ? levels.find((level) => level?.effort !== undefined)?.effort : undefined,
-  };
+  const inherited =
+    defaultsKnown && parsedHarness.success
+      ? inheritedHarnessDefaults({
+          harness: parsedHarness.data,
+          loopDefaults: defaultsField ? { byHarness: {} } : loop.data,
+          ownerDefaults: owner.data,
+          processDefaults: processDefaults.data ?? { byHarness: {} },
+        })
+      : {};
   const effectiveModel = current ?? inherited.model;
   return {
     query,
@@ -493,7 +494,7 @@ function CatalogField({
       : efforts.map((effort) => ({ value: effort, label: effort }));
   const placeholder =
     kind === 'model'
-      ? `${unsetLabel}${unsetLabel === '(loop default)' && inherited.model ? ` (${inherited.model})` : ''}`
+      ? `${unsetLabel}${inherited.model ? ` (${inherited.model})` : ''}`
       : `Default (${inherited.effort ?? (defaultsPending ? 'checking…' : 'unavailable')})`;
   const inheritedUnsupported =
     kind === 'effort' &&

@@ -1,4 +1,10 @@
-import type { Effort, HarnessDefaults, HarnessId, ModelCatalogEntry } from '@graphgoblin/contracts';
+import type {
+  Effort,
+  HarnessDefaults,
+  HarnessId,
+  HarnessModelDefaults,
+  ModelCatalogEntry,
+} from '@graphgoblin/contracts';
 
 export interface HarnessModelResolutionInput {
   harness: HarnessId;
@@ -24,14 +30,28 @@ export type HarnessModelResolution =
     }
   | { status: 'unavailable'; code: 'MODEL_DISABLED'; path: 'model'; message: string };
 
+/** Inherit each field independently, within one harness, from loop, owner, then process. */
+export function inheritedHarnessDefaults(
+  input: Pick<
+    HarnessModelResolutionInput,
+    'harness' | 'loopDefaults' | 'ownerDefaults' | 'processDefaults'
+  >,
+): HarnessModelDefaults {
+  const levels = [input.loopDefaults, input.ownerDefaults, input.processDefaults].map(
+    (defaults) => defaults.byHarness[input.harness],
+  );
+  return {
+    model: levels.find((level) => level?.model !== undefined)?.model,
+    effort: levels.find((level) => level?.effort !== undefined)?.effort,
+  };
+}
+
 /** Resolve only the selected harness's defaults; catalog effort is guidance, never an implicit default. */
 export function resolveHarnessModel(input: HarnessModelResolutionInput): HarnessModelResolution {
   const { harness, catalog } = input;
-  const levels = [input.loopDefaults, input.ownerDefaults, input.processDefaults].map(
-    (defaults) => defaults.byHarness[harness],
-  );
-  const model = input.model ?? levels.find((level) => level?.model !== undefined)?.model;
-  const effort = input.effort ?? levels.find((level) => level?.effort !== undefined)?.effort;
+  const inherited = inheritedHarnessDefaults(input);
+  const model = input.model ?? inherited.model;
+  const effort = input.effort ?? inherited.effort;
   if (!model)
     return {
       status: 'invalid',
