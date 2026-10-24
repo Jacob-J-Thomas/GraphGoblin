@@ -1,0 +1,360 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 385c9da6..77799142 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Events keeps loaded history stable when new events arrive, announces availability, and offers deliberate Refresh with type/time filters and opaque paging preserved. (#240)
++
+ - Show execution defaults in the editor and Settings, pin them on runs, and support explicit Unlimited node visits and repeat passes plus optional authored run deadlines. Runs default to 10 visits and no deadline; remove Claude's hidden provider-turn and ten-minute inference ceilings, preserve typed transport/output failures and retry positively unsubmitted transient transport failures once. **Upgrade:** no existing loop or run gains a deadline. Omitted deadlines and `runDeadlineSeconds: null` mean no deadline; `null` explicitly selects Unlimited visits or passes. SQL 0017 pins existing runs and saved admission intents from their immutable definitions, preserving authored deadlines and pinning null when omitted. Export/API clients must accept nullable limits, the new run pin limits and typed deadline/transport/output failures. Programmatic Claude harness callers must remove `maxTurns` and `turnTimeoutMs`; use authored node/run deadlines. The 16 KiB per-item detail excerpt remains a storage bound; full final results are preserved. No owner-store changes were performed. (#243)
+ 
+ - Preserve the exact authored or repair prompt after a proven pre-submission refusal. Record submission classification and acceptance markers per logical visit; uncertain work continues only a usable session, and missing sessions fail explicitly. An inherited previous/named session without acceptance of the authored task cannot authorize continuation (ADR-0045). Non-pinned generic Codex exits and lost streams retain Resume when session evidence permits it; generic Claude failures require adapter retryability evidence. Pinned policy, configuration and argument refusals remain non-resumable for both. Synchronous repair-start refusals retain the exact repair prompt and use the same typed failure and pinned-refusal rules as initial launch. The inspector lists selectable turn/submission rows with the node ID; provenance values remain REST-only, with the detail view coordinated with #379. Claude result-only acceptance is now recorded as soon as the successful record validates, before process exit; usage and completed results still wait for verified exit. **Upgrade:** on the old build, let every run inside an inference node finish or cancel it before upgrading: startup recovery automatically resumes `running` runs. After upgrading, never resume a failed run whose failure is on an inference node and whose log has no `harness.turn`; use Replay from the node, delete its loop, or reset the store. Ignoring this rule resends the authored prompt blindly: fresh policy starts a new conversation, while previous/named can repeat it in the inherited conversation. Regenerate API clients for `failure.inference`, `HARNESS_DELIVERY_UNCERTAIN`, `HARNESS_SESSION_MISSING`, `harness.turn` and `harness.submission` (now `submitted` for positive acceptance). No compatibility recovery or silent fresh-session fallback is provided. (#244)
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index ab6db492..bb311598 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -19,7 +19,14 @@ import type {
+   ModelCatalogEntry,
+ } from '@graphgoblin/contracts';
+ import { HarnessPreflightSchema } from '@graphgoblin/contracts';
+-import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
++import {
++  useInfiniteQuery,
++  useMutation,
++  useQuery,
++  useQueryClient,
++  type InfiniteData,
++  type QueryClient,
++} from '@tanstack/react-query';
+ import { z } from 'zod';
+ import { useApi } from './context.js';
+ 
+@@ -270,22 +277,42 @@ export function usePreflight() {
+ }
+ 
+ const PENDING_EVENT_REFRESH_MS = 2_000;
++// A single newest row is enough for an availability notice; never count or scan history.
++const NEW_EVENT_CHECK_MS = 2_000;
++type InboundPage = Awaited<ReturnType<typeof events.list>>;
+ 
+ export function useInboundEvents(query: ListEventsQuery = {}) {
+   const client = useApi();
+-  return useInfiniteQuery({
+-    queryKey: [...keys.events, query],
++  const cache = useQueryClient();
++  const queryKey = [...keys.events, query];
++  const history = useInfiniteQuery({
++    queryKey,
+     initialPageParam: query.cursor,
+-    queryFn: ({ pageParam, signal }) =>
+-      events.list(
++    queryFn: async ({ pageParam, signal }) => {
++      const page = await events.list(
+         client,
+         {
+           ...query,
+           ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+         },
+         { signal },
+-      ),
++      );
++      const loaded = cache.getQueryData<InfiniteData<InboundPage>>(queryKey);
++      const index = loaded?.pageParams.indexOf(pageParam) ?? -1;
++      const previous = loaded?.pages[index];
++      if (!previous) return page;
++      // Receipt recovery may update existing rows, but background reads must never replace
++      // membership or paging boundaries. Only an explicit reset admits newer rows.
++      const updates = new Map(page.items.map((event) => [event.id, event]));
++      return {
++        ...previous,
++        items: previous.items.map((event) => updates.get(event.id) ?? event),
++      };
++    },
+     getNextPageParam: (page) => page.nextCursor ?? undefined,
++    refetchOnWindowFocus: false,
++    refetchOnReconnect: false,
++    refetchOnMount: false,
+     refetchInterval: (query) =>
+       query.state.data?.pages.some((page) =>
+         page.items.some((event) => event.delivery?.state === 'pending'),
+@@ -293,6 +320,34 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
+         ? PENDING_EVENT_REFRESH_MS
+         : false,
+   });
++  const newest = useQuery({
++    queryKey: ['newest-inbound-event', query],
++    queryFn: ({ signal }) =>
++      events.list(
++        client,
++        {
++          ...(query.type ? { type: query.type } : {}),
++          ...(query.before ? { before: query.before } : {}),
++          limit: 1,
++        },
++        { signal },
++      ),
++    enabled: history.data !== undefined,
++    refetchInterval: NEW_EVENT_CHECK_MS,
++  });
++  const first = history.data?.pages[0]?.items[0];
++  const latest = newest.data?.items[0];
++  const newerAvailable =
++    latest !== undefined &&
++    (first === undefined ||
++      latest.receivedAt > first.receivedAt ||
++      (latest.receivedAt === first.receivedAt && latest.id > first.id));
++  return {
++    ...history,
++    newerAvailable,
++    newerCheckFailed: newest.isError,
++    refresh: () => cache.resetQueries({ queryKey, exact: true }),
++  };
+ }
+ 
+ /** The control enables this only once its expression and zone have stopped changing. */
+diff --git a/apps/web/src/events/EventsPage.tsx b/apps/web/src/events/EventsPage.tsx
+index 61cd40a4..f6d8d6d3 100644
+--- a/apps/web/src/events/EventsPage.tsx
++++ b/apps/web/src/events/EventsPage.tsx
+@@ -1,9 +1,10 @@
+ import { HistoryState } from '../components/HistoryState.js';
+-import { Link } from 'react-router';
++import { Link, useSearchParams } from 'react-router';
+ import { useInboundEvents } from '../api/queries.js';
+ import { Page, PageHeader } from '../components/layout/index.js';
+ import {
+   Badge,
++  Button,
+   BoundedValue,
+   Card,
+   CELL_PREVIEW_CHARS,
+@@ -113,14 +114,46 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
+  * of other runs, with the runs each one started.
+  */
+ export function EventsPage() {
+-  const query = useInboundEvents();
++  const [params] = useSearchParams();
++  const type = params.get('type');
++  const before = params.get('before');
++  const filters = { ...(type ? { type } : {}), ...(before ? { before } : {}) };
++  const query = useInboundEvents(filters);
+   return (
+     <Page>
+-      <PageHeader title="Events" />
++      <PageHeader
++        title="Events"
++        actions={
++          <Button
++            variant="outline"
++            disabled={query.isFetching}
++            onClick={() => void query.refresh()}
++          >
++            Refresh
++          </Button>
++        }
++      >
++        <span role="status" className="text-sm text-muted">
++          {query.newerAvailable
++            ? 'New events available'
++            : query.newerCheckFailed
++              ? 'Could not check for new events. Refresh to try again.'
++              : null}
++        </span>
++      </PageHeader>
++      {type || before ? (
++        <p className="text-sm text-muted">
++          {type ? `Type: ${type}` : null}
++          {type && before ? ' · ' : null}
++          {before ? `Before: ${before}` : null}
++        </p>
++      ) : null}
+       <HistoryState query={query} what="Events">
+         {(items) =>
+           items.length === 0 ? (
+-            <p className="text-sm text-muted">No inbound events yet.</p>
++            <p className="text-sm text-muted">
++              {type || before ? 'No inbound events match these filters.' : 'No inbound events yet.'}
++            </p>
+           ) : (
+             <Card flush>
+               <Table stack="lg">
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 4c1859b4..9d3750d1 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -421,12 +421,14 @@ This sequence cursor remains a number; it is not interchangeable with list curso
+ 
+ Runs and Events append older rows through a new outline **Load more** button.
+ Filters remain part of the query key and every page request; changing a filter selects
+-its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
+-filters. The control is busy only during a next-page fetch, so background polling does
++its own history. Runs expose loop/status/parent selects; Events displays active `type` and
++`before` filters from its URL. The control is busy only during a next-page fetch, so background polling does
+ not block it. End-of-list text appears after an append and receives keyboard focus
+ when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
+ show an error with a retry through the same button. Runs retain their five-second polling;
+-Events retain pending-delivery polling. No manual Events refresh is added here.
++Events retain pending-delivery polling for existing rows, with loaded membership and cursors
++kept stable. A separate `limit=1` read announces newer arrivals; **Refresh** deliberately
++reloads the newest page within the same filters. See [09](09-frontend-and-pwa.md) for the page behaviour (#240).
+ 
+ ### Pinned definitions (ADR-0041)
+ 
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index d07af1ba..e5a4409b 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -252,8 +252,9 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ - **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, the server copy can open while the three-second storage grace runs, and device storage reports itself blocked (see "Device storage and the save states" below). After device inspection, every edit is mirrored to IndexedDB at once and, after safe reconciliation, flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
+ - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
+ - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+-- **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+-  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. Its URL has no hidden type or time filters; those filters remain available through the API and client. The control is busy only while fetching its next page.
++- **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it checks every two seconds and updates matching loaded receipts so recovery results and new run links appear automatically; this polling stops after displayed receipts are terminal or the page unmounts. Background reads preserve loaded row identities, order and opaque page boundaries. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
++  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. **Refresh** deliberately returns to the newest page within the active filters, discarding appended pages and fetching a fresh first page; subsequent loads use its new opaque cursor. URL `type` and exclusive `before` filters are shown above the table and retained on every page, availability check and Refresh. An empty filtered result says "No inbound events match these filters." An unfiltered empty result says "No inbound events yet."
++  A separate two-second check requests only the newest matching event (`GET /events` with the same filters and `limit=1`). A newer `(receivedAt, id)` than the loaded head, or a first arrival into an empty result, shows **New events available** in the existing header without inserting rows, changing focus or scrolling. It reports availability rather than an exact count to keep reads bounded. Focus and reconnect do not replace loaded rows. Failed availability checks say "Could not check for new events. Refresh to try again." Refresh remains available without a notice and is disabled during a history fetch. Checks stop on unmount and pause in a hidden tab under the normal query defaults. No endpoint, stored-data or client-contract change is needed (#240).
+ - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
+ 
+ ## Draft conflicts (Decided, WP-F2)
+import type { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { ErrorState, QueryState } from './status.js';
+import { Button } from './ui/index.js';
+
+type HistoryPage<T> = { items: T[] };
+
+/** Append failures retain loaded rows; exhausted user-initiated paging keeps keyboard focus. */
+export function HistoryState<T>({
+  query,
+  what,
+  children,
+}: {
+  query: UseInfiniteQueryResult<InfiniteData<HistoryPage<T>>>;
+  what: string;
+  children: (items: T[]) => ReactNode;
+}) {
+  const endRef = useRef<HTMLParagraphElement>(null);
+  const userAppendRef = useRef(false);
+  const { hasNextPage, isFetchingNextPage } = query;
+  const hasAppended = (query.data?.pages.length ?? 0) > 1;
+  useEffect(() => {
+    if (!isFetchingNextPage && userAppendRef.current) {
+      userAppendRef.current = false;
+      if (!hasNextPage && hasAppended) endRef.current?.focus({ preventScroll: true });
+    }
+  }, [isFetchingNextPage, hasNextPage, hasAppended, query.dataUpdatedAt, query.errorUpdatedAt]);
+  return (
+    <>
+      <QueryState query={query} what={what} keepDataOnError={query.isFetchNextPageError}>
+        {(data) => {
+          const items = data.pages.flatMap((page) => page.items);
+          if (!items.length && (hasNextPage || hasAppended))
+            return (
+              <p className="text-sm text-muted">
+                {hasNextPage
+                  ? 'Load more to continue through history.'
+                  : `No readable ${what.toLowerCase()} found.`}
+              </p>
+            );
+          return children(items);
+        }}
+      </QueryState>
+      {query.isFetchNextPageError ? <ErrorState error={query.error} what={what} /> : null}
+      {query.data ? (
+        // Retain footer height at exhaustion so the reading position cannot be clamped.
+        <div className="min-h-9 pointer-coarse:min-h-11">
+          {hasNextPage ? (
+            <Button
+              variant="outline"
+              aria-disabled={isFetchingNextPage}
+              aria-busy={isFetchingNextPage}
+              onClick={() => {
+                if (isFetchingNextPage) return;
+                userAppendRef.current = true;
+                void query.fetchNextPage();
+              }}
+            >
+              {isFetchingNextPage ? 'Loading more\u2026' : 'Load more'}
+            </Button>
+          ) : hasAppended ? (
+            <p ref={endRef} role="status" tabIndex={-1} className="text-sm text-muted">
+              All {what.toLowerCase()} loaded.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  );
+}
+import type { RunStatus } from '@graphgoblin/contracts';
+import type { UseQueryResult } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import { cn, errorMessage, isOfflineError } from '../lib/utils.js';
+import { StatusIcon } from './icons/index.js';
+import { Alert, Badge, type Tone } from './ui/index.js';
+
+/** Colour-blind-safe tones (blue for success, orange for failure), always with an icon. */
+const RUN_STATUS_TONE: Record<RunStatus, Tone> = {
+  queued: 'neutral',
+  running: 'info',
+  waiting: 'warn',
+  paused: 'warn',
+  succeeded: 'good',
+  failed: 'bad',
+  cancelled: 'neutral',
+  exhausted: 'bad',
+};
+
+export function RunStatusBadge({ status }: { status: RunStatus }) {
+  const running = status === 'running';
+  return (
+    <Badge
+      tone={RUN_STATUS_TONE[status]}
+      data-status={status}
+      className={cn(running && 'glow-running')}
+    >
+      <StatusIcon status={status} className={cn(running && 'animate-pulse-soft')} />
+      {status}
+    </Badge>
+  );
+}
+
+/** The backend could not be reached: say so plainly instead of showing an empty screen. */
+export function OfflineState({ what }: { what: string }) {
+  return (
+    <Alert tone="warn" title="Offline">
+      {what} needs the GraphGoblin API, which cannot be reached right now. The app shell keeps
+      working and unsaved editor drafts are kept on this device.
+    </Alert>
+  );
+}
+
+export function ErrorState({ error, what }: { error: unknown; what: string }) {
+  if (isOfflineError(error)) return <OfflineState what={what} />;
+  return <Alert title={`Could not load ${what.toLowerCase()}`}>{errorMessage(error)}</Alert>;
+}
+
+/** Loading, error, and offline handling for one query; renders `children` with the data. */
+export function QueryState<T>({
+  query,
+  what,
+  children,
+  keepDataOnError = false,
+}: {
+  query: UseQueryResult<T>;
+  what: string;
+  children: (data: T) => ReactNode;
+  keepDataOnError?: boolean;
+}) {
+  if (query.isPending && query.fetchStatus === 'paused') return <OfflineState what={what} />;
+  if (query.isPending) return <p className="text-sm text-muted">Loading {what.toLowerCase()}â€¦</p>;
+  if (query.isError)
+    return keepDataOnError && query.data !== undefined ? (
+      <>{children(query.data)}</>
+    ) : (
+      <ErrorState error={query.error} what={what} />
+    );
+  return <>{children(query.data)}</>;
+}

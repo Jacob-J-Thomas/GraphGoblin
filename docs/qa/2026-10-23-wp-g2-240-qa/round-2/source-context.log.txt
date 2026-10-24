@@ -1,0 +1,529 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 77799142..9a4de647 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,7 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
+-- Events keeps loaded history stable when new events arrive, announces availability, and offers deliberate Refresh with type/time filters and opaque paging preserved. (#240)
++- Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. (#240)
++
++- Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.
+ 
+ - Show execution defaults in the editor and Settings, pin them on runs, and support explicit Unlimited node visits and repeat passes plus optional authored run deadlines. Runs default to 10 visits and no deadline; remove Claude's hidden provider-turn and ten-minute inference ceilings, preserve typed transport/output failures and retry positively unsubmitted transient transport failures once. **Upgrade:** no existing loop or run gains a deadline. Omitted deadlines and `runDeadlineSeconds: null` mean no deadline; `null` explicitly selects Unlimited visits or passes. SQL 0017 pins existing runs and saved admission intents from their immutable definitions, preserving authored deadlines and pinning null when omitted. Export/API clients must accept nullable limits, the new run pin limits and typed deadline/transport/output failures. Programmatic Claude harness callers must remove `maxTurns` and `turnTimeoutMs`; use authored node/run deadlines. The 16 KiB per-item detail excerpt remains a storage bound; full final results are preserved. No owner-store changes were performed. (#243)
+ 
+diff --git a/apps/web/e2e/server.ts b/apps/web/e2e/server.ts
+index 9aa0bb99..44d3c0e0 100644
+--- a/apps/web/e2e/server.ts
++++ b/apps/web/e2e/server.ts
+@@ -188,19 +188,18 @@ async function startApp(
+ }
+ 
+ const main = await startApp({}, false, false, { id: 'main' });
+-const mainPort = Number(new URL(main.url).port);
+ const workerPath = join(dist, 'sw.js');
+ const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
+ let workerBuild = 0;
+ 
+ /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
+-async function setApiListening(listening: boolean): Promise<void> {
+-  const server = main.app.app.server;
++async function setApiListening(instance: E2eInstance, listening: boolean): Promise<void> {
++  const server = instance.app.app.server;
+   if (listening === server.listening) return;
+   if (listening) {
+     await new Promise<void>((done, reject) => {
+       server.once('error', reject);
+-      server.listen(mainPort, '127.0.0.1', () => {
++      server.listen(Number(new URL(instance.url).port), '127.0.0.1', () => {
+         server.removeListener('error', reject);
+         done();
+       });
+@@ -283,7 +282,7 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
+       );
+       return { ok: true };
+     case '/api/listener':
+-      await setApiListening(body['listening'] !== false);
++      await setApiListening(selectedInstance(body), body['listening'] !== false);
+       return { ok: true };
+     case '/worker/build':
+       workerBuild += 1;
+@@ -523,7 +522,7 @@ async function stop(): Promise<void> {
+   if (stopping) return;
+   stopping = true;
+   controlServer.close();
+-  await setApiListening(true);
++  for (const instance of instances.values()) await setApiListening(instance, true);
+   await writeFile(workerPath, originalWorker);
+   for (const app of apps) await app.close();
+   for (const close of closers) await close();
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index bb311598..285c1dd4 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -285,8 +285,23 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
+   const client = useApi();
+   const cache = useQueryClient();
+   const queryKey = [...keys.events, query];
++  const manualRefresh = useMutation({
++    mutationKey: [...keys.events, 'refresh', query],
++    mutationFn: () => events.list(client, query),
++    networkMode: 'always',
++    onSuccess: async (page) => {
++      // Commit a complete replacement only after it arrives. Cancel older reads so they
++      // cannot overwrite it; a failed refresh leaves every loaded page and cursor intact.
++      await cache.cancelQueries({ queryKey, exact: true });
++      cache.setQueryData<InfiniteData<InboundPage>>(queryKey, {
++        pages: [page],
++        pageParams: [query.cursor],
++      });
++    },
++  });
+   const history = useInfiniteQuery({
+     queryKey,
++    enabled: !manualRefresh.isPending,
+     initialPageParam: query.cursor,
+     queryFn: async ({ pageParam, signal }) => {
+       const page = await events.list(
+@@ -302,7 +317,7 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
+       const previous = loaded?.pages[index];
+       if (!previous) return page;
+       // Receipt recovery may update existing rows, but background reads must never replace
+-      // membership or paging boundaries. Only an explicit reset admits newer rows.
++      // membership or paging boundaries. Only a successful manual refresh replaces them.
+       const updates = new Map(page.items.map((event) => [event.id, event]));
+       return {
+         ...previous,
+@@ -346,7 +361,10 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
+     ...history,
+     newerAvailable,
+     newerCheckFailed: newest.isError,
+-    refresh: () => cache.resetQueries({ queryKey, exact: true }),
++    isRefreshing: manualRefresh.isPending,
++    refreshFailed: manualRefresh.isError,
++    hasRefreshed: manualRefresh.isSuccess,
++    refresh: () => manualRefresh.mutate(),
+   };
+ }
+ 
+diff --git a/apps/web/src/components/HistoryState.tsx b/apps/web/src/components/HistoryState.tsx
+index 33085716..a557caf7 100644
+--- a/apps/web/src/components/HistoryState.tsx
++++ b/apps/web/src/components/HistoryState.tsx
+@@ -10,10 +10,12 @@ export function HistoryState<T>({
+   query,
+   what,
+   children,
++  keepDataOnError = false,
+ }: {
+   query: UseInfiniteQueryResult<InfiniteData<HistoryPage<T>>>;
+   what: string;
+   children: (items: T[]) => ReactNode;
++  keepDataOnError?: boolean;
+ }) {
+   const endRef = useRef<HTMLParagraphElement>(null);
+   const userAppendRef = useRef(false);
+@@ -27,7 +29,11 @@ export function HistoryState<T>({
+   }, [isFetchingNextPage, hasNextPage, hasAppended, query.dataUpdatedAt, query.errorUpdatedAt]);
+   return (
+     <>
+-      <QueryState query={query} what={what} keepDataOnError={query.isFetchNextPageError}>
++      <QueryState
++        query={query}
++        what={what}
++        keepDataOnError={keepDataOnError || query.isFetchNextPageError}
++      >
+         {(data) => {
+           const items = data.pages.flatMap((page) => page.items);
+           if (!items.length && (hasNextPage || hasAppended))
+@@ -41,7 +47,9 @@ export function HistoryState<T>({
+           return children(items);
+         }}
+       </QueryState>
+-      {query.isFetchNextPageError ? <ErrorState error={query.error} what={what} /> : null}
++      {query.isFetchNextPageError || (keepDataOnError && query.isRefetchError) ? (
++        <ErrorState error={query.error} what={what} />
++      ) : null}
+       {query.data ? (
+         // Retain footer height at exhaustion so the reading position cannot be clamped.
+         <div className="min-h-9 pointer-coarse:min-h-11">
+diff --git a/apps/web/src/events/EventsPage.tsx b/apps/web/src/events/EventsPage.tsx
+index f6d8d6d3..ab7c8f6e 100644
+--- a/apps/web/src/events/EventsPage.tsx
++++ b/apps/web/src/events/EventsPage.tsx
+@@ -1,5 +1,6 @@
+ import { HistoryState } from '../components/HistoryState.js';
+ import { Link, useSearchParams } from 'react-router';
++import { useRef } from 'react';
+ import { useInboundEvents } from '../api/queries.js';
+ import { Page, PageHeader } from '../components/layout/index.js';
+ import {
+@@ -114,41 +115,85 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
+  * of other runs, with the runs each one started.
+  */
+ export function EventsPage() {
+-  const [params] = useSearchParams();
++  const [params, setParams] = useSearchParams();
++  const refreshRef = useRef<HTMLButtonElement>(null);
+   const type = params.get('type');
+   const before = params.get('before');
+   const filters = { ...(type ? { type } : {}), ...(before ? { before } : {}) };
+   const query = useInboundEvents(filters);
++  const busy = query.isFetching || query.isRefreshing;
++  const status = [
++    query.isRefreshing
++      ? 'Refreshing events…'
++      : query.refreshFailed
++        ? 'Refresh failed. Your current events are still shown. Refresh to try again.'
++        : query.hasRefreshed && !query.newerAvailable
++          ? 'Showing the newest events.'
++          : null,
++    query.newerAvailable ? 'New events available' : null,
++    query.newerCheckFailed ? 'Could not check for new events. Refresh to try again.' : null,
++  ]
++    .filter(Boolean)
++    .join(' ');
++  function clearFilter(name: 'type' | 'before') {
++    const next = new URLSearchParams(params);
++    next.delete(name);
++    refreshRef.current?.focus({ preventScroll: true });
++    setParams(next);
++  }
+   return (
+     <Page>
+       <PageHeader
+         title="Events"
+         actions={
+           <Button
++            ref={refreshRef}
+             variant="outline"
+-            disabled={query.isFetching}
+-            onClick={() => void query.refresh()}
++            aria-disabled={busy}
++            aria-busy={busy}
++            onClick={() => {
++              if (!busy) query.refresh();
++            }}
+           >
+             Refresh
+           </Button>
+         }
+       >
+         <span role="status" className="text-sm text-muted">
+-          {query.newerAvailable
+-            ? 'New events available'
+-            : query.newerCheckFailed
+-              ? 'Could not check for new events. Refresh to try again.'
+-              : null}
++          {status}
+         </span>
+       </PageHeader>
+       {type || before ? (
+-        <p className="text-sm text-muted">
+-          {type ? `Type: ${type}` : null}
+-          {type && before ? ' · ' : null}
+-          {before ? `Before: ${before}` : null}
+-        </p>
++        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted">
++          {type ? (
++            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
++              <span className="min-w-0 wrap-anywhere">Type: {type}</span>
++              <Button
++                variant="ghost"
++                size="sm"
++                aria-label="Clear type filter"
++                onClick={() => clearFilter('type')}
++              >
++                Clear
++              </Button>
++            </span>
++          ) : null}
++          {before ? (
++            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
++              <span className="min-w-0 wrap-anywhere">Before: {before}</span>
++              <Button
++                variant="ghost"
++                size="sm"
++                aria-label="Clear before filter"
++                onClick={() => clearFilter('before')}
++              >
++                Clear
++              </Button>
++            </span>
++          ) : null}
++        </div>
+       ) : null}
+-      <HistoryState query={query} what="Events">
++      <HistoryState query={query} what="Events" keepDataOnError>
+         {(items) =>
+           items.length === 0 ? (
+             <p className="text-sm text-muted">
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index e5a4409b..3ef7f23c 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -253,8 +253,8 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
+ - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+ - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it checks every two seconds and updates matching loaded receipts so recovery results and new run links appear automatically; this polling stops after displayed receipts are terminal or the page unmounts. Background reads preserve loaded row identities, order and opaque page boundaries. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+-  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. **Refresh** deliberately returns to the newest page within the active filters, discarding appended pages and fetching a fresh first page; subsequent loads use its new opaque cursor. URL `type` and exclusive `before` filters are shown above the table and retained on every page, availability check and Refresh. An empty filtered result says "No inbound events match these filters." An unfiltered empty result says "No inbound events yet."
+-  A separate two-second check requests only the newest matching event (`GET /events` with the same filters and `limit=1`). A newer `(receivedAt, id)` than the loaded head, or a first arrival into an empty result, shows **New events available** in the existing header without inserting rows, changing focus or scrolling. It reports availability rather than an exact count to keep reads bounded. Focus and reconnect do not replace loaded rows. Failed availability checks say "Could not check for new events. Refresh to try again." Refresh remains available without a notice and is disabled during a history fetch. Checks stop on unmount and pause in a hidden tab under the normal query defaults. No endpoint, stored-data or client-contract change is needed (#240).
++  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. **Refresh** deliberately returns to the newest page within the active filters, replacing appended pages only when the fresh first page arrives; subsequent loads use its new opaque cursor. While Refresh is pending or fails, the current rows, position and filters stay. Failure says "Refresh failed. Your current events are still shown. Refresh to try again." A successful Refresh announces "Showing the newest events." through the existing polite live region. URL `type` and exclusive `before` filters are shown above the table and retained on every page, availability check and Refresh. Each has a keyboard-accessible **Clear** control named for its filter; it removes only that parameter and returns focus to Refresh. An empty filtered result says "No inbound events match these filters." An unfiltered empty result says "No inbound events yet."
++  A separate two-second check requests only the newest matching event (`GET /events` with the same filters and `limit=1`). A newer `(receivedAt, id)` than the loaded head, or a first arrival into an empty result, shows **New events available** in the existing header without inserting rows, changing focus or scrolling. It reports availability rather than an exact count to keep reads bounded. Focus and reconnect do not replace loaded rows. Failed availability checks say "Could not check for new events. Refresh to try again." alongside any existing arrival notice; the failure message clears when checks recover. Refresh remains available without a notice and ignores activation during a history fetch or another Refresh, retaining keyboard focus. Checks stop on unmount and pause in a hidden tab under the normal query defaults. No endpoint, stored-data or client-contract change is needed (#240).
+ - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
+ 
+ ## Draft conflicts (Decided, WP-F2)
+import { HistoryState } from '../components/HistoryState.js';
+import type { ListRunsQuery } from '@graphgoblin/api-client';
+import { RunStatusSchema } from '@graphgoblin/contracts';
+import { Link, useSearchParams } from 'react-router';
+import { useLoops, useRuns } from '../api/queries.js';
+import { Page, PageHeader } from '../components/layout/index.js';
+import { Icon } from '../components/icons/index.js';
+import { RunStatusBadge } from '../components/status.js';
+import {
+  Button,
+  buttonStyles,
+  Card,
+  FieldGroup,
+  FieldRow,
+  Label,
+  Select,
+  Table,
+  Td,
+  Th,
+} from '../components/ui/index.js';
+import { formatDateTime } from '../lib/utils.js';
+import { newRunPath } from './new/paths.js';
+
+const ID_LINK =
+  'touch-target font-mono text-sm font-medium text-link underline-offset-[3px] hover:underline';
+const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
+
+/**
+ * Runs across loops, filtered by loop, status, and parent run (filters live in the URL), and the
+ * New run action: the only place the app starts runs.
+ */
+export function RunsPage() {
+  const [params, setParams] = useSearchParams();
+  const loopId = params.get('loop') ?? '';
+  const status = params.get('status') ?? '';
+  const parent = params.get('parent') ?? '';
+  const query: ListRunsQuery = {
+    ...(loopId ? { loopId } : {}),
+    ...(status ? { status } : {}),
+    ...(parent ? { parent } : {}),
+  };
+  const loopsQuery = useLoops();
+  const runsQuery = useRuns(query, 5000);
+  const names = new Map((loopsQuery.data ?? []).map((l) => [l.id, l.name]));
+
+  const setFilter = (key: string, value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setParams(next);
+  };
+
+  return (
+    <Page>
+      <PageHeader
+        title="Runs"
+        actions={
+          // With the list filtered to one loop, the new run starts with that loop chosen.
+          <Link to={newRunPath(loopId)} className={buttonStyles()}>
+            <Icon name="plus" />
+            New run
+          </Link>
+        }
+      />
+      <Card>
+        <FieldRow>
+          <FieldGroup className="w-[220px]">
+            <Label htmlFor="filter-loop">Loop</Label>
+            <Select
+              id="filter-loop"
+              value={loopId}
+              onChange={(e) => setFilter('loop', e.target.value)}
+            >
+              <option value="">All loops</option>
+              {(loopsQuery.data ?? []).map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+          </FieldGroup>
+          <FieldGroup className="w-[220px]">
+            <Label htmlFor="filter-status">Status</Label>
+            <Select
+              id="filter-status"
+              value={status}
+              onChange={(e) => setFilter('status', e.target.value)}
+            >
+              <option value="">Any status</option>
+              {RunStatusSchema.options.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </FieldGroup>
+          <FieldGroup className="w-[220px]">
+            <Label htmlFor="filter-parent">Parent</Label>
+            <Select
+              id="filter-parent"
+              value={parent}
+              onChange={(e) => setFilter('parent', e.target.value)}
+            >
+              <option value="">Any</option>
+              <option value="none">Top-level runs only</option>
+              {parent && parent !== 'none' ? (
+                <option value={parent}>Children of {parent.slice(-6)}</option>
+              ) : null}
+            </Select>
+          </FieldGroup>
+          {loopId || status || parent ? (
+            <Button variant="ghost" onClick={() => setParams(new URLSearchParams())}>
+              Clear filters
+            </Button>
+          ) : null}
+        </FieldRow>
+      </Card>
+      <HistoryState query={runsQuery} what="Runs">
+        {(items) =>
+          items.length === 0 ? (
+            <p className="text-sm text-muted">No runs match.</p>
+          ) : (
+            <Card flush>
+              <Table stack="lg">
+                <thead>
+                  <tr>
+                    <Th>Run</Th>
+                    <Th>Loop</Th>
+                    <Th>Status</Th>
+                    <Th>Started</Th>
+                    <Th>Parent</Th>
+                    <Th>Children</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((run) => (
+                    <tr key={run.id}>
+                      <Td>
+                        <Link className={ID_LINK} to={`/runs/${run.id}`}>
+                          {run.id}
+                        </Link>
+                      </Td>
+                      <Td label="Loop" className="wrap-anywhere">
+                        {names.get(run.loopId) ?? run.loopId}
+                      </Td>
+                      <Td label="Status">
+                        <RunStatusBadge status={run.status} />
+                      </Td>
+                      <Td label="Started" className="text-sm whitespace-nowrap text-muted">
+                        {formatDateTime(run.startedAt ?? run.createdAt)}
+                      </Td>
+                      <Td label="Parent">
+                        {run.parentRunId ? (
+                          <Link className={ID_LINK} to={`/runs/${run.parentRunId}`}>
+                            {run.parentRunId.slice(-6)}
+                          </Link>
+                        ) : (
+                          <span className="text-subtle">-</span>
+                        )}
+                      </Td>
+                      <Td label="Children">
+                        <Link className={LINK} to={`/runs?parent=${run.id}`}>
+                          children
+                        </Link>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card>
+          )
+        }
+      </HistoryState>
+    </Page>
+  );
+}
+apps/web/src\components\HistoryState.tsx:9:export function HistoryState<T>({
+apps/web/src\events\EventsPage.tsx:1:import { HistoryState } from '../components/HistoryState.js';
+apps/web/src\events\EventsPage.tsx:196:      <HistoryState query={query} what="Events" keepDataOnError>
+apps/web/src\events\EventsPage.tsx:267:      </HistoryState>
+apps/web/src\runs\RunsPage.tsx:1:import { HistoryState } from '../components/HistoryState.js';
+apps/web/src\runs\RunsPage.tsx:118:      <HistoryState query={runsQuery} what="Runs">
+apps/web/src\runs\RunsPage.tsx:173:      </HistoryState>
+import type { RunStatus } from '@graphgoblin/contracts';
+import type { UseQueryResult } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+import { cn, errorMessage, isOfflineError } from '../lib/utils.js';
+import { StatusIcon } from './icons/index.js';
+import { Alert, Badge, type Tone } from './ui/index.js';
+
+/** Colour-blind-safe tones (blue for success, orange for failure), always with an icon. */
+const RUN_STATUS_TONE: Record<RunStatus, Tone> = {
+  queued: 'neutral',
+  running: 'info',
+  waiting: 'warn',
+  paused: 'warn',
+  succeeded: 'good',
+  failed: 'bad',
+  cancelled: 'neutral',
+  exhausted: 'bad',
+};
+
+export function RunStatusBadge({ status }: { status: RunStatus }) {
+  const running = status === 'running';
+  return (
+    <Badge
+      tone={RUN_STATUS_TONE[status]}
+      data-status={status}
+      className={cn(running && 'glow-running')}
+    >
+      <StatusIcon status={status} className={cn(running && 'animate-pulse-soft')} />
+      {status}
+    </Badge>
+  );
+}
+
+/** The backend could not be reached: say so plainly instead of showing an empty screen. */
+export function OfflineState({ what }: { what: string }) {
+  return (
+    <Alert tone="warn" title="Offline">
+      {what} needs the GraphGoblin API, which cannot be reached right now. The app shell keeps
+      working and unsaved editor drafts are kept on this device.
+    </Alert>
+  );
+}
+
+export function ErrorState({ error, what }: { error: unknown; what: string }) {
+  if (isOfflineError(error)) return <OfflineState what={what} />;
+  return <Alert title={`Could not load ${what.toLowerCase()}`}>{errorMessage(error)}</Alert>;
+}
+
+/** Loading, error, and offline handling for one query; renders `children` with the data. */
+export function QueryState<T>({
+  query,
+  what,
+  children,
+  keepDataOnError = false,
+}: {
+  query: UseQueryResult<T>;
+  what: string;
+  children: (data: T) => ReactNode;
+  keepDataOnError?: boolean;
+}) {
+  if (query.isPending && query.fetchStatus === 'paused') return <OfflineState what={what} />;
+  if (query.isPending) return <p className="text-sm text-muted">Loading {what.toLowerCase()}…</p>;
+  if (query.isError)
+    return keepDataOnError && query.data !== undefined ? (
+      <>{children(query.data)}</>
+    ) : (
+      <ErrorState error={query.error} what={what} />
+    );
+  return <>{children(query.data)}</>;
+}
