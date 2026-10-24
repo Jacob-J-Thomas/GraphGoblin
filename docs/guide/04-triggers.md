@@ -211,7 +211,7 @@ Keep whitespace and newlines identical between signing and sending. Send the tim
 
 `dedupeKey` is JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from the expression; ordinary delivery and timestamp metadata remains available. The example deduplicates authored delivery IDs across signing recipes and versions. Without a dedupe expression, identical raw bodies can start separate runs; raw hashes are audit evidence only. Timestamp freshness authenticates the delivery and does not expire its authored key. Saved and duplicate requests return HTTP 202 `{accepted:true}`. Inspect **Events** for the payload, delivery state and started-run links (old `filtered` rows remain historical). The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. A duplicate returns the same 202 without another run. Empty, whitespace-only, malformed JSON or invalid UTF-8 bodies return 400 `BODY_INVALID` (literal `null` is valid), and a dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
 
-A configured key expression must return a nonempty key: null, undefined and empty string return 422 `KEY_INVALID`, before saving input. Strings stay literal, including whitespace; other values use JSON serialization. Keys longer than 512 characters are refused and never truncated, for all authentication recipes. With no `dedupeKey` expression, no automatic business identity is generated. Fix invalid expressions and resend; no claim was consumed by that refusal. Event and Poll key rules are unchanged.
+A configured key expression must return a nonempty key: null, undefined, empty strings and keys containing U+0000 (NUL) return 422 `KEY_INVALID`, before saving input. Strings stay literal, including whitespace; other values use JSON serialization. Keys longer than 512 characters are refused and never truncated, for all authentication recipes. With no `dedupeKey` expression, no automatic business identity is generated. Fix invalid expressions and resend; no claim was consumed by that refusal. Event keys follow the separate Inbound Events rules below; Poll keys follow the polling section.
 
 Explicit webhook keys are permanent in owner/loop/trigger-node scope across versions. Preserved receipt and inbound claims, saved reservations and committed run-envelope keys all count, including keys from earlier trigger kinds and old inbound-only claims with endpoint provenance. Restart, republishing, filter changes or an expired timestamp window do not reopen a key. Timestamp freshness only authenticates the new request. Concurrent repeats and retries after a lost acknowledgement start at most one run for the key.
 
@@ -318,7 +318,7 @@ event.json
 }
 ```
 
-Omit `dedupeKey` for independent deliveries. If supplied, it must contain 1 to 512 characters of well-formed Unicode. An empty string returns 400 `VALIDATION_FAILED` naming `/dedupeKey` before saving anything; whitespace is a literal key.
+Omit `dedupeKey` for independent deliveries. If supplied, it must contain 1 to 512 characters of well-formed Unicode without U+0000 (NUL). An empty string or NUL-containing key returns 400 `VALIDATION_FAILED` naming `/dedupeKey` before saving anything; whitespace is a literal key. Authored Event keys containing NUL or invalid Unicode return 422 `EVENT_KEY_INVALID` before saving anything.
 
 ```bash
 curl -sS -X POST 'http://127.0.0.1:4747/events' \

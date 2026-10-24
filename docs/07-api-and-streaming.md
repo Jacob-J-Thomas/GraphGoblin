@@ -65,7 +65,7 @@ unavailable. Enabled mismatches log a safe warning while both listings stay read
 refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
-event metadata does not change `POST /events` or publish anything to the bus.
+event metadata does not change `POST /events` or publish anything to the bus. Webhook-derived keys containing U+0000 (NUL) return 422 `KEY_INVALID` before any receipt or inbound row is saved.
 
 The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
 
@@ -529,4 +529,4 @@ JSON event pages, SSE, generated clients and MCP use the same `exhausted` status
 
 The 202 response is the saved Event with `duplicate`, durable `admissionId`, pinned `target: {loopId, versionId, triggerNodeId}` and current `delivery`. `runIds` is empty until atomic run admission. `GET /events` exposes the same target and delivery state. The Events page shows the linked target loop, entry trigger and admission identity even when no run has been admitted. Keyed retries return the original delivery, even across later publication, in owner/loop/trigger/type scope. Missing/invalid body fields are 400 `VALIDATION_FAILED`; foreign/missing loop 404 `LOOP_NOT_FOUND`; no published version 409 `VERSION_NOT_PUBLISHED`; unmatched/ambiguous entry 422 `EVENT_TRIGGER_NOT_FOUND`/`EVENT_TRIGGER_AMBIGUOUS`; failed key expression 422 `EVENT_KEY_EXPRESSION_FAILED`; excessive payload depth 422 `EVENT_PAYLOAD_TOO_DEEP`; unconfirmed persistence 503 `EVENT_ADMISSION_FAILED`; unreadable stored delivery on a keyed retry 500 `STORED_EVENT_INVALID`. See [08](08-triggers-and-integrations.md#inbound-events-decided-targeted-durable-admission-adr-0048) for retry, nesting and permanent key semantics. URL webhook acknowledgements remain exactly `{accepted:true}`.
 
-Targeted Event request keys must contain 1 to 512 characters of well-formed Unicode (400 `VALIDATION_FAILED` naming `/dedupeKey` otherwise); an authored key that cannot be stored as valid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization from changing an accepted identity.
+Targeted Event request keys must contain 1 to 512 characters of well-formed Unicode without U+0000 (NUL) (400 `VALIDATION_FAILED` naming `/dedupeKey` otherwise); an authored key containing NUL or invalid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization or NUL truncation from changing an accepted identity.

@@ -572,26 +572,26 @@ it('returns a typed stored-history error for a corrupt keyed retry without rewri
   expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
 });
 
-it('refuses an empty request key before saving any delivery', async () => {
-  const loopId = await t.publishLoop(eventLoop());
-  const responses = await Promise.all([
-    post(loopId, { dedupeKey: '' }),
-    post(loopId, { dedupeKey: '' }),
-  ]);
-  await settle();
-  expect(responses.map((r) => r.statusCode)).toEqual([400, 400]);
-  for (const response of responses) {
-    expect(response.json()).toMatchObject({
-      code: 'VALIDATION_FAILED',
-      errors: [expect.objectContaining({ path: '/dedupeKey' })],
-    });
-  }
-  expect(await listed()).toEqual([]);
-  expect((await t.container.handle.client.execute('SELECT id FROM event_receipts')).rows).toEqual(
-    [],
-  );
-  expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
-});
+it.each(['', 'before\u0000after'])(
+  'refuses request key %j before saving any delivery',
+  async (dedupeKey) => {
+    const loopId = await t.publishLoop(eventLoop());
+    const responses = await Promise.all([post(loopId, { dedupeKey }), post(loopId, { dedupeKey })]);
+    await settle();
+    expect(responses.map((r) => r.statusCode)).toEqual([400, 400]);
+    for (const response of responses) {
+      expect(response.json()).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        errors: [expect.objectContaining({ path: '/dedupeKey' })],
+      });
+    }
+    expect(await listed()).toEqual([]);
+    expect((await t.container.handle.client.execute('SELECT id FROM event_receipts')).rows).toEqual(
+      [],
+    );
+    expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
+  },
+);
 
 it.each([' ', 'x'])(
   'preserves the literal request key %j across retries and run admission',
@@ -618,9 +618,10 @@ it.each([' ', 'x'])(
   },
 );
 
-it.each(['', ' ', 'x'])(
+it.each(['', 'before\u0000after', ' ', 'x'])(
   'preserves webhook key refusal and literal-key deduplication for %j',
   async (key) => {
+    const invalid = key === '' || key.includes('\u0000');
     const definition = eventLoop();
     definition.nodes[0]!.config = { type: 'webhook', dedupeKey: 'issue' };
     const loopId = await t.publishLoop(definition);
@@ -633,17 +634,69 @@ it.each(['', ' ', 'x'])(
         url: webhooks[0]!.path,
         payload: { issue: key },
       });
-      expect(response.statusCode).toBe(key === '' ? 422 : 202);
+      expect(response.statusCode).toBe(invalid ? 422 : 202);
       expect(response.json()).toEqual(
-        key === '' ? expect.objectContaining({ code: 'KEY_INVALID' }) : { accepted: true },
+        invalid ? expect.objectContaining({ code: 'KEY_INVALID' }) : { accepted: true },
       );
     }
     await settle();
-    expect(await t.container.repos.runs.list({ loopId })).toHaveLength(key === '' ? 0 : 1);
-    expect(await listed()).toHaveLength(key === '' ? 0 : 2);
-    if (key === '')
+    expect(await t.container.repos.runs.list({ loopId })).toHaveLength(invalid ? 0 : 1);
+    expect(await listed()).toHaveLength(invalid ? 0 : 2);
+    if (invalid)
       expect(
         (await t.container.handle.client.execute('SELECT id FROM webhook_receipts')).rows,
       ).toEqual([]);
   },
 );
+
+it('refuses an authored Event key containing NUL before saving any delivery', async () => {
+  const definition = eventLoop();
+  definition.nodes[0]!.config = { type: 'event', eventType: 'ready', dedupeKey: 'issue' };
+  const loopId = await t.publishLoop(definition);
+  const response = await post(loopId, { payload: { issue: 'before\u0000after' } });
+  await settle();
+  expect(response.statusCode).toBe(422);
+  expect(response.json()).toMatchObject({ code: 'EVENT_KEY_INVALID' });
+  expect(await listed()).toEqual([]);
+  expect((await t.container.handle.client.execute('SELECT id FROM event_receipts')).rows).toEqual(
+    [],
+  );
+  expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
+});
+
+it('admits a later due Event in the same sweep despite persistent first-receipt metadata failure', async () => {
+  const loops = [await t.publishLoop(eventLoop('bad')), await t.publishLoop(eventLoop('healthy'))];
+  await fault('BEFORE INSERT ON runs');
+  const deliveries: { id: string }[] = [];
+  for (const loopId of loops) {
+    deliveries.push((await post(loopId, { dedupeKey: 'retry' })).json<{ id: string }>());
+    await settle();
+  }
+  await clearFault();
+  const sql = t.container.handle.client;
+  await sql.execute(
+    `CREATE TRIGGER event_fault BEFORE INSERT ON runs WHEN NEW.loop_id='${loops[0]}' BEGIN SELECT RAISE(ABORT,'run fault'); END`,
+  );
+  await sql.execute(
+    `CREATE TRIGGER event_metadata_fault BEFORE UPDATE ON event_receipts WHEN OLD.inbound_id='${deliveries[0]!.id}' BEGIN SELECT RAISE(ABORT,'metadata fault'); END`,
+  );
+  for (let i = 0; i < 2; i++) {
+    t.clock.advance(300_001);
+    await t.container.manager.retryPendingWebhooks();
+    await settle();
+    expect((await listed()).find((event) => event.id === deliveries[0]!.id)).toMatchObject({
+      delivery: { state: 'pending', attempts: 1 },
+      runIds: [],
+    });
+    expect((await listed()).find((event) => event.id === deliveries[1]!.id)).toMatchObject({
+      delivery: { state: 'admitted' },
+    });
+    expect(await t.container.repos.runs.list({ loopId: loops[1]! })).toHaveLength(1);
+  }
+  expect(t.logger.lines).toContainEqual(
+    expect.objectContaining({
+      level: 'error',
+      obj: expect.objectContaining({ code: 'EVENT_RECOVERY_FAILED' }),
+    }),
+  );
+});

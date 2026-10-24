@@ -196,6 +196,11 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
             .min(1)
             .max(512)
             .refine(eventKeyIsWellFormed, 'dedupeKey must contain valid Unicode')
+            .refine((key) => !key.includes('\u0000'), 'dedupeKey must not contain U+0000')
+            .register(openApiRegistry, {
+              description:
+                'Optional literal request key: 1 to 512 characters of well-formed Unicode, excluding U+0000 (NUL). Whitespace is significant.',
+            })
             .optional(),
         }),
         response: { 202: InboundEventSchema.extend({ duplicate: z.boolean() }) },

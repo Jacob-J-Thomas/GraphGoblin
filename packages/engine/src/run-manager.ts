@@ -743,7 +743,15 @@ export class RunManager {
         const eventDue = await this.ports.admission.events.due(this.now(), 5);
         for (const receipt of eventDue) {
           if (this.stopped) break;
-          await this.dispatchEvent(receipt);
+          try {
+            await this.dispatchEvent(receipt);
+          } catch {
+            // A failed metadata write leaves this receipt due; unrelated recipients still recover.
+            this.ports.logger.error(
+              { code: 'EVENT_RECOVERY_FAILED', admissionId: receipt.id },
+              'event receipt recovery failed',
+            );
+          }
         }
       } catch {
         this.ports.logger.error({ code: 'EVENT_RECOVERY_FAILED' }, 'event recovery failed');

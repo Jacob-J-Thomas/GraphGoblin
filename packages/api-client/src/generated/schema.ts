@@ -2220,6 +2220,7 @@ export interface paths {
                         triggerNodeId?: string | undefined;
                         type: string;
                         payload?: components["schemas"]["JsonValueInput"] | undefined;
+                        /** @description Optional literal request key: 1 to 512 characters of well-formed Unicode, excluding U+0000 (NUL). Whitespace is significant. */
                         dedupeKey?: string | undefined;
                     };
                 };

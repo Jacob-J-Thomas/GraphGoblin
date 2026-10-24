@@ -130,7 +130,7 @@ function stringKey(value: unknown): string | undefined {
 function webhookKey(value: unknown): string | undefined {
   if (value === undefined || value === null || value === '') return undefined;
   const key = typeof value === 'string' ? value : JSON.stringify(value);
-  return key !== undefined && key.length <= 512 ? key : undefined;
+  return key !== undefined && key.length <= 512 && !key.includes('\u0000') ? key : undefined;
 }
 
 function lookupOnce<T>(
@@ -621,8 +621,11 @@ export class TriggerService {
       );
       return fail('EVENT_KEY_EXPRESSION_FAILED', 'the event trigger dedupe expression failed');
     }
-    if (nodeKey !== undefined && !eventKeyIsWellFormed(nodeKey))
-      return fail('EVENT_KEY_INVALID', 'the event trigger key must contain valid Unicode');
+    if (nodeKey !== undefined && (!eventKeyIsWellFormed(nodeKey) || nodeKey.includes('\u0000')))
+      return fail(
+        'EVENT_KEY_INVALID',
+        'the event trigger key must contain valid Unicode without U+0000',
+      );
     const record: InboundEventRecord = {
       id: this.deps.ids.next(),
       ownerId: input.ownerId,

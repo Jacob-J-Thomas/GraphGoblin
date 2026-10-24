@@ -214,8 +214,48 @@ it.each([
     expect(engine.ports.logger.lines).toContainEqual(
       expect.objectContaining({
         level: 'error',
-        obj: { code: kind === 'event' ? 'EVENT_RECOVERY_FAILED' : 'WEBHOOK_RECOVERY_FAILED' },
+        obj: expect.objectContaining({
+          code: kind === 'event' ? 'EVENT_RECOVERY_FAILED' : 'WEBHOOK_RECOVERY_FAILED',
+        }),
       }),
     );
   },
 );
+
+it('continues the Event sweep past a persistently broken receipt metadata write', async () => {
+  const { claim, input, store } = await setup();
+  const blocked = vi.spyOn(store, 'create').mockRejectedValue(Error('disk fault'));
+  await engine.manager.receiveEvent(claim, input);
+  const next = {
+    ...claim,
+    id: engine.ports.ids.next(),
+    inbound: { ...claim.inbound, id: engine.ports.ids.next(), dedupeKey: 'next' },
+  };
+  await engine.manager.receiveEvent(next, { ...input, dedupeKey: 'next' });
+  await engine.manager.waitForWebhookRecovery();
+  blocked.mockRestore();
+  const create = store.create.bind(store);
+  vi.spyOn(store, 'create').mockImplementation((intent, receiptId) => {
+    if (receiptId === claim.id) return Promise.reject(Error('disk fault'));
+    return create(intent, receiptId);
+  });
+  const failed = store.failed.bind(store);
+  vi.spyOn(store, 'failed').mockImplementation((id, code, retryAt) => {
+    if (id === claim.id) return Promise.reject(Error('metadata fault'));
+    return failed(id, code, retryAt);
+  });
+  for (let i = 0; i < 2; i++) {
+    engine.ports.clock.advance(300_001);
+    await engine.manager.retryPendingWebhooks();
+    await engine.manager.waitForIdle();
+    expect(await store.get(claim.id)).toMatchObject({ status: 'pending', attempts: 1 });
+    expect(await store.get(next.id)).toMatchObject({ status: 'admitted' });
+    expect(engine.ports.runs.runs.size).toBe(1);
+  }
+  expect(engine.ports.logger.lines).toContainEqual(
+    expect.objectContaining({
+      level: 'error',
+      obj: expect.objectContaining({ code: 'EVENT_RECOVERY_FAILED' }),
+    }),
+  );
+});

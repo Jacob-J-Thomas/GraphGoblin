@@ -1,0 +1,102 @@
+// Independent acceptance checks. No production source modification or private access.
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+const root = process.cwd();
+const evidence = join(root, 'docs/qa/wp-d4-343/round-4');
+const phase = process.env.QA_PHASE ?? 'before';
+const runtime = await mkdtemp(join(tmpdir(), 'gg-wp-d4-343-round4-'));
+await copyFile(join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-2/server.mjs.txt'),join(runtime,'server.mjs'));
+const clean = v => JSON.stringify(v, (_k,x) => typeof x === 'bigint' ? String(x) : x).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]');
+const results = { revision:'63160ef0727a62e1fe10c2a9f5cf4d73d65ea843', node:process.version, runtime, checks:[], http:[], processes:[] };
+const save = () => writeFile(join(evidence,phase+'-reproduction-results.json'), clean(results));
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function test(id, expected, job) {
+  const entry={id,expected,started:new Date().toISOString()};
+  try { entry.actual=await job(); entry.status='PASS'; }
+  catch(e) { entry.status='FAIL'; entry.error=e.stack; }
+  results.checks.push(entry); await save(); console.log(id+' '+entry.status+(entry.error?' '+entry.error.split('\n')[0]:''));
+}
+async function eventually(fn,ms=20000) { const end=Date.now()+ms; while(true) { const v=await fn(); if(v) return v; if(Date.now()>end) throw Error('Timed out waiting for observable state'); await sleep(50); } }
+const inherited=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_') && k!=='JEV_API_KEY'));
+function launch(file,args,env,label) {
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...inherited,...env},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  let stdout='',stderr=''; child.stdout.on('data',d=>stdout+=d); child.stderr.on('data',d=>stderr+=d);
+  const done=new Promise(r=>{child.once('error',e=>r({error:String(e)}));child.once('exit',(code,signal)=>r({code,signal}));});
+  const record={label,pid:child.pid}; results.processes.push(record);
+  return {child,done,record,get stdout(){return stdout},get stderr(){return stderr},async log(){await writeFile(join(evidence,phase+'-'+label+'.log.txt'),(stdout+'\nSTDERR\n'+stderr).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]'));}};
+}
+async function instance(name,port) {
+  const data=join(runtime,name); await mkdir(data);
+  const env={QA_ROOT:root,GG_DATA_DIR:data,GG_PORT:String(port),GG_HOST:'127.0.0.1',GG_REQUIRE_API_KEY:'true',GG_MASTER_KEY:Buffer.alloc(32,11).toString('base64'),GG_SWAGGER_UI:'false',GG_WEB_DIST:join(root,'apps/web/dist'),GG_MAX_CONCURRENT_RUNS:'2',GG_JEV_API_KEY:'',GG_LOG_LEVEL:'warn'};
+  const cli=launch(join(root,'apps/api/dist/main.js'),['--create-api-key','Independent QA'],env,name+'-key-cli');
+  const exit=await cli.done; await cli.log(); assert.equal(exit.code,0,cli.stderr);
+  const key=/\bgg_[A-Za-z0-9_-]+/.exec(cli.stdout)?.[0]; assert.ok(key,'CLI key missing');
+  let proc;
+  const s={name,port,data,env,key,url:'http://127.0.0.1:'+port};
+  s.start=async()=>{ proc=launch(join(runtime,'server.mjs'),[],env,name+'-server-'+results.processes.length); s.proc=proc; await eventually(()=>{if(proc.stderr.includes('Error'))throw Error(proc.stderr);return proc.stdout.includes('QA_READY');},60000); };
+  s.call=async(method,path,body,token=key)=>{
+    const t=performance.now(); const r=await fetch(s.url+path,{method,headers:{authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(30000)});
+    const raw=await r.text(); let value;try{value=JSON.parse(raw)}catch{value=raw}
+    const result={status:r.status,body:value,ms:Math.round(performance.now()-t)};
+    if(path!='/__qa') results.http.push({instance:name,method,path,...result}); return result;
+  };
+  s.qa=async(body)=>{const r=await s.call('POST','/__qa',body);assert.equal(r.status,200,JSON.stringify(r));return r.body};
+  s.sql=(sql,args=[])=>s.qa({op:'sql',sql,args});
+  s.settle=()=>s.qa({op:'settle'});
+  s.sweep=async(ms=300001)=>{await s.qa({op:'sweep',ms});await s.settle()};
+  s.stop=async()=>{await s.qa({op:'stop'});const exit=await proc.done;await proc.log();return exit};
+  s.events=async()=>{const r=await s.call('GET','/events?limit=100');assert.equal(r.status,200,JSON.stringify(r));return r.body.items};
+  s.item=async(id)=>(await s.events()).find(x=>x.id===id);
+  s.runs=async(loopId)=>(await s.call('GET','/runs'+(loopId?'?loopId='+loopId:''))).body.items;
+  await s.start(); return s;
+}
+function definition(name,config={type:'event',eventType:'ready'},extra=false,work=false) {
+  const nodes=[{id:'start',kind:'trigger',label:'Start',config},{id:'done',kind:'exit',label:'Done',config:{returns:'trigger.payload'}}];
+  const edges=[{id:'a',from:{node:'start',port:'out'},to:{node:work?'work':'done'}}];
+  if(extra){nodes.push({id:'second',kind:'trigger',label:'Second',config:{type:'event',eventType:'ready'}});edges.push({id:'c',from:{node:'second',port:'out'},to:{node:'done'}})}
+  if(work){nodes.splice(1,0,{id:'work',kind:'inference',label:'Work',config:{harness:'codex',prompt:{template:'QA delayed work'}}});edges.push({id:'b',from:{node:'work',port:'out'},to:{node:'done'}})}
+  return {schemaVersion:4,name,nodes,edges};
+}
+async function loop(s,d,publish=true,token=s.key){const c=await s.call('POST','/loops',{definition:d},token);assert.equal(c.status,201,JSON.stringify(c));const id=c.body.loop.id;if(publish){const p=await s.call('POST','/loops/'+id+'/publish',undefined,token);assert.equal(p.status,200,JSON.stringify(p));}return id;}
+const ev=(s,id,extra={})=>s.call('POST','/events',{loopId:id,type:'ready',...extra});
+const counts=async s=>(await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM event_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs'))[0];
+const fault=async(s,name,on,when='')=>s.sql(`CREATE TRIGGER ${name} BEFORE ${on} ${when} BEGIN SELECT RAISE(ABORT,'QA storage fault'); END`);
+const drop=(s,name)=>s.sql('DROP TRIGGER '+name);
+const depth=n=>'['.repeat(n+1)+'0'+']'.repeat(n+1); // deepest container depth n, root zero
+
+let s;try {
+s=await instance('sweep-isolated',5750);
+await test('recovery-continues-after-metadata-failure','healthy second Event is admitted despite first receipt metadata-write failure',async()=>{
+ const loops=[await loop(s,definition('Isolated bad')),await loop(s,definition('Isolated healthy'))];await fault(s,'qa_both','INSERT ON runs');
+ const receipts=[];for(const id of loops){receipts.push((await ev(s,id,{dedupeKey:'isolated'})).body);await s.settle()}await drop(s,'qa_both');
+ await fault(s,'qa_bad','INSERT ON runs',"WHEN NEW.loop_id='"+loops[0]+"'");await fault(s,'qa_meta','UPDATE ON event_receipts',"WHEN OLD.inbound_id='"+receipts[0].id+"'");
+ const snap=()=>s.sql('SELECT id,inbound_id,status,attempts,next_attempt_at FROM event_receipts ORDER BY id');const before=await snap(),after=[];
+ for(let i=0;i<3;i++){await s.sweep();after.push(await snap())}
+ await drop(s,'qa_meta');await s.sweep();const ordinary=await snap();await drop(s,'qa_bad');
+ results.facts={loops,receipts,before,after,ordinary,allReceiptCount:(await s.sql('SELECT count(*) AS n FROM event_receipts'))[0].n};
+ assert.equal(results.facts.allReceiptCount,2);assert.equal(ordinary[1].status,'admitted');assert.equal(after[0][1].status,'admitted');return results.facts;
+});
+await test('nul-request-key-refused-before-storage','400 VALIDATION_FAILED /dedupeKey, no new rows or runs',async()=>{
+ const id=await loop(s,definition('NUL request boundary'));
+ const before=await counts(s); const key='before\u0000after';
+ const first=await ev(s,id,{dedupeKey:key,payload:{original:true}});await s.settle();
+ const retry=await ev(s,id,{dedupeKey:key,payload:{changed:true}});await s.settle();
+ const after=await counts(s); const receipt=await s.sql('SELECT id,status,attempts,failure_code,hex(request_key) AS key_hex,intent FROM event_receipts WHERE loop_id=?',[id]);
+ results.nulFacts={first,retry,before,after,receipt,runs:await s.runs(id)};await save();
+ console.log('NUL_REQUEST '+JSON.stringify(results.nulFacts));
+ assert.equal(first.status,400);assert.equal(retry.status,400);assert.equal(first.body.code,'VALIDATION_FAILED');assert.ok(first.body.errors.some(e=>e.path==='/dedupeKey'));assert.deepEqual(after,before);
+ return results.nulFacts;
+});
+await test('nul-webhook-key-refused-before-storage','422 KEY_INVALID, no new rows or runs',async()=>{
+ const id=await loop(s,definition('NUL webhook boundary',{type:'webhook',dedupeKey:'issue'}));
+ const triggers=await s.call('GET','/loops/'+id+'/triggers');const path=triggers.body.webhooks[0].path;
+ const before=await counts(s);const first=await s.call('POST',path,{issue:'before\u0000after'});await s.settle();
+ const after=await counts(s);results.webhookNulFacts={first,before,after,runs:await s.runs(id)};await save();
+ console.log('NUL_WEBHOOK '+JSON.stringify(results.webhookNulFacts));
+ assert.equal(first.status,422);assert.equal(first.body.code,'KEY_INVALID');assert.deepEqual(after,before);return results.webhookNulFacts;
+});
+await s.stop();await save();if(results.checks.some(c=>c.status==='FAIL'))process.exitCode=1;
+}catch(e){results.fatal=e.stack;await save();if(s)await s.stop().catch(()=>{});throw e}
