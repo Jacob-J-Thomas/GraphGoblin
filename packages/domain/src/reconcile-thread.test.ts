@@ -51,3 +51,34 @@ it('reconciles only durable completions and carries visits across every verified
   );
   expect(reconcileThread(initial, [], { seq: 1, thread: sampleThread() })).toBe(initial);
 });
+
+it('uses a proven checkpoint state with only its boundary event and tail', () => {
+  const initial = sampleThread({ vars: {} });
+  const history: ThreadReplayEvent[] = [
+    { seq: 1, type: 'node.started', nodeId: 'a' },
+    {
+      seq: 2,
+      type: 'node.finished',
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/items', value: [] }],
+    },
+    {
+      seq: 3,
+      type: 'node.finished',
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
+    },
+    { seq: 4, type: 'node.started', nodeId: 'b' },
+  ];
+  const checkpoint = {
+    seq: 2,
+    thread: reconcileThread(initial, history, undefined, 2),
+    replayState: { strict: true },
+  };
+  expect(reconcileThread(checkpoint.thread, history.slice(1), checkpoint)).toEqual(
+    reconcileThread(initial, history),
+  );
+  expect(reconcileThread(initial, history, checkpoint, 1)).toEqual(
+    reconcileThread(initial, history, undefined, 1),
+  );
+});

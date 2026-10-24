@@ -5,5 +5,7 @@ These oversized captures are not included in the candidate. Test-runner trace me
 | Artifact                                                                                              |   Bytes | SHA-256                                                          |
 | ----------------------------------------------------------------------------------------------------- | ------: | ---------------------------------------------------------------- |
 | apps/web/test-results\thread-history-open-and-re-f624b-cess-with-delayed-snapshots-chromium\trace.zip | 6456339 | 5560238c647c76891ad3e9749f457822acccee9de4759a97e176140503512fcf |
-| docs/qa/2026-10-23-wp-g1-116-format-debug.log.txt                                                     | 4115796 | 4aeac6b866a69a18742f619bc60fc0ac495319b0dbbd36fea59248da31dc21af |
+| docs/qa/2026-10-23-wp-g1-116/format-debug.log.txt                                                     | 4115796 | 4aeac6b866a69a18742f619bc60fc0ac495319b0dbbd36fea59248da31dc21af |
 | apps/web/test-results/inspector-large-values-a-r-6a394-at-an-event-on-request-259--chromium/trace.zip | 4243510 | 5c30df8487e8602c49bfeb31d4d20b198b8d4f843cb6c1cabef19522bf5f3870 |
+
+Historical unavailable captures retain the size/hash recorded when their original bytes were available. Round 2 recomputes available capture metadata and all retained evidence hashes from final bytes; it does not invent hashes for absent historical preimages.

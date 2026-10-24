@@ -1,45 +1,23 @@
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { writeFile } from 'node:fs/promises';
 import { ContextThreadSchema, RunRecordSchema, type ContextThread } from '@graphgoblin/contracts';
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, control } from './fixtures.js';
 
 test('open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots', async ({
   browser,
   request,
 }) => {
   test.setTimeout(180_000);
-  const child = spawn(
-    process.execPath,
-    ['--conditions=development', '--import', 'tsx', 'scripts/thread-history-server.ts'],
-    { stdio: ['pipe', 'pipe', 'inherit'], windowsHide: true },
-  );
-  let context: BrowserContext | undefined;
-  try {
-    const ready = await new Promise<{ url: string; loopId: string }>((resolveReady, reject) => {
-      let bytes = '';
-      const timer = setTimeout(
-        () => reject(new Error('Fixture server startup exceeded 60s')),
-        60_000,
-      );
-      child.stdout.on('data', (chunk: Buffer) => {
-        bytes += chunk.toString();
-        if (bytes.includes('\n')) {
-          clearTimeout(timer);
-          resolveReady(JSON.parse(bytes.trim()) as { url: string; loopId: string });
-        }
-      });
-      child.once('exit', (code) => {
-        clearTimeout(timer);
-        reject(new Error('Fixture exited: ' + code));
-      });
+  const instance = await control(request, '/apps', { threadHistory: true });
+  const ready = { url: String(instance['url']), loopId: String(instance['loopId']) };
+  const action = (name: string, runId?: string) =>
+    control(request, '/thread-history', {
+      instanceId: instance['instanceId'],
+      action: name,
+      runId,
     });
-    const control = async (path: string) => {
-      const response = await request.get('http://127.0.0.1:5931' + path);
-      expect(response.ok()).toBe(true);
-      return (await response.json()) as { snapshot: ContextThread; bytes: string };
-    };
-    context = await browser.newContext();
+  const context = await browser.newContext();
+  try {
     const open = await context.newPage();
     const reloaded = await context.newPage();
     const observations: {
@@ -61,15 +39,20 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       await page.goto(ready.url + '/app/runs/' + run.id);
       await page.getByRole('button', { name: 'Full thread JSON' }).click();
     }
-    await control('/start');
+    await action('start');
     async function browserThread(page: Page) {
       await page.bringToFront();
       return ContextThreadSchema.parse(
         JSON.parse(await page.getByTestId('thread-json').innerText()),
       );
     }
+    async function snapshot() {
+      const value = await action('snapshot', run.id);
+      if (typeof value['bytes'] !== 'string') throw new Error('Missing stored bytes');
+      return { snapshot: ContextThreadSchema.parse(value['snapshot']), bytes: value['bytes'] };
+    }
     async function check(step: string) {
-      const before = await control('/snapshot/' + run.id);
+      const before = await snapshot();
       const api = ContextThreadSchema.parse(
         await (await request.get(ready.url + '/runs/' + run.id + '/thread')).json(),
       );
@@ -82,7 +65,7 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       await reloaded.getByRole('button', { name: 'Full thread JSON' }).click();
       await expect.poll(() => browserThread(reloaded)).toEqual(api);
       const reload = await browserThread(reloaded);
-      const after = await control('/snapshot/' + run.id);
+      const after = await snapshot();
       observations.push({
         step,
         status: record.status,
@@ -98,12 +81,12 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
     await context.setOffline(true);
     await open.waitForTimeout(2500);
     expect((await request.post(ready.url + '/runs/' + run.id + '/resume')).ok()).toBe(true);
-    await control('/working');
+    await action('working');
     await context.setOffline(false);
     await check('resumed-unfinished');
-    await control('/release');
+    await action('release');
     await check('succeeded');
-    await control('/flush');
+    await action('flush');
     if (process.env['GG_THREAD_EVIDENCE'])
       await writeFile(process.env['GG_THREAD_EVIDENCE'], JSON.stringify(observations, null, 2));
     for (const item of observations) {
@@ -117,19 +100,6 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       expect(item.readsUnchanged, item.step).toBe(true);
     }
   } finally {
-    await context?.close();
-    if (child.exitCode === null) {
-      const stopped = once(child, 'exit');
-      child.stdin.end('stop\n');
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      await Promise.race([
-        stopped,
-        new Promise<void>((resolveStop) => {
-          timer = setTimeout(resolveStop, 10_000);
-        }),
-      ]);
-      clearTimeout(timer);
-      if (child.exitCode === null) child.kill();
-    }
+    await context.close();
   }
 });

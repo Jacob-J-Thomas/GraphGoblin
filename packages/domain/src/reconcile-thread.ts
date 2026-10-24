@@ -1,9 +1,11 @@
 import type { ContextThread } from '@graphgoblin/contracts';
-import { replayStateAt, replayThread, type ThreadReplayEvent } from './replay.js';
+import { replayStateAt, replayThread, type ThreadReplayEvent, type ReplayState } from './replay.js';
 
 export interface ThreadCheckpoint {
   thread: ContextThread;
   seq: number;
+  /** A bounded reader may supply state proven from this checkpoint event and write order. */
+  replayState?: ReplayState;
 }
 
 /**
@@ -26,7 +28,7 @@ export function reconcileThread(
       checkpoint.thread,
       events.filter((event) => event.seq > checkpoint.seq),
       uptoSeq,
-      replayStateAt(events, checkpoint.seq),
+      checkpoint.replayState ?? replayStateAt(events, checkpoint.seq),
     );
   }
   return replayThread(initial, events, uptoSeq);

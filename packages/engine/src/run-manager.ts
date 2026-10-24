@@ -1063,6 +1063,26 @@ export class RunManager {
   /** Read-only thread through the durable event tail; snapshots are verified caches. */
   async getThread(runId: string): Promise<ContextThread | undefined> {
     const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
+    if (checkpoint) {
+      const tail = await this.ports.events.read(runId, checkpoint.seq - 1);
+      const boundary = tail[0];
+      if (boundary?.seq === checkpoint.seq) {
+        // One execution token: started/waiting names its open visit. The engine writes a
+        // matching node.finished before checkpointing a completion or appending run.finished,
+        // so those boundaries have strict replay with no open visit. Recovery can checkpoint
+        // other terminal/progress events; their state is ambiguous and needs the full prefix.
+        if (boundary.type === 'node.started' || boundary.type === 'run.waiting')
+          return reconcileThread(checkpoint.thread, tail, {
+            ...checkpoint,
+            replayState: { strict: true, openNodeId: boundary.nodeId },
+          });
+        if (boundary.type === 'node.finished' || boundary.type === 'run.finished')
+          return reconcileThread(checkpoint.thread, tail, {
+            ...checkpoint,
+            replayState: { strict: true },
+          });
+      }
+    }
     const initial = await this.ports.runs.getInitialThread(runId);
     if (!initial) return undefined;
     return reconcileThread(initial, await this.ports.events.read(runId), checkpoint);
