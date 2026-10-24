@@ -1,0 +1,50 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/model-effort-refresh.test.tsx -t "describes inherited" --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/web
+
+ ❯ src/editor/model-effort-refresh.test.tsx (9 tests | 1 failed | 8 skipped) 1363ms
+   × describes inherited model identity and unsupported inherited effort on the controls 1360ms
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/model-e ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/model-effort-refresh.test.tsx > describes inherited model identity and unsupported inherited effort 
+on the controls
+Error: expect(element).toHaveAccessibleDescription()
+
+Expected element to have accessible description:
+  /Default model: gpt-6-luna/
+Received:
+  Model; inherits within this harness from loop, owner, then process defaults.
+ ❯ src/editor/model-effort-refresh.test.tsx:114:42
+    112|   renderWith(form(), '/', api);
+    113|   await waitFor(() => expect(within(screen.getByLabelText('Effort')).g…
+    114|     name: 'Default (low) (not supported by this model)',
+       |                                          ^
+    115|   })).toBeInTheDocument());
+    116|   expect.soft(screen.getByLabelText('Model')).toHaveAccessibleDescript…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  02:32:12
+   Duration  35.19s (transform 45%, import 36%, environment 11%, setup 4%, tests 4%)
+
+  Transform  transforming modules took 15.77s · 45% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\web
+
+RESULT: exit 1

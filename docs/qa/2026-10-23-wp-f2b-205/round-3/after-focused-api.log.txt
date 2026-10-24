@@ -1,0 +1,48 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/claude-effort-readiness.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/api
+
+ ❯ src/claude-effort-readiness.test.ts (9 tests | 1 failed) 2137ms
+   × guards a real Event trigger start before the adapter 109ms
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/claude-effort- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude-effort-readiness.test.ts > guards a real Event trigger start before the adapter
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation 
+failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the 
+schema","errors":[{"path":"/definition/nodes/0/config/filter","message":"Unrecognized key \"filter\""}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:96:45
+     94|         headers,
+     95|       });
+     96|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+     97|       const id = created.json<{ loop: { id: string } }>().loop.id;
+     98|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ setup src/claude-effort-readiness.test.ts:30:18
+ ❯ src/claude-effort-readiness.test.ts:49:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  02:43:37
+   Duration  10.15s (import 48%, transform 30%, tests 22%)
+
+  Transform  transforming modules took 3.00s · 30% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\api
+
+RESULT: exit 1

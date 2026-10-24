@@ -1,0 +1,93 @@
+[
+  {
+    "method": "GET",
+    "path": "/system/model-defaults",
+    "status": 200,
+    "body": {
+      "byHarness": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "claude": {
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        }
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/settings",
+    "status": 403,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/forbidden",
+      "title": "forbidden",
+      "status": 403,
+      "code": "FORBIDDEN",
+      "detail": "this key lacks the \"settings:read\" scope"
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/system/model-defaults",
+    "status": 200,
+    "body": {
+      "byHarness": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "claude": {
+          "model": "claude-opus-5-5",
+          "effort": "low"
+        }
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  }
+]

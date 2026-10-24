@@ -586,6 +586,10 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
 
+### Process model defaults (#205)
+
+`GET /system/model-defaults` returns the configured process `HarnessDefaults` (`byHarness`), before loop and owner overrides. The editor uses these values to display effective inherited model and effort, including custom `GG_DEFAULTS`. It requires `system:read`, is read-only and contains no credentials.
+
 ## Gateway shutdown (#224)
 
 `GET /system/shutdown` requires `system:read` and returns `phase`, `graceMs`,

@@ -10,6 +10,51 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/system/model-defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Process model and effort defaults, before loop and owner overrides */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @default {} */
+                            byHarness: {
+                                [key: string]: {
+                                    model?: string | undefined;
+                                    /** @enum {string} */
+                                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/shutdown": {
         parameters: {
             query?: never;

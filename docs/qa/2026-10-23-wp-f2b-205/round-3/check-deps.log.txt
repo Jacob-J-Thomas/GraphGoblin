@@ -1,0 +1,15 @@
+COMMAND: pnpm.cmd check:deps
+NODE: v22.14.0
+pnpm.cmd : $ depcruise packages apps --config .dependency-cruiser.cjs
+At line:14 char:3
++   pnpm.cmd @arguments 2>&1 | Out-File -Encoding UTF8 -Append $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ depcruise pac...ncy-cruiser.cjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+
+x 1 dependency violations (0 errors, 1 warnings). 914 modules, 3740 dependencies cruised.
+
+RESULT: exit 0; seconds 32.52

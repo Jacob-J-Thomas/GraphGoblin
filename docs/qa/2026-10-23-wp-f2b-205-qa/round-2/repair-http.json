@@ -1,0 +1,596 @@
+[
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV66H6MPXCGHPYE1JCSSD6",
+        "ownerId": "local",
+        "name": "QA205 1 inference claude",
+        "draftVersionId": "01M5PV66H6MPXCGHPYE1JCSSD7",
+        "createdAt": "2026-10-24T11:36:56.614Z",
+        "updatedAt": "2026-10-24T11:36:56.614Z"
+      },
+      "draft": {
+        "id": "01M5PV66H6MPXCGHPYE1JCSSD7",
+        "loopId": "01M5PV66H6MPXCGHPYE1JCSSD6",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 1 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:36:56.614Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV66H6MPXCGHPYE1JCSSD6/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV66H6MPXCGHPYE1JCSSD7",
+        "loopId": "01M5PV66H6MPXCGHPYE1JCSSD6",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 1 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:36:56.614Z",
+        "publishedAt": "2026-10-24T11:36:56.636Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV66H6MPXCGHPYE1JCSSD6/runs",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "loopId": "01M5PV66H6MPXCGHPYE1JCSSD6",
+          "versionId": "01M5PV66H6MPXCGHPYE1JCSSD7",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs?loopId=01M5PV66H6MPXCGHPYE1JCSSD6",
+    "status": 200,
+    "body": {
+      "items": [],
+      "nextCursor": null
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV68T5J9BE60494F3M5HF5",
+        "ownerId": "local",
+        "name": "QA205 2 inference claude",
+        "draftVersionId": "01M5PV68T5J9BE60494F3M5HF6",
+        "createdAt": "2026-10-24T11:36:58.949Z",
+        "updatedAt": "2026-10-24T11:36:58.949Z"
+      },
+      "draft": {
+        "id": "01M5PV68T5J9BE60494F3M5HF6",
+        "loopId": "01M5PV68T5J9BE60494F3M5HF5",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 2 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "effort": "high",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:36:58.949Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV68T5J9BE60494F3M5HF5/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV68T5J9BE60494F3M5HF6",
+        "loopId": "01M5PV68T5J9BE60494F3M5HF5",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 2 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "effort": "high",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:36:58.949Z",
+        "publishedAt": "2026-10-24T11:36:58.964Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV68T5J9BE60494F3M5HF5/runs",
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "EFFORT_UNSUPPORTED",
+          "severity": "error",
+          "loopId": "01M5PV68T5J9BE60494F3M5HF5",
+          "versionId": "01M5PV68T5J9BE60494F3M5HF6",
+          "nodeId": "work",
+          "path": "config.effort",
+          "message": "The selected reasoning effort is not supported by this model"
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs?loopId=01M5PV68T5J9BE60494F3M5HF5",
+    "status": 200,
+    "body": {
+      "items": [],
+      "nextCursor": null
+    }
+  }
+]

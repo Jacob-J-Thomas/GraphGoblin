@@ -182,10 +182,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
   it.each([
     [
       'inference',
-      ['harness', 'session', 'prompt', 'harnessOptions.sandbox'],
+      ['harness', 'model', 'effort', 'session', 'prompt', 'harnessOptions.sandbox'],
       [
-        'model',
-        'effort',
         'harnessOptions.approval',
         'harnessOptions.networkAccess',
         'harnessOptions.webSearch',
@@ -197,7 +195,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         'output.schema',
         'timeoutSeconds',
       ],
-      ['Model', 'Harness options', 'Output', 'Limits'],
+      ['Harness options', 'Output', 'Limits'],
     ],
     [
       'script',
@@ -377,8 +375,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         parseErrors={{ 'harnessOptions.configOverrides.a': { message: 'invalid JSON', text: '{' } }}
       />,
     );
-    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 2 set 3 errors'));
-    const badge = within(toggle()!).getByText('3 errors');
+    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 1 set 2 errors'));
+    const badge = within(toggle()!).getByText('2 errors');
     expect(badge.closest('[class*="bg-status-bad-bg"]')).not.toBeNull();
     expect(badge.parentElement!.querySelector('svg[data-icon="alert"]')).not.toBeNull();
     // A split object's own message (an unknown key) shows with its basic fields, in sight.

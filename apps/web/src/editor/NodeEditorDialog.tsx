@@ -5,6 +5,8 @@ import {
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { refreshModelDefaults } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import {
   Button,
@@ -159,6 +161,10 @@ export function NodeEditorDialog({
   /** Shown at the top of the dialog, for notices that need an answer while it is open. */
   notice?: ReactNode;
 }) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    void refreshModelDefaults(queryClient);
+  }, [queryClient]);
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   const nodeFocus = useEditorStore((s) => s.nodeFocus);
   // Bumped by undo and redo: the config form remounts with the restored values.

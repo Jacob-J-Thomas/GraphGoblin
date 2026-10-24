@@ -1,0 +1,2710 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d642a383..cbcce8a4 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Show model and reasoning effort directly in inference and LLM decision editors, each in one dropdown naming the inherited default. Refresh default labels on dialog open, window focus and Settings saves; describe inherited values and unsupported efforts accessibly. Refuse a manual run whose Claude effort is outside the ready capabilities before recording it. Classifiers keep Question, Model, then Answer with no effort. Process defaults are exposed read-only for accurate labels; saved configuration shapes are unchanged. (#205)
++
+ - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
+ 
+ - Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.
+diff --git a/apps/api/src/adversarial.test.ts b/apps/api/src/adversarial.test.ts
+index 1a843972..7fd6a138 100644
+--- a/apps/api/src/adversarial.test.ts
++++ b/apps/api/src/adversarial.test.ts
+@@ -104,6 +104,7 @@ describe('adversarial API invariants', () => {
+       '/events',
+       '/harness/preflight',
+       '/system/preflight',
++      '/system/model-defaults',
+     ]) {
+       expect(
+         (await t.app.inject({ url, headers: { authorization: `Bearer ${key.token}` } })).statusCode,
+@@ -172,6 +173,7 @@ describe('adversarial API invariants', () => {
+     'GET /events': 'events:read',
+     'POST /events': 'events:write',
+     'GET /system/preflight': 'system:read',
++    'GET /system/model-defaults': 'system:read',
+     'GET /harness/preflight': 'system:read',
+   };
+ 
+diff --git a/apps/api/src/claude-effort-readiness.test.ts b/apps/api/src/claude-effort-readiness.test.ts
+new file mode 100644
+index 00000000..c35dfe6e
+--- /dev/null
++++ b/apps/api/src/claude-effort-readiness.test.ts
+@@ -0,0 +1,109 @@
++import { afterEach, expect, it } from 'vitest';
++import type { Effort, RunRecord } from '@graphgoblin/contracts';
++import { FakeHarness, singleNodeLoop } from '@graphgoblin/engine/testing';
++import { createTestApp, type TestApp } from './testing/test-app.js';
++
++let app: TestApp;
++afterEach(async () => {
++  await app?.close();
++});
++
++// Manual admission checks the ready Claude capabilities once per start. Execution checks the
++// catalog, whose Claude rows carry the adapter's capability table (packages/engine
++// claude-effort.test.ts), so these cases narrow only the probed list.
++async function setup(explicit: boolean, effort: Effort = 'high') {
++  const harness = new FakeHarness([], 'claude');
++  harness.preflightResult = {
++    state: 'ready',
++    ok: true,
++    authenticated: true,
++    problems: [],
++    models: [{ model: 'claude-opus-5-5', efforts: ['low'] }],
++  };
++  app = await createTestApp({
++    harnesses: { claude: harness },
++    env: {
++      GG_DEFAULTS: JSON.stringify({ byHarness: { claude: { model: 'claude-opus-5-5', effort } } }),
++    },
++  });
++  const loopId = await app.publishLoop(
++    singleNodeLoop('Capability effort', {
++      id: 'work',
++      kind: 'inference',
++      label: 'Work',
++      config: {
++        harness: 'claude',
++        ...(explicit ? { model: 'claude-opus-5-5', effort } : {}),
++        harnessOptions: { sandbox: 'read-only', approval: 'never' },
++        prompt: { template: 'q' },
++      },
++    }),
++  );
++  return { harness, loopId };
++}
++
++it.each([false, true])(
++  'refuses capability-only unsupported high before manual admission (explicit=%s)',
++  async (explicit) => {
++    const { harness, loopId } = await setup(explicit);
++    const response = await app.app.inject({
++      method: 'POST',
++      url: `/loops/${loopId}/runs`,
++      payload: {},
++    });
++    await app.idle();
++    expect({
++      status: response.statusCode,
++      requests: harness.started.map(({ model, effort }) => ({ model, effort })),
++    }).toEqual({ status: 422, requests: [] });
++    expect(response.json()).toMatchObject({
++      errors: [
++        expect.objectContaining({
++          code: 'EFFORT_UNSUPPORTED',
++          nodeId: 'work',
++          path: 'config.effort',
++        }),
++      ],
++    });
++    expect((await app.app.inject(`/runs?loopId=${loopId}`)).json().items).toEqual([]);
++  },
++);
++
++it('checks pinned child selections at manual admission', async () => {
++  const { harness, loopId } = await setup(false);
++  const parentId = await app.publishLoop(
++    singleNodeLoop('Capability parent', {
++      id: 'child',
++      kind: 'subloop',
++      label: 'Child',
++      config: { loopRef: { loopId, version: 'latest' } },
++    }),
++  );
++  const rejected = await app.app.inject({
++    method: 'POST',
++    url: `/loops/${parentId}/runs`,
++    payload: {},
++  });
++  expect(rejected.statusCode, rejected.body).toBe(422);
++  expect(rejected.json()).toMatchObject({
++    errors: [expect.objectContaining({ code: 'EFFORT_UNSUPPORTED', loopId, nodeId: 'work' })],
++  });
++  expect(harness.started).toEqual([]);
++});
++
++it.each([false, true])(
++  'runs a capability-supported low unchanged (explicit=%s)',
++  async (explicit) => {
++    const { harness, loopId } = await setup(explicit, 'low');
++    const response = await app.app.inject({
++      method: 'POST',
++      url: `/loops/${loopId}/runs`,
++      payload: {},
++    });
++    expect(response.statusCode, response.body).toBe(202);
++    await app.idle();
++    const { run } = response.json<{ run: RunRecord }>();
++    expect(await app.container.repos.runs.get(run.id)).toMatchObject({ status: 'succeeded' });
++    expect(harness.started).toMatchObject([{ model: 'claude-opus-5-5', effort: 'low' }]);
++  },
++);
+diff --git a/apps/api/src/routes/model-defaults.test.ts b/apps/api/src/routes/model-defaults.test.ts
+new file mode 100644
+index 00000000..23fc228a
+--- /dev/null
++++ b/apps/api/src/routes/model-defaults.test.ts
+@@ -0,0 +1,19 @@
++import { expect, it } from 'vitest';
++import { createTestApp } from '../testing/test-app.js';
++
++it('exposes the actual process defaults separately from owner overrides', async () => {
++  const defaults = { byHarness: { codex: { model: 'gpt-6.1-sol', effort: 'high' } } };
++  const target = await createTestApp({ env: { GG_DEFAULTS: JSON.stringify(defaults) } });
++  try {
++    await target.app.inject({
++      method: 'PUT',
++      url: '/settings',
++      payload: { defaults: { byHarness: { codex: { effort: 'low' } } } },
++    });
++    const result = await target.app.inject({ method: 'GET', url: '/system/model-defaults' });
++    expect(result.statusCode).toBe(200);
++    expect(result.json()).toEqual(defaults);
++  } finally {
++    await target.close();
++  }
++});
+diff --git a/apps/api/src/routes/runs.ts b/apps/api/src/routes/runs.ts
+index 1b6996b9..e024b646 100644
+--- a/apps/api/src/routes/runs.ts
++++ b/apps/api/src/routes/runs.ts
+@@ -95,7 +95,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void
+             ...(versionId ? { versionId } : {}),
+             ...(body.allowDraft ? { allowDraft: true } : {}),
+           },
+-          (plan) => assertRunReadiness(plan, readiness),
++          async (plan) => assertRunReadiness(plan, readiness, await ports.modelCatalog.list()),
+         );
+         reply.status(202);
+         return { run };
+diff --git a/apps/api/src/routes/system.ts b/apps/api/src/routes/system.ts
+index 3a7e99c7..34c2b2fb 100644
+--- a/apps/api/src/routes/system.ts
++++ b/apps/api/src/routes/system.ts
+@@ -1,6 +1,10 @@
+ import { readinessOperation } from '../readiness-operation.js';
+ import { z } from 'zod';
+-import { HarnessPreflightSchema, HarnessIdSchema } from '@graphgoblin/contracts';
++import {
++  HarnessPreflightSchema,
++  HarnessIdSchema,
++  HarnessDefaultsSchema,
++} from '@graphgoblin/contracts';
+ import type { Container } from '../container.js';
+ import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
+ import { API_VERSION, type ApiInstance } from '../types.js';
+@@ -8,6 +12,18 @@ import { API_VERSION, type ApiInstance } from '../types.js';
+ const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
+ 
+ export function registerSystemRoutes(app: ApiInstance, container: Container): void {
++  app.get(
++    '/system/model-defaults',
++    {
++      schema: {
++        tags: ['system'],
++        summary: 'Process model and effort defaults, before loop and owner overrides',
++        response: { 200: HarnessDefaultsSchema },
++      },
++    },
++    () => container.config.defaults,
++  );
++
+   app.get(
+     '/healthz',
+     {
+diff --git a/apps/api/src/run-readiness.ts b/apps/api/src/run-readiness.ts
+index 89bb1c2a..15778c14 100644
+--- a/apps/api/src/run-readiness.ts
++++ b/apps/api/src/run-readiness.ts
+@@ -1,5 +1,11 @@
+-import type { HarnessId, LoopIssue, LoopVersionRecord } from '@graphgoblin/contracts';
+-import { readinessMessage } from '@graphgoblin/domain';
++import type {
++  Effort,
++  HarnessId,
++  LoopIssue,
++  LoopVersionRecord,
++  ModelCatalogEntry,
++} from '@graphgoblin/contracts';
++import { readinessMessage, resolveHarnessModel } from '@graphgoblin/domain';
+ import type { RunStartPlan } from '@graphgoblin/engine';
+ import type { ReadinessOperation } from './readiness-operation.js';
+ 
+@@ -14,6 +20,7 @@ export class RunReadinessError extends Error {
+ export async function assertRunReadiness(
+   plan: RunStartPlan,
+   readiness: ReadinessOperation,
++  catalog: readonly ModelCatalogEntry[],
+ ): Promise<void> {
+   const numbered = new Map(
+     [...plan.versions.values()]
+@@ -22,16 +29,34 @@ export async function assertRunReadiness(
+   );
+   const pending = [{ version: plan.root, depth: 0 }];
+   const visited = new Set<string>([plan.root.id]);
+-  const selections: { version: LoopVersionRecord; nodeId: string; harness: HarnessId }[] = [];
++  const selections: {
++    version: LoopVersionRecord;
++    nodeId: string;
++    harness: HarnessId;
++    model: string | undefined;
++    effort: Effort | undefined;
++  }[] = [];
+   // Breadth first visits a repeated version at its shallowest depth. A cycle cannot add work.
+   // Use the handler's configured per-edge limit (including overrides); schemas cap it at 64.
+   for (let i = 0; i < pending.length; i++) {
+     const { version, depth } = pending[i]!;
+     for (const node of version.definition.nodes) {
+       if (node.kind === 'inference')
+-        selections.push({ version, nodeId: node.id, harness: node.config.harness });
++        selections.push({
++          version,
++          nodeId: node.id,
++          harness: node.config.harness,
++          model: node.config.model,
++          effort: node.config.effort,
++        });
+       if (node.kind === 'decision' && node.config.kind === 'llm')
+-        selections.push({ version, nodeId: node.id, harness: node.config.harness });
++        selections.push({
++          version,
++          nodeId: node.id,
++          harness: node.config.harness,
++          model: node.config.model.mode === 'explicit' ? node.config.model.value : undefined,
++          effort: node.config.effort.mode === 'explicit' ? node.config.effort.value : undefined,
++        });
+       if (node.kind !== 'subloop') continue;
+       const limit = node.config.depthLimitOverride ?? version.definition.settings.subloopDepthLimit;
+       if (depth + 1 > limit) continue;
+@@ -47,25 +72,53 @@ export async function assertRunReadiness(
+     }
+   }
+   const results = await Promise.all(
+-    selections.map(async ({ version, nodeId, harness }): Promise<RunReadinessIssue[]> => {
+-      const result = await readiness.probe(harness);
+-      if (result.state === 'ready') return [];
+-      const detail = result.problems.join(' ') || readinessMessage(harness, result.state);
+-      return [
+-        {
+-          code: 'HARNESS_READINESS_' + result.state.toUpperCase().replaceAll('-', '_'),
+-          severity: 'warning',
+-          loopId: version.loopId,
+-          versionId: version.id,
+-          nodeId,
+-          path: 'config.harness',
+-          message:
+-            version.id === plan.root.id
+-              ? detail
+-              : `Loop "${version.definition.name}" (${version.loopId}), node "${nodeId}": ${detail}`,
+-        },
+-      ];
+-    }),
++    selections.map(
++      async ({ version, nodeId, harness, model, effort }): Promise<RunReadinessIssue[]> => {
++        const result = await readiness.probe(harness);
++        if (result.state === 'ready') {
++          if (harness !== 'claude' || result.models === undefined) return [];
++          const resolution = resolveHarnessModel({
++            harness,
++            ...(model !== undefined ? { model } : {}),
++            ...(effort !== undefined ? { effort } : {}),
++            loopDefaults: version.definition.settings.defaults,
++            ownerDefaults: plan.defaults.owner,
++            processDefaults: plan.defaults.process,
++            catalog,
++            claudeCapabilities: result.models,
++          });
++          // Other catalog/configuration failures keep their existing execution-time handling.
++          if (resolution.status !== 'invalid' || resolution.code !== 'EFFORT_UNSUPPORTED')
++            return [];
++          return [
++            {
++              code: resolution.code,
++              severity: 'error',
++              loopId: version.loopId,
++              versionId: version.id,
++              nodeId,
++              path: 'config.effort',
++              message: resolution.message,
++            },
++          ];
++        }
++        const detail = result.problems.join(' ') || readinessMessage(harness, result.state);
++        return [
++          {
++            code: 'HARNESS_READINESS_' + result.state.toUpperCase().replaceAll('-', '_'),
++            severity: 'warning',
++            loopId: version.loopId,
++            versionId: version.id,
++            nodeId,
++            path: 'config.harness',
++            message:
++              version.id === plan.root.id
++                ? detail
++                : `Loop "${version.definition.name}" (${version.loopId}), node "${nodeId}": ${detail}`,
++          },
++        ];
++      },
++    ),
+   );
+   const issues = results.flat();
+   if (issues.length) throw new RunReadinessError(issues);
+diff --git a/apps/web/e2e/claude-harness.spec.ts b/apps/web/e2e/claude-harness.spec.ts
+index 568eca8c..f2e0ee6e 100644
+--- a/apps/web/e2e/claude-harness.spec.ts
++++ b/apps/web/e2e/claude-harness.spec.ts
+@@ -179,8 +179,7 @@ for (const [model, displayName, effort] of [
+ 
+     await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+     const dialog = await openNode(page, 'infer');
+-    // Model and effort currently sit under Advanced; #205 owns their placement.
+-    await openAdvanced(dialog);
++    // Model and effort are visible on Settings with Advanced collapsed (#205).
+     const modelField = dialog.getByLabel('Model', { exact: true });
+     await expect(modelField).not.toHaveAttribute('aria-readonly', 'true');
+     await expect(
+@@ -191,7 +190,7 @@ for (const [model, displayName, effort] of [
+     const effortField = dialog.getByLabel('Effort', { exact: true });
+     // Exactly the catalog's supported efforts for this model; minimal is never offered for Claude.
+     await expect(effortField.locator('option')).toHaveText([
+-      '(inherited; the catalog suggests high)',
++      'Default (unavailable)',
+       'low',
+       'medium',
+       'high',
+diff --git a/apps/web/e2e/model-effort.spec.ts b/apps/web/e2e/model-effort.spec.ts
+new file mode 100644
+index 00000000..b8e7ad49
+--- /dev/null
++++ b/apps/web/e2e/model-effort.spec.ts
+@@ -0,0 +1,460 @@
++import { LoopDefinitionSchema } from '@graphgoblin/contracts';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { test, expect, control, openNode, closeNode } from './fixtures.js';
++
++function inheritedInference(name: string, config: Record<string, unknown> = {}) {
++  const source = minimalLoop();
++  return {
++    ...source,
++    name,
++    nodes: [
++      source.nodes[0],
++      {
++        id: 'work',
++        kind: 'inference',
++        label: 'Work',
++        ui: { x: 260, y: 80 },
++        config: { prompt: { template: 'q' }, ...config },
++      },
++      source.nodes[1],
++    ],
++    edges: [
++      { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
++      { id: 'work-done', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
++    ],
++  };
++}
++
++test('open inherited labels refresh on focus after another tab saves Settings and match the next request', async ({
++  page,
++  request,
++  context,
++}) => {
++  const instance = await control(request, '/apps');
++  const url = String(instance['url']);
++  const instanceId = String(instance['instanceId']);
++  const created = await request.post(url + '/loops', {
++    data: { definition: inheritedInference('205 refresh') },
++  });
++  expect(created.status()).toBe(201);
++  const { loop } = (await created.json()) as { loop: { id: string } };
++  expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
++  await page.goto(url + `/app/loops/${loop.id}/edit`);
++  let dialog = await openNode(page, 'work');
++  await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
++    'Default (low)',
++  );
++  const settingsTab = await context.newPage();
++  await settingsTab.bringToFront();
++  await settingsTab.goto(url + '/app/settings');
++  await settingsTab.getByLabel('Default model', { exact: true }).selectOption('gpt-6.1-sol');
++  await expect(settingsTab.getByLabel('Default model', { exact: true })).toBeEnabled();
++  await settingsTab.getByLabel('Default effort', { exact: true }).selectOption('high');
++  await expect(settingsTab.getByLabel('Default effort', { exact: true })).toBeEnabled();
++  expect(await (await request.get(url + '/settings')).json()).toMatchObject({
++    defaults: { byHarness: { codex: { model: 'gpt-6.1-sol', effort: 'high' } } },
++  });
++  await page.bringToFront();
++  // In default headless Edge both tabs stay visible/focused; bringToFront emits no window
++  // focus event (recorded in round-3/browser-focus-diagnostic.log.txt). Exercise the public
++  // DOM event explicitly; this case does not claim native window-activation coverage.
++  await page.evaluate(() => window.dispatchEvent(new FocusEvent('focus')));
++  await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
++    /Default model: gpt-6.1-sol/,
++  );
++  await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
++    'Default (high)',
++  );
++  expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
++  await expect
++    .poll(async () => (await control(request, '/harness/requests', { instanceId }))['started'])
++    .toMatchObject([{ model: 'gpt-6.1-sol', effort: 'high' }]);
++  await closeNode(page);
++  expect((await request.delete(url + '/settings/defaults')).status()).toBe(204);
++  dialog = await openNode(page, 'work');
++  await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
++    'Default (low)',
++  );
++  await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
++    /Default model: gpt-6-luna/,
++  );
++  await settingsTab.close();
++});
++
++test('catalog pending and failure label effort as unknown without changing the selection', async ({
++  page,
++  request,
++}) => {
++  const instance = await control(request, '/apps');
++  const url = String(instance['url']);
++  const created = await request.post(url + '/loops', {
++    data: { definition: inheritedInference('205 unknown catalog') },
++  });
++  const { loop } = (await created.json()) as { loop: { id: string } };
++  let fail!: () => void;
++  const pending = new Promise<void>((resolve) => {
++    fail = resolve;
++  });
++  await page.route('**/model-catalog', async (route) => {
++    await pending;
++    await route.fulfill({
++      status: 503,
++      contentType: 'application/problem+json',
++      body: JSON.stringify({ status: 503, code: 'FAILED', detail: 'catalog unavailable' }),
++    });
++  });
++  await page.goto(url + `/app/loops/${loop.id}/edit`);
++  const dialog = await openNode(page, 'work');
++  await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
++    /Default model: gpt-6-luna/,
++  );
++  const effort = dialog.getByLabel('Effort', { exact: true });
++  await expect(effort.locator('option').first()).toHaveText('Default (checking…)');
++  fail();
++  await expect(effort.locator('option').first()).toHaveText('Default (unavailable)');
++  await expect(effort).toHaveValue('');
++});
++
++for (const explicit of [false, true]) {
++  test(`Claude ready capabilities refuse high before admission and still run low (explicit=${explicit})`, async ({
++    page,
++    request,
++  }) => {
++    const instance = await control(request, '/apps', {
++      claude: true,
++      env: {
++        GG_DEFAULTS: JSON.stringify({
++          byHarness: { claude: { model: 'claude-opus-5-5', effort: 'high' } },
++        }),
++      },
++    });
++    const url = String(instance['url']);
++    const instanceId = String(instance['instanceId']);
++    const created = await request.post(url + '/loops', {
++      data: {
++        definition: inheritedInference('205 Claude capability', {
++          harness: 'claude',
++          harnessOptions: { sandbox: 'read-only', approval: 'never' },
++          ...(explicit ? { model: 'claude-opus-5-5', effort: 'high' } : {}),
++        }),
++      },
++    });
++    expect(created.status()).toBe(201);
++    const { loop } = (await created.json()) as { loop: { id: string } };
++    expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
++    await control(request, '/harness/preflight', {
++      instanceId,
++      harness: 'claude',
++      state: 'ready',
++      models: [{ model: 'claude-opus-5-5', efforts: ['low'] }],
++    });
++    await page.goto(url + `/app/loops/${loop.id}/edit`);
++    const dialog = await openNode(page, 'work');
++    const effort = dialog.getByLabel('Effort', { exact: true });
++    await expect(effort).toHaveValue(explicit ? 'high' : '');
++    await expect(effort).toHaveAccessibleDescription(/not supported/);
++    if (!explicit)
++      await expect(effort).toHaveAccessibleDescription(
++        /Default effort: high.*not supported by this model/,
++      );
++    const rejected = await request.post(url + `/loops/${loop.id}/runs`, { data: {} });
++    expect(rejected.status()).toBe(422);
++    expect(await rejected.json()).toMatchObject({
++      errors: [
++        expect.objectContaining({
++          nodeId: 'work',
++          code: 'EFFORT_UNSUPPORTED',
++          path: 'config.effort',
++        }),
++      ],
++    });
++    expect(
++      (await control(request, '/harness/requests', { instanceId, harness: 'claude' }))['started'],
++    ).toEqual([]);
++    await effort.selectOption('low');
++    await closeNode(page);
++    await page.getByRole('button', { name: 'Publish', exact: true }).click();
++    await expect(page.getByText('Published version 2.')).toBeVisible();
++    expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
++    await expect
++      .poll(
++        async () =>
++          (await control(request, '/harness/requests', { instanceId, harness: 'claude' }))[
++            'started'
++          ],
++      )
++      .toMatchObject([{ model: 'claude-opus-5-5', effort: 'low' }]);
++  });
++}
++
++for (const kind of ['inference', 'llm'] as const) {
++  for (const level of ['explicit', 'loop', 'Settings', 'ecosystem', 'process'] as const) {
++    test(`${kind} ${level} effort survives editing, save, reload and adapter request`, async ({
++      page,
++      request,
++    }) => {
++      const instance = await control(request, '/apps', {
++        env:
++          level === 'process'
++            ? {
++                GG_DEFAULTS: JSON.stringify({
++                  byHarness: { codex: { model: 'gpt-6.1-sol', effort: 'high' } },
++                }),
++              }
++            : {},
++      });
++      const url = String(instance['url']);
++      const instanceId = String(instance['instanceId']);
++      const defaults = { byHarness: { codex: { model: 'gpt-6.1-sol', effort: 'high' } } };
++      if (level === 'Settings')
++        expect((await request.put(url + '/settings', { data: { defaults } })).status()).toBe(200);
++      const source = minimalLoop();
++      const definition = LoopDefinitionSchema.parse({
++        ...source,
++        name: `205 ${kind} ${level}`,
++        settings: { ...source.settings, ...(level === 'loop' ? { defaults } : {}) },
++        nodes: [
++          source.nodes[0],
++          {
++            id: 'work',
++            label: 'Work',
++            kind: kind === 'inference' ? kind : 'decision',
++            ui: { x: 260, y: 80 },
++            config:
++              kind === 'inference'
++                ? { prompt: { template: 'Choose' } }
++                : {
++                    kind: 'llm',
++                    harness: 'codex',
++                    instructions: 'Choose',
++                    model: { mode: 'inherit' },
++                    effort: { mode: 'inherit' },
++                    routes: [
++                      { id: 'yes', label: 'Yes' },
++                      { id: 'no', label: 'No' },
++                    ],
++                  },
++          },
++          source.nodes[1],
++        ],
++        edges: [
++          { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
++          ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map((port) => ({
++            id: port,
++            from: { node: 'work', port },
++            to: { node: 'done' },
++          })),
++        ],
++      });
++      const created = await request.post(url + '/loops', { data: { definition } });
++      expect(created.status()).toBe(201);
++      const { loop } = (await created.json()) as { loop: { id: string } };
++      await page.goto(url + `/app/loops/${loop.id}/edit`);
++      const dialog = await openNode(page, 'work');
++      const effort = dialog.getByLabel('Effort', { exact: true });
++      const inherited = ['loop', 'Settings', 'process'].includes(level) ? 'high' : 'low';
++      await expect(effort.locator('option').first()).toHaveText(`Default (${inherited})`);
++      await expect(effort).toBeVisible();
++      await expect(dialog.getByRole('group', { name: 'Effort', exact: true })).toHaveCount(0);
++      // Exercise both transitions: Default must discard the explicit value rather than pin it.
++      await effort.selectOption('high');
++      if (level !== 'explicit') await effort.selectOption('');
++      const expectedEffort = level === 'explicit' ? 'high' : inherited;
++      const expectedModel = ['loop', 'Settings', 'process'].includes(level)
++        ? 'gpt-6.1-sol'
++        : 'gpt-6-luna';
++      if (kind === 'llm')
++        await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
++          new RegExp(`Default model: ${expectedModel}`),
++        );
++      else
++        await expect(
++          dialog.getByLabel('Model', { exact: true }).locator('option').first(),
++        ).toHaveText(`(loop default) (${expectedModel})`);
++      if (level === 'loop') {
++        await effort.scrollIntoViewIfNeeded();
++        await page.screenshot({
++          path: `../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-${kind}.png`,
++        });
++      }
++      await closeNode(page);
++      await page.getByRole('button', { name: 'Publish', exact: true }).click();
++      await expect(page.getByText('Published version 1.')).toBeVisible();
++      await page.reload();
++      const reopened = await openNode(page, 'work');
++      await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue(
++        level === 'explicit' ? 'high' : '',
++      );
++      await closeNode(page);
++      const saved = await request.get(url + `/loops/${loop.id}`);
++      const data = (await saved.json()) as { current: { definition: unknown } };
++      const config = LoopDefinitionSchema.parse(data.current.definition).nodes.find(
++        (node) => node.id === 'work',
++      )!.config;
++      if (level === 'explicit')
++        expect(config).toHaveProperty(
++          'effort',
++          kind === 'llm' ? { mode: 'explicit', value: 'high' } : 'high',
++        );
++      else if (kind === 'llm') expect(config).toHaveProperty('effort', { mode: 'inherit' });
++      else expect(config).not.toHaveProperty('effort');
++      expect(
++        (await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } })).status(),
++      ).toBe(202);
++      await expect
++        .poll(async () => {
++          const result = await control(
++            request,
++            kind === 'llm' ? '/deciders/requests' : '/harness/requests',
++            { instanceId },
++          );
++          return result[kind === 'llm' ? 'routes' : 'started'];
++        })
++        .toMatchObject([{ model: expectedModel, effort: expectedEffort }]);
++    });
++  }
++}
++
++test('classifier keeps Question, Model, Answer visible and has no effort', async ({
++  page,
++  request,
++}) => {
++  const source = minimalLoop();
++  const created = await request.post('/loops', {
++    data: {
++      definition: {
++        ...source,
++        name: '205 classifier order',
++        nodes: [
++          source.nodes[0],
++          {
++            id: 'pick',
++            kind: 'decision',
++            label: 'Pick',
++            ui: { x: 260, y: 80 },
++            config: {
++              kind: 'classifier',
++              model: 'jev',
++              question: 'Choose',
++              answer: {
++                type: 'choice',
++                options: [
++                  { id: 'yes', label: 'Yes', criteria: 'yes' },
++                  { id: 'no', label: 'No', criteria: 'no' },
++                ],
++              },
++            },
++          },
++          source.nodes[1],
++        ],
++        edges: [
++          { id: 'start-pick', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
++          ...['yes', 'no'].map((port) => ({
++            id: port,
++            from: { node: 'pick', port },
++            to: { node: 'done' },
++          })),
++        ],
++      },
++    },
++  });
++  expect(created.status()).toBe(201);
++  const { loop } = (await created.json()) as { loop: { id: string } };
++  await page.goto(`/app/loops/${loop.id}/edit`);
++  const dialog = await openNode(page, 'pick');
++  const fields = dialog.locator('[data-field-scope="config"]');
++  for (const name of ['question', 'model', 'answer'])
++    await expect(fields.locator(`[data-field="${name}"]`).first()).toBeVisible();
++  expect(
++    await fields
++      .locator('[data-field]')
++      .evaluateAll((elements) => [
++        ...new Set(
++          elements
++            .map((element) => element.getAttribute('data-field'))
++            .filter((name) => ['question', 'model', 'answer'].includes(name ?? '')),
++        ),
++      ]),
++  ).toEqual(['question', 'model', 'answer']);
++  await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
++  await page.screenshot({
++    path: '../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-classifier.png',
++  });
++});
++
++test('a saved unsupported effort stays visible and is refused before the adapter', async ({
++  page,
++  request,
++}) => {
++  const instance = await control(request, '/apps');
++  const url = String(instance['url']);
++  const instanceId = String(instance['instanceId']);
++  const entry = {
++    instanceId,
++    harness: 'codex',
++    model: 'effort-limited',
++    displayName: 'Limited',
++    efforts: ['low', 'high'],
++    defaultEffort: 'low',
++    enabled: true,
++    source: 'harness',
++  };
++  await control(request, '/catalog/upsert', entry);
++  const source = minimalLoop();
++  const created = await request.post(url + '/loops', {
++    data: {
++      definition: {
++        ...source,
++        name: '205 unsupported effort',
++        nodes: [
++          source.nodes[0],
++          {
++            id: 'work',
++            kind: 'inference',
++            label: 'Work',
++            config: { model: entry.model, effort: 'high', prompt: { template: 'q' } },
++            ui: { x: 260, y: 80 },
++          },
++          source.nodes[1],
++        ],
++        edges: [
++          { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
++          { id: 'work-done', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
++        ],
++      },
++    },
++  });
++  expect(created.status()).toBe(201);
++  const { loop } = (await created.json()) as { loop: { id: string } };
++  expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
++  await control(request, '/catalog/upsert', { ...entry, efforts: ['low'] });
++  await page.goto(url + `/app/loops/${loop.id}/edit`);
++  const dialog = await openNode(page, 'work');
++  const effort = dialog.getByLabel('Effort', { exact: true });
++  await expect(effort).toHaveValue('high');
++  await expect(effort).toHaveAccessibleDescription(/not supported/);
++  await expect(effort.locator('option:checked')).toHaveText('high (not supported by this model)');
++  await closeNode(page);
++  await page.reload();
++  await expect((await openNode(page, 'work')).getByLabel('Effort', { exact: true })).toHaveValue(
++    'high',
++  );
++  // Published runs are queued before execution-time model resolution; refusal happens before
++  // the provider call, rather than at admission after a catalog capability change.
++  const queued = await request.post(url + `/loops/${loop.id}/runs`, { data: { input: null } });
++  expect(queued.status()).toBe(202);
++  const { run } = (await queued.json()) as { run: { id: string } };
++  await expect
++    .poll(async () => {
++      const response = await request.get(url + `/runs/${run.id}`);
++      return (await response.json()) as unknown;
++    })
++    .toMatchObject({
++      status: 'failed',
++      failure: {
++        code: 'EVALUATION_INVALID_CONFIGURATION',
++        details: { code: 'EFFORT_UNSUPPORTED' },
++      },
++    });
++  expect((await control(request, '/harness/requests', { instanceId }))['started']).toEqual([]);
++});
+diff --git a/apps/web/e2e/model-picker.spec.ts b/apps/web/e2e/model-picker.spec.ts
+index 21233b94..a85fdfa0 100644
+--- a/apps/web/e2e/model-picker.spec.ts
++++ b/apps/web/e2e/model-picker.spec.ts
+@@ -63,11 +63,7 @@ for (const theme of ['dark', 'light']) {
+     await page.keyboard.press('Enter');
+     await expect(model).toHaveValue(selected);
+     const effort = dialog.getByLabel('Effort', { exact: true });
+-    await expect(effort.locator('option')).toHaveText([
+-      '(inherited; the catalog suggests low)',
+-      'low',
+-      'high',
+-    ]);
++    await expect(effort.locator('option')).toHaveText(['Default (low)', 'low', 'high']);
+     await effort.focus();
+     await page.keyboard.press('h');
+     await page.keyboard.press('Enter');
+@@ -193,7 +189,7 @@ test('catalog failure preserves the current values until retry and loop defaults
+   await defaults.getByRole('textbox', { name: 'By harness key 1' }).fill('codex');
+   const codexDefaults = settings.locator('[data-field="defaults.byHarness.codex"]');
+   const defaultModel = codexDefaults.getByLabel('Model', { exact: true });
+-  await expect(defaultModel.locator('option').first()).toHaveText('(owner default)');
++  await expect(defaultModel.locator('option').first()).toHaveText('(owner default) (gpt-6-luna)');
+   await defaultModel.selectOption(chosen.model);
+   await expect(codexDefaults.getByLabel('Effort', { exact: true }).locator('option')).toHaveCount(
+     chosen.efforts.length + 1,
+@@ -260,10 +256,8 @@ test('the decision LLM uses an explicit harness model and rejects unsupported ef
+   await page.goto(`/app/loops/${loop.id}/edit`);
+   const dialog = await openNode(page, 'infer');
+   const evaluation = dialog;
+-  const modelGroup = evaluation.getByRole('group', { name: 'Model', exact: true });
+-  const effortGroup = evaluation.getByRole('group', { name: 'Effort', exact: true });
+-  const model = modelGroup.getByLabel('Value', { exact: true });
+-  const effort = effortGroup.getByLabel('Value', { exact: true });
++  const model = evaluation.getByLabel('Model', { exact: true });
++  const effort = evaluation.getByLabel('Effort', { exact: true });
+   await expect(model).toHaveValue('picker-decision');
+   await expect(effort).toHaveValue('high');
+   await closeNode(page);
+diff --git a/apps/web/e2e/node-placement.spec.ts b/apps/web/e2e/node-placement.spec.ts
+index 3ba0f43b..28ef9ab5 100644
+--- a/apps/web/e2e/node-placement.spec.ts
++++ b/apps/web/e2e/node-placement.spec.ts
+@@ -62,7 +62,8 @@ test('inference placement, tab keyboard order, and single-panel kinds', async ({
+   const context = dialog.getByRole('tab', { name: /^Context\b/ });
+   await expect(dialog.getByRole('tablist', { name: 'Node configuration' })).toBeVisible();
+   await expect(main).toHaveAttribute('aria-selected', 'true');
+-  await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
++  await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
++  await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
+   await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
+   await expect(dialog.getByRole('button', { name: 'Add input', exact: true })).toBeHidden();
+   await main.focus();
+diff --git a/apps/web/e2e/server.ts b/apps/web/e2e/server.ts
+index 9aa0bb99..74d571f7 100644
+--- a/apps/web/e2e/server.ts
++++ b/apps/web/e2e/server.ts
+@@ -314,7 +314,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
+       const { harness, fake } = selectedHarness(instance, body);
+       if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
+         throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
+-      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
++      if (body['state'] === 'ready')
++        fake.preflightResult = HarnessPreflightSchema.parse({
++          ...readyClaudePreflight,
++          ...(body['models'] !== undefined ? { models: body['models'] } : {}),
++        });
+       else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
+       else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
+       return { ok: true };
+@@ -335,6 +339,8 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
+       target.jev.isAvailable = body['jev'] !== false;
+       target.codex.isAvailable = body['codex'] !== false;
+       return { ok: true };
++    case '/deciders/requests':
++      return { routes: selectedInstance(body).app.codex.routes };
+     case '/deciders/route':
+       target.jev.choose = (request) => {
+         target.jev.choices.push(request);
+@@ -356,7 +362,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
+       return { ok: true };
+     }
+     case '/catalog/upsert':
+-      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
++      await selectedInstance(body).app.container.repos.catalog.upsert(
++        ModelCatalogEntrySchema.parse(
++          Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'instanceId')),
++        ),
++      );
+       return { ok: true };
+     case '/timers/poll':
+       await target.container.timers.poll();
+diff --git a/apps/web/src/__fixtures__/fake-api.ts b/apps/web/src/__fixtures__/fake-api.ts
+index cacfe4eb..1ed94f3e 100644
+--- a/apps/web/src/__fixtures__/fake-api.ts
++++ b/apps/web/src/__fixtures__/fake-api.ts
+@@ -774,6 +774,10 @@ export class FakeApi {
+     ],
+     ['POST /runs/:id/signals/:name', () => json({ woke: true })],
+     ['GET /settings', () => json(this.settingsValues)],
++    [
++      'GET /system/model-defaults',
++      () => json({ byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }),
++    ],
+     [
+       'PUT /settings',
+       (call) => {
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index ab6db492..d3d196de 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -18,7 +18,7 @@ import type {
+   LoopDefinitionInput,
+   ModelCatalogEntry,
+ } from '@graphgoblin/contracts';
+-import { HarnessPreflightSchema } from '@graphgoblin/contracts';
++import { HarnessDefaultsSchema, HarnessPreflightSchema } from '@graphgoblin/contracts';
+ import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+ import { z } from 'zod';
+ import { useApi } from './context.js';
+@@ -46,6 +46,7 @@ export const keys = {
+   thread: (id: string) => ['runs', 'thread', id] as const,
+   settings: ['settings'] as const,
+   catalog: ['model-catalog'] as const,
++  modelDefaults: ['process-model-defaults'] as const,
+   /** Classifier summaries: their configured state follows the secrets they reference. */
+   classifiers: ['classifier-models'] as const,
+   secrets: ['secrets'] as const,
+@@ -139,6 +140,29 @@ export function useSettings() {
+   return useQuery({ queryKey: keys.settings, queryFn: () => settings.get(client) });
+ }
+ 
++export function useProcessModelDefaults() {
++  const client = useApi();
++  return useQuery({
++    queryKey: keys.modelDefaults,
++    queryFn: async () => HarnessDefaultsSchema.parse(await system.modelDefaults(client)),
++  });
++}
++
++/** Defaults may change in Settings or outside this tab. Refresh both levels together. */
++export async function refreshModelDefaults(queryClient: QueryClient): Promise<void> {
++  const queries = [keys.settings, keys.modelDefaults];
++  // A request begun before this event may hold older Settings. Replace it, including a first
++  // load, without reverting authoritative data just written by the Settings mutation.
++  await Promise.all(
++    queries.map((queryKey) =>
++      queryClient.cancelQueries({ queryKey, exact: true }, { silent: true, revert: false }),
++    ),
++  );
++  await Promise.all(
++    queries.map((queryKey) => queryClient.invalidateQueries({ queryKey, exact: true })),
++  );
++}
++
+ export function useModelCatalog() {
+   const client = useApi();
+   return useQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
+diff --git a/apps/web/src/app/bootstrap.tsx b/apps/web/src/app/bootstrap.tsx
+index 547aa3cd..48b3e8fb 100644
+--- a/apps/web/src/app/bootstrap.tsx
++++ b/apps/web/src/app/bootstrap.tsx
+@@ -4,6 +4,7 @@ import { StrictMode, useEffect, type ReactNode } from 'react';
+ import { createRoot, type Root } from 'react-dom/client';
+ import { BrowserRouter } from 'react-router';
+ import { ApiProvider, createAppClient } from '../api/context.js';
++import { refreshModelDefaults } from '../api/queries.js';
+ import { applyFont, currentFont, readStoredFont, useFontAcrossTabs } from '../lib/font.js';
+ import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
+ import { startReachability } from '../lib/reachability.js';
+@@ -29,6 +30,18 @@ export function Providers({
+   children: ReactNode;
+ }) {
+   useEffect(() => startReachability(queryClient, client), [queryClient, client]);
++  useEffect(() => {
++    const refresh = () => void refreshModelDefaults(queryClient);
++    const visible = () => {
++      if (document.visibilityState === 'visible') refresh();
++    };
++    window.addEventListener('focus', refresh);
++    document.addEventListener('visibilitychange', visible);
++    return () => {
++      window.removeEventListener('focus', refresh);
++      document.removeEventListener('visibilitychange', visible);
++    };
++  }, [queryClient]);
+ 
+   return (
+     <ApiProvider client={client}>
+diff --git a/apps/web/src/editor/NodeEditorDialog.tsx b/apps/web/src/editor/NodeEditorDialog.tsx
+index 474d4bdb..08007920 100644
+--- a/apps/web/src/editor/NodeEditorDialog.tsx
++++ b/apps/web/src/editor/NodeEditorDialog.tsx
+@@ -5,6 +5,8 @@ import {
+   type NodeInput,
+ } from '@graphgoblin/contracts';
+ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
++import { useQueryClient } from '@tanstack/react-query';
++import { refreshModelDefaults } from '../api/queries.js';
+ import { Icon } from '../components/icons/index.js';
+ import {
+   Button,
+@@ -159,6 +161,10 @@ export function NodeEditorDialog({
+   /** Shown at the top of the dialog, for notices that need an answer while it is open. */
+   notice?: ReactNode;
+ }) {
++  const queryClient = useQueryClient();
++  useEffect(() => {
++    void refreshModelDefaults(queryClient);
++  }, [queryClient]);
+   const fieldErrors = useEditorStore((s) => s.fieldErrors);
+   const nodeFocus = useEditorStore((s) => s.nodeFocus);
+   // Bumped by undo and redo: the config form remounts with the restored values.
+diff --git a/apps/web/src/editor/field-controls.ts b/apps/web/src/editor/field-controls.ts
+index 35662c0c..3b430c73 100644
+--- a/apps/web/src/editor/field-controls.ts
++++ b/apps/web/src/editor/field-controls.ts
+@@ -1,7 +1,13 @@
+ import { ExecutionLimitField } from './ExecutionLimitField.js';
+ import type { FieldControls } from '../forms/fields.js';
+ import { CronControl, CronTimezoneControl } from '../forms/cron/control.js';
+-import { EffortField, LoopModelField, ModelField } from '../forms/fields/model.js';
++import {
++  EffortField,
++  EffortSelectionField,
++  LoopModelField,
++  ModelField,
++  ModelSelectionField,
++} from '../forms/fields/model.js';
+ import { ClassifierField } from './ClassifierField.js';
+ import { ClaudeApprovalField, ClaudePolicyField } from './ClaudePolicyField.js';
+ import { DECISION_FIELD_OVERRIDES } from './DecisionTruthThresholdField.js';
+@@ -18,6 +24,8 @@ export const NODE_FIELD_CONTROLS: FieldControls = {
+   'execution-limit': ExecutionLimitField,
+   model: ModelField,
+   effort: EffortField,
++  'effort-selection': EffortSelectionField,
++  'model-selection': ModelSelectionField,
+   cron: CronControl,
+   'cron-timezone': CronTimezoneControl,
+   classifier: ClassifierField,
+diff --git a/apps/web/src/editor/model-effort-refresh.test.tsx b/apps/web/src/editor/model-effort-refresh.test.tsx
+new file mode 100644
+index 00000000..f0d82815
+--- /dev/null
++++ b/apps/web/src/editor/model-effort-refresh.test.tsx
+@@ -0,0 +1,280 @@
++import { LoopDefinitionSchema, NodeConfigSchemas } from '@graphgoblin/contracts';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
++import { it, expect, vi } from 'vitest';
++import { FakeApi, problem } from '../__fixtures__/fake-api.js';
++import { renderApp, renderWith } from '../__fixtures__/render.js';
++import { keys } from '../api/queries.js';
++import { SchemaForm } from '../forms/SchemaForm.js';
++import { DefaultsSection } from '../settings/sections/DefaultsSection.js';
++import { NODE_FIELD_CONTROLS } from './field-controls.js';
++
++const inheritedNode = { prompt: { template: 'q' } };
++const defaults = (model = 'gpt-6-luna', effort = 'low') => ({
++  byHarness: { codex: { model, effort } },
++});
++function form(value: unknown = inheritedNode, change = vi.fn()) {
++  return (
++    <SchemaForm
++      schema={NodeConfigSchemas.inference}
++      value={value}
++      onChange={change}
++      label="Inference"
++      controls={NODE_FIELD_CONTROLS}
++    />
++  );
++}
++async function expectDefault(effort: string) {
++  await waitFor(() =>
++    expect(
++      within(screen.getByLabelText('Effort', { exact: true })).getByRole('option', {
++        name: `Default (${effort})`,
++      }),
++    ).toBeInTheDocument(),
++  );
++}
++
++it.each(['owner', 'process'] as const)('refreshes %s defaults on window focus', async (level) => {
++  const api = new FakeApi();
++  let process = defaults();
++  api.override('GET /system/model-defaults', () => Response.json(process));
++  renderWith(form(), '/', api);
++  await expectDefault('low');
++  if (level === 'owner') api.settingsValues = { defaults: defaults('gpt-6.1-sol', 'high') };
++  else process = defaults('gpt-6.1-sol', 'high');
++  act(() => {
++    window.dispatchEvent(new Event('focus'));
++  });
++  await expectDefault('high');
++  expect(
++    within(screen.getByLabelText('Model')).getByRole('option', {
++      name: '(loop default) (gpt-6.1-sol)',
++    }),
++  ).toBeInTheDocument();
++});
++
++it('refreshes defaults when the tab becomes visible', async () => {
++  const api = new FakeApi();
++  renderWith(form(), '/', api);
++  await expectDefault('low');
++  api.settingsValues = { defaults: defaults('gpt-6.1-sol', 'high') };
++  const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
++  act(() => {
++    document.dispatchEvent(new Event('visibilitychange'));
++  });
++  await expectDefault('low');
++  visibility.mockReturnValue('visible');
++  act(() => {
++    document.dispatchEvent(new Event('visibilitychange'));
++  });
++  await expectDefault('high');
++  visibility.mockRestore();
++});
++
++it.each(['initial', 'background'] as const)(
++  'focus replaces an older %s Settings request instead of accepting its stale result',
++  async (state) => {
++    const api = new FakeApi();
++    let release!: (response: Response) => void;
++    const held = new Promise<Response>((resolve) => {
++      release = resolve;
++    });
++    if (state === 'initial') api.override('GET /settings', () => held);
++    const change = vi.fn();
++    const { queryClient } = renderWith(form(inheritedNode, change), '/', api);
++    if (state === 'background') {
++      await expectDefault('low');
++      api.override('GET /settings', () => held);
++      act(() => {
++        void queryClient.invalidateQueries({ queryKey: keys.settings });
++      });
++    }
++    await waitFor(() =>
++      expect(
++        api.calls.filter((call) => call.method === 'GET' && call.path === '/settings'),
++      ).toHaveLength(state === 'initial' ? 1 : 2),
++    );
++    api.override('GET /settings', () =>
++      Response.json({ defaults: defaults('gpt-6.1-sol', 'high') }),
++    );
++    act(() => {
++      window.dispatchEvent(new Event('focus'));
++      release(Response.json({}));
++    });
++    await expectDefault('high');
++    expect(change).not.toHaveBeenCalled();
++  },
++);
++
++it.each(['owner', 'process'] as const)(
++  'refreshes fresh cached %s defaults when a node dialog opens',
++  async (level) => {
++    const api = new FakeApi();
++    let process = defaults();
++    api.override('GET /system/model-defaults', () => Response.json(process));
++    const source = minimalLoop();
++    const loop = api.addLoop(
++      LoopDefinitionSchema.parse({
++        ...source,
++        nodes: [
++          ...source.nodes,
++          { id: 'work', kind: 'inference', label: 'Work', config: inheritedNode },
++        ],
++      }),
++    );
++    const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
++    queryClient.setQueryDefaults(keys.settings, { staleTime: Infinity });
++    queryClient.setQueryDefaults(keys.modelDefaults, { staleTime: Infinity });
++    fireEvent.click(await screen.findByTestId('node-work'));
++    await expectDefault('low');
++    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++    if (level === 'owner') api.settingsValues = { defaults: defaults('gpt-6.1-sol', 'high') };
++    else process = defaults('gpt-6.1-sol', 'high');
++    fireEvent.click(screen.getByTestId('node-work'));
++    await expectDefault('high');
++  },
++);
++
++it('refreshes process defaults immediately after a same-tab Settings save', async () => {
++  const api = new FakeApi();
++  api.catalog = [
++    {
++      harness: 'codex',
++      model: 'chosen',
++      displayName: 'Chosen',
++      efforts: ['low', 'high'],
++      defaultEffort: 'low',
++      enabled: true,
++      source: 'harness',
++    },
++  ];
++  let process = defaults();
++  api.override('GET /system/model-defaults', () => Response.json(process));
++  renderWith(
++    <>
++      <DefaultsSection />
++      {form()}
++    </>,
++    '/',
++    api,
++  );
++  await expectDefault('low');
++  process = defaults('gpt-6-luna', 'high');
++  fireEvent.change(screen.getByLabelText('Default model', { exact: true }), {
++    target: { value: 'chosen' },
++  });
++  await waitFor(() =>
++    expect(api.settingsValues).toHaveProperty('defaults.byHarness.codex.model', 'chosen'),
++  );
++  await expectDefault('high');
++});
++
++it.each(['pending', 'failed'] as const)(
++  'does not claim a concrete effort while the catalog is %s',
++  async (state) => {
++    const api = new FakeApi();
++    api.override('GET /model-catalog', () =>
++      state === 'pending'
++        ? new Promise<Response>(() => undefined)
++        : problem(503, 'FAILED', 'catalog unavailable'),
++    );
++    const change = vi.fn();
++    const { queryClient } = renderWith(form(inheritedNode, change), '/', api);
++    await waitFor(() => expect(queryClient.getQueryData(keys.modelDefaults)).toEqual(defaults()));
++    await waitFor(() => expect(queryClient.getQueryData(keys.settings)).toBeDefined());
++    await waitFor(() =>
++      expect(
++        within(screen.getByLabelText('Effort')).getByRole('option', {
++          name: state === 'pending' ? /Default.*checking/ : 'Default (unavailable)',
++        }),
++      ).toBeInTheDocument(),
++    );
++    expect(change).not.toHaveBeenCalled();
++  },
++);
++
++it('uses one LLM model dropdown with an accessible inherited identity and preserves selection shapes', async () => {
++  const api = new FakeApi();
++  api.catalog = [
++    {
++      harness: 'codex',
++      model: 'chosen',
++      displayName: 'Chosen',
++      efforts: ['low'],
++      defaultEffort: 'low',
++      enabled: true,
++      source: 'harness',
++    },
++  ];
++  const change = vi.fn();
++  renderWith(
++    <SchemaForm
++      schema={NodeConfigSchemas.decision}
++      value={{
++        kind: 'llm',
++        harness: 'codex',
++        instructions: 'q',
++        model: { mode: 'inherit' },
++        effort: { mode: 'inherit' },
++        routes: [
++          { id: 'yes', label: 'Yes' },
++          { id: 'no', label: 'No' },
++        ],
++      }}
++      onChange={change}
++      label="Decision"
++      controls={NODE_FIELD_CONTROLS}
++    />,
++    '/',
++    api,
++  );
++  await waitFor(() =>
++    expect(screen.getByRole('combobox', { name: 'Model' })).toHaveAccessibleDescription(
++      /Default model: gpt-6-luna/,
++    ),
++  );
++  const model = screen.getByRole('combobox', { name: 'Model' });
++  expect(screen.queryByRole('combobox', { name: 'Mode' })).not.toBeInTheDocument();
++  expect(within(model).getByRole('option', { name: 'Default (gpt-6-luna)' })).toBeInTheDocument();
++  fireEvent.change(model, { target: { value: 'chosen' } });
++  await waitFor(() =>
++    expect(change.mock.lastCall?.[0]).toHaveProperty('model', {
++      mode: 'explicit',
++      value: 'chosen',
++    }),
++  );
++  fireEvent.change(model, { target: { value: '' } });
++  await waitFor(() =>
++    expect(change.mock.lastCall?.[0]).toHaveProperty('model', { mode: 'inherit' }),
++  );
++});
++
++it('describes inherited model identity and unsupported inherited effort on the controls', async () => {
++  const api = new FakeApi();
++  api.catalog = [
++    {
++      harness: 'codex',
++      model: 'gpt-6-luna',
++      displayName: 'Luna',
++      efforts: ['high'],
++      defaultEffort: 'high',
++      enabled: true,
++      source: 'harness',
++    },
++  ];
++  renderWith(form(), '/', api);
++  await waitFor(() =>
++    expect(
++      within(screen.getByLabelText('Effort')).getByRole('option', {
++        name: 'Default (low) (not supported by this model)',
++      }),
++    ).toBeInTheDocument(),
++  );
++  expect
++    .soft(screen.getByLabelText('Model'))
++    .toHaveAccessibleDescription(/Default model: gpt-6-luna/);
++  expect
++    .soft(screen.getByLabelText('Effort'))
++    .toHaveAccessibleDescription(/Default effort: low.*not supported by this model/i);
++});
+diff --git a/apps/web/src/editor/model-effort.test.tsx b/apps/web/src/editor/model-effort.test.tsx
+new file mode 100644
+index 00000000..a5c5fcf8
+--- /dev/null
++++ b/apps/web/src/editor/model-effort.test.tsx
+@@ -0,0 +1,261 @@
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { LoopDefinitionSchema, NodeConfigSchemas } from '@graphgoblin/contracts';
++import { fireEvent, screen, waitFor, within } from '@testing-library/react';
++import { expect, it } from 'vitest';
++import { FakeApi } from '../__fixtures__/fake-api.js';
++import { renderApp, renderWith } from '../__fixtures__/render.js';
++import { SchemaForm } from '../forms/SchemaForm.js';
++import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
++import { NODE_FIELD_CONTROLS } from './field-controls.js';
++import { vi } from 'vitest';
++import { problem } from '../__fixtures__/fake-api.js';
++
++it('renders an unknown harness without inventing inherited defaults', async () => {
++  const change = vi.fn();
++  renderWith(
++    <SchemaForm
++      schema={NodeConfigSchemas.inference}
++      value={{ harness: 'unknown-harness', prompt: { template: 'q' } }}
++      onChange={change}
++      label="Node"
++      controls={NODE_FIELD_CONTROLS}
++    />,
++    '/',
++    new FakeApi(),
++  );
++  await waitFor(() =>
++    expect(
++      within(screen.getByLabelText('Effort')).getByRole('option', {
++        name: 'Default (unavailable)',
++      }),
++    ).toBeInTheDocument(),
++  );
++  expect(
++    within(screen.getByLabelText('Model')).getByRole('option', { name: '(loop default)' }),
++  ).toBeInTheDocument();
++  expect(change).not.toHaveBeenCalled();
++});
++
++it.each(['loading', 'failed', 'invalid-owner'] as const)(
++  'does not invent a default when defaults are %s',
++  async (state) => {
++    const api = new FakeApi();
++    if (state === 'loading')
++      api.override('GET /settings', () => new Promise<Response>(() => undefined));
++    if (state === 'failed')
++      api.override('GET /system/model-defaults', () => problem(503, 'FAILED', 'unavailable'));
++    if (state === 'invalid-owner') api.settingsValues = { defaults: { invalid: true } };
++    const change = vi.fn();
++    renderWith(
++      <SchemaForm
++        schema={NodeConfigSchemas.inference}
++        value={{ prompt: { template: 'q' } }}
++        onChange={change}
++        label="Node"
++        controls={NODE_FIELD_CONTROLS}
++      />,
++      '/',
++      api,
++    );
++    const effort = screen.getByLabelText('Effort');
++    await waitFor(() =>
++      expect(
++        within(effort).getByRole('option', {
++          name: state === 'loading' ? /Default.*checking/ : 'Default (unavailable)',
++        }),
++      ).toBeInTheDocument(),
++    );
++    expect(change).not.toHaveBeenCalled();
++  },
++);
++
++it('intersects an explicit Claude model with adapter efforts and marks an unsupported inherited default', async () => {
++  const api = new FakeApi();
++  api.catalog = [
++    {
++      harness: 'claude',
++      model: 'claude-opus-5-5',
++      displayName: 'Opus',
++      efforts: ['low', 'high'],
++      defaultEffort: 'low',
++      enabled: true,
++      source: 'harness',
++    },
++  ];
++  api.settingsValues = {
++    defaults: { byHarness: { claude: { model: 'claude-opus-5-5', effort: 'high' } } },
++  };
++  api.preflight = [
++    {
++      harness: 'claude',
++      state: 'ready',
++      ok: true,
++      authenticated: true,
++      problems: [],
++      models: [{ model: 'claude-opus-5-5', efforts: ['low'] }],
++    },
++  ];
++  const change = vi.fn();
++  renderWith(
++    <SchemaForm
++      schema={NodeConfigSchemas.inference}
++      value={{
++        harness: 'claude',
++        model: 'claude-opus-5-5',
++        effort: 'high',
++        prompt: { template: 'q' },
++      }}
++      onChange={change}
++      label="Node"
++      controls={NODE_FIELD_CONTROLS}
++    />,
++    '/',
++    api,
++  );
++  const effort = screen.getByLabelText('Effort');
++  await waitFor(() => expect(effort).toHaveAccessibleDescription(/not supported/));
++  expect(
++    within(effort).getByRole('option', { name: 'high (not supported by this model)' }),
++  ).toBeDisabled();
++  expect(
++    within(effort)
++      .getAllByRole('option')
++      .map((option) => option.textContent),
++  ).toEqual(['Default (high)', 'high (not supported by this model)', 'low']);
++  fireEvent.change(effort, { target: { value: '' } });
++  await waitFor(() =>
++    expect(
++      within(effort).getByRole('option', { name: 'Default (high) (not supported by this model)' }),
++    ).toBeInTheDocument(),
++  );
++  expect(change.mock.lastCall?.[0]).not.toHaveProperty('effort');
++});
++
++it.each(['inference', 'llm'] as const)(
++  '%s exposes model and one effort dropdown before Advanced',
++  async (kind) => {
++    const api = new FakeApi();
++    const source = minimalLoop();
++    const config =
++      kind === 'inference'
++        ? { prompt: { template: 'Choose' } }
++        : {
++            kind,
++            instructions: 'Choose',
++            harness: 'codex',
++            model: { mode: 'inherit' },
++            effort: { mode: 'inherit' },
++            routes: [
++              { id: 'yes', label: 'Yes' },
++              { id: 'no', label: 'No' },
++            ],
++          };
++    const loop = api.addLoop(
++      LoopDefinitionSchema.parse({
++        ...source,
++        nodes: [
++          ...source.nodes,
++          { id: 'work', label: 'Work', kind: kind === 'llm' ? 'decision' : kind, config },
++        ],
++      }),
++    );
++    renderApp(`/loops/${loop.id}/edit`, api);
++    fireEvent.click(await screen.findByTestId('node-work'));
++    const dialog = screen.getByRole('dialog');
++    await waitFor(() =>
++      expect(within(dialog).getByLabelText('Effort', { exact: true })).toBeVisible(),
++    );
++    expect(within(dialog).queryByRole('group', { name: 'Effort' })).toBeNull();
++    expect(within(dialog).getAllByRole('combobox', { name: 'Effort' })).toHaveLength(1);
++  },
++);
++
++for (const kind of ['inference', 'llm'] as const) {
++  it.each(['loop', 'Settings', 'process'] as const)(
++    `${kind} resolves %s defaults and stores one explicit or inherited effort`,
++    async (level) => {
++      const api = new FakeApi();
++      api.catalog = [
++        {
++          harness: 'codex',
++          model: 'chosen',
++          displayName: 'Chosen',
++          efforts: ['low', 'high'],
++          defaultEffort: 'low',
++          enabled: true,
++          source: 'harness',
++        },
++      ];
++      const defaults = { byHarness: { codex: { model: 'chosen', effort: 'high' as const } } };
++      api.settingsValues = level === 'Settings' ? { defaults } : {};
++      api.override('GET /system/model-defaults', () =>
++        Response.json(
++          level === 'process'
++            ? defaults
++            : { byHarness: { codex: { model: 'chosen', effort: 'low' } } },
++        ),
++      );
++      const definition = minimalLoop();
++      if (level === 'loop') definition.settings = { ...definition.settings, defaults };
++      const change = vi.fn();
++      const value =
++        kind === 'inference'
++          ? { prompt: { template: 'q' } }
++          : {
++              kind: 'llm',
++              harness: 'codex',
++              instructions: 'q',
++              model: { mode: 'inherit' },
++              effort: { mode: 'inherit' },
++              routes: [
++                { id: 'yes', label: 'Yes' },
++                { id: 'no', label: 'No' },
++              ],
++            };
++      renderWith(
++        <NodeOutputsContext value={{ definition, node: definition.nodes[0]! }}>
++          <SchemaForm
++            schema={NodeConfigSchemas[kind === 'llm' ? 'decision' : kind]}
++            value={value}
++            onChange={change}
++            label="Test node"
++            controls={NODE_FIELD_CONTROLS}
++          />
++        </NodeOutputsContext>,
++        '/',
++        api,
++      );
++      const effort = screen.getByLabelText('Effort', { exact: true });
++      await waitFor(() =>
++        expect(within(effort).getByRole('option', { name: 'Default (high)' })).toBeInTheDocument(),
++      );
++      expect(
++        within(effort)
++          .getAllByRole('option')
++          .map((o) => o.textContent),
++      ).toEqual(['Default (high)', 'low', 'high']);
++      expect(change).not.toHaveBeenCalled();
++      if (kind === 'llm')
++        expect(screen.getByLabelText('Model')).toHaveAccessibleDescription(/Default model: chosen/);
++      else
++        expect(
++          within(screen.getByLabelText('Model')).getByRole('option', {
++            name: '(loop default) (chosen)',
++          }),
++        ).toBeInTheDocument();
++      fireEvent.change(effort, { target: { value: 'low' } });
++      await waitFor(() =>
++        expect(change.mock.lastCall?.[0]).toHaveProperty(
++          'effort',
++          kind === 'llm' ? { mode: 'explicit', value: 'low' } : 'low',
++        ),
++      );
++      fireEvent.change(effort, { target: { value: '' } });
++      await waitFor(() =>
++        kind === 'llm'
++          ? expect(change.mock.lastCall?.[0]).toHaveProperty('effort', { mode: 'inherit' })
++          : expect(change.mock.lastCall?.[0]).not.toHaveProperty('effort'),
++      );
++    },
++  );
++}
+diff --git a/apps/web/src/forms/advanced.test.tsx b/apps/web/src/forms/advanced.test.tsx
+index f159369a..73b94f55 100644
+--- a/apps/web/src/forms/advanced.test.tsx
++++ b/apps/web/src/forms/advanced.test.tsx
+@@ -182,10 +182,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
+   it.each([
+     [
+       'inference',
+-      ['harness', 'session', 'prompt', 'harnessOptions.sandbox'],
++      ['harness', 'model', 'effort', 'session', 'prompt', 'harnessOptions.sandbox'],
+       [
+-        'model',
+-        'effort',
+         'harnessOptions.approval',
+         'harnessOptions.networkAccess',
+         'harnessOptions.webSearch',
+@@ -197,7 +195,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
+         'output.schema',
+         'timeoutSeconds',
+       ],
+-      ['Model', 'Harness options', 'Output', 'Limits'],
++      ['Harness options', 'Output', 'Limits'],
+     ],
+     [
+       'script',
+@@ -377,8 +375,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
+         parseErrors={{ 'harnessOptions.configOverrides.a': { message: 'invalid JSON', text: '{' } }}
+       />,
+     );
+-    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 2 set 3 errors'));
+-    const badge = within(toggle()!).getByText('3 errors');
++    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 1 set 2 errors'));
++    const badge = within(toggle()!).getByText('2 errors');
+     expect(badge.closest('[class*="bg-status-bad-bg"]')).not.toBeNull();
+     expect(badge.parentElement!.querySelector('svg[data-icon="alert"]')).not.toBeNull();
+     // A split object's own message (an unknown key) shows with its basic fields, in sight.
+diff --git a/apps/web/src/forms/fields/model.test.tsx b/apps/web/src/forms/fields/model.test.tsx
+index 78fe3270..7b6f899e 100644
+--- a/apps/web/src/forms/fields/model.test.tsx
++++ b/apps/web/src/forms/fields/model.test.tsx
+@@ -253,7 +253,7 @@ describe('catalog field controls', () => {
+ 
+     await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
+     expect(model()).toHaveValue('claude-fable-5-1');
+-    expect(model()).not.toHaveAccessibleDescription(/unavailable/);
++    expect(model()).not.toHaveAccessibleDescription(/read-only|not listed|not in the catalog/);
+     expect(within(model()).getByRole('option', { name: /claude-fable-5-1/ })).toBeEnabled();
+     expect(within(model()).getByRole('option', { name: /claude-opus-5-5/ })).toBeEnabled();
+ 
+@@ -520,11 +520,8 @@ describe('catalog field controls', () => {
+       api,
+     );
+     const group = screen.getByRole('form', { name: 'Decision' });
+-    // Explicit selections are controls nested within the active model and effort unions.
+-    const modelGroup = within(group).getByRole('group', { name: 'Model' });
+-    const effortGroup = within(group).getByRole('group', { name: 'Effort' });
+-    const model = within(modelGroup).getByLabelText('Value');
+-    const effort = within(effortGroup).getByLabelText('Value');
++    const model = within(group).getByLabelText('Model');
++    const effort = within(group).getByLabelText('Effort');
+     await waitFor(() => expect(model).not.toHaveAttribute('aria-readonly'));
+     expect(model).toHaveValue('alpha');
+     expect(within(model).getAllByRole('option')).toHaveLength(2);
+@@ -536,7 +533,7 @@ describe('catalog field controls', () => {
+         model: { mode: 'explicit', value: 'alpha' },
+         effort: { mode: 'explicit', value: 'low' },
+       }),
+-      expect.objectContaining({ path: 'effort.value', kind: 'commit' }),
++      expect.objectContaining({ path: 'effort', kind: 'commit' }),
+     );
+   });
+   it('shows an empty catalog with only the inherited choice and a Settings link', async () => {
+@@ -546,7 +543,7 @@ describe('catalog field controls', () => {
+       within(model())
+         .getAllByRole('option')
+         .map((o) => o.textContent),
+-    ).toEqual(['(loop default)']);
++    ).toEqual(['(loop default) (gpt-6-luna)']);
+     expect(model()).toHaveAccessibleDescription(/No enabled models/);
+     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
+     expect(change).not.toHaveBeenCalled();
+@@ -568,7 +565,7 @@ describe('catalog field controls', () => {
+       within(effort())
+         .getAllByRole('option')
+         .map((o) => o.textContent),
+-    ).toEqual(['(inherited; the catalog suggests low)', 'low', 'high']);
++    ).toEqual(['Default (low)', 'low', 'high']);
+     expect(effort()).toHaveValue('');
+     await user.selectOptions(effort(), 'high');
+     expect(change).toHaveBeenLastCalledWith(
+@@ -847,30 +844,43 @@ describe('catalog field controls', () => {
+     expect(model()).toHaveAccessibleDescription(/MODEL_DISABLED: Server warning for alpha/);
+   });
+ 
+-  it('registers loop defaults with Codex choices and an owner-default unset value', async () => {
+-    const api = new FakeApi();
+-    api.catalog = [entry('alpha'), entry('other', true, 'another')];
+-    const change = vi.fn();
+-    renderWith(
+-      <SchemaForm
+-        schema={LoopSettingsSchema}
+-        value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
+-        label="Settings"
+-        onChange={change}
+-        controls={LOOP_FIELD_CONTROLS}
+-      />,
+-      '/',
+-      api,
+-    );
+-    await ready();
+-    expect(within(model()).getByRole('option', { name: '(owner default)' })).toBeInTheDocument();
+-    expect(within(model()).getAllByRole('option')).toHaveLength(2);
+-    await userEvent.setup().selectOptions(model(), '');
+-    expect(change.mock.lastCall?.[0]).toMatchObject({
+-      defaults: { byHarness: { codex: {} } },
+-    });
+-    expect(within(effort()).getAllByRole('option')).toHaveLength(7);
+-  });
++  it.each(['owner', 'process'] as const)(
++    'registers loop defaults with Codex choices and the inherited %s model',
++    async (level) => {
++      const api = new FakeApi();
++      api.catalog = [entry('alpha'), entry('other', true, 'another')];
++      if (level === 'owner')
++        api.settingsValues = {
++          defaults: { byHarness: { codex: { model: 'owner-model', effort: 'high' } } },
++        };
++      const change = vi.fn();
++      renderWith(
++        <SchemaForm
++          schema={LoopSettingsSchema}
++          value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
++          label="Settings"
++          onChange={change}
++          controls={LOOP_FIELD_CONTROLS}
++        />,
++        '/',
++        api,
++      );
++      await ready();
++      await waitFor(() =>
++        expect(
++          within(model()).getByRole('option', {
++            name: `(owner default) (${level === 'owner' ? 'owner-model' : 'gpt-6-luna'})`,
++          }),
++        ).toBeInTheDocument(),
++      );
++      expect(within(model()).getAllByRole('option')).toHaveLength(2);
++      await userEvent.setup().selectOptions(model(), '');
++      expect(change.mock.lastCall?.[0]).toMatchObject({
++        defaults: { byHarness: { codex: {} } },
++      });
++      expect(within(effort()).getAllByRole('option')).toHaveLength(7);
++    },
++  );
+ 
+   it('uses the validated byHarness record key for mixed loop default model and effort choices', async () => {
+     const api = new FakeApi();
+diff --git a/apps/web/src/forms/fields/model.tsx b/apps/web/src/forms/fields/model.tsx
+index 7e52f63b..4ef49cc2 100644
+--- a/apps/web/src/forms/fields/model.tsx
++++ b/apps/web/src/forms/fields/model.tsx
+@@ -11,11 +11,13 @@ import { createContext, use, useId } from 'react';
+ import { QueryObserver, useQueryClient } from '@tanstack/react-query';
+ import { useWatch } from 'react-hook-form';
+ import { Link } from 'react-router';
+-import { harnessDisplayName } from '@graphgoblin/domain';
++import { harnessDisplayName, inheritedHarnessDefaults } from '@graphgoblin/domain';
+ import {
+   keys,
+   useModelCatalog,
+   usePreflight,
++  useSettings,
++  useProcessModelDefaults,
+   type HarnessPreflightItem,
+ } from '../../api/queries.js';
+ import { harnessReadiness, readinessLine } from '../../api/readiness.js';
+@@ -23,6 +25,7 @@ import { Icon } from '../../components/icons/index.js';
+ import { Button, HelpText, Select } from '../../components/ui/index.js';
+ import { shapeOf, unwrap, type FieldShape, type Schema } from '../introspect.js';
+ import { isUnset } from '../unset.js';
++import { NodeOutputsContext } from '../EarlierNodeOutputs.js';
+ import { fieldMeta, FormScopeContext, Row, useField, type FieldProps } from './shared.js';
+ 
+ /** Read the shared queries at action time; this hook never starts or refetches a lookup. */
+@@ -207,6 +210,9 @@ function defaultsHarnessField(
+ 
+ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown) {
+   const scope = use(FormScopeContext)!;
++  const node = use(NodeOutputsContext);
++  const settings = useSettings();
++  const processDefaults = useProcessModelDefaults();
+   const segments = name.split('.');
+   const defaultsField = defaultsHarnessField(scope.schema, name);
+   const defaultsByHarness: unknown = useWatch({
+@@ -263,12 +269,27 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
+   });
+   const model = selection ? (kind === 'model' ? value : selectedModel) : selectedModel;
+   const selected =
+-    selection && kind === 'effort' && typeof model === 'object' && model !== null
++    typeof model === 'object' && model !== null
+       ? (model as { mode?: unknown; value?: unknown }).mode === 'explicit'
+         ? (model as { value?: unknown }).value
+         : undefined
+       : model;
+   const current = typeof selected === 'string' && !isUnset(selected) ? selected : undefined;
++  const owner = HarnessDefaultsSchema.safeParse(settings.data?.['defaults'] ?? {});
++  const loop = HarnessDefaultsSchema.safeParse(node?.definition.settings?.defaults ?? {});
++  const parsedHarness = HarnessIdSchema.safeParse(harnessId);
++  // Missing/failed Settings cannot certify that a lower-level fallback is effective.
++  const defaultsKnown = settings.data !== undefined && owner.success && loop.success;
++  const inherited =
++    defaultsKnown && parsedHarness.success
++      ? inheritedHarnessDefaults({
++          harness: parsedHarness.data,
++          loopDefaults: defaultsField ? { byHarness: {} } : loop.data,
++          ownerDefaults: owner.data,
++          processDefaults: processDefaults.data ?? { byHarness: {} },
++        })
++      : {};
++  const effectiveModel = current ?? inherited.model;
+   return {
+     query,
+     preflightQuery,
+@@ -279,7 +300,9 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
+     harnessPreflight,
+     modelCapabilities,
+     hasClaudeAdmission,
+-    entry: entries.find((entry) => entry.model === current),
++    entry: entries.find((entry) => entry.model === (kind === 'model' ? current : effectiveModel)),
++    inherited,
++    defaultsPending: settings.isPending || processDefaults.isPending,
+     catalogNoticeId: `${scope.id}-${sibling(name, 'model')}-catalog`,
+   };
+ }
+@@ -290,7 +313,8 @@ function CatalogField({
+   label,
+   kind,
+   unsetLabel = '(loop default)',
+-}: FieldProps & { kind: 'model' | 'effort'; unsetLabel?: string }) {
++  selection = false,
++}: FieldProps & { kind: 'model' | 'effort'; unsetLabel?: string; selection?: boolean }) {
+   const field = useField(name, 'commit');
+   const { help, required } = fieldMeta(schema);
+   const {
+@@ -303,12 +327,20 @@ function CatalogField({
+     modelCapabilities,
+     hasClaudeAdmission,
+     entry,
++    inherited,
++    defaultsPending,
+     catalogNoticeId,
+   } = useCatalogField(name, kind, field.value);
+   const harnessName = harnessDisplayName(harnessId);
+   const id = useId();
+   const noticeId = kind === 'model' ? catalogNoticeId : `${id}-effort`;
+-  const value = typeof field.value === 'string' ? field.value : '';
++  const raw =
++    selection && typeof field.value === 'object' && field.value !== null
++      ? (field.value as { mode?: unknown; value?: unknown }).mode === 'explicit'
++        ? (field.value as { value?: unknown }).value
++        : undefined
++      : field.value;
++  const value = typeof raw === 'string' ? raw : '';
+   const unavailable =
+     query.data === undefined || ((kind === 'model' || !entry) && !hasClaudeAdmission);
+   // An inherited Claude model must support any offered effort, without choosing a model for it.
+@@ -316,7 +348,16 @@ function CatalogField({
+     harnessId === 'claude'
+       ? inheritedClaudeEfforts(availableEntries, modelCapabilities)
+       : EffortSchema.options;
+-  const efforts: readonly string[] = entry?.efforts ?? inheritedEfforts;
++  const efforts: readonly string[] = entry
++    ? entry.efforts.filter(
++        (effort) =>
++          harnessId !== 'claude' ||
++          !hasClaudeAdmission ||
++          modelCapabilities?.some(
++            (capability) => capability.model === entry.model && capability.efforts.includes(effort),
++          ),
++      )
++    : inheritedEfforts;
+   const unsupported = kind === 'effort' && !unavailable && value !== '' && !efforts.includes(value);
+   const capability =
+     kind === 'model' ? modelCapabilities?.find((item) => item.model === value) : undefined;
+@@ -450,12 +491,26 @@ function CatalogField({
+           label: `${entry.displayName} (${entry.model})`,
+         }))
+       : efforts.map((effort) => ({ value: effort, label: effort }));
++  const unknownDefault = defaultsPending ? 'checking…' : 'unavailable';
++  const inheritedEffort =
++    query.data === undefined
++      ? query.isPending
++        ? 'checking…'
++        : 'unavailable'
++      : (inherited.effort ?? unknownDefault);
+   const placeholder =
+     kind === 'model'
+-      ? unsetLabel
+-      : entry
+-        ? `(inherited; the catalog suggests ${entry.defaultEffort})`
+-        : '(inherited effort)';
++      ? selection
++        ? `Default (${inherited.model ?? unknownDefault})`
++        : `${unsetLabel}${inherited.model ? ` (${inherited.model})` : ''}`
++      : `Default (${inheritedEffort})`;
++  const inheritedUnsupported =
++    kind === 'effort' &&
++    value === '' &&
++    inherited.effort !== undefined &&
++    !unavailable &&
++    !efforts.includes(inherited.effort);
++  const defaultDescription = `Default ${kind}: ${kind === 'model' ? (inherited.model ?? unknownDefault) : inheritedEffort}.${inheritedUnsupported ? ' This inherited effort is not supported by this model.' : ''}`;
+   return (
+     <Row
+       name={name}
+@@ -479,6 +534,7 @@ function CatalogField({
+         const describedBy =
+           [
+             control['aria-describedby'],
++            `${id}-default`,
+             messages.length ? noticeId : undefined,
+             kind === 'effort' && (unavailable || query.isError) ? catalogNoticeId : undefined,
+           ]
+@@ -494,10 +550,20 @@ function CatalogField({
+               onBlur={field.onBlur}
+               onChange={(event) => {
+                 if (unavailable) event.currentTarget.value = value;
+-                else field.onChange(event.target.value || undefined);
++                else
++                  field.onChange(
++                    selection
++                      ? event.target.value
++                        ? { mode: 'explicit', value: event.target.value }
++                        : { mode: 'inherit' }
++                      : event.target.value || undefined,
++                  );
+               }}
+             >
+-              <option value="">{placeholder}</option>
++              <option value="">
++                {placeholder}
++                {inheritedUnsupported ? ' (not supported by this model)' : ''}
++              </option>
+               {unavailable ? (
+                 value !== '' ? (
+                   <option value={value} disabled>
+@@ -518,6 +584,9 @@ function CatalogField({
+                   </option>
+                 ))}
+             </Select>
++            <HelpText id={`${id}-default`} tone={inheritedUnsupported ? 'warn' : 'muted'}>
++              {defaultDescription}
++            </HelpText>
+             {messages.length ? (
+               <HelpText id={noticeId} role="status" tone={warn ? 'warn' : 'muted'}>
+                 {warn ? (
+@@ -565,3 +634,10 @@ export function LoopModelField(props: FieldProps) {
+ export function EffortField(props: FieldProps) {
+   return <CatalogField {...props} kind="effort" />;
+ }
++export function EffortSelectionField(props: FieldProps) {
++  return <CatalogField {...props} kind="effort" selection />;
++}
++
++export function ModelSelectionField(props: FieldProps) {
++  return <CatalogField {...props} kind="model" selection />;
++}
+diff --git a/apps/web/src/forms/layout.test.ts b/apps/web/src/forms/layout.test.ts
+index 376a942e..cc08046a 100644
+--- a/apps/web/src/forms/layout.test.ts
++++ b/apps/web/src/forms/layout.test.ts
+@@ -40,9 +40,15 @@ describe('formLayout', () => {
+ 
+   it('places inference fields: basic first, a split object, groups by first appearance', () => {
+     const layout = formLayout(shape(NodeConfigSchemas.inference), '', undefined, true);
+-    expect(names(layout.basic)).toEqual(['harness', 'session', 'prompt', 'harnessOptions.sandbox']);
++    expect(names(layout.basic)).toEqual([
++      'harness',
++      'model',
++      'effort',
++      'session',
++      'prompt',
++      'harnessOptions.sandbox',
++    ]);
+     expect(sections(layout)).toEqual([
+-      ['Model', ['model', 'effort']],
+       [
+         'Harness options',
+         [
+@@ -62,10 +68,10 @@ describe('formLayout', () => {
+     // A split object's blocks: the basic one shows its own message, the advanced one does not.
+     const sandbox = layout.basic.find(isOwned);
+     expect(sandbox).toMatchObject({ owner: 'harnessOptions', showsError: true });
+-    const harness = layout.advanced[1]!.items.find(isOwned);
++    const harness = layout.advanced[0]!.items.find(isOwned);
+     expect(harness).toMatchObject({ owner: 'harnessOptions', showsError: false });
+     // All of `output` is advanced: its first block shows its message.
+-    expect(layout.advanced[2]!.items[0]).toMatchObject({ owner: 'output', showsError: true });
++    expect(layout.advanced[1]!.items[0]).toMatchObject({ owner: 'output', showsError: true });
+     const context = contextLayout(NodeConfigSchemas.inference, {});
+     expect(names(context.basic)).toEqual(['input']);
+     expect(sections(context)).toEqual([['Files', ['contextFiles']]]);
+diff --git a/apps/web/src/settings/sections/DefaultsSection.tsx b/apps/web/src/settings/sections/DefaultsSection.tsx
+index 7132f78d..043dcc3d 100644
+--- a/apps/web/src/settings/sections/DefaultsSection.tsx
++++ b/apps/web/src/settings/sections/DefaultsSection.tsx
+@@ -7,7 +7,13 @@ import {
+ } from '@graphgoblin/contracts';
+ import { useMutation, useQueryClient } from '@tanstack/react-query';
+ import { useApi } from '../../api/context.js';
+-import { keys, useModelCatalog, usePreflight, useSettings } from '../../api/queries.js';
++import {
++  keys,
++  refreshModelDefaults,
++  useModelCatalog,
++  usePreflight,
++  useSettings,
++} from '../../api/queries.js';
+ import { harnessReadiness, readinessLine, type HarnessReadiness } from '../../api/readiness.js';
+ import { Icon } from '../../components/icons/index.js';
+ import { QueryState } from '../../components/status.js';
+@@ -110,7 +116,7 @@ export function DefaultsSection() {
+     },
+     onSuccess: async (authoritative) => {
+       queryClient.setQueryData(keys.settings, authoritative);
+-      await queryClient.invalidateQueries({ queryKey: keys.settings, exact: true });
++      await refreshModelDefaults(queryClient);
+     },
+   });
+   return (
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index dc2876f7..b7e96faa 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -112,6 +112,16 @@ retained on the container or module. Run admission pins the checked version and
+ prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
+ become underscores); catalog/configuration issues retain their existing codes.
+ 
++Claude's ready `models` list also constrains the effective model and effort (#205). Manual
++admission resolves each pinned inference/LLM selection with the run's pinned owner/process
++defaults and its definition's loop defaults, rejecting `EFFORT_UNSUPPORTED` on the node before
++recording the run. Request resolution in the engine checks the catalog before every adapter
++request (manual and automatic starts, subloop children, resumes and recovery) and does not probe
++the CLI per request: Claude's catalog rows are seeded from the adapter's own capability table, so
++the catalog check enforces the same efforts. An unknown or unready probe retains the existing
++readiness handling; no capability check substitutes a model or effort or claims provider
++entitlement. The editor intersects the same ready capabilities with the catalog's effort choices.
++
+ Manual UI/API/MCP trigger start checks the engine's frozen root definition (published version or
+ draft snapshot) and every executable pinned subloop definition, recursively. Both `latest` and
+ numbered child references use the published records the engine prepared for this start, never a
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 4c1859b4..63120158 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -522,3 +522,7 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
+ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+ 
+ JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
++
++### Process model defaults (#205)
++
++`GET /system/model-defaults` returns the configured process `HarnessDefaults` (`byHarness`), before loop and owner overrides. The editor uses these values to display effective inherited model and effort, including custom `GG_DEFAULTS`. It requires `system:read`, is read-only and contains no credentials.
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index d07af1ba..4e466aeb 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -392,15 +392,15 @@ The owner's decisions of 2026-10-04: a node is edited in a modal dialog, the rig
+ 
+ ### Basic, Advanced and Context placement (Decided, #14 and #170)
+ 
+-Inference and decision forms separate Settings and Context. D1 retains that placement with the evaluator-specific format-4 fields. Optional inference model/effort overrides move to Model under Advanced; session policy/key stay on Settings with the harness, prompt and sandbox. Context preparation moves to its own Context tab. Decision provider context now follows its metadata rather than the old #14 table's conflicting claim that it was all advanced. Optional classifier thresholds move under Acceptance, on classifier branches. Required evaluator selections, questions, answer definitions and routes remain visible.
++Inference and decision forms separate Settings and Context. D1 retains that placement with the evaluator-specific format-4 fields. Inference model and effort stay visible on Settings with the harness, session policy/key, prompt and sandbox (#205). LLM decisions show model and one effort dropdown on Settings; classifiers keep Question, Model, then Answer and have no effort control. Context preparation moves to its own Context tab. Decision provider context now follows its metadata rather than the old #14 table's conflicting claim that it was all advanced. Optional classifier thresholds move under Acceptance, on classifier branches. Required evaluator selections, questions, answer definitions and routes remain visible.
+ 
+-| Kind      | Settings basic                                                                                           | Settings Advanced, by group                                                                                                                                                                                                                                                                                                                                | Context tab                                                                                                               |
+-| --------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+-| Inference | `harness`, `session.policy` and named-session `session.key`, `prompt.template`, `harnessOptions.sandbox` | Model: `model`, `effort`. Harness options: `harnessOptions.approval`, `.networkAccess`, `.webSearch`, `.configOverrides`, `capabilities` (`mcpServers`, `plugins`, `skills`). Output: `output.captureTranscript`, `.toMessages`, `.transforms`, `.schema` (JSON Schema, native output, repair enabled/attempts/prompt/onFailure). Limits: `timeoutSeconds` | Basic: `input` mutations, including their active variant's fields. Advanced ? Files: `contextFiles` (`path`, `template`). |
+-| Decision  | `kind` and applicable source/routes or classifier answer                                                 | Classifier thresholds and recording only                                                                                                                                                                                                                                                                                                                   | LLM/classifier `context`; expressions have no Context tab                                                                 |
+-| Script    | `command`, `args`, `cwd`                                                                                 | Process: `env`, `timeoutSeconds`. Input and output: `stdin`, `stdout`, `exitCodeRoutes`                                                                                                                                                                                                                                                                    | none                                                                                                                      |
+-| Subloop   | `loopRef`, `input.mode`, `output.mode`                                                                   | Input mapping: other `input` fields. Output mapping: other `output` fields. Limits: `depthLimitOverride`                                                                                                                                                                                                                                                   | none                                                                                                                      |
+-| Mutate    | `operations`, each collapsed to its kind and path                                                        | none                                                                                                                                                                                                                                                                                                                                                       | none                                                                                                                      |
++| Kind      | Settings basic                                                                                                              | Settings Advanced, by group                                                                                                                                                                                                                                                                                                      | Context tab                                                                                                               |
++| --------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
++| Inference | `harness`, `model`, `effort`, `session.policy` and named-session `session.key`, `prompt.template`, `harnessOptions.sandbox` | Harness options: `harnessOptions.approval`, `.networkAccess`, `.webSearch`, `.configOverrides`, `capabilities` (`mcpServers`, `plugins`, `skills`). Output: `output.captureTranscript`, `.toMessages`, `.transforms`, `.schema` (JSON Schema, native output, repair enabled/attempts/prompt/onFailure). Limits: `timeoutSeconds` | Basic: `input` mutations, including their active variant's fields. Advanced ? Files: `contextFiles` (`path`, `template`). |
++| Decision  | `kind` and applicable source/routes or classifier answer                                                                    | Classifier thresholds and recording only                                                                                                                                                                                                                                                                                         | LLM/classifier `context`; expressions have no Context tab                                                                 |
++| Script    | `command`, `args`, `cwd`                                                                                                    | Process: `env`, `timeoutSeconds`. Input and output: `stdin`, `stdout`, `exitCodeRoutes`                                                                                                                                                                                                                                          | none                                                                                                                      |
++| Subloop   | `loopRef`, `input.mode`, `output.mode`                                                                                      | Input mapping: other `input` fields. Output mapping: other `output` fields. Limits: `depthLimitOverride`                                                                                                                                                                                                                         | none                                                                                                                      |
++| Mutate    | `operations`, each collapsed to its kind and path                                                                           | none                                                                                                                                                                                                                                                                                                                             | none                                                                                                                      |
+ 
+ | Decision evaluator                     | Settings basic                                                                | Settings Advanced                                                                         | Context                                                                  |
+ | -------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+@@ -545,9 +545,15 @@ Choosing a schedule when no time zone was supplied authors the displayed UTC def
+ 
+ ### Catalog model and effort controls (#16)
+ 
+-The metadata controls `model` and `effort` are registered together in `editor/field-controls.ts` for node configs and loop defaults. The inference, decision Codex, and loop-default fields carry this metadata in the contracts; every form uses its canonical contract schema. `forms/fields/model.tsx` binds through `useField` and watches the sibling harness and model through react-hook-form. The inference harness selects the catalog partition, using the sibling schema's default when unset; groups without a harness use the inference contract's Codex default. `FormScopeContext` supplies the active form schema and unique scope for sibling notice IDs. Model uses the shared native `Select`, with enabled entries labelled by display name and id and an unset **(loop default)** choice (**(owner default)** for loop defaults). Native keyboard navigation and typeahead remain available, and the shared tokens cover both themes. The **Model catalog in Settings** link follows the control and help text in Tab order; there is no free-text model entry.
++The LLM decision's model is also one native dropdown: **Default (gpt-6-luna)**, for example, followed by explicit model choices. Default stores `{mode:"inherit"}` and an explicit choice stores `{mode:"explicit",value}`. There is no separate Model Mode selector. Both model and effort controls associate their inherited identity with the accessible description; an unsupported inherited effort includes its warning there too.
+ 
+-Effort offers the selected model's efforts, or every canonical effort when its metadata is unavailable or no model is selected. Its unset option says **(inherited; the catalog suggests low)** when low is suggested; the engine's node → loop → owner → process resolution is unchanged and the effective inherited effort may differ. Changing the model alone never rewrites effort. Explicit harness changes follow the authoring rule below (#204). A current missing/disabled model or unsupported effort stays selected as an unavailable option with a warning glyph and `HelpText`'s `warn` tone. Catalog validation warnings (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through `CatalogWarningsContext` from the editor's merged validation list. A server warning matching the local catalog status is omitted from the field notice while catalog data is available; unavailable data or a different warning keeps it visible. They remain warnings.
++Owner Settings and process defaults refresh when a node dialog opens and when the window regains focus or the tab becomes visible. Saving defaults in Settings updates the shared cache and invalidates both queries immediately. An API change made without a browser focus change may appear on the next focus or dialog open. No refresh changes saved node values. While the catalog has no result, the inherited effort label says **checking…** or **unavailable**, even when defaults have loaded; a failed refresh with cached catalog data keeps the last known choices.
++
++Claude inference admission checks the effective model and effort against its ready preflight capabilities as well as the catalog. Manual admission checks the pinned root and reachable child definitions before recording a run and refuses an unsupported effort with the node's typed `EFFORT_UNSUPPORTED`. Engine request resolution checks the catalog, which carries the adapter's capability table for Claude, before every adapter request for all starts, children and resumes, without probing the CLI per request.
++
++The metadata controls `model` and `effort` are registered together in `editor/field-controls.ts` for node configs and loop defaults. The inference, decision Codex, and loop-default fields carry this metadata in the contracts; every form uses its canonical contract schema. `forms/fields/model.tsx` binds through `useField` and watches the sibling harness and model through react-hook-form. The inference harness selects the catalog partition, using the sibling schema's default when unset; groups without a harness use the inference contract's Codex default. `FormScopeContext` supplies the active form schema and unique scope for sibling notice IDs. Model uses the shared native `Select`, with enabled entries labelled by display name and id and an unset **(loop default)** choice showing the inherited model id; loop defaults show **(owner default)** with the inherited owner-or-process model id. Native keyboard navigation and typeahead remain available, and the shared tokens cover both themes. The **Model catalog in Settings** link follows the control and help text in Tab order; there is no free-text model entry.
++
++Effort is one native dropdown, without a separate Mode/Explicit selector or Effort section. Its first entry is **Default (high)**, for example: it shows the actual inherited effort from loop, then owner Settings, then process defaults, independently of the selected model's catalog suggestion. The editor and request resolver share the domain's `inheritedHarnessDefaults` lookup; the loop-default form omits the loop level. The read-only `GET /system/model-defaults` exposes the process values, including custom `GG_DEFAULTS`; pending or unavailable defaults are labelled honestly. Selecting Default removes an inference override or stores `{mode:"inherit"}` for an LLM decision; an explicit choice stores the selected effort in the existing shape. Choices follow the effective model's catalog efforts, intersected with Claude's ready adapter capabilities. An unsupported inherited default is marked unsupported; it is never silently replaced. Changing the model alone never rewrites effort. Explicit harness changes follow the authoring rule below (#204). A current missing/disabled model or unsupported effort stays selected as an unavailable option with a warning glyph and `HelpText`'s `warn` tone. Catalog validation warnings (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through `CatalogWarningsContext` from the editor's merged validation list. A server warning matching the local catalog status is omitted from the field notice while catalog data is available; unavailable data or a different warning keeps it visible. They remain warnings.
+ 
+ The editor loads the catalog on mount (`useModelCatalog`, which also keys its API checks; see "Freshness" under the classifier models). While no catalog data is available, the same native selects retain their current values and focus, expose `aria-readonly`, and ignore changes. One loading/unavailable notice and **Retry model catalog** appear on Model; Effort's description points to that notice. Successful retry or automatic query recovery makes the existing controls editable. Checks may show issue badges before the catalog arrives, so following a model issue remains possible during loading; a clean answer under an unknown catalog never claims readiness. With no issues the indicator says **Checking…** while the catalog loads and **Validation unavailable** if it fails, until a check under the resolved catalog state completes. A failed refresh with cached data keeps choices editable and shows a notice that the catalog may be out of date. No fetch, refresh, or recovery writes form values. Unit cases cover catalog sizes, harness filtering and schema defaults, retained values, dependent effort, warning deduplication, focus, and failure/recovery; Edge checks cover publication and execution with the selected options, and focus through a delayed catalog and failed refresh.
+ 
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 26730afa..6f255075 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -57,7 +57,7 @@ A saved model that is missing or disabled stays selected with **not in catalog**
+ 
+ Only classifiers choose **Choice**, **Noul** or **Score**. Choice keeps criteria and stable IDs; Noul keeps both sides' criteria and IDs, a true-probability threshold and separate minimum confidence. Score keeps fractional indices and complete routing bands: an interior boundary enters the next band, and the final endpoint is inclusive. Connect each declared route. Route IDs own connections; labels and display order can change independently. Use the up/down buttons to reorder routes, Choice options or Score bands. Changing an ID in the structured form carries its connections, including their manual line layouts. An unfinished or duplicate ID keeps ownership until repaired, including after reopening its device draft or restoring a set-aside copy.
+ 
+-**Changing kind or classifier answer type** opens a review before any edit. It lists fields and unfinished input that will be lost and the new fields to complete. **Cancel change** keeps everything; **Confirm change** makes one undoable edit. Compatible route IDs, labels, connections and provider context are retained, including unfinished route-field text when moving between kinds or classifier answer types. The loss preview names fields and routes; inherited provider defaults are not listed as lost settings. Choice to Noul maps the first route to true and the second to false, retaining their criteria; Noul refuses any route count other than two. New source, classifier selection, criteria and Score rubrics/bounds stay blank until you author them. Blank source or missing provider configuration blocks publication; choose its validation issue to focus the field. LLM model and effort start at **inherit**.
++**Changing kind or classifier answer type** opens a review before any edit. It lists fields and unfinished input that will be lost and the new fields to complete. **Cancel change** keeps everything; **Confirm change** makes one undoable edit. Compatible route IDs, labels, connections and provider context are retained, including unfinished route-field text when moving between kinds or classifier answer types. The loss preview names fields and routes; inherited provider defaults are not listed as lost settings. Choice to Noul maps the first route to true and the second to false, retaining their criteria; Noul refuses any route count other than two. New source, classifier selection, criteria and Score rubrics/bounds stay blank until you author them. Blank source or missing provider configuration blocks publication; choose its validation issue to focus the field. LLM model starts at **Default**, showing its inherited model id; Effort starts at **Default**, showing its resolved inherited value.
+ 
+ The selected port is `lastOutput.value.portId`, provider details are `lastOutput.value.provenance`, and evidence is `lastOutput.value.observation`. Route observations expose `routeId`; classifier observations expose typed `answer`. Questions/instructions render against the full thread; provider context selection does not restrict Liquid exposure. Invalid configurations have precise diagnostics and no evaluator fallback. Current definitions/exports use format 4; old exports/stores require the integrated cutover.
+ 
+@@ -125,7 +125,7 @@ Empty or whitespace-only optional JSONata expressions count as absent and show n
+ 
+ The forms draw each field by its type. An asterisk (*) marks a field you must fill (screen readers hear "required"), and a list or set of options that needs entries says how many ("At least 2 items.", "Choose at least 1."); a problem shows under its field; a field with a default shows it as a placeholder or as the initial choice. An on/off setting with a default is a switch; one that may stay unset offers **Not set**, **Yes**, and **No**. A choice of two to four options is a row of segments (Tab reaches the chosen one and the arrow keys move it), a longer one a dropdown, and an optional choice keeps **Not set**. Liquid, JSONata, and JSON fields are code editors tagged with their language; **Tab** and **Shift+Tab** leave them as from any other field.
+ 
+-Inference, decision, script and subloop forms keep optional controls under **Advanced**, grouped by purpose. In inference, find model/effort overrides under **Advanced ? Model**; harness, session policy/key, prompt and sandbox stay visible on **Settings**. Open **Context** for `input` mutations, and **Context ? Advanced ? Files** for `contextFiles`. In provider decisions, **Context** holds message selection and last output; **Context ? Advanced ? Provider context** holds variable selection. Expression decisions have no Context tab. Decision answers/routes and required evaluator inputs stay visible on Settings; classifier confidence and Noul thresholds are under **Advanced ? Acceptance** inside Evaluation, with alternative recording under the form's **Advanced ? Recording**. Shared exit evaluators use the same nested threshold placement on their single panel.
++Inference, decision, script and subloop forms keep optional controls under **Advanced**, grouped by purpose. In inference, model and effort stay visible on **Settings** with harness, session policy/key, prompt and sandbox. LLM decisions also show model and effort on Settings. Effort is one dropdown: **Default (high)** shows the inherited value, followed by the effective model's supported choices. Choose Default to clear an explicit override; resolution is node, then loop, then Settings, then process defaults. Classifiers keep Question, Model, then Answer and have no effort control. Open **Context** for `input` mutations, and **Context ? Advanced ? Files** for `contextFiles`. In provider decisions, **Context** holds message selection and last output; **Context ? Advanced ? Provider context** holds variable selection. Expression decisions have no Context tab. Decision answers/routes and required evaluator inputs stay visible on Settings; classifier confidence and Noul thresholds are under **Advanced ? Acceptance** inside Evaluation, with alternative recording under the form's **Advanced ? Recording**. Shared exit evaluators use the same nested threshold placement on their single panel.
+ 
+ Use Left/Right, Home and End on the tabs; Tab leaves the tablist for the selected panel. Both panels keep your edits and unparsed text when switching. Tabs and Advanced show problem counts; Context and Advanced also count fields with values of their own. Choosing an issue opens the right tab and group at its field. Undo/Redo preserve your current tab and open groups; reopening starts on Settings. On large screens the node editor grows at 1024 and 1280 px; below 768 px it remains a full-width bottom sheet.
+ 
+diff --git a/docs/reference/api.md b/docs/reference/api.md
+index 4463c06d..1a1645d3 100644
+--- a/docs/reference/api.md
++++ b/docs/reference/api.md
+@@ -114,9 +114,10 @@ Schedules, webhook endpoints, and the public /hooks receiver.
+ 
+ Health, version, harness preflight.
+ 
+-| Method | Path                 | Summary                                                                                        | Parameters | Request body | Responses |
+-| ------ | -------------------- | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
+-| GET    | `/healthz`           | Liveness check                                                                                 | -          | -            | 200       |
+-| GET    | `/version`           | API name and version                                                                           | -          | -            | 200       |
+-| GET    | `/system/preflight`  | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
+-| GET    | `/harness/preflight` | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |
++| Method | Path                     | Summary                                                                                        | Parameters | Request body | Responses |
++| ------ | ------------------------ | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
++| GET    | `/system/model-defaults` | Process model and effort defaults, before loop and owner overrides                             | -          | -            | 200       |
++| GET    | `/healthz`               | Liveness check                                                                                 | -          | -            | 200       |
++| GET    | `/version`               | API name and version                                                                           | -          | -            | 200       |
++| GET    | `/system/preflight`      | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
++| GET    | `/harness/preflight`     | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |
+diff --git a/docs/reference/nodes.md b/docs/reference/nodes.md
+index b3d70bde..e5ab7e56 100644
+--- a/docs/reference/nodes.md
++++ b/docs/reference/nodes.md
+@@ -106,8 +106,8 @@ Ports: `out`.
+ | Field            | Type                                                                                                                                                       | Required | Default              | Advanced          | Description                                                                                                                 |
+ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+ | `harness`        | `"codex"` \| `"claude"`                                                                                                                                    | no       | `"codex"`            |                   | Harness that runs the session.                                                                                              |
+-| `model`          | string                                                                                                                                                     | no       |                      | yes               | Model; inherits within this harness from loop, owner, then process defaults.                                                |
+-| `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      | yes               | Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.                             |
++| `model`          | string                                                                                                                                                     | no       |                      |                   | Model; inherits within this harness from loop, owner, then process defaults.                                                |
++| `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      |                   | Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.                             |
+ | `session`        | one of `"fresh"` \| `"resume-previous"` \| `"resume-named"` by `policy`                                                                                    | no       | `{"policy":"fresh"}` |                   | Start fresh, resume the previous session, or resume a named session.                                                        |
+ | `prompt`         | { template }                                                                                                                                               | yes      |                      |                   | Liquid template rendered against the thread.                                                                                |
+ | `input`          | array of (one of `"set"` \| `"delete"` \| `"append-message"` \| `"inject"` \| `"truncate"` \| `"drop"` \| `"replace"` \| `"redact"` \| `"coerce"` by `op`) | no       | `[]`                 |                   | Mutations applied to the thread view the template sees.                                                                     |
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+index fc865ac8..0700fa25 100644
+--- a/packages/api-client/openapi.json
++++ b/packages/api-client/openapi.json
+@@ -17574,6 +17574,65 @@
+     }
+   },
+   "paths": {
++    "/system/model-defaults": {
++      "get": {
++        "summary": "Process model and effort defaults, before loop and owner overrides",
++        "tags": [
++          "system"
++        ],
++        "responses": {
++          "200": {
++            "description": "Default Response",
++            "content": {
++              "application/json": {
++                "schema": {
++                  "type": "object",
++                  "properties": {
++                    "byHarness": {
++                      "default": {},
++                      "type": "object",
++                      "propertyNames": {
++                        "type": "string",
++                        "enum": [
++                          "codex",
++                          "claude"
++                        ]
++                      },
++                      "additionalProperties": {
++                        "type": "object",
++                        "properties": {
++                          "model": {
++                            "type": "string",
++                            "minLength": 1,
++                            "maxLength": 256
++                          },
++                          "effort": {
++                            "type": "string",
++                            "enum": [
++                              "minimal",
++                              "low",
++                              "medium",
++                              "high",
++                              "xhigh",
++                              "max"
++                            ]
++                          }
++                        },
++                        "additionalProperties": false
++                      }
++                    }
++                  },
++                  "required": [
++                    "byHarness"
++                  ],
++                  "additionalProperties": false
++                }
++              }
++            }
++          }
++        }
++      }
++    },
+     "/healthz": {
+       "get": {
+         "summary": "Liveness check",
+diff --git a/packages/api-client/src/contract.test.ts b/packages/api-client/src/contract.test.ts
+index b42e12dc..562aa7fb 100644
+--- a/packages/api-client/src/contract.test.ts
++++ b/packages/api-client/src/contract.test.ts
+@@ -55,6 +55,17 @@ async function until(predicate: () => Promise<boolean>, timeoutMs = 5000): Promi
+ }
+ 
+ describe('against the in-process API (local trusted mode)', () => {
++  it('reads process model defaults through the public resource', async () => {
++    const app = await createTestApp();
++    try {
++      const client = createGraphGoblinClient({ baseUrl: await listen(app) });
++      expect(await system.modelDefaults(client)).toEqual({
++        byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
++      });
++    } finally {
++      await app.close();
++    }
++  });
+   let t: TestApp;
+   let baseUrl: string;
+   let client: GraphGoblinClient;
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+index f6cb9edb..842cd01c 100644
+--- a/packages/api-client/src/generated/schema.ts
++++ b/packages/api-client/src/generated/schema.ts
+@@ -10,6 +10,51 @@
+ export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+ 
+ export interface paths {
++    "/system/model-defaults": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Process model and effort defaults, before loop and owner overrides */
++        get: {
++            parameters: {
++                query?: never;
++                header?: never;
++                path?: never;
++                cookie?: never;
++            };
++            requestBody?: never;
++            responses: {
++                /** @description Default Response */
++                200: {
++                    headers: {
++                        [name: string]: unknown;
++                    };
++                    content: {
++                        "application/json": {
++                            /** @default {} */
++                            byHarness: {
++                                [key: string]: {
++                                    model?: string | undefined;
++                                    /** @enum {string} */
++                                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
++                                };
++                            };
++                        };
++                    };
++                };
++            };
++        };
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+     "/healthz": {
+         parameters: {
+             query?: never;
+diff --git a/packages/api-client/src/resources.ts b/packages/api-client/src/resources.ts
+index f6ff06fe..4fefb076 100644
+--- a/packages/api-client/src/resources.ts
++++ b/packages/api-client/src/resources.ts
+@@ -271,6 +271,8 @@ export const events = {
+ };
+ 
+ export const system = {
++  modelDefaults: async (client: GraphGoblinClient) =>
++    unwrap(await client.GET('/system/model-defaults')),
+   health: async (client: GraphGoblinClient) => unwrap(await client.GET('/healthz')),
+   version: async (client: GraphGoblinClient) => unwrap(await client.GET('/version')),
+   /** Is each configured harness installed and authenticated? */
+diff --git a/packages/contracts/src/evaluation.ts b/packages/contracts/src/evaluation.ts
+index c40db4df..29dead47 100644
+--- a/packages/contracts/src/evaluation.ts
++++ b/packages/contracts/src/evaluation.ts
+@@ -365,8 +365,12 @@ const LlmSourceSchema = z.strictObject({
+   kind: z.literal('llm').meta(field('Use a structured Codex evaluation.')),
+   instructions: TemplateSchema.meta(field('Liquid instructions rendered against the full thread.')),
+   harness: z.literal('codex').meta(field('Implemented structured evaluator harness.')),
+-  model: ModelSelectionSchema.meta(field('Inherit or explicitly select the model.')),
+-  effort: EffortSelectionSchema.meta(field('Inherit or explicitly select reasoning effort.')),
++  model: ModelSelectionSchema.meta(
++    field('Inherit or explicitly select the model.', { control: 'model-selection' }),
++  ),
++  effort: EffortSelectionSchema.meta(
++    field('Inherit or explicitly select reasoning effort.', { control: 'effort-selection' }),
++  ),
+ });
+ export const LlmDecisionConfigSchema = LlmSourceSchema.extend({
+   ...GateLimits,
+diff --git a/packages/contracts/src/nodes.ts b/packages/contracts/src/nodes.ts
+index ddd43ba7..6d30b3df 100644
+--- a/packages/contracts/src/nodes.ts
++++ b/packages/contracts/src/nodes.ts
+@@ -232,8 +232,6 @@ export const InferenceConfigSchema = z
+     model: ModelNameSchema.optional().meta(
+       field('Model; inherits within this harness from loop, owner, then process defaults.', {
+         control: 'model',
+-        advanced: true,
+-        group: 'Model',
+       }),
+     ),
+     effort: EffortSchema.optional().meta(
+@@ -241,8 +239,6 @@ export const InferenceConfigSchema = z
+         'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
+         {
+           control: 'effort',
+-          advanced: true,
+-          group: 'Model',
+         },
+       ),
+     ),
+diff --git a/packages/domain/src/inherited-harness-defaults.test.ts b/packages/domain/src/inherited-harness-defaults.test.ts
+new file mode 100644
+index 00000000..e719010c
+--- /dev/null
++++ b/packages/domain/src/inherited-harness-defaults.test.ts
+@@ -0,0 +1,75 @@
++import type { HarnessDefaults } from '@graphgoblin/contracts';
++import { describe, expect, it } from 'vitest';
++import { inheritedHarnessDefaults } from './index.js';
++
++const empty: HarnessDefaults = { byHarness: {} };
++const defaults = {
++  loopDefaults: {
++    byHarness: {
++      codex: { model: 'codex-loop', effort: 'high' },
++      claude: { model: 'claude-loop', effort: 'max' },
++    },
++  },
++  ownerDefaults: {
++    byHarness: {
++      codex: { model: 'codex-owner', effort: 'medium' },
++      claude: { model: 'claude-owner', effort: 'xhigh' },
++    },
++  },
++  processDefaults: {
++    byHarness: {
++      codex: { model: 'codex-process', effort: 'low' },
++      claude: { model: 'claude-process', effort: 'medium' },
++    },
++  },
++} satisfies Record<string, HarnessDefaults>;
++
++describe.each(['codex', 'claude'] as const)('%s inherited harness defaults', (harness) => {
++  it.each([
++    ['loop', defaults, defaults.loopDefaults],
++    ['owner', { ...defaults, loopDefaults: empty }, defaults.ownerDefaults],
++    [
++      'process',
++      { ...defaults, loopDefaults: empty, ownerDefaults: empty },
++      defaults.processDefaults,
++    ],
++  ] as const)('takes model and effort from %s before lower levels', (_level, input, expected) => {
++    expect(inheritedHarnessDefaults({ ...input, harness })).toEqual(expected.byHarness[harness]);
++  });
++
++  it('inherits effort independently when the loop only supplies a model', () => {
++    expect(
++      inheritedHarnessDefaults({
++        ...defaults,
++        harness,
++        loopDefaults: { byHarness: { [harness]: { model: 'partial-loop' } } },
++        ownerDefaults: { byHarness: { [harness]: { model: 'shadowed-owner' } } },
++      }),
++    ).toEqual({
++      model: 'partial-loop',
++      effort: defaults.processDefaults.byHarness[harness].effort,
++    });
++  });
++
++  it('inherits model independently when the loop only supplies effort', () => {
++    expect(
++      inheritedHarnessDefaults({
++        ...defaults,
++        harness,
++        loopDefaults: { byHarness: { [harness]: { effort: 'low' } } },
++      }),
++    ).toEqual({ model: defaults.ownerDefaults.byHarness[harness].model, effort: 'low' });
++  });
++
++  it('leaves missing fields unresolved instead of borrowing from another harness', () => {
++    const other = harness === 'codex' ? 'claude' : 'codex';
++    expect(
++      inheritedHarnessDefaults({
++        harness,
++        loopDefaults: empty,
++        ownerDefaults: empty,
++        processDefaults: { byHarness: { [other]: { model: 'other-model', effort: 'high' } } },
++      }),
++    ).toEqual({ model: undefined, effort: undefined });
++  });
++});
+diff --git a/packages/domain/src/model-resolution.test.ts b/packages/domain/src/model-resolution.test.ts
+index ddd9cfc8..6035faa0 100644
+--- a/packages/domain/src/model-resolution.test.ts
++++ b/packages/domain/src/model-resolution.test.ts
+@@ -1,5 +1,9 @@
+ import { describe, expect, it } from 'vitest';
+-import type { HarnessDefaults, ModelCatalogEntry } from '@graphgoblin/contracts';
++import type {
++  ClaudeModelCapability,
++  HarnessDefaults,
++  ModelCatalogEntry,
++} from '@graphgoblin/contracts';
+ import {
+   resolveHarnessModel,
+   validateHarnessDefaults,
+@@ -165,6 +169,35 @@ const claudeBase: HarnessModelResolutionInput = {
+   },
+ };
+ describe('independent Claude model defaults', () => {
++  it.each([undefined, 'high'] as const)(
++    'refuses effective effort absent from ready capabilities (explicit=%s)',
++    (effort) => {
++      expect(
++        resolveHarnessModel({
++          ...claudeBase,
++          ...(effort !== undefined ? { effort } : {}),
++          claudeCapabilities: [{ model: opus.model, efforts: ['low'] }],
++        }),
++      ).toMatchObject({ status: 'invalid', code: 'EFFORT_UNSUPPORTED', path: 'effort' });
++    },
++  );
++  it('checks the selected model, accepts supported effort, and leaves Codex independent', () => {
++    expect(
++      resolveHarnessModel({
++        ...claudeBase,
++        effort: 'low',
++        claudeCapabilities: [{ model: opus.model, efforts: ['low'] }],
++      }),
++    ).toMatchObject({ status: 'ready', model: opus.model, effort: 'low' });
++    const lists: ClaudeModelCapability[][] = [[], [{ model: 'another-model', efforts: ['low'] }]];
++    for (const claudeCapabilities of lists)
++      expect(
++        resolveHarnessModel({ ...claudeBase, effort: 'low', claudeCapabilities }),
++      ).toMatchObject({ code: 'EFFORT_UNSUPPORTED' });
++    expect(resolveHarnessModel({ ...base, claudeCapabilities: [] })).toMatchObject({
++      status: 'ready',
++    });
++  });
+   it('uses exact family settings and never catalog guidance or another family fallback', () => {
+     expect(resolveHarnessModel(claudeBase)).toEqual({
+       status: 'ready',
+diff --git a/packages/domain/src/model-resolution.ts b/packages/domain/src/model-resolution.ts
+index ab4f7408..3bda9018 100644
+--- a/packages/domain/src/model-resolution.ts
++++ b/packages/domain/src/model-resolution.ts
+@@ -1,4 +1,11 @@
+-import type { Effort, HarnessDefaults, HarnessId, ModelCatalogEntry } from '@graphgoblin/contracts';
++import type {
++  ClaudeModelCapability,
++  Effort,
++  HarnessDefaults,
++  HarnessId,
++  HarnessModelDefaults,
++  ModelCatalogEntry,
++} from '@graphgoblin/contracts';
+ 
+ export interface HarnessModelResolutionInput {
+   harness: HarnessId;
+@@ -8,6 +15,8 @@ export interface HarnessModelResolutionInput {
+   ownerDefaults: HarnessDefaults;
+   processDefaults: HarnessDefaults;
+   catalog: readonly ModelCatalogEntry[];
++  /** A ready Claude probe's model list, when provided by the adapter. */
++  claudeCapabilities?: readonly ClaudeModelCapability[];
+ }
+ export type HarnessModelResolution =
+   | { status: 'ready'; model: string; effort: Effort }
+@@ -24,14 +33,28 @@ export type HarnessModelResolution =
+     }
+   | { status: 'unavailable'; code: 'MODEL_DISABLED'; path: 'model'; message: string };
+ 
++/** Inherit each field independently, within one harness, from loop, owner, then process. */
++export function inheritedHarnessDefaults(
++  input: Pick<
++    HarnessModelResolutionInput,
++    'harness' | 'loopDefaults' | 'ownerDefaults' | 'processDefaults'
++  >,
++): HarnessModelDefaults {
++  const levels = [input.loopDefaults, input.ownerDefaults, input.processDefaults].map(
++    (defaults) => defaults.byHarness[input.harness],
++  );
++  return {
++    model: levels.find((level) => level?.model !== undefined)?.model,
++    effort: levels.find((level) => level?.effort !== undefined)?.effort,
++  };
++}
++
+ /** Resolve only the selected harness's defaults; catalog effort is guidance, never an implicit default. */
+ export function resolveHarnessModel(input: HarnessModelResolutionInput): HarnessModelResolution {
+   const { harness, catalog } = input;
+-  const levels = [input.loopDefaults, input.ownerDefaults, input.processDefaults].map(
+-    (defaults) => defaults.byHarness[harness],
+-  );
+-  const model = input.model ?? levels.find((level) => level?.model !== undefined)?.model;
+-  const effort = input.effort ?? levels.find((level) => level?.effort !== undefined)?.effort;
++  const inherited = inheritedHarnessDefaults(input);
++  const model = input.model ?? inherited.model;
++  const effort = input.effort ?? inherited.effort;
+   if (!model)
+     return {
+       status: 'invalid',
+@@ -58,7 +81,14 @@ export function resolveHarnessModel(input: HarnessModelResolutionInput): Harness
+       path: 'effort',
+       message: 'No reasoning effort is configured for the selected harness',
+     };
+-  if (!entry.efforts.includes(effort))
++  if (
++    !entry.efforts.includes(effort) ||
++    (harness === 'claude' &&
++      input.claudeCapabilities !== undefined &&
++      !input.claudeCapabilities.some(
++        (capability) => capability.model === model && capability.efforts.includes(effort),
++      ))
++  )
+     return {
+       status: 'invalid',
+       code: 'EFFORT_UNSUPPORTED',
+diff --git a/packages/engine/src/claude-effort.test.ts b/packages/engine/src/claude-effort.test.ts
+new file mode 100644
+index 00000000..ed4c889b
+--- /dev/null
++++ b/packages/engine/src/claude-effort.test.ts
+@@ -0,0 +1,65 @@
++import { expect, it } from 'vitest';
++import { FakeHarness, createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
++import type { HarnessPreflight } from '@graphgoblin/contracts';
++
++class ProbedHarness extends FakeHarness {
++  probes = 0;
++  override preflight(): Promise<HarnessPreflight> {
++    this.probes += 1;
++    return super.preflight();
++  }
++}
++
++// Claude's catalog rows are seeded from the adapter's capability table, so request resolution
++// checks the catalog and never probes the CLI per request; manual admission checks the ready
++// capabilities once per start (apps/api run-readiness).
++it.each(['supported', 'unsupported'] as const)(
++  'resolves a Claude request against the catalog without probing the harness: %s',
++  async (state) => {
++    const engine = await createTestEngine({
++      defaults: { byHarness: { claude: { model: 'claude-opus-5-5', effort: 'high' } } },
++    });
++    const harness = new ProbedHarness([], 'claude');
++    engine.ports.harnesses.claude = harness;
++    engine.ports.modelCatalog.entries = [
++      {
++        harness: 'claude',
++        model: 'claude-opus-5-5',
++        displayName: 'Opus',
++        source: 'harness',
++        enabled: true,
++        efforts: state === 'supported' ? ['low', 'high'] : ['low'],
++        defaultEffort: 'low',
++      },
++    ];
++    const version = engine.publish(
++      singleNodeLoop('Capability guard', {
++        id: 'work',
++        kind: 'inference',
++        label: 'Work',
++        config: {
++          harness: 'claude',
++          harnessOptions: { sandbox: 'read-only', approval: 'never' },
++          prompt: { template: 'q' },
++        },
++      }),
++    );
++    const run = await engine.runToIdle(version.loopId);
++    if (state === 'unsupported') {
++      expect(run).toMatchObject({
++        status: 'failed',
++        failure: {
++          nodeId: 'work',
++          code: 'EVALUATION_INVALID_CONFIGURATION',
++          details: [{ harness: 'claude', resolution: { code: 'EFFORT_UNSUPPORTED' } }],
++        },
++      });
++      expect(harness.started).toEqual([]);
++    } else {
++      expect(run.status).toBe('succeeded');
++      expect(harness.started).toMatchObject([{ model: 'claude-opus-5-5', effort: 'high' }]);
++    }
++    expect(harness.probes).toBe(0);
++    engine.manager.stop();
++  },
++);
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index e88227d6..41b91100 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -125,6 +125,7 @@ export interface RunStartPlan {
+   root: LoopVersionRecord;
+   versions: ReadonlyMap<string, LoopVersionRecord>;
+   subloopVersions: Readonly<Record<string, string>>;
++  defaults: PinnedDefaults;
+ }
+ 
+ /** A run start prepared outside the pin lock, admitted inside it. */
+@@ -470,6 +471,7 @@ export class RunManager {
+         root: prepared.version,
+         versions,
+         subloopVersions: intent.queued.subloopVersions ?? {},
++        defaults: prepared.run.pinned.defaults,
+       });
+       const admitted = await this.withPinLock(async () => {
+         await this.assertVersionPresent(prepared.sourceId, input.loopId);
