@@ -324,6 +324,14 @@ Existing authored gate time checks and node timeouts still apply. The run inspec
 Execution limits card shows the pinned values and absolute deadline, even after edits.
 An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
 
+Settings reads the schema's structured-completion default: null means no completion
+deadline unless the loop sets one. In the Loop tab, Structured completion milliseconds
+defaults to Unlimited. Choose Limited and enter milliseconds (the suggestion is 120000)
+to bound each LLM decision or structured repair call. The run inspector shows its pinned
+value. Expiry aborts the call and releases capacity with `STRUCTURED_COMPLETION_TIMEOUT`;
+late results cannot change that outcome. Unlimited disables this cutoff, while Cancel
+and independent authored limits remain available.
+
 Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
 has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
 script/decision nodes. Only a positively unsubmitted transient transport failure retries

@@ -1,4 +1,7 @@
 import { existsSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { HarnessPort } from '@graphgoblin/engine';
 import { FakeHarness } from '@graphgoblin/engine/testing';
 import { describe, expect, it, vi } from 'vitest';
@@ -130,12 +133,25 @@ it('forwards abort through the Codex harness to the SDK call and cleans its dire
 });
 
 it.each([false, true])(
-  'calls harness cancellation once and cleans up when cancellation rejects=%s',
+  'removes scratch only after harness cancellation settles, rejects=%s',
   async (fails) => {
-    const cleanup = vi.fn(() => Promise.resolve());
+    const scratch = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-'));
+    const order: string[] = [];
+    const cleanup = vi.fn(async () => {
+      order.push('cleanup');
+      await rm(scratch, { recursive: true, force: true });
+    });
     const failure = new Error('cancel cleanup failure');
     const cancelled = new Error('caller cancelled');
-    const cancel = vi.fn(() => (fails ? Promise.reject(failure) : Promise.resolve()));
+    let settleCancel!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      settleCancel = resolve;
+    });
+    const cancel = vi.fn(async () => {
+      await pending;
+      order.push('cancel settled');
+      if (fails) throw failure;
+    });
     const controller = new AbortController();
     const harness: HarnessPort = {
       id: 'codex',
@@ -154,12 +170,24 @@ it.each([false, true])(
       },
     };
     const structured = createCodexStructured(harness, {
-      tempDir: () => Promise.resolve({ path: '/scratch', cleanup }),
+      tempDir: () => Promise.resolve({ path: scratch, cleanup }),
     });
-    await expect(structured.complete({ prompt: 'p', schema }, controller.signal)).rejects.toBe(
-      fails ? failure : cancelled,
-    );
-    expect(cancel).toHaveBeenCalledOnce();
-    expect(cleanup).toHaveBeenCalledOnce();
+    const result = structured.complete({ prompt: 'p', schema }, controller.signal);
+    const rejected = expect(result).rejects.toBe(fails ? failure : cancelled);
+    try {
+      await expect.poll(() => cancel.mock.calls.length).toBe(1);
+      expect(cleanup).not.toHaveBeenCalled();
+      expect(existsSync(scratch)).toBe(true);
+      settleCancel();
+      await rejected;
+      expect(cancel).toHaveBeenCalledOnce();
+      expect(cleanup).toHaveBeenCalledOnce();
+      expect(order).toEqual(['cancel settled', 'cleanup']);
+      expect(existsSync(scratch)).toBe(false);
+    } finally {
+      settleCancel();
+      await result.catch(() => undefined);
+      await rm(scratch, { recursive: true, force: true });
+    }
   },
 );

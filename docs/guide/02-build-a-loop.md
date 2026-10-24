@@ -99,12 +99,14 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
 
 ## Set workspace and limits
 
-| Setting             | Configure it                                                                                                                                                                                                   |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxNodeVisits`     | Default 10, range 1 to 10,000. Safety cap against unintended cycles; exceeding fresh visits per node fails `MAX_NODE_VISITS`. Intentional repeats use a decision gate.                                         |
-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
-| `defaults`          | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
+| Setting               | Configure it                                                                                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxNodeVisits`       | Default 10, range 1 to 10,000. Safety cap against unintended cycles; exceeding fresh visits per node fails `MAX_NODE_VISITS`. Intentional repeats use a decision gate.                                         |
+| `runDeadlineSeconds`  | Default null (no run deadline), range 1 to 31,536,000 seconds when Limited. Includes waits, pauses and downtime; expiry fails `RUN_DEADLINE_EXCEEDED`.                                                         |
+| `structuredTimeoutMs` | Default null (Unlimited), range 1 to 31,536,000,000 milliseconds when Limited. Bounds each LLM decision or structured repair completion; expiry fails `STRUCTURED_COMPLETION_TIMEOUT`.                         |
+| `workingDirectory`    | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
+| `subloopDepthLimit`   | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
+| `defaults`            | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
@@ -383,6 +385,13 @@ Marked repeat decisions use Maximum passes; choose Unlimited there for indefinit
 Existing authored gate time checks and node timeouts still apply. The run inspector's
 Execution limits card shows the pinned values and absolute deadline, even after edits.
 An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Structured completion milliseconds is independently Unlimited by default. Choose Limited
+and enter milliseconds (the suggestion is 120000) to bound each LLM decision or structured
+repair call. The limit is pinned on the run. Expiry aborts the call, releases capacity and
+fails `STRUCTURED_COMPLETION_TIMEOUT`, naming the configured milliseconds. Late results
+are discarded. Unlimited removes this cutoff; explicit Cancel and other authored limits
+still apply. This is an execution deadline, not a usage budget.
 
 Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
 has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware

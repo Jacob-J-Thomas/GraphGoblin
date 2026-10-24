@@ -1,7 +1,9 @@
 # ADR-0051: Engine-owned structured-completion deadlines
 
-Status: implemented; independent review and real-provider QA remain separate.
+Status: implemented in PR #392; independent review approved with required fixes.
+The reviewer passed the real-adapter check on `12a96af9`; round-2 fixes await review and QA.
 Date: 2026-10-23.
+Updated: 2026-10-24.
 
 The old process `EngineSettings.structuredTimeoutMs` declared a 120,000 ms limit in
 the API but no caller enforced it. Stalled repair calls also held capacity after a
@@ -21,6 +23,7 @@ settles, propagates parent cancellation and run deadlines, checks elapsed time w
 busy event loop delays a timer, and handles both late fulfillment and rejection.
 Long timers re-arm in chunks no larger than Node's 2,147,483,647 ms timer range.
 Timeout is the resumable `STRUCTURED_COMPLETION_TIMEOUT` with `details.timeoutMs`;
+LLM decisions also retain provider, model and effort in `details.provenance`.
 a deliberate Resume can repeat a read-only evaluation after its external cause clears.
 No automatic retry is introduced. Explicit run cancellation remains status `cancelled`
 and has no timeout failure code. Existing terminal-event arbitration remains authoritative.
@@ -30,6 +33,8 @@ abort and forwards the signal through CodexHarness to the SDK/provider process. 
 engine does not wait indefinitely for a broken adapter before releasing its slot.
 The harness retains its existing bounded cancellation cleanup; no new kill grace is
 introduced here. Real process termination requires the separate adapter QA script.
+Late fulfillments and non-abort rejections are warned once; acknowledgement of the
+forwarded abort reason or an AbortError is normal cleanup and is not a late result.
 
 Unlimited disables only this cutoff. Explicit node/run deadlines remain independent;
 classifier calls retain their existing provider controls. Inference turns, including

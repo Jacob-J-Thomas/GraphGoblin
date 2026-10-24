@@ -18,8 +18,8 @@ import { isAbortError, RunFailureError } from './errors.js';
 import type { HandlerServices } from './handler.js';
 import type { ClassifierUnavailableReason, EnginePorts } from './ports.js';
 interface EvaluationRequest {
-  structuredTimeoutMs?: number | null;
-  runId?: string;
+  structuredTimeoutMs: number | null;
+  runId: string;
   nodeId: string;
   ownerId: string;
   config: { kind: 'expression' | 'llm' | 'classifier' };
@@ -315,13 +315,20 @@ async function evaluateLlm(
     raw = await completeWithDeadline(
       (signal) => decider.route({ ...prepared, routes: config.routes }, signal),
       request.signal,
-      request.structuredTimeoutMs ?? null,
+      request.structuredTimeoutMs,
       request.ports.logger,
-      { nodeId: request.nodeId, ...(request.runId ? { runId: request.runId } : {}) },
+      { nodeId: request.nodeId, runId: request.runId },
     );
     request.signal.throwIfAborted();
   } catch (error) {
-    if (error instanceof RunFailureError) throw error;
+    if (error instanceof RunFailureError) {
+      if (error.code === 'STRUCTURED_COMPLETION_TIMEOUT')
+        fail(request, error.code, error.message, error.options.resumable ?? true, {
+          timeoutMs: request.structuredTimeoutMs,
+          provenance,
+        });
+      throw error;
+    }
     providerFailure(request, error, provenance);
   }
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw))

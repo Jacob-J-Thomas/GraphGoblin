@@ -17,19 +17,6 @@ export const WorkingDirectorySpecSchema = z.discriminatedUnion('kind', [
 export type WorkingDirectorySpec = z.infer<typeof WorkingDirectorySpecSchema>;
 
 export const ExecutionLimitsSchema = z.strictObject({
-  structuredTimeoutMs: z
-    .number()
-    .int()
-    .positive()
-    .max(31_536_000_000)
-    .nullable()
-    .default(null)
-    .meta(
-      field(
-        'Milliseconds per LLM decision or structured repair completion. No deadline by default; Unlimited removes this cutoff.',
-        { control: 'execution-limit' },
-      ),
-    ),
   maxNodeVisits: z
     .number()
     .int()
@@ -53,6 +40,19 @@ export const ExecutionLimitsSchema = z.strictObject({
     .meta(
       field(
         'Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.',
+        { control: 'execution-limit' },
+      ),
+    ),
+  structuredTimeoutMs: z
+    .number()
+    .int()
+    .positive()
+    .max(31_536_000_000)
+    .nullable()
+    .default(null)
+    .meta(
+      field(
+        'Milliseconds per LLM decision or structured repair completion. No deadline by default; Unlimited removes this cutoff.',
         { control: 'execution-limit' },
       ),
     ),

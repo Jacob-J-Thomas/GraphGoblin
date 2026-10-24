@@ -72,8 +72,9 @@ export function LoopSettingsPanel({
       <HelpText>
         Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum
         passes for an intentional repeat. The elapsed execution deadline includes waits and pauses.
-        There is no run deadline unless you set one. Visits and passes can be explicitly set to
-        Unlimited; cancellation remains available.
+        There is no run deadline unless you set one. Structured completion milliseconds bounds each
+        LLM decision or structured repair call when Limited; it defaults to Unlimited. Visits and
+        passes can also be explicitly set to Unlimited; cancellation remains available.
       </HelpText>
       <CatalogWarningsContext
         value={issues

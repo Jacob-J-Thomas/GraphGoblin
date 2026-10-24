@@ -5,11 +5,16 @@
 Branch: `codex-wp-f3-270`. Worktree:
 `%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-270`.
 Base commit: `fbd48d3da5f162539964516a34d5de7e387d63c6`.
-Uncommitted; orchestrator review and unresolved validation remain before commit.
+Round 1 was formatted, committed and pushed by the orchestrator as
+`12a96af9a661d7779a956ebac8d6569205749bb8` (PR #392). Round-2 changes are uncommitted.
+This record retains round-1 test/gate history; current findings, commands and results
+are in [the round-2 report](round-2/REPORT.md). Historical manifests describe their
+recorded round-1 source bytes, not the current round-2 source. The artifact index
+refreshes this updated report's hash; the round-1 raw logs and runners are unchanged.
 
 ## 2. Per bolt
 
-**#270: implemented; full verification remains incomplete.**
+**#270: implemented; round-1 independent real-adapter check passed; required round-2 fixes await review and QA.**
 
 - Baseline: both public RunManager and API reproductions stayed `running` beyond the
   configured visible run deadline, while the repair call remained pending and capacity
@@ -21,7 +26,7 @@ Uncommitted; orchestrator review and unresolved validation remain before commit.
   milliseconds in its message and `details.timeoutMs`. Public engine tests demonstrate
   capacity release; API tests exercise repair and the real CodexDecider over a fake
   StructuredPort. An authored run deadline retains `RUN_DEADLINE_EXCEEDED`.
-- Late settlement: both fulfillment and rejection are observed once after interruption,
+- Late settlement: fulfillment and non-abort rejection are observed once after interruption,
   logged as `late structured completion discarded` with run/node identity and no provider
   body, and cannot produce a decision, node completion patch or changed thread.
 - Cancellation: explicit Cancel remains `cancelled`, with `run.cancelled` and no timeout
@@ -37,17 +42,20 @@ Uncommitted; orchestrator review and unresolved validation remain before commit.
   reaches the SDK through CodexHarness, session.cancel is invoked and scratch cleanup
   runs after cancellation. Tests cover early abort, SDK abort forwarding, cancellation
   cleanup and cleanup failure.
-- Real adapter: the 100 ms case produced the typed timeout and advanced past assertions
-  that the original SDK session settled and its scratch directory was cleaned. The
-  expected-fast case exceeded its explicit 60,000 ms deadline. **The positive live case
-  is unresolved.** [Attempt log](real-adapter.log.txt) and
-  [reconstructed attempted runner](real-adapter-check-run.mjs) retain this evidence. The attempted runner was reconstructed by reversing the later model-constant and final-cleanup edits; its original raw script capture was not kept. The attempt
-  preceded the final engine Promise.race refactor; that earlier helper source was not
-  kept separately. Adapter cancellation code is unchanged. The
-  [current runner](real-adapter-check.mjs) adds bounded final cleanup reporting and is
-  ready for the orchestrator to run outside this sandbox. No further provider retry
-  was attempted here. SDK session settlement is observed; no separate PID-tree inventory
-  is claimed.
+- Real adapter evidence:
+  - [real-adapter.log.txt](real-adapter.log.txt) is the **failed sandbox attempt**:
+    the short-deadline case reached its timeout/cleanup assertions, but the expected-fast
+    case timed out after 60,000 ms. The earlier helper preceded the final Promise.race
+    refactor. The attempted runner was reconstructed; its original raw script was not kept.
+  - The reviewer ran the committed current runner unmodified outside the sandbox at
+    `12a96af9`, using Codex CLI 0.160.0: **PASS**. The 100 ms case timed out
+    (run 1,721 ms), the 60,000 ms case succeeded in 20,346 ms with `{value: 7}`, and both
+    scratch directories were cleaned. [Copied reviewer output](round-2/real-adapter-review.log.txt)
+    was read from `%USERPROFILE%\AppData\Local\Temp\gg-review-270-api\real.log`.
+    This is independent reviewer evidence, not a provider run performed by this worker.
+    Its one late-results warning was an abort acknowledgement; round 2 corrects that
+    warning and tests it separately. SDK session settlement and scratch cleanup are
+    observed; no separate PID-tree inventory is claimed.
 
 ## 3. Files changed
 
@@ -144,7 +152,8 @@ to avoid denied writes to the shared cache. Two workers limit this worker's test
 - `pnpm.cmd build --concurrency=2`: passed 11/11.
 - From `apps/web`, `pnpm.cmd exec playwright test e2e/unlimited-mode.spec.ts`: passed 2/2.
 - `node docs/qa/2026-10-23-wp-f3-270/real-adapter-check.mjs`: incomplete positive case;
-  the retained attempt exited 1 after its 60-second timeout.
+  the retained sandbox attempt exited 1 after its 60-second timeout. The separate
+  reviewer run of the committed script passed, as recorded in section 2.
 - `git diff --check`: passed.
 
 ## 6. Docs
@@ -184,26 +193,17 @@ without content differences and check:docs passed.
 
 ## 8. Caveats and open items
 
-Do not call #270 fully verified or merge-ready. The positive real-provider case needs
-an outside-sandbox run of the current runner, and aggregate gate failures and the incomplete
-whole-repository format gate need independent QA/baseline reconciliation. No retry-to-green acceptance is claimed. See
-[host measurement](HOST-MEASUREMENT.md) for the observed process load and its limits.
-Unchanged engine child-wake/Unlimited and adapter CLI-probe timing failures recur; an
-earlier checkpoint test also measured 2027.96 ms against its 2000 ms bound. The latter
-passed in the final engine run but has not been resolved by a code change.
+Round 1 is committed on PR #392. Its aggregate failures and incomplete format gate
+above are historical worker results. The reviewer's passing outside-sandbox adapter
+check resolves the earlier positive live-case gap for `12a96af9`; round-2 source changes
+still require independent review and QA. Current gate outcomes and any isolated reruns
+are recorded in [round-2/REPORT.md](round-2/REPORT.md). No retry-to-green acceptance is claimed.
 
-Infrastructure's native cleanup/readiness failures require investigation alongside
-its two cutover timeouts. The final API-client run passed all 72 tests. Retained artifacts
-are indexed with byte sizes and SHA-256 in [ARTIFACTS.json](ARTIFACTS.json); changed
-source and runner hashes are in [SOURCE-HASHES.json](SOURCE-HASHES.json). Captured logs
-are normalized to UTF-8 and user-profile paths redacted before hashing; pre-normalized
-terminal streams were not separately kept. No retained capture exceeds 1,000,000 bytes.
+[Host measurement](HOST-MEASUREMENT.md), [temporary leftovers](TEMP-LEFTOVERS.md) and the
+round-1 hash manifests retain their historical scope. New evidence is retained under
+`round-2/`, with local user paths redacted to `%USERPROFILE%`. No worker commit, push,
+owner-store change or GitHub mutation was performed.
 
-All changes remain uncommitted for the orchestrator's cross-vendor review, QA and
-subsequent commit/sign-off process. The requested commit-ready state is not asserted
-because the validation gaps above remain. Task-prefix temporary directories and generated
-outputs remain for the orchestrator; see [TEMP-LEFTOVERS.md](TEMP-LEFTOVERS.md).
-
-Observed outside this bolt: `packages/engine/src/ports.ts:464` still describes owner
-model defaults as read on start or resume, although execution pins inherited defaults
-at creation. This existing comment was not changed as part of structured deadlines.
+Observed outside this bolt: `packages/engine/src/ports.ts:464` describes owner model
+defaults as read on start or resume, although execution pins inherited defaults at
+creation. This existing comment remains outside the structured-deadline change.

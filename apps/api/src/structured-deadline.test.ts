@@ -126,6 +126,7 @@ it.each([
     const requested = new Promise<void>((resolve) => {
       reached = resolve;
     });
+    const logger = new CapturingLogger();
     const value = kind === 'repair' ? 7 : { route: 'yes', confidence: 1, reasoning: 'Safe route' };
     container = await createContainer(
       loadConfig({
@@ -134,7 +135,7 @@ it.each([
         GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
       }),
       {
-        logger: new CapturingLogger(),
+        logger,
         startTimers: false,
         harnesses: { codex: new FakeHarness() },
         structured: {
@@ -143,8 +144,14 @@ it.each([
             reached();
             return mode === 'fast'
               ? Promise.resolve({ value })
-              : new Promise((resolve) => {
-                  release = () => resolve({ value });
+              : new Promise((resolve, reject) => {
+                  // CodexDecider turns a late value into an abort acknowledgement. Exercise
+                  // its non-abort late rejection here so the warning is a positive barrier;
+                  // repair/API and public-engine route cases cover late fulfillment.
+                  release = () =>
+                    kind === 'route'
+                      ? reject(new Error('late route provider failure'))
+                      : resolve({ value });
                 });
           },
         },
@@ -233,7 +240,14 @@ it.each([
     else expect((await read()).failure).toBeUndefined();
     const before = await container.manager.getThread(id);
     release?.();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    if (mode !== 'fast')
+      await expect
+        .poll(
+          () =>
+            logger.lines.filter((line) => line.msg === 'late structured completion discarded')
+              .length,
+        )
+        .toBe(1);
     expect(await container.manager.getThread(id)).toEqual(before);
     expect(signal?.aborted).toBe(mode !== 'fast');
     const events = await container.ports.events.read(id);

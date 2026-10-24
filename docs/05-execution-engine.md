@@ -549,11 +549,14 @@ One engine helper owns the deadline around both port paths, independent of the a
 The clock starts at that port boundary, after admission and model/context preparation.
 It passes a combined abort signal, cancels overdue work and fails the node and run with
 `STRUCTURED_COMPLETION_TIMEOUT`, naming the duration in the message and
-`details.timeoutMs`. This failure is resumable for a deliberate new attempt; no automatic
+`details.timeoutMs`; LLM decisions also include evaluation provider, model and effort
+in `details.provenance`. This failure is resumable for a deliberate new attempt; no automatic
 retry occurs. The engine releases its run slot without waiting indefinitely for an
-uncooperative adapter. A late fulfillment or rejection is observed, discarded and logged
+uncooperative adapter. A late fulfillment or non-abort rejection is observed, discarded and logged
 once as `late structured completion discarded`, with run/node identity and no provider
-body. It cannot validate a value, append a decision, or patch the thread.
+body. Acknowledging the forwarded abort reason or an AbortError is normal cleanup
+and does not produce this warning. A late result cannot validate a value, append a
+decision, or patch the thread.
 
 Cancel still produces `run.cancelled` and status `cancelled`, with no timeout failure.
 The first settled call outcome wins; the manager honours an observed run cancellation

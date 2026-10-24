@@ -1,17 +1,17 @@
-import { RunCancelledError, RunFailureError } from './errors.js';
+import { isAbortError, RunCancelledError, RunFailureError } from './errors.js';
 import type { Logger } from './ports.js';
 
 /** One engine boundary for route and repair completions, including adapters that ignore abort. */
 export async function completeWithDeadline<T>(
   call: (signal: AbortSignal) => Promise<T>,
   signal: AbortSignal,
-  timeoutMs: number | null,
+  timeoutMs: number | null | undefined,
   logger: Logger,
   identity: { runId?: string; nodeId: string },
 ): Promise<T> {
   signal.throwIfAborted();
   const controller = new AbortController();
-  const deadline = timeoutMs === null ? Infinity : Date.now() + timeoutMs;
+  const deadline = timeoutMs == null ? Infinity : Date.now() + timeoutMs;
   let aborted = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let rejectInterruption!: (reason: Error) => void;
@@ -47,13 +47,14 @@ export async function completeWithDeadline<T>(
     );
   };
   signal.addEventListener('abort', cancel, { once: true });
-  if (timeoutMs !== null) expire();
+  if (timeoutMs != null) expire();
   const observe = () => {
     // Enforce wall time even when a busy event loop delayed the timer callback. Observe every
     // late settlement once, without retaining provider values or diagnostics in the log.
     if (!aborted && Date.now() >= deadline) expire();
-    if (aborted) logger.warn(identity, 'late structured completion discarded');
+    return aborted;
   };
+  const warnLate = () => logger.warn(identity, 'late structured completion discarded');
   const work = Promise.resolve()
     .then(() => {
       controller.signal.throwIfAborted();
@@ -61,11 +62,13 @@ export async function completeWithDeadline<T>(
     })
     .then(
       (value) => {
-        observe();
+        if (observe()) warnLate();
         return value;
       },
       (error: unknown) => {
-        observe();
+        // An adapter acknowledging abort (including the forwarded typed timeout reason)
+        // has no late answer to discard. Still observe any other rejection exactly once.
+        if (observe() && !isAbortError(error) && error !== controller.signal.reason) warnLate();
         // Preserve provider failure identity/categories; only interruption is manufactured here.
         throw error;
       },

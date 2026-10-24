@@ -178,37 +178,93 @@ it('Unlimited keeps stalled work running until explicit cancellation, with no ti
   expect((await e.manager.getThread(run.id))?.vars.value).toBeUndefined();
 });
 
-it.each([0, 50])(
-  'cancel competing with the %s ms deadline has exactly one terminal outcome',
-  async (delay) => {
+it('keeps the timeout when cancellation arrives during failure persistence', async () => {
+  vi.useFakeTimers();
+  e = await createTestEngine();
+  let signal: AbortSignal | undefined;
+  let finishPersistence!: () => void;
+  let failureWritten!: () => void;
+  const persistence = new Promise<void>((resolve) => {
+    finishPersistence = resolve;
+  });
+  const written = new Promise<void>((resolve) => {
+    failureWritten = resolve;
+  });
+  // Fault-inject the event-store port: the terminal event is durable, but its append
+  // acknowledgement (and therefore the run snapshot update) remains in flight.
+  const append = e.ports.events.append.bind(e.ports.events);
+  e.ports.events.append = async (...args) => {
+    const stored = await append(...args);
+    if (args[1].some((event) => event.type === 'run.failed')) {
+      failureWritten();
+      await persistence;
+    }
+    return stored;
+  };
+  e.ports.structured = {
+    complete: (_request, supplied) => {
+      signal = supplied;
+      return new Promise((resolve) => {
+        release = () => {
+          finishPersistence();
+          resolve({ value: 99 });
+        };
+      });
+    },
+  };
+  const def = repairLoop();
+  def.settings = { structuredTimeoutMs: 100 };
+  const run = await e.start(e.publish(def).loopId);
+  await vi.advanceTimersByTimeAsync(20);
+  expect(signal).toBeDefined();
+  await vi.advanceTimersByTimeAsync(101);
+  await written;
+  expect(signal?.aborted).toBe(true);
+  expect((await e.ports.runs.get(run.id))?.status).toBe('running');
+  await e.manager.cancel(run.id);
+  expect(e.eventTypes(run.id)).toContain('run.cancel_requested');
+  finishPersistence();
+  const final = await e.settle(run.id);
+  expect(final.status).toBe('failed');
+  expect(final.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
+  release!();
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(
+    e
+      .events(run.id)
+      .filter((event) => ['run.failed', 'run.cancelled', 'run.finished'].includes(event.type)),
+  ).toMatchObject([{ type: 'run.failed', failure: { code: 'STRUCTURED_COMPLETION_TIMEOUT' } }]);
+  expect((await e.ports.runs.get(run.id))?.failure).toEqual(final.failure);
+  expect((await e.manager.getThread(run.id))?.vars.value).toBeUndefined();
+});
+
+it.each(['AbortError', 'forwarded reason'] as const)(
+  'does not warn about an adapter cancellation acknowledgement: %s',
+  async (acknowledgement) => {
+    vi.useFakeTimers();
     e = await createTestEngine();
-    let signal: AbortSignal | undefined;
     e.ports.structured = {
-      complete: (_request, supplied) => {
-        signal = supplied;
-        return new Promise((resolve) => {
-          release = () => resolve({ value: 99 });
-        });
-      },
+      complete: (_request, signal) =>
+        new Promise((_resolve, reject) => {
+          release = () => {
+            if (acknowledgement === 'AbortError')
+              reject(new DOMException('The operation was aborted', 'AbortError'));
+            else if (signal.reason instanceof Error) reject(signal.reason);
+            else throw new Error('Forwarded cancellation reason must be an Error');
+          };
+        }),
     };
     const def = repairLoop();
     def.settings = { structuredTimeoutMs: 100 };
     const run = await e.start(e.publish(def).loopId);
-    await expect.poll(() => signal !== undefined).toBe(true);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    try {
-      await e.manager.cancel(run.id);
-    } catch (error) {
-      expect(error).toMatchObject({ code: 'INVALID_STATE' });
-    }
-    const final = await e.settle(run.id);
-    expect(['cancelled', 'failed']).toContain(final.status);
-    if (final.status === 'failed')
-      expect(final.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
-    else expect(final.failure).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(101);
+    await e.manager.waitForIdle();
+    expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
+    release!();
+    await vi.advanceTimersByTimeAsync(0);
     expect(
-      e.events(run.id).filter((event) => ['run.failed', 'run.cancelled'].includes(event.type)),
-    ).toHaveLength(1);
+      e.ports.logger.lines.filter((line) => line.msg === 'late structured completion discarded'),
+    ).toHaveLength(0);
   },
 );
 
@@ -253,6 +309,10 @@ it('applies the same deadline to LLM routing without replacing it with a generic
   );
   const run = await e.runToIdle(e.publish(def).loopId);
   expect(run.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
+  expect(run.failure?.details).toMatchObject({
+    timeoutMs: 50,
+    provenance: { kind: 'llm', provider: 'codex', model: 'gpt-6-luna', effort: 'low' },
+  });
   expect(signal?.aborted).toBe(true);
   release!();
   await new Promise((resolve) => setTimeout(resolve, 0));

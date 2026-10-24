@@ -2559,12 +2559,12 @@ export interface components {
                         };
                     } | undefined;
                 } | undefined;
-                /** @default null */
-                structuredTimeoutMs?: (number | null) | undefined;
                 /** @default 10 */
                 maxNodeVisits?: (number | null) | undefined;
                 /** @default null */
                 runDeadlineSeconds?: (number | null) | undefined;
+                /** @default null */
+                structuredTimeoutMs?: (number | null) | undefined;
                 /** @default 8 */
                 subloopDepthLimit?: number | undefined;
             } | undefined;
@@ -3708,12 +3708,12 @@ export interface components {
                     };
                 };
                 limits: {
-                    /** @default null */
-                    structuredTimeoutMs?: (number | null) | undefined;
                     /** @default 10 */
                     maxNodeVisits?: (number | null) | undefined;
                     /** @default null */
                     runDeadlineSeconds?: (number | null) | undefined;
+                    /** @default null */
+                    structuredTimeoutMs?: (number | null) | undefined;
                 };
                 classifiers: {
                     [key: string]: {
@@ -3964,12 +3964,12 @@ export interface components {
                     };
                 };
                 limits: {
-                    /** @default null */
-                    structuredTimeoutMs?: (number | null) | undefined;
                     /** @default 10 */
                     maxNodeVisits?: (number | null) | undefined;
                     /** @default null */
                     runDeadlineSeconds?: (number | null) | undefined;
+                    /** @default null */
+                    structuredTimeoutMs?: (number | null) | undefined;
                 };
                 classifiers: {
                     [key: string]: {
@@ -4657,12 +4657,12 @@ export interface components {
                         };
                     };
                 };
-                /** @default null */
-                structuredTimeoutMs: number | null;
                 /** @default 10 */
                 maxNodeVisits: number | null;
                 /** @default null */
                 runDeadlineSeconds: number | null;
+                /** @default null */
+                structuredTimeoutMs: number | null;
                 /** @default 8 */
                 subloopDepthLimit: number;
             };
@@ -5791,12 +5791,12 @@ export interface components {
                     };
                 };
                 limits: {
-                    /** @default null */
-                    structuredTimeoutMs: number | null;
                     /** @default 10 */
                     maxNodeVisits: number | null;
                     /** @default null */
                     runDeadlineSeconds: number | null;
+                    /** @default null */
+                    structuredTimeoutMs: number | null;
                 };
                 classifiers: {
                     [key: string]: {
@@ -6047,12 +6047,12 @@ export interface components {
                     };
                 };
                 limits: {
-                    /** @default null */
-                    structuredTimeoutMs: number | null;
                     /** @default 10 */
                     maxNodeVisits: number | null;
                     /** @default null */
                     runDeadlineSeconds: number | null;
+                    /** @default null */
+                    structuredTimeoutMs: number | null;
                 };
                 classifiers: {
                     [key: string]: {

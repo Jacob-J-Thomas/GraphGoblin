@@ -17,6 +17,8 @@ const sides = {
 };
 function request(): ClassifierEvaluationRequest {
   return {
+    structuredTimeoutMs: null,
+    runId: 'run',
     nodeId: 'evaluate',
     ownerId: 'owner',
     config: ClassifierDecisionConfigSchema.parse({
