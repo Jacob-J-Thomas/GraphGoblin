@@ -1,0 +1,54 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure=true
+At line:2 char:237
++ ... age+'.log'; & pnpm.cmd --filter "@graphgoblin/$package" test:coverage ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...tOnFailure=true:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 %WORKTREE%/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 1 failed) 58161ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20104ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > edits authentication, body and extraction by keyboard with one-step undo
+and field validation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:241:1
+    239| });
+    240|
+    241| it('edits authentication, body and extraction by keyboard with one-ste…
+       | ^
+    242|   const user = userEvent.setup();
+    243|   const dialog = await openTrigger();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 117 passed (118)
+      Tests  1 failed | 1481 passed (1482)
+   Start at  15:02:31
+   Duration  1419.09s (tests 38%, environment 35%, setup 12%, import 12%, transform 2%, worker 1%)
+
+Environment  jsdom was created 118 times · 924.46s total, 35% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98% ( 8026/8189 )
+Branches     : 94.73% ( 7148/7545 )
+Functions    : 98.45% ( 2168/2202 )
+Lines        : 98.93% ( 6983/7058 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\apps\web

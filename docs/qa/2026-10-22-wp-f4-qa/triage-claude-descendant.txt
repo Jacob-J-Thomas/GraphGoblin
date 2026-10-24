@@ -1,0 +1,55 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1 -t kills the descendant that a long-lived child started
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 6343ms
+   ? owned native Claude process transport (5)
+     � kills the descendant that a long-lived child started 6342ms
+pnpm.cmd : 
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+??????? Failed Tests 1 ???????
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�' // 
+Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ? src/claude/process.test.ts:146:46
+
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  23:33:32
+   Duration  8.91s (tests 73%, import 15%, transform 12%)
+
+????????????????????????[1/2]?
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-ytzBir'
+????????????????????????[2/2]?
+
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  � "pnpm recursive exec" failed in C:
+  � <user path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  � f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=9.84

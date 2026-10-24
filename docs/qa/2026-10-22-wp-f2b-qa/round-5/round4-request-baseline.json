@@ -1,0 +1,379 @@
+{
+  "historicalHead": "492b283b49747e91470d94dca7028caa4eeb6c3d",
+  "source": "Retained round-4 owned API log, read only; original observations, newly extracted attribution windows.",
+  "sourceLogSha256": "75ec578dc66066e680b07fd45e432aafed54cab0b56759360ca6731fd06180b8",
+  "checks": [
+    {
+      "id": "B2-loop-sibling",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-fable-5-1\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    14 × locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM0RJFD1CPV5S7387G3AXY",
+      "windowStartMs": 1792700081303,
+      "windowEndMs": 1792700088919,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700081313,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700081540,
+          "method": "POST",
+          "path": "/loops/01M5JM0RJFD1CPV5S7387G3AXY/validate"
+        }
+      ]
+    },
+    {
+      "id": "effort-only-high",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    13 × locator resolved to <input type=\"radio\" name=\"_r_n_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"",
+      "loop": "01M5JM1GPB7Q84S94WYKCD9FXZ",
+      "windowStartMs": 1792700106406,
+      "windowEndMs": 1792700113108,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700106408,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700106562,
+          "method": "POST",
+          "path": "/loops/01M5JM1GPB7Q84S94WYKCD9FXZ/validate",
+          "responseMs": 5186.107799999998,
+          "status": 200,
+          "completedMs": 1792700111749
+        }
+      ]
+    },
+    {
+      "id": "effort-only-minimal",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    14 × locator resolved to <input type=\"radio\" name=\"_r_n_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"",
+      "loop": "01M5JM1R6Q8T10CV54TGY23CDG",
+      "windowStartMs": 1792700113884,
+      "windowEndMs": 1792700120768,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700113889,
+          "method": "GET",
+          "path": "/harness/preflight",
+          "responseMs": 5584.0420999999915,
+          "status": 200,
+          "completedMs": 1792700119474
+        },
+        {
+          "startMs": 1792700114055,
+          "method": "POST",
+          "path": "/loops/01M5JM1R6Q8T10CV54TGY23CDG/validate",
+          "responseMs": 3481.2819000000018,
+          "status": 200,
+          "completedMs": 1792700117537
+        }
+      ]
+    },
+    {
+      "id": "B3-first-load",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-fable-5-1\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    - locator resolved to <select id=\"_r_17_\" aria-readonly=\"true\" aria-describedby=\"_r_17_-help _r_q_-model-catalog\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sun…>…</select>\n    12 × unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM1ZP4XYMTVDJ5PJGTT7FZ",
+      "windowStartMs": 1792700121189,
+      "windowEndMs": 1792700127989,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700121367,
+          "method": "POST",
+          "path": "/loops/01M5JM1ZP4XYMTVDJ5PJGTT7FZ/validate"
+        },
+        {
+          "startMs": 1792700121596,
+          "method": "GET",
+          "path": "/harness/preflight",
+          "responseMs": 4793.900800000003,
+          "status": 200,
+          "completedMs": 1792700126390
+        },
+        {
+          "startMs": 1792700121627,
+          "method": "POST",
+          "path": "/loops/01M5JM1ZP4XYMTVDJ5PJGTT7FZ/validate"
+        }
+      ]
+    },
+    {
+      "id": "B3-retry-not-first",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    14 × locator resolved to <input type=\"radio\" name=\"_r_n_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"",
+      "loop": "01M5JM2RXQ70R70CGVN5DGBDFM",
+      "windowStartMs": 1792700147288,
+      "windowEndMs": 1792700155793,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700147289,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700147456,
+          "method": "POST",
+          "path": "/loops/01M5JM2RXQ70R70CGVN5DGBDFM/validate"
+        },
+        {
+          "startMs": 1792700154745,
+          "method": "POST",
+          "path": "/loops/01M5JM2RXQ70R70CGVN5DGBDFM/validate"
+        }
+      ]
+    },
+    {
+      "id": "no-extra-lookups",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    13 × locator resolved to <select id=\"_r_30_\" aria-describedby=\"_r_30_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM31WM5P5H1GNXPCP1Z699",
+      "windowStartMs": 1792700156506,
+      "windowEndMs": 1792700162904,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700156510,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700156906,
+          "method": "POST",
+          "path": "/loops/01M5JM31WM5P5H1GNXPCP1Z699/validate"
+        }
+      ]
+    },
+    {
+      "id": "undo-switch",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    13 × locator resolved to <select id=\"_r_11_\" aria-describedby=\"_r_11_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM38TT7QK0T4PEZJQMHJY8",
+      "windowStartMs": 1792700164504,
+      "windowEndMs": 1792700171177,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700164505,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700164707,
+          "method": "POST",
+          "path": "/loops/01M5JM38TT7QK0T4PEZJQMHJY8/validate"
+        }
+      ]
+    },
+    {
+      "id": "restart",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-fable-5-1\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    14 × locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM3GXCARYK0DD2VCTDXA81",
+      "windowStartMs": 1792700172102,
+      "windowEndMs": 1792700188495,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700172136,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700172341,
+          "method": "POST",
+          "path": "/loops/01M5JM3GXCARYK0DD2VCTDXA81/validate"
+        },
+        {
+          "startMs": 1792700180579,
+          "method": "GET",
+          "path": "/harness/preflight",
+          "responseMs": 6541.360799999995,
+          "status": 200,
+          "completedMs": 1792700187120
+        }
+      ]
+    },
+    {
+      "id": "recipe-ui",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"gpt-6-astra\"\nReceived: \"claude-opus-5-5\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    14 × locator resolved to <select id=\"_r_1b_\" aria-readonly=\"true\" aria-describedby=\"_r_1b_-help _r_10_-model-catalog\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-su…>…</select>\n       - unexpected value \"claude-opus-5-5\"",
+      "loop": "01M5JM41TJX5Q00WE73305QX7G",
+      "windowStartMs": 1792700189238,
+      "windowEndMs": 1792700198579,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700189242,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700189488,
+          "method": "POST",
+          "path": "/loops/01M5JM41TJX5Q00WE73305QX7G/validate",
+          "responseMs": 3778.262800000026,
+          "status": 200,
+          "completedMs": 1792700193266
+        },
+        {
+          "startMs": 1792700196893,
+          "method": "GET",
+          "path": "/harness/preflight"
+        }
+      ]
+    },
+    {
+      "id": "recipe-absent-disabled",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    13 × locator resolved to <select id=\"_r_11_\" aria-describedby=\"_r_11_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM4BNP7814PZMNM78GJMV6",
+      "windowStartMs": 1792700198990,
+      "windowEndMs": 1792700204902,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700198996,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700199159,
+          "method": "POST",
+          "path": "/loops/01M5JM4BNP7814PZMNM78GJMV6/validate"
+        }
+      ]
+    },
+    {
+      "id": "effort-only-cleared",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    14 × locator resolved to <input type=\"radio\" name=\"_r_t_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"",
+      "loop": "01M5JM4HV9EW5WY111385V87AR",
+      "windowStartMs": 1792700206011,
+      "windowEndMs": 1792700211868,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700206014,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700206177,
+          "method": "POST",
+          "path": "/loops/01M5JM4HV9EW5WY111385V87AR/validate",
+          "responseMs": 233.89489999998477,
+          "status": 200,
+          "completedMs": 1792700206410
+        }
+      ]
+    },
+    {
+      "id": "cached-catalog-failure",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Ready to publish', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Ready to publish', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Ready to publish', { exact: true })\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)",
+      "loop": "01M5JM4Z8S57EHZM619V031HZ1",
+      "windowStartMs": 1792700219478,
+      "windowEndMs": 1792700225754,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700219480,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700219704,
+          "method": "POST",
+          "path": "/loops/01M5JM4Z8S57EHZM619V031HZ1/validate"
+        }
+      ]
+    },
+    {
+      "id": "server-check-only-failure",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Published version 1.')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Published version 1.') with timeout 5000ms\n  - waiting for getByText('Published version 1.')\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)",
+      "loop": "01M5JM566WQ5M6FPK7A1697355",
+      "windowStartMs": 1792700226597,
+      "windowEndMs": 1792700232833,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700226600,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700227090,
+          "method": "POST",
+          "path": "/loops/01M5JM566WQ5M6FPK7A1697355/publish"
+        }
+      ]
+    },
+    {
+      "id": "classifier-catalog-failure",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Ready to publish', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Ready to publish', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Ready to publish', { exact: true })\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)",
+      "loop": "01M5JM5D44B73F34P2FV3MSX9F",
+      "windowStartMs": 1792700233888,
+      "windowEndMs": 1792700239212,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700233892,
+          "method": "GET",
+          "path": "/harness/preflight",
+          "responseMs": 5292.123700000026,
+          "status": 200,
+          "completedMs": 1792700239185
+        },
+        {
+          "startMs": 1792700234088,
+          "method": "POST",
+          "path": "/loops/01M5JM5D44B73F34P2FV3MSX9F/validate"
+        }
+      ]
+    },
+    {
+      "id": "B2-disabled-loop-and-settings",
+      "round4Verdict": "FAIL",
+      "round4Error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    10 × locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"",
+      "loop": "01M5JM71QVQWMHYZQ6EWAZJ0Q8",
+      "windowStartMs": 1792700287452,
+      "windowEndMs": null,
+      "method": "Requests starting between first editor GET of captured loop and next loop creation; request completion may outlast assertion.",
+      "requests": [
+        {
+          "startMs": 1792700287455,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700287634,
+          "method": "POST",
+          "path": "/loops/01M5JM71QVQWMHYZQ6EWAZJ0Q8/validate"
+        },
+        {
+          "startMs": 1792700288417,
+          "method": "GET",
+          "path": "/harness/preflight"
+        },
+        {
+          "startMs": 1792700288489,
+          "method": "POST",
+          "path": "/loops/01M5JM71QVQWMHYZQ6EWAZJ0Q8/validate",
+          "responseMs": 4612.346700000024,
+          "status": 200,
+          "completedMs": 1792700293102
+        }
+      ]
+    }
+  ]
+}

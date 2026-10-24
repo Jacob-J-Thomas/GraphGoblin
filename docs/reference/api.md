@@ -46,11 +46,12 @@ Starting, observing, and controlling runs.
 | POST   | `/runs/{id}/cancel`                 | Cancel a run                                                                 | `id`: string (path, required)                                                                                                                                                                            | -                                                              | 200       |
 | POST   | `/runs/{id}/pause`                  | Pause a run                                                                  | `id`: string (path, required)                                                                                                                                                                            | -                                                              | 200       |
 | POST   | `/runs/{id}/resume`                 | Resume a run                                                                 | `id`: string (path, required)                                                                                                                                                                            | -                                                              | 200       |
-| POST   | `/runs/{id}/input`                  | Answer a wait node in input mode                                             | `id`: string (path, required)                                                                                                                                                                            | `{ input }`                                                    | 200       |
-| POST   | `/runs/{id}/signals/{name}`         | Deliver a named signal                                                       | `id`: string (path, required), `name`: string (path, required)                                                                                                                                           | `{ payload? }`                                                 | 200       |
+| POST   | `/runs/{id}/input`                  | Answer a wait node in input mode                                             | `id`: string (path, required)                                                                                                                                                                            | `{ waitId, input }`                                            | 200, 409  |
+| POST   | `/runs/{id}/signals/{name}`         | Deliver a named signal                                                       | `id`: string (path, required), `name`: string (path, required)                                                                                                                                           | `{ waitId, payload? }`                                         | 200, 409  |
 | POST   | `/runs/{id}/replay`                 | Fork a new run at a node, with the thread as it was just before that node    | `id`: string (path, required)                                                                                                                                                                            | `{ nodeId }`                                                   | 202       |
 | GET    | `/runs/{id}/sessions`               | Harness sessions the run started or resumed                                  | `id`: string (path, required)                                                                                                                                                                            | -                                                              | 200       |
 | GET    | `/runs/{id}/artifacts/{artifactId}` | Download an artifact from the run's thread                                   | `id`: string (path, required), `artifactId`: string (path, required)                                                                                                                                     | -                                                              | 200       |
+| GET    | `/runs/diagnostics`                 | Identify unreadable run history for manual repair or explicit deletion       | `cursor`: string (query)                                                                                                                                                                                 | -                                                              | 200       |
 
 ## settings
 
@@ -92,12 +93,12 @@ Keys for other applications and the MCP server.
 
 ## events
 
-The inbound event bus.
+Inbound Events and the event triggers they start.
 
-| Method | Path      | Summary                                                 | Parameters                                                                 | Request body                     | Responses |
-| ------ | --------- | ------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------- | --------- |
-| GET    | `/events` | Stored inbound events, newest first                     | `type`: string (query), `before`: string (query), `limit`: integer (query) | -                                | 200       |
-| POST   | `/events` | Publish an inbound event; fires matching event triggers | -                                                                          | `{ type, payload?, dedupeKey? }` | 202       |
+| Method | Path      | Summary                                                 | Parameters                                                                                                                                                           | Request body                     | Responses |
+| ------ | --------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | --------- |
+| GET    | `/events` | Stored inbound events, newest first with stable paging  | `type`: string (query), `before`: string (query), `cursor`: string (query): Opaque inbound-event cursor, at most 256 base64url characters., `limit`: integer (query) | -                                | 200       |
+| POST   | `/events` | Publish an inbound event; fires matching event triggers | -                                                                                                                                                                    | `{ type, payload?, dedupeKey? }` | 202       |
 
 ## triggers
 
@@ -113,9 +114,12 @@ Schedules, webhook endpoints, and the public /hooks receiver.
 
 Health, version, harness preflight.
 
-| Method | Path                 | Summary                                                                                        | Parameters | Request body | Responses |
-| ------ | -------------------- | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
-| GET    | `/healthz`           | Liveness check                                                                                 | -          | -            | 200       |
-| GET    | `/version`           | API name and version                                                                           | -          | -            | 200       |
-| GET    | `/system/preflight`  | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
-| GET    | `/harness/preflight` | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |
+| Method | Path                     | Summary                                                                                        | Parameters | Request body | Responses |
+| ------ | ------------------------ | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
+| GET    | `/system/model-defaults` | Process model and effort defaults, before loop and owner overrides                             | -          | -            | 200       |
+| GET    | `/system/shutdown`       | Observe gateway drain and force-stop state                                                     | -          | -            | 200       |
+| POST   | `/system/shutdown`       | Drain, keep waiting, or explicitly force-stop the gateway                                      | -          | `{ action }` | 202, 409  |
+| GET    | `/healthz`               | Liveness check                                                                                 | -          | -            | 200       |
+| GET    | `/version`               | API name and version                                                                           | -          | -            | 200       |
+| GET    | `/system/preflight`      | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
+| GET    | `/harness/preflight`     | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |

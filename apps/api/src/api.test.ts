@@ -12,6 +12,7 @@ import {
   everyFieldLoop,
   kitchenSinkLoop,
   minimalLoop,
+  samplePin,
 } from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -67,13 +68,23 @@ describe('system routes', () => {
       items: { harness: string; ok: boolean }[];
     }>();
     expect(preflight.items).toEqual([
-      { harness: 'codex', ok: true, version: 'fake', authenticated: true, problems: [] },
+      {
+        harness: 'codex',
+        state: 'ready',
+        ok: true,
+        version: 'fake',
+        authenticated: true,
+        problems: [],
+      },
     ]);
     t.harness.preflight = () => Promise.reject(new Error('codex missing'));
     const broken = (await t.app.inject('/harness/preflight')).json<{
       items: { ok: boolean; problems: string[] }[];
     }>();
-    expect(broken.items[0]).toMatchObject({ ok: false, problems: ['codex missing'] });
+    expect(broken.items[0]).toMatchObject({
+      ok: false,
+      problems: [expect.stringMatching(/readiness could not be confirmed/)],
+    });
     delete t.container.ports.harnesses.codex;
     const none = (await t.app.inject('/harness/preflight')).json<{
       items: { problems: string[] }[];
@@ -360,7 +371,10 @@ describe('runs', () => {
     const badInput = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/input`,
-      payload: { input: { nope: 1 } },
+      payload: {
+        waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        input: { nope: 1 },
+      },
     });
     expect(badInput.statusCode).toBe(400);
     expect(badInput.json()).toMatchObject({ code: 'INVALID_INPUT' });
@@ -368,7 +382,10 @@ describe('runs', () => {
       await t.app.inject({
         method: 'POST',
         url: `/runs/${run.id}/signals/go`,
-        payload: { payload: { x: 1 } },
+        payload: {
+          waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+          payload: { x: 1 },
+        },
       })
     ).json<{ woke: boolean }>();
     expect(signal.woke).toBe(false);
@@ -379,9 +396,16 @@ describe('runs', () => {
     const conflict = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/input`,
-      payload: { input: { ok: true } },
+      payload: {
+        waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        input: { ok: true },
+      },
     });
     expect(conflict.statusCode).toBe(409);
+    expect(conflict.json()).toMatchObject({
+      code: 'INVALID_STATE',
+      detail: expect.stringContaining('paused'),
+    });
     expect(
       (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/resume` })).json<RunRecord>()
         .status,
@@ -390,7 +414,10 @@ describe('runs', () => {
     const provided = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/input`,
-      payload: { input: { ok: true } },
+      payload: {
+        waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        input: { ok: true },
+      },
     });
     expect(provided.statusCode).toBe(200);
     await t.idle();
@@ -439,6 +466,7 @@ describe('runs', () => {
         ownerId: 'someone-else',
         loopId: id,
         versionId: version!.id,
+        pinned: samplePin(),
         invocationId,
         status: 'succeeded',
         iteration: 1,
@@ -601,7 +629,7 @@ describe('settings, secrets, api keys, catalog, events', () => {
     ).toBe(404);
   });
 
-  it('publishes and lists inbound events', async () => {
+  it('publishes and lists same-millisecond inbound events in reverse creation order', async () => {
     const published = await t.app.inject({
       method: 'POST',
       url: '/events',
@@ -614,7 +642,14 @@ describe('settings, secrets, api keys, catalog, events', () => {
       dedupeKey: 'k',
       ownerId: 'local',
     });
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'second' } });
+    const second = await t.app.inject({
+      method: 'POST',
+      url: '/events',
+      payload: { type: 'second' },
+    });
+    expect(second.json<{ receivedAt: string }>().receivedAt).toBe(
+      published.json<{ receivedAt: string }>().receivedAt,
+    );
     const list = (await t.app.inject('/events')).json<{ items: { type: string }[] }>();
     expect(list.items.map((e) => e.type)).toEqual(['second', 'issue-ready']);
   });

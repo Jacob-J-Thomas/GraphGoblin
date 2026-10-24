@@ -1,0 +1,435 @@
+diff --git a/apps/web/src/runs/RunInspectorPage.test.tsx b/apps/web/src/runs/RunInspectorPage.test.tsx
+index a5c17ebd..ab4c5a5e 100644
+--- a/apps/web/src/runs/RunInspectorPage.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.test.tsx
+@@ -2,7 +2,7 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { describe, expect, it } from 'vitest';
+-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
++import { LoopDefinitionSchema, type JsonValue, type RunEvent } from '@graphgoblin/contracts';
+ import { minimalLoop } from '@graphgoblin/contracts/testing';
+ import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
+ import { renderApp } from '../__fixtures__/render.js';
+@@ -176,7 +176,10 @@ describe('RunInspectorPage', () => {
+     });
+     renderApp(`/runs/${run.id}`, api);
+ 
+-    expect(await screen.findByText('Loading run-version configuration…')).toBeInTheDocument();
++    const row = (term: string) => screen.getByText(term, { selector: 'dt' }).nextElementSibling;
++    expect(await screen.findByText('Confidence acceptance')).toBeInTheDocument();
++    expect(row('Confidence acceptance')).toHaveTextContent('Loading run-version configuration…');
++    expect(row('Label')).toHaveTextContent('Loading run-version configuration…');
+     expect(
+       screen.queryByText('Not recorded (classifier configuration unavailable)'),
+     ).not.toBeInTheDocument();
+@@ -186,6 +189,9 @@ describe('RunInspectorPage', () => {
+     await waitFor(() =>
+       expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2'),
+     );
++    // The chosen side's label and criterion, as the run version authored them.
++    expect(row('Label')).toHaveTextContent('True');
++    expect(row('Criterion')).toHaveTextContent('The check passes');
+     expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+       'No minimum configured in run version',
+     );
+@@ -686,3 +692,145 @@ describe('RunInspectorPage', () => {
+     expect(JSON.parse(screen.getByTestId('thread-json').textContent).vars.blob).toBe(long);
+   });
+ });
++
++/** What a finished exit returned, and the last gate's passes, at the top of the run (#129). */
++describe('RunInspectorPage exit evidence', () => {
++  function exitRun(
++    api: FakeApi,
++    exit: Record<string, unknown>,
++    options: { result?: JsonValue; decisions?: (runId: string) => RunEvent[] } = {},
++  ) {
++    const base = minimalLoop();
++    const loop = api.addLoop(
++      {
++        ...base,
++        nodes: base.nodes.map((node) => (node.kind === 'exit' ? { ...node, config: exit } : node)),
++      },
++      { published: true },
++    );
++    const run = api.addRun({
++      loopId: loop.id,
++      versionId: loop.currentVersionId!,
++      status: 'succeeded',
++      ...(options.result !== undefined && options.result !== null
++        ? { result: options.result }
++        : {}),
++    });
++    const events = [
++      event(run.id, 1, 'run.queued', queuedFields()),
++      ...(options.decisions?.(run.id) ?? []),
++    ];
++    const next = events.length + 1;
++    events.push(
++      event(run.id, next, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }),
++      event(run.id, next + 1, 'run.finished', {
++        status: 'succeeded',
++        outcome: 'success',
++        ...(options.result === undefined ? {} : { result: options.result }),
++      }),
++    );
++    for (const item of events) api.pushEvent(run.id, item);
++    return run;
++  }
++
++  it('says a quiet exit returned nothing by configuration, at the top and in its details', async () => {
++    const api = new FakeApi();
++    const run = exitRun(api, { returns: 'none', destinations: [] });
++    renderApp(`/runs/${run.id}`, api);
++    const quiet =
++      'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.';
++    await waitFor(() => expect(screen.getByTestId('exit-returns')).toHaveTextContent(quiet));
++    expect(screen.queryByTestId('run-result')).toBeNull();
++    await userEvent.setup().click(screen.getByRole('button', { name: /exit\.evaluated/ }));
++    expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(quiet);
++    expect(screen.queryByText(/See the run result/)).toBeNull();
++  });
++
++  it('names the exit and start-request destinations that a None return left empty', async () => {
++    const api = new FakeApi();
++    const run = exitRun(api, {
++      returns: 'none',
++      destinations: [{ kind: 'caller' }, { kind: 'log' }],
++    });
++    const thread = api.threads.get(run.id)!;
++    api.threads.set(run.id, {
++      ...thread,
++      invocation: {
++        ...thread.invocation,
++        returnDefaults: [{ kind: 'webhook', url: 'https://example.test/hook' }],
++      },
++    });
++    renderApp(`/runs/${run.id}`, api);
++    await waitFor(() =>
++      expect(screen.getByTestId('exit-returns')).toHaveTextContent(
++        'No value was returned: Returns is None, so no destination received anything (caller, log from the exit; webhook from the start request). This is the exit’s configuration, not a failure.',
++      ),
++    );
++  });
++
++  it('shows a null return as the result rather than as nothing', async () => {
++    const api = new FakeApi();
++    const run = exitRun(api, { returns: 'vars.missing' }, { result: null });
++    renderApp(`/runs/${run.id}`, api);
++    await waitFor(() => expect(screen.getByTestId('run-result')).toHaveTextContent('null'));
++    expect(screen.queryByTestId('exit-returns')).toBeNull();
++  });
++
++  it('does not claim a None configuration when an expression exit recorded no value', async () => {
++    // A format-4 run recorded by an older build omitted a null result (CHANGELOG); the pinned exit
++    // still has an expression, so the history cannot show a no-value configuration (#129 audit).
++    const api = new FakeApi();
++    const run = exitRun(api, { returns: 'null', destinations: [{ kind: 'caller' }] });
++    renderApp(`/runs/${run.id}`, api);
++    const ambiguous =
++      'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.';
++    await waitFor(() => expect(screen.getByTestId('exit-returns')).toHaveTextContent(ambiguous));
++    expect(screen.queryByTestId('run-result')).toBeNull();
++    expect(screen.queryByText(/Returns is None/)).toBeNull();
++    await userEvent.setup().click(screen.getByRole('button', { name: /exit\.evaluated/ }));
++    expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(ambiguous);
++  });
++
++  it('keeps the last gate pass and stopping limit beside the exit outcome', async () => {
++    const api = new FakeApi();
++    const run = exitRun(
++      api,
++      { outcome: 'exhausted', returns: '"work"' },
++      {
++        result: 'work',
++        decisions: (runId) =>
++          [1, 2, 3].map((pass) =>
++            event(runId, pass + 1, 'decision.made', {
++              nodeId: 'gate',
++              portId: pass === 3 ? 'limit-reached' : 'again',
++              diagnostics: [],
++              provenance: {
++                kind: 'expression',
++                provider: null,
++                classifierId: null,
++                model: null,
++                effort: null,
++              },
++              observation: { kind: 'route', routeId: 'again', confidence: null, reasoning: null },
++              gate: {
++                previousPasses: pass,
++                passes: pass === 3 ? 3 : pass + 1,
++                repeatRouteId: 'again',
++                maxPasses: 3,
++                elapsedSeconds: 1,
++                limit: pass === 3 ? 'max-passes' : null,
++              },
++            }),
++          ),
++      },
++    );
++    renderApp(`/runs/${run.id}`, api);
++    expect(
++      await screen.findByText(
++        'Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
++      ),
++    ).toBeInTheDocument();
++    expect(screen.getByTestId('run-result')).toHaveTextContent('work');
++    expect(screen.queryByTestId('exit-returns')).toBeNull();
++  });
++});
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index 22fc6c7a..75295c97 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -1,3 +1,4 @@
++import type { RunEvent } from '@graphgoblin/contracts';
+ import { useQueryClient } from '@tanstack/react-query';
+ import { GraphGoblinApiError } from '@graphgoblin/api-client';
+ import { useState } from 'react';
+@@ -14,7 +15,7 @@ import { Timeline } from './inspector/Timeline.js';
+ import { WaitPanel } from './inspector/WaitPanel.js';
+ import { DeliveryPanel } from './inspector/DeliveryPanel.js';
+ import { useRunEvents } from './useRunEvents.js';
+-import { describeEvent } from './projections.js';
++import { describeEvent, exitReturnSummary, lastGateSummary } from './projections.js';
+ 
+ const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
+ 
+@@ -80,7 +81,13 @@ export function RunInspectorPage() {
+   const seq = selectedSeq ?? log.lastSeq;
+   const selectedEvent = log.events.find((event) => event.seq === seq);
+   const firstEvent = log.events[0];
++  const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
++  const finished = log.events.findLast(
++    (event): event is Extract<RunEvent, { type: 'run.finished' }> => event.type === 'run.finished',
++  );
++  // The exit's configuration explains a run that returned nothing, so a finished exit needs it too.
+   const needsPinnedDefinition =
++    latestExit !== undefined ||
+     selectedEvent?.type === 'decision.made' ||
+     selectedEvent?.type === 'run.failed' ||
+     (firstEvent !== undefined && (firstEvent.type !== 'run.queued' || !firstEvent.initialThread));
+@@ -89,7 +96,13 @@ export function RunInspectorPage() {
+     runQuery.data?.versionId ?? '',
+     needsPinnedDefinition,
+   );
+-  const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
++  const definition = versionQuery.data?.definition;
++  const gateSummary = lastGateSummary(log.events);
++  const returnSummary = exitReturnSummary(
++    log.events,
++    definition,
++    threadQuery.data?.invocation.returnDefaults,
++  );
+ 
+   return (
+     <Page wide>
+@@ -136,12 +149,16 @@ export function RunInspectorPage() {
+             {latestExit ? (
+               <Card title="Exit evaluation">
+                 <p>{describeEvent(latestExit)}</p>
++                {gateSummary ? <p>{gateSummary}</p> : null}
++                {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
+               </Card>
+             ) : null}
+-            {run.result !== undefined ? (
++            {/* A null return is a value: show the row's recorded result, or the finish event's
++                when the row has none. */}
++            {run.result !== undefined || finished?.result !== undefined ? (
+               <Card title="Result">
+                 <BoundedValue
+-                  value={run.result}
++                  value={run.result !== undefined ? run.result : finished?.result}
+                   label="Result"
+                   testId="run-result"
+                   fileName={`run-${run.id}-result`}
+@@ -168,15 +185,16 @@ export function RunInspectorPage() {
+           ) : null}
+           <EvaluationDetails
+             event={selectedEvent}
+-            definition={versionQuery.data?.definition}
++            definition={definition}
+             definitionLoading={versionQuery.isPending}
++            exitReturns={returnSummary}
+           />
+           {threadQuery.data ? (
+             <ThreadViewer
+               current={threadQuery.data}
+               events={log.events}
+               seq={seq}
+-              definition={versionQuery.data?.definition}
++              definition={definition}
+               historyBytes={log.bytes}
+             />
+           ) : (
+diff --git a/apps/web/src/runs/inspector/EvaluationDetails.tsx b/apps/web/src/runs/inspector/EvaluationDetails.tsx
+index 5f6abc4a..653aaca1 100644
+--- a/apps/web/src/runs/inspector/EvaluationDetails.tsx
++++ b/apps/web/src/runs/inspector/EvaluationDetails.tsx
+@@ -160,6 +160,53 @@ function DecisionAcceptance({
+     </>
+   );
+ }
++/**
++ * The chosen route as authored in the immutable run version: its readable label and, for a
++ * classifier Choice option or Noul side, the criterion the classifier was given. A refused repeat
++ * keeps its observed route here while Selected port says Limit reached (#129).
++ */
++function ChosenRoute({
++  event,
++  definition,
++  definitionLoading,
++}: {
++  event: Extract<RunEvent, { type: 'decision.made' }>;
++  definition: LoopDefinition | undefined;
++  definitionLoading: boolean;
++}) {
++  const node = definition?.nodes.find((n) => n.id === event.nodeId);
++  const config = node?.kind === 'decision' ? node.config : undefined;
++  const chosen = event.gate?.limit ? event.gate.repeatRouteId : event.portId;
++  const rows: { id: string; label: string; criteria?: string }[] = !config
++    ? []
++    : config.kind !== 'classifier'
++      ? config.routes
++      : config.answer.type === 'choice'
++        ? config.answer.options
++        : config.answer.type === 'noul'
++          ? [config.answer.true, config.answer.false]
++          : config.answer.bands;
++  const row = rows.find((candidate) => candidate.id === chosen);
++  return (
++    <>
++      <dt>Label</dt>
++      {/* Labels may be 120 characters without a break opportunity: wrap them, never widen. */}
++      <dd className="min-w-0 wrap-anywhere">
++        {!definition && definitionLoading
++          ? 'Loading run-version configuration…'
++          : !config
++            ? 'Not recorded (decision configuration unavailable)'
++            : (row?.label ?? 'Not in the run-version configuration')}
++      </dd>
++      {row?.criteria !== undefined ? (
++        <>
++          <dt>Criterion</dt>
++          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">{row.criteria}</dd>
++        </>
++      ) : null}
++    </>
++  );
++}
+ function ObservationDetails({
+   observation,
+   provenance,
+@@ -214,10 +261,13 @@ export function EvaluationDetails({
+   event,
+   definition,
+   definitionLoading = false,
++  exitReturns,
+ }: {
+   event: RunEvent | undefined;
+   definition?: LoopDefinition | undefined;
+   definitionLoading?: boolean;
++  /** Why the run recorded no value, or why the history cannot show that (projections.ts). */
++  exitReturns?: string | undefined;
+ }) {
+   if (!event || !['decision.made', 'exit.evaluated', 'run.failed'].includes(event.type))
+     return null;
+@@ -228,12 +278,12 @@ export function EvaluationDetails({
+       <p>{describeEvent(event)}</p>
+       {event.type === 'exit.evaluated' ? (
+         <p>
+-          Exit outcome: {event.outcome}. This exit is terminal. See the run result for the returned
+-          value.
++          Exit outcome: {event.outcome}. This exit is terminal.{' '}
++          {exitReturns ?? 'See the run result for the returned value.'}
+         </p>
+       ) : event.type === 'decision.made' ? (
+         <>
+-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
++          <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
+             <dt>
+               {event.observation.kind === 'route'
+                 ? 'Route ID'
+@@ -270,6 +320,11 @@ export function EvaluationDetails({
+             <dd>
+               <code>{event.portId}</code>
+             </dd>
++            <ChosenRoute
++              event={event}
++              definition={definition}
++              definitionLoading={definitionLoading}
++            />
+             {event.gate ? (
+               <>
+                 <dt>Previous passes</dt>
+@@ -333,7 +388,7 @@ export function EvaluationDetails({
+               Classifier result rejected by the confidence gate. No decision was accepted and no
+               route was selected.
+             </p>
+-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
++            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
+               <dt>Proposed answer</dt>
+               <dd>{answerDescription(rejection.answer)}</dd>
+               <ObservationDetails
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+index 49d6b08d..d8ed9469 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.test.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -242,9 +242,15 @@ describe('ThreadViewer with a large history', () => {
+       }),
+     ];
+     render(<ThreadViewer current={thread} events={all} seq={3} historyBytes={3_500_000} />);
+-    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
+-    expect(screen.getByText('The thread cannot be reconstructed at event 3')).toBeInTheDocument();
++    // Activated from the keyboard: the alert takes the keyboard the button had.
++    await user.tab();
++    expect(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' })).toHaveFocus();
++    await user.keyboard('{Enter}');
++    const alert = screen.getByText('The thread cannot be reconstructed at event 3');
++    expect(alert).toBeInTheDocument();
+     expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
++    expect(document.activeElement).not.toBe(document.body);
++    expect(document.activeElement?.contains(alert)).toBe(true);
+   });
+ 
+   it('reconstructs automatically at and below the threshold', () => {
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.tsx b/apps/web/src/runs/inspector/ThreadViewer.tsx
+index 0f67e7de..cfeae7e4 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.tsx
+@@ -148,6 +148,7 @@ export function ThreadViewer({
+   // Ownership of the whole viewer is tracked by its focus events for the same reason as above.
+   const rootRef = useRef<HTMLDivElement>(null);
+   const reconstructRef = useRef<HTMLButtonElement>(null);
++  const alertRef = useRef<HTMLDivElement>(null);
+   const [viewerOwnsFocus, setViewerOwnsFocus] = useState(false);
+   // The card unmounts the messages section without a blur event: its ownership ends here.
+   if (!ready && ownsFocus) {
+@@ -168,7 +169,9 @@ export function ThreadViewer({
+     const section = messagesRef.current;
+     const list = listRef.current;
+     const inside = section !== null && section.contains(document.activeElement);
+-    if (!inside) (showAllRef.current ?? list)?.focus();
++    // Without a messages section (a reconstruction that failed), the alert itself takes the
++    // keyboard, so an activated control never leaves it on the body.
++    if (!inside) (showAllRef.current ?? list ?? alertRef.current)?.focus();
+     setHoldsFocus(document.activeElement === list);
+   }, [handoffs]);
+   useLayoutEffect(() => {
+@@ -213,9 +216,11 @@ export function ThreadViewer({
+   if (replayed === undefined || !replayed.ok || thread === undefined) {
+     return (
+       <div {...viewerFocus}>
+-        <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+-          {replayed === undefined || replayed.ok ? '' : replayed.error}
+-        </Alert>
++        <div ref={alertRef} tabIndex={-1} className="outline-none">
++          <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
++            {replayed === undefined || replayed.ok ? '' : replayed.error}
++          </Alert>
++        </div>
+       </div>
+     );
+   }

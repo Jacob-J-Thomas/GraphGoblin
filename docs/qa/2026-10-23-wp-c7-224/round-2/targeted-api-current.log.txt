@@ -1,0 +1,52 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/shutdown-admission.test.ts (3 tests | 1 failed) 2113ms
+   × refuses manual and webhook HTTP admission and preserves due cron slots and poll dedupe 408ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-admission.test.ts > refuses manual and webhook HTTP admission and preserves due cron slots and poll dedupe
+AssertionError: expected { …(5) } to match object { items: [] }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "items": [],
++   "code": "NOT_FOUND",
++   "detail": "GET /loops/01M3Y7RKG0506CW570BZ5W86DJ/runs does not exist",
++   "status": 404,
++   "title": "not found",
++   "type": "https://graphgoblin.dev/problems/not-found",
+  }
+
+ ❯ src/shutdown-admission.test.ts:42:107
+     40|     expect(await t.container.polls.poll()).toEqual([]);
+     41|     expect(await t.container.repos.runs.hasTriggerDedupe(poll, 'start'…
+     42|     for (const id of [manual, hook, cron, poll]) expect((await t.app.i…
+       |                                                                                                           ^
+     43|     expect((await t.app.inject('/events')).json()).toMatchObject({ ite…
+     44|   } finally { await t.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 13 passed (14)
+   Start at  00:36:49
+   Duration  15.72s (import 44%, transform 40%, tests 16%)
+
+  Transform  transforming modules took 13.93s · 40% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts", "exit": 1, "seconds": 17.65}

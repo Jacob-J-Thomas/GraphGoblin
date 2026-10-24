@@ -45,6 +45,18 @@ import { z } from 'zod';
 export const DEFAULT_BASE_URL = 'https://api.typesafe.ai';
 export const DEFAULT_MODEL = 'jev-latest';
 
+const sdkLogRouting = {
+  debug: ['debug', 'jev: SDK debug event'],
+  info: ['debug', 'jev: SDK information event'],
+  warn: ['warn', 'jev: SDK warning'],
+  error: ['warn', 'jev: SDK error'],
+} as const;
+
+function forwardSdkLog(logger: Logger, level: keyof typeof sdkLogRouting): void {
+  const [method, message] = sdkLogRouting[level];
+  logger[method]({}, message);
+}
+
 export interface JevDeciderOptions {
   secrets: SecretsPort;
   /** Secret holding the API key. Default `jev-api-key`. */
@@ -179,10 +191,10 @@ export class JevDecider implements ClassifierPort {
       ...(logger
         ? {
             logger: {
-              debug: () => logger.debug({}, 'jev: SDK debug event'),
-              info: () => logger.debug({}, 'jev: SDK information event'),
-              warn: () => logger.warn({}, 'jev: SDK warning'),
-              error: () => logger.warn({}, 'jev: SDK error'),
+              debug: forwardSdkLog.bind(null, logger, 'debug'),
+              info: forwardSdkLog.bind(null, logger, 'info'),
+              warn: forwardSdkLog.bind(null, logger, 'warn'),
+              error: forwardSdkLog.bind(null, logger, 'error'),
             },
           }
         : {}),

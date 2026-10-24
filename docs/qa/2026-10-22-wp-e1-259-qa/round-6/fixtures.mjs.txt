@@ -1,0 +1,16 @@
+import {readFile} from 'node:fs/promises';import {resolve} from 'node:path';import {dir,call,createRun,op,mut,waitNode,save,historySize,events,sha} from './gg-qa-e1-r6-support.mjs';
+const key=await call('/api-keys',{label:'Independent QA #259 round 6',scopes:['*']});await save('api-key-metadata.json',{created:Boolean(key.token),id:key.key.id,label:key.key.label});
+const wide={},medium={};for(let i=0;i<350000;i++)wide['key'+i]=i;for(let i=0;i<90000;i++)medium['key'+i]=i;
+const msgs=Array.from({length:6000},(_,i)=>({id:'m'+i,role:'note',content:i===0||i===5950?'F'.repeat(20000):'short message '+i,nodeId:'seed',ts:'2026-10-22T12:00:00.000Z'}));
+const append=mut('append',[{op:'append-message',role:'note',content:'live appended'}]);
+const fixtures={runs:{},admission:[]};
+for(const width of [1440,390]){
+ const wideId=await createRun('wide '+width,[mut('seed',[op('/vars',wide)]),waitNode('ask'),append,waitNode('notouch'),mut('change',[op('/vars/key0','CHANGED 🚀\u0000')]),waitNode('touched')]);
+ const mediumId=await createRun('medium '+width,[mut('seed',[op('/vars',medium)]),waitNode('ask'),append,waitNode('notouch')]);
+ const stringId=await createRun('string '+width,[mut('seed',[op('/vars',{value:'S'.repeat(1000000)})]),waitNode('ask')]);
+ const many=await createRun('messages '+width,[mut('seed',[op('/messages',msgs)]),waitNode('ask'),append,waitNode('notouch')]);
+ fixtures.runs[width]={wide:wideId,medium:mediumId,string:stringId,many};
+ for(const [name,id] of Object.entries(fixtures.runs[width])){const es=await events(id),thread=await call('/runs/'+id+'/thread');fixtures.admission.push({width,name,id,eventCount:es.length,historyChars:historySize(es),variablesProperties:Object.keys(thread.vars).length,messages:thread.messages.length,variablesPrettyChars:JSON.stringify(thread.vars,null,2).length,variablesSha256:sha(JSON.stringify(thread.vars,null,2)),seed:es.find(e=>e.type==='node.finished'&&e.nodeId==='seed').seq,ask:es.find(e=>e.type==='run.waiting').seq});}
+ await save('fixtures.json',fixtures);console.log(JSON.stringify({width,...fixtures.runs[width]}));
+}
+

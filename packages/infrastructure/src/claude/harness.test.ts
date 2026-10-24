@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as probeFs from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { HarnessOptionsSchema } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { HarnessEvent, HarnessStartRequest } from '@graphgoblin/engine';
@@ -109,6 +111,41 @@ async function drain(events: AsyncIterable<HarnessEvent>) {
   return values;
 }
 describe('Claude existing harness contract', () => {
+  it.each([
+    { terminationUnconfirmed: true as const, code: 'HARNESS_TERMINATION_UNCONFIRMED' },
+    { timedOut: true, code: 'HARNESS_TIMEOUT' },
+    { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
+  ])('preserves $code over a native zero-turn refusal envelope', async ({ code, ...transport }) => {
+    const { harness } = fixture({
+      records: [
+        {
+          type: 'result',
+          subtype: 'error_during_execution',
+          is_error: true,
+          num_turns: 0,
+          session_id: id,
+        },
+      ],
+      exit: { exitCode: 1, turnRejection: 'session-missing', ...transport },
+    });
+    await expect(
+      harness.resume(id, request, new AbortController().signal).result,
+    ).rejects.toMatchObject({ code });
+  });
+  it('does not let a refusal diagnostic conceal unconfirmed native termination', async () => {
+    const { harness } = fixture({
+      records: [init],
+      exit: { exitCode: null, terminationUnconfirmed: true, turnRejection: 'session-missing' },
+    });
+    const session = harness.resume(id, request, new AbortController().signal);
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+    expect((await drain(session.events)).at(-1)).toMatchObject({
+      type: 'error',
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      submission: 'delivery-uncertain',
+    });
+  });
+
   it('uses a fresh empty prerequisite directory and removes it after inspection', async () => {
     const directories = new Set<string>();
     const runner: ClaudeCliRunner = async (command) => {
@@ -157,9 +194,95 @@ describe('Claude existing harness contract', () => {
       }
     },
   );
+  it('creates the prerequisite directory under a system temporary directory of 226 characters (#102)', async () => {
+    // Windows `fs.mkdtemp` refused the 249-character probe path here (ENAMETOOLONG), although the
+    // directory can be created and the CLI started in it; see docs/qa/2026-10-19-wp-f5-launch-diagnosis.md.
+    const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-long-temp-'));
+    let longTemp = root;
+    while (longTemp.length < 226 - 21) longTemp = join(longTemp, 'segment-abcdefghij');
+    longTemp = join(longTemp, 'x'.repeat(226 - longTemp.length - 1));
+    expect(longTemp).toHaveLength(226);
+    await probeFs.mkdir(longTemp, { recursive: true });
+    const directories: string[] = [];
+    const runner: ClaudeCliRunner = async (command) => {
+      directories.push(command.cwd);
+      expect(await probeFs.readdir(command.cwd)).toEqual([]);
+      if (command.args.includes('--version')) return outcome('2.1.285');
+      if (command.args.includes('--help')) return outcome(help);
+      return outcome('{"authMethod":"claude.ai"}');
+    };
+    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, longTemp);
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      expect(directories).toHaveLength(3);
+      expect(new Set(directories).size).toBe(1);
+      expect(directories[0]?.startsWith(longTemp)).toBe(true);
+      expect(directories[0]?.length).toBeGreaterThan(248);
+      await expect(probeFs.access(directories[0] ?? '')).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      vi.unstubAllEnvs();
+      await probeFs.rm(root, { recursive: true, force: true });
+    }
+  });
+  it('tries a fresh prerequisite directory name after a name collision and never removes the existing one', async () => {
+    const collision = Object.assign(new Error('Synthetic name collision'), { code: 'EEXIST' });
+    const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValueOnce(collision);
+    const remove = vi.spyOn(probeFs, 'rm');
+    const directories = new Set<string>();
+    const runner: ClaudeCliRunner = (command) => {
+      directories.add(command.cwd);
+      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+      return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
+    };
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      const attempted = create.mock.calls.map(([path]) => String(path));
+      expect(attempted).toHaveLength(2);
+      expect(attempted[0]).not.toBe(attempted[1]);
+      expect([...directories]).toEqual([attempted[1]]);
+      expect(remove.mock.calls.map(([path]) => String(path))).toEqual([attempted[1]]);
+    } finally {
+      create.mockRestore();
+      remove.mockRestore();
+    }
+  });
+  it.each([
+    ['four name collisions', 'EEXIST', 4],
+    ['a creation fault', 'EACCES', 1],
+  ])(
+    'fails the check without starting the CLI or removing anything after %s',
+    async (_case, code, attempts) => {
+      const fault = Object.assign(new Error('Synthetic creation fault'), { code });
+      const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValue(fault);
+      const remove = vi.spyOn(probeFs, 'rm');
+      const runner = vi.fn<ClaudeCliRunner>();
+      try {
+        const harness = new ClaudeHarness({ runner, platform: 'win32' });
+        expect(await harness.preflight()).toMatchObject({
+          ok: false,
+          state: 'unknown',
+          problems: [
+            'Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.',
+          ],
+        });
+        const attempted = create.mock.calls.map(([path]) => String(path));
+        expect(attempted).toHaveLength(attempts);
+        expect(new Set(attempted).size).toBe(attempts);
+        expect(runner).not.toHaveBeenCalled();
+        expect(remove).not.toHaveBeenCalled();
+      } finally {
+        create.mockRestore();
+        remove.mockRestore();
+      }
+    },
+  );
   it('checks the installed capability/auth prerequisites and exposes explicit model support and policies', async () => {
     const { harness, calls } = fixture();
     expect(await harness.preflight()).toMatchObject({
+      state: 'ready',
       ok: true,
       authenticated: true,
       version: '2.1.285',
@@ -180,29 +303,57 @@ describe('Claude existing harness contract', () => {
       '--json',
     ]);
   });
-  it('executes Fable through strict native model verification with its requested effort', async () => {
-    const model = 'claude-fable-5-1';
-    const { harness, calls } = fixture({
-      records: [
-        { ...init, model },
-        { ...final, modelUsage: { [model]: {} } },
-      ],
-    });
-    const session = harness.start(
-      { ...request, model, effort: 'max' },
-      new AbortController().signal,
-    );
-    expect(await session.sessionId).toBe(id);
-    expect(await session.result).toMatchObject({ finalText: 'finished' });
-    expect(calls[3]?.args).toEqual(expect.arrayContaining(['--model', model, '--effort', 'max']));
-    const mismatched = fixture({ records: [init, final] }).harness;
-    await expect(
-      mismatched.start({ ...request, model }, new AbortController().signal).result,
-    ).rejects.toMatchObject({
-      code: 'HARNESS_UNSUPPORTED_POLICY',
-      message: expect.stringMatching(/Claude CLI 2\.1\.285.*launch policy.*model/),
-    });
-  });
+  it.each(['claude-fable-5-1', 'claude-sonnet-5-5', 'claude-haiku-5-5'])(
+    'executes %s through strict native model verification with its requested effort',
+    async (model) => {
+      for (const effort of ['low', 'max'] as const) {
+        const { harness, calls } = fixture({
+          records: [
+            { ...init, model },
+            { ...final, modelUsage: { [model]: {} } },
+          ],
+        });
+        const session = harness.start({ ...request, model, effort }, new AbortController().signal);
+        expect(await session.sessionId).toBe(id);
+        expect(await session.result).toMatchObject({ finalText: 'finished' });
+        expect(calls[3]?.args).toEqual(
+          expect.arrayContaining(['--model', model, '--effort', effort]),
+        );
+        const policy = (await drain(session.events)).find((event) => event.type === 'item');
+        expect(policy).toMatchObject({
+          item: {
+            detail: { requestedModel: model, requestedEffort: effort, effectiveEffort: null },
+          },
+        });
+      }
+      // The reported model must be the requested one in both init and result usage.
+      const mismatched = fixture({ records: [init, final] }).harness;
+      await expect(
+        mismatched.start({ ...request, model }, new AbortController().signal).result,
+      ).rejects.toMatchObject({
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        message: expect.stringMatching(/Claude CLI 2\.1\.285.*launch policy.*model/),
+      });
+      const otherUsage = fixture({
+        records: [
+          { ...init, model },
+          { ...final, modelUsage: { [model]: {}, 'claude-opus-5-5': {} } },
+        ],
+      }).harness;
+      await expect(
+        otherUsage.start({ ...request, model }, new AbortController().signal).result,
+      ).rejects.toMatchObject({ code: 'HARNESS_UNSUPPORTED_POLICY' });
+      // An unsupported effort is refused before any CLI process starts.
+      const refused = fixture();
+      await expect(
+        refused.harness.start(
+          { ...request, model, effort: 'minimal' },
+          new AbortController().signal,
+        ).result,
+      ).rejects.toMatchObject({ code: 'HARNESS_INVALID_CONFIGURATION' });
+      expect(refused.calls).toHaveLength(0);
+    },
+  );
   it('checks auth before every start and resume, uses the same env, and maps current port events/result', async () => {
     const { harness, calls } = fixture();
     const first = harness.start(request, new AbortController().signal);
@@ -214,6 +365,7 @@ describe('Claude existing harness contract', () => {
     expect((await drain(first.events)).map((event) => event.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'usage',
       'turn-complete',
     ]);
@@ -345,6 +497,7 @@ describe('Claude existing harness contract', () => {
     expect(events.map((event) => event.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'item',
       'item',
       'usage',
@@ -549,7 +702,7 @@ describe('Claude preflight and transport failure matrix', () => {
             ? '2.1.287'
             : command.args.includes('--help')
               ? help.replace('--restricted', '')
-              : '{}',
+              : '{"loggedIn":false,"authMethod":"none"}',
         );
       },
     });
@@ -616,12 +769,7 @@ describe('Claude preflight and transport failure matrix', () => {
     });
   });
   it('validates positive process bounds', () => {
-    for (const options of [
-      { preflightTimeoutMs: 0 },
-      { turnTimeoutMs: -1 },
-      { maxOutputBytes: 0 },
-      { maxTurns: 1.5 },
-    ])
+    for (const options of [{ preflightTimeoutMs: 0 }, { maxOutputBytes: 0 }])
       expect(() => new ClaudeHarness(options)).toThrow();
     const { harness, calls } = fixture();
     expect(harness.id).toBe('claude');
@@ -650,17 +798,15 @@ describe('Claude preflight and transport failure matrix', () => {
       },
       platform: 'win32',
       preflightTimeoutMs: 1000,
-      turnTimeoutMs: 2000,
       maxOutputBytes: 1024,
-      maxTurns: 5,
     });
     expect(
       await configured.start({ ...request, effort: 'max' }, new AbortController().signal).result,
     ).toMatchObject({ finalText: 'finished' });
-    expect(configuredCalls.at(-1)).toMatchObject({ timeoutMs: 2000, maxOutputBytes: 1024 });
-    expect(configuredCalls.at(-1)?.args).toEqual(
-      expect.arrayContaining(['--effort', 'max', '--max-turns', '5']),
-    );
+    expect(configuredCalls.at(-1)).toMatchObject({ timeoutMs: null, maxOutputBytes: 1024 });
+    expect(configuredCalls.at(-1)?.args).toEqual(expect.arrayContaining(['--effort', 'max']));
+    expect(configuredCalls.at(-1)?.args).not.toContain('--max-turns');
+    expect(configuredCalls.at(-1)?.args).not.toContain('--max-budget-usd');
     const withoutSettings = {
       workingDirectory: request.workingDirectory,
       options: request.options,
@@ -680,7 +826,7 @@ describe('Claude preflight and transport failure matrix', () => {
   it.each([
     { timedOut: true, code: 'HARNESS_TIMEOUT' },
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
-    { spawnCode: 'EACCES' as const, code: 'HARNESS_NOT_INSTALLED' },
+    { spawnCode: 'EACCES' as const, code: 'HARNESS_TURN_FAILED' },
     { stdinFailed: true, code: 'HARNESS_TURN_FAILED' },
   ])('maps transport disposition $code safely', async ({ code, ...exit }) => {
     const { harness } = fixture({ exit });
@@ -709,6 +855,34 @@ describe('Claude preflight and transport failure matrix', () => {
 });
 
 describe('unconfirmed native termination', () => {
+  it.each([
+    ['timeout', { timedOut: true }, 'unknown', 'HARNESS_TIMEOUT'],
+    ['missing executable', { spawnCode: 'ENOENT' }, 'cli-missing', 'HARNESS_NOT_INSTALLED'],
+    [
+      'unconfirmed termination',
+      { terminationUnconfirmed: true },
+      'unknown',
+      'HARNESS_TERMINATION_UNCONFIRMED',
+    ],
+    ['aborted process', { aborted: true }, 'unknown', 'HARNESS_TURN_FAILED'],
+    ['output overflow', { overflow: true }, 'unknown', 'HARNESS_OUTPUT_LIMIT'],
+  ] as const)(
+    'keeps %s authoritative over positive auth-status text',
+    async (_name, fault, state, code) => {
+      const runner: ClaudeCliRunner = (command) => {
+        if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+        if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+        return Promise.resolve(outcome('Not logged in', { notLoggedIn: true, ...fault }));
+      };
+      const harness = new ClaudeHarness({ platform: 'win32', runner });
+      const result = await harness.preflight();
+      expect(result).toMatchObject({ state, ok: false });
+      expect(result).not.toHaveProperty('authenticated');
+      await expect(
+        harness.start(request, new AbortController().signal).result,
+      ).rejects.toMatchObject({ code });
+    },
+  );
   it.each(['cancel', 'signal'] as const)(
     'preserves actionable typed failure for %s and after completion',
     async (mode) => {
@@ -825,3 +999,17 @@ describe('Claude native structured repair through the engine', () => {
     },
   );
 });
+
+it.each(['auth', 'quota', 'transport'] as const)(
+  'does not infer a real turn failure from %s stderr classification',
+  async (failureState) => {
+    const { harness } = fixture({ exit: { exitCode: 1, failureState, notLoggedIn: true } });
+    const session = harness.start(request, new AbortController().signal);
+    const events = drain(session.events);
+    await expect(session.result).rejects.toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      retriable: false,
+    });
+    await events;
+  },
+);

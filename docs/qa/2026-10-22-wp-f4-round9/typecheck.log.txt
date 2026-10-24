@@ -1,0 +1,60 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:338
++ ... TEXITCODE"; pnpm.cmd typecheck *> "$env:TEMP/gg-wp-f4-round9-typechec ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing ed32c9ca5eee9de2
+@graphgoblin/contracts:typecheck: cache miss, executing aa156fce17ef3189
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing da09b85524d781f6
+@graphgoblin/domain:typecheck: cache miss, executing 0a8a5b350e183182
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:typecheck: cache miss, executing 90bfc39271c65df1
+@graphgoblin/engine:build: cache miss, executing d02a030a0b7ea517
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 6efd17eb3e3b6778
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 81be024af2721ab4
+@graphgoblin/adapter-jev:build: cache miss, executing 12d946b82e4b2688
+@graphgoblin/infrastructure:typecheck: cache miss, executing faf7acaae9cdceb0
+@graphgoblin/adapter-codex:build: cache miss, executing 6b0dad721a2b4d95
+@graphgoblin/infrastructure:build: cache miss, executing 8a3972624586ae08
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:typecheck: cache miss, executing 771dc927e36723d1
+@graphgoblin/api:build: cache miss, executing dc53652afa73d571
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/engine:typecheck: src/handlers/inference-evidence-matrix.test.ts(183,47): error TS2339: Property 'turnId' does not exist on type '{ type: "run.queued"; versionId: string; pinned: { source: "draft" | "published"; version: number; name: string; label: string; defaults: { owner: { byHarness: Partial<Record<"codex" | "claude", { model?: string | undefined; effort?: "minimal" | ... 5 more ... | undefined; }>>; }; process: { ...; }; }; classifiers: ...'.
+@graphgoblin/engine:typecheck:   Property 'turnId' does not exist on type '{ type: "run.queued"; versionId: string; pinned: { source: "draft" | "published"; version: number; name: string; label: string; defaults: { owner: { byHarness: Partial<Record<"codex" | "claude", { model?: string | undefined; effort?: "minimal" | ... 5 more ... | undefined; }>>; }; process: { ...; }; }; classifiers: ...'.
+@graphgoblin/engine:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/engine#typecheck:  ERROR  command 
+(<USERPROFILE>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-prompt-provenance\packages\engine) 
+C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    9 successful, 14 total
+Cached:    0 cached, 14 total
+  Time:    43.702s 
+Failed:    @graphgoblin/engine#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

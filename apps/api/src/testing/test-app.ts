@@ -39,6 +39,7 @@ export interface TestApp {
 }
 
 export interface TestAppOptions {
+  clock?: FakeClock;
   harnesses?: Partial<Record<HarnessId, HarnessPort>>;
   requireApiKey?: boolean;
   env?: Record<string, string>;
@@ -62,7 +63,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const codex = new FakeDecider('codex');
   const structured = new FakeStructured();
   const logger = new CapturingLogger();
-  const clock = new FakeClock();
+  const clock = options.clock ?? new FakeClock();
   const container = await createContainer(config, {
     harnesses: options.harnesses ?? { codex: harness },
     deciders: [codex],
@@ -100,9 +101,18 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     },
     idle: () => container.manager.waitForIdle(),
     async close() {
+      // Teardown is a storage/component boundary, not an operator stop. C2 reopens this store.
+      // If a test did request managed shutdown, settle that sequence before closing resources.
+      if (['draining', 'awaiting-choice', 'forcing'].includes(container.shutdown.state().phase)) {
+        if (['draining', 'awaiting-choice'].includes(container.shutdown.state().phase))
+          await container.requestShutdown('force');
+        await container.shutdown.drain();
+      }
       await app.close();
-      await container.stop();
+      await container.dispose();
       await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
     },
   };
 }
+
+export { createThreadHistoryFixture } from './thread-history.js';

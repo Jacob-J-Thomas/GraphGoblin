@@ -1,0 +1,29 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:23 char:3
++   & pnpm.cmd @qaArgs *> (Join-Path $qaScratch ($qaGate.id + '.log.txt ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <checkout>/apps/web
+      Coverage enabled with v8
+
+
+ Test Files  123 passed (123)
+      Tests  1555 passed (1555)
+   Start at  20:30:11
+   Duration  1785.12s (tests 46%, environment 28%, import 13%, setup 11%, transform 1%, worker 1%)
+
+Environment  jsdom was created 123 times · 484.52s total, 28% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98.02% ( 8133/8297 )
+Branches     : 94.9% ( 7295/7687 )
+Functions    : 98.51% ( 2193/2226 )
+Lines        : 98.93% ( 7090/7166 )
+================================================================================

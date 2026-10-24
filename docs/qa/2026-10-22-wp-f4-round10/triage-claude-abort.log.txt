@@ -1,0 +1,35 @@
+pnpm.cmd : $ vitest run --maxWorkers=1 src/claude/process.test.ts -t 'does not spawn for an already aborted signal'
+At line:21 char:2
++  pnpm.cmd --filter @graphgoblin/infrastructure test --maxWorkers=1 $c ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...aborted signal':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 5094ms
+   ❯ owned native Claude process transport (5)
+     × does not spawn for an already aborted signal and cancels a running process 5092ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir 
+'<USERPROFILE>\AppData\Local\Temp\gg-wp-f4-round10-cbec9a4ac48b48308177f7568cb508e9\fixtures\gg-claude-process-mkDaeJ'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:44:22
+   Duration  8.34s (tests 64%, import 20%, transform 16%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\infrastructure
+

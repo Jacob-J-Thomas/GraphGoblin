@@ -42,21 +42,31 @@ export const CallerSchema = z.strictObject({
 });
 export type Caller = z.infer<typeof CallerSchema>;
 
-/** Return channels are declared on exit nodes; callers may also supply defaults. */
-export const ReturnChannelSchema = z.discriminatedUnion('kind', [
+/**
+ * Return channels are declared on exit nodes; callers may also supply defaults. There is no
+ * loop-to-loop channel: a loop that needs another loop's result calls it as an awaited subloop
+ * (ADR-0044).
+ */
+export const WebhookReturnChannelSchema = z.strictObject({
+  kind: z.literal('webhook'),
+  url: z.url(),
+  secretRef: z.string().max(128).optional(),
+});
+
+export const NonWebhookReturnChannelSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('caller') }),
-  z.strictObject({
-    kind: z.literal('webhook'),
-    url: z.url(),
-    secretRef: z.string().max(128).optional(),
-  }),
   z.strictObject({
     kind: z.literal('file'),
     path: z.string().min(1).max(4096),
     format: z.enum(['json', 'markdown', 'text']).default('json'),
   }),
-  z.strictObject({ kind: z.literal('event'), eventType: SlugSchema }),
   z.strictObject({ kind: z.literal('log') }),
+]);
+const [callerReturnChannel, ...otherReturnChannels] = NonWebhookReturnChannelSchema.options;
+export const ReturnChannelSchema = z.discriminatedUnion('kind', [
+  callerReturnChannel,
+  WebhookReturnChannelSchema,
+  ...otherReturnChannels,
 ]);
 export type ReturnChannel = z.infer<typeof ReturnChannelSchema>;
 

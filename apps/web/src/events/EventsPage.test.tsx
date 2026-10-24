@@ -1,9 +1,52 @@
-import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('EventsPage delivery dispositions', () => {
+  it('appends an exactly full final event page and preserves expanded content and keyboard focus', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    api.inbound = Array.from({ length: 200 }, (_, i) => ({
+      id: `event-${i}`,
+      ownerId: 'local',
+      type: 'chosen',
+      payload: { index: i },
+      receivedAt: TS,
+      source: 'api',
+      runIds: [],
+    }));
+    api.inbound = api.inbound.map((event, i) => ({
+      ...event,
+      ...(i === 0
+        ? {
+            webhook: {
+              configurationAvailable: false,
+            },
+          }
+        : {}),
+    }));
+    renderApp('/events?type=ignored&before=invalid', api);
+    const disclosure = await screen.findByText('Webhook configuration');
+    await user.click(disclosure);
+    const expanded = disclosure.closest('details')!;
+    expect(expanded).toHaveAttribute('open');
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    more.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(201));
+    await waitFor(() => expect(screen.getByText('All events loaded.')).toHaveFocus());
+    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    const call = api.callsTo('GET', '/events').at(-1)!;
+    expect(call.search.has('type')).toBe(false);
+    expect(call.search.has('before')).toBe(false);
+    expect(call.search.get('cursor')).toBe('event-99');
+    expect(expanded).toBeInTheDocument();
+    expect(expanded).toHaveAttribute('open');
+    expect(screen.queryByText('other', { exact: true })).not.toBeInTheDocument();
+  });
+
   it('shows the five receipt states, attempts, retry time, safe failure and admitted run link', async () => {
     const api = new FakeApi();
     api.inbound = [
@@ -254,4 +297,33 @@ it('shows safe pinned webhook configuration and explains unavailable history', a
   expect(
     within(unavailable).getByText('Configuration unavailable for this delivery.'),
   ).toBeVisible();
+});
+
+it('lays out a large payload within the cell bound and offers the exact value (#259)', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const payload = { items: Array.from({ length: 300 }, (_, i) => ({ i, text: 'p'.repeat(64) })) };
+  api.inbound = [
+    {
+      id: 'big',
+      ownerId: 'local',
+      type: 'issues',
+      payload,
+      receivedAt: TS,
+      source: 'api',
+      runIds: [],
+    },
+  ];
+  renderApp('/events', api);
+  const cell = await screen.findByTestId('payload-big');
+  expect(cell.textContent?.length).toBe(1_025);
+  expect(
+    screen.getByText('Showing the first 1,024 characters of a larger value.'),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Download Payload of event big as JSON' }),
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Show all of Payload of event big' }));
+  const region = screen.getByRole('region', { name: 'Payload of event big' });
+  expect(JSON.parse(region.textContent ?? '')).toEqual(payload);
 });

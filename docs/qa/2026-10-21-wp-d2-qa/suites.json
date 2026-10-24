@@ -1,0 +1,44 @@
+[
+  {
+    "name": "engine",
+    "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2 --coverage.reportOnFailure=true",
+    "code": 0,
+    "elapsedMs": 49869
+  },
+  {
+    "name": "infrastructure",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2 --coverage.reportOnFailure=true",
+    "code": 1,
+    "elapsedMs": 176898
+  },
+  {
+    "name": "api",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure=true",
+    "code": 1,
+    "elapsedMs": 1110400
+  },
+  {
+    "name": "webhook-retry",
+    "command": "pnpm.cmd test:webhook-retry",
+    "code": 0,
+    "elapsedMs": 137820
+  },
+  {
+    "name": "recovery-process",
+    "command": "pnpm.cmd test:recovery-process",
+    "code": 0,
+    "elapsedMs": 26797
+  },
+  {
+    "name": "wait-restart",
+    "command": "pnpm.cmd test:wait-restart",
+    "code": 0,
+    "elapsedMs": 125533
+  },
+  {
+    "name": "edge",
+    "command": "Set-Location apps/web; $env:GG_E2E_BROWSER_CHANNEL='msedge'; pnpm.cmd exec playwright test e2e/webhook-delivery.spec.ts e2e/webhook-receiver.spec.ts --retries=0",
+    "code": 0,
+    "elapsedMs": 31864
+  }
+]

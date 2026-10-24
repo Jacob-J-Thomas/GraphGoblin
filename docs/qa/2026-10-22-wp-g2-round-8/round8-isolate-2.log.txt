@@ -1,0 +1,34 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 15544ms
+   ❯ owned native Claude process transport (5)
+     ↓ streams stdout, sends stdin and never retains stderr content
+     ↓ reports missing executable without exposing raw native errors
+     × kills on deadline and output overflow 15542ms
+     ↓ does not spawn for an already aborted signal and cancels a running process
+     ↓ kills the descendant that a long-lived child started
+pnpm.cmd : 
+At line:2 char:261
++ ... $caseIndex; & pnpm.cmd --filter @graphgoblin/infrastructure exec vite ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-ahqThZ'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  20:47:18
+   Duration  16.37s (tests 97%, transform 2%, import 1%)
+
+JSON report written to <worktree>/round8-isolate-2-results.log
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

@@ -6,7 +6,7 @@ import { DefaultField, type FieldProps } from '../forms/fields.js';
 import { useFormChange } from '../forms/changes.js';
 import { FormEditReviewContext } from '../forms/edit-review.js';
 import { UNSET } from '../forms/unset.js';
-import { unwrap } from '../forms/introspect.js';
+import { ExecutionLimitField } from './ExecutionLimitField.js';
 import { useParseErrors } from '../forms/parse-errors.js';
 import { gateRows, hasRepeatRoute } from './decision-gates.js';
 
@@ -56,20 +56,18 @@ export function GateLimitField(props: FieldProps) {
     (issue) => issue.severity === 'warning' && issue.path === `config.${props.name}`,
   );
   if (!hasRepeatRoute(config)) return null;
-  return (
-    <DefaultField
+  return props.name === 'maxPasses' ? (
+    <ExecutionLimitField
       {...props}
-      schema={
-        props.name === 'maxPasses'
-          ? unwrap(props.schema).base.describe(
-              [
-                'Required. Passes start at 1; a non-repeat choice wins on the last pass.',
-                ...warnings.map((issue) => `Warning: ${issue.message}`),
-              ].join(' '),
-            )
-          : props.schema
-      }
+      schema={props.schema.describe(
+        [
+          'Required. Passes start at 1; a non-repeat choice wins on the last pass. Choose Unlimited explicitly to remove the pass cutoff.',
+          ...warnings.map((issue) => `Warning: ${issue.message}`),
+        ].join(' '),
+      )}
     />
+  ) : (
+    <DefaultField {...props} />
   );
 }
 

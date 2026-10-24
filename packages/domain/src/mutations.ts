@@ -12,20 +12,11 @@ import type {
 import { MutationError } from './errors.js';
 import { evaluateExpression, evaluatePredicate } from './expression.js';
 import { validateJson } from './json-schema.js';
-import { applyPatch } from './patch.js';
-import { getAtPointer, pointerStartsWith } from './pointer.js';
+import { applyPatch, assertMutablePath } from './patch.js';
+import { getAtPointer } from './pointer.js';
 import { unsafeRegexReason } from './regex-safety.js';
 import { renderTemplate } from './template.js';
 import { estimateMessageTokens, threadView } from './thread-view.js';
-
-/** Regions of the thread that mutation operations may write. The engine owns the rest. */
-export const MUTABLE_REGIONS = [
-  '/vars',
-  '/messages',
-  '/artifacts',
-  '/outputs',
-  '/lastOutput',
-] as const;
 
 export interface MutationContext {
   /** Node performing the mutation; stamped on created messages. */
@@ -57,14 +48,6 @@ export interface MutationResult {
   pending?: RepairRequest;
   /** Index of the first operation not yet applied (equals ops.length when complete). */
   appliedThrough: number;
-}
-
-function assertMutable(path: string): void {
-  if (!MUTABLE_REGIONS.some((region) => pointerStartsWith(path, region))) {
-    throw new MutationError(
-      `path "${path}" is not in a mutable region (${MUTABLE_REGIONS.join(', ')})`,
-    );
-  }
 }
 
 function asJson(value: unknown): JsonValue {
@@ -166,13 +149,13 @@ export async function planMutation(
 
   switch (op.op) {
     case 'set': {
-      assertMutable(op.path);
+      assertMutablePath(op.path);
       const value = await resolveValue(op.value, view);
       const exists = getAtPointer(thread, op.path).found;
       return { kind: 'patch', patch: [{ op: exists ? 'replace' : 'add', path: op.path, value }] };
     }
     case 'delete': {
-      assertMutable(op.path);
+      assertMutablePath(op.path);
       if (!getAtPointer(thread, op.path).found) return { kind: 'patch', patch: [] };
       return { kind: 'patch', patch: [{ op: 'remove', path: op.path }] };
     }
@@ -269,7 +252,7 @@ export async function planMutation(
       return { kind: 'patch', patch };
     }
     case 'coerce': {
-      assertMutable(op.target);
+      assertMutablePath(op.target);
       const source = getAtPointer(thread, op.source);
       const value = source.found ? source.value : undefined;
       const validation = validateJson(op.jsonSchema, value);

@@ -1,0 +1,190 @@
+{
+  "run": {
+    "id": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+    "ownerId": "local",
+    "loopId": "01M5ANB5M70YK5TXXQHMZ6F85C",
+    "versionId": "01M5ANB5M7CZ5F2Y3H05DVEP93",
+    "invocationId": "01M5ANB5NSA8N1S7ARWZYM2D41",
+    "status": "failed",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "failure": {
+      "code": "SCRIPT_TIMEOUT",
+      "message": "script exceeded 1s",
+      "nodeId": "work",
+      "resumable": true
+    },
+    "createdAt": "2026-10-19T18:03:54.937Z",
+    "startedAt": "2026-10-19T18:03:54.944Z",
+    "finishedAt": "2026-10-19T18:03:59.634Z",
+    "lastEventSeq": 6
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+        "seq": 1,
+        "ts": "2026-10-19T18:03:54.937Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+            "loopId": "01M5ANB5M70YK5TXXQHMZ6F85C",
+            "versionId": "01M5ANB5M7CZ5F2Y3H05DVEP93",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5ANB5NSA8N1S7ARWZYM2D41",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T18:03:54.937Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+        "seq": 2,
+        "ts": "2026-10-19T18:03:54.947Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+        "seq": 3,
+        "ts": "2026-10-19T18:03:54.954Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+        "seq": 4,
+        "ts": "2026-10-19T18:03:54.961Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:54.961Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:54.961Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+        "seq": 5,
+        "ts": "2026-10-19T18:03:54.978Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "script",
+        "attempt": 1,
+        "configHash": "1fc2c2c442e2ffdc"
+      },
+      {
+        "runId": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+        "seq": 6,
+        "ts": "2026-10-19T18:03:59.632Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "SCRIPT_TIMEOUT",
+          "message": "script exceeded 1s",
+          "nodeId": "work",
+          "resumable": true
+        }
+      }
+    ],
+    "nextAfter": 6
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5ANB5NSPD8DZ7TP9YWCREZ9",
+      "loopId": "01M5ANB5M70YK5TXXQHMZ6F85C",
+      "versionId": "01M5ANB5M7CZ5F2Y3H05DVEP93",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5ANB5NSA8N1S7ARWZYM2D41",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-19T18:03:54.937Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-19T18:03:54.961Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "start",
+      "value": null,
+      "at": "2026-10-19T18:03:54.961Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  },
+  "assistedCleanup": true,
+  "pid": 12568
+}

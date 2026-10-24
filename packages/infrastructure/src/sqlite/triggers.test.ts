@@ -7,6 +7,7 @@ import {
   fakeUlid,
   minimalLoop,
   sampleInvocation,
+  samplePin,
   sampleThread,
 } from '@graphgoblin/contracts/testing';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -160,11 +161,13 @@ describe('SqliteInboundEvents', () => {
       event('e2', { receivedAt: '2026-10-02T12:01:00.000Z', type: 'other', dedupeKey: 'k' }),
     );
     await events.insert(event('e3', { receivedAt: '2026-10-02T12:02:00.000Z', ownerId: 'else' }));
-    expect((await events.list('local')).map((e) => e.id)).toEqual(['e2', 'e1']);
-    expect((await events.list('local', { limit: 1 })).map((e) => e.id)).toEqual(['e2']);
-    expect((await events.list('local', { type: 'issue.ready' })).map((e) => e.id)).toEqual(['e1']);
+    expect((await events.page('local')).items.map((e) => e.id)).toEqual(['e2', 'e1']);
+    expect((await events.page('local', { limit: 1 })).items.map((e) => e.id)).toEqual(['e2']);
+    expect((await events.page('local', { type: 'issue.ready' })).items.map((e) => e.id)).toEqual([
+      'e1',
+    ]);
     expect(
-      (await events.list('local', { before: '2026-10-02T12:01:00.000Z' })).map((e) => e.id),
+      (await events.page('local', { before: '2026-10-02T12:01:00.000Z' })).items.map((e) => e.id),
     ).toEqual(['e1']);
     await events.setRunIds('e1', ['r1', 'r2']);
     expect(await events.get('e1')).toMatchObject({ runIds: ['r1', 'r2'] });
@@ -224,6 +227,7 @@ describe('trigger lookups on runs and loops', () => {
       ownerId: 'local',
       loopId: a.loop.id,
       versionId: a.draft.id,
+      pinned: samplePin(),
       invocationId: fakeUlid('inv:dedupe'),
       status: 'queued',
       iteration: 1,

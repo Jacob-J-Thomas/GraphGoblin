@@ -1,0 +1,13 @@
+Command: node %TEMP%\gg-qa-e1-r6-fixtures.mjs
+Exit: 1
+Elapsed ms: 52870
+
+file:///<USER>/AppData/Local/Temp/gg-qa-e1-r6-fixtures.mjs:13
+ for(const [name,id] of Object.entries(fixtures.runs[width])){const es=await events(id),thread=await call('/runs/'+id+'/thread');fixtures.admission.push({width,name,id,eventCount:es.length,historyChars:historySize(es),variablesProperties:Object.keys(thread.vars).length,messages:thread.messages.length,variablesPrettyChars:JSON.stringify(thread.vars,null,2).length,variablesSha256:sha(JSON.stringify(thread.vars,null,2)),seed:es.find(e=>e.type==='node.finished'&&e.nodeId==='seed').seq,ask:es.find(e=>e.type==='run.waiting').seq});}
+                                                                                                                                                                                      ^
+
+TypeError: Cannot read properties of undefined (reading 'length')
+    at file:///<USER>/AppData/Local/Temp/gg-qa-e1-r6-fixtures.mjs:13:183
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+Node.js v22.14.0

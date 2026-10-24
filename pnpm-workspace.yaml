@@ -3,6 +3,21 @@ packages:
   - apps/*
   - tooling
 
+# Drizzle Kit does not import this deprecated loader; remove its unused esbuild chain.
+overrides:
+  '@esbuild-kit/esm-loader': '-'
+
 # Dependency lifecycle scripts allowed to run (pnpm blocks all others). esbuild only validates its binary.
 allowBuilds:
   esbuild: true
+
+# Accepted advisories, each test-only and unreachable from shipped code. Remove an entry as soon as
+# its fixed version installs on the Node 22 patch used for local gates.
+auditConfig:
+  ignoreGhsas:
+    # undici < 8.12.2 (denial of service through excessive content encodings). undici is reached
+    # only through jsdom, the web test environment, which talks to local test servers; no workspace
+    # imports it and no built app bundles it. The fixed 8.12.x cannot load on Node 22.14 (it needs
+    # zlib's zstd support), which the local gates still use (ADR-0040 patch-floor gap). Remove this
+    # entry and take undici >= 8.12.2 when the local Node 22 is updated to 22.22.2 or later.
+    - GHSA-xjj6-f33q-929c

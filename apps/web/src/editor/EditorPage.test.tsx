@@ -1,11 +1,20 @@
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTask } from '../__fixtures__/dialog.js';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp, renderWith } from '../__fixtures__/render.js';
+import { renderNodeEditor } from '../__fixtures__/node-editor.js';
+import { pasteInto } from '../__fixtures__/user.js';
 import { App } from '../app/App.js';
 import {
   loadLocalDraft,
@@ -51,6 +60,9 @@ describe('EditorPage', () => {
     const api = new FakeApi();
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
+    // Loop/device loading precedes validation. Give that public phase its own observation
+    // window, within the unchanged 20 s test budget, before observing the server's checks.
+    await waitForElementToBeRemoved(screen.getByText('Loading loop…'), { timeout: 10_000 });
     await screen.findByText('Ready to publish');
     act(() =>
       useEditorStore.getState().setFieldError('node:start', 'inputSchema', {
@@ -683,6 +695,9 @@ describe('EditorPage', () => {
     expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
   });
 
+  // This whole-page integration deliberately checks every discard surface and both canvas and
+  // dialog focus, with no fixture typing to batch. It exceeded 20 s under coverage/CPU load;
+  // retain those real UI transitions with the API subprocess precedent's 60 s budget, here only.
   it('blocks publishing on JSON that does not parse, and discards it from the badges', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -763,7 +778,7 @@ describe('EditorPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('node-start').closest('.react-flow__node')).toHaveFocus(),
     );
-  });
+  }, 60_000);
 
   it('opens a node at an issue’s field from its badge, by pointer or keyboard', async () => {
     const user = userEvent.setup();
@@ -884,6 +899,9 @@ describe('EditorPage', () => {
     }
   });
 
+  // Adding nodes, entering the modal from the canvas, connecting/removing an edge and opening a
+  // second full form are the integration behavior under test. With no setup strings to batch,
+  // keep these transitions and allow 60 s locally after a measured 20 s coverage/load timeout.
   it('connects nodes from the keyboard and customizes a default list', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -928,6 +946,10 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Add Exit node' }));
     act(() => useEditorStore.getState().openNode('exit'));
     expect(await screen.findByText('[{"kind":"caller"}]')).toBeInTheDocument();
+    // Its help says that default receives nothing while Returns is None (#129).
+    expect(screen.getByRole('group', { name: 'Destinations' })).toHaveAccessibleDescription(
+      /^Returns is None, so this destination receives nothing\./,
+    );
     await user.click(screen.getByRole('button', { name: 'Customize destinations' }));
     await waitFor(() =>
       expect(
@@ -939,7 +961,7 @@ describe('EditorPage', () => {
       ).toEqual([{ kind: 'caller' }]),
     );
     expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
-  });
+  }, 60_000);
 
   it('shows the right node when the open editor is switched to another node of the same kind', async () => {
     const api = new FakeApi();
@@ -1074,7 +1096,8 @@ describe('EditorPage', () => {
     renderApp(`/loops/${loop.id}/edit`, api);
     expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Discard it' }));
-    expect(screen.queryByText('The server has a newer draft')).toBeNull();
+    // The click dispatch completes before the asynchronous device deletion necessarily does.
+    await waitFor(() => expect(screen.queryByText('The server has a newer draft')).toBeNull());
     await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
   });
 
@@ -1159,7 +1182,7 @@ describe('EditorPage', () => {
     const panel = screen.getByRole('complementary', { name: 'Loop settings' });
     const name = within(panel).getByLabelText('Name');
     await user.clear(name);
-    await user.type(name, 'sink');
+    await pasteInto(user, name, 'sink');
     expect(screen.getByRole('heading', { name: 'sink' })).toBeInTheDocument();
     await user.type(screen.getByLabelText('Description'), 'x');
     await user.clear(screen.getByLabelText('Maximum node visits'));
@@ -1177,14 +1200,16 @@ describe('EditorPage', () => {
     await screen.findByRole('form', { name: 'check config' });
     const idInput = within(dialog).getByLabelText('Node id');
     await user.clear(idInput);
-    await user.type(idInput, '9bad{Enter}');
+    await pasteInto(user, idInput, '9bad');
+    await user.keyboard('{Enter}');
     expect(screen.getByText(/Use a letter first/)).toBeInTheDocument();
     expect(idInput).toHaveAttribute('aria-invalid', 'true');
     await user.clear(idInput);
-    await user.type(idInput, 'infer{Enter}');
+    await pasteInto(user, idInput, 'infer');
+    await user.keyboard('{Enter}');
     expect(screen.getByText(/"infer" is already used/)).toBeInTheDocument();
     await user.clear(idInput);
-    await user.type(idInput, 'verify');
+    await pasteInto(user, idInput, 'verify');
     fireEvent.blur(idInput);
     expect(useEditorStore.getState().selectedNodeId).toBe('verify');
     // The dialog follows the rename and keeps focus where it was.
@@ -1207,9 +1232,10 @@ describe('EditorPage', () => {
   it('applies an id typed in the dialog when it closes, and stops once for an id that cannot apply', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
-    const loop = api.addLoop(kitchenSinkLoop());
-    renderApp(`/loops/${loop.id}/edit`, api);
-    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    // ID drafting/commit belongs to the dialog; unrelated canvas cards need not rerender per key.
+    renderNodeEditor(loop.id, definition, 'check', api);
     act(() => useEditorStore.getState().openNode('check'));
     const idInput = (await screen.findByRole('dialog')).querySelector<HTMLInputElement>(
       '#node-id',

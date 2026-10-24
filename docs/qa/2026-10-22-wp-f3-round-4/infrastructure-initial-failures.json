@@ -1,0 +1,20 @@
+{
+  "result": "FAIL",
+  "passed": 758,
+  "failed": 9,
+  "coverage": "Not emitted on the failed command",
+  "failures": [
+    " src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+    " src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow",
+    " src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process",
+    " src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+    " src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+    " src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies",
+    " src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+    " src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout",
+    " src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted",
+    " src/sqlite/history-summaries.test.ts > SQLite history queries > applies the history index to an existing current-format store and reruns idempotently"
+  ],
+  "historyIndexFixture": "Removed only the latest ledger row after 0017 was appended, leaving a dropped 0016 index recorded as applied. Corrected by locating the index SQL and rewinding from its own timestamp.",
+  "nativeTerminationEvidence": "Eight native termination/descendant/readiness-stop/locked-cleanup cases are the D-015 class. The SQLite history-index fixture failure is separate."
+}

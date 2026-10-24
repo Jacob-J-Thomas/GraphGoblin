@@ -5,13 +5,13 @@
 | Term             | Meaning                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Loop             | A named, owned graph definition with a history of versions.                                                        |
-| Loop version     | An immutable snapshot of a loop's definition. Runs pin one.                                                        |
+| Loop version     | A record of a loop's definition: the editable draft, or an immutable published version or draft snapshot.          |
 | Node             | A unit of behaviour in the graph with a kind, a config validated by that kind's schema, and ports.                 |
 | Port             | A named connection point. Inputs are `in`. Outputs are `out` by default; decisions and exits add labelled outputs. |
 | Edge             | A directed connection from a node's output port to another node's input port.                                      |
 | Trigger envelope | The normalised payload that starts a run, whatever the source.                                                     |
 | Invocation       | Who or what started a run, and how its return should be delivered.                                                 |
-| Run              | One execution of a loop version. Owns a context thread and an event log.                                           |
+| Run              | One execution of an immutable loop version it pins for life. Owns a context thread and an event log.               |
 | Child run        | A run started by a subloop node. Has a parent run id.                                                              |
 | Run event        | One append-only record in a run's log, with a sequence number.                                                     |
 | Context thread   | The run's shared state: messages, variables, artifacts, counters, last output.                                     |
@@ -28,7 +28,7 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 type LoopDefinition = {
   schemaVersion: 4;
   name: string;
-  description?: string;
+  description?: string; // an empty string is distinct from absence
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
@@ -85,15 +85,44 @@ provide only model and effort. Definitions containing `settings.defaults.harness
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
 Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
 
+## Inference context and session identity (#33)
+
+Provider conversation selection is independent of authored loop-context selection:
+
+- `session: { policy: "fresh" }` (the unchanged default) starts an isolated provider
+  conversation with the authored task and selected inputs. Use the prompt template,
+  input transforms and context files to deliberately supply current main-loop context.
+- `session: { policy: "resume-own", resetAfterVisits?: number }` opts into this node's
+  independent conversation within this execution and harness. Other nodes, runs,
+  replay forks and subloop children do not inherit its handle. Outputs enter the
+  shared thread only through the existing output configuration.
+- `resume-previous` still selects the latest session for the run and harness;
+  `resume-named` still selects the loop/key and harness, including across runs.
+  These existing shared policies are unchanged.
+
+`resetAfterVisits` is optional, with no default: positive safe integers from 1 to
+9,007,199,254,740,991. Visits 1 through N share a provider conversation; visit N+1
+starts fresh. Only durably completed logical visits advance this count; retries,
+repairs and interrupted recovery stay inside their visit. A reset changes only
+this node's provider conversation, preserving main-loop context and other nodes.
+There is no hidden ten-visit reset, provider-turn ceiling or token cap.
+
+The existing session rows retain `(runId, nodeId, attempt, harness)` identity.
+Attempts restart on each visit, so own continuity selects the exact final attempt
+of the latest durable `node.finished`, not the largest attempt or newest timestamp.
+The log supplies completed-visit/reset counts and open-turn provenance across restart.
+No row schema or stored data rewrite is needed. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
 ## Versioning (Decided)
 
 - Upgrade migration `0005` rewrites stored version definitions once, removing only
   `settings.defaults.harness`. Existing inference nodes already carry their explicit harness.
   Version ids, numbers, creation and publication timestamps, and run pins stay unchanged.
 - Editing creates or updates a **draft** version. Publishing freezes it as the loop's current version.
-- A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
-- New runs always use the latest published version.
-- A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number.
+- A run pins an immutable definition record and finishes on it, through waits, resume, replay forks and restarts, even if the loop is edited or a newer version is published meanwhile ([ADR-0041](decisions/ADR-0041-runs-pin-immutable-definitions.md)). A published start pins that version. A draft start (a test run, `allowDraft`) pins a **draft snapshot**: a `loop_versions` row with status `snapshot`, a new id, the draft's number and the definition exactly as the start read it, committed with the run. A snapshot is never published, never latest, not the loop's draft, not listed in `GET /loops/{id}/versions` and never started directly; `GET /loops/{id}/versions/{versionId}` still returns it. Storage triggers refuse any change to a snapshot and its deletion while a run pins it; run deletion removes snapshots no run pins.
+- The run's `versionId` is that record, and `run.pinned` describes it: `source` (`published` or `draft`), the version number, the loop name in the pinned definition, a readable `label` (`Review v3`, `Review draft v4`) and the inherited model defaults pinned at start (`defaults.owner` from Settings, `defaults.process` from `GG_DEFAULTS`) and `classifiers`, the catalog binding (provider, provider model, endpoint, primitives, secret name) of every classifier the definition uses. None of it changes during the run; a classifier's existence, enabled switch and secret value are still checked when it is called.
+- New runs always use the latest published version, or freeze the current draft, with the defaults current at their start.
+- A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number. A child has its own pin and inherits its parent's pinned defaults, so later Settings changes do not reach a running tree either.
   - "Starts" means the parent run is created: the resolution covers every loop reachable through subloop references, at any depth, and is recorded on the parent's `run.queued` event as `subloopVersions` (loop id to version id). Children inherit the map, replay forks copy it, and recovery reads it from the log, so a version published while the parent waits never reaches the parent's tree (05, ADV-004). A loop that an active run can still start (its own runs, or runs whose pins or references reach it) cannot be deleted (409 `LOOP_IN_USE`).
 
 ## Deleting a loop (Decided)
@@ -123,6 +152,19 @@ future attempt to execute it fails with `SUBLOOP_NOT_FOUND`.
 longer exists, using the same run-owned cleanup. It is an offline maintenance operation for
 the later format-4 cutover; the current offline upgrade is unchanged. See
 [ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
+
+## Webhook delivery records (#246)
+
+The run record's optional `deliveries` array tracks outbound webhooks independently of
+execution status. Each item carries `id`, webhook `channel`, `status` (pending/delivered/failed),
+`attempts`, `maxAttempts`, `inFlight`, `acknowledgement`, `effectMayHaveHappened`,
+`acknowledgementUncertain` (sticky across later rejections and success), optional
+`nextAttemptAt` and typed `lastError`. The journal's `delivery.queued`, `delivery.attempted`,
+`delivery.attempt_finished` and `delivery.finished` events each contain a complete snapshot.
+The API projects the latest snapshot per identity from these durable events, without a second
+status column or table. An absent array means no webhook has been queued. Interrupted or timed
+out acknowledgements are unknown; a later success cannot erase earlier uncertainty. Migration
+0015 converts completed historical webhook return events once (ADR-0043).
 
 ## Context thread (Draft - to be co-designed)
 
@@ -163,6 +205,15 @@ type Artifact = {
 };
 ```
 
+Authored patches may mutate only `/messages`, `/vars`, `/artifacts`, `/outputs` and
+`/lastOutput`, including their descendants. The document root, `/schemaVersion`, `/run`,
+`/invocation`, `/counters` and `/gates` are protected. Every mutating destination is checked
+before the patch is applied: `add`, `replace`, `remove`, `move` and `copy` check `path`,
+and `move` also checks `from` because it removes its source. `copy` may read protected
+context into a writable destination; `test` may read any location. Rejecting any operation
+rejects the entire patch without changing the thread. Engine-owned bookkeeping uses its
+own patches and can update protected locations.
+
 Questions to settle together, tracked in 13:
 
 1. Are messages the right spine, or should the thread be variables plus artifacts with messages as one artifact kind?
@@ -200,39 +251,55 @@ engine-owned region. Usage roll-up remains an engine operation.
 
 ## Run (Decided)
 
-| Field                                                  | Notes                                                                                     |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity and pinning                                                                      |
-| `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted` |
-| `currentNodeId?`, `iteration`                          | Where the token is                                                                        |
-| `waiting?`                                             | `{ nodeId, kind: 'input'                                                                  | 'timer' | 'signal' | 'heartbeat', until?: string, timeoutAt?: string, startedSeq?: number, prompt?: string, inputSchema?: JsonSchema }` |
-| `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                  |
-| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`            |
-| `result?`                                              | The exit node's return payload                                                            |
-| `outcome?`                                             | `success`, `failure`, `exhausted`                                                         |
-| `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                               |
+| Field                                                  | Notes                                                                                                                                                                                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity; `versionId` is the immutable definition record the run executes                                                                                                                                        |
+| `pinned`                                               | `{ source, version, name, label, defaults: { owner, process }, classifiers }`, at start                                                                                                                          |
+| `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted`                                                                                                                        |
+| `currentNodeId?`, `iteration`                          | Where the token is                                                                                                                                                                                               |
+| `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
+| `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                                                                                                                                         |
+| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean; details?: unknown; inference?: PromptProvenance }`                                                                                  |
+| `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
+| `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
+| `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
+
+A missing run `result` means no payload was returned, whereas `result: null` is a present JSON value, preserved distinctly from `false`, `0`, `""`, `[]` and `{}` across storage and restart. The distinction reaches a subloop parent too: a child without a result passes no `result` to the parent's mapping, and a child that returned `null` passes `null` (#242).
+
+A child run's `waiting` parent is woken only through the park it observed: the wake carries the parent's `waiting.waitId` and is accepted only while that park, of kind `child` and on that `childRunId`, is current (05).
+
+A `failure` carried up from a subloop child has the child's `code` and `resumable`, the parent's subloop node as `nodeId`, and `details: { childRunId, childNodeId?, childDetails? }` naming where it happened (#251, 05). A child that finished through a Failure exit has `outcome: failure` and no `failure`; its parent receives it as data.
+
+`failure.inference` contains `visitId`, `turnId`, `promptKind` (`authored`, `repair`, or
+`continuation`), `submission` (`definitely-not-submitted`, `delivery-uncertain`, or
+`session-missing`), and optional `sessionId`. The ID may be an inherited previous/named/own
+conversation; it does not by itself establish acceptance of this visit's authored task.
+See [inference recovery](05-execution-engine.md#inference-submission-and-recovery).
 
 ## Run events (Decided kinds, Draft payloads)
 
-Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.
+Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and typed fields. Transcripts and other output payloads use artifact references. `harness.turn.prompt` is an exception: the whole rendered prompt is stored inline, without a schema size limit or automatic artifact offloading. It can enlarge the event log; it shares the run's private access and deletion boundary. `run.queued.initialThread` is also inline (05).
 
-| Type                                                                 | Payload                                                                                               |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                                                     |
-| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
-| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
-| `run.failed`                                                         | failure object                                                                                        |
-| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                 |
-| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                   |
-| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                          |
-| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                        |
-| `harness.usage`                                                      | tokens as reported by the harness, informational                                                      |
-| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics |
-| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                              |
-| `signal.received`, `input.received`                                  | name, payload reference                                                                               |
-| `heartbeat.beat`                                                     | beat number, probe result summary                                                                     |
-| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                 |
-| `return.delivered`, `return.failed`                                  | channel, target, status                                                                               |
+| Type                                                                 | Payload                                                                                                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                                                   |
+| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                                                     |
+| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                                                 |
+| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                                                |
+| `run.failed`                                                         | failure object                                                                                                                        |
+| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                                                 |
+| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                                                   |
+| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                                                          |
+| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                                                        |
+| `harness.turn`                                                       | nodeId, visitId, turnId, harness, promptKind, exact inline prompt, optional resumeSessionId; durable before invoking the adapter      |
+| `harness.submission`                                                 | nodeId, visitId, turnId, submission (`submitted` on acceptance, otherwise one of the three failure classes), optional positive marker |
+| `harness.usage`                                                      | tokens as reported by the harness, informational                                                                                      |
+| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics                                 |
+| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                                                              |
+| `signal.received`, `input.received`                                  | name, payload reference                                                                                                               |
+| `heartbeat.beat`                                                     | beat number, probe result summary                                                                                                     |
+| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                                                 |
+| `return.delivered`, `return.failed`                                  | channel, target, status                                                                                                               |
 
 ## Other entities (Decided)
 
@@ -242,7 +309,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                                            |
 | `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header and scheme, nullable replay window (null for body signing), enabled. |
 | `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.                                                           |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<name>@<startedSeq>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                   |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<kind>@<waitId>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                       |
 | `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                                         |
 | `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                                               |
 | `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                                      |
@@ -260,7 +327,7 @@ Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an 
 
 Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 

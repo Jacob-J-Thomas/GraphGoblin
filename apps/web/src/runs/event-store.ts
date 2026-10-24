@@ -6,7 +6,23 @@ export interface RunEventLog {
   events: RunEvent[];
   /** The highest `seq` received; the SSE subscription resumes after it. */
   lastSeq: number;
+  /**
+   * Characters of JSON the recorded events amount to, accumulated as they arrive. The inspector
+   * uses it to tell a history whose reconstruction would freeze the page (#259).
+   */
+  bytes: number;
 }
+
+/**
+ * Recorded characters of JSON above which a run's history is "large": replaying it for a newly
+ * selected event, and enumerating the keys of a value it holds, would each freeze the page for
+ * hundreds of milliseconds (a 350,000-property variable measured at 344 to 473 ms), as would
+ * serialising the log into session storage on every append. The inspector reconstructs the thread
+ * at an event of such a run on request only, and the stored copy leaves such a log out, so a
+ * reload replays it from its first event (#259). Ordinary runs record kilobytes to a few hundred
+ * kilobytes.
+ */
+export const LARGE_HISTORY_BYTES = 2_000_000;
 
 export interface RunEventStoreState {
   runs: Record<string, RunEventLog>;
@@ -45,18 +61,20 @@ export const useRunEventStore = create<RunEventStoreState>()(
       runs: {},
       append: (runId, ...incoming) =>
         set((state) => {
-          const log = state.runs[runId] ?? { events: [], lastSeq: 0 };
+          const log = state.runs[runId] ?? EMPTY;
           const fresh: RunEvent[] = [];
           let lastSeq = log.lastSeq;
+          let bytes = log.bytes;
           for (const event of incoming) {
             if (event.seq <= lastSeq) continue;
             fresh.push(event);
             lastSeq = event.seq;
+            bytes += JSON.stringify(event).length;
           }
           if (fresh.length === 0) return state;
           const runs = {
             ...state.runs,
-            [runId]: { events: [...log.events, ...fresh], lastSeq },
+            [runId]: { events: [...log.events, ...fresh], lastSeq, bytes },
           };
           const ids = Object.keys(runs);
           if (ids.length > MAX_RUNS) delete runs[ids[0] as string];
@@ -77,12 +95,20 @@ export const useRunEventStore = create<RunEventStoreState>()(
         sessionStorage.removeItem('graphgoblin-run-events');
         return quotaSafeSessionStorage;
       }),
-      partialize: (state) => ({ runs: state.runs }),
+      // Version 1 added `bytes` to each log. A stored log of an earlier version has no size to
+      // carry on from, so it is dropped and the run replays from its first event.
+      version: 1,
+      migrate: () => ({ runs: {} }),
+      partialize: (state) => ({
+        runs: Object.fromEntries(
+          Object.entries(state.runs).filter(([, log]) => log.bytes <= LARGE_HISTORY_BYTES),
+        ),
+      }),
     },
   ),
 );
 
-const EMPTY: RunEventLog = { events: [], lastSeq: 0 };
+const EMPTY: RunEventLog = { events: [], lastSeq: 0, bytes: 0 };
 
 export function useRunEventLog(runId: string): RunEventLog {
   return useRunEventStore((s) => s.runs[runId] ?? EMPTY);

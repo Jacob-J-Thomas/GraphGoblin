@@ -10,6 +10,153 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/system/model-defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Process model and effort defaults, before loop and owner overrides */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @default {} */
+                            byHarness: {
+                                [key: string]: {
+                                    model?: string | undefined;
+                                    /** @enum {string} */
+                                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/shutdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Observe gateway drain and force-stop state */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Drain, keep waiting, or explicitly force-stop the gateway */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        action: "drain" | "wait" | "force";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -114,6 +261,8 @@ export interface paths {
                         "application/json": {
                             ok: boolean;
                             checks: {
+                                /** @enum {string} */
+                                state?: ("unknown" | "ready" | "cli-missing" | "cli-incompatible" | "auth" | "quota" | "transport") | undefined;
                                 id: string;
                                 label: string;
                                 /** @enum {string} */
@@ -158,9 +307,11 @@ export interface paths {
                     content: {
                         "application/json": {
                             items: {
+                                /** @enum {string} */
+                                state: "unknown" | "ready" | "cli-missing" | "cli-incompatible" | "auth" | "quota" | "transport";
                                 ok: boolean;
                                 version?: string | undefined;
-                                authenticated: boolean;
+                                authenticated?: boolean | undefined;
                                 problems: string[];
                                 authMethod?: ("claude.ai" | null) | undefined;
                                 supportedPolicies?: {
@@ -222,7 +373,25 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: components["schemas"]["LoopRecord"][];
+                            items: {
+                                id: string;
+                                ownerId: string;
+                                name: string;
+                                description?: string | undefined;
+                                currentVersionId?: string | undefined;
+                                draftVersionId?: string | undefined;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                                latestRun: {
+                                    id: string;
+                                    status: components["schemas"]["RunStatus"];
+                                    /** Format: date-time */
+                                    createdAt: string;
+                                } | null;
+                                runCount: number;
+                            }[];
                         };
                     };
                 };
@@ -887,6 +1056,7 @@ export interface paths {
                         "application/json": {
                             items: components["schemas"]["RunEvent"][];
                             nextAfter: number;
+                            hasMore: boolean;
                         };
                     };
                 };
@@ -1036,6 +1206,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        waitId: string;
                         input: components["schemas"]["JsonValueInput"];
                     };
                 };
@@ -1048,6 +1219,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["RunRecord"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitConflict"];
                     };
                 };
             };
@@ -1081,6 +1261,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        waitId: string;
                         payload?: components["schemas"]["JsonValueInput"] | undefined;
                     };
                 };
@@ -1096,6 +1277,15 @@ export interface paths {
                             run: components["schemas"]["RunRecord"];
                             woke: boolean;
                         };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitConflict"];
                     };
                 };
             };
@@ -1229,6 +1419,52 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Identify unreadable run history for manual repair or explicit deletion */
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: {
+                                runId: string;
+                                /** @enum {string} */
+                                code: "HISTORY_UNREADABLE";
+                                reason: string;
+                            }[];
+                            nextCursor: string | null;
+                        };
+                    };
                 };
             };
         };
@@ -1664,6 +1900,7 @@ export interface paths {
                                 /** @enum {string} */
                                 defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                                 enabled: boolean;
+                                ecosystemDefault: boolean;
                             }[];
                         };
                     };
@@ -1997,12 +2234,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Stored inbound events, newest first */
+        /** Stored inbound events, newest first with stable paging */
         get: {
             parameters: {
                 query?: {
                     type?: string;
                     before?: string;
+                    /** @description Opaque inbound-event cursor, at most 256 base64url characters. */
+                    cursor?: string;
                     limit?: number;
                 };
                 header?: never;
@@ -2100,6 +2339,7 @@ export interface paths {
                                     failureCode?: string | undefined;
                                 } | undefined;
                             }[];
+                            nextCursor: string | null;
                         };
                     };
                 };
@@ -2395,6 +2635,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WaitConflictInput: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @enum {string} */
+            code: "WAIT_MISMATCH" | "INVALID_STATE";
+            detail?: string | undefined;
+        };
         ClassifierModelSummaryInput: {
             id: string;
             displayName: string;
@@ -2458,7 +2707,9 @@ export interface components {
                     } | undefined;
                 } | undefined;
                 /** @default 10 */
-                maxNodeVisits?: number | undefined;
+                maxNodeVisits?: (number | null) | undefined;
+                /** @default null */
+                runDeadlineSeconds?: (number | null) | undefined;
                 /** @default 8 */
                 subloopDepthLimit?: number | undefined;
             } | undefined;
@@ -2640,7 +2891,7 @@ export interface components {
                     /** @constant */
                     kind: "expression";
                     jsonata: string;
-                    maxPasses?: number | undefined;
+                    maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
@@ -2670,7 +2921,7 @@ export interface components {
                         /** @enum {string} */
                         value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                     };
-                    maxPasses?: number | undefined;
+                    maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
@@ -2694,7 +2945,7 @@ export interface components {
                     question: string;
                     minConfidence?: number | undefined;
                     truthThreshold?: number | undefined;
-                    maxPasses?: number | undefined;
+                    maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
                     answer: {
                         /** @constant */
@@ -2784,6 +3035,10 @@ export interface components {
                         /** @constant */
                         policy: "resume-named";
                         key: string;
+                    } | {
+                        /** @constant */
+                        policy: "resume-own";
+                        resetAfterVisits?: number | undefined;
                     }) | undefined;
                     prompt: {
                         template: string;
@@ -3518,7 +3773,7 @@ export interface components {
             loopId: string;
             version: number;
             /** @enum {string} */
-            status: "draft" | "published";
+            status: "draft" | "published" | "snapshot";
             definition: components["schemas"]["LoopDefinitionInput"];
             /** Format: date-time */
             createdAt: string;
@@ -3529,13 +3784,29 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
             details?: components["schemas"]["JsonValueInput"] | undefined;
+            inference?: {
+                visitId: string;
+                turnId: string;
+                /** @enum {string} */
+                submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing";
+                /** @enum {string} */
+                promptKind: "authored" | "repair" | "continuation";
+                sessionId?: string | undefined;
+                retry?: {
+                    /** @enum {string} */
+                    harness: "codex" | "claude";
+                    prompt: string;
+                    resumeSessionId?: string | undefined;
+                } | undefined;
+            } | undefined;
         };
         WaitSpecInput: {
+            waitId: string;
             nodeId: string;
             /** @enum {string} */
             kind: "input" | "timer" | "signal" | "heartbeat" | "child";
@@ -3550,13 +3821,59 @@ export interface components {
             beat?: number | undefined;
             /** Format: date-time */
             timeoutAt?: string | undefined;
-            startedSeq?: number | undefined;
+            startedSeq: number;
         };
         RunRecordInput: {
             id: string;
             ownerId: string;
             loopId: string;
             versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+                limits: {
+                    /** @default 10 */
+                    maxNodeVisits?: (number | null) | undefined;
+                    /** @default null */
+                    runDeadlineSeconds?: (number | null) | undefined;
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             parentRunId?: string | undefined;
             invocationId: string;
             status: components["schemas"]["RunStatusInput"];
@@ -3571,6 +3888,36 @@ export interface components {
             /** @enum {string} */
             outcome?: ("success" | "failure" | "exhausted") | undefined;
             result?: components["schemas"]["JsonValueInput"] | undefined;
+            deliveries?: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            }[] | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -3585,7 +3932,202 @@ export interface components {
             /** Format: date-time */
             ts: string;
             /** @constant */
+            type: "delivery.queued";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempted";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempt_finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
             type: "run.queued";
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+                limits: {
+                    /** @default 10 */
+                    maxNodeVisits?: (number | null) | undefined;
+                    /** @default null */
+                    runDeadlineSeconds?: (number | null) | undefined;
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             replayOf?: {
                 runId: string;
                 nodeId: string;
@@ -3825,6 +4367,36 @@ export interface components {
             /** Format: date-time */
             ts: string;
             /** @constant */
+            type: "harness.turn";
+            nodeId: string;
+            visitId: string;
+            turnId: string;
+            /** @enum {string} */
+            harness: "codex" | "claude";
+            /** @enum {string} */
+            promptKind: "authored" | "repair" | "continuation";
+            prompt: string;
+            resumeSessionId?: string | undefined;
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "harness.submission";
+            nodeId: string;
+            visitId: string;
+            turnId: string;
+            /** @enum {string} */
+            submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing" | "submitted";
+            /** @enum {string} */
+            marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "fake.accepted") | undefined;
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
@@ -3980,7 +4552,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.delivered";
-            channel: components["schemas"]["ReturnChannelInput"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format?: ("json" | "markdown" | "text") | undefined;
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             target?: string | undefined;
         } | {
             runId: string;
@@ -3989,7 +4576,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.failed";
-            channel: components["schemas"]["ReturnChannelInput"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format?: ("json" | "markdown" | "text") | undefined;
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             error: string;
         };
         EvaluationDiagnosticInput: {
@@ -4008,7 +4610,7 @@ export interface components {
             previousPasses: number;
             passes: number;
             repeatRouteId: string;
-            maxPasses: number;
+            maxPasses: number | null;
             maxRunTimeSeconds?: number | undefined;
             elapsedSeconds: number;
             limit: ("max-passes" | "max-run-time") | null;
@@ -4031,10 +4633,6 @@ export interface components {
              * @enum {string}
              */
             format?: ("json" | "markdown" | "text") | undefined;
-        } | {
-            /** @constant */
-            kind: "event";
-            eventType: string;
         } | {
             /** @constant */
             kind: "log";
@@ -4135,6 +4733,15 @@ export interface components {
                 };
             };
         };
+        WaitConflict: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @enum {string} */
+            code: "WAIT_MISMATCH" | "INVALID_STATE";
+            detail?: string | undefined;
+        };
         ClassifierModelSummary: {
             id: string;
             displayName: string;
@@ -4196,7 +4803,9 @@ export interface components {
                     };
                 };
                 /** @default 10 */
-                maxNodeVisits: number;
+                maxNodeVisits: number | null;
+                /** @default null */
+                runDeadlineSeconds: number | null;
                 /** @default 8 */
                 subloopDepthLimit: number;
             };
@@ -4374,7 +4983,7 @@ export interface components {
                     /** @constant */
                     kind: "expression";
                     jsonata: string;
-                    maxPasses?: number | undefined;
+                    maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
@@ -4404,7 +5013,7 @@ export interface components {
                         /** @enum {string} */
                         value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                     };
-                    maxPasses?: number | undefined;
+                    maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
@@ -4427,7 +5036,7 @@ export interface components {
                     question: string;
                     minConfidence?: number | undefined;
                     truthThreshold?: number | undefined;
-                    maxPasses?: number | undefined;
+                    maxPasses?: (number | null) | undefined;
                     maxRunTimeSeconds?: number | undefined;
                     answer: {
                         /** @constant */
@@ -4516,6 +5125,10 @@ export interface components {
                         /** @constant */
                         policy: "resume-named";
                         key: string;
+                    } | {
+                        /** @constant */
+                        policy: "resume-own";
+                        resetAfterVisits?: number | undefined;
                     };
                     prompt: {
                         template: string;
@@ -5241,7 +5854,7 @@ export interface components {
             loopId: string;
             version: number;
             /** @enum {string} */
-            status: "draft" | "published";
+            status: "draft" | "published" | "snapshot";
             definition: components["schemas"]["LoopDefinition"];
             /** Format: date-time */
             createdAt: string;
@@ -5252,13 +5865,29 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
             details?: components["schemas"]["JsonValue"] | undefined;
+            inference?: {
+                visitId: string;
+                turnId: string;
+                /** @enum {string} */
+                submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing";
+                /** @enum {string} */
+                promptKind: "authored" | "repair" | "continuation";
+                sessionId?: string | undefined;
+                retry?: {
+                    /** @enum {string} */
+                    harness: "codex" | "claude";
+                    prompt: string;
+                    resumeSessionId?: string | undefined;
+                } | undefined;
+            } | undefined;
         };
         WaitSpec: {
+            waitId: string;
             nodeId: string;
             /** @enum {string} */
             kind: "input" | "timer" | "signal" | "heartbeat" | "child";
@@ -5273,13 +5902,59 @@ export interface components {
             beat?: number | undefined;
             /** Format: date-time */
             timeoutAt?: string | undefined;
-            startedSeq?: number | undefined;
+            startedSeq: number;
         };
         RunRecord: {
             id: string;
             ownerId: string;
             loopId: string;
             versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+                limits: {
+                    /** @default 10 */
+                    maxNodeVisits: number | null;
+                    /** @default null */
+                    runDeadlineSeconds: number | null;
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             parentRunId?: string | undefined;
             invocationId: string;
             status: components["schemas"]["RunStatus"];
@@ -5294,6 +5969,36 @@ export interface components {
             /** @enum {string} */
             outcome?: ("success" | "failure" | "exhausted") | undefined;
             result?: components["schemas"]["JsonValue"] | undefined;
+            deliveries?: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            }[] | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -5308,7 +6013,202 @@ export interface components {
             /** Format: date-time */
             ts: string;
             /** @constant */
+            type: "delivery.queued";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempted";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempt_finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
             type: "run.queued";
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+                limits: {
+                    /** @default 10 */
+                    maxNodeVisits: number | null;
+                    /** @default null */
+                    runDeadlineSeconds: number | null;
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             replayOf?: {
                 runId: string;
                 nodeId: string;
@@ -5548,6 +6448,36 @@ export interface components {
             /** Format: date-time */
             ts: string;
             /** @constant */
+            type: "harness.turn";
+            nodeId: string;
+            visitId: string;
+            turnId: string;
+            /** @enum {string} */
+            harness: "codex" | "claude";
+            /** @enum {string} */
+            promptKind: "authored" | "repair" | "continuation";
+            prompt: string;
+            resumeSessionId?: string | undefined;
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "harness.submission";
+            nodeId: string;
+            visitId: string;
+            turnId: string;
+            /** @enum {string} */
+            submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing" | "submitted";
+            /** @enum {string} */
+            marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "fake.accepted") | undefined;
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
@@ -5703,7 +6633,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.delivered";
-            channel: components["schemas"]["ReturnChannel"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format: "json" | "markdown" | "text";
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             target?: string | undefined;
         } | {
             runId: string;
@@ -5712,7 +6657,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.failed";
-            channel: components["schemas"]["ReturnChannel"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format: "json" | "markdown" | "text";
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             error: string;
         };
         EvaluationDiagnostic: {
@@ -5731,7 +6691,7 @@ export interface components {
             previousPasses: number;
             passes: number;
             repeatRouteId: string;
-            maxPasses: number;
+            maxPasses: number | null;
             maxRunTimeSeconds?: number | undefined;
             elapsedSeconds: number;
             limit: ("max-passes" | "max-run-time") | null;
@@ -5754,10 +6714,6 @@ export interface components {
              * @enum {string}
              */
             format: "json" | "markdown" | "text";
-        } | {
-            /** @constant */
-            kind: "event";
-            eventType: string;
         } | {
             /** @constant */
             kind: "log";

@@ -2,7 +2,7 @@
 
 Date: 2026-10-07. Status: **Accepted architecture; implementation and product review pending**. Owner approval: [#26](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/26).
 
-Billing metadata and the Fable block below are superseded by [ADR-0029](ADR-0029-no-billing-in-the-product.md). The exact version pin is also superseded: CLI 2.1.285 is now the minimum; newer versions must advertise all required capabilities and still pass strict runtime protocol checks. The original bounded runtime observations remain historical evidence.
+Billing metadata and the Fable block below are superseded by [ADR-0029](ADR-0029-no-billing-in-the-product.md). The exact version pin is also superseded: CLI 2.1.285 is now the minimum; newer versions must advertise all required capabilities and still pass strict runtime protocol checks. The original bounded runtime observations remain historical evidence. The admitted exact models now also include `claude-sonnet-5-5` and `claude-haiku-5-5` (#206), under the same checks; the current list and its verification evidence are in [06 - Harness integration](../06-harness-integration.md#authentication-and-supported-models).
 
 ## Context
 

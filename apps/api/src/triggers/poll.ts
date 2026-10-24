@@ -16,6 +16,7 @@ import {
   renderTemplate,
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
@@ -36,7 +37,7 @@ interface Armed extends PollTarget {
 export interface PollTriggersDeps {
   probes: HttpProbePort;
   scripts: ScriptPort;
-  manager: Pick<RunManager, 'startRun' | 'startPollItem'>;
+  manager: Pick<RunManager, 'startRun' | 'startPollItem' | 'assertAdmissionOpen'>;
   /** Whether this trigger node already started a run with this dedupe key. */
   hasDedupe(loopId: string, triggerNodeId: string, dedupeKey: string): Promise<boolean>;
   findSeen(
@@ -141,6 +142,7 @@ export class PollTriggers {
   private async check(target: Armed, now: Date): Promise<RunRecord[]> {
     const context = { loopId: target.loopId, nodeId: target.triggerNodeId };
     try {
+      this.deps.manager.assertAdmissionOpen();
       const base = { now: now.toISOString() };
       const probe = await this.probe(target.config.probe, base, target.config.items !== undefined);
       const view = { ...base, probe };
@@ -161,6 +163,9 @@ export class PollTriggers {
               dedupeKey: candidate.dedupeKey,
             }),
         });
+        // At most 200 fixed-shape diagnostics: never include candidate values or exceptions.
+        for (const rejection of result.rejections)
+          this.deps.logger.warn({ ...context, ...rejection }, 'poll item rejected');
         if (result.failedItemIndex !== undefined)
           this.deps.logger.warn(
             { ...context, code: 'POLL_ADMISSION_FAILED', itemIndex: result.failedItemIndex },
@@ -198,7 +203,9 @@ export class PollTriggers {
         {
           ...context,
           code:
-            error instanceof PollProbeError || error instanceof PollItemsError
+            error instanceof PollProbeError ||
+            error instanceof PollItemsError ||
+            error instanceof ProbeBodyOverflowError
               ? error.code
               : 'POLL_TRIGGER_FAILED',
           ...(error instanceof PollItemsError
@@ -233,7 +240,7 @@ export class PollTriggers {
           AbortSignal.timeout(spec.timeoutSeconds * 1000),
         );
         if (itemsMode) return itemsHttpProbe(response);
-        const body = response.body.slice(0, 65_536);
+        const body = response.body;
         return {
           status: response.status,
           headers: response.headers,
@@ -246,7 +253,7 @@ export class PollTriggers {
         for (const arg of spec.args) args.push(await renderTemplate(arg, view));
         const result = await this.deps.scripts.run({
           command: spec.command,
-          ...(itemsMode ? { maxStdoutBytes: 65_536 } : {}),
+          ...(itemsMode ? { maxStdoutBytes: PROBE_MAX_BODY_BYTES } : {}),
           args,
           cwd: this.deps.scriptCwd,
           env: {},
@@ -256,7 +263,8 @@ export class PollTriggers {
         if (itemsMode) return itemsScriptProbe(result);
         return {
           exitCode: result.exitCode,
-          stdout: result.stdout.slice(0, 65_536),
+          // This UTF-16 display slice is not a byte cap.
+          stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
           stderr: result.stderr.slice(-4000),
           json: jsonOrText(result.stdout),
           timedOut: result.timedOut,

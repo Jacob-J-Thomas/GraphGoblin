@@ -6,7 +6,7 @@ For a source-referenced snapshot of the code as it stands at `c379f80`, includin
 
 | Layer                | Choice                                                                                                                 | Notes                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Language and runtime | TypeScript on Node 22 LTS, everywhere                                                                                  | Shared schemas end to end. Codex has a TypeScript SDK only.                                |
+| Language and runtime | TypeScript on Node 22 LTS (22.x), everywhere ([ADR-0040](decisions/ADR-0040-node-22-runtime-baseline.md))              | Shared schemas end to end. Codex has a TypeScript SDK only.                                |
 | Monorepo             | pnpm workspaces, Turborepo, TS project references                                                                      | Packages only at real boundaries. See ADR-0014.                                            |
 | Layer enforcement    | Declared package dependencies, package `exports` maps, dependency-cruiser and lint rules for folders inside a package  | Violations fail CI.                                                                        |
 | HTTP                 | Fastify 5, Zod type provider, OpenAPI 3.1 generation                                                                   | Plain, fast, testable.                                                                     |
@@ -96,7 +96,7 @@ Post-1.0 packages: `adapter-claude`, `adapter-litellm`, `adapter-postgres`, `app
 | `ClockPort`, `IdPort`, `Logger`            | Time, ULIDs, structured logging                                            | real and fake                                                     |
 | `TimerPort`                                | Schedule a wake-up for a run at a time; survives restart                   | `infrastructure/scheduler`                                        |
 | `HttpProbePort`                            | HTTP requests for heartbeat and poll probes                                | `infrastructure/http`                                             |
-| `ReturnDeliveryPort`                       | Outbound webhooks, internal event bus, log sink for return channels        | `infrastructure/http` plus the API's event bus                    |
+| `ReturnDeliveryPort`                       | Outbound webhooks and the log sink for return channels                     | `infrastructure/http`                                             |
 
 Persisted timers are not an engine port. The scheduler folder defines its own `TimerStore` interface and `SqliteTimerStore` in the sqlite folder satisfies it structurally; both live in one package, so nothing in the engine has to connect them.
 

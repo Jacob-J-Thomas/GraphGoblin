@@ -2,31 +2,36 @@ import { randomBytes } from 'node:crypto';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const RANDOM_LIMIT = 1n << 80n;
 
-/** ULID generator: 48-bit millisecond timestamp plus 80 random bits, Crockford base32. */
+/** Process-local monotonic ULIDs: a 48-bit timestamp and an incrementing 80-bit random part. */
 export class UlidIds implements IdPort {
+  private lastTime = -1;
+  private random = 0n;
+
   constructor(private readonly clock: ClockPort = { now: () => new Date() }) {}
 
   next(): string {
-    let time = this.clock.now().getTime();
+    // A clock adjustment must not reverse identities already minted by this generator.
+    let time = Math.max(this.clock.now().getTime(), this.lastTime);
+    if (time === this.lastTime) {
+      this.random += 1n;
+      if (this.random >= RANDOM_LIMIT) throw new Error('ULID random component exhausted.');
+    } else {
+      this.random = BigInt('0x' + randomBytes(10).toString('hex'));
+    }
+    this.lastTime = time;
     let timePart = '';
     for (let i = 0; i < 10; i += 1) {
       timePart = ALPHABET[time % 32] + timePart;
       time = Math.floor(time / 32);
     }
-    const random = randomBytes(10);
+    let random = this.random;
     let randomPart = '';
-    // 80 bits -> 16 characters of 5 bits each.
-    let acc = 0;
-    let bits = 0;
-    for (const byte of random) {
-      acc = (acc << 8) | byte;
-      bits += 8;
-      while (bits >= 5) {
-        bits -= 5;
-        randomPart += ALPHABET[(acc >> bits) & 31];
-      }
+    for (let i = 0; i < 16; i += 1) {
+      randomPart = ALPHABET[Number(random & 31n)] + randomPart;
+      random >>= 5n;
     }
-    return `${timePart}${randomPart}`.slice(0, 26);
+    return timePart + randomPart;
   }
 }

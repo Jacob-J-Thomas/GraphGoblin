@@ -4,6 +4,12 @@
  */
 export { Alert } from './alert.js';
 export { Badge, type Tone } from './badge.js';
+export {
+  BoundedValue,
+  CELL_PREVIEW_CHARS,
+  VALUE_PREVIEW_CHARS,
+  type BoundedValueProps,
+} from './bounded-value.js';
 export { Button, buttonStyles } from './button.js';
 export { ConfirmAction } from './confirm-action.js';
 export { Card } from './card.js';

@@ -1,0 +1,9 @@
+[
+    "layers=pnpm.cmd check:layers",
+    "deps=pnpm.cmd check:deps",
+    "tokens=pnpm.cmd check:tokens",
+    "build=pnpm.cmd build",
+    "ports-before=node <USERPROFILE>\\AppData\\Local\\Temp\\gg-chore-web-round3-ports.cjs --before",
+    "browser-setup=node <USERPROFILE>\\AppData\\Local\\Temp\\gg-chore-web-round3-browser.cjs",
+    "browser=pnpm.cmd --filter @graphgoblin/web exec playwright test -c gg-chore-web-round3-playwright.config.ts e2e/drafts.spec.ts e2e/editor-modal.spec.ts --retries=0"
+]

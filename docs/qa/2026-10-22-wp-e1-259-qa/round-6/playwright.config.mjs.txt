@@ -1,0 +1,7 @@
+// Uses the already-running disposable server. Its fake controls serve /apps and /harness/script.
+import { createRequire } from 'node:module';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
+const root=process.env.QA_WORKTREE_ROOT??process.cwd();
+const req=createRequire(resolve(root,'apps/web/package.json'));const {defineConfig}=req('@playwright/test');
+export default defineConfig({testDir:resolve(root,'apps/web/e2e'),testMatch:'inspector-large-values.spec.ts',workers:1,retries:0,timeout:60000,expect:{timeout:10000},reporter:'list',outputDir:join(tmpdir(),'gg-qa-e1-r6-playwright-'+Date.now()),use:{channel:'msedge',headless:true,viewport:{width:1440,height:900},trace:'off'}});

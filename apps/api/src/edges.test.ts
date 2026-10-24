@@ -11,7 +11,6 @@ import { z } from 'zod';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContainer } from './container.js';
-import { main } from './main.js';
 import { problem } from './plugins/errors.js';
 import { streamRunEvents } from './sse.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -73,8 +72,21 @@ describe('scopes', () => {
       { method: 'POST', url: `/runs/${run.id}/cancel` },
       { method: 'POST', url: `/runs/${run.id}/pause` },
       { method: 'POST', url: `/runs/${run.id}/resume` },
-      { method: 'POST', url: `/runs/${run.id}/input`, payload: { input: 1 } },
-      { method: 'POST', url: `/runs/${run.id}/signals/go`, payload: {} },
+      {
+        method: 'POST',
+        url: `/runs/${run.id}/input`,
+        payload: {
+          waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+          input: 1,
+        },
+      },
+      {
+        method: 'POST',
+        url: `/runs/${run.id}/signals/go`,
+        payload: {
+          waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        },
+      },
       { method: 'PUT', url: '/settings', payload: { a: 1 } },
       { method: 'DELETE', url: '/settings/a' },
       { method: 'PUT', url: '/secrets/token', payload: { value: 'x' } },
@@ -122,7 +134,7 @@ describe('loop and run route branches', () => {
     });
   });
 
-  it('starts runs with every optional body field, signals without a payload, and delivers event return channels', async () => {
+  it('starts runs with every optional body field, signals without a payload, and delivers caller return defaults', async () => {
     const id = await t.publishLoop(returnLoop);
     const version = await t.container.repos.loops.getLatestPublished(id);
     const started = await t.app.inject({
@@ -131,7 +143,7 @@ describe('loop and run route branches', () => {
       payload: {
         triggerNodeId: 'start',
         versionId: version!.id,
-        return: [{ kind: 'event', eventType: 'loop-done' }],
+        return: [{ kind: 'log' }],
       },
     });
     expect(started.statusCode).toBe(202);
@@ -140,26 +152,27 @@ describe('loop and run route branches', () => {
     const signal = await t.app.inject({
       method: 'POST',
       url: `/runs/${runId}/signals/go`,
-      payload: {},
+      payload: { waitId: (await t.container.manager.getRun(runId))?.waiting?.waitId ?? 'unknown' },
     });
     expect(signal.json()).toMatchObject({ woke: false });
     await t.app.inject({
       method: 'POST',
       url: `/runs/${runId}/input`,
-      payload: { input: { answer: 42 } },
+      payload: {
+        waitId: (await t.container.manager.getRun(runId))?.waiting?.waitId ?? 'unknown',
+        input: { answer: 42 },
+      },
     });
     await t.idle();
     expect((await t.app.inject(`/runs/${runId}`)).json<RunRecord>().status).toBe('succeeded');
-    const events = (await t.app.inject('/events')).json<{
-      items: { type: string; payload: unknown }[];
-    }>();
-    expect(events.items).toEqual([
-      expect.objectContaining({
-        type: 'loop-done',
-        ownerId: 'local',
-        payload: expect.objectContaining({ runId, outcome: 'success', result: { answer: 42 } }),
-      }),
-    ]);
+    const delivered = (await t.app.inject(`/runs/${runId}/events`)).json<{ items: RunEvent[] }>();
+    expect(
+      delivered.items.flatMap((event) =>
+        event.type === 'return.delivered' ? [event.channel.kind] : [],
+      ),
+    ).toEqual(['caller', 'log']);
+    // Returns never publish an Event (#242).
+    expect((await t.app.inject('/events')).json<{ items: unknown[] }>().items).toEqual([]);
 
     await t.app.inject({
       method: 'PUT',
@@ -213,7 +226,9 @@ describe('loop and run route branches', () => {
     const failed = (await t.app.inject('/harness/preflight')).json<{
       items: { problems: string[] }[];
     }>();
-    expect(failed.items[0]?.problems).toEqual(['plain failure']);
+    expect(failed.items[0]?.problems).toEqual([
+      expect.stringMatching(/readiness could not be confirmed/),
+    ]);
   });
 });
 
@@ -469,42 +484,4 @@ describe('composition defaults', () => {
   }, 30_000);
 });
 
-describe('main shutdown', () => {
-  it('closes the app and container once on SIGINT or SIGTERM, then exits', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'gg-main-'));
-    const previous = { ...process.env };
-    const beforeInt = process.listeners('SIGINT');
-    const beforeTerm = process.listeners('SIGTERM');
-    const exit = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
-    Object.assign(process.env, {
-      GG_DATA_DIR: dir,
-      GG_DB_URL: ':memory:',
-      GG_PORT: '0',
-      GG_LOG_LEVEL: 'silent',
-      GG_SWAGGER_UI: 'false',
-      GG_HOST: '127.0.0.1',
-      GG_MASTER_KEY: Buffer.alloc(32, 4).toString('base64'),
-    });
-    const added: { signal: 'SIGINT' | 'SIGTERM'; listener: (...args: unknown[]) => void }[] = [];
-    try {
-      const { app } = await main();
-      for (const [signal, before] of [
-        ['SIGINT', beforeInt],
-        ['SIGTERM', beforeTerm],
-      ] as const) {
-        for (const listener of process.listeners(signal))
-          if (!before.includes(listener))
-            added.push({ signal, listener: listener as (...args: unknown[]) => void });
-      }
-      expect(added.map((a) => a.signal).sort()).toEqual(['SIGINT', 'SIGTERM']);
-      for (const { signal, listener } of added) listener(signal);
-      await vi.waitFor(() => expect(exit).toHaveBeenCalledWith(0));
-      expect(exit).toHaveBeenCalledTimes(1);
-      expect(app.server.listening).toBe(false);
-    } finally {
-      for (const { signal, listener } of added) process.removeListener(signal, listener);
-      process.env = previous;
-      await rm(dir, { recursive: true, force: true }).catch(() => undefined);
-    }
-  }, 30_000);
-});
+// Native shutdown evidence lives in main.test.ts and testing/api-subprocess.ts.

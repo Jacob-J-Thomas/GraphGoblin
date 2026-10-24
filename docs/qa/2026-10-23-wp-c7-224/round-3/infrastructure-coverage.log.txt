@@ -1,0 +1,192 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 16289ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 1581ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 11205ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 6440ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 1988ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 798ms
+     × does not spawn for an already aborted signal and cancels a running process 174ms
+     × kills the descendant that a long-lived child started 826ms
+ ❯ src/process/scripts.test.ts (39 tests | 1 failed) 10748ms
+   ❯ ProcessScripts (36)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 222ms
+ ❯ src/sqlite/upgrade.test.ts (26 tests | 6 failed) 189413ms
+   ❯ definitions-only format-4 cutover (26)
+     × rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL 20106ms
+     × rechecks safety at commit and rolls back if the lock or backup is lost 20076ms
+     × removes old database archives and converts legacy owner defaults without changing other settings 20180ms
+     × refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON' 20060ms
+     × refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','"unknown"','2026-10-17T00:00:00.000Z') 20025ms
+     × refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z') 20103ms
+ ❯ src/sqlite/storage.test.ts (42 tests | 1 failed) 58952ms
+   ❯ SqliteRunRepository (8)
+     × migration 0002 marks runs that were already terminal as finalized 30042ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-aYFlgD'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-Xwr9Ee'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-bv3qTT'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxx' to be 'xxxxxx' // Object.is equality
+
+Expected: "xxxxxx"
+Received: "xxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-r0SDPr'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: expected [Function] to throw an error
+ ❯ src/process/scripts.test.ts:200:45
+    198|     if (pid === undefined) throw new Error('child did not start');
+    199|     const childPid = pid;
+    200|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    201|   });
+    202|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  src/sqlite/storage.test.ts > SqliteRunRepository > migration 0002 marks runs that were already terminal as finalized
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/storage.test.ts:272:3
+    270|   });
+    271|
+    272|   it('migration 0002 marks runs that were already terminal as finalize…
+       |   ^
+    273|     const dir = mkdtempSync(join(tmpdir(), 'gg-0002-'));
+    274|     const migrations = join(dir, 'migrations');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:323:3
+    321|     }
+    322|   });
+    323|   it('rolls back deletions, DDL, ledger, rewrites and marker on a fail…
+       |   ^
+    324|     const handle = await fixture(),
+    325|       before = await snapshot(handle.client),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rechecks safety at commit and rolls back if the lock or backup is lost
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:349:3
+    347|     await applyDatabaseUpgrade(handle.client, selected, safety);
+    348|   });
+    349|   it('rechecks safety at commit and rolls back if the lock or backup i…
+       |   ^
+    350|     const handle = await fixture(),
+    351|       selected = await request(handle),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > removes old database archives and converts legacy owner defaults without changing other settings
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:409:3
+    407|     expect(await snapshot(handle.client)).toEqual(before);
+    408|   });
+    409|   it('removes old database archives and converts legacy owner defaults…
+       |   ^
+    410|     const handle = await fixture();
+    411|     await handle.client.execute('CREATE TABLE gg_upgrade_archive (payl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON'
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','"unknown"','2026-10-17T00:00:00.000Z')
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z')
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:432:5
+    430|     "INSERT INTO settings VALUES ('local','defaultModel','\"unknown\"'…
+    431|     "INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"…
+    432|   ])('refuses invalid/conflicting owner defaults: %s', async (sql) => {
+       |     ^
+    433|     const handle = await fixture();
+    434|     await handle.client.execute(sql);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+
+ Test Files  6 failed | 46 passed (52)
+      Tests  13 failed | 768 passed (781)
+   Start at  08:21:46
+   Duration  725.06s (tests 72%, import 25%, transform 2%, worker 1%)
+
+     Import  214 modules were evaluated 474 times · 167.37s total, 25% of tracked time
+             ~91.80s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.62% ( 2510/2571 )
+Branches     : 95.18% ( 1819/1911 )
+Functions    : 97.98% ( 534/545 )
+Lines        : 98.49% ( 2230/2264 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\infrastructure
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure", "exit": 1, "seconds": 728.52}

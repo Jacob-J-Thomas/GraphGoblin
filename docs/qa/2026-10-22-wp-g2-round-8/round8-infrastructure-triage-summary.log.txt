@@ -1,0 +1,147 @@
+{
+  "infrastructure": {
+    "total": 718,
+    "passed": 710,
+    "failed": 7,
+    "incomplete": 1,
+    "workerCrash": {
+      "code": "0xC0000005",
+      "file": "src/sqlite/storage.test.ts",
+      "test": "runs a loop end to end on SQLite",
+      "classification": "Separate native worker crash; not D-015."
+    },
+    "coverage": {
+      "lines": {
+        "total": 2157,
+        "covered": 2096,
+        "skipped": 0,
+        "pct": 97.17
+      },
+      "statements": {
+        "total": 2445,
+        "covered": 2344,
+        "skipped": 0,
+        "pct": 95.86
+      },
+      "functions": {
+        "total": 532,
+        "covered": 507,
+        "skipped": 0,
+        "pct": 95.3
+      },
+      "branches": {
+        "total": 1744,
+        "covered": 1615,
+        "skipped": 0,
+        "pct": 92.6
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "coverageQualification": "Incomplete full-run collection after worker crash; gate failed."
+  },
+  "isolated": [
+    {
+      "file": "src/adversarial.test.ts",
+      "title": "6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "fullName": "adversarial infrastructure invariants (forks pool) 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "filter": "6.QA.LIMIT.001..ProcessScripts.abort.kills.a.real.child.and.its.grandchild",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 19,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-1-results.log.txt"
+    },
+    {
+      "file": "src/claude/process.test.ts",
+      "title": "kills on deadline and output overflow",
+      "fullName": "owned native Claude process transport kills on deadline and output overflow",
+      "filter": "kills.on.deadline.and.output.overflow",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 4,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-2-results.log.txt"
+    },
+    {
+      "file": "src/claude/process.test.ts",
+      "title": "does not spawn for an already aborted signal and cancels a running process",
+      "fullName": "owned native Claude process transport does not spawn for an already aborted signal and cancels a running process",
+      "filter": "does.not.spawn.for.an.already.aborted.signal.and.cancels.a.running.process",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 4,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-3-results.log.txt"
+    },
+    {
+      "file": "src/claude/process.test.ts",
+      "title": "kills the descendant that a long-lived child started",
+      "fullName": "owned native Claude process transport kills the descendant that a long-lived child started",
+      "filter": "kills.the.descendant.that.a.long.lived.child.started",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 4,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-4-results.log.txt"
+    },
+    {
+      "file": "src/process/scripts.test.ts",
+      "title": "kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "fullName": "ProcessScripts kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "filter": "kills.and.closes.a.real.process.cancelled.with.incomplete.UTF.8.pending.on.both.streams",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 38,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-5-results.log.txt"
+    },
+    {
+      "file": "src/process/scripts.test.ts",
+      "title": "kills the process tree on timeout",
+      "fullName": "ProcessScripts kills the process tree on timeout",
+      "filter": "kills.the.process.tree.on.timeout",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 38,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-6-results.log.txt"
+    },
+    {
+      "file": "src/process/scripts.test.ts",
+      "title": "kills the process when the signal aborts, including when already aborted",
+      "fullName": "ProcessScripts kills the process when the signal aborts, including when already aborted",
+      "filter": "kills.the.process.when.the.signal.aborts..including.when.already.aborted",
+      "exit": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 38,
+      "activeCount": 1,
+      "class": "D-015 native termination",
+      "raw": "round8-isolate-7-results.log.txt"
+    }
+  ],
+  "storageIsolated": {
+    "passed": 42,
+    "failed": 0,
+    "total": 42,
+    "raw": "round8-storage-isolated-results.log.txt"
+  },
+  "fullGateRemainsFailed": true
+}

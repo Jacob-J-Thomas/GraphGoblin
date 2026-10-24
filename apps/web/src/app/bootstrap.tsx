@@ -4,6 +4,7 @@ import { StrictMode, useEffect, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { ApiProvider, createAppClient } from '../api/context.js';
+import { refreshModelDefaults } from '../api/queries.js';
 import { applyFont, currentFont, readStoredFont, useFontAcrossTabs } from '../lib/font.js';
 import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
 import { startReachability } from '../lib/reachability.js';
@@ -29,6 +30,18 @@ export function Providers({
   children: ReactNode;
 }) {
   useEffect(() => startReachability(queryClient, client), [queryClient, client]);
+  useEffect(() => {
+    const refresh = () => void refreshModelDefaults(queryClient);
+    const visible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [queryClient]);
 
   return (
     <ApiProvider client={client}>

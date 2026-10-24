@@ -7,6 +7,7 @@ import {
   fakeUlid,
   kitchenSinkLoop,
   minimalLoop,
+  samplePin,
 } from '@graphgoblin/contracts/testing';
 import {
   EngineRequestError,
@@ -331,7 +332,13 @@ describe('run control', () => {
   it('reports unknown runs', async () => {
     const engine = await createTestEngine();
     await expect(engine.manager.cancel(FIXTURE_IDS.run)).rejects.toBeInstanceOf(EngineRequestError);
-    await expect(engine.manager.provideInput(FIXTURE_IDS.run, 1)).rejects.toMatchObject({
+    await expect(
+      engine.manager.provideInput(
+        FIXTURE_IDS.run,
+        (await engine.manager.getRun(FIXTURE_IDS.run))?.waiting?.waitId ?? 'unknown',
+        1,
+      ),
+    ).rejects.toMatchObject({
       code: 'RUN_NOT_FOUND',
     });
     expect(await engine.manager.getRun(FIXTURE_IDS.run)).toBeUndefined();
@@ -381,6 +388,10 @@ describe('failure and recovery', () => {
       exitCode: 1,
       stdout: '',
       stderr: 'boom',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 4,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -397,6 +408,10 @@ describe('failure and recovery', () => {
       exitCode: 0,
       stdout: '"fixed"',
       stderr: '',
+      stdoutBytes: 7,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     await engine.manager.resume(run.id);
@@ -445,6 +460,7 @@ describe('failure and recovery', () => {
         ownerId: 'local',
         loopId,
         versionId,
+        pinned: samplePin(),
         invocationId,
         status: 'running',
         currentNodeId: 'infer',
@@ -456,11 +472,35 @@ describe('failure and recovery', () => {
       thread,
     );
     await ports.events.append(runId, [
-      { type: 'run.queued' },
+      { type: 'run.queued', versionId, pinned: samplePin() },
       { type: 'run.started', attempt: 1 },
       { type: 'node.started', nodeId: 'start', kind: 'trigger', attempt: 1, configHash: 'h' },
       { type: 'node.finished', nodeId: 'start', patch: [], route: 'out', durationMs: 1 },
       { type: 'node.started', nodeId: 'infer', kind: 'inference', attempt: 1, configHash: 'h' },
+      {
+        type: 'harness.turn',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        harness: 'codex',
+        promptKind: 'authored',
+        prompt: 'go',
+      },
+      {
+        type: 'harness.session',
+        nodeId: 'infer',
+        harness: 'codex',
+        sessionId: 'left-behind',
+        mode: 'fresh',
+      },
+      {
+        type: 'harness.submission',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        submission: 'delivery-uncertain',
+        marker: 'fake.accepted',
+      },
     ]);
     await ports.sessions.upsert({
       runId,
@@ -512,6 +552,7 @@ describe('failure and recovery', () => {
       ownerId: 'local',
       loopId: version.loopId,
       versionId: version.id,
+      pinned: samplePin(),
       invocationId,
       iteration: 1,
       createdAt: FIXTURE_TS,
@@ -537,7 +578,7 @@ describe('failure and recovery', () => {
         id: cancelledId,
         status: 'waiting',
         cancelRequestedAt: FIXTURE_TS,
-        waiting: { nodeId: 'x', kind: 'input' },
+        waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'x', kind: 'input' },
       },
       createInitialThread({
         runId: cancelledId,
@@ -591,7 +632,13 @@ describe('event helpers', () => {
         attempt: 1,
         configHash: 'h',
       },
-      { ...base, seq: 3, type: 'run.waiting', nodeId: 'w', wait: { nodeId: 'w', kind: 'input' } },
+      {
+        ...base,
+        seq: 3,
+        type: 'run.waiting',
+        nodeId: 'w',
+        wait: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
+      },
     ];
     expect(findPendingWake(events)).toBeUndefined();
     events.push({
@@ -618,7 +665,17 @@ describe('event helpers', () => {
     expect(
       findPendingWake([{ ...base, seq: 1, type: 'run.woken', nodeId: 'w', reason: 'timer' }]),
     ).toEqual({ reason: 'timer' });
-    expect(findPendingWake([{ ...base, seq: 1, type: 'run.queued' }])).toBeUndefined();
+    expect(
+      findPendingWake([
+        {
+          ...base,
+          seq: 1,
+          type: 'run.queued',
+          versionId: FIXTURE_IDS.version,
+          pinned: samplePin(),
+        },
+      ]),
+    ).toBeUndefined();
   });
 
   it('counts attempts since the last finish of the node', () => {
@@ -761,7 +818,11 @@ describe('the visit cap and re-entries of one visit', () => {
     expect(inputRun.status).toBe('waiting');
     await engine.manager.pause(inputRun.id);
     await engine.manager.resume(inputRun.id);
-    await engine.manager.provideInput(inputRun.id, { ok: true });
+    await engine.manager.provideInput(
+      inputRun.id,
+      (await engine.manager.getRun(inputRun.id))?.waiting?.waitId ?? 'unknown',
+      { ok: true },
+    );
     expect((await engine.settle(inputRun.id)).status).toBe('succeeded');
 
     const timer = singleNodeLoop('cap-timer', {

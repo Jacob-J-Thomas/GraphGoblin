@@ -1,0 +1,14 @@
+// Stop only this round's disposable process, verify artifacts and preserve Git ownership.
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';import {resolve} from 'node:path';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-3');
+const stopped=await (await fetch('http://127.0.0.1:5721/stop',{method:'POST'})).json();
+await new Promise(ok=>setTimeout(ok,1000));
+const ports=[];for(const p of [5720,5721]){let reachable;try{await fetch('http://127.0.0.1:'+p+'/info',{signal:AbortSignal.timeout(2000)});reachable=true;}catch{reachable=false;}ports.push({port:p,reachable});}
+await writeFile(resolve(dir,'shutdown.json'),JSON.stringify({stopped,ports,dataDirectoryLeftForOrchestrator:'gg-qa-e1-Gyo7PW'},null,2));
+const logs=(await readdir(dir)).filter(n=>n.endsWith('.log.txt'));
+for(const name of logs){const buf=await readFile(resolve(dir,name));let text=buf[0]===255&&buf[1]===254?buf.subarray(2).toString('utf16le'):buf.toString('utf8');text=text.replace(/(?:[A-Z]:)?[\\/]+Users[\\/]+[A-Za-z0-9._-]+/gi,'<USER>');await writeFile(resolve(dir,name),text);}
+const audit=JSON.parse(await readFile(resolve(dir,'round-two-audit.json'),'utf8'));const retained=[];
+for(const row of audit.records){const file=resolve(dir,'../round-2',row.name);const raw=await readFile(file);retained.push({name:row.name,unchanged:createHash('sha256').update(raw).digest('hex')===row.sha256});}
+const final={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),status:execFileSync('git',['status','--short'],{encoding:'utf8'}).trim(),productionDiff:execFileSync('git',['diff','--stat'],{encoding:'utf8'}).trim(),roundTwoReferences:retained.length,allRoundTwoReferencedFilesUnchanged:retained.every(x=>x.unchanged),retained};
+await writeFile(resolve(dir,'final-state.json'),JSON.stringify(final,null,2));
+console.log(JSON.stringify({stopped,ports,head:final.head,unchangedRound2:final.allRoundTwoReferencedFilesUnchanged,productionDiff:final.productionDiff}));

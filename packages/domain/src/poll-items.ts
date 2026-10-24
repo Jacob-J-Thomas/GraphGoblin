@@ -1,11 +1,37 @@
-import { JsonValueSchema, type JsonValue, type PollItems } from '@graphgoblin/contracts';
+import type { JsonValue, PollItems } from '@graphgoblin/contracts';
 import { DomainError } from './errors.js';
 import { evaluateExpression } from './expression.js';
+import { isJsonValue } from './json-value.js';
+
+// SQLite JSON1 accepts 1,000 container levels. The runs dedupe expression index parses
+// initial_thread: root (1) -> invocation (2) -> trigger (3) -> payload/candidate (4).
+// Count the candidate's root container as depth 0, so another 996 nested containers fit.
+// An object {v: <996 arrays>} is storable; a 997th array would exceed SQLite's limit.
+export const POLL_ITEM_MAX_NESTING_DEPTH = 1000 - 4;
+
+export interface PollItemRejection {
+  code: 'POLL_ITEM_REJECTED';
+  itemIndex: number;
+  reason: 'NESTING_DEPTH_EXCEEDED';
+}
+
+function exceedsStoredDepth(item: JsonValue): boolean {
+  const stack = [{ value: item, depth: 0 }];
+  while (stack.length) {
+    const { value, depth } = stack.pop()!;
+    if (value === null || typeof value !== 'object') continue;
+    if (depth > POLL_ITEM_MAX_NESTING_DEPTH) return true;
+    for (const child of Array.isArray(value) ? value : Object.values(value))
+      stack.push({ value: child, depth: depth + 1 });
+  }
+  return false;
+}
 
 export interface PreparedPollItem {
   item: JsonValue;
   index: number;
   dedupeKey: string;
+  rejection?: PollItemRejection;
 }
 
 type ItemFailure =
@@ -48,11 +74,11 @@ export async function preparePollItems(
   const result: PreparedPollItem[] = [];
   const seen = new Set<string>();
   for (const [index, candidate] of selected.entries()) {
-    const parsed = JsonValueSchema.safeParse(candidate);
-    if (!parsed.success) throw new PollItemsError('ITEM_INVALID', 'items.select', index);
+    if (!isJsonValue(candidate)) throw new PollItemsError('ITEM_INVALID', 'items.select', index);
+    const tooDeep = exceedsStoredDepth(candidate);
     let key: unknown;
     try {
-      key = await evaluateExpression(config.dedupeKey, { ...view, item: parsed.data, index });
+      key = await evaluateExpression(config.dedupeKey, { ...view, item: candidate, index });
     } catch {
       throw new PollItemsError('KEY_FAILED', 'items.dedupeKey', index);
     }
@@ -60,7 +86,20 @@ export async function preparePollItems(
       throw new PollItemsError('KEY_INVALID', 'items.dedupeKey', index);
     if (seen.has(key)) throw new PollItemsError('KEY_DUPLICATE', 'items.dedupeKey', index);
     seen.add(key);
-    result.push({ item: parsed.data, index, dedupeKey: key });
+    result.push({
+      item: candidate,
+      index,
+      dedupeKey: key,
+      ...(tooDeep
+        ? {
+            rejection: {
+              code: 'POLL_ITEM_REJECTED' as const,
+              itemIndex: index,
+              reason: 'NESTING_DEPTH_EXCEEDED' as const,
+            },
+          }
+        : {}),
+    });
   }
   return result;
 }

@@ -1,0 +1,597 @@
+[
+  {
+    "name": "initial mixed draft",
+    "expected": 201,
+    "actual": {
+      "status": 201,
+      "ms": 49,
+      "body": {
+        "loop": {
+          "id": "01M5CBBC2444KWNJ6JJSASTH7N",
+          "ownerId": "local",
+          "name": "QA claude 1792489664547",
+          "draftVersionId": "01M5CBBC24127V9PC0544TT1Z3",
+          "createdAt": "2026-10-20T09:47:44.580Z",
+          "updatedAt": "2026-10-20T09:47:44.580Z"
+        },
+        "draft": {
+          "id": "01M5CBBC24127V9PC0544TT1Z3",
+          "loopId": "01M5CBBC2444KWNJ6JJSASTH7N",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA claude 1792489664547",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer2",
+                "label": "Work 2",
+                "ui": {
+                  "x": 780,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer2",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "infer2",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:47:44.580Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready publication",
+    "expected": 200,
+    "actual": {
+      "status": 200,
+      "ms": 515,
+      "body": {
+        "version": {
+          "id": "01M5CBBC24127V9PC0544TT1Z3",
+          "loopId": "01M5CBBC2444KWNJ6JJSASTH7N",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA claude 1792489664547",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer2",
+                "label": "Work 2",
+                "ui": {
+                  "x": 780,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer2",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "infer2",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:47:44.580Z",
+          "publishedAt": "2026-10-20T09:47:45.102Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: API run admitted",
+    "expected": "202; fake CLI cannot accept a provider turn",
+    "actual": {
+      "status": 202,
+      "ms": 473,
+      "body": {
+        "run": {
+          "id": "01M5CBBH5BMRR0HCHRQSM3848S",
+          "ownerId": "local",
+          "loopId": "01M5CBBC2444KWNJ6JJSASTH7N",
+          "versionId": "01M5CBBC24127V9PC0544TT1Z3",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA claude 1792489664547",
+            "label": "QA claude 1792489664547 v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "high"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "high"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5CBBH5BZ9ACA8RBETAHNQ49",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-20T09:47:49.803Z",
+          "lastEventSeq": 1
+        }
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: API fixture refuses execution",
+    "expected": "failed after fixture refusal; no provider turn",
+    "actual": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude turn failed",
+        "nodeId": "infer0",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        }
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+          "--safe-mode --setting-sources  --strict-mcp-config --restricted --tools Read,Glob,Grep --permission-mode dontAsk --permission-prompts none --model claude-opus-5-5 --effort high --max-turns 100 --output-format stream-json --verbose --input-format text --print"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: MCP run admitted",
+    "expected": "runId, no MCP error",
+    "actual": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M5CBBHXE02PSR21MWVX1HQZM\",\n  \"loopId\": \"01M5CBBC2444KWNJ6JJSASTH7N\",\n  \"versionId\": \"01M5CBBC24127V9PC0544TT1Z3\",\n  \"definition\": \"QA claude 1792489664547 v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA claude 1792489664547\",\n    \"label\": \"QA claude 1792489664547 v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"high\"\n          },\n          \"claude\": {\n            \"model\": \"claude-opus-5-5\",\n            \"effort\": \"high\"\n          }\n        }\n      }\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ],
+      "structuredContent": {
+        "runId": "01M5CBBHXE02PSR21MWVX1HQZM",
+        "loopId": "01M5CBBC2444KWNJ6JJSASTH7N",
+        "versionId": "01M5CBBC24127V9PC0544TT1Z3",
+        "definition": "QA claude 1792489664547 v1",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA claude 1792489664547",
+          "label": "QA claude 1792489664547 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "high"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "high"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "status": "queued",
+        "next": "Call wait_for_run with this runId to wait for the result."
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: MCP fixture refuses execution",
+    "expected": "failed after fixture refusal; no provider turn",
+    "actual": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude turn failed",
+        "nodeId": "infer0",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        }
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+          "--safe-mode --setting-sources  --strict-mcp-config --restricted --tools Read,Glob,Grep --permission-mode dontAsk --permission-prompts none --model claude-opus-5-5 --effort high --max-turns 100 --output-format stream-json --verbose --input-format text --print"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "final API shutdown",
+    "expected": "stopped",
+    "actual": {
+      "ms": 22,
+      "exit": null,
+      "signal": "SIGTERM",
+      "stopped": true
+    },
+    "pass": true
+  }
+]

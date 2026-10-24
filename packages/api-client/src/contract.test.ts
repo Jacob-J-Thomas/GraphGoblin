@@ -55,6 +55,17 @@ async function until(predicate: () => Promise<boolean>, timeoutMs = 5000): Promi
 }
 
 describe('against the in-process API (local trusted mode)', () => {
+  it('reads process model defaults through the public resource', async () => {
+    const app = await createTestApp();
+    try {
+      const client = createGraphGoblinClient({ baseUrl: await listen(app) });
+      expect(await system.modelDefaults(client)).toEqual({
+        byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
+      });
+    } finally {
+      await app.close();
+    }
+  });
   let t: TestApp;
   let baseUrl: string;
   let client: GraphGoblinClient;
@@ -192,9 +203,10 @@ describe('against the in-process API (local trusted mode)', () => {
       pollMs: 10,
     });
     expect(finished).toBe(true);
+    if (!finished) throw new Error('the run did not finish within the observation budget');
     expect(run.status).toBe('succeeded');
 
-    expect((await runs.list(client, { loopId: loop.id })).map((r) => r.id)).toEqual([run.id]);
+    expect((await runs.list(client, { loopId: loop.id })).items.map((r) => r.id)).toEqual([run.id]);
     expect((await runs.thread(client, run.id)).invocation.source).toBe('manual.api');
     const page = await runs.events(client, run.id, { after: 0, limit: 2 });
     expect(page.items).toHaveLength(2);
@@ -202,7 +214,7 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(await runs.sessions(client, run.id)).toEqual([]);
   });
 
-  it('preserves typed run pages and the items-only wrapper', async () => {
+  it('preserves typed run pages including opaque cursors', async () => {
     const { loop } = await loops.create(client, minimalLoop());
     await loops.publish(client, loop.id);
     await runs.start(client, loop.id);
@@ -213,7 +225,7 @@ describe('against the in-process API (local trusted mode)', () => {
     if (!first.data?.nextCursor) throw new Error('expected a next page');
     expect(first.data.items).toHaveLength(1);
     expect(first.data.items[0]).not.toHaveProperty('templateSubject');
-    expect(await runs.list(client, query)).toEqual(first.data.items);
+    expect(await runs.list(client, query)).toEqual(first.data);
     const last = await client.GET('/runs', {
       params: { query: { ...query, cursor: first.data.nextCursor } },
     });
@@ -228,14 +240,32 @@ describe('against the in-process API (local trusted mode)', () => {
 
     const first = await runs.start(client, loop.id, { input: { topic: 'x' } });
     await until(async () => (await runs.get(client, first.id)).status === 'waiting');
-    const pending = await waitForRun(client, first.id, { timeoutMs: 30, pollMs: 10 });
+    // The first snapshot uses the real API; the injected poll advances the observation
+    // clock to its deadline so the snapshot assertion does not depend on network timing.
+    let clock = 0;
+    const pending = await waitForRun(client, first.id, {
+      timeoutMs: 60_000,
+      pollMs: 60_000,
+      now: () => clock,
+      sleep: (ms) => {
+        clock += ms;
+        return Promise.resolve();
+      },
+    });
     expect(pending).toMatchObject({ finished: false, run: { status: 'waiting' } });
-    expect((await runs.signal(client, first.id, 'nudge')).woke).toBe(false);
-    expect((await runs.signal(client, first.id, 'nudge', { n: 1 })).woke).toBe(false);
-    await runs.provideInput(client, first.id, { ok: true });
-    expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
+    const waiting = await runs.get(client, first.id);
+    expect(waiting.status).toBe('waiting');
+    const waitId = waiting.waiting!.waitId;
+    expect((await runs.signal(client, first.id, 'nudge', waitId)).woke).toBe(false);
+    expect((await runs.signal(client, first.id, 'nudge', waitId, { n: 1 })).woke).toBe(false);
+    await runs.provideInput(client, first.id, waitId, { ok: true });
+    expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(
       'succeeded',
     );
+    await expect(runs.provideInput(client, first.id, waitId, { ok: false })).rejects.toMatchObject({
+      status: 409,
+      code: 'WAIT_MISMATCH',
+    });
     const fork = await runs.replay(client, first.id, 'start');
     expect(fork.id).not.toBe(first.id);
     await until(async () => (await runs.get(client, fork.id)).status === 'waiting');
@@ -246,13 +276,52 @@ describe('against the in-process API (local trusted mode)', () => {
 
     const second = await runs.start(client, loop.id);
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
-    expect((await runs.pause(client, second.id)).status).toBe('paused');
+    const paused = await runs.pause(client, second.id);
+    expect(paused.status).toBe('paused');
+    await expect(
+      runs.provideInput(client, second.id, paused.waiting!.waitId, { ok: true }),
+    ).rejects.toMatchObject({ status: 409, code: 'INVALID_STATE' });
     expect((await runs.resume(client, second.id)).status).toBe('waiting'); // paused while parked: back to waiting (docs/05)
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     await runs.cancel(client, second.id);
-    expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
+    expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(
       'cancelled',
     );
+  });
+
+  it('cancels observation independently of the running operation', async () => {
+    const { loop } = await loops.create(client, { ...waitLoop, name: 'observation-only' });
+    await loops.publish(client, loop.id);
+    const run = await runs.start(client, loop.id);
+    await until(async () => (await runs.get(client, run.id)).status === 'waiting');
+    const noSnapshot = await waitForRun(client, run.id, { timeoutMs: 0 });
+    expect(noSnapshot).toEqual({ finished: false });
+    const controller = new AbortController();
+    const reason = new Error('stop observing');
+    let sleeping!: () => void;
+    const entered = new Promise<void>((resolve) => {
+      sleeping = resolve;
+    });
+    const pending = waitForRun(client, run.id, {
+      timeoutMs: 5000,
+      signal: controller.signal,
+      sleep: () => {
+        sleeping();
+        return new Promise<void>(() => undefined);
+      },
+    });
+    await entered;
+    controller.abort(reason);
+    await expect(pending).rejects.toBe(reason);
+    const parked = await runs.get(client, run.id);
+    expect(parked.status).toBe('waiting');
+    await runs.provideInput(client, run.id, parked.waiting!.waitId, true);
+    await expect(
+      waitForRun(client, run.id, { timeoutMs: 5000, pollMs: 10 }),
+    ).resolves.toMatchObject({
+      finished: true,
+      run: { status: 'succeeded' },
+    });
   });
 
   it('streams run events over SSE until the run finishes, and resumes from a sequence', async () => {
@@ -267,7 +336,8 @@ describe('against the in-process API (local trusted mode)', () => {
       runId: run.id,
       onEvent: (event) => {
         seen.push(event);
-        if (event.type === 'run.waiting') void runs.provideInput(client, run.id, 'go');
+        if (event.type === 'run.waiting')
+          void runs.provideInput(client, run.id, event.wait.waitId, 'go');
       },
     });
     await subscription.done;
@@ -391,7 +461,7 @@ describe('against the in-process API (local trusted mode)', () => {
     await modelCatalog.remove(client, 'codex', 'test-model');
 
     const published = await events.publish(client, { type: 'demo', payload: { a: 1 } });
-    expect((await events.list(client)).map((e) => e.id)).toContain(published.id);
+    expect((await events.list(client)).items.map((e) => e.id)).toContain(published.id);
   });
 });
 

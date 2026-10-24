@@ -1,0 +1,60 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine test:coverage --coverage.reportOnFailure
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/webhook-admission.test.ts (16 tests | 1 failed) 3192ms
+   × marks a removed saved target permanently failed and ignores stale already-admitted sweep rows 320ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/webhook-admission.test.ts > marks a removed saved target permanently failed and ignores stale already-admitted sweep rows
+AssertionError: expected { …(11) } to match object { …(2) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "failureCode": "WEBHOOK_TARGET_REMOVED",
+-   "status": "failed",
++   "failureCode": "WEBHOOK_ADMISSION_RETRY",
++   "status": "pending",
+  }
+
+ ❯ src/webhook-admission.test.ts:460:64
+    458|   engine.ports.clock.advance(5000);
+    459|   await engine.manager.retryPendingWebhooks();
+    460|   expect(await engine.ports.admission.get(pending.receipt.id)).toMatch…
+       |                                                                ^
+    461|     failureCode: 'WEBHOOK_TARGET_REMOVED',
+    462|     status: 'failed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 42 passed (43)
+      Tests  1 failed | 1609 passed (1610)
+   Start at  07:46:27
+   Duration  58.02s (tests 41%, import 37%, transform 21%, worker 1%)
+
+    Isolate  43 workers spawned · ~1.71s startup each (spawn + environment, per file)
+             at least ~4.97s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.41% ( 2962/3072 )
+Branches     : 92.35% ( 2319/2511 )
+Functions    : 98.38% ( 548/557 )
+Lines        : 97.82% ( 2694/2754 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --coverage.reportOnFailure", "exit": 1, "seconds": 62.65}

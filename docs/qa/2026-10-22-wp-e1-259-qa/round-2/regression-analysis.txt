@@ -1,0 +1,13 @@
+Regression qualification for c26d65d814613d9ea394f58af5a99810d2df7cd5
+
+Executed on candidate: the seven affected test files pass, 67/67 tests. The maintained BoundedValue tests include:
+1. starts bounded again when another value is shown, and when the first one returns
+2. keeps the keyboard inside the component when a change of value collapses the region
+
+Previous-code qualification is reasoned from the diff, not an executed base run. The previous component was extracted with git show into previous-bounded-value.tsx.txt; the maintained tests were not edited and no production file was replaced.
+
+Expansion counterfactual: a52299c6 stores expandedFor=big after expanding A. Rendering B leaves that state intact. Rendering A again makes expandedFor===value true and displays bigJson. The extended regression instead expects bigJson.slice(0,4096) plus the ellipsis at this point, so it fails on the previous code. This mechanism was also observed by the original round-1 browser failure. The current guard expandedState && shownValue===value is false on the first render that sees a new value, and the adjusted state stays collapsed when A returns.
+
+Focus counterfactual: the previous component has no focus refs/effects or held-text tabindex. The new unit regression focuses the expanded pre and rerenders a different large value, then expects Show all to have focus. Nothing in the previous code focuses that button, so this expectation fails. Its later tabindex=-1 expectation for a small replacement is also absent from the previous source.
+
+These counterfactuals establish why the added assertions detect the old implementations. They are not a claim that the previous-code test command was run. The new focus unit test passes under jsdom, while independent real Edge live-update checks still fail for large-to-small replacements (QA-259-R2-01).

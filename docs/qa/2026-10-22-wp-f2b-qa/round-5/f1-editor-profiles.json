@@ -1,0 +1,147 @@
+{
+  "source": "docs/qa/2026-10-22-wp-f1-qa/round-3/browser-final.json",
+  "sourceRevision": "c2a2b6632c0996383abe491268baf871aec448dd",
+  "note": "Historical signed-off state/problem expectations replayed through the current editor with public HTTP injection. These are not fresh CLI classifier observations.",
+  "profiles": [
+    {
+      "id": "api401",
+      "state": "auth",
+      "label": "Sign-in needed",
+      "claudeProblems": [
+        "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+      ]
+    },
+    {
+      "id": "http429",
+      "state": "quota",
+      "label": "Usage limit",
+      "claudeProblems": [
+        "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      ]
+    },
+    {
+      "id": "stdout429-warning",
+      "state": "quota",
+      "label": "Usage limit",
+      "claudeProblems": [
+        "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      ]
+    },
+    {
+      "id": "empty",
+      "state": "unknown",
+      "label": "Unknown",
+      "claudeProblems": [
+        "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+      ]
+    },
+    {
+      "id": "empty-object",
+      "state": "unknown",
+      "label": "Unknown",
+      "claudeProblems": [
+        "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+      ]
+    },
+    {
+      "id": "ready",
+      "state": "ready",
+      "label": "Ready",
+      "claudeProblems": []
+    },
+    {
+      "id": "signed-out",
+      "state": "auth",
+      "label": "Sign-in needed",
+      "claudeProblems": ["Claude is not signed in. Run claude auth login, then retry preflight."]
+    },
+    {
+      "id": "errno-auth",
+      "state": "transport",
+      "label": "Connection failed",
+      "claudeProblems": [
+        "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      ]
+    },
+    {
+      "id": "syntax-status-network",
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "claudeProblems": [
+        "Claude CLI lacks a required capability. Update the Claude CLI, then retry preflight."
+      ]
+    },
+    {
+      "id": "http403",
+      "state": "auth",
+      "label": "Sign-in needed",
+      "claudeProblems": [
+        "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+      ]
+    },
+    {
+      "id": "http503",
+      "state": "transport",
+      "label": "Connection failed",
+      "claudeProblems": [
+        "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      ]
+    },
+    {
+      "id": "unrecognized",
+      "state": "unknown",
+      "label": "Unknown",
+      "claudeProblems": [
+        "Claude CLI check exited with code 3762504530. Check that the Claude CLI starts and responds, then retry preflight."
+      ]
+    },
+    {
+      "id": "old",
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "claudeProblems": [
+        "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+      ]
+    },
+    {
+      "id": "missing-model",
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "claudeProblems": [
+        "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+      ]
+    },
+    {
+      "id": "missing-effort",
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "claudeProblems": [
+        "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+      ]
+    },
+    {
+      "id": "quota",
+      "state": "quota",
+      "label": "Usage limit",
+      "claudeProblems": [
+        "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      ]
+    },
+    {
+      "id": "transport",
+      "state": "transport",
+      "label": "Connection failed",
+      "claudeProblems": [
+        "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      ]
+    },
+    {
+      "id": "unknown",
+      "state": "unknown",
+      "label": "Unknown",
+      "claudeProblems": [
+        "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+      ]
+    }
+  ]
+}

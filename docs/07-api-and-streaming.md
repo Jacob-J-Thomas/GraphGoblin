@@ -15,28 +15,29 @@ Loops
   GET    /loops/{id}                    loop with current published version and draft
   PUT    /loops/{id}/draft              save draft definition (validated, may be unpublishable; If-Match)
   POST   /loops/{id}/publish            validate and freeze draft as a new version
-  GET    /loops/{id}/versions           version history
+  GET    /loops/{id}/versions           version history: published versions and the draft (no draft snapshots)
+  GET    /loops/{id}/versions/{vid}     one version, draft or draft snapshot, with its definition (a run's versionId)
   GET    /loops/{id}/export             definition as JSON for committing to a repo
   POST   /loops/import                  create or update from exported JSON
   DELETE /loops/{id}                    delete loop, versions, drafts, triggers and all run history; 204, 404 or 409
 
 Runs
-  POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
+  POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId?, input?, return?: ReturnChannel[], versionId?, allowDraft? }; 202 { run } with its pin
   GET    /runs                          owner-scoped list with run/template filters and a stable nextCursor
-  GET    /runs/{id}                     snapshot: status, current node, iteration, waiting spec, result, failure
+  GET    /runs/{id}                     snapshot: pinned definition, status, current node, iteration, waiting spec, result, failure
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
   POST   /runs/{id}/cancel | pause | resume
-  POST   /runs/{id}/input               for a wait node in input mode; validated against its inputSchema
-  POST   /runs/{id}/signals/{name}      deliver a named signal
+  POST   /runs/{id}/input               body: { waitId, input }; observed identity and inputSchema validated
+  POST   /runs/{id}/signals/{name}      body: { waitId, payload? }; deliver to the observed wait
   POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId }; 202 { run }; 409 REPLAY_NODE_NOT_REACHED (see 05)
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
   POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
-  POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
-  GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
+  POST   /events                        inbound Event intake; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  GET    /events?type=&before=&limit=   stored inbound events (API, webhooks), newest first
 
 Settings and catalog
   CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
@@ -49,12 +50,12 @@ Settings and catalog
   PUT    /classifier-models/{id}        create/replace custom HTTP metadata, 200 summary (settings:write; also secrets:write with secretRef); If-None-Match: * creates only
   PATCH  /classifier-models/{id}        exactly { enabled: boolean }, 200 summary (settings:write)
   DELETE /classifier-models/{id}        remove custom metadata, 204; preserve secrets/references (settings:write)
-  GET    /harness/preflight             Codex installed and authenticated?
+  GET    /harness/preflight             Configured harness capabilities and local login?
   GET    /system/preflight              first-run checks: Node, data dir, master key, database, harnesses, Jev, default model (11)
   GET    /openapi.json   GET /healthz   GET /version   (all public; Swagger UI at /docs when enabled)
 ```
 
-Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
+Run and inbound-event lists are paginated with opaque cursors. Loop listings return every owner loop with its latest-run summary and exact run count. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
 
 Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `eventType`,
 optional `dedupeKey`, and `configurationAvailable`. Secret references are names only. Webhook and Event configs reject `filter`; payload checks belong in downstream decisions. Historical `filtered` receipt states remain readable.
@@ -65,6 +66,24 @@ refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/versi
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
 event metadata does not change `POST /events` or publish anything to the bus.
+
+The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
+
+Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
+
+## Pinned execution limits (#243)
+
+Run responses expose `pinned.limits`: `maxNodeVisits` defaults to 10 and
+`runDeadlineSeconds` defaults to null (no deadline). Explicit null removes the visit
+cap; an authored positive deadline starts at first execution and includes waits,
+pauses and downtime. Queue time is excluded. Editing a loop or Settings cannot change
+an existing run's pin. Expiry fails with non-resumable `RUN_DEADLINE_EXCEEDED` and
+cancels awaited children; explicit Cancel remains `cancelled`. Observation deadlines
+on client/MCP waits only stop observation and do not impose a run deadline.
+
+## Artifact downloads
+
+`GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).
 
 ## Loop deletion
 
@@ -103,6 +122,69 @@ under `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
 Responses and exports use format 4. The server-store cutover remains separate:
 unconverted stores still stop before ordinary migrations or recovery. No tolerant
 runtime reader is added. See the CHANGELOG upgrade notes.
+
+## Current thread and resumed history (#116)
+
+`GET /runs/{id}/thread` and MCP `get_run_thread` reconstruct the current thread through
+the observed durable event tail, using verified snapshots only as a cache. A delayed snapshot
+cannot hide completed patches or an unfinished node's visit count. These reads do not write
+snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-record
+projection (status, position, result and failure); the record contains no context-thread
+snapshot. Separate reads can observe different event prefixes while execution advances.
+
+A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
+Observers following all attempts first catch up with JSON event pages after their stored
+cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
+Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
+whether to follow a live tail when a page overtakes the captured run record. Terminal observation
+checks a lagging run record until its status agrees and refreshes metadata without needing another
+event. A resumable failure continues checks because another client may resume it; other terminal
+outcomes stop once the run record agrees. This leaves return-delivery finalization separate.
+
+### Bounded current-thread reads (#116)
+
+Each checkpoint writer records the thread, its sequence and the domain `ReplayState`
+(`{ openNodeId?: string; strict: boolean }`) together. Executor parking records that visit open;
+its own matching completion records no open visit. Recovery computes `replayStateAt(events, seq)`
+from the full durable history. A `node.finished` boundary alone cannot prove a closed visit:
+a delayed duplicate for A can leave B open. Readers never infer state from event types.
+
+When stored state is present, current-thread reads request only the checkpoint boundary and its
+tail using `events.read(runId, checkpoint.seq - 1)` and require the first returned sequence to be
+the checkpoint's. Domain `reconcileThread` carries the recorded state through the tail. Missing
+boundaries, unsequenced snapshots and snapshots without stored state use the full admitted
+seed/history. Execution's `loadThread` retains its full history for its other recovery needs.
+No read writes or repairs a checkpoint.
+
+SQL migration `0018_thread_checkpoint_replay_state` adds nullable JSON text
+`runs.thread_snapshot_replay_state`. Existing snapshots retain NULL and use full-prefix replay
+until a writer saves the next checkpoint; no state is guessed or backfilled. Snapshot, sequence
+and state are replaced in one repository update. The required `RunRepository.saveThread` port
+arguments are `(runId, thread, seq, replayState)`.
+
+A fresh round-3 Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite
+with 10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).
+Each case had one warm-up and five measured reads, comparing the complete returned thread with
+full replay. The lagging checkpoint omitted 200 events. The machine was loaded, including other
+validation work; these elapsed samples describe this fixture, not an SLA or a speedup caused by
+persisting state.
+
+| Checkpoint         | Decoded rows per read | Round-3 median (ms) | Observed range (ms) |
+| ------------------ | --------------------: | ------------------: | ------------------: |
+| current            |                     1 |              11.357 |        5.206-86.185 |
+| lagging-200-events |                   201 |              11.291 |        9.350-26.730 |
+
+The structural result remains one decoded boundary row for a current checkpoint and boundary
+plus 200 tail rows for the lagging case. The earlier round-2 full-history measurements decoded
+10,008 rows per read (medians 311.421/222.919 ms); its bounded implementation decoded 1/201 rows
+(medians 25.814/21.827 ms), but its event-type proof failed the delayed-duplicate case. The
+persisted-state correction restores replay equivalence while keeping that bound. Timing samples
+from different loaded runs are observations, not a controlled comparison of the state fix.
+
+Fresh samples and counted port reads: `docs/qa/2026-10-23-wp-g1-116/round-3-measure.json`.
+Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-before.json` and
+`docs/qa/2026-10-23-wp-g1-116/measure-after.json`. The repeatable script is
+`apps/api/scripts/thread-read-measure.ts`.
 
 ## SSE protocol (Decided)
 
@@ -188,6 +270,20 @@ following a timezone issue focuses the time zone control.
 
 ## Return delivery (Decided)
 
+Run snapshots include optional `deliveries` for outbound webhooks, with separate pending,
+delivered or failed state, stable identity, attempts/budget, next attempt and typed last error.
+REST run detail/list, the generated api-client, MCP `get_run` and `wait_for_run` preserve it.
+`wait_for_run.finished` means execution finished, even with pending or failed delivery; call
+`get_run` again to observe delivery. The inspector polls once per second while delivery is
+pending. SSE still closes on execution's terminal event; subsequent JSON event pages expose
+`delivery.queued`, `delivery.attempted`, `delivery.attempt_finished` and `delivery.finished`.
+Unknown acknowledgement is never represented as non-delivery. The required
+`acknowledgementUncertain` flag in each delivery snapshot retains earlier uncertainty even
+when `lastError` is a later rejection and the final acknowledgement is accepted. The inspector
+keeps its possible-duplicate warning in that case; rejection-only retries do not set the flag.
+An invalid HTTP response status is a retryable `transport` error with unknown acknowledgement
+and no `httpStatus`. See ADR-0043.
+
 The `caller` return channel resolves at delivery time:
 
 | Invocation source                                     | Delivery                                                                                      |
@@ -196,7 +292,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file, event, and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each.
+The file and log channels are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each; webhooks use the delivery journal above. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
 
 ## MCP server (Decided)
 
@@ -207,22 +303,31 @@ Other channels, webhook, file, event, and log, are delivered by the engine after
 
 Tools (each with a Zod input schema; descriptions tell the agent when to call it and what to do next):
 
-| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                   |
-| --------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                     |
-| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds      |
-| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                 |
-| `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
-| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
-| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                              |
-| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `before?`, `limit?` | Compact runs, newest first; `nextBefore` (a `createdAt`) pages                                                                                                                                              |
-| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
-| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                               |
-| `provide_input`                         | `runId`, `input`                                            | Answers a wait node in input mode                                                                                                                                                                           |
-| `send_signal`                           | `runId`, `name`, `payload?`                                 | `{ woke, run }`                                                                                                                                                                                             |
-| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                               |
+| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                     |
+| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                       |
+| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds        |
+| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId`, `versionId`, `definition` (the pin label) and `pinned` immediately; `allowDraft` runs a snapshot of the draft of an unpublished loop                             |
+| `wait_for_run`                          | `runId`, `timeoutSeconds?` (1 to 600, default 60)           | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status?, cursor?, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
+| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                  |
+| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                                |
+| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                        |
+| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                               |
+| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                                 |
+| `provide_input`                         | `runId`, `waitId`, `input`                                  | Answers the observed input wait                                                                                                                                                                               |
+| `send_signal`                           | `runId`, `name`, `waitId`, `payload?`                       | `{ woke, run }`                                                                                                                                                                                               |
+| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                                 |
 
-`wait_for_run` polls `GET /runs/{id}` once a second rather than calling the client's `waitForRun`, so it can return early, and it sends MCP progress notifications between polls when the caller supplies a progress token. MCP clients have their own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling it until `finished` is true.
+`wait_for_run` uses the client's shared `observeRun` polling implementation, once a second,
+with early returns for input and paused runs and MCP progress notifications when the caller
+supplies a progress token. Its deadline covers pending HTTP requests, response bodies,
+progress notification delivery and sleeps. At the deadline it returns `finished: false`
+with the latest timely status and cursor. If no snapshot arrived, it omits status/waiting
+and cursor fields and asks the caller to check again. `timeoutSeconds` must be an
+integer from 1 to 600 (default 60). MCP request cancellation interrupts observation through the SDK's
+cancellation error; it never calls the run cancellation endpoint. MCP clients have their
+own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling
+until `finished` is true.
 
 Resources: the templates `graphgoblin://runs/{id}/events` (the whole log as JSON, up to 10,000 events, with `truncated` and `nextAfter`) and `graphgoblin://runs/{id}/thread`; listing them returns the 20 most recent runs.
 
@@ -263,7 +368,10 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 - **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; transport failures throw it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls.
 - **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
 - **Live events.** `subscribeRunEvents({ client, runId, after?, onEvent, signal? })` reads `GET /runs/{id}/events` as SSE, validates each frame with `RunEventSchema`, and calls `onEvent` in `seq` order. It remembers the last delivered `seq`; if the connection drops before `run.finished`, `run.failed`, or `run.cancelled`, it reconnects with `after=<lastSeq>` after an exponential backoff (500 ms doubling, capped at 30 s, reset after a connection that makes progress) and discards replayed events it has already delivered. 408, 425, 429, 5xx, and network errors are retried; other statuses reject `done`. A frame that fails validation is reported through `onError` and skipped. It returns `{ close(), done, lastSeq }`.
-- **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the timeout and returns `{ run, finished }`; the MCP `wait_for_run` tool is built on it.
+- **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the deadline. Every GET and sleep receives a signal combining caller cancellation and the total observation budget. Caller abort rejects promptly with the signal's exact reason, including before the first request. The deadline resolves `{ finished: false, run? }` without waiting for an in-flight request or sleep, retaining only the last snapshot received before the deadline; when none arrived, `run` is omitted. The deadline result carries the last timely snapshot, which can be up to one poll interval old during normal polling (older if a request stalls). A zero budget makes no request. A timely terminal snapshot returns `{ finished: true, run }`. Late responses and rejections cannot change the settled result or trigger another poll. The first cancellation cause wins; a caller signal already aborted at entry wins over a zero deadline. Timers and caller listeners are removed on completion. `observeRun(client, runId, options, { stopWhen?, onPoll? })` shares these semantics while supporting MCP's early returns and progress reporting.
+- **Observation and run cancellation.** Aborting a client wait or MCP request, reaching its deadline, or closing/aborting an SSE subscription stops observation only. The run continues. Cancelling the run requires the explicit `POST /runs/{id}/cancel` endpoint (`runs.cancel` / MCP `cancel_run`). SSE already passes its subscription signal into the fetch and body reader, including reconnects; closing or aborting resolves its `done` promise.
+
+Both input and signal paths require the opaque `waitId` from `GET /runs/{id}` at `waiting.waitId`, or the `run.waiting` event at `wait.waitId`. The matching input or signal-mode answer is consumed once. Stale, unknown or already consumed identities return RFC 9457 409 `WAIT_MISMATCH` without appending another answer or replacing the accepted payload. A retry can finish the status acknowledgement and enqueue an earlier durable answer. A matching identity on a paused run returns 409 `INVALID_STATE` with a paused-run message; resume first, then answer the same observed wait. Missing identities are 400 validation errors. Input and signal acceptance retry at most ten conditional-append conflicts; a saturated caller receives `WAIT_MISMATCH` and must refresh its observed snapshot. Heartbeat signals are observations within the current logical visit; every accepted signal is counted once, and each new park has a new identity. The browser submits the identity associated with its displayed form. MCP callers obtain it from `get_run` or `wait_for_run`.
 
 ## Error responses (Decided)
 
@@ -304,9 +412,9 @@ Decision evaluation failures never retain provider raw answers, messages, stacks
 
 Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `config.kind: classifier` at `config.model`, requiring the declared Choice, Noul or Score capability, without an exit predicate path. Expression source issues identify `config.jsonata`; LLM issues identify `config.instructions`, `config.model.value` or `config.effort.value`. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
 
-`POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
+`POST /loops`, `POST /loops/import` and `PUT /loops/{id}/draft` report catalog/configuration issues without CLI probes. `POST /loops/{id}/validate` and `POST /loops/{id}/publish` add fresh readiness issues. All share the same base checks: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
-The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation and saving allow unresolved inherited model or effort defaults, returning the readiness issues for later repair. Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
+The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation, import and saving allow unresolved inherited model or effort defaults, returning catalog/configuration issues for later repair. They never probe harness readiness. Explicit validate, publish and manual API/MCP trigger start probe once per referenced harness per request, concurrently across harnesses; `/harness/preflight` supplies editor readiness separately. Manual trigger start returns 422 `HARNESS_NOT_READY` with typed readiness issues before a turn starts when prerequisites fail. Replay (`POST /runs/{id}/replay`) has a separate admission policy and does not perform this preflight: it can return 202, execute preceding mutations and then fail at an unready harness. Scheduled/webhook starts, internal subloops and resumes also retain their existing execution checks; see [no-turn readiness](06-harness-integration.md#no-turn-readiness-179). Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
 
 Known limitation: loop-default model warnings always check the Codex catalog, the only supported
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes
@@ -331,13 +439,13 @@ The loader and dormant configured contracts/services are removed in the next bou
 ### Ordinary run listing and pagination
 
 `GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
-Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
-listing. Equal creation timestamps do not skip runs. The default page size is 100,
+Reuse the returned opaque `nextCursor` as `cursor` with the same filters; `nextCursor: null` ends the
+listing. Equal timestamps are ordered by ID; IDs follow creation order within one process through a monotonic ULID generator, so ties do not skip runs. The default page size is 100,
 with `limit` from 1 to 500. The run repository fetches one extra row (at most 501)
 to determine whether another page exists. Cursors are bounded to 256 characters,
 canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
 A malformed, oversized or noncanonical cursor receives `400 INVALID_CURSOR`.
-The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+The timestamp-only `before` filter is an exclusive time bound, not a paging cursor; it composes with `cursor` and stays unchanged on every page.
 Accepted `before` timestamps are normalized to UTC with milliseconds before comparison,
 so offsets and omitted milliseconds select the same page as the canonical timestamp.
 
@@ -346,9 +454,78 @@ Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
 including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
 and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
 The exclusive `(created_at, id)` boundary keeps newer insertions between requests
-out of subsequent pages. MCP's `before`/`nextBefore` timestamp paging stays separate.
-Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
-the complete page; the convenience `runs.list` wrapper returns its items only.
+out of subsequent pages. Both `runs.list(client, query)` and MCP `list_runs` expose
+`{items, nextCursor}`. Consumers never decode or reconstruct a cursor; repeat the active
+filters and copy `nextCursor` unchanged into `cursor`. Pass it even when `items` is empty
+because damaged rows were skipped; stop when `nextCursor` is null. Invalid statuses
+(including empty or partly invalid comma-separated lists) receive `400 VALIDATION_FAILED`,
+with a `/status` error explaining: "Use comma-separated run statuses."
+MCP `list_runs` accepts `cursor` and its loop/status/parent filters; its parameters do not include `before`.
+
+`GET /events` and `events.list(client, query)` return `{items, nextCursor}`, ordered by
+`receivedAt DESC, id DESC`, using one lookahead row and the same 100 default / 500 maximum.
+The opaque inbound cursor is distinct from a run-list cursor; malformed, oversized and
+noncanonical values receive `400 INVALID_CURSOR`. The `type` and exclusive `before`
+filters compose with `cursor`; keep them unchanged on subsequent pages. A cursor is a
+position, not a snapshot: concurrent insertions ahead of it do not appear in older pages.
+It encodes only a position; reusing it with different filters continues from that position
+under the new filters. Inbound rows sharing a timestamp are ordered by ID, which follows
+creation order within one process. Unknown query parameters return 400, and `before` must
+be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
+
+`GET /runs/{id}/events` retains its sequence-number continuation, returning
+`{items, nextAfter, hasMore}`. One raw lookahead row determines `hasMore`; an exactly full
+final page returns false. Only requested rows are decoded and validated: malformed
+lookahead cannot fail a healthy page, but requesting that event still returns
+`STORED_EVENT_INVALID`, including when it is in the middle of a larger page. Inbound
+event and run lists likewise decode only their requested rows. `read_run_events`
+forwards that authoritative API result.
+This sequence cursor remains a number; it is not interchangeable with list cursors.
+
+Runs and Events append older rows through a new outline **Load more** button.
+Filters remain part of the query key and every page request; changing a filter selects
+its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
+filters. The control is busy only during a next-page fetch, so background polling does
+not block it. End-of-list text appears after an append and receives keyboard focus
+when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
+show an error with a retry through the same button. Runs retain their five-second polling;
+Events retain pending-delivery polling. No manual Events refresh is added here.
+
+### Pinned definitions (ADR-0041)
+
+Every run, draft runs included, executes one immutable definition record for its whole life.
+`RunRecord.versionId` names it and `RunRecord.pinned` describes it:
+`{ source: 'published' | 'draft', version, name, label, defaults: { owner, process }, classifiers }`,
+where `classifiers` maps each classifier id the definition uses to the catalog binding it calls
+(`provider`, `providerModel`, `endpoint`, `primitives`, `secretRef?`; never the secret value).
+The start responses (`POST /loops/{id}/runs`, `POST /runs/{id}/replay`, MCP `start_run`) return it,
+and the first event of every run, `run.queued`, carries the same `versionId` and `pinned`, so the
+SSE stream identifies the definition before anything runs. A draft start
+(`{ versionId: <draft id>, allowDraft: true }`) answers with a new `versionId`: the draft snapshot
+taken at start, readable at `GET /loops/{id}/versions/{versionId}` (status `snapshot`) and never
+listed in the version history. Starting a snapshot directly answers 409 `VERSION_NOT_PUBLISHED`.
+`label` and `name` are those of the pinned definition, so renaming or editing the loop later does
+not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
+
+**Stored definitions that predate ADR-0044 (#242).** A version, draft or draft-run snapshot saved
+before exits stopped publishing Events can still hold an exit destination `{ kind: "event" }`.
+It is refused before it is served or run, never dropped silently: `GET /loops/{id}`,
+`GET /loops/{id}/versions`, `GET /loops/{id}/versions/{versionId}`, `GET /loops/{id}/export`,
+`POST /loops/{id}/publish`, `POST /loops/{id}/runs` and `POST /runs/{id}/replay` answer 409
+`LOOP_UPGRADE_REQUIRED` with the extension members `loopId`, `versionId`, `version` and `paths`
+(JSON Pointers to each such destination); the `detail` explains the repair. A run already pinned
+to such a definition fails before its next node with `failure.code` `LOOP_UPGRADE_REQUIRED`
+(`resumable: false`, the same identity in `details`), and a parent whose subloop would start or
+awaits such a loop fails with it at its subloop node. Repair: replace the destination with a
+Subloop call and publish. A published version or draft that still holds one can be repaired by
+removing the destination from its stored JSON by hand with GraphGoblin stopped; a draft-run
+snapshot cannot be edited even then (migration 0014's immutability trigger), so delete the loop
+once its runs are terminal (`DELETE /loops/{id}` still works and removes its runs and snapshots)
+or reset the store. The store-level startup check does not refuse a definition whose only
+departure from the current contract is such a destination (in the former channel's exact shape,
+`{ kind: "event", eventType: <slug> }`), so the API starts and the refusal stays per loop. The
+offline format cutover (`inspect`/`apply`) still converts every definition strictly: a store
+holding such a destination needs explicit repair, loop deletion or a reset before a cutover.
 
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these
@@ -365,12 +542,93 @@ Repository recipes remain unregistered in this foundation release.
 
 Ordinary copied drafts use the ordinary engine resume behavior. The API installs no template admission, execution, resume or reporting policy. Dormant configured runtime modules await deletion in the next #165 split.
 
+### Loop listing summaries
+
+`GET /loops` returns `{items}` with `latestRun: {id, status, createdAt} | null` and an
+exact `runCount` on each loop. One SQL statement selects each authenticated owner's
+loops, joins its latest run through a correlated `ORDER BY created_at DESC, id DESC LIMIT 1`
+subquery, and counts that loop's owner-scoped runs. The covering
+`runs_loop_owner_history_idx (loop_id, owner_id, created_at, id)` index supports both
+lookup and counting (migration `0016_loop_owner_history`). There is no global
+history-page limit or N+1 API fan-out. A null summary with `runCount: 0` means no history.
+The selected latest row's run record (including its pin), `initial_thread` and any
+present `thread_snapshot` pass through the shared strict decoders used by run and
+recovery readers before its summary is returned. An absent cached snapshot (SQL
+NULL) remains valid: readers rebuild from the initial thread and event log. Damage in any
+of those stored values makes `latestRun` null while its row remains counted; an
+older run is never substituted. Only the selected latest row is decoded, not every
+run in the loop. Its event log also passes the same strict decoder as recovery, in
+batches of at most 100 rows, stopping at the first unreadable event, which likewise
+makes `latestRun` null. Recovery logs
+failures without retaining a reusable set; diagnostics scans on demand. The repository
+therefore caches event readability by latest-run identity and event count (one entry
+per loop). Each listing counts events using the run-event index; unchanged histories
+need no event decoding or payload reads. Counting still walks that run's indexed
+entries. An append or a different latest run invalidates the cache.
+Cold validation is linear in the selected history up to its first bad event, with
+bounded batch memory; it never scans older runs. Out-of-band edits or repairs that
+leave the count unchanged require an API restart. Database failures remain errors,
+not cached unavailability. Recovery refuses damaged records, threads and events
+before repairing status; checking these boundaries here too prevents a valid but
+stale status column from becoming a badge after
+a damaged snapshot missed a terminal update, including after restart. The UI says
+"latest run unavailable" and directs the operator to run history diagnostics (`GET /runs/diagnostics`).
+Healthy loops remain available; database read failures remain errors. Loops refresh their summaries every five seconds; deletion confirmation uses
+the exact server count.
+
 ## Gate admission and terminal outcomes (#164 E1)
 
 Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
+
+### Process model defaults (#205)
+
+`GET /system/model-defaults` returns the configured process `HarnessDefaults` (`byHarness`), before loop and owner overrides. The editor uses these values to display effective inherited model and effort, including custom `GG_DEFAULTS`. It requires `system:read`, is read-only and contains no credentials.
+
+## Gateway shutdown (#224)
+
+`GET /system/shutdown` requires `system:read` and returns `phase`, `graceMs`,
+`activeRunIds` (executors and queued family work), `unconfirmedRunIds` (native cleanup warnings),
+`choices`, and optional `startedAt`, `choiceAt`, `error`. `POST /system/shutdown` requires
+`system:write` and a strict body `{ "action": "drain" | "wait" | "force" }`.
+The 202 snapshot awaits initial family capture so active identities are accurate. It
+acknowledges the control, not completed cleanup. Invalid transitions return 409 with current
+state: wait requires an open drain, and force cannot restart a failed drain observation.
+
+Phases are running, draining, awaiting-choice, forcing, drain-failed, force-failed, exiting,
+ready and stopped. The default grace is five minutes (`GG_SHUTDOWN_GRACE_MS`); expiry offers
+`["wait", "force"]` without interruption. Wait has no hidden kill timer. Force is available
+before expiry. A force cleanup failure offers `["force"]`: a further explicit force exits
+code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
+terminations remain warnings without preventing normal completion. A drain observation
+failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
+#319 will build the browser interaction on these phases and controls.
+
+Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
+503 before saving any inbound record or dedupe key, so the same Event can be retried after
+restart. Webhooks return 503 `WEBHOOK_ADMISSION_FAILED`. Independent queued runs remain
+unstarted and durable. Drain waits for active executors, queued family continuations and
+already-due family wakes. Durable input/signal waits, future timers, parents waiting on
+parked children and pauses do not hold drain and survive force unchanged. While other work
+holds drain open, input, signals, cancellation, timers and required children remain usable;
+woken work holds drain until it finishes or parks again. After restart, past wall-clock waits
+become eligible and paused runs remain paused.
+
+Interrupted executing/queued work records `RUN_INTERRUPTED_BY_STOP` with node, attempt and
+external-effect evidence; it is distinct from user cancellation or successful completion.
+Only this shutdown's own unconfirmed native interruption blocks release in force-failed.
+After applicable execution/delivery cleanup, SSE inspectors (including queued runs) close,
+HTTP closes, SQLite closes and the lock is released. The explicit failed-stop exit instead
+preserves ownership for dead-PID reclamation. See ADR-0049 and docs/11.
+
+An intake accepted before drain can finish recording its durable run/receipt while shutdown
+waits; independent runs admitted then remain queued for restart. A new closed intake returns
+503 before recording anything. At the final quiescent handoff, mutating run commands are
+sealed atomically with wake admission: a late command returns 503 `SHUTTING_DOWN` before
+writing, while an earlier accepted wake keeps controls and SSE open until its runnable family
+settles. Durable future parks and pauses still recover on the next start.

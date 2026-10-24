@@ -1,0 +1,50 @@
+// Run from the worktree root after fresh evidence is complete.
+import {readFileSync,writeFileSync,existsSync,readdirSync} from 'node:fs';
+import {resolve,dirname,join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+const root=process.cwd(),base='docs/qa/2026-10-20-wp-f1-qa',newBase='docs/qa/2026-10-22-wp-f1-qa/round-3';
+const original=readFileSync(base+'/index.md','utf8');
+if(original.includes('## Evidence restored'))throw Error('Historical records already restored; do not apply twice');
+const names=[...original.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]);
+const tracked=new Set(execFileSync('git',['ls-files',base],{encoding:'utf8'}).trim().split(/\r?\n/).map(s=>s.slice(base.length+1)));
+const missing=names.filter(n=>!tracked.has(n));
+function replacement(name){
+ if(name==='build.log')return 'build.log.txt';
+ if(name==='api.log')return 'api-coverage-corrected.log.txt';
+ if(name==='web.log')return 'web-coverage-unfiltered.log.txt';
+ if(name==='owner-followup.json'||name==='owner-followup.log')return 'owner-replay.json';
+ if(name==='owner.mjs')return 'owner-replay.mjs.txt';
+ if(/^(domain|infrastructure|adapter-codex|api|web)\.log$/.test(name))return name.replace('.log','-coverage.log.txt');
+ if(name==='api-readiness-alone.log')return 'api-readiness-alone.log.txt';
+ if(/^edge/.test(name))return name+'.txt';
+ if(/^infra-.*-alone\.log$/.test(name))return name+'.txt';
+ if(/^(typecheck|lint|format|docs|tokens)\.log$/.test(name))return name+'.txt';
+ if(/format/.test(name))return 'format-final.log.txt';
+ if(name.endsWith('.png'))return existsSync(join(newBase,name))?name:name==='owner-defaults-saved.png'?'defaults-auth.png':name==='settings-auth.png'?'settings-signed-out.png':'settings-empty.png';
+ if(/cleanup|process-inventory|gate-processes|native-process/.test(name))return name.endsWith('.ps1')?'cleanup.ps1.txt':'environment.json';
+ if(name==='e2e-ports.cjs')return 'port-scope.cjs.txt';
+ if(name==='run-gates.ps1')return 'run-checks.mjs.txt';
+ if(name.endsWith('.mjs'))return name==='finalize.mjs'?'restore-evidence.mjs.txt':'collect.mjs.txt';
+ if(/focus|browser/.test(name))return 'browser-final.json';
+ if(/web-serial/.test(name))return 'web-coverage.log.txt';
+ if(name==='temp-root.txt')return 'environment.json';
+ return 'runtime.json';
+}
+const mapping=missing.map(name=>({historical:name,regenerated:replacement(name),original:'lost during curation; not recovered',revision:'c2a2b6632c0996383abe491268baf871aec448dd'}));
+for(const m of mapping)if(!existsSync(join(newBase,m.regenerated)))throw Error('Missing fresh target '+m.regenerated);
+writeFileSync(newBase+'/restoration-map.json',JSON.stringify({revision:'c2a2b6632c0996383abe491268baf871aec448dd',historicalEntries:names.length,untrackedAtStart:missing.length,mapping},null,2));
+for(const file of [base+'/index.md',base+'/checks.md','docs/qa/2026-10-20-wp-f1-qa.md']){
+ let text=readFileSync(file,'utf8');
+ const prefix=file.endsWith('wp-f1-qa.md')?'2026-10-22-wp-f1-qa/round-3/':'../2026-10-22-wp-f1-qa/round-3/';
+ // Historical numbers and verdict remain intact. Lost links now identify the current replay.
+ for(const m of mapping){
+   const oldTarget=file.endsWith('wp-f1-qa.md')?'2026-10-20-wp-f1-qa/'+m.historical:m.historical;
+   text=text.replace(/\[([^\]]*)\]\(([^)]+)\)/g,(whole,label,target)=>target===oldTarget?'[round-3 replay: '+m.regenerated+']('+prefix+m.regenerated+')':whole);
+   text=text.split('`'+m.historical+'`').join('[round-3 replay]('+prefix+m.regenerated+')');
+   const escaped=m.historical.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+   text=text.replace(new RegExp('(?<![A-Za-z0-9_/.-])'+escaped+'(?![A-Za-z0-9_.-])','g'),prefix+m.regenerated);
+ }
+ const section='\n## Evidence restored\n\nThe original missing round-1 and round-2 artifacts were lost during curation (D-030). The historical results and verdict remain unchanged. Links for lost artifacts now lead to fresh round-3 replacements or consolidated replay evidence from **c2a2b6632c0996383abe491268baf871aec448dd**, not recovered originals. See the [round-3 report and complete retained artifact index]('+prefix+'README.md) and [original-to-regenerated mapping]('+prefix+'restoration-map.json). Retained original artifacts remain historical. Interrupted collectors, old timestamps, partial serial runs and historical process inventories cannot be recreated; their replacements document the current checks and their limits.\n';
+ const titleEnd=text.indexOf('\n');text=text.slice(0,titleEnd+1)+section+'\n'+text.slice(titleEnd+1);writeFileSync(file,text);
+}
+console.log(JSON.stringify({missing:missing.length,restoredTargets:[...new Set(mapping.map(m=>m.regenerated))].length}));

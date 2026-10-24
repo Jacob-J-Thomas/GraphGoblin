@@ -44,6 +44,68 @@ function linearLoop(): LoopDefinitionInput {
 }
 
 describe('replay-at-node', () => {
+  it('records the exact executable seed, keeps inherited counters and gates, and leaves the source byte-identical', async () => {
+    const engine = await createTestEngine();
+    try {
+      const definition = linearLoop();
+      definition.nodes.splice(3, 0, {
+        id: 'gate',
+        kind: 'decision',
+        label: 'Gate',
+        config: {
+          kind: 'expression',
+          jsonata: '"repeat"',
+          maxPasses: 3,
+          routes: [
+            { id: 'repeat', label: 'Repeat', repeat: true },
+            { id: 'stop', label: 'Stop' },
+          ],
+        },
+      });
+      definition.edges[2]!.to.node = 'gate';
+      definition.edges.push(
+        { id: 'repeat', from: { node: 'gate', port: 'repeat' }, to: { node: 'a' } },
+        { id: 'stop', from: { node: 'gate', port: 'stop' }, to: { node: 'done' } },
+        { id: 'limit', from: { node: 'gate', port: 'limit-reached' }, to: { node: 'done' } },
+      );
+      // Fresh entries are bounded by this run's own log, independently of inherited visits.
+      definition.settings = { maxNodeVisits: 3 };
+      const version = engine.publish(definition);
+      const source = await engine.runToIdle(version.loopId, { n: 7 });
+      const sourceBytes = async () =>
+        JSON.stringify({
+          record: await engine.manager.getRun(source.id),
+          events: engine.events(source.id),
+          snapshot: await engine.ports.runs.getThreadCheckpoint(source.id),
+          initial: await engine.ports.runs.getInitialThread(source.id),
+        });
+      const before = await sourceBytes();
+      // Replay done: it first starts after the gate has exhausted all three passes.
+      engine.manager.stop();
+      const fork = await engine.manager.replay({ runId: source.id, nodeId: 'done' });
+      const initial = await engine.ports.runs.getInitialThread(fork.id);
+      expect(initial).toMatchObject({
+        run: { iteration: 1 },
+        gates: { gate: { passes: 3 } },
+        counters: { nodeVisits: { start: 1, a: 3, b: 3, gate: 3 } },
+      });
+      expect(await engine.manager.getThread(fork.id)).toEqual(initial);
+      expect(engine.events(fork.id)[0]).toMatchObject({
+        type: 'run.queued',
+        initialThread: initial,
+      });
+      await engine.manager.start();
+      expect((await engine.settle(fork.id)).status).toBe('succeeded');
+      const final = await engine.manager.getThread(fork.id);
+      expect(final?.counters.nodeVisits).toEqual({ start: 1, a: 3, b: 3, gate: 3, done: 1 });
+      expect(final?.gates).toEqual(initial?.gates);
+      expect(final?.run.iteration).toBe(initial?.run.iteration);
+      expect(await sourceBytes()).toBe(before);
+    } finally {
+      engine.manager.stop();
+    }
+  });
+
   it('forks a finished run at a node with the thread from just before that node', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(linearLoop());
@@ -146,7 +208,11 @@ describe('replay-at-node', () => {
     expect(parked.status).toBe('waiting');
     expect(parked.waiting).toMatchObject({ nodeId: 'ask', kind: 'input' });
     // The source still waits on its own; answering the fork does not touch it.
-    await engine.manager.provideInput(fork.id, 'yes');
+    await engine.manager.provideInput(
+      fork.id,
+      (await engine.manager.getRun(fork.id))?.waiting?.waitId ?? 'unknown',
+      'yes',
+    );
     expect((await engine.settle(fork.id)).status).toBe('succeeded');
     expect((await engine.ports.runs.get(source.id))?.status).toBe('waiting');
   });

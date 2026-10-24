@@ -253,14 +253,19 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
         path: `config.${routePath}.repeat`,
         message: 'a repeat route must lead back to its decision gate',
       });
-    } else if (edge && (decision.config.maxPasses ?? 0) > def.settings.maxNodeVisits) {
+    } else if (
+      edge &&
+      def.settings.maxNodeVisits !== null &&
+      (decision.config.maxPasses === null ||
+        (decision.config.maxPasses ?? 0) > def.settings.maxNodeVisits)
+    ) {
       const cycle = repeatCycleNodes(def, decision.id, edge.to.node);
       issues.push({
         code: 'GATE_PASSES_ABOVE_VISIT_CAP',
         severity: 'warning',
         nodeId: decision.id,
         path: 'config.maxPasses',
-        message: `gate "${decision.id}" has maxPasses ${decision.config.maxPasses}, above settings.maxNodeVisits ${def.settings.maxNodeVisits}. Repeat-cycle nodes: ${cycle.map((id) => `"${id}"`).join(', ')}. Continued repetition will fail with MAX_NODE_VISITS before the maximum-pass Limit reached output. Lower maximum passes or raise the visit cap.`,
+        message: `gate "${decision.id}" has maxPasses ${decision.config.maxPasses ?? 'unlimited'}, above settings.maxNodeVisits ${def.settings.maxNodeVisits}. Repeat-cycle nodes: ${cycle.map((id) => `"${id}"`).join(', ')}. Continued repetition will fail with MAX_NODE_VISITS before the maximum-pass Limit reached output. Lower maximum passes or raise the visit cap.`,
       });
     }
   }

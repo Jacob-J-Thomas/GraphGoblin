@@ -1,0 +1,35 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure
+At
+<profile>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f1\docs\qa\2026-10-20-wp-f1-qa\run-gates.ps1:21
+char:3
++   & pnpm.cmd @commandArgs *> (Join-Path $evidence ($check.Name + '.lo ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 <profile>/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f1/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792487776412,"pid":47568,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5652"}
+{"level":30,"time":1792487776413,"pid":47568,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5652,"dataDir":"<profile>\\AppData\\Local\\Temp\\gg-api-process-eK5p9l","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792487776456,"pid":47568,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792487776462,"pid":47568,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":5.875699999999597,"msg":"request completed"}
+
+ Test Files  46 passed | 2 skipped (48)
+      Tests  701 passed | 6 skipped (707)
+   Start at  04:10:45
+   Duration  525.52s (tests 64%, import 34%, transform 2%, worker 1%)
+
+     Import  267 modules were evaluated 455 times · 166.25s total, 34% of tracked time
+             ~68.69s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.39% ( 1978/2052 )
+Branches     : 92.98% ( 1285/1382 )
+Functions    : 94.04% ( 395/420 )
+Lines        : 97.88% ( 1803/1842 )
+================================================================================

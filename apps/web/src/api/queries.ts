@@ -11,14 +11,15 @@ import {
   system,
   templates,
   type ListRunsQuery,
+  type ListEventsQuery,
 } from '@graphgoblin/api-client';
 import type {
   ClassifierModelSummary,
   LoopDefinitionInput,
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
-import { HarnessPreflightSchema } from '@graphgoblin/contracts';
-import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+import { HarnessDefaultsSchema, HarnessPreflightSchema } from '@graphgoblin/contracts';
+import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from './context.js';
 
@@ -45,6 +46,7 @@ export const keys = {
   thread: (id: string) => ['runs', 'thread', id] as const,
   settings: ['settings'] as const,
   catalog: ['model-catalog'] as const,
+  modelDefaults: ['process-model-defaults'] as const,
   /** Classifier summaries: their configured state follows the secrets they reference. */
   classifiers: ['classifier-models'] as const,
   secrets: ['secrets'] as const,
@@ -55,9 +57,9 @@ export const keys = {
     ['cron-preview', expression, timezone] as const,
 };
 
-export function useLoops() {
+export function useLoops(refetchInterval: number | false = false) {
   const client = useApi();
-  return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client) });
+  return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client), refetchInterval });
 }
 
 export function useTemplates() {
@@ -99,16 +101,33 @@ export function useLoopVersion(loopId: string, versionId: string, enabled = true
 
 export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | false = false) {
   const client = useApi();
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: keys.runs(query),
-    queryFn: () => runs.list(client, query),
+    initialPageParam: query.cursor,
+    queryFn: ({ pageParam, signal }) =>
+      runs.list(
+        client,
+        {
+          ...query,
+          ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+        },
+        { signal },
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     refetchInterval,
   });
 }
 
 export function useRun(id: string) {
   const client = useApi();
-  return useQuery({ queryKey: keys.run(id), queryFn: () => runs.get(client, id) });
+  return useQuery({
+    queryKey: keys.run(id),
+    queryFn: () => runs.get(client, id),
+    refetchInterval: (query) =>
+      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending')
+        ? 1000
+        : false,
+  });
 }
 
 export function useRunThread(id: string) {
@@ -119,6 +138,29 @@ export function useRunThread(id: string) {
 export function useSettings() {
   const client = useApi();
   return useQuery({ queryKey: keys.settings, queryFn: () => settings.get(client) });
+}
+
+export function useProcessModelDefaults() {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.modelDefaults,
+    queryFn: async () => HarnessDefaultsSchema.parse(await system.modelDefaults(client)),
+  });
+}
+
+/** Defaults may change in Settings or outside this tab. Refresh both levels together. */
+export async function refreshModelDefaults(queryClient: QueryClient): Promise<void> {
+  const queries = [keys.settings, keys.modelDefaults];
+  // A request begun before this event may hold older Settings. Replace it, including a first
+  // load, without reverting authoritative data just written by the Settings mutation.
+  await Promise.all(
+    queries.map((queryKey) =>
+      queryClient.cancelQueries({ queryKey, exact: true }, { silent: true, revert: false }),
+    ),
+  );
+  await Promise.all(
+    queries.map((queryKey) => queryClient.invalidateQueries({ queryKey, exact: true })),
+  );
 }
 
 export function useModelCatalog() {
@@ -253,13 +295,25 @@ export function usePreflight() {
 
 const PENDING_EVENT_REFRESH_MS = 2_000;
 
-export function useInboundEvents() {
+export function useInboundEvents(query: ListEventsQuery = {}) {
   const client = useApi();
-  return useQuery({
-    queryKey: keys.events,
-    queryFn: () => events.list(client),
+  return useInfiniteQuery({
+    queryKey: [...keys.events, query],
+    initialPageParam: query.cursor,
+    queryFn: ({ pageParam, signal }) =>
+      events.list(
+        client,
+        {
+          ...query,
+          ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+        },
+        { signal },
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     refetchInterval: (query) =>
-      query.state.data?.some((event) => event.delivery?.state === 'pending')
+      query.state.data?.pages.some((page) =>
+        page.items.some((event) => event.delivery?.state === 'pending'),
+      )
         ? PENDING_EVENT_REFRESH_MS
         : false,
   });

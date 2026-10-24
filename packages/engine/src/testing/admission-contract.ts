@@ -1,11 +1,20 @@
-import type { ContextThread, RunEvent, RunRecord } from '@graphgoblin/contracts';
+import {
+  CURRENT_DEFINITION_FORMAT,
+  LoopDefinitionSchema,
+  type ContextThread,
+  type LoopVersionRecord,
+  type RunEvent,
+  type RunRecord,
+} from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import { type RunAdmission, type TriggerAdmissionPort, type WebhookClaim } from '../admission.js';
 import { createInitialThread } from '../thread.js';
+import { freezeDraft, pinnedFields } from '../definition-pin.js';
 import {
   FakeClock,
   FakeIds,
   InMemoryEventStore,
+  InMemoryLoopRepository,
   InMemoryRunRepository,
   InMemoryTriggerAdmission,
   type AdmissionWrite,
@@ -17,6 +26,8 @@ export interface AdmissionContractFixture {
   run(id: string): Promise<RunRecord | undefined>;
   thread(id: string): Promise<ContextThread | undefined>;
   events(id: string): Promise<RunEvent[]>;
+  /** A stored loop version or draft snapshot. */
+  version(id: string): Promise<LoopVersionRecord | undefined>;
   inbound(id: string): Promise<WebhookClaim['inbound'] | undefined>;
   subscribe(id: string, listener: (event: RunEvent) => void): () => void;
   failAt(write: AdmissionWrite | undefined): Promise<void>;
@@ -29,8 +40,9 @@ export type AdmissionContractFactory = () => Promise<AdmissionContractFixture>;
 export function createFakeAdmissionFixture(): Promise<AdmissionContractFixture> {
   const runs = new InMemoryRunRepository();
   const events = new InMemoryEventStore(new FakeClock());
+  const loops = new InMemoryLoopRepository();
   let failure: AdmissionWrite | undefined;
-  const admission = new InMemoryTriggerAdmission(runs, events, (write) => {
+  const admission = new InMemoryTriggerAdmission(runs, events, loops, (write) => {
     if (write === failure) throw new Error('injected admission write failure');
   });
   return Promise.resolve<AdmissionContractFixture>({
@@ -38,6 +50,7 @@ export function createFakeAdmissionFixture(): Promise<AdmissionContractFixture> 
     run: (id) => runs.get(id),
     thread: (id) => runs.getInitialThread(id),
     events: (id) => events.read(id),
+    version: (id) => loops.getVersion(id),
     inbound: (id) => Promise.resolve(structuredClone(admission.inbound.get(id))),
     subscribe: (id, listener) => events.subscribe(id, listener),
     failAt(write) {
@@ -73,6 +86,8 @@ async function rejects(work: () => unknown): Promise<void> {
   equal(rejected, true);
 }
 
+const NO_DEFAULTS = { owner: { byHarness: {} }, process: { byHarness: {} } };
+
 function inputs() {
   const ids = new FakeIds();
   const now = new FakeClock().now().toISOString();
@@ -81,6 +96,15 @@ function inputs() {
     ownerId: 'owner',
     loopId: ids.next(),
     versionId: ids.next(),
+    pinned: {
+      source: 'published',
+      version: 1,
+      name: 'Contract',
+      label: 'Contract v1',
+      defaults: NO_DEFAULTS,
+      classifiers: {},
+      limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+    },
     invocationId: ids.next(),
     status: 'queued',
     iteration: 1,
@@ -107,7 +131,13 @@ function inputs() {
   const intent: RunAdmission = {
     run,
     initialThread,
-    queued: { type: 'run.queued', initialThread, subloopVersions: { [childId]: ids.next() } },
+    queued: {
+      type: 'run.queued',
+      versionId: run.versionId,
+      pinned: run.pinned,
+      initialThread,
+      subloopVersions: { [childId]: ids.next() },
+    },
     pinnedLoopIds: [run.loopId, childId],
   };
   const claim: WebhookClaim = {
@@ -130,6 +160,41 @@ function inputs() {
   return { intent, claim, ids, childId, now };
 }
 
+/** Point an intent at another definition record, everywhere the admission records it. */
+function repin(intent: RunAdmission, versionId: string): void {
+  intent.run.versionId = versionId;
+  intent.initialThread.run.versionId = versionId;
+  intent.queued.versionId = versionId;
+}
+
+/** A manual draft start: the intent pins and carries a frozen copy of the draft. */
+function draftStart(): ReturnType<typeof inputs> & { snapshot: LoopVersionRecord } {
+  const base = inputs();
+  const { intent, ids, now } = base;
+  intent.initialThread.invocation.source = 'manual.api';
+  intent.initialThread.invocation.trigger.kind = 'manual';
+  const draft: LoopVersionRecord = {
+    id: ids.next(),
+    loopId: intent.run.loopId,
+    version: 3,
+    status: 'draft',
+    definition: LoopDefinitionSchema.parse({
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: 'Contract',
+      nodes: [{ id: 'hook', kind: 'trigger', label: 'Hook', config: { type: 'manual' } }],
+      edges: [],
+    }),
+    createdAt: now,
+  };
+  const snapshot = freezeDraft(draft, ids.next(), now);
+  const pin = pinnedFields(snapshot, { defaults: NO_DEFAULTS, classifiers: {} });
+  repin(intent, pin.versionId);
+  intent.run.pinned = pin.pinned;
+  intent.queued.pinned = pin.pinned;
+  intent.snapshot = snapshot;
+  return { ...base, snapshot };
+}
+
 type Scenario = { name: string; run(fixture: AdmissionContractFixture): Promise<void> };
 const scenarios: Scenario[] = [
   {
@@ -138,8 +203,7 @@ const scenarios: Scenario[] = [
       const { claim, intent, ids } = inputs();
       claim.inbound.receivedAt = '2000-01-01T00:00:00.000Z';
       await f.preserveInbound(claim);
-      intent.run.versionId = ids.next();
-      intent.initialThread.run.versionId = intent.run.versionId;
+      repin(intent, ids.next());
       const next = {
         ...claim,
         id: ids.next(),
@@ -177,8 +241,7 @@ const scenarios: Scenario[] = [
       equal(claimed.map((value) => value.receipt.status).sort(), ['deduplicated', 'pending']);
       const pending = claimed.find((value) => value.receipt.status === 'pending')!;
       await f.admission.failed(pending.receipt.id, 'WEBHOOK_INTENT_CONFLICT');
-      intent.run.versionId = ids.next();
-      intent.initialThread.run.versionId = intent.run.versionId;
+      repin(intent, ids.next());
       const repeat = {
         ...claim,
         id: ids.next(),
@@ -367,6 +430,39 @@ const scenarios: Scenario[] = [
       equal((await f.inbound(next.inbound.id))?.runIds, [second.run.id]);
       equal((await f.events(intent.run.id)).length, 1);
       equal((await f.events(second.run.id)).length, 1);
+    },
+  },
+  {
+    name: 'a draft snapshot commits with its run or not at all, and is never replaced',
+    async run(f) {
+      const { intent, snapshot } = draftStart();
+      for (const write of ['create.snapshot', 'create.run', 'create.event'] as const) {
+        await f.failAt(write);
+        await rejects(() => f.admission.create(intent));
+        equal(await f.version(snapshot.id), undefined);
+        equal(await f.run(intent.run.id), undefined);
+      }
+      await f.failAt(undefined);
+      const run = await f.admission.create(intent);
+      equal(await f.version(snapshot.id), snapshot);
+      equal((await f.events(run.id))[0], {
+        ...intent.queued,
+        runId: run.id,
+        seq: 1,
+        ts: run.createdAt,
+      });
+      equal(await f.admission.create(structuredClone(intent)), run);
+      const changed = structuredClone(intent);
+      changed.snapshot!.definition.name = 'Changed';
+      await rejects(() => f.admission.create(changed));
+      const unpinned = structuredClone(intent);
+      unpinned.run.pinned.source = 'published';
+      unpinned.queued.pinned = unpinned.run.pinned;
+      await rejects(() => f.admission.create(unpinned));
+      const missing = structuredClone(intent);
+      delete missing.snapshot;
+      equal(await f.admission.create(missing), run);
+      equal(await f.version(snapshot.id), snapshot);
     },
   },
   {

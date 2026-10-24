@@ -1,0 +1,356 @@
+
+Running 9 tests using 1 worker
+
+pnpm.cmd : (node:37372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd exec playwright test e2e/model-effort.baseline.s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:37372) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+inference: Edit inference
+work
+
+Required fields are marked *
+
+Node id
+*
+Label
+*
+Settings
+Context
+Harness
+codex
+claude
+
+Harness that runs the session.
+
+Session
+Policy
+fresh
+resume-previous
+resume-named
+
+Start fresh, resume the previous session, or resume a named session.
+
+Prompt
+
+Liquid template rendered against the thread.
+
+Template
+*
+Liquid
+1
+baseline
+Preview (sample thread): baseline
+Earlier node outputs (1)
+Sandbox
+read-only
+workspace-write
+danger-full-access
+
+Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.
+
+Advanced
+Connections
+out → done
+Delete node
+Done
+inference effort: (inherited effort)
+minimal
+low
+medium
+high
+xhigh
+max
+llm: Edit decision
+work
+
+Required fields are marked *
+
+Node id
+*
+Label
+*
+Decision kind
+*
+expression
+Return one declared route ID from a JSONata expression.
+llm
+Give Codex Liquid instructions and readable routes. Confidence is informational.
+classifier
+Ask a configured classifier for Choice, Noul or Score.
+Settings
+Context
+Instructions
+*
+Liquid
+1
+Choose
+Preview (sample thread): Choose
+Earlier node outputs (1)
+
+Liquid instructions rendered against the full thread.
+
+Edit as JSON
+Routes *
+
+At least 2 items.
+
+Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.
+
+Routes 1
+Id
+*
+
+Stable route id and output port; changing display order does not change the route.
+
+Label
+*
+
+Unique readable route label, shown on the canvas and in Connections.
+
+Repeat route
+
+Only one route can repeat. Connect it back to earlier work in this gate.
+
+↑
+↓
+Routes 2
+Id
+*
+
+Stable route id and output port; changing display order does not change the route.
+
+Label
+*
+
+Unique readable route label, shown on the canvas and in Connections.
+
+Repeat route
+
+Only one route can repeat. Connect it back to earlier work in this gate.
+
+↑
+↓
+Add routes
+Harness: codex
+Model
+Mode
+*
+inherit
+explicit
+
+Inherit or explicitly select the model.
+
+Effort
+Mode
+*
+inherit
+explicit
+
+Inherit or explicitly select reasoning effort.
+
+Connections
+Yes (yes) → done
+No (no) → done
+Delete node
+Done
+  x  1 [chromium] › e2e\model-effort.baseline.spec.ts:4:1 › record #205 baseline placement (4.9s)
+(node:32780) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32780) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) (12.8s)
+(node:2756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) (12.7s)
+(node:20616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 [chromium] › e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (12.4s)
+(node:11756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 [chromium] › e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker (1.0m)
+(node:51180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 6 [chromium] › e2e\model-picker.spec.ts:203:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (2.0s)
+  ok 7 [chromium] › e2e\model-picker.spec.ts:284:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (7.6s)
+  ok 8 [chromium] › e2e\model-picker.spec.ts:366:1 › explicit Claude to Codex switch persists the owner default and sends the exact request (2.7s)
+  ok 9 [chromium] › e2e\model-picker.spec.ts:418:1 › cached catalog failure holds publication across a harness switch and recovers (5.0s)
+
+
+  1) [chromium] › e2e\model-effort.baseline.spec.ts:4:1 › record #205 baseline placement ───────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      11 |         : { kind, question: 'Choose', model: 'jev', answer: { type: 'choice', options: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }] } };
+      12 |     const created = await request.post('/loops', { data: { definition: { ...source, name: `205 baseline ${kind}`, nodes: [source.nodes[0], { id: 'work', kind: kind === 'inference' ? kind : 'decision', label: 'Work', config, ui: { x: 260, y: 80 } }, source.nodes[1]], edges: [{ id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } }, ...(kind === 'inference' ? ['out'] : ['yes', 'no']).map(port => ({ id: port, from: { node: 'work', port }, to: { node: 'done' } }))] } } });
+    > 13 |     expect(created.status()).toBe(201);
+         |                              ^
+      14 |     const { loop } = await created.json() as { loop: { id: string } };
+      15 |     await page.goto(`/app/loops/${loop.id}/edit`);
+      16 |     const dialog = await openNode(page, 'work');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-effort.baseline.spec.ts:13:30
+
+    Error Context: test-results\model-effort.baseline-record-205-baseline-placement-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort.baseline-record-205-baseline-placement-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort.baseline-record-205-baseline-placement-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-dark"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_13_" aria-describedby="_r_13_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      62 |     await page.keyboard.type(`Picker ${theme}`);
+      63 |     await page.keyboard.press('Enter');
+    > 64 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      65 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      66 |     await expect(effort.locator('option')).toHaveText([
+      67 |       '(inherited; the catalog suggests low)',
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-picker.spec.ts:64:25
+
+    Error Context: test-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-light"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_13_" aria-describedby="_r_13_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      62 |     await page.keyboard.type(`Picker ${theme}`);
+      63 |     await page.keyboard.press('Enter');
+    > 64 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      65 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      66 |     await expect(effort.locator('option')).toHaveText([
+      67 |       '(inherited; the catalog suggests low)',
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-picker.spec.ts:64:25
+
+    Error Context: test-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+    Expected: "/app/settings"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+
+
+      136 |     'alert',
+      137 |   );
+    > 138 |   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
+          |                                                                                 ^
+      139 |     'href',
+      140 |     '/app/settings',
+      141 |   );
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-picker.spec.ts:138:81
+
+    Error Context: test-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog').getByRole('button', { name: 'Retry model catalog' })
+
+
+      183 |   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);
+      184 |   await page.unroute('**/model-catalog');
+    > 185 |   await dialog.getByRole('button', { name: 'Retry model catalog' }).click();
+          |                                                                     ^
+      186 |   await expect(model).not.toHaveAttribute('aria-readonly');
+      187 |   await expect(model).toHaveValue(chosen.model);
+      188 |   await closeNode(page);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-picker.spec.ts:185:69
+
+    Error Context: test-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    [chromium] › e2e\model-effort.baseline.spec.ts:4:1 › record #205 baseline placement ────────────
+    [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) 
+    [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) 
+    [chromium] › e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+    [chromium] › e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+  4 passed (2.9m)

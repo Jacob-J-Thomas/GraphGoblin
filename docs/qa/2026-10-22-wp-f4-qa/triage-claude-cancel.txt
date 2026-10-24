@@ -1,0 +1,35 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1 -t does not spawn for an already aborted signal and cancels a running process
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 5102ms
+   ? owned native Claude process transport (5)
+     � does not spawn for an already aborted signal and cancels a running process 5100ms
+pnpm.cmd : 
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+??????? Failed Tests 1 ???????
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-LQhW8A'
+????????????????????????[1/1]?
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  23:33:23
+   Duration  8.19s (tests 65%, import 20%, transform 15%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  � "pnpm recursive exec" failed in C:
+  � <user path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  � f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=9.45

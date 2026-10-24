@@ -1,0 +1,140 @@
+pnpm --filter @graphgoblin/web test:coverage
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:979
++ ... "$qaPath/$($gateJob.name).log.txt"; & pnpm.cmd @gateArgs 2>&1 | Out-F ...
++                                         ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 1 failed) 113029ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20401ms
+ ❯ src/runs/inspector/ThreadViewer.test.tsx (9 tests | 2 failed) 65412ms
+   ❯ ThreadViewer with a large history (6)
+     × asks again for an event whose reconstruction the viewer no longer remembers 20328ms
+     × reconstructs a patch diff whose other half was let go in one activation 20143ms
+ ❯ src/editor/EditorPage.undo.test.tsx (8 tests | 1 failed) 101971ms
+   ❯ EditorPage undo and redo (8)
+     × undoes typing in a label in one step, from outside the field 13309ms
+ ❯ src/forms/saved-values.test.tsx (6 tests | 1 failed) 64718ms
+   ❯ the same edits save the same config (6)
+     × inference: basic, split, and advanced fields 20887ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes typing in a label in one step, from 
+outside the field
+Error: expect(element).toHaveValue(Start)
+
+Expected the element to have value:
+  Start
+Received:
+  Start h
+ ❯ src/editor/EditorPage.undo.test.tsx:92:19
+     90|     expect(screen.getByRole('button', { name: 'Undo edit label of star…
+     91|     await user.keyboard(UNDO);
+     92|     expect(label).toHaveValue('Start');
+       |                   ^
+     93|     expect(within(screen.getByTestId('node-start')).getByText('Start')…
+     94|     await user.keyboard(REDO);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > edits authentication, body and extraction by keyboard with one-step undo 
+and field validation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:245:1
+    243| });
+    244|
+    245| it('edits authentication, body and extraction by keyboard with one-ste…
+       | ^
+    246|   const user = userEvent.setup();
+    247|   const dialog = await openTrigger();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/forms/saved-values.test.tsx > the same edits save the same config > inference: basic, split, and advanced 
+fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/forms/saved-values.test.tsx:73:3
+     71|
+     72| describe('the same edits save the same config', () => {
+     73|   it('inference: basic, split, and advanced fields', async () => {
+       |   ^
+     74|     await expectSaved(
+     75|       'inference',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/runs/inspector/ThreadViewer.test.tsx > ThreadViewer with a large history > asks again for an event whose 
+reconstruction the viewer no longer remembers
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/runs/inspector/ThreadViewer.test.tsx:165:3
+    163|   });
+    164|
+    165|   it('asks again for an event whose reconstruction the viewer no longe…
+       |   ^
+    166|     const user = userEvent.setup();
+    167|     const { thread, events } = threadOf(3, 'a');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/runs/inspector/ThreadViewer.test.tsx > ThreadViewer with a large history > reconstructs a patch diff whose 
+other half was let go in one activation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/runs/inspector/ThreadViewer.test.tsx:191:3
+    189|   });
+    190|
+    191|   it('reconstructs a patch diff whose other half was let go in one act…
+       |   ^
+    192|     const user = userEvent.setup();
+    193|     const { thread, events } = threadOf(3, 'a');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/web/src/forms/introspect.test.ts.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  4 failed | 125 passed (129)
+      Tests  5 failed | 1635 passed (1640)
+     Errors  1 error
+   Start at  19:29:42
+   Duration  792.19s (environment 34%, tests 30%, setup 12%, transform 11%, import 11%, worker 1%)
+
+Environment  jsdom was created 129 times · 2696.67s total, 34% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\web
+

@@ -1,0 +1,45 @@
+{
+  "contractMaximum": 2000,
+  "scriptedHarnessSummaryChars": [16384, 20000],
+  "storedProgress": [
+    {
+      "seq": 7,
+      "itemId": "summary",
+      "summaryChars": 2000
+    },
+    {
+      "seq": 8,
+      "itemId": "raw",
+      "summaryChars": 2000
+    }
+  ],
+  "boundaries": [
+    {
+      "inputChars": 2000,
+      "accepted": true,
+      "issues": []
+    },
+    {
+      "inputChars": 2001,
+      "accepted": false,
+      "issues": [
+        {
+          "code": "too_big",
+          "path": ["item", "summary"],
+          "maximum": 2000
+        }
+      ]
+    },
+    {
+      "inputChars": 16384,
+      "accepted": false,
+      "issues": [
+        {
+          "code": "too_big",
+          "path": ["item", "summary"],
+          "maximum": 2000
+        }
+      ]
+    }
+  ]
+}

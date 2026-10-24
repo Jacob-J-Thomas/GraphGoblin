@@ -244,7 +244,11 @@ describe('freshness of the API checks (phase review F3)', () => {
     expect(api.callsTo('GET', /^\/model-catalog$/)).toHaveLength(catalogRequests + 1);
 
     await act(() => Promise.resolve(release()));
-    await waitFor(() => expect(queryClient.getQueryData(keys.catalog)).toEqual(api.catalog));
+    await waitFor(() =>
+      expect(queryClient.getQueryData(keys.catalog)).toEqual(
+        api.catalog.map((entry) => ({ ...entry, ecosystemDefault: false })),
+      ),
+    );
     await waitFor(() => expect(validations(api)).toBe(3));
     expect(nodeBadge('infer')).toHaveAttribute('aria-label', '1 issue on infer');
     expect(screen.queryByText('Ready to publish')).toBeNull();

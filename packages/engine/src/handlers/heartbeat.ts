@@ -1,12 +1,14 @@
-import type { JsonValue } from '@graphgoblin/contracts';
+import type { JsonValue, RunEvent } from '@graphgoblin/contracts';
 import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { ProbeBodyOverflowError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import { jsonOrText, outputPatch, toJson } from './common.js';
+import { PROBE_MAX_BODY_BYTES, type ProbeResponse } from '../ports.js';
+import { jsonOrText, outputPatch, toJson, withTimeout } from './common.js';
 
 async function probe(
   ctx: NodeContext<'heartbeat'>,
   view: Record<string, unknown>,
+  visitEvents: readonly RunEvent[],
 ): Promise<JsonValue> {
   const { probe: spec } = ctx.config;
   switch (spec.kind) {
@@ -16,57 +18,81 @@ async function probe(
       const headers: Record<string, string> = {};
       for (const [k, v] of Object.entries(spec.headers ?? {}))
         headers[k] = await renderTemplate(v, view);
-      const response = await ctx.ports.probes.fetch(
-        {
-          method: spec.method,
-          url: await renderTemplate(spec.url, view),
-          headers,
-          ...(spec.body !== undefined ? { body: await renderTemplate(spec.body, view) } : {}),
-          timeoutMs: spec.timeoutSeconds * 1000,
-        },
-        ctx.signal,
-      );
+      let response: ProbeResponse;
+      try {
+        response = await ctx.ports.probes.fetch(
+          {
+            method: spec.method,
+            url: await renderTemplate(spec.url, view),
+            headers,
+            ...(spec.body !== undefined ? { body: await renderTemplate(spec.body, view) } : {}),
+            timeoutMs: spec.timeoutSeconds * 1000,
+          },
+          ctx.signal,
+        );
+      } catch (error) {
+        if (error instanceof ProbeBodyOverflowError)
+          throw new RunFailureError(
+            error.code,
+            `HTTP heartbeat probe body exceeds the ${PROBE_MAX_BODY_BYTES}-byte limit; narrow the response or use a script probe`,
+            { nodeId: ctx.node.id },
+          );
+        throw error;
+      }
       return toJson({
         status: response.status,
         headers: response.headers,
-        body: response.body.slice(0, 65_536),
+        body: response.body,
         json: response.json ?? jsonOrText(response.body),
       });
     }
     case 'script': {
       const args: string[] = [];
       for (const arg of spec.args) args.push(await renderTemplate(arg, view));
-      const result = await ctx.ports.scripts.run({
-        command: spec.command,
-        args,
-        cwd: await ctx.services.workingDirectory(),
-        env: {},
-        timeoutMs: spec.timeoutSeconds * 1000,
-        signal: ctx.signal,
-      });
+      const cwd = await ctx.services.workingDirectory();
+      // Preserve the first abort cause while native cleanup returns. An authored probe
+      // timeout remains predicate input; an unconfirmed stop interruption owns a veto.
+      const timeout = withTimeout(
+        ctx.signal,
+        spec.timeoutSeconds,
+        () => new Error('probe timeout'),
+      );
+      let result;
+      try {
+        result = await ctx.ports.scripts.run({
+          command: spec.command,
+          args,
+          cwd,
+          env: {},
+          timeoutMs: spec.timeoutSeconds * 1000,
+          signal: timeout.signal,
+        });
+      } finally {
+        timeout.dispose();
+      }
+      if (
+        result.terminationUnconfirmed &&
+        timeout.signal.reason instanceof RunFailureError &&
+        timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP'
+      ) {
+        throw new RunFailureError(
+          'SCRIPT_TERMINATION_UNCONFIRMED',
+          'Heartbeat probe termination was not confirmed during explicit stop',
+          { nodeId: ctx.node.id, resumable: false, details: { interruptedByStop: true } },
+        );
+      }
       return toJson({
         exitCode: result.exitCode,
-        stdout: result.stdout.slice(0, 65_536),
+        // This UTF-16 display slice is not a byte cap.
+        stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
         stderr: result.stderr.slice(-4000),
         json: jsonOrText(result.stdout),
-        timedOut: result.timedOut,
+        timedOut: result.timedOut || timeout.timedOut(),
+        ...(result.terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
       });
     }
     case 'signal-count': {
-      const events = await ctx.services.events();
-      const startIndex = events
-        .map((e) => e.type === 'node.started' && e.nodeId === ctx.node.id)
-        .lastIndexOf(true);
-      const since = events.slice(
-        Math.max(
-          0,
-          events.findIndex(
-            (e, i) => i >= 0 && e.type === 'node.started' && e.nodeId === ctx.node.id,
-          ),
-        ),
-      );
-      void startIndex;
-      const count = since.filter(
+      const count = visitEvents.filter(
         (e) => e.type === 'signal.received' && e.name === spec.name,
       ).length;
       return toJson({ name: spec.name, count });
@@ -79,11 +105,28 @@ export const heartbeatHandler: NodeHandler<'heartbeat'> = {
   async execute(ctx) {
     const { config } = ctx;
     const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-    const beat = (ctx.previousWait?.beat ?? 0) + 1;
+    const events = await ctx.services.events();
+    // Finishing ends a logical visit; beats, retries and recovery starts do not.
+    const finished = events.findLastIndex(
+      (event) => event.type === 'node.finished' && event.nodeId === ctx.node.id,
+    );
+    const afterFinish = events.slice(finished + 1);
+    const start = afterFinish.findIndex(
+      (event) => event.type === 'node.started' && event.nodeId === ctx.node.id,
+    );
+    const visitEvents = start < 0 ? [] : afterFinish.slice(start);
+    const recordedBeat = visitEvents.reduce(
+      (last, event) =>
+        event.type === 'heartbeat.beat' && event.nodeId === ctx.node.id
+          ? Math.max(last, event.beat)
+          : last,
+      ctx.previousWait?.beat ?? 0,
+    );
+    const beat = recordedBeat + 1;
     const nowIso = ctx.services.now();
     const now = Date.parse(nowIso);
 
-    const result = await probe(ctx, view);
+    const result = await probe(ctx, view, visitEvents);
     await ctx.services.record({
       type: 'heartbeat.beat',
       nodeId: ctx.node.id,
@@ -141,7 +184,6 @@ export const heartbeatHandler: NodeHandler<'heartbeat'> = {
     }
 
     const next = new Date(now + config.intervalSeconds * 1000);
-    await ctx.ports.timers.schedule(ctx.run.id, 'heartbeat', next);
     return {
       kind: 'park',
       patch: [],

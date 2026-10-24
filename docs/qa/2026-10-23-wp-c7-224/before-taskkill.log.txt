@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/infrastructure
+
+ ❯ src/process/shutdown.test.ts (3 tests | 1 failed | 2 skipped) 21ms
+   × reports taskkill nonzero exit truthfully instead of assuming tree termination 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/process/shutdown.test.ts > reports taskkill nonzero exit truthfully instead of assuming tree termination
+AssertionError: expected { exitCode: +0, timedOut: false, …(6) } to match object { terminationUnconfirmed: true, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "exitCode": null,
+-   "terminationUnconfirmed": true,
++   "exitCode": 0,
+  }
+
+ ❯ src/process/shutdown.test.ts:25:18
+     23|   f.root.emit('close',0);
+     24|   await f.pending;
+     25|   expect(result).toMatchObject({terminationUnconfirmed:true,exitCode:n…
+       |                  ^
+     26| });
+     27| it('waits for both tree acknowledgement and the root close before repo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  18:46:24
+   Duration  1.01s (transform 42%, import 42%, tests 9%, worker 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\infrastructure
+

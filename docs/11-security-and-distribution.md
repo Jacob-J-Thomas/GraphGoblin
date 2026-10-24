@@ -38,9 +38,25 @@
 - Post-1.0 multi-tenant hosting requires per-run isolation, which is why the runner abstraction exists: a remote runner can be a container.
 - Expressions and templates run in-process. JSONata evaluation has a cooperative time and depth budget (05), and Liquid has no filesystem access. Neither can interrupt a native regular-expression match, so regexes are checked statically before they run: JSONata regex literals and the patterns of the `redact` and `replace` mutations are rejected when they contain a back-reference, a repeated group that contains another repetition, or a repeated group whose body can match the empty string or split the same text two ways, looking through nested groups (`packages/domain/src/regex-safety.ts`, ADV-007). JSONata cannot turn a string into a regex except through `$eval`, which compiles a string at run time; it is shadowed by a binding that checks the string the same way and then runs it through JSONata's own `$eval`, in the caller's environment and budget. The check is conservative and syntactic: it can reject a harmless pattern (rewrite it, for example without an optional part that overlaps what follows), and it is a heuristic, not a proof that every accepted pattern is linear. Residual risk: polynomial backtracking (several adjacent unbounded wildcards such as `.*.*.*x` against a very large string) and memory exhaustion are not bounded in-process, and Liquid has no CPU or output-size ceiling. For a single-user local tool the author of the expression is the owner; a hosted product needs evaluation in a worker or child process with an external deadline and bounded input and output, behind an evaluation port so the domain stays pure.
 
+## Probe resource bounds (#117)
+
+Outbound HTTP probes retain at most 65,536 decompressed body bytes before decoding
+or JSON parsing (`PROBE_MAX_BODY_BYTES` in `packages/engine/src/ports.ts`).
+Oversized identity-encoded declared lengths refuse before reading; encoded wire
+lengths are not compared with the decompressed cap. Streamed/no-length bodies stop
+on the first over-limit chunk. The reader is cancelled and its lock released on
+overflow, abort or timeout. Overflow is the safe typed `HTTP_PROBE_BODY_OVERFLOW`
+failure, never a successful truncated response. HEAD and body-less 204/304 metadata
+are exempt because there is no response body. This budget matches strict poll-script stdout and also
+applies to heartbeat and single-result HTTP probes (08).
+
 ## Retention (Decided)
 
 1.0 keeps all runs, events, and artifacts, matching the harness defaults, which keep sessions on disk indefinitely. Settings has no purge action. Retention policies, scheduled purges, and the manual run and loop purge controls are post-1.0 work (12, "Residual risks and post-1.0 backlog").
+
+Artifacts use unchanged `artifact:<kind>/<sha256>` references. Publication writes a unique temporary file in the final file's directory, flushes its bytes with `fsync`, closes it, then atomically renames it over the final path. Readers verify SHA-256 over the raw bytes before UTF-8 decoding; a mismatch throws typed `ArtifactStoreError` with the API-only code `ARTIFACT_CORRUPT` (HTTP 500 on download), while missing content remains `undefined` (HTTP 404). A repeated `put` verifies existing content and atomically replaces a corrupt file; concurrent writers of identical content converge on the same verified bytes.
+
+As an engineering parameter, Windows publication uses six attempts with five delays of 10, 20, 40, 80 and 160 ms (310 ms total backoff, plus I/O time), only for `EPERM`/`EBUSY`, to tolerate brief scanner/indexer locks without unlinking the final path. After failed publication, `put` re-reads the final reference: if another identical writer already published verified content, it succeeds despite the replacement failure. Otherwise it fails explicitly as `ARTIFACT_WRITE_FAILED`. Longer scanner locks remain a residual when no correct, readable final file exists. Interrupted `.tmp` files are ignored by reference reads and are not swept; a startup sweep is a possible later bolt. This protects publication from interrupted writes; it does not promise power-loss durability of the directory entry or change retention.
 
 ## Distribution (Decided)
 
@@ -51,7 +67,7 @@
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
-`scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 or newer and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
+`scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
 
 `pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
 
@@ -64,7 +80,7 @@
 - Size (2026-10-03, linux/amd64): 1.04 GB unpacked as Docker Desktop reports it, 259 MB compressed. The Codex binary package (`@openai/codex@0.160.0-linux-x64`) is 427 MB of it, the rest of `node_modules` about 70 MB, and the web app 8 MB.
 - Smoke test before the data-directory lock (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` worked through `docker exec`. With the lock, stop the API and use `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>` before restarting it.
 
-The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 90s` to let active Codex turns settle before SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only that file after confirming all GraphGoblin processes using the volume have stopped.
+The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 1h` to leave time for drain and an explicit operator choice before Docker SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only that file after confirming all GraphGoblin processes using the volume have stopped.
 
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
@@ -72,7 +88,7 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
 
 | Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Node.js        | major version 22 or newer                                                                                                                                     |                                                                                                                                                      | older than 22                                                                           |
+| Node.js        | major version 22 only                                                                                                                                         |                                                                                                                                                      | any major other than 22                                                                 |
 | Data directory | exists and a new probe file can be created (exclusively, random name) and removed                                                                             | does not exist yet (created on first start)                                                                                                          | not a directory, unreadable, or not writable                                            |
 | Master key     | `GG_MASTER_KEY` or `<dataDir>/master.key` decodes to 32 bytes                                                                                                 | no key yet (generated on first start; back it up)                                                                                                    | present but not a base64 32-byte key, or unreadable                                     |
 | Database       | reachable, no pending migrations                                                                                                                              | file does not exist yet but its nearest existing ancestor is a writable directory (start creates the rest), or migrations pending (applied at start) | cannot be opened, read, or queried, or its file cannot be created                       |
@@ -106,3 +122,38 @@ Step 06 is complete with steps 07 and 08 folded into the same child. Configured 
 Step 09 removed configured contracts and the `container.templates.store` facade. Migration `0012_retire_template_instances` drops `template_instances`, `runs.template_subject` and the six template expression indexes; format-4 readiness requires it already applied. Step 10 reduced the catalogue to four manifests and ordinary drafts; the live loader opens no configured graphs or support files.
 
 The accepted end state is recorded in [ADR-0034](decisions/ADR-0034-retire-template-runtime-authority.md). The shared stopped-store format-4 cutover deletes configured instances, their loops and runs, with no archive or private-report exception. This child performs no installed data conversion, journal reconciliation, credential rotation or physical cleanup. Ordinary authored scripts retain the API account's filesystem access; templates provide no operating-system confinement.
+
+## Managed stop controls (#224)
+
+The first SIGINT or SIGTERM requests normal drain. Signals within 1,000 ms of the preceding accepted signal are ignored to coalesce foreground-group and pnpm
+forwarding of one Ctrl+C. A later SIGINT or SIGTERM explicitly forces interruption through the same container controller as
+`POST /system/shutdown` with `{ "action": "force" }`. Signal handlers remain installed
+through drain; repeated signals during startup are remembered until recovery settles.
+`{ "action": "drain" }` starts normal stop and `{ "action": "wait" }` acknowledges the
+choice without a new deadline. `GET /system/shutdown` exposes phase and active identities.
+Controls require `system:write` (`system:read` for status) in API-key mode.
+
+The engineering default `GG_SHUTDOWN_GRACE_MS=300000` gives five minutes before an operator
+warning offers wait or force; expiry has no kill action. Durable parks and paused runs recover on restart and do not hold drain. Drain checks
+active executors, queued family work and due wakes at
+50 ms; script termination has a five-second acknowledgement/close reporting deadline only
+after explicit interruption. Native kill failure, including a nonzero `taskkill /T /F`,
+during this stop's explicit interruption retains listener, SQLite and lock in `force-failed`.
+Earlier unconfirmed terminations are visible in `unconfirmedRunIds` but do not block normal
+stop. Inspect the recorded failure and native processes; a further force request or later
+signal explicitly exits with code 1, preserving that failure and leaving the lock for the
+next process to reclaim. A 100 ms response-flush delay precedes this emergency exit; it
+performs no cleanup. Drain observation failures use `drain-failed`; invalid controls return
+409 with current phase. Force interruption is
+recorded as a non-resumable failed run with node/attempt evidence and possible external effects.
+
+The supplied Compose example allows one hour (an engineering allowance for deliberation
+beyond the five-minute notice). Docker's subsequent SIGKILL is an external hard deadline
+and cannot record managed interruption. For indefinite normal waiting, request drain through
+the API while Compose remains running and stop the service after it exits; configure other
+supervisors accordingly. HTTP and SSE remain usable throughout drain. Streams close after
+executor/delivery cleanup; HTTP closes next, then SQLite, then the directory lock is released.
+
+On Windows, use the API controls when stopping from another process. Windows `taskkill`
+and Node's programmatic `child.kill('SIGINT'/'SIGTERM')` bypass JavaScript signal handlers;
+they cannot establish managed drain/force evidence. The real signal cases run on Linux CI.

@@ -9,12 +9,13 @@ import type {
   EvaluationObservation,
   RunEvent,
   LoopDefinition,
+  ReturnChannel,
 } from '@graphgoblin/contracts';
-import { getAtPointer, replayThread } from '@graphgoblin/domain';
+import { getAtPointer, reconcileThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
- * including a subloop child's seed; logs written before that field existed fall back to the
+ * including a subloop child's or replay fork's seed; logs without that field fall back to the
  * immutable `run` and `invocation` from the current thread and one-based gates from the definition.
  */
 export function initialThreadFrom(
@@ -45,22 +46,15 @@ export function initialThreadFrom(
 }
 
 /**
- * The thread after the event with sequence `seq`: node patches replayed by `domain`, plus the
- * node-visit counter the engine keeps outside patches (it counts `node.started`).
+ * The thread after event `seq`, including the seed's counters, gates and iteration. Domain replay
+ * increments visits for each `node.started`, just as the executor does, without resetting the seed.
  */
 export function threadAt(
   initial: ContextThread,
   events: readonly RunEvent[],
   seq: number,
 ): ContextThread {
-  const thread = replayThread(initial, events, seq);
-  const nodeVisits: Record<string, number> = {};
-  for (const event of events) {
-    if (event.seq > seq) break;
-    if (event.type === 'node.started')
-      nodeVisits[event.nodeId] = (nodeVisits[event.nodeId] ?? 0) + 1;
-  }
-  return { ...thread, counters: { ...thread.counters, nodeVisits } };
+  return reconcileThread(initial, events, undefined, seq);
 }
 
 /**
@@ -77,6 +71,83 @@ export function tryThreadAt(
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+export type ReplayResult = ReturnType<typeof tryThreadAt>;
+
+export interface ThreadCache {
+  at(initial: ContextThread, events: readonly RunEvent[], seq: number): ReplayResult;
+  /** Whether `at` would answer from memory for this seed and log: a remembered, replayable thread. */
+  has(initial: ContextThread, events: readonly RunEvent[], seq: number): boolean;
+}
+
+/**
+ * `tryThreadAt` with its results remembered per sequence while a run's log only grows (#259). A
+ * live run appends an event every few hundred milliseconds, and without this every append replayed
+ * the whole log again for the event the viewer had selected. A result is kept only once the log has
+ * reached its sequence, since later events cannot change it. A log counts as grown only when every
+ * event seen before is still the same object at the same index (a cleared and refilled log keeps
+ * its length and its tail but not its middle; comparing references is far cheaper than a replay);
+ * a different initial thread or any other log empties the cache. At most `limit` results stay: a
+ * viewer moves between a handful of selected events, so 32 covers a session's browsing; each
+ * result is one thread object, so the memory held scales with the run's thread, not with its log.
+ */
+export function createThreadCache(limit = 32): ThreadCache {
+  let initial: ContextThread | undefined;
+  let known: readonly RunEvent[] = [];
+  const results = new Map<number, ReplayResult>();
+  const grown = (init: ContextThread, events: readonly RunEvent[]) =>
+    init === initial &&
+    events.length >= known.length &&
+    known.every((event, index) => events[index] === event);
+  return {
+    has(init, events, seq) {
+      // A remembered failure counts: asking again would show the same error, not rebuild.
+      return grown(init, events) && results.has(seq);
+    },
+    at(init, events, seq) {
+      const extended = grown(init, events);
+      if (!extended) {
+        results.clear();
+        initial = init;
+      }
+      known = events;
+      const hit = results.get(seq);
+      if (hit) {
+        // A hit becomes the newest entry, so the results a reader asks for together (a patch
+        // diff needs an event and the one before it) are not parted by the next eviction.
+        results.delete(seq);
+        results.set(seq, hit);
+        return hit;
+      }
+      // Replay from the nearest earlier remembered thread rather than from the seed: a live append
+      // then costs the new events only, and the parts of the thread those events do not touch keep
+      // their identity (patches copy only along their path), so their remembered previews stay.
+      let base: { seq: number; thread: ContextThread } | undefined;
+      for (const [cachedSeq, cached] of results) {
+        if (cached.ok && cachedSeq < seq && (base === undefined || cachedSeq > base.seq))
+          base = { seq: cachedSeq, thread: cached.thread };
+      }
+      let result: ReplayResult;
+      if (base === undefined) result = tryThreadAt(init, events, seq);
+      else {
+        try {
+          result = {
+            ok: true,
+            thread: reconcileThread(init, events, base, seq),
+          };
+        } catch (error) {
+          result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+      const last = events[events.length - 1]?.seq ?? 0;
+      if (seq <= last) {
+        results.set(seq, result);
+        if (results.size > limit) results.delete(results.keys().next().value as number);
+      }
+      return result;
+    },
+  };
 }
 
 export interface PatchLine {
@@ -135,6 +206,8 @@ export function describeEvent(event: RunEvent): string {
     case 'input.received':
     case 'child_run.started':
     case 'child_run.finished':
+    case 'harness.turn':
+    case 'harness.submission':
     case 'harness.session':
       return 'nodeId' in event ? event.nodeId : '';
     case 'decision.made':
@@ -143,6 +216,11 @@ export function describeEvent(event: RunEvent): string {
       return describeExit(event);
     case 'signal.received':
       return event.name;
+    case 'delivery.queued':
+    case 'delivery.attempted':
+    case 'delivery.attempt_finished':
+    case 'delivery.finished':
+      return `Webhook ${event.delivery.status}, ${event.delivery.attempts}/${event.delivery.maxAttempts} attempts${event.delivery.lastError ? `: ${event.delivery.lastError.message}` : ''}`;
     case 'return.delivered':
     case 'return.failed':
       return event.channel.kind;
@@ -194,11 +272,72 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
         ? ` with ${confidenceLabel} not recorded`
         : '';
   const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');
-  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes} of ${event.gate.maxPasses}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
+  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes}${event.gate.maxPasses === null ? ' (unlimited)' : ` of ${event.gate.maxPasses}`}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
 }
 
 function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
   return `Exited: ${event.outcome}`;
+}
+
+/**
+ * The latest gate decision's pass and limit evidence, in one line for the top of the run: where
+ * a loop-back exit used to say "iteration 2 of 5", a gate says which pass chose what and whether a
+ * limit stopped the repeat (#129). Undefined when no gate decided.
+ */
+export function lastGateSummary(events: readonly RunEvent[]): string | undefined {
+  const event = events.findLast(
+    (e): e is Extract<RunEvent, { type: 'decision.made' }> =>
+      e.type === 'decision.made' && e.gate !== undefined,
+  );
+  const gate = event?.gate;
+  if (!event || !gate) return undefined;
+  // An Unlimited gate records `maxPasses: null` (#243): name the pass without a bound.
+  const of = gate.maxPasses === null ? ' (unlimited passes)' : ` of ${gate.maxPasses}`;
+  const chose = `Last gate decision: ${event.nodeId} chose ${gate.limit ? gate.repeatRouteId : event.portId} on pass ${gate.previousPasses}${of}`;
+  if (!gate.limit) return `${chose}.`;
+  const limit = gate.limit === 'max-passes' ? 'maximum passes' : 'maximum run time';
+  return `${chose}; ${limit} stopped the repeat, so it took Limit reached.`;
+}
+
+/**
+ * Why a finished run recorded no result. Undefined while the run has not finished through an
+ * exit, or when the exit returned a value (null included); Result shows that value. Only the
+ * pinned definition can establish that nothing was returned on purpose: an exit whose Returns is
+ * None delivers to no destination, the exit's own or the start request's (#129, #258), and the
+ * summary names the destinations that received nothing or identifies a quiet exit. An exit whose
+ * Returns is an expression, or a definition that is not available, establishes nothing: a run
+ * recorded by an older build omitted a null result, so the history alone does not show whether the
+ * exit returned nothing or null, and the summary says so rather than inventing a configuration.
+ */
+export function exitReturnSummary(
+  events: readonly RunEvent[],
+  definition: LoopDefinition | undefined,
+  startDestinations: readonly ReturnChannel[] = [],
+): string | undefined {
+  const exit = events.findLast(
+    (e): e is Extract<RunEvent, { type: 'exit.evaluated' }> => e.type === 'exit.evaluated',
+  );
+  const finished = events.findLast(
+    (e): e is Extract<RunEvent, { type: 'run.finished' }> => e.type === 'run.finished',
+  );
+  if (!exit || !finished || finished.result !== undefined) return undefined;
+  const node = definition?.nodes.find((n) => n.id === exit.nodeId);
+  if (node?.kind !== 'exit')
+    return `No value was recorded for this run. The pinned definition ${definition ? `has no exit node ${exit.nodeId}` : 'is not available'}, so the exit’s Returns setting cannot be shown.`;
+  if (node.config.returns !== 'none')
+    return 'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.';
+  const configuration = 'This is the exit’s configuration, not a failure.';
+  const own = node.config.destinations;
+  const key = (channel: ReturnChannel) => JSON.stringify(channel);
+  const requested = startDestinations.filter((extra) => !own.some((c) => key(c) === key(extra)));
+  if (own.length === 0 && requested.length === 0)
+    return `Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. ${configuration}`;
+  const kinds = (channels: readonly ReturnChannel[]) => channels.map((c) => c.kind).join(', ');
+  const named = [
+    ...(own.length ? [`${kinds(own)} from the exit`] : []),
+    ...(requested.length ? [`${kinds(requested)} from the start request`] : []),
+  ].join('; ');
+  return `No value was returned: Returns is None, so no destination received anything (${named}). ${configuration}`;
 }
 
 export function strategyName(strategy: string): string {

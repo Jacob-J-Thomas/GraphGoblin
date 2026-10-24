@@ -1,0 +1,15 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --testNamePattern=parent interrupted mid-wake --maxWorkers=1 --reporter=verbose
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ↓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+ ↓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent 17895ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 2 skipped (3)
+   Start at  20:52:39
+   Duration  25.07s (tests 73%, import 16%, transform 11%)
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --testNamePattern=parent interrupted mid-wake --maxWorkers=1 --reporter=verbose", "exit": 0, "seconds": 26.58}

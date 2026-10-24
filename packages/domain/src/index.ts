@@ -20,6 +20,7 @@ export * from './loop-io.js';
 export * from './replay.js';
 export * from './regex-safety.js';
 export * from './model-resolution.js';
+export * from './readiness.js';
 export * from './upgrade.js';
 export * from './upgrade-current.js';
 export {
@@ -31,3 +32,6 @@ export {
 export * from './convert-v3-v4/index.js';
 
 export * from './poll-items.js';
+export * from './json-value.js';
+export * from './retired-destinations.js';
+export * from './reconcile-thread.js';

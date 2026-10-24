@@ -1,6 +1,6 @@
 import type { PatchOperation } from '@graphgoblin/contracts';
 import { JsonPatchSchema, SCRIPT_PROGRESS_STDERR_MAX } from '@graphgoblin/contracts';
-import { MUTABLE_REGIONS, pointerStartsWith, threadView } from '@graphgoblin/domain';
+import { assertMutablePatch, threadView, type MutationError } from '@graphgoblin/domain';
 import { RunCancelledError, RunFailureError } from '../errors.js';
 import type { NodeHandler } from '../handler.js';
 import { jsonOrText, outputPatch, withTimeout } from './common.js';
@@ -62,6 +62,21 @@ export const scriptHandler: NodeHandler<'script'> = {
     } finally {
       timeout.dispose();
     }
+    if (result.terminationUnconfirmed) {
+      throw new RunFailureError(
+        'SCRIPT_TERMINATION_UNCONFIRMED',
+        'Script process tree termination was not confirmed; stop the process before restarting',
+        {
+          nodeId: ctx.node.id,
+          resumable: false,
+          details: {
+            interruptedByStop:
+              timeout.signal.reason instanceof RunFailureError &&
+              timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+          },
+        },
+      );
+    }
     if (ctx.signal.aborted) throw new RunCancelledError();
     if (result.timedOut || timeout.timedOut()) {
       throw new RunFailureError(
@@ -79,7 +94,7 @@ export const scriptHandler: NodeHandler<'script'> = {
       progress: {
         exitCode,
         stderr: result.stderr.slice(-SCRIPT_PROGRESS_STDERR_MAX),
-        stdoutBytes: result.stdout.length,
+        stdoutBytes: result.stdoutBytes,
       },
     });
     if (!route) {
@@ -113,14 +128,14 @@ export const scriptHandler: NodeHandler<'script'> = {
           { nodeId: ctx.node.id },
         );
       }
-      for (const op of checked.data) {
-        if (!MUTABLE_REGIONS.some((region) => pointerStartsWith(op.path, region))) {
-          throw new RunFailureError(
-            'SCRIPT_EXIT_CODE',
-            `script patch touches "${op.path}", outside the mutable regions`,
-            { nodeId: ctx.node.id },
-          );
-        }
+      try {
+        assertMutablePatch(checked.data);
+      } catch (error) {
+        throw new RunFailureError(
+          'SCRIPT_EXIT_CODE',
+          `script patch is outside the mutable regions: ${(error as MutationError).message}`,
+          { nodeId: ctx.node.id },
+        );
       }
       patch = checked.data;
     } else if (config.stdout === 'last-output') {

@@ -1,0 +1,421 @@
+{
+  "head": "a553d429ad50cf9b528d660b8d39948fc554dda9",
+  "data": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-116-2-scripts-bP2DPL\\gg-qa-g1-116-2-store-Oxv4jK",
+  "port": 5873,
+  "processes": [
+    {
+      "ready": true,
+      "pid": 42764,
+      "port": 5873,
+      "runtime": "v22.14.0"
+    },
+    {
+      "ready": true,
+      "pid": 22344,
+      "port": 5873,
+      "runtime": "v22.14.0"
+    }
+  ],
+  "checks": [
+    {
+      "name": "failed delayed checkpoint agrees in REST MCP and two inspector sizes",
+      "pass": true,
+      "detail": {
+        "status": "failed",
+        "seq": 9,
+        "vars": {
+          "prepared": true
+        },
+        "visits": {
+          "start": 1,
+          "prepare": 1,
+          "work": 1
+        }
+      }
+    },
+    {
+      "name": "open inspectors reconnect after native API replacement",
+      "pass": true,
+      "detail": {
+        "status": "failed",
+        "seq": 9,
+        "vars": {
+          "prepared": true
+        },
+        "visits": {
+          "start": 1,
+          "prepare": 1,
+          "work": 1
+        }
+      }
+    },
+    {
+      "name": "resumed unfinished work contributes a visit but no patch",
+      "pass": true,
+      "detail": {
+        "status": "running",
+        "seq": 11,
+        "vars": {
+          "prepared": true
+        },
+        "visits": {
+          "start": 1,
+          "prepare": 1,
+          "work": 2
+        }
+      }
+    },
+    {
+      "name": "reload during unfinished resumed work converges",
+      "pass": true,
+      "detail": {
+        "status": "running",
+        "seq": 11,
+        "vars": {
+          "prepared": true
+        },
+        "visits": {
+          "start": 1,
+          "prepare": 1,
+          "work": 2
+        }
+      }
+    },
+    {
+      "name": "success after terminal resume agrees with delayed snapshots",
+      "pass": true,
+      "detail": {
+        "status": "succeeded",
+        "seq": 18,
+        "vars": {
+          "prepared": true,
+          "completed": true
+        },
+        "visits": {
+          "start": 1,
+          "prepare": 1,
+          "work": 2,
+          "done": 1
+        }
+      }
+    },
+    {
+      "name": "next executor checkpoint writer records replay state",
+      "pass": true,
+      "detail": {
+        "checkpoint": {
+          "thread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "loopId": "01M5PX2X7SZBBD3PYK1V8N55B5",
+              "versionId": "01M5PX2X7SZBBD3PYK1V8N55B6",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMMF",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-24T12:10:05.998Z"
+              }
+            },
+            "messages": [],
+            "vars": {
+              "prepared": true,
+              "completed": true
+            },
+            "artifacts": [],
+            "outputs": {
+              "start": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-24T12:10:06.067Z"
+              }
+            },
+            "lastOutput": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:10:06.067Z"
+            },
+            "gates": {},
+            "counters": {
+              "nodeVisits": {
+                "start": 1,
+                "prepare": 1,
+                "work": 2,
+                "done": 1
+              },
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "seq": 17,
+          "replayState": {
+            "strict": true
+          }
+        },
+        "read": {
+          "seq": 18,
+          "vars": {
+            "prepared": true,
+            "completed": true
+          },
+          "visits": {
+            "start": 1,
+            "prepare": 1,
+            "work": 2,
+            "done": 1
+          },
+          "reads": [
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 16,
+              "rows": 2
+            },
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 16,
+              "rows": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "real node.started node.finished run.finished checkpoint boundaries",
+      "pass": true,
+      "detail": [
+        {
+          "type": "node.started",
+          "seq": 18,
+          "vars": {
+            "prepared": true,
+            "completed": true
+          },
+          "visits": {
+            "start": 1,
+            "prepare": 1,
+            "work": 2,
+            "done": 1
+          },
+          "reads": [
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 6,
+              "rows": 12
+            },
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 6,
+              "rows": 12
+            }
+          ]
+        },
+        {
+          "type": "node.finished",
+          "seq": 18,
+          "vars": {
+            "prepared": true,
+            "completed": true
+          },
+          "visits": {
+            "start": 1,
+            "prepare": 1,
+            "work": 2,
+            "done": 1
+          },
+          "reads": [
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 3,
+              "rows": 15
+            },
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 3,
+              "rows": 15
+            }
+          ]
+        },
+        {
+          "type": "run.finished",
+          "seq": 18,
+          "vars": {
+            "prepared": true,
+            "completed": true
+          },
+          "visits": {
+            "start": 1,
+            "prepare": 1,
+            "work": 2,
+            "done": 1
+          },
+          "reads": [
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 16,
+              "rows": 2
+            },
+            {
+              "id": "01M5PX2X9EVQDZ2X8BNC36XMME",
+              "after": 16,
+              "rows": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "waiting checkpoint keeps visit open and includes later input completion",
+      "pass": true,
+      "detail": {
+        "parked": {
+          "seq": 6,
+          "vars": {},
+          "visits": {
+            "start": 1,
+            "wait": 1
+          },
+          "reads": [
+            {
+              "id": "01M5PX3HJHBSA3WJRFTD5RBSGV",
+              "after": 5,
+              "rows": 1
+            },
+            {
+              "id": "01M5PX3HJHBSA3WJRFTD5RBSGV",
+              "after": 5,
+              "rows": 1
+            }
+          ]
+        },
+        "after": {
+          "seq": 15,
+          "vars": {},
+          "visits": {
+            "start": 1,
+            "wait": 2,
+            "done": 1
+          },
+          "reads": [
+            {
+              "id": "01M5PX3HJHBSA3WJRFTD5RBSGV",
+              "after": 5,
+              "rows": 10
+            },
+            {
+              "id": "01M5PX3HJHBSA3WJRFTD5RBSGV",
+              "after": 5,
+              "rows": 10
+            }
+          ]
+        },
+        "checkpoint": {
+          "thread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5PX3HJHBSA3WJRFTD5RBSGV",
+              "loopId": "01M5PX3HHNFT266142RE5VX14T",
+              "versionId": "01M5PX3HHP45T5SD21JPPH3ZJ9",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5PX3HJHBSA3WJRFTD5RBSGW",
+              "source": "manual.api",
+              "caller": {
+                "kind": "user",
+                "id": "local"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-24T12:10:26.769Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {
+              "start": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-24T12:10:26.798Z"
+              }
+            },
+            "lastOutput": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T12:10:26.798Z"
+            },
+            "gates": {},
+            "counters": {
+              "nodeVisits": {
+                "start": 1,
+                "wait": 1
+              },
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "seq": 6,
+          "replayState": {
+            "strict": true,
+            "openNodeId": "wait"
+          }
+        }
+      }
+    },
+    {
+      "name": "subloop child retains identity and maps its result to parent",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: GET /runs?parentRunId=01M5PX3HYS38K09GXBJ4EGSP6P {\"type\":\"https://graphgoblin.dev/problems/validation-failed\",\"title\":\"validation failed\",\"status\":400,\"code\":\"VALIDATION_FAILED\",\"detail\":\"the request did not match the schema\",\"errors\":[{\"path\":\"/parentRunId\",\"message\":\"Unrecognized key \\\"parentRunId\\\"\"}]}\n    at api (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:28:251)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:72:362\n    at async check (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:35:75)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:72:2"
+    },
+    {
+      "name": "cancelled unfinished work excludes the returned patch",
+      "pass": false,
+      "error": "Error: cancelled deadline; undefined\n    at poll (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:31:187)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:73:223\n    at async check (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:35:75)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-2-scripts-bP2DPL/lifecycle.mjs:73:2"
+    },
+    {
+      "name": "inspector keyboard control remains reachable",
+      "pass": true,
+      "detail": {
+        "width": 390,
+        "focus": {
+          "tag": "BUTTON",
+          "text": "Node progress (2 nodes)",
+          "aria": null
+        }
+      }
+    }
+  ],
+  "restart": {
+    "oldPid": 42764,
+    "newPid": 22344,
+    "outage": [
+      {
+        "url": "http://127.0.0.1:5873/runs/01M5PX2X9EVQDZ2X8BNC36XMME",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "url": "http://127.0.0.1:5873/runs/01M5PX2X9EVQDZ2X8BNC36XMME",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      }
+    ]
+  }
+}

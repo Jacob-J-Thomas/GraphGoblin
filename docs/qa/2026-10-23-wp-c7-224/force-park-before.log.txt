@@ -1,0 +1,39 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain.test.ts -t still committing its timer park --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain.test.ts (6 tests | 1 failed | 5 skipped) 2132ms
+   × force settles a run that is still committing its timer park 2129ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain.test.ts > force settles a run that is still committing its timer park
+Error: force did not settle the parking run
+ ❯ Timeout.<anonymous> src/drain.test.ts:156:93
+    154|   let timer:ReturnType<typeof setTimeout>|undefined;
+    155|   try {
+    156|     await Promise.race([forced,new Promise<never>((_r,reject)=>{timer=…
+       |                                                                                             ^
+    157|     expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('RUN_…
+    158|   } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  19:33:18
+   Duration  46.62s (transform 88%, import 7%, tests 5%)
+
+  Transform  transforming modules took 38.09s · 88% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain.test.ts -t still committing its timer park --maxWorkers=1", "exit": 1, "seconds": 62.87}

@@ -1,0 +1,324 @@
+# #116 [I07/U19/B51] Reconcile snapshot and event tails
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:bug, area:web, area:api, area:engine, backlog, kind:bolt, status:approved-held
+parent: #308 [I07/U19] Reconcile execution history
+sub-issues: -
+created: 2026-10-07T19:28:19Z updated: 2026-10-18T23:36:09Z
+
+## Body
+
+Part of #308
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B51 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Reconcile snapshot and event tails
+
+## Acceptance criteria
+
+- [ ] Failure/resume/success is represented consistently in current-thread reads, API snapshots and existing/reconnected browser tabs; reads neither apply unfinished patches nor mutate state.
+
+- [ ] Existing tabs, reloaded/reconnected tabs, API and MCP agree through failure/resume/success despite delayed snapshots. Read reconciliation cannot apply unfinished patches or mutate execution state.
+
+## Verification
+
+Real persisted terminal/resume sequences, delayed snapshots, reconnect and reload.
+
+## Dependencies
+
+- #247 — B17
+- #279 — implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#116, #183, #239
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #116 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/115), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1233), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1326), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/apps/api/src/sse.ts#L79)
+
+### Source #239 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L83), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L85), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/useRunEvents.ts#L49), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/sse.ts#L222), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L137)
+
+
+## Consolidated source reports
+
+- #183: Engine: current-thread reads omit the last node start after an expression failure.
+- #239: Run history: show every resumed attempt after an earlier terminal event.
+
+These reports are closed as duplicate tracking records. Their accepted requirements and owner-review conditions remain in this bolt. This bolt is the sole open delivery record; no implementation or acceptance is claimed by consolidation.
+
+
+## Comments (1)
+
+### Jacob-J-Thomas at 2026-10-09T23:19:24Z
+
+### Parked (2026-10-09)
+
+After QA of PR #151 the owner put further development on hold until the after-merge phase finishes: hands-on product evaluation (#166) and an architecture and tech-debt sweep (#163). This issue moves to `Later` with `backlog` and leaves the queue.
+
+When it is unparked, restore the gate `human-in-the-loop`. Its type, area, QA and routing labels are unchanged.
+
+# #308 [I07/U19] Reconcile execution history
+
+state: OPEN | milestone: Later | labels: type:epic, area:web, area:api, area:engine, backlog, kind:uow, status:approved-held
+parent: #289 [I07] Make run history and completion trustworthy
+sub-issues: #116(OPEN), #245(OPEN), #236(OPEN)
+created: 2026-10-17T19:59:02Z updated: 2026-10-18T23:37:41Z
+
+## Body
+
+Part of #289
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:U19 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome and acceptance
+
+Live and reconstructed views agree with the durable run history.
+
+## Touched components
+
+- event projections
+- run snapshots
+- replay seed
+- loop summaries
+
+## Bolts
+
+- #116 **[I07/U19/B51] Reconcile snapshot and event tails** — Failure/resume/success is represented consistently in current-thread reads, API snapshots and existing/reconnected browser tabs; reads neither apply unfinished patches nor mutate state.
+- #245 **[I07/U19/B52] Seed replay from the actual initial thread** — Replay reconstruction starts from that replay run's actual seed and produces correct add/replace values and counters; the original run is unchanged.
+- #236 **[I07/U19/B53] Show truthful latest-run summaries** — A loop with older history is not labeled never run because unrelated loops fill a global page; summaries use the correct loop-specific latest run.
+
+Each nondeferred bolt is the sole implementation record for its scope. Current UoW completion requires their evidence and applicable owner acceptance; parked children do not block current completion. Publication is not dispatch.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #116 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/115), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1233), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1326), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/apps/api/src/sse.ts#L79)
+
+### Source #236 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/loops/LoopsPage.tsx#L234), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/templates.ts#L195)
+
+### Source #239 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L83), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L85), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/useRunEvents.ts#L49), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/sse.ts#L222), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L137)
+
+### Source #245 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L849), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/projections.ts#L13), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/inspector/ThreadViewer.tsx#L51)
+
+
+## Comments (0)
+# #289 [I07] Make run history and completion trustworthy
+
+state: OPEN | milestone: Later | labels: type:epic, area:editor, area:api, area:engine, area:contracts, backlog, kind:intent, status:approved-held
+parent: #278 GraphGoblin roadmap — owner-approved intents, UoWs and bolts
+sub-issues: #308(OPEN), #309(OPEN), #310(OPEN)
+created: 2026-10-17T19:58:20Z updated: 2026-10-18T23:38:13Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:I07 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome
+
+The UI, API and MCP agree on what executed, what happened and whether completion includes outstanding delivery.
+
+## Priority
+
+7 in the approved next-intent order.
+
+## Units of work
+
+- #308 **U19: Reconcile execution history** — Live and reconstructed views agree with the durable run history.
+- #309 **U20: Expose actual finalization** — Neither a terminal event nor a closed subscription falsely implies successful finalization.
+- #310 **U21: Make evidence accessible and accurate** — Users can find complete relevant history and understand the actual execution without losing established capabilities.
+
+## Intent acceptance
+
+UI, API and MCP agree across live execution, resume/replay, paging and return finalization.
+
+## Source issue coverage
+
+#116, #121, #123, #128, #129, #183, #185, #231, #236, #238, #239, #240, #245, #249, #252, #255, #258
+
+Conditional investigation/measurement bolts require their evidence before corrective implementation. Do not count a negative investigation as a successful fix.
+
+## Specific owner feedback
+
+- Do not drop loopback-node functionality or useful evidence unless the replacement decision/exit experience provides it. Preserve applicable Choice list-level help, unique-option constraints and criterion/output explanations under the accepted new contract.
+
+## Approved review refinements
+
+Current-thread reads, snapshots and later events agree across API/MCP/browser. Show execution outcome separately from pending/failed result delivery. Finish pagination consumers while retaining landed API work; exact values and useful completion evidence remain accessible.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #116 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/115), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1233), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1326), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/apps/api/src/sse.ts#L79)
+
+### Source #121 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/apps/web/src/runs/projections.ts#L78), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/3049b9c160d3bc4726318594f0e04edd89927c90/packages/domain/src/pointer.ts#L46)
+
+### Source #231 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/mcp/src/tools.ts#L312), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/resources.ts#L123), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/mcp/src/tools.ts#L269), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/templates.ts#L178)
+
+### Source #236 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/loops/LoopsPage.tsx#L234), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/templates.ts#L195)
+
+### Source #238 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/resources.ts#L123), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/RunsPage.tsx#L36), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/events/EventsPage.tsx#L79)
+
+### Source #239 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L83), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L85), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/useRunEvents.ts#L49), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/sse.ts#L222), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L137)
+
+### Source #240 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/api/queries.ts#L262), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/events/EventsPage.tsx#L79)
+
+### Source #245 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L849), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/projections.ts#L13), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/inspector/ThreadViewer.tsx#L51)
+
+### Source #249 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L103), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/sse.ts#L202), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/useRunEvents.ts#L49)
+
+### Source #252 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/routes/runs.ts#L144), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/plugins/errors.ts#L1)
+
+### Source #255 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/RunInspectorPage.tsx#L57), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/RunsPage.tsx#L1), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/inspector/WaitPanel.tsx#L48)
+
+### Source #258 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1634), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L187)
+
+
+## Comments (0)
+# ADR-0053: Reconcile observed threads from durable event tails
+
+- Status: Accepted for implementation; independent review pending
+- Date: 2026-10-23
+- Issue: #116
+
+## Context
+
+Execution already verified checkpoint sequences and replayed later events. Public thread reads
+returned any available snapshot immediately. Inspectors stopped at a cached terminal event,
+even when the same run was later resumed. Persisted fault injection reproduced disagreement
+through failure, resume and success.
+
+## Decision
+
+Domain owns pure `reconcileThread`: the admitted seed and durable event prefix are authoritative.
+A snapshot is an optimization only when its sequence occurs in that prefix at or before the
+requested boundary. Replay carries the open visit across a checkpoint so duplicate completions
+are not applied twice; starts contribute visits but cannot invent patches. Engine execution,
+public current-thread reads (REST and MCP) and inspector reconstruction use this owner.
+
+Reads never persist reconciliation, advance execution, finalize a run or repair storage.
+Concurrent reads describe the prefix each observed. This decision does not make separate REST
+requests atomic or replace the run-record lifecycle projection.
+
+SSE remains a terminal-bounded subscription. The inspector reconciles JSON pages beyond old
+terminal events before following a new active tail. Each catch-up captures a finite run cursor;
+500-event pages match the API default. Lifecycle events choose the tail state even when a page
+overtakes the captured run record. A two-second check watches resumable failures and a terminal
+event whose status has not yet reached the run record. A changed run record refreshes inspector
+metadata even without another event; terminal observation stops once that record agrees, except
+for resumable failures. This allows another client to resume them without keeping terminal SSE
+connections open. The interval is an engineering refresh parameter, not an owner-approved latency
+SLA. Cancellation and unmount discard late reads. Transport failures retry observation with
+exponential delays from two to thirty seconds; other read failures remain visible without an
+automatic retry.
+
+## Bounded current-thread reads (round 2)
+
+Current-thread reads first request only the checkpoint boundary and its tail using
+`events.read(runId, checkpoint.seq - 1)` and verify that the first returned sequence is the
+checkpoint's. Bounded replay state follows from the engine's single execution token and write
+order: a `node.started` or `run.waiting` names the open visit; a matching `node.finished` closes
+it, and an exit's `run.finished` follows that completion in the same append. These boundaries
+therefore prove strict replay state without their prefix. Other boundary kinds, a missing
+boundary, or an unsequenced snapshot fall back to the full admitted seed/history. This fallback
+covers recovery snapshots at failed/cancelled or later progress/delivery events whose open visit
+is not established by that event alone. Execution's `loadThread` keeps its existing full history.
+The proven state is an in-memory reconciliation input, not a new stored field or migration.
+
+A controlled Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite with
+10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).
+Each case had one warm-up and five measured reads, comparing the complete returned thread with
+full replay. The lagging checkpoint omitted 200 events. The machine was loaded; these elapsed
+times describe this fixture, not an SLA or a claim about the different #190 workload.
+
+| Checkpoint         | Rows before | Rows after | Median before (ms) | Median after (ms) |
+| ------------------ | ----------: | ---------: | -----------------: | ----------------: |
+| current            |       10008 |          1 |            311.421 |            25.814 |
+| lagging-200-events |       10008 |        201 |            222.919 |            21.827 |
+
+The structural result is one decoded boundary row for a current checkpoint and boundary plus
+200 tail rows for the lagging case, rather than a history-sized read. The raw samples and
+counted port reads are in `docs/qa/2026-10-23-wp-g1-116/measure-before.json` and
+`docs/qa/2026-10-23-wp-g1-116/measure-after.json`; the repeatable script is
+`apps/api/scripts/thread-read-measure.ts`.
+
+## Consequences
+
+No schema or data migration is required. Unsequenced snapshots cannot accelerate reconstruction.
+The actual replay seed remains authoritative (#245). Historical event selection and raw values
+remain available for #255 without changing patch-diff presentation in this bolt. Execution
+outcome remains separate from delivery finalization. Public reads cost the proven checkpoint boundary plus its tail, with full-history fallback
+when its state cannot be proven. Bounded streaming optimization remains owned by #186.

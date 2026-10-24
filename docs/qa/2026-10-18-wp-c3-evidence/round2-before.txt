@@ -1,0 +1,53 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ × src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates in one poll when the first exceeds SQLite nesting 663ms
+   → expected [] to deeply equal [ 's-a', 's-b' ]
+pnpm.cmd : 
+At line:2 char:89
++ ...  --version; pnpm.cmd --filter @graphgoblin/api exec vitest run src/tr ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both 
+later candidates in one poll when the first exceeds SQLite nesting
+AssertionError: expected [] to deeply equal [ 's-a', 's-b' ]
+
+- Expected
++ Received
+
+- [
+-   "s-a",
+-   "s-b",
+- ]
++ []
+
+ ❯ src/triggers/poll-depth.test.ts:78:27
+     76|     candidates = [deep(1100), { key: 's-a' }, { key: 's-b' }];
+     77|     const loopId = await publish(t);
+     78|     expect(await poll(t)).toEqual(['s-a', 's-b']);
+       |                           ^
+     79|     expect(await t.container.repos.runs.hasTriggerDedupe(loopId, 'poll…
+     80|     const warnings = t.logger.lines.filter((line) => line.level === 'w…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  23:55:14
+   Duration  7.56s (import 56%, transform 35%, tests 9%)
+
+  Transform  transforming modules took 2.52s · 35% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c3-wake-
+  │ poll-research\apps\api
+

@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/packages/infrastructure
+
+ ❯ src/sqlite/checkpoint-state.test.ts (1 test | 1 failed) 1074ms
+   × migrates shipped snapshots without inventing state, then persists checkpoint proof across reopen 1072ms
+pnpm.cmd : 
+At line:18 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/checkpoint-state.test.ts > migrates shipped snapshots without inventing state, then persists 
+checkpoint proof across reopen
+AssertionError: expected [ 'a' ] to deeply equal [ 'a', 'b' ]
+
+- Expected
++ Received
+
+  [
+    "a",
+-   "b",
+  ]
+
+ ❯ src/sqlite/checkpoint-state.test.ts:133:54
+    131|       JSON.stringify((await current.client.execute('SELECT * FROM runs…
+    132|     const previous = await bytes();
+    133|     expect((await reader.getThread(id))?.vars.items).toEqual(['a', 'b'…
+       |                                                      ^
+    134|     expect(reads).toEqual([{ after: 0, rows: history.length }]);
+    135|     expect(await bytes()).toBe(previous);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  05:48:53
+   Duration  10.23s (import 48%, transform 41%, tests 11%)
+
+  Transform  transforming modules took 4.01s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\packages\infrastructure
+

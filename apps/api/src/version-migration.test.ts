@@ -14,7 +14,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   await t.app.close();
-  await t.container.stop();
+  await t.container.dispose();
   await rm(t.dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
@@ -84,10 +84,18 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute('DROP TABLE classifier_models');
   await t.container.handle.client.execute('DROP TABLE webhook_receipts');
   await t.container.handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
-  await t.container.handle.client.execute(
+  for (const statement of [
+    'DROP INDEX runs_loop_owner_history_idx',
+    'DROP TRIGGER loop_versions_snapshot_immutable',
+    'DROP TRIGGER loop_versions_snapshot_pinned',
+    'DROP INDEX runs_version_idx',
+    'ALTER TABLE runs DROP COLUMN pinned',
+  ])
+    await t.container.handle.client.execute(statement);
+  const removed = await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
-  expect(await t.container.handle.pendingMigrations()).toBe(9);
+  expect(await t.container.handle.pendingMigrations()).toBe(removed.rowsAffected);
   await expect(t.container.handle.migrate()).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
   });
@@ -122,7 +130,7 @@ describe('migrated SQLite versions through the API', () => {
 
   it('recovers a current-format pinned run across restart mid-run without migration', async () => {
     await t.app.close();
-    await t.container.stop();
+    await t.container.dispose();
     // Run file-backed libsql in a child so Windows releases every native file handle before
     // the parent removes the directory. The child uses its own store and never binds a port.
     const script = `
@@ -159,12 +167,12 @@ describe('migrated SQLite versions through the API', () => {
         runId = started.json().run.id;
         await first.manager.waitForIdle();
         assert.equal((await first.repos.runs.get(runId)).status, 'waiting');
-      } finally { await app.close(); await first.stop(); }
+      } finally { await app.close(); await first.dispose(); }
       const second = await createContainer(config, overrides);
       try {
         await second.start();
         app = await buildApp(second, { logger: false });
-        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { input: true } });
+        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { waitId: (await second.repos.runs.get(runId)).waiting.waitId, input: true } });
         assert.equal(answered.statusCode, 200, answered.body);
         await second.manager.waitForIdle();
         const finished = await second.repos.runs.get(runId);
@@ -181,7 +189,7 @@ describe('migrated SQLite versions through the API', () => {
         await second.manager.waitForIdle();
         assert.equal((await second.repos.runs.get(replay.json().run.id)).status, 'succeeded');
         assert.equal(harness.started.length, 2);
-      } finally { await app.close(); await second.stop(); }
+      } finally { await app.close(); await second.dispose(); }
       process.stdout.write('migration recovery succeeded');
     `;
     const { stdout } = await promisify(execFile)(

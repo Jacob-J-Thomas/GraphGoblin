@@ -1,0 +1,84 @@
+COMMAND: pnpm.cmd exec playwright test e2e/model-effort.spec.ts e2e/model-picker.spec.ts --retries=0
+NODE: v22.14.0
+
+Running 24 tests using 1 worker
+
+pnpm.cmd : (node:18044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:14 char:3
++   pnpm.cmd @arguments 2>&1 | Out-File -Encoding UTF8 -Append $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:18044) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x   1 [chromium] › e2e\model-effort.spec.ts:28:1 › open inherited labels refresh after Settings in another tab and match the next request (14.1s)
+(node:1968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  2 [chromium] › e2e\model-effort.spec.ts:77:1 › catalog pending and failure label effort as unknown without changing the selection (4.9s)
+  ok  3 [chromium] › e2e\model-effort.spec.ts:112:3 › Claude ready capabilities refuse high before admission and still run low (explicit=false) (2.1s)
+  ok  4 [chromium] › e2e\model-effort.spec.ts:112:3 › Claude ready capabilities refuse high before admission and still run low (explicit=true) (2.2s)
+  ok  5 [chromium] › e2e\model-effort.spec.ts:185:5 › inference explicit effort survives editing, save, reload and adapter request (3.3s)
+  ok  6 [chromium] › e2e\model-effort.spec.ts:185:5 › inference loop effort survives editing, save, reload and adapter request (3.8s)
+  ok  7 [chromium] › e2e\model-effort.spec.ts:185:5 › inference Settings effort survives editing, save, reload and adapter request (4.4s)
+  ok  8 [chromium] › e2e\model-effort.spec.ts:185:5 › inference ecosystem effort survives editing, save, reload and adapter request (5.3s)
+  ok  9 [chromium] › e2e\model-effort.spec.ts:185:5 › inference process effort survives editing, save, reload and adapter request (3.1s)
+  ok 10 [chromium] › e2e\model-effort.spec.ts:185:5 › llm explicit effort survives editing, save, reload and adapter request (5.7s)
+  ok 11 [chromium] › e2e\model-effort.spec.ts:185:5 › llm loop effort survives editing, save, reload and adapter request (3.5s)
+  ok 12 [chromium] › e2e\model-effort.spec.ts:185:5 › llm Settings effort survives editing, save, reload and adapter request (4.2s)
+  ok 13 [chromium] › e2e\model-effort.spec.ts:185:5 › llm ecosystem effort survives editing, save, reload and adapter request (2.6s)
+  ok 14 [chromium] › e2e\model-effort.spec.ts:185:5 › llm process effort survives editing, save, reload and adapter request (3.0s)
+  ok 15 [chromium] › e2e\model-effort.spec.ts:311:1 › classifier keeps Question, Model, Answer visible and has no effort (2.7s)
+  ok 16 [chromium] › e2e\model-effort.spec.ts:378:1 › a saved unsupported effort stays visible and is refused before the adapter (3.9s)
+  ok 17 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) (7.6s)
+  ok 18 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) (4.7s)
+  ok 19 [chromium] › e2e\model-picker.spec.ts:98:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (3.3s)
+  ok 20 [chromium] › e2e\model-picker.spec.ts:155:1 › catalog failure preserves the current values until retry and loop defaults share the picker (3.7s)
+  ok 21 [chromium] › e2e\model-picker.spec.ts:199:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (1.9s)
+  ok 22 [chromium] › e2e\model-picker.spec.ts:278:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (8.8s)
+  ok 23 [chromium] › e2e\model-picker.spec.ts:360:1 › explicit Claude to Codex switch persists the owner default and sends the exact request (3.5s)
+  ok 24 [chromium] › e2e\model-picker.spec.ts:412:1 › cached catalog failure holds publication across a harness switch and recovers (5.8s)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:28:1 › open inherited labels refresh after Settings in another tab and match the next request 
+
+    Error: expect(locator).toHaveAccessibleDescription(expected) failed
+
+    Locator: getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected pattern: /Default model: gpt-6.1-sol/
+    Received string:  "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toHaveAccessibleDescription" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_q_" aria-describedby="_r_q_-help _r_q_-default" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 …>…</select>
+           - unexpected value "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+
+
+      53 |   await expect(settingsTab.getByLabel('Default effort', { exact: true })).toBeEnabled();
+      54 |   await page.bringToFront();
+    > 55 |   await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+         |                                                             ^
+      56 |     /Default model: gpt-6.1-sol/,
+      57 |   );
+      58 |   await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-effort.spec.ts:55:61
+
+    Error Context: test-results\model-effort-open-inherite-37380--and-match-the-next-request-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-open-inherite-37380--and-match-the-next-request-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-open-inherite-37380--and-match-the-next-request-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\model-effort.spec.ts:28:1 › open inherited labels refresh after Settings in another tab and match the next request 
+  23 passed (3.3m)
+RESULT: exit 1; seconds 202.87

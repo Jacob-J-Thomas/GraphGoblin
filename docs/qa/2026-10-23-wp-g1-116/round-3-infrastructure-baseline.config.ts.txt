@@ -1,0 +1,6 @@
+import { fileURLToPath } from 'node:url';
+import { mergeConfig } from 'vitest/config';
+import config from './vitest.config.js';
+export default mergeConfig(config, {
+  resolve: { alias: [{ find: /^(?:\.\.?\/)run-manager\.js$/, replacement: fileURLToPath(new URL('../engine/src/wp-g1-116-d9abfac7.ts', import.meta.url)) }] },
+});

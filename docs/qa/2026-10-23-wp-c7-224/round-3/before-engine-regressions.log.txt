@@ -1,0 +1,129 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-admission.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-admission.test.ts (3 tests | 3 failed) 215ms
+   × rechecks runnable work awakened while delivery cleanup is pending 166ms
+   × holds drain until an intake already accepted before closure has durable queued work 7ms
+   × refuses wakes after the quiescent handoff without changing durable parks 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-admission.test.ts > rechecks runnable work awakened while delivery cleanup is pending
+AssertionError: delivery cleanup must not seal a drain with an awakened executor: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/drain-admission.test.ts:50:86
+     48|     delivery.resolve();
+     49|     await vi.advanceTimersByTimeAsync(100);
+     50|     expect(done, 'delivery cleanup must not seal a drain with an awake…
+       |                                                                                      ^
+     51|     await vi.advanceTimersByTimeAsync(2000);
+     52|     await draining;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/drain-admission.test.ts > holds drain until an intake already accepted before closure has durable queued work
+AssertionError: in-flight intake must hold ownership until its durable outcome: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/drain-admission.test.ts:78:84
+     76|   try {
+     77|     await vi.advanceTimersByTimeAsync(100);
+     78|     expect(done, 'in-flight intake must hold ownership until its durab…
+       |                                                                                    ^
+     79|     release.resolve();
+     80|     expect(await outcome).toMatchObject({ run: { status: 'queued' } });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/drain-admission.test.ts > refuses wakes after the quiescent handoff without changing durable parks
+AssertionError: promise resolved "{ …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "currentNodeId": "work",
++   "id": "00000000000000000000000001",
++   "invocationId": "00000000000000000000000002",
++   "iteration": 1,
++   "lastEventSeq": 1,
++   "loopId": "3F3R7DZNTHPHYKXRGWTSC2SE19",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "sealed input v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++     },
++     "name": "sealed input",
++     "source": "published",
++     "version": 1,
++   },
++   "startedAt": "2026-10-02T12:00:00.000Z",
++   "status": "running",
++   "versionId": "E8CZTTRQPAY613GDTEH9M8CTC0",
++   "waiting": {
++     "kind": "input",
++     "nodeId": "work",
++     "prompt": "Continue",
++     "startedSeq": 5,
++     "waitId": "00000000000000000000000001:5",
++   },
+  }
+
+ ❯ src/drain-admission.test.ts:103:81
+    101|   await e.manager.waitForDrain();
+    102|   try {
+    103|     await expect(e.manager.provideInput(run.id, parked.waiting!.waitId…
+       |                                                                                 ^
+    104|     await expect(e.manager.signal(run.id, 'late', parked.waiting!.wait…
+    105|     expect(await e.ports.runs.get(run.id)).toEqual(parked);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  07:19:28
+   Duration  11.37s (transform 72%, import 26%, tests 2%)
+
+  Transform  transforming modules took 7.59s · 72% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-admission.test.ts --maxWorkers=1", "exit": 1, "seconds": 14.4}

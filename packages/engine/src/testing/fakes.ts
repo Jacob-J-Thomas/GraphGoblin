@@ -3,7 +3,9 @@
  * tests and by API and E2E tests through `@graphgoblin/engine/testing`.
  */
 import type {
+  PromptSubmission,
   ContextThread,
+  ClassifierBinding,
   ClassifierPrimitive,
   HarnessId,
   ModelCatalogEntry,
@@ -15,8 +17,14 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
-import { isTerminal, stableStringify } from '@graphgoblin/domain';
+import {
+  isTerminal,
+  stableStringify,
+  type ReplayState,
+  type ThreadCheckpoint,
+} from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -64,6 +72,7 @@ import type {
   WorkspacePort,
 } from '../ports.js';
 import { AppendConflictError } from '../errors.js';
+import { validateGeneratedEvent } from '../event-validation.js';
 import {
   AdmissionConflictError,
   assertAdmissionIdentity,
@@ -142,28 +151,30 @@ export class CapturingLogger implements Logger {
 export class InMemoryEventStore implements EventStorePort {
   private readonly logs = new Map<string, RunEvent[]>();
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
-  constructor(private readonly clock: ClockPort) {}
+  constructor(
+    private readonly clock: ClockPort,
+    private readonly runRepository?: RunRepository,
+  ) {}
 
-  append(
+  async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
+    if (options.requireRun && !(await this.runRepository?.get(runId))) return [];
     const log = this.logs.get(runId) ?? [];
     if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
       return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
     }
-    const stored: RunEvent[] = [];
-    for (const draft of drafts) {
-      const event = {
+    const stored = drafts.map((draft, index) =>
+      validateGeneratedEvent({
         ...draft,
         runId,
-        seq: log.length + 1,
+        seq: log.length + index + 1,
         ts: this.clock.now().toISOString(),
-      };
-      log.push(event);
-      stored.push(event);
-    }
+      }),
+    );
+    log.push(...stored);
     this.logs.set(runId, log);
     for (const event of stored) {
       for (const listener of this.listeners.get(runId) ?? []) listener(event);
@@ -209,7 +220,7 @@ export class InMemoryRunRepository implements RunRepository {
   readonly runs = new Map<string, RunRecord>();
   private readonly initial = new Map<string, ContextThread>();
   private readonly threads = new Map<string, ContextThread>();
-  private readonly checkpoints = new Map<string, number>();
+  private readonly checkpoints = new Map<string, { seq: number; replayState: ReplayState }>();
   private readonly finalized = new Set<string>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
@@ -245,10 +256,12 @@ export class InMemoryRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
+    guard?: { waitId: string },
   ): Promise<RunRecord | undefined> {
     const current = this.runs.get(runId);
     if (!current) return Promise.reject(new Error(`run ${runId} not found`));
-    if (!from.includes(current.status)) return Promise.resolve(undefined);
+    if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+      return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }
   claimCancel(
@@ -272,8 +285,12 @@ export class InMemoryRunRepository implements RunRepository {
     this.runs.set(current.id, record);
     return record;
   }
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
-    return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
+  listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]> {
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((r) => !isTerminal(r.status) || !this.finalized.has(r.id))
+        .map((r) => ({ id: r.id, terminal: isTerminal(r.status) })),
+    );
   }
   markFinalized(runId: string): Promise<void> {
     this.finalized.add(runId);
@@ -283,9 +300,17 @@ export class InMemoryRunRepository implements RunRepository {
     this.finalized.delete(runId);
     return Promise.resolve();
   }
-  listUnfinalized(): Promise<RunRecord[]> {
+  listRunReferences(
+    statuses: readonly RunStatus[],
+  ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
     return Promise.resolve(
-      [...this.runs.values()].filter((r) => isTerminal(r.status) && !this.finalized.has(r.id)),
+      [...this.runs.values()]
+        .filter((run) => statuses.includes(run.status))
+        .map(({ id, loopId, versionId }) => ({
+          id,
+          loopId,
+          versionId,
+        })),
     );
   }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
@@ -297,16 +322,20 @@ export class InMemoryRunRepository implements RunRepository {
   getThread(runId: string): Promise<ContextThread | undefined> {
     return Promise.resolve(this.threads.get(runId));
   }
-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
+  saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
     this.threads.set(runId, thread);
-    if (seq === undefined) this.checkpoints.delete(runId);
-    else this.checkpoints.set(runId, seq);
+    this.checkpoints.set(runId, { seq, replayState });
     return Promise.resolve();
   }
-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined> {
+  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined> {
     const thread = this.threads.get(runId);
-    const seq = this.checkpoints.get(runId);
-    return Promise.resolve(thread && seq !== undefined ? { thread, seq } : undefined);
+    const checkpoint = this.checkpoints.get(runId);
+    return Promise.resolve(thread && checkpoint ? { thread, ...checkpoint } : undefined);
   }
   /** Test helper: drop the thread snapshot to force replay. */
   dropThreadSnapshot(runId: string): void {
@@ -376,6 +405,22 @@ export class InMemorySessionRepository implements HarnessSessionRepository {
       .sort((a, b) => b.attempt - a.attempt);
     return Promise.resolve(rows[0]);
   }
+  forNodeAttempt(
+    runId: string,
+    nodeId: string,
+    attempt: number,
+    harness: HarnessId,
+  ): Promise<HarnessSessionRecord | undefined> {
+    return Promise.resolve(
+      this.rows.find(
+        (r) =>
+          r.runId === runId &&
+          r.nodeId === nodeId &&
+          r.attempt === attempt &&
+          r.harness === harness,
+      ),
+    );
+  }
   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
       .filter((r) => r.runId === runId && r.harness === harness && r.sessionId)
@@ -403,6 +448,12 @@ export interface ScriptedTurn {
   usage?: Partial<Usage>;
   /** Simulate a harness-level failure. */
   error?: { code: string; message: string; retriable?: boolean };
+  /** Explicit transport evidence. Default failed scripts are uncertain. */
+  submission?: PromptSubmission;
+  /** Omit even initialization/session evidence. */
+  announceSession?: boolean;
+  /** Positive acceptance marker, independent of initialization. */
+  accepted?: boolean;
   /** Delay before completing, in fake-clock-independent real milliseconds; lets tests cancel mid-turn. */
   delayMs?: number;
 }
@@ -419,6 +470,7 @@ export class FakeHarness implements HarnessPort {
   readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
   readonly cancelled: string[] = [];
   preflightResult: HarnessPreflight = {
+    state: 'ready',
     ok: true,
     version: 'fake',
     authenticated: true,
@@ -472,7 +524,10 @@ export class FakeHarness implements HarnessPort {
     const usage: Usage = { ...ZERO_USAGE, ...turn.usage };
     const items = turn.items ?? [{ id: 'i1', type: 'message', summary: turn.finalText ?? 'OK' }];
     const events: HarnessEvent[] = [
-      { type: 'session', sessionId, mode },
+      ...(turn.announceSession === false ? [] : [{ type: 'session' as const, sessionId, mode }]),
+      ...((turn.accepted ?? !turn.error)
+        ? [{ type: 'submitted' as const, marker: 'fake.accepted' as const }]
+        : []),
       ...items.map((item) => ({ type: 'item', item }) as const),
     ];
     if (turn.error) {
@@ -481,6 +536,11 @@ export class FakeHarness implements HarnessPort {
         code: turn.error.code,
         message: turn.error.message,
         retriable: turn.error.retriable ?? false,
+        submission:
+          turn.submission ??
+          (turn.error.code === 'HARNESS_SESSION_MISSING'
+            ? 'session-missing'
+            : 'delivery-uncertain'),
       });
     } else {
       events.push({ type: 'usage', usage }, { type: 'turn-complete' });
@@ -625,6 +685,10 @@ export class FakeScripts implements ScriptPort {
       exitCode: 0,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
       timedOut: false,
     }),
   ) {}
@@ -659,7 +723,8 @@ export class FakeWorkspace implements WorkspacePort {
 
 export class FakeTimers implements TimerPort {
   readonly scheduled: { runId: string; key: string; at: Date }[] = [];
-  private listeners: ((runId: string, key: string) => void | Promise<void>)[] = [];
+  private listeners: ((runId: string, key: string) => void | boolean | Promise<void | boolean>)[] =
+    [];
   /** An upsert, like the real store: one timer per run and key. */
   schedule(runId: string, key: string, at: Date): Promise<void> {
     const existing = this.scheduled.find((t) => t.runId === runId && t.key === key);
@@ -674,7 +739,9 @@ export class FakeTimers implements TimerPort {
     }
     return Promise.resolve();
   }
-  onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void {
+  onFire(
+    listener: (runId: string, key: string) => void | boolean | Promise<void | boolean>,
+  ): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
@@ -684,8 +751,13 @@ export class FakeTimers implements TimerPort {
   async fireDue(now: Date): Promise<number> {
     const due = this.scheduled.filter((t) => t.at.getTime() <= now.getTime());
     for (const t of due) {
-      this.scheduled.splice(this.scheduled.indexOf(t), 1);
-      for (const listener of this.listeners) await listener(t.runId, t.key);
+      const firedAt = t.at.getTime();
+      let delivered = true;
+      for (const listener of this.listeners) {
+        if ((await listener(t.runId, t.key)) === false) delivered = false;
+      }
+      const index = this.scheduled.indexOf(t);
+      if (delivered && index >= 0 && t.at.getTime() === firedAt) this.scheduled.splice(index, 1);
     }
     return due.length;
   }
@@ -697,8 +769,15 @@ export class FakeTimers implements TimerPort {
       (t) => t.runId === runId && (t.key === key || t.key.startsWith(`${key}@`)),
     );
     const fired = index >= 0 ? (this.scheduled[index] as { key: string }).key : key;
-    if (index >= 0) this.scheduled.splice(index, 1);
-    for (const listener of this.listeners) await listener(runId, fired);
+    const timer = this.scheduled[index];
+    const firedAt = timer?.at.getTime();
+    let delivered = true;
+    for (const listener of this.listeners) {
+      if ((await listener(runId, fired)) === false) delivered = false;
+    }
+    const remaining = timer ? this.scheduled.indexOf(timer) : -1;
+    if (delivered && remaining >= 0 && timer?.at.getTime() === firedAt)
+      this.scheduled.splice(remaining, 1);
   }
 }
 
@@ -721,18 +800,40 @@ export class FakeProbes implements HttpProbePort {
 }
 
 export class FakeDelivery implements ReturnDeliveryPort {
-  readonly webhooks: { url: string; payload: JsonValue; secret?: string }[] = [];
-  readonly events: { eventType: string; payload: JsonValue }[] = [];
+  readonly webhooks: { url: string; payload: JsonValue; secret?: string; deliveryId: string }[] =
+    [];
   readonly logged: { runId: string; payload: JsonValue }[] = [];
   failWebhooks = false;
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void> {
-    if (this.failWebhooks) return Promise.reject(new Error('webhook endpoint returned 503'));
-    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}) });
-    return Promise.resolve();
-  }
-  publishEvent(eventType: string, payload: JsonValue): Promise<void> {
-    this.events.push({ eventType, payload });
-    return Promise.resolve();
+  responder?: (
+    deliveryId: string,
+    attempt: number,
+  ) => WebhookAttemptResult | Promise<WebhookAttemptResult>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult> {
+    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}), deliveryId });
+    if (this.responder)
+      return Promise.resolve(
+        this.responder(
+          deliveryId,
+          this.webhooks.filter((call) => call.deliveryId === deliveryId).length,
+        ),
+      );
+    if (this.failWebhooks)
+      return Promise.resolve({
+        ok: false,
+        error: {
+          code: 'http',
+          message: 'Webhook returned HTTP 400.',
+          httpStatus: 400,
+          retryable: false,
+          acknowledgement: 'rejected',
+        },
+      });
+    return Promise.resolve({ ok: true });
   }
   log(runId: string, payload: JsonValue): void {
     this.logged.push({ runId, payload });
@@ -767,21 +868,43 @@ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
-  readonly requests: { ownerId: string; modelId: string; primitive: ClassifierPrimitive }[] = [];
+  readonly requests: {
+    ownerId: string;
+    modelId: string;
+    primitive: ClassifierPrimitive;
+    binding: ClassifierBinding;
+  }[] = [];
   readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
   readonly unavailable = new Map<
     string,
     Extract<ClassifierResolution, { status: 'unavailable' }>
   >();
+  /** Catalog metadata per id; ids registered in `models` or `unavailable` get a default entry. */
+  readonly bindings = new Map<string, ClassifierBinding>();
   constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
     if (builtin) this.models.set('jev', builtin);
+  }
+  bind(_ownerId: string, modelId: string): Promise<ClassifierBinding | undefined> {
+    const known = this.models.has(modelId) || this.unavailable.has(modelId);
+    return Promise.resolve(
+      this.bindings.get(modelId) ??
+        (known
+          ? {
+              provider: modelId === 'jev' ? 'typesafe' : 'http',
+              providerModel: modelId === 'jev' ? 'jev-latest' : modelId,
+              primitives: ['choice', 'noul', 'score'],
+              endpoint: 'https://classifier.test',
+            }
+          : undefined),
+    );
   }
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution> {
-    this.requests.push({ ownerId, modelId, primitive });
+    this.requests.push({ ownerId, modelId, primitive, binding });
     const unavailable = this.unavailable.get(modelId);
     if (unavailable) return Promise.resolve(unavailable);
     const classifier = this.models.get(modelId);
@@ -801,9 +924,9 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
       status: 'ready',
       classifier,
       provenance: {
-        provider: modelId === 'jev' ? 'typesafe' : 'http',
+        provider: binding.provider,
         classifierId: modelId,
-        model: modelId === 'jev' ? 'jev-latest' : modelId,
+        model: binding.providerModel,
       },
     });
   }
@@ -828,6 +951,7 @@ export class FakeModelCatalog {
 export type AdmissionWrite =
   | 'claim.inbound'
   | 'claim.receipt'
+  | 'create.snapshot'
   | 'create.run'
   | 'create.event'
   | 'create.receipt'
@@ -844,6 +968,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly runs: InMemoryRunRepository,
     private readonly events: InMemoryEventStore,
+    private readonly loops: InMemoryLoopRepository,
     private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
   ) {}
   async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
@@ -868,13 +993,18 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     }
     let run = this.runs.runs.get(input.run.id);
     const created = !run;
+    // A draft snapshot is immutable: the same id may only ever hold the same record.
+    const existing = input.snapshot ? this.loops.versions.get(input.snapshot.id) : undefined;
+    if (existing && stableStringify(existing) !== stableStringify(input.snapshot))
+      throw new AdmissionConflictError();
     if (run) {
       const thread = await this.runs.getInitialThread(run.id);
-      if (!thread) throw new AdmissionConflictError();
+      if (!thread || (input.snapshot && !existing)) throw new AdmissionConflictError();
       assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
     } else {
       if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
+      if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
       this.beforeWrite('create.event');
     }
@@ -891,6 +1021,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       this.beforeWrite('create.link');
     }
     if (created) {
+      if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
       this.events.commitQueued(queuedEvent(input));
     }
@@ -1050,9 +1181,10 @@ export interface FakePorts extends EnginePorts {
 /** Build a complete set of fake ports wired together. */
 export function createFakePorts(options: { secrets?: Record<string, string> } = {}): FakePorts {
   const clock = new FakeClock();
-  const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
-  const admission = new InMemoryTriggerAdmission(runs, events);
+  const events = new InMemoryEventStore(clock, runs);
+  const loops = new InMemoryLoopRepository();
+  const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();
   const jev = new FakeClassifier('jev');
   const codexDecider = new FakeDecider('codex');
@@ -1065,7 +1197,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     events,
     runs,
     admission,
-    loops: new InMemoryLoopRepository(),
+    loops,
     sessions: new InMemorySessionRepository(),
     harnesses: { codex: harness },
     harness,

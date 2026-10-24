@@ -1,0 +1,207 @@
+[
+  {
+    "id": "environment",
+    "verdict": "PASS",
+    "actual": {
+      "node": "v22.14.0",
+      "edge": "155.0.4283.62",
+      "port": 5862,
+      "nativePreflight": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "tier": "Built app in Edge, real disposable API and tooling fixture CLIs. Readiness fault/state matrix uses public HTTP route interception; no native provider parsing claim."
+    }
+  },
+  {
+    "id": "background-recheck-1440",
+    "steps": "Saved Claude ready; make stale focus refetch wait; inspect retained ready choices; release transport; Retry while holding another response, then recover ready.",
+    "expected": "Background keeps last ready result; completed failure uses typed fallback; retry preserves last failed line until ready; authored values remain.",
+    "actual": {
+      "heldReady": {
+        "width": 1440,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": [
+          "Read-only — built-in tools only; no OS or read-path isolation",
+          "Danger full access — command execution and network unconfined"
+        ],
+        "policyReadonly": null,
+        "modelReadonly": null,
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 2
+        },
+        "capture": "background-ready-1440.png"
+      },
+      "failed": {
+        "width": 1440,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": ["Current policy: read-only / never (saved; not verified)"],
+        "policyReadonly": "true",
+        "modelReadonly": "true",
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nCurrent policy: read-only / never (saved; not verified)\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nClaude readiness: Connection failed. The saved policy is unchanged.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nclaude-opus-5-5 (saved)\n\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight. Model choices are read-only until Claude is ready.\n\nRetry Claude preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 2
+        }
+      },
+      "heldFailed": {
+        "width": 1440,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": ["Current policy: read-only / never (saved; not verified)"],
+        "policyReadonly": "true",
+        "modelReadonly": "true",
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nCurrent policy: read-only / never (saved; not verified)\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nClaude readiness: Connection failed. The saved policy is unchanged.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nclaude-opus-5-5 (saved)\n\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight. Model choices are read-only until Claude is ready.\n\nRetry Claude preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 3
+        },
+        "capture": "background-failed-retry-1440.png"
+      },
+      "recovered": {
+        "width": 1440,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": [
+          "Read-only — built-in tools only; no OS or read-path isolation",
+          "Danger full access — command execution and network unconfined"
+        ],
+        "policyReadonly": null,
+        "modelReadonly": null,
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 3
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "background-recheck-390",
+    "steps": "Saved Claude ready; make stale focus refetch wait; inspect retained ready choices; release transport; Retry while holding another response, then recover ready.",
+    "expected": "Background keeps last ready result; completed failure uses typed fallback; retry preserves last failed line until ready; authored values remain.",
+    "actual": {
+      "heldReady": {
+        "width": 390,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": [
+          "Read-only — built-in tools only; no OS or read-path isolation",
+          "Danger full access — command execution and network unconfined"
+        ],
+        "policyReadonly": null,
+        "modelReadonly": null,
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 2
+        },
+        "capture": "background-ready-390.png"
+      },
+      "failed": {
+        "width": 390,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": ["Current policy: read-only / never (saved; not verified)"],
+        "policyReadonly": "true",
+        "modelReadonly": "true",
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nCurrent policy: read-only / never (saved; not verified)\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nClaude readiness: Connection failed. The saved policy is unchanged.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nclaude-opus-5-5 (saved)\n\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight. Model choices are read-only until Claude is ready.\n\nRetry Claude preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 2
+        }
+      },
+      "heldFailed": {
+        "width": 390,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": ["Current policy: read-only / never (saved; not verified)"],
+        "policyReadonly": "true",
+        "modelReadonly": "true",
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nCurrent policy: read-only / never (saved; not verified)\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nClaude readiness: Connection failed. The saved policy is unchanged.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nclaude-opus-5-5 (saved)\n\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight. Model choices are read-only until Claude is ready.\n\nRetry Claude preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 3
+        },
+        "capture": "background-failed-retry-390.png"
+      },
+      "recovered": {
+        "width": 390,
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "policyOptions": [
+          "Read-only — built-in tools only; no OS or read-path isolation",
+          "Danger full access — command execution and network unconfined"
+        ],
+        "policyReadonly": null,
+        "modelReadonly": null,
+        "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+        "counts": {
+          "catalog": 2,
+          "settings": 2,
+          "preflight": 3
+        }
+      }
+    },
+    "verdict": "PASS"
+  }
+]

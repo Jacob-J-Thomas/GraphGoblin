@@ -13,7 +13,7 @@ Starts a run. A loop may have several trigger nodes; each is an entry point that
 | `manual`  | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                         | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                                          |
 | `cron`    | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                    | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                                              |
 | `webhook` | `authentication`, `body`, `eventType`, `dedupeKey?: JSONata`                                                                   | General POST endpoint; None or either HMAC recipe. Payload checks run downstream.                                               |
-| `event`   | `eventType`, `dedupeKey?: JSONata`                                                                                             | Fires on the inbound-event bus; payload checks run downstream.                                                                  |
+| `event`   | `eventType`, `dedupeKey?: JSONata`                                                                                             | Fires on a matching inbound Event (`POST /events`); payload checks run downstream.                                              |
 | `poll`    | `intervalSeconds`, `probe: Probe`, `fireWhen: JSONata`, `dedupeKey?`, optional `items: { select, dedupeKey, maxRunsPerPoll? }` | Needs no inbound connectivity. Items mode validates a bounded candidate array and admits unseen items up to the configured cap. |
 
 Concurrency: every firing starts a new run, in parallel with any already running. A per-loop policy is post-1.0.
@@ -39,7 +39,7 @@ Choose one `kind`; its fields describe that evaluator directly. See [ADR-0035](d
 
 Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in` and `limit-reached`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
 
-Classifier Choice retains options with IDs, labels and criteria. Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
+Classifier Choice retains 2-64 options with IDs, labels and criteria; option IDs and trimmed labels are unique, as are Score band IDs and labels and the two Noul sides'. Every ID is a stable output port. The editor shows these rules as list-level and per-field help and reports a duplicate at the field (#129). Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
 
 LLM responses require exactly `route`, `confidence` and `reasoning`, with no extra properties. The route must be declared, confidence finite in [0,1], and the stored reasoning excerpt at most 2,048 characters. Confidence is informational and has no acceptance threshold. There is no repair or evaluator fallback.
 
@@ -51,7 +51,7 @@ Current definitions/exports use format 4. Old exports and stores require the int
 
 ### Gates and repeat limits (#164 E1)
 
-A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1 to 10,000 or null for Unlimited); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
 
 Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
 
@@ -70,7 +70,11 @@ type InferenceConfig = {
   harness: 'codex' | 'claude';
   model?: string;
   effort?: Effort;
-  session: { policy: 'fresh' | 'resume-previous' | 'resume-named'; key?: string };
+  session:
+    | { policy: 'fresh' }
+    | { policy: 'resume-previous' }
+    | { policy: 'resume-named'; key: string }
+    | { policy: 'resume-own'; resetAfterVisits?: number };
   prompt: { template: string }; // Liquid, rendered against the thread
   input: InputTransform[]; // applied to the thread view the template sees
   contextFiles?: { path: string; template: string }[]; // written under the working directory before the session starts
@@ -99,7 +103,26 @@ type RepairPolicy = {
 };
 ```
 
-Behaviour: the engine writes the harness session row, renders the prompt and context files, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+Behaviour: the engine renders the prompt and context files, persists the pending turn and harness session row, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+
+`fresh` remains the default. Supply main-loop context deliberately through the prompt,
+input transforms or context files. Opt-in `resume-own` preserves only this node's provider
+conversation within this run and harness, including after restart; forks and children
+start fresh. Its optional `resetAfterVisits` accepts positive safe integers, without a
+default. N completed visits share a conversation; visit N+1 starts fresh. Retries and
+repairs stay in their visit. Reset never clears shared context or another node's session.
+Previous/named selection remains unchanged. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
+Before invoking the harness, the engine durably records `harness.turn`: the exact rendered
+prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
+records refusal, uncertainty, missing-session status and any positive acceptance marker.
+A definitely-not-submitted turn retries that saved task with its original session-policy
+selection when the cause is resumable. Uncertain authored work cannot continue a previous/named/own
+conversation on its inherited ID alone: this visit needs durable acceptance or a newly
+established session. Repairs and continuations can use the visit's own session. Without a
+usable session, or with a missing session, the run fails non-resumably; Replay from the node
+is the available deliberate new attempt. Named-session lookup still applies on replay.
+See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
 
 Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
 pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,
@@ -128,15 +151,33 @@ type ScriptConfig = {
 
 Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, which is resumable after the script is fixed. Scripts should be idempotent because crash recovery may run them again (05).
 
+Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
+four-byte characters survive arbitrary subprocess chunk boundaries. Capture is
+limited to 10 MiB of raw bytes per stream by default (`ProcessScripts.maxOutputBytes`);
+probe callers may request stricter byte caps. A character split by a capture cap
+is omitted; an incomplete trailing sequence at end of stream becomes U+FFFD
+(the replacement character), including after timeout or cancellation.
+`stdoutBytes`/`stderrBytes` count captured raw bytes before decoding, and
+`stdoutOverflow`/`stderrOverflow` report truncation for default and explicit caps.
+The counts exclude synthetic spawn diagnostics and replacement-character encoding.
+Timeout and cancellation retain process-tree termination.
+
 Ports: `out` plus any labels in `exitCodeRoutes`.
 
 ## Context mutation (Decided operations)
 
 Applies an ordered list of operations to the thread. No LLM calls in 1.0.
 
+Authored operations write only `/vars`, `/messages`, `/artifacts`, `/outputs` and
+`/lastOutput` and their descendants. Protected context remains readable. Script JSON
+Patch stdout obeys the same boundary: every mutating `path` is checked, and a `move`
+also checks `from`. A `copy` from protected context into a writable destination and a
+read-only `test` of protected context are permitted. A protected write or move source
+rejects the entire patch; earlier operations in that patch are not retained.
+
 | Operation              | Parameters                                                                                            | Effect                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `set`                  | `path`, `value` (Liquid or JSONata)                                                                   | Set a var or any thread path                                                   |
+| `set`                  | `path`, `value` (Liquid or JSONata)                                                                   | Set a var or another writable thread path                                      |
 | `delete`               | `path`                                                                                                | Remove a var, message, or artifact                                             |
 | `append-message`       | `role`, `content` template, `tags`                                                                    | Inject additional context                                                      |
 | `inject`               | `position: 'start' \| 'end' \| index`, `messages[]`                                                   | Insert templated messages                                                      |
@@ -180,7 +221,7 @@ type SubloopConfig = {
 };
 ```
 
-Behaviour: the child run has its own id, event log, iteration counter, and version pin. The parent run enters `waiting` with kind `child` until the child finishes. Cancelling the parent cancels the child. The child's outcome does not fail the parent by itself; its return payload and outcome are available to the output mapping and to downstream decision nodes.
+Behaviour: the subloop is an awaited call ([ADR-0044](decisions/ADR-0044-awaited-subloops.md)). The child run has its own id, event log, iteration counter, and version pin. The parent run enters `waiting` with kind `child` and continues only after the child finishes; the wake is bound to that park, so it can never answer a later wait. The child's exit returns its configured output to the output mapping, or no output: with `returns: "none"` the summary has no `result` and `resultTo.var` is removed (after any variable merge, so a merged copy never restores it), while a returned JSON `null` arrives as `null`. A child exit never finishes the parent, which continues to its own exit. Cancelling the parent cancels the child. The child's authored outcome (Success, Failure or Exhausted exit) does not fail the parent; its return payload and outcome are available to the output mapping and to downstream decision nodes. A child's execution failure or cancellation is handled like the same failure inline (#251): the parent fails at this node with the child's code and resumability (`details.childRunId` names the child), or is cancelled with it. Resuming such a parent resumes the failed child in place.
 
 Ports: `out`.
 
@@ -193,11 +234,11 @@ Parks the run until something happens. In engine terms the run stops and is late
 | `input`    | `prompt` template, `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]` | A human or agent providing input through the UI, REST, or the MCP tool    |
 | `duration` | `seconds`                                                                 | A persisted timer                                                         |
 | `until`    | `timestamp`, a Liquid template rendering an ISO 8601 timestamp            | A persisted timer                                                         |
-| `signal`   | `name`, `filter?: JSONata`                                                | A named signal delivered through REST or MCP, or a matching inbound event |
+| `signal`   | `name`, `filter?: JSONata`                                                | A named signal delivered through REST or MCP, sent with the wait identity |
 
 Common fields: `timeoutSeconds?`, `onTimeout: 'continue' | 'fail-run'` (default `continue`, with `lastOutput = { timedOut: true }` so a decision node can branch).
 
-Behaviour: the node emits `run.waiting` and the run releases its worker. On wake, the received input or signal payload is appended as a message with role `user` or `note` and set as `lastOutput`.
+Behaviour: the node emits `run.waiting` with a required `wait.waitId`, also exposed as `waiting.waitId` in the run snapshot, and the run releases its worker. Input and signal callers must return that observed identity. Stale, unknown and already answered identities reject with 409 `WAIT_MISMATCH` without changing the run or log. On wake, the received input or signal payload is appended as a message with role `user` or `note` and set as `lastOutput`.
 
 Ports: `out`.
 
@@ -217,20 +258,48 @@ type HeartbeatConfig = {
 };
 ```
 
+A logical visit lasts until this node records `node.finished`. Signal observations and recorded beat numbers persist across beats, retries and restart within that visit; a gate returning to the completed node starts from zero observations and beat 1. Each park exposes a new `waiting.waitId`: send signals with the identity observed in that snapshot. Signals for earlier parks or visits reject with 409 `WAIT_MISMATCH` and cannot increase the count. Two separately accepted signals are two observations, even if their payloads match.
+
 Two readings of "heartbeat" fit this node. The first is "poll until a condition is true", such as waiting for an external job to finish. The second is "emit a periodic keep-alive to another system while the loop is paused", which is the same node with a `probe` that performs the ping and no `until`. If the owner meant something else, this section changes.
 
 Ports: `out`.
 
 ## Exit (Decided, #164 E1)
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log. Exits do not publish Events: a loop that needs another loop's result calls it as a subloop (ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 The caller destination resolves to the run result, the MCP caller or the parent subloop output mapping. Delivery records `return.delivered` or `return.failed` for each destination.
+
+With `returns: "none"` the run finishes without a result and no destination receives anything: neither the exit's own nor those added by the start request's `return`. The engine records no delivery event for them. This is valid configuration, not a failure. A quiet exit is `returns: "none"` with no destinations. A return expression that evaluates to nothing returns `null`, which is a value and is delivered. The exit editor says which case applies, and the inspector states that a run returned nothing by configuration, naming the destinations that received nothing, or identifies the quiet exit (#129, #258).
 
 ## Post-1.0 node ideas (recorded, not planned)
 
 - Error or debug node: an explicit place to route to when run inspection is not enough for debugging.
 - Fan-out and fan-in nodes.
 - Summarise node once an LLM provider port exists.
+
+## Visible execution limits and unlimited mode (#243)
+
+The editor's Loop tab and Settings show the defaults before a run exists:
+`maxNodeVisits: 10` and no run deadline (`runDeadlineSeconds: null`). Omission means the
+contract default. For visits and repeat passes, `null` is an explicit Unlimited choice,
+with a warning. The deadline's neutral No run deadline choice is the default; choose
+Limited and enter seconds to add one. Each new run pins the effective
+values in `pinned.limits`; the run inspector shows those values and its absolute deadline.
+Definition changes and Settings edits cannot alter an existing run's pin.
+
+A run deadline starts on first execution, includes waits, pauses and restart downtime,
+and excludes queue time. A durable timer aborts active work or fails a parked run with
+`RUN_DEADLINE_EXCEEDED` (non-resumable). Late node results cannot overwrite this outcome;
+explicit Cancel remains `cancelled`. Null removes the run timer. Node `timeoutSeconds`
+and authored gate `maxRunTimeSeconds` remain independent explicit controls.
+
+Format 4 uses per-gate passes instead of shared iterations. Set `maxPasses: null` for
+unlimited marked repetition; evidence records null and passes continue increasing.
+The gate's authored non-repeat routes and explicit time check still apply. Disable both
+loop controls, pass limits and any authored watchdogs to permit intentionally indefinite
+execution, ending through authored exits, Cancel or an external/resource failure.
+GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
+Authors may use script/decision nodes for their own usage-aware behavior.

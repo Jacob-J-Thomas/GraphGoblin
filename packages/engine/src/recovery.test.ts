@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { replayThread } from '@graphgoblin/domain';
+import { replayThread, replayStateAt } from '@graphgoblin/domain';
 import { AppendConflictError } from './errors.js';
 import { RunManager } from './run-manager.js';
 import {
@@ -39,6 +39,18 @@ async function recover(e: TestEngine): Promise<RunManager> {
   manager.stop();
   return manager;
 }
+
+it('refuses startup when recovery encounters a store I/O failure', async () => {
+  const e = await createTestEngine();
+  e.manager.stop();
+  const version = e.publish(inputLoop('I/O failure'));
+  await e.start(version.loopId);
+  const failure = new Error('injected storage I/O failure');
+  vi.spyOn(e.ports.runs, 'get').mockRejectedValueOnce(failure);
+  const restarted = new RunManager(e.ports, e.settings);
+  await expect(restarted.start()).rejects.toBe(failure);
+  restarted.stop();
+});
 
 describe('cursor boundaries, recovered twice', () => {
   const kinds = [
@@ -142,22 +154,26 @@ describe('cursor boundaries, recovered twice', () => {
       });
       const t = vi
         .spyOn(e.ports.runs, 'transition')
-        .mockImplementation(async (id, from, changes) => {
+        .mockImplementation(async (id, from, changes, ...rest) => {
           if (
             nodeKind === 'exit' &&
             boundary !== 'append-return' &&
             changes.status === 'succeeded'
           ) {
-            if (boundary === 'after-cursor') await transition(id, from, changes);
+            if (boundary === 'after-cursor') await transition(id, from, changes, ...rest);
             blocked = true;
             return hang();
           }
-          return transition(id, from, changes);
+          return transition(id, from, changes, ...rest);
         });
       const r = await e.start(e.publish(def).loopId);
       if (nodeKind === 'wait') {
         await e.manager.waitForIdle();
-        await e.manager.provideInput(r.id, 'accepted');
+        await e.manager.provideInput(
+          r.id,
+          (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+          'accepted',
+        );
       }
       await vi.waitFor(() => expect(blocked).toBe(true));
       e.manager.stop();
@@ -183,7 +199,11 @@ describe('wakes across crashes (review finding 4)', () => {
     const e = await createTestEngine();
     const r = await e.runToIdle(e.publish(inputLoop()).loopId);
     e.manager.stop();
-    await e.manager.provideInput(r.id, 'keep me');
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'keep me',
+    );
     const append = e.ports.events.append.bind(e.ports.events);
     let blocked = false;
     // The first recovery dies right after its run.started marker.
@@ -216,15 +236,19 @@ describe('wakes across crashes (review finding 4)', () => {
       let blocked = false;
       const spy = vi
         .spyOn(e.ports.runs, 'transition')
-        .mockImplementation(async (id, from, changes) => {
+        .mockImplementation(async (id, from, changes, ...rest) => {
           if (from.includes('waiting') && changes.status === 'running') {
-            if (when === 'after') await transition(id, from, changes);
+            if (when === 'after') await transition(id, from, changes, ...rest);
             blocked = true;
             return hang();
           }
-          return transition(id, from, changes);
+          return transition(id, from, changes, ...rest);
         });
-      void e.manager.provideInput(r.id, 'accepted');
+      void e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        'accepted',
+      );
       await vi.waitFor(() => expect(blocked).toBe(true));
       e.manager.stop();
       spy.mockRestore();
@@ -247,7 +271,11 @@ describe('wakes across crashes (review finding 4)', () => {
       }
       return append(id, drafts, options);
     });
-    await e.manager.provideInput(r.id, 'late');
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'late',
+    );
     expect((await e.settle(r.id)).status).toBe('succeeded');
     expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
   });
@@ -265,13 +293,15 @@ describe('terminal transitions across crashes (review finding 5)', () => {
     };
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let blocked = false;
-    const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation((id, from, changes) => {
-      if (changes.status === 'succeeded') {
-        blocked = true;
-        return hang();
-      }
-      return transition(id, from, changes);
-    });
+    const spy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation((id, from, changes, ...rest) => {
+        if (changes.status === 'succeeded') {
+          blocked = true;
+          return hang();
+        }
+        return transition(id, from, changes, ...rest);
+      });
     const r = await e.start(e.publish(def).loopId);
     await vi.waitFor(() => expect(blocked).toBe(true));
     e.manager.stop();
@@ -297,13 +327,15 @@ describe('terminal transitions across crashes (review finding 5)', () => {
     const parent = e.publish(subLoop('finish-parent', child.loopId));
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let blocked = false;
-    const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation((id, from, changes) => {
-      if (changes.status === 'succeeded' && changes.result === 7) {
-        blocked = true;
-        return hang();
-      }
-      return transition(id, from, changes);
-    });
+    const spy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation((id, from, changes, ...rest) => {
+        if (changes.status === 'succeeded' && changes.result === 7) {
+          blocked = true;
+          return hang();
+        }
+        return transition(id, from, changes, ...rest);
+      });
     const r = await e.start(parent.loopId);
     await vi.waitFor(() => expect(blocked).toBe(true));
     e.manager.stop();
@@ -353,12 +385,12 @@ describe('subloops (review finding 3)', () => {
     const pv = e.publish(subLoop('pause-parent', cv.loopId));
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let once = true;
-    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
+    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes, ...rest) => {
       if (once && changes.waiting?.kind === 'child') {
         once = false;
         await e.manager.pause(id);
       }
-      return transition(id, from, changes);
+      return transition(id, from, changes, ...rest);
     });
     const r = await e.runToIdle(pv.loopId);
     expect(r.status).toBe('paused');
@@ -367,7 +399,11 @@ describe('subloops (review finding 3)', () => {
     await e.manager.waitForIdle();
     const [kid] = await e.ports.runs.listChildren(r.id);
     expect(await e.ports.runs.listChildren(r.id)).toHaveLength(1);
-    await e.manager.provideInput(kid!.id, 'done');
+    await e.manager.provideInput(
+      kid!.id,
+      (await e.manager.getRun(kid!.id))?.waiting?.waitId ?? 'unknown',
+      'done',
+    );
     expect((await e.settle(r.id)).status).toBe('succeeded');
   });
 
@@ -377,7 +413,11 @@ describe('subloops (review finding 3)', () => {
     const r = await e.runToIdle(e.publish(subLoop('paused-parent', cv.loopId)).loopId);
     await e.manager.pause(r.id);
     const [kid] = await e.ports.runs.listChildren(r.id);
-    await e.manager.provideInput(kid!.id, 'finished meanwhile');
+    await e.manager.provideInput(
+      kid!.id,
+      (await e.manager.getRun(kid!.id))?.waiting?.waitId ?? 'unknown',
+      'finished meanwhile',
+    );
     await e.manager.waitForIdle();
     expect((await e.ports.runs.get(r.id))?.status).toBe('paused');
     await e.manager.resume(r.id);
@@ -418,7 +458,11 @@ describe('subloops (review finding 3)', () => {
       await recovered.waitForIdle();
       if (state === 'active') {
         expect((await recovered.getRun(r.id))?.status).toBe('waiting');
-        await recovered.provideInput(kid!.id, 'go');
+        await recovered.provideInput(
+          kid!.id,
+          (await recovered.getRun(kid!.id))?.waiting?.waitId ?? 'unknown',
+          'go',
+        );
         await recovered.waitForIdle();
       }
       recovered.stop();
@@ -451,14 +495,18 @@ describe('subloops (review finding 3)', () => {
     const pv = e.publish(subLoop('after-park-parent', cv.loopId));
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let sawRace = false;
-    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
-      const parked = await transition(id, from, changes);
+    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes, ...rest) => {
+      const parked = await transition(id, from, changes, ...rest);
       if (changes.status === 'waiting' && changes.waiting?.kind === 'child') {
         const child = changes.waiting.childRunId!;
         await vi.waitFor(async () =>
           expect((await e.manager.getRun(child))?.status).toBe('waiting'),
         );
-        await e.manager.provideInput(child, 'fast');
+        await e.manager.provideInput(
+          child,
+          (await e.manager.getRun(child))?.waiting?.waitId ?? 'unknown',
+          'fast',
+        );
         await vi.waitFor(async () =>
           expect((await e.manager.getRun(child))?.status).toBe('succeeded'),
         );
@@ -488,27 +536,39 @@ describe('thread checkpoints (review finding 9)', () => {
       r.id,
       { ...checkpoint.thread, vars: { ...checkpoint.thread.vars, marker: true } },
       checkpoint.seq,
+      checkpoint.replayState!,
     );
-    await e.manager.provideInput(r.id, 'go');
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'go',
+    );
     await e.settle(r.id);
     expect((await e.ports.runs.getThread(r.id))?.vars['marker']).toBe(true);
   });
 
-  it.each(['ahead of the log', 'without a seq'] as const)(
+  it.each(['ahead of the log', 'without a snapshot'] as const)(
     'ignores a checkpoint %s and replays from the initial thread',
     async (kind) => {
       const e = await createTestEngine();
       const r = await waitingRun(e);
       const checkpoint = (await e.ports.runs.getThreadCheckpoint(r.id))!;
-      await e.ports.runs.saveThread(
-        r.id,
-        { ...checkpoint.thread, vars: { marker: true } },
-        kind === 'without a seq' ? undefined : checkpoint.seq + 100,
-      );
+      if (kind === 'without a snapshot') e.ports.runs.dropThreadSnapshot(r.id);
+      else
+        await e.ports.runs.saveThread(
+          r.id,
+          { ...checkpoint.thread, vars: { marker: true } },
+          checkpoint.seq + 100,
+          checkpoint.replayState!,
+        );
       expect(await e.ports.runs.getThreadCheckpoint(r.id)).toEqual(
-        kind === 'without a seq' ? undefined : expect.anything(),
+        kind === 'without a snapshot' ? undefined : expect.anything(),
       );
-      await e.manager.provideInput(r.id, 'go');
+      await e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        'go',
+      );
       await e.settle(r.id);
       expect((await e.ports.runs.getThread(r.id))?.vars['marker']).toBeUndefined();
       expect(await e.ports.runs.getThread(r.id)).toEqual(
@@ -536,14 +596,16 @@ describe('thread checkpoints (review finding 9)', () => {
     let blocked = false;
     let runId = '';
     // Crash right after the checkpoint for the mutate completion is written.
-    const spy = vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
-      await save(id, thread, seq);
-      if (thread.messages.length === 1 && !blocked) {
-        runId = id;
-        blocked = true;
-        return hang();
-      }
-    });
+    const spy = vi
+      .spyOn(e.ports.runs, 'saveThread')
+      .mockImplementation(async (id, thread, seq, replayState) => {
+        await save(id, thread, seq, replayState);
+        if (thread.messages.length === 1 && !blocked) {
+          runId = id;
+          blocked = true;
+          return hang();
+        }
+      });
     await e.start(e.publish(def).loopId);
     await vi.waitFor(() => expect(blocked).toBe(true));
     e.manager.stop();
@@ -595,9 +657,18 @@ describe('thread checkpoints (review finding 9)', () => {
       { type: 'run.waiting', nodeId: 'wait', wait: r.waiting! },
     ]);
     const thread = replayThread((await e.ports.runs.getInitialThread(r.id))!, e.events(r.id));
-    await e.ports.runs.saveThread(r.id, thread, stored.at(-1)!.seq);
+    await e.ports.runs.saveThread(
+      r.id,
+      thread,
+      stored.at(-1)!.seq,
+      replayStateAt(e.events(r.id), stored.at(-1)!.seq),
+    );
     const started = performance.now();
-    await e.manager.provideInput(r.id, 'go');
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'go',
+    );
     expect((await e.settle(r.id)).status).toBe('succeeded');
     const elapsed = performance.now() - started;
     expect(await e.ports.runs.getThread(r.id)).toEqual(
@@ -609,7 +680,7 @@ describe('thread checkpoints (review finding 9)', () => {
 });
 
 describe('wake and timer edges', () => {
-  it('a timer armed by an earlier wait cannot wake a later one; legacy keys still wake', async () => {
+  it('a stale timer cannot wake the current park; its scheduled timer wakes once', async () => {
     const e = await createTestEngine();
     const r = await e.runToIdle(
       e.publish(
@@ -621,7 +692,7 @@ describe('wake and timer edges', () => {
         }),
       ).loopId,
     );
-    const seq = r.waiting!.startedSeq!;
+    const seq = r.waiting!.startedSeq;
     await e.ports.timers.fire(r.id, `timer@${seq + 100}`);
     expect((await e.ports.runs.get(r.id))?.status).toBe('waiting');
     await e.ports.timers.fire(r.id, 'timer');
@@ -639,17 +710,23 @@ describe('wake and timer edges', () => {
           ? Promise.reject(new AppendConflictError(id, options.expectedLastSeq, 0))
           : append(id, drafts, options),
       );
-    await expect(e.manager.provideInput(r.id, 1)).rejects.toThrow(/kept changing/);
+    await expect(
+      e.manager.provideInput(r.id, (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown', 1),
+    ).rejects.toThrow(/kept changing/);
     always.mockImplementation((id, drafts, options) =>
       options?.expectedLastSeq !== undefined
         ? Promise.reject(new Error('disk full'))
         : append(id, drafts, options),
     );
-    await expect(e.manager.provideInput(r.id, 1)).rejects.toThrow('disk full');
+    await expect(
+      e.manager.provideInput(r.id, (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown', 1),
+    ).rejects.toThrow('disk full');
     always.mockRestore();
     // A durable wake already sits in the log: the run is not waiting for another.
     await e.ports.events.append(r.id, [{ type: 'run.woken', nodeId: 'wait', reason: 'manual' }]);
-    await expect(e.manager.provideInput(r.id, 1)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(
+      e.manager.provideInput(r.id, (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown', 1),
+    ).rejects.toMatchObject({ code: 'WAIT_MISMATCH' });
   });
 
   it('a wake that loses the status race to a pause stays in the log for resume', async () => {
@@ -658,13 +735,17 @@ describe('wake and timer edges', () => {
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     const spy = vi
       .spyOn(e.ports.runs, 'transition')
-      .mockImplementation(async (id, from, changes) => {
+      .mockImplementation(async (id, from, changes, ...rest) => {
         if (changes.status === 'running' && from.includes('waiting')) {
           await e.manager.pause(id);
         }
-        return transition(id, from, changes);
+        return transition(id, from, changes, ...rest);
       });
-    const paused = await e.manager.provideInput(r.id, 'kept');
+    const paused = await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'kept',
+    );
     spy.mockRestore();
     expect(paused.status).toBe('paused');
     expect((await e.manager.resume(r.id)).status).toBe('running');
@@ -686,32 +767,29 @@ describe('wake and timer edges', () => {
       ).loopId,
     );
     vi.spyOn(e.ports.events, 'read').mockRejectedValueOnce(new Error('read failed'));
-    await expect(e.ports.timers.fire(r.id, `timer@${r.waiting!.startedSeq}`)).rejects.toThrow(
+    await expect(e.ports.timers.fire(r.id, `timer@${r.waiting!.waitId}`)).rejects.toThrow(
       'read failed',
     );
     expect((await e.ports.runs.get(r.id))?.status).toBe('waiting');
   });
 
-  it('recovery re-arms a wait spec written before wait identities and timeoutAt', async () => {
+  it('recovery re-arms the recorded timeout with the same observed identity', async () => {
     const e = await createTestEngine();
-    const r = await e.runToIdle(e.publish(inputLoop('legacy-spec')).loopId);
+    const def = inputLoop('persisted-spec');
+    const wait = def.nodes.find((node) => node.kind === 'wait');
+    if (wait?.kind !== 'wait' || wait.config.mode !== 'input') throw new Error('wait fixture');
+    wait.config.timeoutSeconds = 300;
+    const r = await e.runToIdle(e.publish(def).loopId);
     e.manager.stop();
-    const until = '2026-10-02T12:05:00.000Z';
-    const startedSeq = r.waiting!.startedSeq!;
-    await e.ports.runs.update(r.id, { waiting: { nodeId: 'wait', kind: 'input', until } });
-    // Strip the identity from the logged wait too, as a log from before identities would be.
-    for (const event of e.events(r.id))
-      if (event.type === 'run.waiting') delete event.wait.startedSeq;
-    await e.ports.timers.schedule(r.id, 'timeout', new Date(until));
+    await e.ports.timers.cancel(r.id);
     await recover(e);
-    // The identity is derived from the log, the record updated, and the bare key replaced.
-    expect((await e.ports.runs.get(r.id))?.waiting?.startedSeq).toBe(startedSeq);
+    expect((await e.ports.runs.get(r.id))?.waiting).toEqual(r.waiting);
     expect(e.ports.timers.scheduled).toEqual([
-      { runId: r.id, key: `timeout@${startedSeq}`, at: new Date(until) },
+      { runId: r.id, key: 'timeout@' + r.waiting!.waitId, at: new Date(r.waiting!.timeoutAt!) },
     ]);
   });
 
-  it('a bare timeout from before an upgrade cannot wake a later wait (review probe)', async () => {
+  it('an unidentified timeout cannot wake a later wait', async () => {
     const e = await createTestEngine();
     e.manager.stop();
     const def = singleNodeLoop('legacy-timer', {
@@ -737,17 +815,9 @@ describe('wake and timer edges', () => {
     });
     await manager.waitForIdle();
     manager.stop();
-    // Make the parked duration wait look pre-upgrade: no identity, no timeoutAt, bare keys.
+    // Unidentified external rows are stale, never interpreted as current timers.
     const wait = { ...(await manager.getRun(r.id))!.waiting! };
-    delete wait.startedSeq;
-    delete wait.timeoutAt;
     await e.ports.runs.update(r.id, { waiting: wait });
-    for (const event of e.events(r.id)) {
-      if (event.type === 'run.waiting') {
-        delete event.wait.startedSeq;
-        delete event.wait.timeoutAt;
-      }
-    }
     await e.ports.timers.cancel(r.id);
     await e.ports.timers.schedule(r.id, 'timer', new Date('2026-10-02T12:00:01Z'));
     await e.ports.timers.schedule(r.id, 'timeout', new Date('2026-10-02T12:00:02Z'));
@@ -776,8 +846,10 @@ describe('wake and timer edges', () => {
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     const spy = vi
       .spyOn(e.ports.runs, 'transition')
-      .mockImplementation((id, from, changes) =>
-        changes.status === 'running' ? Promise.resolve(undefined) : transition(id, from, changes),
+      .mockImplementation((id, from, changes, ...rest) =>
+        changes.status === 'running'
+          ? Promise.resolve(undefined)
+          : transition(id, from, changes, ...rest),
       );
     await recover(e);
     spy.mockRestore();
@@ -809,7 +881,11 @@ describe('wake and timer edges', () => {
     const run = (await started) as { id: string };
     expect(e.events(run.id)[0]).not.toHaveProperty('subloopVersions');
     await e.settle(run.id);
-    await e.manager.provideInput(run.id, null);
+    await e.manager.provideInput(
+      run.id,
+      (await e.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     expect((await e.settle(run.id)).failure?.code).toBe('SUBLOOP_NOT_FOUND');
     // The other order: a parent pinned first makes the deletion refuse, and remove never runs.
     const other = e.publish(minimalLoop(), { loopId: e.loopId('kept-child') });
@@ -896,7 +972,7 @@ describe('pins and timers (review probes)', () => {
       const recovered = new RunManager(e.ports, e.settings);
       await recovered.start();
       expect(e.ports.timers.scheduled).toHaveLength(1);
-      const seq = r.waiting!.startedSeq!;
+      const seq = r.waiting!.startedSeq;
       await e.ports.timers.fire(r.id, `${kind === 'timer' ? 'heartbeat' : 'timer'}@${seq}`);
       expect((await recovered.getRun(r.id))?.status).toBe('waiting');
       await e.ports.timers.fireDue(e.ports.clock.now());
@@ -925,7 +1001,7 @@ describe('pins and timers (review probes)', () => {
     );
     await Promise.all([
       e.manager.cancel(r.id),
-      e.ports.timers.fire(r.id, `timer@${r.waiting!.startedSeq}`),
+      e.ports.timers.fire(r.id, `timer@${r.waiting!.waitId}`),
     ]);
     await e.manager.waitForIdle();
     expect((await e.ports.runs.get(r.id))?.status).toBe('cancelled');
@@ -981,7 +1057,11 @@ describe('pins and timers (review probes)', () => {
       e.publish(minimalLoop(), { loopId: cv.loopId, version: 2 });
       if (state === 'deleted') e.ports.loops.versions.delete(cv.id);
       else e.ports.loops.versions.set(cv.id, { ...cv, status: 'draft' });
-      await e.manager.provideInput(r.id, null);
+      await e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        null,
+      );
       const final = await e.settle(r.id);
       expect(final.status).toBe('failed');
       expect(final.failure?.code).toBe('SUBLOOP_NOT_FOUND');
@@ -1007,7 +1087,11 @@ describe('pins and timers (review probes)', () => {
     const queued = e.events(r.id)[0];
     if (queued?.type === 'run.queued') delete queued.subloopVersions;
     const newer = e.publish(minimalLoop(), { loopId: cv.loopId, version: 2 });
-    await e.manager.provideInput(r.id, null);
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await e.settle(r.id);
     expect((await e.ports.runs.listChildren(r.id))[0]?.versionId).toBe(newer.id);
   });
@@ -1032,7 +1116,11 @@ describe('deletion against replay and root resolution (fourth round)', () => {
     const child = e.publish(minimalLoop());
     const parent = e.publish(parentOf('replay-race', child.loopId));
     const source = await e.runToIdle(parent.loopId);
-    await e.manager.provideInput(source.id, null);
+    await e.manager.provideInput(
+      source.id,
+      (await e.manager.getRun(source.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     expect((await e.settle(source.id)).status).toBe('succeeded');
     let fork: Promise<{ id: string }> | undefined;
     let registeredDuring = true;
@@ -1040,14 +1128,18 @@ describe('deletion against replay and root resolution (fourth round)', () => {
       fork = e.manager.replay({ runId: source.id, nodeId: 'wait' });
       await new Promise((resolve) => setTimeout(resolve, 20));
       registeredDuring =
-        (await e.ports.runs.listByStatus(['queued', 'running', 'waiting'])).length > 0;
+        (await e.ports.runs.listRunReferences(['queued', 'running', 'waiting'])).length > 0;
       e.ports.loops.versions.delete(child.id);
     });
     expect(deleted).toBe(true);
     expect(registeredDuring).toBe(false);
     const forked = await fork!;
     await e.settle(forked.id);
-    await e.manager.provideInput(forked.id, null);
+    await e.manager.provideInput(
+      forked.id,
+      (await e.manager.getRun(forked.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     // Deletion won: the fork's pinned child is gone, so its subloop fails, as for any reference
     // to a deleted loop.
     expect((await e.settle(forked.id)).failure?.code).toBe('SUBLOOP_NOT_FOUND');
@@ -1058,7 +1150,11 @@ describe('deletion against replay and root resolution (fourth round)', () => {
     const child = e.publish(minimalLoop());
     const parent = e.publish(parentOf('replay-first', child.loopId));
     const source = await e.runToIdle(parent.loopId);
-    await e.manager.provideInput(source.id, null);
+    await e.manager.provideInput(
+      source.id,
+      (await e.manager.getRun(source.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await e.settle(source.id);
     const forked = await e.manager.replay({ runId: source.id, nodeId: 'wait' });
     expect((await e.settle(forked.id)).status).toBe('waiting');
@@ -1096,6 +1192,6 @@ describe('deletion against replay and root resolution (fourth round)', () => {
     ).toBe(true);
     unblock();
     await expect(start).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
-    expect(await e.ports.runs.listByStatus(['queued'])).toHaveLength(0);
+    expect(await e.ports.runs.listRunReferences(['queued'])).toHaveLength(0);
   });
 });

@@ -509,7 +509,10 @@ async function convertDefinition(
     edges.push(...checked.data.edges);
     for (const node of checked.data.nodes)
       if (node.kind === 'decision' && node.config.maxPasses !== undefined)
-        settings.maxNodeVisits = Math.max(Number(settings.maxNodeVisits), node.config.maxPasses);
+        settings.maxNodeVisits = Math.max(
+          Number(settings.maxNodeVisits),
+          Number(node.config.maxPasses),
+        );
   }
 
   // Walk the frozen schemas, then locate exact leaves without treating dots in record keys as separators.

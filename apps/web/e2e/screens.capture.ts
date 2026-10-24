@@ -1,3 +1,4 @@
+import { showWaitingWorker } from './pwa-helpers.js';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Screenshots of every screen and its main states at four widths in both themes (#41, #11).
@@ -538,8 +539,11 @@ const SCREENS: Screen[] = [
     path: () => '/app/loops',
     ready: 'nightly-triage',
     act: async (page) => {
-      await page.evaluate(() => window.graphgoblinPwa?.simulateUpdate());
-      await page.getByText('A new version is available').waitFor();
+      try {
+        await showWaitingWorker(page);
+      } finally {
+        await control(page.request, '/worker/reset');
+      }
     },
   },
   {
@@ -576,7 +580,7 @@ async function shoot(
   const context = await browser.newContext({
     viewport: { width: size.width, height: size.height },
     reducedMotion: 'reduce',
-    serviceWorkers: 'block',
+    serviceWorkers: screen.name === 'update-toast' ? 'allow' : 'block',
   });
   // Contexts made here do not take the config's timeouts: a state that never shows fails the shot.
   context.setDefaultTimeout(20_000);

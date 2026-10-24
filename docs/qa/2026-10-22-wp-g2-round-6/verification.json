@@ -1,0 +1,424 @@
+{
+  "head": "1ab402b851223d19c92f6077965a5634460cb0ae",
+  "runtime": "v22.14.0",
+  "packages": {
+    "infrastructure": {
+      "total": 639,
+      "passed": 630,
+      "failed": 9,
+      "skipped": 0,
+      "success": false,
+      "coverage": {
+        "lines": {
+          "total": 2038,
+          "covered": 2006,
+          "skipped": 0,
+          "pct": 98.42
+        },
+        "statements": {
+          "total": 2310,
+          "covered": 2256,
+          "skipped": 0,
+          "pct": 97.66
+        },
+        "functions": {
+          "total": 517,
+          "covered": 508,
+          "skipped": 0,
+          "pct": 98.25
+        },
+        "branches": {
+          "total": 1648,
+          "covered": 1558,
+          "skipped": 0,
+          "pct": 94.53
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "loopsCoverage": {
+        "lines": {
+          "total": 81,
+          "covered": 81,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 22,
+          "covered": 22,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 90,
+          "covered": 87,
+          "skipped": 0,
+          "pct": 96.66
+        },
+        "branches": {
+          "total": 54,
+          "covered": 50,
+          "skipped": 0,
+          "pct": 92.59
+        }
+      }
+    },
+    "api": {
+      "total": 737,
+      "passed": 730,
+      "failed": 1,
+      "skipped": 6,
+      "success": false,
+      "coverage": {
+        "lines": {
+          "total": 1810,
+          "covered": 1773,
+          "skipped": 0,
+          "pct": 97.95
+        },
+        "statements": {
+          "total": 2023,
+          "covered": 1952,
+          "skipped": 0,
+          "pct": 96.49
+        },
+        "functions": {
+          "total": 405,
+          "covered": 382,
+          "skipped": 0,
+          "pct": 94.32
+        },
+        "branches": {
+          "total": 1355,
+          "covered": 1261,
+          "skipped": 0,
+          "pct": 93.06
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    },
+    "web": {
+      "total": 1488,
+      "passed": 1488,
+      "failed": 0,
+      "skipped": 0,
+      "success": true,
+      "coverage": {
+        "lines": {
+          "total": 7058,
+          "covered": 6983,
+          "skipped": 0,
+          "pct": 98.93
+        },
+        "statements": {
+          "total": 8188,
+          "covered": 8027,
+          "skipped": 0,
+          "pct": 98.03
+        },
+        "functions": {
+          "total": 2204,
+          "covered": 2171,
+          "skipped": 0,
+          "pct": 98.5
+        },
+        "branches": {
+          "total": 7544,
+          "covered": 7157,
+          "skipped": 0,
+          "pct": 94.87
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    }
+  },
+  "failedCases": [
+    {
+      "id": "isolate-01",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/adversarial.test.ts",
+      "title": "6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "fullName": "adversarial infrastructure invariants (forks pool) 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "classification": "D-015 native termination",
+      "originalError": "Error: Test timed out in 30000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/adversarial.test.ts:225:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 30152.079700000002,
+        "error": "Error: Test timed out in 30000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/adversarial.test.ts:225:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      }
+    },
+    {
+      "id": "isolate-02",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/claude/process.test.ts",
+      "title": "kills on deadline and output overflow",
+      "fullName": "owned native Claude process transport kills on deadline and output overflow",
+      "classification": "D-015 native termination",
+      "originalError": "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-7vhZiZ'",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 16032.9712,
+        "error": "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-Uy2Ilc'"
+      }
+    },
+    {
+      "id": "isolate-03",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/claude/process.test.ts",
+      "title": "does not spawn for an already aborted signal and cancels a running process",
+      "fullName": "owned native Claude process transport does not spawn for an already aborted signal and cancels a running process",
+      "classification": "D-015 native termination",
+      "originalError": "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-LwKPiD'",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 5111.6303,
+        "error": "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-hXJ5iC'"
+      }
+    },
+    {
+      "id": "isolate-04",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/claude/process.test.ts",
+      "title": "kills the descendant that a long-lived child started",
+      "fullName": "owned native Claude process transport kills the descendant that a long-lived child started",
+      "classification": "D-015 native termination",
+      "originalError": "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality\n    at <worktree>/packages/infrastructure/src/claude/process.test.ts:146:46\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20\nError: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-k3pdqY'",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 6470.7485,
+        "error": "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality\n    at <worktree>/packages/infrastructure/src/claude/process.test.ts:146:46\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20\nError: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-t4NlQY'"
+      }
+    },
+    {
+      "id": "isolate-05",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "title": "kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "fullName": "ProcessScripts kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "classification": "D-015 native termination",
+      "originalError": "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:194:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 8040.3161,
+        "error": "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:194:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      }
+    },
+    {
+      "id": "isolate-06",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "title": "kills the process tree on timeout",
+      "fullName": "ProcessScripts kills the process tree on timeout",
+      "classification": "D-015 native termination",
+      "originalError": "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:237:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 15022.8953,
+        "error": "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:237:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      }
+    },
+    {
+      "id": "isolate-07",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "title": "kills the process when the signal aborts, including when already aborted",
+      "fullName": "ProcessScripts kills the process when the signal aborts, including when already aborted",
+      "classification": "D-015 native termination",
+      "originalError": "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:248:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 15026.4124,
+        "error": "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:248:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      }
+    },
+    {
+      "id": "isolate-08",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/sqlite/upgrade.test.ts",
+      "title": "refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions",
+      "fullName": "definitions-only format-4 cutover refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions",
+      "classification": "non-D-015",
+      "originalError": "Error: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/sqlite/upgrade.test.ts:302:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+      "isolated": {
+        "selected": 1,
+        "passed": 0,
+        "failed": 1,
+        "durationMs": 20031.876900000003,
+        "error": "Error: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/sqlite/upgrade.test.ts:302:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      }
+    },
+    {
+      "id": "isolate-09",
+      "package": "@graphgoblin/infrastructure",
+      "file": "src/sqlite/upgrade.test.ts",
+      "title": "rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL",
+      "fullName": "definitions-only format-4 cutover rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL",
+      "classification": "non-D-015",
+      "originalError": "Error: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/sqlite/upgrade.test.ts:323:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+      "isolated": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "durationMs": 19331.881,
+        "error": ""
+      }
+    },
+    {
+      "id": "isolate-10",
+      "package": "@graphgoblin/api",
+      "file": "src/adversarial.test.ts",
+      "title": "ADV-008: every advertised route against every scope",
+      "fullName": "adversarial API invariants ADV-008: every advertised route against every scope",
+      "classification": "non-D-015",
+      "originalError": "Error: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/apps/api/src/adversarial.test.ts:178:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3451:26",
+      "isolated": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "durationMs": 4300.772400000002,
+        "error": ""
+      }
+    }
+  ],
+  "gateLedger": [
+    {
+      "command": "format",
+      "exit": 0
+    },
+    {
+      "command": "typecheck",
+      "exit": 0
+    },
+    {
+      "command": "lint",
+      "exit": 0
+    },
+    {
+      "command": "build",
+      "exit": 0
+    },
+    {
+      "command": "native-restart-edge",
+      "exit": 0
+    },
+    {
+      "command": "auditor-process",
+      "exit": 0
+    },
+    {
+      "command": "auditor-expectations",
+      "exit": 1
+    },
+    {
+      "command": "layers",
+      "exit": 0
+    },
+    {
+      "command": "deps",
+      "exit": 0
+    },
+    {
+      "command": "migrations",
+      "exit": 0
+    },
+    {
+      "command": "docs",
+      "exit": 0
+    },
+    {
+      "command": "tokens",
+      "exit": 0
+    },
+    {
+      "command": "format-check",
+      "exit": 0
+    },
+    {
+      "command": "auditor-expectations-corrected",
+      "exit": 0
+    },
+    {
+      "command": "isolation-selector-check",
+      "exit": 0
+    },
+    {
+      "command": "edge-history",
+      "exit": 0
+    },
+    {
+      "command": "auditor-final-process",
+      "exit": -1073741819
+    },
+    {
+      "command": "auditor-final-expectations",
+      "exit": 1
+    },
+    {
+      "command": "auditor-isolated-process",
+      "exit": 0
+    },
+    {
+      "command": "auditor-isolated-expectations",
+      "exit": 0
+    },
+    {
+      "command": "native-final",
+      "exit": 0
+    }
+  ],
+  "edgeHistory": {
+    "channel": "msedge",
+    "total": 3,
+    "passed": 3,
+    "retries": 0,
+    "exit": 0
+  },
+  "auditorFinal": {
+    "exit": -1073741819,
+    "code": "0xC0000005",
+    "recordedCases": 2,
+    "passedFunctionalRecords": 2,
+    "resultsFileWritten": false,
+    "postcheckExit": 1,
+    "cause": "unresolved native crash after recording both cases",
+    "classification": "not D-015",
+    "isolatedExit": 0,
+    "isolatedCases": 2,
+    "isolatedPostcheckExit": 0,
+    "failedRunRetained": true
+  },
+  "nativeFinal": {
+    "exit": 0,
+    "total": 3,
+    "passed": 3,
+    "columns": ["pinned", "initial_thread", "thread_snapshot"]
+  }
+}

@@ -1,5 +1,6 @@
 import {
   ContextThreadSchema,
+  SlugSchema,
   JsonValueSchema,
   ReturnChannelSchema,
   RunEventSchema,
@@ -16,10 +17,12 @@ import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
+import { readinessOperation } from '../readiness-operation.js';
+import { assertRunReadiness, RunReadinessError } from '../run-readiness.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
-import { openApiRegistry } from '../openapi-registry.js';
+import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
 
 const IdParams = z.object({ id: UlidSchema });
 
@@ -77,19 +80,30 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       if (!loop || loop.ownerId !== request.auth.ownerId)
         throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${request.params.id} not found`);
       const body = request.body;
-      const run = await manager.startRun({
-        ownerId: request.auth.ownerId,
-        loopId: loop.id,
-        source: sourceFor(request),
-        caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
-        ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),
-        ...(body.input !== undefined ? { payload: body.input } : {}),
-        ...(body.return ? { returnDefaults: body.return } : {}),
-        ...(body.versionId ? { versionId: body.versionId } : {}),
-        ...(body.allowDraft ? { allowDraft: true } : {}),
-      });
-      reply.status(202);
-      return { run };
+      const versionId = body.versionId || loop.currentVersionId;
+      const readiness = readinessOperation(ports.harnesses);
+      try {
+        const run = await manager.startRun(
+          {
+            ownerId: request.auth.ownerId,
+            loopId: loop.id,
+            source: sourceFor(request),
+            caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
+            ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),
+            ...(body.input !== undefined ? { payload: body.input } : {}),
+            ...(body.return ? { returnDefaults: body.return } : {}),
+            ...(versionId ? { versionId } : {}),
+            ...(body.allowDraft ? { allowDraft: true } : {}),
+          },
+          async (plan) => assertRunReadiness(plan, readiness, await ports.modelCatalog.list()),
+        );
+        reply.status(202);
+        return { run };
+      } catch (error) {
+        if (error instanceof RunReadinessError)
+          return problem(reply, 422, 'HARNESS_NOT_READY', error.message, error.issues);
+        throw error;
+      }
     },
   );
 
@@ -99,30 +113,24 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'List runs with filters and stable newest-first paging',
-        querystring: z
-          .strictObject({
-            loopId: UlidSchema.optional(),
-            status: z
-              .string()
-              .refine(
-                (value) =>
-                  value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
-                'Use comma-separated run statuses.',
-              )
-              .optional(),
-            parent: z.union([UlidSchema, z.literal('none')]).optional(),
-            before: TimestampSchema.optional(),
-            cursor: z.string().optional().register(openApiRegistry, {
-              description: 'Opaque run cursor, at most 256 base64url characters.',
-              // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
-              maxLength: 256,
-            }),
-            limit: z.coerce.number().int().min(1).max(500).optional(),
-          })
-          .superRefine((query, ctx) => {
-            if (query.cursor !== undefined && query.before !== undefined)
-              ctx.addIssue({ code: 'custom', message: 'Use either cursor or before.' });
+        querystring: z.strictObject({
+          loopId: UlidSchema.optional(),
+          status: z
+            .string()
+            .refine(
+              (value) => value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
+              'Use comma-separated run statuses.',
+            )
+            .optional(),
+          parent: z.union([UlidSchema, z.literal('none')]).optional(),
+          before: TimestampSchema.optional(),
+          cursor: z.string().optional().register(openApiRegistry, {
+            description: 'Opaque run cursor, at most 256 base64url characters.',
+            // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
+            maxLength: 256,
           }),
+          limit: z.coerce.number().int().min(1).max(500).optional(),
+        }),
         response: {
           200: z.object({ items: z.array(RunRecordSchema), nextCursor: z.string().nullable() }),
         },
@@ -198,7 +206,11 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           limit: z.coerce.number().int().min(1).max(1000).optional(),
         }),
         response: {
-          200: z.object({ items: z.array(RunEventSchema), nextAfter: z.number().int() }),
+          200: z.object({
+            items: z.array(RunEventSchema),
+            nextAfter: z.number().int(),
+            hasMore: z.boolean(),
+          }),
         },
       },
     },
@@ -208,6 +220,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const after = request.query.after ?? (Number.isFinite(lastEventId) ? lastEventId : 0);
       if ((request.headers.accept ?? '').includes('text/event-stream')) {
         await streamRunEvents(request, reply, repos.events, request.params.id, after, {
+          closeSignal: container.shutdown.closing.signal,
           isTerminal: async () => {
             const run = await repos.runs.get(request.params.id);
             return run !== undefined && isTerminal(run.status);
@@ -215,8 +228,8 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         });
         return reply;
       }
-      const items = await repos.events.read(request.params.id, after, request.query.limit ?? 500);
-      return { items, nextAfter: items.length ? (items[items.length - 1]?.seq ?? after) : after };
+      const limit = request.query.limit ?? 500;
+      return repos.events.page(request.params.id, after, limit);
     },
   );
 
@@ -245,13 +258,18 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'Answer a wait node in input mode',
         params: IdParams,
-        body: z.object({ input: JsonValueSchema }),
-        response: { 200: RunRecordSchema },
+        body: z.strictObject({ waitId: z.string().min(1).max(64), input: JsonValueSchema }),
+        response: { 200: RunRecordSchema, 409: WaitConflictSchema },
       },
     },
     async (request) => {
       await ownedRun(request, request.params.id);
-      return manager.provideInput(request.params.id, request.body.input, request.auth.actor);
+      return manager.provideInput(
+        request.params.id,
+        request.body.waitId,
+        request.body.input,
+        request.auth.actor,
+      );
     },
   );
 
@@ -261,14 +279,25 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'Deliver a named signal',
-        params: z.object({ id: UlidSchema, name: z.string() }),
-        body: z.object({ payload: JsonValueSchema.optional() }).default({}),
-        response: { 200: z.object({ run: RunRecordSchema, woke: z.boolean() }) },
+        params: z.object({ id: UlidSchema, name: SlugSchema }),
+        body: z.strictObject({
+          waitId: z.string().min(1).max(64),
+          payload: JsonValueSchema.optional(),
+        }),
+        response: {
+          200: z.object({ run: RunRecordSchema, woke: z.boolean() }),
+          409: WaitConflictSchema,
+        },
       },
     },
     async (request) => {
       await ownedRun(request, request.params.id);
-      return manager.signal(request.params.id, request.params.name, request.body.payload ?? null);
+      return manager.signal(
+        request.params.id,
+        request.params.name,
+        request.body.waitId,
+        request.body.payload ?? null,
+      );
     },
   );
 

@@ -35,6 +35,58 @@ function codexUsage(inputTokens: number) {
 }
 
 describe('CodexHarness.start', () => {
+  it.each(
+    [false, true].flatMap((retriable) =>
+      (['sync', 'promise', 'iterator'] as const).map((boundary) => ({ retriable, boundary })),
+    ),
+  )(
+    'preserves typed missing-session metadata at $boundary with retriable=$retriable',
+    async ({ retriable, boundary }) => {
+      const error = Object.assign(new Error('Recorded conversation no longer exists'), {
+        code: 'HARNESS_SESSION_MISSING',
+        retriable,
+      });
+      const harness = new CodexHarness({
+        clientFactory: () => ({
+          startThread: () => {
+            throw new Error('Expected resume');
+          },
+          resumeThread: () => {
+            if (boundary === 'sync') throw error;
+            return {
+              runStreamed: () =>
+                boundary === 'promise'
+                  ? Promise.reject(error)
+                  : Promise.resolve({
+                      events: (async function* () {
+                        yield await Promise.reject(error);
+                      })(),
+                    }),
+            };
+          },
+        }),
+      });
+      if (boundary === 'sync') {
+        expect(() => harness.resume('missing-id', request(), new AbortController().signal)).toThrow(
+          error,
+        );
+        return;
+      }
+      const session = harness.resume('missing-id', request(), new AbortController().signal);
+      const events = await drain(session);
+      expect(events.at(-1)).toMatchObject({
+        type: 'error',
+        code: 'HARNESS_SESSION_MISSING',
+        submission: 'session-missing',
+        retriable,
+      });
+      await expect(session.result).rejects.toMatchObject({
+        code: 'HARNESS_SESSION_MISSING',
+        retriable,
+      });
+    },
+  );
+
   it('replays a message turn: session first, items, usage, turn-complete, result', async () => {
     const codex = ReplayCodex.fromFixtures('message');
     const harness = createCodexHarness({ clientFactory: codex.factory });
@@ -45,6 +97,7 @@ describe('CodexHarness.start', () => {
     expect(events.map((e) => e.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'item',
       'usage',
       'turn-complete',
@@ -136,6 +189,7 @@ describe('CodexHarness.start', () => {
     expect(types).toEqual([
       'session',
       'error',
+      'submitted',
       'command',
       'file-change',
       'message',
@@ -171,7 +225,7 @@ describe('CodexHarness.start', () => {
     const harness = new CodexHarness({ clientFactory: codex.factory, logger: log });
     const session = harness.start(request(), new AbortController().signal);
     const events = await drain(session);
-    expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'error']);
+    expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted', 'error']);
     expect(events.at(-1)).toMatchObject({
       type: 'error',
       code: 'HARNESS_TURN_FAILED',
@@ -312,6 +366,33 @@ describe('CodexHarness.resume', () => {
 });
 
 describe('cancellation', () => {
+  it('preserves typed unconfirmed termination when cancellation is in flight', async () => {
+    const controller = new AbortController();
+    const harness = new CodexHarness({
+      clientFactory: () => ({
+        startThread: () => ({
+          runStreamed: () => {
+            controller.abort();
+            return Promise.reject(
+              Object.assign(new Error('Process still alive'), {
+                code: 'HARNESS_TERMINATION_UNCONFIRMED',
+                retriable: false,
+              }),
+            );
+          },
+        }),
+        resumeThread: () => {
+          throw new Error('Expected start');
+        },
+      }),
+    });
+    const session = harness.start(request(), controller.signal);
+    expect((await drain(session)).at(-1)).toMatchObject({
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      submission: 'delivery-uncertain',
+    });
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+  });
   it('aborts the SDK call when the caller signal fires and rejects with an AbortError', async () => {
     const codex = new ReplayCodex({
       events: loadFixture('command-and-file-change').events,
@@ -388,7 +469,16 @@ describe('preflight', () => {
   const runner =
     (responses: Record<string, Awaited<ReturnType<CliRunner>>>): CliRunner =>
     (_cli, args) =>
-      Promise.resolve(responses[args.join(' ')] ?? { code: 1, output: '' });
+      Promise.resolve(
+        responses[args.join(' ')] ??
+          (args.includes('--help')
+            ? {
+                code: 0,
+                output:
+                  '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
+              }
+            : { code: 1, output: '' }),
+      );
 
   it('reports version and login for a healthy install', async () => {
     const harness = new CodexHarness({
@@ -399,6 +489,7 @@ describe('preflight', () => {
       }),
     });
     expect(await harness.preflight()).toEqual({
+      state: 'ready',
       ok: true,
       version: '0.160.0',
       authenticated: true,
@@ -409,13 +500,18 @@ describe('preflight', () => {
   it('reports a logged-out CLI as a problem', async () => {
     const harness = new CodexHarness({
       cliRunner: runner({
-        '--version': { code: 0, output: 'codex dev' },
+        '--version': { code: 0, output: 'codex-cli 0.160.0' },
         'login status': { code: 1, output: 'Not logged in' },
       }),
     });
     const result = await harness.preflight();
-    expect(result).toMatchObject({ ok: false, version: 'codex dev', authenticated: false });
-    expect(result.problems[0]).toMatch(/not logged in/);
+    expect(result).toMatchObject({
+      state: 'auth',
+      ok: false,
+      version: '0.160.0',
+      authenticated: false,
+    });
+    expect(result.problems[0]).toMatch(/codex login/);
   });
 
   it('reports a login status call that could not run', async () => {
@@ -425,9 +521,13 @@ describe('preflight', () => {
         'login status': { code: null, output: '', spawnError: 'timed out after 10 ms' },
       }),
     });
-    expect((await harness.preflight()).problems).toEqual([
-      'codex login status failed: timed out after 10 ms',
-    ]);
+    expect(await harness.preflight()).toMatchObject({
+      state: 'unknown',
+      ok: false,
+      problems: [
+        'Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.',
+      ],
+    });
   });
 
   it('reports a missing binary without throwing', async () => {
@@ -436,28 +536,25 @@ describe('preflight', () => {
       cliRunner: runner({ '--version': { code: null, output: '', spawnError: 'spawn ENOENT' } }),
     });
     const result = await harness.preflight();
-    expect(result).toEqual({
-      ok: false,
-      authenticated: false,
-      problems: ['Codex CLI could not be run (C:/missing/codex.exe): spawn ENOENT'],
-    });
+    expect(result).toMatchObject({ state: 'cli-missing', ok: false });
+    expect(result).not.toHaveProperty('authenticated');
     const failing = new CodexHarness({
       codexBinary: 'codex.mjs',
       cliRunner: runner({ '--version': { code: 2, output: '' } }),
     });
-    expect((await failing.preflight()).problems[0]).toMatch(/exit 2$/);
+    expect((await failing.preflight()).problems[0]).toMatch(/could not be confirmed/);
     const noisy = new CodexHarness({
       cliRunner: runner({ '--version': { code: 2, output: 'bad flag' } }),
     });
-    expect((await noisy.preflight()).problems[0]).toMatch(/bad flag$/);
+    expect((await noisy.preflight()).problems[0]).toMatch(/could not be confirmed/);
   });
 
   it('turns an unexpected runner failure into a problem', async () => {
     const harness = new CodexHarness({ cliRunner: () => Promise.reject(new Error('boom')) });
     expect(await harness.preflight()).toEqual({
+      state: 'unknown',
       ok: false,
-      authenticated: false,
-      problems: ['preflight failed: boom'],
+      problems: [expect.stringMatching(/could not be confirmed/)],
     });
   });
 });

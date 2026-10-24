@@ -1,0 +1,26 @@
+node : node:internal/deps/undici/undici:13502
+At line:17 char:6
++ '@ | node --input-type=module *> round6-audit-crash-triage.log
++      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/deps/undici/undici:13502:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+      Error.captureStackTrace(err);
+            ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async 
+file:///<worktree>/[eval1]:6:20 {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:5620
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 5620
+  }
+}
+
+Node.js v22.14.0

@@ -85,7 +85,7 @@ export const ChoiceConfigSchema = z
       .max(64)
       .meta(
         field(
-          'Two to sixty-four uniquely labelled options, each with a stable id and a nonblank criterion.',
+          'Two to sixty-four uniquely labelled options, each with a unique stable id (its output port) and a nonblank criterion.',
         ),
       ),
   })
@@ -115,7 +115,15 @@ const NoulFields = {
 export const NoulSpecSchema = z.strictObject(NoulFields);
 export type NoulSpec = z.infer<typeof NoulSpecSchema>;
 export const NoulConfigSchema = z
-  .strictObject({ ...NoulFields, true: ChoiceOptionSchema, false: ChoiceOptionSchema })
+  .strictObject({
+    ...NoulFields,
+    true: ChoiceOptionSchema.meta(
+      field('True side: its id is an output port; the two sides need different ids and labels.'),
+    ),
+    false: ChoiceOptionSchema.meta(
+      field('False side: its id is an output port; the two sides need different ids and labels.'),
+    ),
+  })
   .superRefine((answer, ctx) => {
     for (const key of ['id', 'label'] as const) {
       if (answer.true[key] === answer.false[key])
@@ -152,7 +160,11 @@ export const ScoreConfigSchema = z
       .array(ScoreBandSchema)
       .min(1)
       .max(64)
-      .meta(field('Stable bands covering the entire rubric.')),
+      .meta(
+        field(
+          'One to sixty-four bands with unique ids (output ports) and unique labels, covering the entire rubric without gaps or overlap.',
+        ),
+      ),
   })
   .superRefine((answer, ctx) => {
     for (const key of ['id', 'label'] as const) {
@@ -225,8 +237,15 @@ export type DecisionContext = z.infer<typeof DecisionContextSchema>;
 export const RouteIdSchema = ChoiceOptionIdSchema;
 export type RouteId = z.infer<typeof RouteIdSchema>;
 export const RouteDeclarationSchema = z.strictObject({
-  id: RouteIdSchema,
-  label: z.string().trim().min(1).max(120),
+  id: RouteIdSchema.meta(
+    field('Stable route id and output port; changing display order does not change the route.'),
+  ),
+  label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .meta(field('Unique readable route label, shown on the canvas and in Connections.')),
   repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
 });
 export type RouteDeclaration = z.infer<typeof RouteDeclarationSchema>;
@@ -263,9 +282,10 @@ const ExpressionSourceSchema = z
         message: 'expression must contain source',
       });
   });
-type GateConfig = { maxPasses?: number | undefined; maxRunTimeSeconds?: number | undefined } & (
-  { routes: RouteDeclaration[] } | { answer: ClassifierAnswerConfig }
-);
+type GateConfig = {
+  maxPasses?: number | null | undefined;
+  maxRunTimeSeconds?: number | undefined;
+} & ({ routes: RouteDeclaration[] } | { answer: ClassifierAnswerConfig });
 function gateLimitsIssues(config: GateConfig, ctx: z.RefinementCtx): void {
   const routes =
     'routes' in config
@@ -313,11 +333,12 @@ const GateLimits = {
     .int()
     .positive()
     .max(10_000)
+    .nullable()
     .optional()
     .meta(
-      field(
-        'Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.',
-      ),
+      field('Required with a repeat route. Null means unlimited passes.', {
+        control: 'execution-limit',
+      }),
     ),
   maxRunTimeSeconds: z
     .number()
@@ -334,20 +355,29 @@ const GateLimits = {
 export const ExpressionDecisionConfigSchema = ExpressionSourceSchema.safeExtend({
   ...GateLimits,
   routes: RouteDeclarationsSchema.meta(
-    field('Two to sixty-four stable readable routes.', { jsonEditor: true }),
+    field(
+      'Two to sixty-four routes with unique ids and unique labels; the expression returns one id.',
+      { jsonEditor: true },
+    ),
   ),
 }).superRefine(gateLimitsIssues);
 const LlmSourceSchema = z.strictObject({
   kind: z.literal('llm').meta(field('Use a structured Codex evaluation.')),
   instructions: TemplateSchema.meta(field('Liquid instructions rendered against the full thread.')),
   harness: z.literal('codex').meta(field('Implemented structured evaluator harness.')),
-  model: ModelSelectionSchema.meta(field('Inherit or explicitly select the model.')),
-  effort: EffortSelectionSchema.meta(field('Inherit or explicitly select reasoning effort.')),
+  model: ModelSelectionSchema.meta(
+    field('Inherit or explicitly select the model.', { control: 'model-selection' }),
+  ),
+  effort: EffortSelectionSchema.meta(
+    field('Inherit or explicitly select reasoning effort.', { control: 'effort-selection' }),
+  ),
 });
 export const LlmDecisionConfigSchema = LlmSourceSchema.extend({
   ...GateLimits,
   routes: RouteDeclarationsSchema.meta(
-    field('Declared stable route ids and readable labels.', { jsonEditor: true }),
+    field('Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.', {
+      jsonEditor: true,
+    }),
   ),
   context: DecisionContextSchema.prefault({}).meta(
     field('Selected provider context.', { context: true, jsonEditor: true }),
@@ -575,7 +605,7 @@ export const GateEvidenceSchema = z.strictObject({
   previousPasses: z.number().int().positive(),
   passes: z.number().int().positive(),
   repeatRouteId: RouteIdSchema,
-  maxPasses: z.number().int().positive().max(10_000),
+  maxPasses: z.number().int().positive().max(10_000).nullable(),
   maxRunTimeSeconds: z
     .number()
     .int()
@@ -600,15 +630,15 @@ export const DecisionPayloadSchema = EvaluationFactSchema.extend({
     const repeat = payload.portId === gate.repeatRouteId;
     const limit =
       repeat || payload.portId === LIMIT_REACHED_PORT_ID
-        ? gate.previousPasses >= gate.maxPasses
+        ? gate.maxPasses !== null && gate.previousPasses >= gate.maxPasses
           ? 'max-passes'
           : gate.maxRunTimeSeconds !== undefined && gate.elapsedSeconds >= gate.maxRunTimeSeconds
             ? 'max-run-time'
             : null
         : null;
     if (
-      gate.previousPasses > gate.maxPasses ||
-      gate.passes > gate.maxPasses ||
+      (gate.maxPasses !== null &&
+        (gate.previousPasses > gate.maxPasses || gate.passes > gate.maxPasses)) ||
       gate.limit !== limit ||
       (payload.portId === LIMIT_REACHED_PORT_ID) !== (limit !== null) ||
       gate.passes !== gate.previousPasses + (repeat && !limit ? 1 : 0)

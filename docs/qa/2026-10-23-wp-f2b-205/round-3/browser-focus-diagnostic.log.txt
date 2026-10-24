@@ -1,0 +1,64 @@
+COMMAND: pnpm.cmd exec playwright test e2e/model-effort.spec.ts --grep open inherited labels refresh --retries=0
+NODE: v22.14.0
+
+Running 1 test using 1 worker
+
+pnpm.cmd : (node:60496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:14 char:3
++   pnpm.cmd @arguments 2>&1 | Out-File -Encoding UTF8 -Append $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:60496) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:60496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+editor GG205FOCUS {"event":"focus","target":"DIV","visible":"visible","focused":true}
+editor GG205FOCUS {"event":"focusin","target":"DIV","visible":"visible","focused":true}
+editor GG205FOCUS {"event":"blur","target":"DIV","visible":"visible","focused":true}
+editor GG205FOCUS {"event":"focusout","target":"DIV","visible":"visible","focused":true}
+editor GG205FOCUS {"event":"focus","target":"H2","visible":"visible","focused":true}
+editor GG205FOCUS {"event":"focusin","target":"H2","visible":"visible","focused":true}
+GG205STATES {"editor":{"visible":"visible","focused":true},"settings":{"visible":"visible","focused":true},"saved":{"defaults":{"byHarness":{"codex":{"model":"gpt-6.1-sol","effort":"high"}}}}}
+editor GG205FOCUS {"event":"visibilitychange","target":"window","visible":"hidden","focused":true}
+  x  1 [chromium] › e2e\model-effort.spec.ts:28:1 › open inherited labels refresh after Settings in another tab and match the next request (16.2s)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:28:1 › open inherited labels refresh after Settings in another tab and match the next request 
+
+    Error: expect(locator).toHaveAccessibleDescription(expected) failed
+
+    Locator: getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected pattern: /Default model: gpt-6.1-sol/
+    Received string:  "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+    Timeout: 10000ms
+
+    Call log:
+      - Expect "toHaveAccessibleDescription" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_q_" aria-describedby="_r_q_-help _r_q_-default" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 …>…</select>
+           - unexpected value "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+
+
+      70 |     saved: await (await request.get(url + '/settings')).json(),
+      71 |   }));
+    > 72 |   await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+         |                                                             ^
+      73 |     /Default model: gpt-6.1-sol/,
+      74 |   );
+      75 |   await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-effort.spec.ts:72:61
+
+    Error Context: test-results\model-effort-open-inherite-37380--and-match-the-next-request-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-open-inherite-37380--and-match-the-next-request-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-open-inherite-37380--and-match-the-next-request-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\model-effort.spec.ts:28:1 › open inherited labels refresh after Settings in another tab and match the next request 
+RESULT: exit 1; seconds 77.71

@@ -14,13 +14,14 @@ GraphGoblin is a pnpm + Turborepo monorepo in TypeScript. Read `docs/README.md` 
 
 Layer rules are enforced by `pnpm check:layers` (declared workspace dependencies) and `pnpm check:deps` (dependency-cruiser). Reach other packages only through their `@graphgoblin/*` entry points.
 
-dependency-cruiser 18 refuses Node 23. Where the default Node is 23, run `check:deps` with the nvm Node 22 binary without switching versions: `& "$env:APPDATA\nvm\v22.14.0\node.exe" node_modules/dependency-cruiser/bin/dependency-cruiser.mjs packages apps --config .dependency-cruiser.cjs` (PowerShell; from Git Bash use `"$APPDATA/nvm/v22.14.0/node.exe"`).
+Node 22 LTS is the supported runtime for installation, development, gates and built apps; other majors are unsupported. Select it for the whole shell before running commands: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` in PowerShell, or `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` in Git Bash on this Windows host. Confirm `node --version` reports `v22.x`. `.nvmrc`, CI and the container use this major; root `engines.node` and `devEngines.runtime` declare `^22`, with `onFail: error` refusing every pnpm command on other majors. Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses this check, and Turbo's cache key ignores the running Node version. See ADR-0040 for the decision, verification and dependency patch-floor qualification gap.
 
 ## Rules
 
 - Every package must keep unit-test coverage above 90% of lines and branches. `pnpm test:coverage` fails otherwise. Do not lower thresholds or add exclusions beyond generated code.
 - `pnpm typecheck` runs `tsc -b tsconfig.build.json && tsc -p tsconfig.json` in every package, so test files and fixtures are type-checked too; fix their types rather than casting to `any`.
 - Tests, lint, and typechecking need no prior build: every workspace package lists a `development` export condition pointing at its TypeScript source, which TypeScript, Vitest, and ESLint resolve. Node at runtime loads `dist/`, so run `pnpm build` before starting an app. A new workspace package must follow the same export-map shape.
+- API subprocess tests build the API first through Turbo's `test` and `test:coverage` task dependencies.
 - Only permissive licences (MIT, Apache-2.0, BSD, ISC). `pnpm check:licenses` enforces the allowlist in `tooling/license-allowlist.json`; add a line to `docs/research/licenses.md` for every new dependency.
 - Relative imports use explicit `.js` extensions (NodeNext). Zod 4: use `.prefault({})` for object defaults whose fields have defaults.
 - Keep docs in sync: a behaviour change updates the relevant numbered doc; a decision change adds an ADR.

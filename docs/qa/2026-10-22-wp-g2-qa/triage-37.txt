@@ -1,0 +1,48 @@
+PACKAGE: web
+FILE: src/forms/advanced.test.tsx
+TEST: basic fields first, advanced ones behind a disclosure > keeps every mutate field editable, down to nested leaves, once Advanced and items are open
+COMMAND: pnpm.cmd --filter @graphgoblin/web exec vitest run src/forms/advanced.test.tsx --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+FILTER_REGEX: keeps.*every.*mutate.*field.*editable.*down.*to.*nested.*leaves.*once.*Advanced.*and.*items.*are.*open
+
+ RUN  v5.0.3 <worktree>/apps/web
+
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > trigger draws every field as before, in schema order, with no Advanced section
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > wait draws every field as before, in schema order, with no Advanced section
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > heartbeat draws every field as before, in schema order, with no Advanced section
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > exit draws every field as before, in schema order, with no Advanced section
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > inference shows its basic set, the rest under a collapsed Advanced
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > script shows its basic set, the rest under a collapsed Advanced
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > subloop shows its basic set, the rest under a collapsed Advanced
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps mutate to its operations, with no Advanced section
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every trigger field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every decision field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every inference field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every script field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every mutate field editable, down to nested leaves, once Advanced and items are open 3011ms
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every subloop field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every wait field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every heartbeat field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every exit field editable, down to nested leaves, once Advanced and items are open
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > expects the nested leaves and variant fields, and would notice one not drawn
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > labels split fields by their title, and shows descriptions as help with code
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > says how many advanced fields hold a value of their own, and follows edits
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > flags problems inside a collapsed Advanced: issues and unparsed text
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > flags a problem on an advanced decision field and shows it there
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > counts errors found outside the form, such as an expression that does not compile
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > counts an explicitly empty JSON Schema as set: it turns structured output on
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > says "1 error" for one problem
+ ? src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > opens Advanced when an issue is followed to a field inside it
+ ? src/forms/advanced.test.tsx > advanced fields without a group > sit in the panel without a heading, ahead of the groups that follow them
+ ? src/forms/advanced.test.tsx > collapsible operations > shows each operation collapsed to its kind and path, and opens it on request
+ ? src/forms/advanced.test.tsx > collapsible operations > opens an added operation with focus on its first control, and flags problems when collapsed
+ ? src/forms/advanced.test.tsx > collapsible operations > collapses the transforms of an inference node the same way
+ ? src/forms/advanced.test.tsx > registered controls > draws a field with the control registered under its metadata name, else as usual
+ ? src/forms/advanced.test.tsx > registered controls > draws the default renderer for a name the registry only inherits, such as toString
+ ? src/forms/advanced.test.tsx > registered controls > draws the default renderer when no controls are given
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 32 skipped (33)
+   Start at  23:08:28
+   Duration  11.77s (tests 26%, environment 25%, import 21%, transform 19%, setup 9%)
+
+EXIT: 0

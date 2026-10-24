@@ -1,0 +1,1 @@
+CREATE INDEX `runs_loop_owner_history_idx` ON `runs` (`loop_id`,`owner_id`,`created_at`,`id`);

@@ -1,0 +1,47 @@
+{
+  "head": "a3dd50ea74c4bbcc926ec43a37134737ce600f07",
+  "results": [
+    {
+      "name": "five-second parent deadline cancels input-wait child",
+      "status": "PASS",
+      "actual": {
+        "parent": {
+          "failure": {
+            "code": "RUN_DEADLINE_EXCEEDED",
+            "message": "The run exceeded its configured elapsed execution deadline",
+            "resumable": false
+          },
+          "elapsedMs": 5537
+        },
+        "child": {
+          "status": "cancelled",
+          "pin": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          }
+        }
+      }
+    },
+    {
+      "name": "inspector shows authored pinned limits and absolute deadline at 390px",
+      "status": "PASS",
+      "actual": {
+        "card": "Maximum node visits: 10. Run deadline: 5 seconds.",
+        "absoluteDeadline": "2026-10-22T05:57:57.659Z"
+      }
+    }
+  ],
+  "lifecycle": [
+    {
+      "pid": 39004,
+      "exitCode": 0,
+      "confirmedExited": true,
+      "forced": false
+    }
+  ],
+  "cleanup": {
+    "store": "gg-qa-243-r3-child-y2zKtU",
+    "processConfirmedExited": true,
+    "removed": true
+  }
+}

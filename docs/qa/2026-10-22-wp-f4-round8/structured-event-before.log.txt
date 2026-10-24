@@ -1,0 +1,56 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/handlers/inference-boundaries.test.ts (22 tests | 2 failed | 20 skipped) 152ms
+   × preserves later codex HARNESS_DELIVERY_UNCERTAIN at later-event 136ms
+   × preserves later claude HARNESS_DELIVERY_UNCERTAIN at later-event 13ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/in ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-boundaries.test.ts > preserves later codex HARNESS_DELIVERY_UNCERTAIN at later-event
+ FAIL  src/handlers/inference-boundaries.test.ts > preserves later claude HARNESS_DELIVERY_UNCERTAIN at later-event
+AssertionError: expected { …(5) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_DELIVERY_UNCERTAIN",
++   "code": "HARNESS_NOT_AUTHENTICATED",
+    "inference": {
+      "promptKind": "repair",
+-     "submission": "delivery-uncertain",
++     "submission": "definitely-not-submitted",
+    },
+    "resumable": true,
+  }
+
+ ❯ src/handlers/inference-boundaries.test.ts:132:27
+    130|       const wrapper = boundary === 'wrapper';
+    131|       expect(run.status).toBe('failed');
+    132|       expect(run.failure).toMatchObject({
+       |                           ^
+    133|         code: wrapper ? 'HARNESS_NOT_AUTHENTICATED' : code,
+    134|         resumable: wrapper || boundary === 'later-event',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 20 skipped (22)
+   Start at  18:16:52
+   Duration  4.43s (import 52%, transform 44%, tests 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

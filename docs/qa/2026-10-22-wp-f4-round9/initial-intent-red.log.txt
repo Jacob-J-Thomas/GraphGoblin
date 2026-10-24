@@ -1,0 +1,85 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts (872 tests | 4 failed | 868 skipped) 159ms
+   × retains initial codex intent afterCommit=false across an unavailable reconciliation read 83ms
+   × retains initial codex intent afterCommit=true across an unavailable reconciliation read 23ms
+   × retains initial claude intent afterCommit=false across an unavailable reconciliation read 23ms
+   × retains initial claude intent afterCommit=true across an unavailable reconciliation read 22ms
+pnpm.cmd : 
+At line:34 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > retains initial codex intent afterCommit=false across an 
+unavailable reconciliation read
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > retains initial claude intent afterCommit=false across an 
+unavailable reconciliation read
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > retains initial claude intent afterCommit=true across an 
+unavailable reconciliation read
+AssertionError: expected { code: 'INTERNAL_ERROR', …(2) } to match object { code: 'INTERNAL_ERROR', …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "inference": {
+-     "promptKind": "authored",
+-     "submission": "definitely-not-submitted",
+-   },
+  }
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts:209:28
+    207|     const run=await manager.startRun({ownerId:'local',loopId:v.loopId,…
+    208|     const failed=(await e.ports.runs.get(run.id))!;
+    209|     expect(failed.failure).toMatchObject({code:'INTERNAL_ERROR',infere…
+       |                            ^
+    210|     expect(fake.started).toHaveLength(0);
+    211|     await manager.resume(run.id);await manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > retains initial codex intent afterCommit=true across an 
+unavailable reconciliation read
+AssertionError: expected { code: 'INTERNAL_ERROR', …(2) } to match object { code: 'INTERNAL_ERROR', …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "inference": {
+-     "promptKind": "authored",
+-     "submission": "definitely-not-submitted",
+-   },
+  }
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts:209:28
+    207|     const run=await manager.startRun({ownerId:'local',loopId:v.loopId,…
+    208|     const failed=(await e.ports.runs.get(run.id))!;
+    209|     expect(failed.failure).toMatchObject({code:'INTERNAL_ERROR',infere…
+       |                            ^
+    210|     expect(fake.started).toHaveLength(0);
+    211|     await manager.resume(run.id);await manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 868 skipped (872)
+   Start at  20:11:24
+   Duration  3.22s (import 52%, transform 42%, tests 5%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

@@ -44,6 +44,23 @@ function gateLoop(): LoopDefinitionInput {
 const parse = (input: LoopDefinitionInput) => LoopDefinitionSchema.parse(input);
 
 describe('decision gate graph rules', () => {
+  it.each([null, 10])(
+    'compares unlimited passes only against a finite visit cap %s',
+    (maxNodeVisits) => {
+      const input = gateLoop();
+      input.settings = { maxNodeVisits };
+      const gate = input.nodes[1];
+      if (!gate || gate.kind !== 'decision' || gate.config.kind !== 'expression')
+        throw new Error('fixture');
+      gate.config.maxPasses = null;
+      const warnings = validateLoop(parse(input)).filter(
+        (issue) => issue.code === 'GATE_PASSES_ABOVE_VISIT_CAP',
+      );
+      expect(warnings).toHaveLength(maxNodeVisits === null ? 0 : 1);
+      if (maxNodeVisits !== null) expect(warnings[0]?.message).toContain('unlimited');
+    },
+  );
+
   it.each([2, 3, 4])('compares maximum passes with the node visit cap %s', (maxNodeVisits) => {
     const input = gateLoop();
     input.settings = { maxNodeVisits };

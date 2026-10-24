@@ -8,7 +8,6 @@ import {
   contextLayout,
   isCustomized,
   isOwned,
-  labelOf,
   placementsOf,
   type FormLayout,
   type LayoutItem,
@@ -41,9 +40,15 @@ describe('formLayout', () => {
 
   it('places inference fields: basic first, a split object, groups by first appearance', () => {
     const layout = formLayout(shape(NodeConfigSchemas.inference), '', undefined, true);
-    expect(names(layout.basic)).toEqual(['harness', 'session', 'prompt', 'harnessOptions.sandbox']);
+    expect(names(layout.basic)).toEqual([
+      'harness',
+      'model',
+      'effort',
+      'session',
+      'prompt',
+      'harnessOptions.sandbox',
+    ]);
     expect(sections(layout)).toEqual([
-      ['Model', ['model', 'effort']],
       [
         'Harness options',
         [
@@ -63,10 +68,10 @@ describe('formLayout', () => {
     // A split object's blocks: the basic one shows its own message, the advanced one does not.
     const sandbox = layout.basic.find(isOwned);
     expect(sandbox).toMatchObject({ owner: 'harnessOptions', showsError: true });
-    const harness = layout.advanced[1]!.items.find(isOwned);
+    const harness = layout.advanced[0]!.items.find(isOwned);
     expect(harness).toMatchObject({ owner: 'harnessOptions', showsError: false });
     // All of `output` is advanced: its first block shows its message.
-    expect(layout.advanced[2]!.items[0]).toMatchObject({ owner: 'output', showsError: true });
+    expect(layout.advanced[1]!.items[0]).toMatchObject({ owner: 'output', showsError: true });
     const context = contextLayout(NodeConfigSchemas.inference, {});
     expect(names(context.basic)).toEqual(['input']);
     expect(sections(context)).toEqual([['Files', ['contextFiles']]]);
@@ -194,10 +199,14 @@ describe('formLayout', () => {
   });
 
   it('reads labels from titles', () => {
-    expect(labelOf('maxIterations', z.number())).toBe('Max iterations');
-    expect(labelOf('mode', z.string().meta(field('M.', { title: 'Input mode' })))).toBe(
-      'Input mode',
-    );
+    const layout = formLayout({
+      maxIterations: z.number(),
+      mode: z.string().meta(field('M.', { title: 'Input mode' })),
+    });
+    expect(placementsOf(layout.basic).map(({ name, label }) => ({ name, label }))).toEqual([
+      { name: 'maxIterations', label: 'Max iterations' },
+      { name: 'mode', label: 'Input mode' },
+    ]);
   });
 });
 

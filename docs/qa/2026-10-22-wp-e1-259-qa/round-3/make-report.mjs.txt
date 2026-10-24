@@ -1,0 +1,123 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-3'),prettier=createRequire(resolve('package.json'))('prettier');
+const read=n=>readFile(resolve(dir,n),'utf8'),json=async n=>JSON.parse(await read(n));
+const initial=await json('browser-results.json'),follow=await json('followup-results.json'),repro=await json('focus-small-repro.json');
+const final=new Map(initial.map(x=>[x.id,{...x,evidence:'browser-results.json'}]));follow.forEach(x=>final.set(x.id,{...x,evidence:'followup-results.json'}));
+const audit=await json('round-two-audit.json'),state=await json('final-state.json'),env=await json('browser-environment.json');
+const clean=s=>String(s??'').replaceAll('|',' / ').replaceAll('\n',' '),focus=x=>x?.tag==='PRE'?`PRE ${x.label??''}, tabindex ${x.tabindex??x.preTabindex}`:x?.tag==='BUTTON'?`BUTTON ${x.label??x.text}`:x?.tag??'';
+function actual(r){const a=r.actual;if(!a)return r.error;
+ if(a.movements)return `${a.chars.toLocaleString('en-US')} full characters; ${a.movements.map(m=>m.wallMs.toFixed(1)).join(', ')} ms; ${a.movements.reduce((s,m)=>s+m.tasks.length,0)} long tasks; max pre ${Math.max(...a.movements.map(m=>m.maxPre))}`;
+ if(a.bytes)return `${a.bytes} bytes; identical SHA-256; thread, events and run result unchanged`;
+ if(a.eventsAdded)return `${a.eventsAdded} events appended; ${a.focusEvents} focus-in events; final ${focus(a.after)}; stable 250 ms; ${a.after.preChars} characters`;
+ if(a.beforeTab)return `${a.source?'From '+focus(a.source)+'; ':''}${focus(a.beforeTab)}; Tab -> ${focus(a.afterTab)}; pre tabindex ${a.afterTab.preTabindex}`;
+ if(a.focusedAfterFinish)return `${a.focusedAfterFinish}; ${a.threadChars} characters; Tab leaves pre without tabindex`;
+ if(a.focus)return `${focus(a.focus)}; ${a.focus.preChars} characters; Tab -> ${focus(a.afterTab)}`;
+ if(a.before&&a.after)return `${focus(a.before)} -> ${focus(a.after)}; pre ${a.after.preChars} characters, tabindex ${a.after.preTabindex}`;
+ if(a.after)return `${a.chars} characters; ${focus(a.after)}; selected seed unchanged`;
+ return JSON.stringify(a);
+}
+const gateNames=['build','focused-tests','lint','typecheck','playwright','source-format','layers','deps','tokens','format'];
+const gates=[];for(const name of gateNames){let log;try{log=await read(name+'.log.txt');}catch{log='';}gates.push({name,command:log.match(/^Command: (.+)/m)?.[1]??'pending',code:log.match(/^Exit: (.+)/m)?.[1]??'pending'});}
+const rows=[...final.values()].map(r=>`| BoundedValue / inspector | ${clean(r.id)} | ${clean(r.expected)} | ${clean(actual(r))} | **${r.pass?'PASS':'FAIL'}** | [Case record](${r.evidence}) |`).join('\n');
+const reproRows=repro.map(r=>`| ${r.width} px | ${r.delayMs} ms | ${r.beforeTab.tag}, tabindex ${r.beforeTab.tabindex} | ${r.afterTab.text}; tabindex ${r.afterTab.tabindex} | **${r.pass?'PASS':'FAIL'}** |`).join('\n');
+const planned=['validation.json','validation.log.txt','format.log.txt','format-qa.log.txt'];
+const files=[...new Set([...(await readdir(dir)).filter(n=>n!=='README.md'),...planned])].sort();
+let text=`# 1. Verdict
+
+**PASS** for QA round 3 at **011a01296a00bf1b5427bb9a397c3c5bc2fbdaf6**. **QA-259-R2-01 is fixed:** the formerly failing live large-to-small replacement retains the keyboard on the text at tabindex -1 at both requested widths. Large replacements focus Show all, removed controls hand focus over, surviving Download controls retain it, and outside focus stays put. QA-259-01 remains fixed; QA-259-02 remains disposed.
+
+Worktree **codex-qa-wp-e1-259**, detached at the assigned HEAD; comparison base **c26d65d814613d9ea394f58af5a99810d2df7cd5**. Independent QA only: no production or maintained-test edits, index changes, commits, stashes, branch switches, sub-agents, GitHub writes or live provider turns. New evidence is uncommitted, ready for orchestrator commit. The [tracked change since round 2](round-three-change.diff.txt) contains only BoundedValue and its unit/Edge tests. [Final state](final-state.json) confirms the same HEAD and an empty tracked diff.
+
+The product verdict is separate from the repository-wide formatting result: the inherited round-2 JSON artifacts produce formatting warnings; changed production/test files pass their formatting check. See the exact gate results below.
+
+# 2. Defects and previous dispositions
+
+**No new product defects found within this round's scope.**
+
+## QA-259-R2-01 — closed by fresh Edge verification
+
+Reproduced the original steps exactly: create a real mutate/wait run with a 20,000-character Variables marker, expand it, press Shift+Tab into its named region, and deliver the wait input through HTTP while focus remains there. The next mutate node writes the 19-character small object. Repeat with a scripted fake inference turn delayed 500 ms before that mutation. Expected: text holds focus at tabindex -1, then Tab reaches Full thread JSON and removes tabindex.
+
+| Width | Fake delay | Actual immediately after replacement | Actual after Tab | Result |
+| --- | --- | --- | --- | --- |
+${reproRows}
+
+The [four exact reproductions](focus-small-repro.json) retain complete focus/DOM traces and run events; the [script](focus-small-repro.mjs.txt) and [log](focus-small.log.txt) are kept. The direct small replacement preserves focus on the same pre element without a focus-in transition. The delayed case first focuses Show all for an intermediate large reconstruction, then correctly hands focus to the small text when that control disappears.
+
+“Never BODY” here means the settled focus after a replacement or commit. During an ordinary blur/focus transfer, focusout listeners can synchronously observe BODY between the old and new focus targets, including while pressing Tab. Those intermediate focusout samples are retained, not treated as a persistent focus loss. Mutation-observer samples and after-replacement assertions show the intended target. The four screenshots show **the following Tab's Full thread JSON focus**, not the held-text stage.
+
+## QA-259-01 — remains fixed
+
+At both widths the original 2,322,721-character Variables fixture passes A -> B -> A and B -> A -> B. A is replace node.finished; B is seed node.finished. Every newly selected value has 4,096 characters plus an ellipsis and offers Show all. Maximum pre length is 4,097 characters; no full value remains laid out. Across eight CDP-dispatched selections, observed input-to-two-animation-frame wall time is **28.4–118.4 ms**, with **zero browser long tasks** (50 ms threshold). Wall time includes automation scheduling and is not an owner-approved SLA. See [measurements](followup-results.json).
+
+## QA-259-02 — disposition retained
+
+No new value-difference claim was found or reopened. Full thread JSON remains a client reconstruction whose property order can differ from live API serialization. The broader semantic comparison remains [round-2 evidence](../round-2/README.md); this round's fresh strict-byte spot-check is Variables, as requested.
+
+# 3. Coverage of criteria
+
+## Environment, touched systems and isolation
+
+- Windows, Node **${env.node}** selected first on PATH; dependencies already installed; pnpm build completed before serving built API/web files.
+- Microsoft Edge **${env.browser}**, headless through Playwright, **1440 x 900** and **390 x 844**.
+- Disposable API **127.0.0.1:5720**, fake control server **127.0.0.1:5721**, system-temp data directory **${env.server.dataDir}**. API-created QA keys were used only as setup metadata; tokens are not retained. [Environment](browser-environment.json), [key metadata](api-key-metadata.json), [server source](server.mjs.txt), [server log](server.log.txt).
+- **Fake-only provider evidence:** the real HTTP/SQLite/engine/mutate/wait paths run with FakeHarness and FakeStructured. No real provider or CLI adapter was called. The 80 ms and 500 ms fake delays create controlled update schedules, not performance thresholds.
+- Touched systems tested: BoundedValue expansion and focus ownership; control removal/survival; held-text Tab cleanup; live event reconstruction and historic selection; Full thread JSON on completion; strict JSON download and stored thread/events/run preservation; narrow layout and browser errors. Adjacent result, progress and wait surfaces are also covered by the maintained Edge spec and affected unit files.
+- Both disposable ports were unreachable after stopping this round's native process, which exited with code 0. [Shutdown](shutdown.json), [shutdown log](shutdown.log.txt). The temp store and test-output directories are left for the orchestrator; no directories were deleted. Owner ports/store were not accessed.
+
+## Round-2 retention audit
+
+**Nothing cited is missing:** all **${audit.round2Referenced}** unique linked/backtick file references in the round-2 README exist. However, **${audit.untracked} are untracked** on the assigned HEAD; only the referenced round-1 README is tracked. The initial status already listed the round-2 directory as untracked, contrary to the handoff's “committed” description. [Per-file existence, tracked state, sizes and SHA-256](round-two-audit.json). All ${state.roundTwoReferences} referenced files stayed byte-for-byte unchanged throughout this run, confirmed by [final hashes](final-state.json). They need the orchestrator's retention/commit handling, not a product fix.
+
+## Requested checks
+
+There are **30 final independent matrix cases**, plus the **four exact prior-failure reproductions**, all passing. Each matrix record includes the case, expected behavior, actual focus/attributes, run ID and any timing/trace evidence. Common live steps are: create a public-API mutate/wait run, load and synchronize its timeline, expand Variables, position focus on the stated region/control, submit the observed wait ID externally, then inspect focus after the new events paint. Steps are implemented in the linked [initial script](browser-matrix.mjs.txt) and [corrected targeted follow-up](targeted-followup.mjs.txt).
+
+| System | Case / steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${rows}
+
+All four rapid-update runs append **25 events** after the starting wait, including two controlled fake turns and several mutations before finishing. Large-final cases produce one focus-in hand-off; small-final cases produce two. Focus stays stable for the following 250 ms, without a loop or browser error. [Initial error capture](browser-errors.json) and [follow-up error capture](followup-errors.json) are empty. Captured document scroll widths equal the viewport widths.
+
+The page heading is normally non-focusable. The outside-heading probe adds tabindex -1 **only to that H1 in the disposable browser DOM**, then focuses it; its original attribute state and text are recorded. The component under test is unchanged. The timeline target is focused without activating it, so the inspector continues to follow the latest event and the replacement really occurs.
+
+The fresh Variables downloads at both widths are **20,018 UTF-8 bytes**, byte-identical to JSON.stringify of the API value with two-space indentation. Both SHA-256 values are **2367eae086c4b8471dee0cc3e07f5db4a4ed707f9abfe4b719453976232d9648**. Raw downloads and API bytes are kept with .json.txt extensions. Thread, event log and complete run record compare unchanged before/after expansion, download and collapse.
+
+## Probe corrections and limits
+
+The complete first-run record is preserved, including **nine blocked/invalid checks**. Six completion waits incorrectly expected the last REST event after the terminal event; the [diagnostic](timeline-diagnosis.json) shows return.delivered at seq 25/33 after run.finished at seq 24/32, while SSE closes at the terminal event. Two A/B/A checks initially replaced the original 20,000-character change field with one character and correctly failed the fixture-size guard. One desktop historical-expansion mouse click did not reach Playwright's stable-element condition within 15 seconds; that first result remains, and the targeted historical probe uses keyboard focus plus Enter.
+
+Only those blocked checks were run again after explicit probe changes; passed cases were not repeated. [Corrections and rationale](probe-corrections.json), [correction generator](prepare-followup.mjs.txt), [initial log](browser.log.txt), [targeted log](followup.log.txt). No retry option or force-click was used. The initial unit command also had five incorrect file filters and therefore exercised only two files; its [log](initial-unit-filter.log.txt) remains. The corrected command ran all seven intended files once. The first artifact-validation pass preceded its own output files; its [initial result](validation-initial.json.txt) and [log](validation-initial.log.txt) are retained. Final validation runs after those files exist.
+
+This round does not repeat the entire round-1/round-2 adversarial matrix, native restart/session/storage-reset campaign, live provider behavior, unrelated editor flows, or full-package coverage. The user explicitly narrowed this round and waived full coverage. The current independent download/storage spot-check and the historic-value append checks are fresh; prior broader acceptance remains historical. Actual screen-reader software was not run; this focus round inspects DOM roles, names and keyboard behavior in Edge.
+
+## Tests, regression provenance and gates
+
+The seven affected unit files pass **68/68 tests**. BoundedValue covers value-change rebounding, retained expansion for an unchanged value, large/large region hand-off, large/small held text, Tab cleanup, outside focus, removed Show all/Download controls and surviving Download. The maintained Edge file passes **5/5** with retries disabled, covering large Result/progress and long wait prompts at both widths plus live Full thread JSON replacement. The critical small-value path is additionally verified through the four independent browser reproductions above.
+
+The prior implementation was **not checked out or executed** this round. Its failure is established by the retained round-2 real-Edge reproduction; [the current diff](round-three-change.diff.txt) shows why the regression assertions distinguish it: it detected ownership after the DOM collapse and did not initiate hand-off for an already collapsed control. Current tests pass on the assigned HEAD. This is source reasoning plus historical before-evidence, not a fresh scratch-base test run.
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+${gates.map(g=>`| ${clean(g.command)} | ${g.code==='0'?'PASS':g.name==='format'&&g.code==='1'?'FAIL — retained QA JSON formatting warnings':g.code} | [Log](${g.name}.log.txt) |`).join('\n')}
+| pnpm --filter @graphgoblin/web test:coverage | NOT RUN — explicitly waived for this round | User's round-3 scope |
+| pnpm check:docs | NOT RUN — no node schema or route changed | [Tracked diff](round-three-change.diff.txt) |
+| pnpm check:licenses | NOT RUN — no dependencies changed | [Tracked diff](round-three-change.diff.txt) |
+
+Build/typecheck logs include nonfatal Turbo cache-write Access denied warnings; their tasks completed successfully. Full root formatting is read-only and does not alter inherited evidence. The focused source-format command passes for all three changed maintained files. No numbered docs, ADR, CHANGELOG or generated references were changed by QA. No thresholds, dependencies or production parameters were changed.
+
+# 4. Report path and evidence folder
+
+Report: **docs/qa/2026-10-22-wp-e1-259-qa/round-3/README.md**. Evidence folder: **docs/qa/2026-10-22-wp-e1-259-qa/round-3/**. Only this directory was added by this round. All kept artifacts are linked below; raw downloads remain untouched by JSON formatters. [Artifact/link/path/download validation](validation.json), [validation log](validation.log.txt).
+
+${files.map(n=>`- [${n}](${n})`).join('\n')}
+
+# 5. Observations outside scope
+
+- The round-2 evidence is present but untracked, as described in the retention audit. It was left unchanged for the orchestrator.
+- The REST event tail can extend beyond the SSE terminal event (the return delivery observation above). SSE's terminal set is defined at apps/api/src/sse.ts:5; this was treated as a synchronization boundary, not reopened as a #259 focus defect.
+- One initial desktop Playwright mouse-click stabilization timeout is retained without attributing a product root cause. The historical keyboard interaction and selection/expansion assertions pass in the corrected targeted check.
+- Root formatting warnings on inherited round-2 JSON remain outside the production fix. No unrelated fixes or owner-environment changes were attempted.
+`;
+await writeFile(resolve(dir,'README.md'),await prettier.format(text,{parser:'markdown'}));
+console.log(JSON.stringify({verdict:'PASS',matrix:final.size,reproductions:repro.length,report:'round-3/README.md'}));

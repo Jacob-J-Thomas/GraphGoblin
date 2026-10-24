@@ -1,0 +1,42 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:10 char:1
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 --cov ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792711476727,"pid":24860,"hostname":"<HOST>","msg":"Server listening at http://127.0.0.1:5660"}
+{"level":30,"time":1792711476727,"pid":24860,"hostname":"<HOST>","host":"127.0.0.1","port":5660,"dataDir":"<USERPROFILE>\\AppData\\Local\\Temp\\gg-wp-f4-round8-unit\\gg-api-process-ir6S2H","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792711476771,"pid":24860,"hostname":"<HOST>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792711476778,"pid":24860,"hostname":"<HOST>","reqId":"req-1","res":{"statusCode":200},"responseTime":6.677200000000084,"msg":"request completed"}
+
+ Test Files  56 passed | 2 skipped (58)
+      Tests  768 passed | 6 skipped (774)
+   Start at  18:22:06
+   Duration  768.32s (tests 72%, import 27%, transform 1%, worker 1%)
+
+     Import  282 modules were evaluated 402 times · 194.66s total, 27% of tracked time
+             ~58.11s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.59% ( 1986/2056 )
+Branches     : 93.25% ( 1286/1379 )
+Functions    : 94.48% ( 394/417 )
+Lines        : 98.04% ( 1805/1841 )
+================================================================================

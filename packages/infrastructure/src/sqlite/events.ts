@@ -1,6 +1,10 @@
 import { EventEmitter } from 'node:events';
 import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
-import { AppendConflictError } from '@graphgoblin/engine';
+import {
+  AppendConflictError,
+  UnreadableRunHistoryError,
+  validateGeneratedEvent,
+} from '@graphgoblin/engine';
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
 import { and, asc, eq, gt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
@@ -9,13 +13,13 @@ import { runEvents, runs } from './schema.js';
 type Row = Omit<typeof runEvents.$inferSelect, 'payload'> & { payload: string };
 
 /** A stored row violates the current contract. Reject the entire page without exposing payloads. */
-export class InvalidStoredRunEventError extends Error {
+export class InvalidStoredRunEventError extends UnreadableRunHistoryError {
   constructor(
-    readonly runId: string,
+    runId: string,
     readonly seq: number,
     readonly eventType: string,
   ) {
-    super(`Stored run event does not conform: run ${runId}, seq ${seq}, type ${eventType}`);
+    super(runId, `Stored run event does not conform: run ${runId}, seq ${seq}, type ${eventType}`);
     this.name = 'InvalidStoredRunEventError';
   }
 }
@@ -59,11 +63,15 @@ export class SqliteEventStore implements EventStorePort {
   async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
     if (drafts.length === 0) return [];
     const ts = this.clock.now().toISOString();
     const stored = await this.db.transaction(async (tx) => {
+      if (options.requireRun) {
+        const [run] = await tx.select({ id: runs.id }).from(runs).where(eq(runs.id, runId));
+        if (!run) return [];
+      }
       const [current] = await tx
         .select({ max: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
         .from(runEvents)
@@ -76,27 +84,12 @@ export class SqliteEventStore implements EventStorePort {
       const rows: (typeof runEvents.$inferInsert)[] = [];
       for (const draft of drafts) {
         seq += 1;
-        const { type, ...rest } = draft as { type: string; nodeId?: string } & Record<
-          string,
-          unknown
-        >;
-        const { nodeId, ...payload } = rest;
-        rows.push({
-          runId,
-          seq,
-          ts,
-          type,
-          nodeId: typeof nodeId === 'string' ? nodeId : null,
-          payload,
-        });
-        events.push({
-          ...payload,
-          runId,
-          seq,
-          ts,
-          type,
-          ...(typeof nodeId === 'string' ? { nodeId } : {}),
-        } as RunEvent);
+        const event = validateGeneratedEvent({ ...draft, runId, seq, ts });
+        const nodeId = 'nodeId' in event ? event.nodeId : undefined;
+        const { type, runId: _runId, seq: _seq, ts: _ts, ...rest } = event;
+        const { nodeId: _nodeId, ...payload } = { ...rest, nodeId };
+        rows.push({ runId, seq, ts, type, nodeId: nodeId ?? null, payload });
+        events.push(event);
       }
       await tx.insert(runEvents).values(rows);
       await tx.update(runs).set({ lastEventSeq: seq }).where(eq(runs.id, runId));
@@ -120,6 +113,21 @@ export class SqliteEventStore implements EventStorePort {
   }
 
   async read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
+    return (await this.readRows(runId, afterSeq, limit)).map(toEvent);
+  }
+
+  /** Decode only the requested page: corruption in lookahead must not hide healthy history. */
+  async page(
+    runId: string,
+    afterSeq: number,
+    limit: number,
+  ): Promise<{ items: RunEvent[]; nextAfter: number; hasMore: boolean }> {
+    const rows = await this.readRows(runId, afterSeq, limit + 1);
+    const items = rows.slice(0, limit).map(toEvent);
+    return { items, nextAfter: items.at(-1)?.seq ?? afterSeq, hasMore: rows.length > limit };
+  }
+
+  private async readRows(runId: string, afterSeq: number, limit?: number): Promise<Row[]> {
     const base = this.db
       .select({
         runId: runEvents.runId,
@@ -133,8 +141,7 @@ export class SqliteEventStore implements EventStorePort {
       .from(runEvents)
       .where(and(eq(runEvents.runId, runId), gt(runEvents.seq, afterSeq)))
       .orderBy(asc(runEvents.seq));
-    const rows = limit ? await base.limit(limit) : await base;
-    return rows.map(toEvent);
+    return limit ? base.limit(limit) : base;
   }
 
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {

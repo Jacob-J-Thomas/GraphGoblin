@@ -24,6 +24,7 @@ const request = (signal = new AbortController().signal) => ({
 });
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.mocked(killTree).mockResolvedValue(true);
   child = new ChildProcess();
   child.stdin = new PassThrough();
   child.stdout = new PassThrough();
@@ -100,4 +101,50 @@ describe('bounded native transport failure outcomes', () => {
       expect(JSON.stringify(await result)).not.toContain('PRIVATE_NATIVE_BODY');
     },
   );
+});
+
+it.each(['stdout', 'stderr'] as const)(
+  'classifies %s without mining model/turn content',
+  async (stream) => {
+    const result = runClaudeProcess({ ...request(), classifyDiagnostics: true });
+    child[stream]?.emit(
+      'data',
+      Buffer.from(
+        stream === 'stdout'
+          ? 'A response discussing quota and authentication'
+          : 'Usage limit: quota exhausted PRIVATE_BODY',
+      ),
+    );
+    child.emit('close', 1);
+    if (stream === 'stderr') expect(await result).toMatchObject({ failureState: 'quota' });
+    else expect(await result).not.toHaveProperty('failureState');
+    expect(JSON.stringify(await result)).not.toContain('PRIVATE_BODY');
+  },
+);
+
+it('does not infer turn causes from stderr', async () => {
+  const result = runClaudeProcess(request());
+  child.stderr?.emit('data', Buffer.from('quota network authentication PRIVATE_BODY'));
+  child.emit('close', 1);
+  expect(await result).not.toHaveProperty('failureState');
+  expect(JSON.stringify(await result)).not.toContain('PRIVATE_BODY');
+});
+
+it('reports nonzero tree acknowledgement even if the root independently closes', async () => {
+  vi.mocked(killTree).mockResolvedValue(false);
+  const controller = new AbortController();
+  const pending = runClaudeProcess(request(controller.signal));
+  controller.abort();
+  child.emit('close', 0);
+  expect(await pending).toMatchObject({ terminationUnconfirmed: true, exitCode: null });
+});
+
+it('completes cancellation when tree acknowledgement precedes child close', async () => {
+  const controller = new AbortController();
+  const pending = runClaudeProcess(request(controller.signal));
+  controller.abort();
+  await Promise.resolve();
+  child.emit('close', null);
+  expect(await pending).not.toHaveProperty('terminationUnconfirmed');
+  expect(vi.getTimerCount()).toBe(0);
 });

@@ -1,0 +1,63 @@
+pnpm.cmd : $ vitest run --coverage --coverage.reportsDirectory=.tmp/qa-c2-api-coverage
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api test:coverage --covera ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...c2-api-coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792451972044,"pid":41376,"hostname":"<host>","msg":"Server listening at http://127.0.0.1:5669"}
+{"level":30,"time":1792451972046,"pid":41376,"hostname":"<host>","host":"127.0.0.1","port":5669,"dataDir":"<user>\\AppData\\Local\\Temp\\gg-api-process-xDYgKV","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792451972137,"pid":41376,"hostname":"<host>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792451972146,"pid":41376,"hostname":"<host>","reqId":"req-1","res":{"statusCode":200},"responseTime":7.558999999999287,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 2 failed | 4 skipped) 222069ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 61238ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60459ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created 
+key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:49:3
+     47|   }, 60_000);
+     48|
+     49|   it('serves authenticated requests using a binary-created key and ref…
+       |   ^
+     50|     const f = await fixture();
+     51|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their 
+real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 41 passed | 2 skipped (44)
+      Tests  2 failed | 670 passed | 6 skipped (678)
+   Start at  18:17:35
+   Duration  348.21s (tests 62%, import 30%, transform 7%, worker 1%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <drive>:
+  │ \Users\<user-name>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ c2\apps\api
+
