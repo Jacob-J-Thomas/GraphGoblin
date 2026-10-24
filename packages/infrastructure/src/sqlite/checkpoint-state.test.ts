@@ -20,6 +20,7 @@ it('migrates shipped snapshots without inventing state, then persists checkpoint
   const journal = JSON.parse(await readFile(join(shipped, 'meta/_journal.json'), 'utf8')) as {
     entries: { idx: number; tag: string }[];
   };
+  const shippedCount = journal.entries.length;
   journal.entries = journal.entries.filter((entry) => entry.idx < 18);
   await writeFile(join(folder, 'meta/_journal.json'), JSON.stringify(journal));
   for (const entry of journal.entries)
@@ -88,7 +89,8 @@ it('migrates shipped snapshots without inventing state, then persists checkpoint
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(1);
+    // Every migration from 0018 on is pending, however many have shipped since.
+    expect(await current.pendingMigrations()).toBe(shippedCount - 18);
     const before = (
       await current.client.execute(
         'SELECT initial_thread, thread_snapshot, thread_snapshot_seq FROM runs',
