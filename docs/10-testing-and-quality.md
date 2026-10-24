@@ -103,6 +103,16 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the 
 
 ## Performance baseline (Decided by measurement, 2026-10-03)
 
+The #186 server/transport change has a current-baseline [before report](qa/2026-10-22-wp-e1-186-before.md)
+and the same-workload [after report](qa/2026-10-22-wp-e1-186-after.md), including full/late/slow/
+interrupted/reconnected exact payload hashes, event-loop delay, raw paused-socket wire bytes,
+and separate heap samples. Engineering bounds are ADR-0050. API regressions exercise paged
+replay with a concurrent append, bounded held live events, and a paused real socket against
+SQLite followed by complete cursor recovery. Client and hook regressions cover typed failure,
+resume cursor, visible retry reason and early batch flush. The tests were run red on the base.
+Shared-host observations are not a quiet-host performance guarantee. History browsing follows
+in #186 round 2.
+
 The sustained, file-backed baseline for #190 is recorded in [2026-10-18 sustained-run measurements](qa/2026-10-18-sustained-run-measurements.md). [The repeatable scripts](../tooling/perf/README.md) cover cyclic work, growing context, SSE replay and slow readers, transcripts, readiness, populated stores, and headless Edge. They run separately from coverage and preserve their disposable stores, JSON summaries, memory samples, and API CPU profiles. The earlier in-memory baseline below remains historical evidence.
 
 `apps/api/src/perf.test.ts` boots the API in-process over the in-memory database with the fake harness, whose scripted turn streams 1,000 items, so one run of `trigger -> inference -> exit` appends 1,011 events (one `node.progress` per item). It is skipped unless `PERF=1`:

@@ -1,0 +1,1421 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --no-file-parallelism --reporter=verbose 
+--coverage.reportOnFailure=true
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 --no- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...tOnFailure=true:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+      Coverage enabled with v8
+
+ ✓ src/triggers.test.ts > arming on publish > creates schedules and endpoints, keeps webhook paths, and disables old versions 4476ms
+ ✓ src/triggers.test.ts > arming on publish > refuses to publish a cron trigger that does not parse 1581ms
+ ✓ src/triggers.test.ts > arming on publish > arms a stored cron node that no longer parses as disabled and logs it 546ms
+ ✓ src/triggers.test.ts > cron triggers > starts a run when a schedule comes due 2956ms
+ ✓ src/triggers.test.ts > cron triggers > applies the missed-fire policy after an outage 4781ms
+ ✓ src/triggers.test.ts > cron triggers > logs a fire whose loop is gone 1864ms
+ ✓ src/triggers.test.ts > boot > re-arms every published loop and catches up on missed fires 2291ms
+ ✓ src/triggers.test.ts > boot > keeps body business and content receipts durable after a stopped database restart 1370ms
+ ✓ src/triggers.test.ts > boot > logs and continues when a loop cannot be re-armed 615ms
+ ✓ src/triggers.test.ts > webhooks > starts a run for a correctly signed delivery 1526ms
+ ✓ src/triggers.test.ts > webhooks > authenticates Buffer request bytes and never persists the presented timestamp signature 1572ms
+ ✓ src/triggers.test.ts > webhooks > rejects bad signatures, stale or missing timestamps, unknown tokens, and replays 2770ms
+ ✓ src/triggers.test.ts > webhooks > accepts Unix-second timestamps, literal null, and a custom signature header 964ms
+ ✓ src/triggers.test.ts > webhooks > acknowledges formerly ignored payloads and quietly exits inside the admitted run 5037ms
+ ✓ src/triggers.test.ts > webhooks > reports downstream expression errors in an admitted run after 202 and keeps its key consumed 4103ms
+ ✓ src/triggers.test.ts > webhooks > dedupes authored keys after timestamp freshness windows 3299ms
+ ✓ src/triggers.test.ts > webhooks > reports invalid JSON, failing expressions, missing secrets, and oversized bodies 642ms
+ ✓ src/triggers.test.ts > webhooks > rate limits each endpoint 1981ms
+ ✓ src/triggers.test.ts > FixedWindowRateLimiter > counts per key, resets per window, and sweeps idle keys 1183ms
+ ✓ src/triggers.test.ts > event triggers > fires matching event triggers before downstream checks, preserves dedupe, and lists events 5100ms
+ ✓ src/triggers.test.ts > event triggers > logs event trigger failures 1358ms
+ ✓ src/triggers.test.ts > event triggers > starts event triggers from external Events only; finished runs publish none (#242) 4087ms
+ ✓ src/triggers.test.ts > poll triggers > probes over HTTP and fires once per new dedupe key 3008ms
+ ✓ src/triggers.test.ts > poll triggers > probes with scripts, fires without a dedupe key, and logs failures 2970ms
+ ✓ src/triggers.test.ts > poll triggers > skips overlapping polls, polls on an interval, and disarms with the loop 3960ms
+ ✓ src/triggers.test.ts > body signing and durable admission > bounds chunked raw input before invoking intake or decoding 1050ms
+ ✓ src/triggers.test.ts > body signing and durable admission > acknowledges a saved claim while create is blocked and exposes only the fixed receipt response 2615ms
+ ✓ src/triggers.test.ts > body signing and durable admission > returns 503 only for an unconfirmed claim; confirms a lost claim acknowledgement without another run 1887ms
+ ✓ src/triggers.test.ts > body signing and durable admission > acknowledges permanently failed saved admission and retries no execution on redelivery 1522ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header x-hub-signature-256 before authoring dedupe keys 1775ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header X-Hub-Signature-256 before authoring dedupe keys 1432ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header x-custom-signature before authoring dedupe keys 1499ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header X-Custom-Signature before authoring dedupe keys 1552ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header x-hub-signature-256 before authoring dedupe keys 2115ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header X-Hub-Signature-256 before authoring dedupe keys 969ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header x-custom-signature before authoring dedupe keys 1981ms
+ ✓ src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header X-Custom-Signature before authoring dedupe keys 784ms
+ ✓ src/triggers.test.ts > body signing and durable admission > keeps credential-free $headers in hmac-sha256 keys and retains delivery/timestamp metadata 1375ms
+ ✓ src/triggers.test.ts > body signing and durable admission > keeps credential-free $headers in hmac-sha256-body keys and retains delivery/timestamp metadata 1508ms
+ ✓ src/triggers.test.ts > body signing and durable admission > rejects overlong business keys before consuming content and preserves exact boundary keys 1102ms
+ ✓ src/triggers.test.ts > body signing and durable admission > logs safe operational context for a missing hmac-sha256 secret 913ms
+ ✓ src/triggers.test.ts > body signing and durable admission > logs safe operational context for a missing hmac-sha256-body secret 452ms
+ ✓ src/triggers.test.ts > body signing and durable admission > isolates a corrupt pending intent ({}) during real SQLite boot recovery and admits other due receipts 969ms
+ ✓ src/triggers.test.ts > body signing and durable admission > isolates a corrupt pending intent (not-json) during real SQLite boot recovery and admits other due receipts 1309ms
+ ✓ src/triggers.test.ts > body signing and durable admission > verifies raw body without timestamp and admits equal content with distinct authored keys 3254ms
+ ✓ src/triggers.test.ts > body signing and durable admission > consumes distinct bodies with the same authored business key without another run 1334ms
+ ✓ src/triggers.test.ts > body signing and durable admission > serializes concurrent distinct bodies with one key and keeps loop keys isolated 2128ms
+ ✓ src/triggers.test.ts > body signing and durable admission > keeps quiet-run and pending keys consumed 2978ms
+ ✓ src/triggers.test.ts > body signing and durable admission > uses the same authored key claims across timestamp and body recipes 2111ms
+ ✓ src/triggers.test.ts > body signing and durable admission > reserves an old webhook key from items-mode poll admission when recovery is after-lookup 2067ms
+ ✓ src/triggers.test.ts > body signing and durable admission > reserves an old webhook key from items-mode poll admission when recovery is still-pending 3333ms
+ ✓ src/triggers.test.ts > body signing and durable admission > consumes an authored body key when a current poll wins before the old authenticated claim 2180ms
+ ✓ src/triggers.test.ts > body signing and durable admission > does not activate business dedupe for generated signature hints 1685ms
+ ✓ src/triggers.test.ts > body signing and durable admission > allows unkeyed content after downstream check correction, and rejects invalid signatures before JSON 4546ms
+ ✓ src/triggers.test.ts > body signing and durable admission > returns 202 with a persisted pending intent, blocks deletion, and recovers before redelivery 4655ms
+ ✓ src/triggers.test.ts > bounded items-mode poll integration > validates all candidates before one indexed lookup, drains cap across sweeps, and uses item payloads 3436ms
+ ✓ src/triggers.test.ts > bounded items-mode poll integration > refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode 4820ms
+ ✓ src/triggers.test.ts > bounded items-mode poll integration > skips overlapping sweeps even after republish, and admission failure leaves the unseen tail 2439ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.inbound for actual hmac-sha256 bytes and recovers the same saved ID 3336ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.receipt for actual hmac-sha256 bytes and recovers the same saved ID 2991ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.run for actual hmac-sha256 bytes and recovers the same saved ID 2936ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.event for actual hmac-sha256 bytes and recovers the same saved ID 1958ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.receipt for actual hmac-sha256 bytes and recovers the same saved ID 2240ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.link for actual hmac-sha256 bytes and recovers the same saved ID 775ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.inbound for actual hmac-sha256-body bytes and recovers the same saved ID 2225ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.receipt for actual hmac-sha256-body bytes and recovers the same saved ID 1746ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.run for actual hmac-sha256-body bytes and recovers the same saved ID 2175ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.event for actual hmac-sha256-body bytes and recovers the same saved ID 3386ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.receipt for actual hmac-sha256-body bytes and recovers the same saved ID 2561ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.link for actual hmac-sha256-body bytes and recovers the same saved ID 1132ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > allows identical concurrent unkeyed hmac-sha256 bytes, but deduplicates an authored key 3804ms
+ ✓ src/triggers.test.ts > unified signed webhook admission and Allow > allows identical concurrent unkeyed hmac-sha256-body bytes, but deduplicates an authored key 6395ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > applies Allow to concurrent unsigned repeats while consuming an explicit key once 4337ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > admits unsigned json through saved intent, queued metadata and recovery 2299ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > admits unsigned text through saved intent, queued metadata and recovery 2555ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > admits unsigned bytes through saved intent, queued metadata and recovery 1903ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > refuses signed intake when the real secret storage boundary is unavailable 549ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > applies the limiter/bound/decoding to None without accepting an authenticated identity 6174ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > never claims an invalid/ambiguous extracted event type and uses fallback for missing metadata 1957ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > exposes pinned safe configuration on endpoint/Events summaries and refuses row disagreement before authentication 2745ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > marks disabled orphan summaries unavailable and omits absent or foreign endpoint data from Events 2670ms
+ ✓ src/triggers.test.ts > general webhook configuration and unsigned intake > bounds Events lookups by unique endpoint/version/loop and never caches across requests 3110ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > requires secrets:write to attach a secret and permits settings-only edits that clear it 7722ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > returns a configured/enabled distinction and protects builtin metadata 687ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > creates disabled, replaces metadata preserving enabled, clears auth and retains secrets on delete 1089ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"enabled":true} 910ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"source":"custom"} 1033ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"configured":true} 1251ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"apiKey":"key"} 422ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"endpoint":"https://user:key@host"} 1009ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"endpoint":"http://classifier.example","secretRef":"required-key"} 1202ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"primitives":["choice","choice"]} 462ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > creates only with If-None-Match: *, refusing an existing id with CLASSIFIER_EXISTS 402ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > lets exactly one of two concurrent create-only requests for an id succeed 1128ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid ids and enabled bodies 2399ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > checks settings scopes before parsing bodies and isolates owners and their secret state 810ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > derives status without provider calls through missing, blank, created, rotated, unreadable and deleted secrets 546ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (disabled) 2122ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (missing) 2044ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (blank) 682ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (unreadable) 1112ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (configured) 1182ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (missing) 1414ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (no-choice) 2279ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (disabled) 1304ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-missing) 684ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-blank) 2151ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-unreadable) 1305ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (implicit) 1024ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (implicit-only) 993ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (configured) 2179ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > exports and imports a clean expression evaluator without unused classifier metadata 926ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > rejects Jev probabilities with an undeclared secret key before any run read 1139ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > keeps real Jev decision HTTP error bodies out of snapshots, events, streams and logs 1591ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > sanitizes real built-in Jev validation paths and error bodies (HTTP 200) 1405ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > sanitizes real built-in Jev validation paths and error bodies (HTTP 400) 640ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > sanitizes a real Codex turn failure before persisting it for run readers 1140ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > never exposes an echoed classifier bearer to runs:read (recordAlternatives true) 2113ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > never exposes an echoed classifier bearer to runs:read (recordAlternatives false) 1060ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > passes the engine logger to the decision-time Jev SDK client 560ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and fails unavailable deleted/disabled published references 2648ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > reports an unreachable endpoint as a provider failure, without silently falling through 1224ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 12: every advertised private route rejects missing and revoked credentials 3980ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: a credential without read scope cannot enumerate private resources 643ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope 4350ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write"],"status":403}) 1125ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:read"],"status":403}) 521ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["secrets:write"],"status":403}) 364ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:read","secrets:write"],"status":403}) 327ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:write"],"status":200}) 363ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["*"],"status":200}) 547ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: local trusted mode keeps full access without a key 550ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 12: every mutating route rejects a valid key with no write scopes 628ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 12/13: API keys cannot bypass signatures; signatures bind exact body bytes 833ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -300001 ms 799ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -299999 ms 901ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 299999 ms 907ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 300001 ms 399ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: byte limit, 61st delivery and deleted endpoint are rejected 531ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 14: exits cannot chain loops through Events; external Event intake still starts runs 726ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 15: a draft cron is not armed 323ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 4: deletion is refused while a version is pinned by an active run 739ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: disconnect during replay validation unsubscribes before headers are sent 4427ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID 99999 always closes 253ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID -1 always closes 334ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID not-a-number always closes 253ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: 1000 persisted events stream in sequence without duplicates 502ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 17: traversal, long paths, and Range cannot disclose files outside static root 327ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 18: secrets never appear in read responses or invalid-request errors 618ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 19: malformed JSON, 10 MB bodies, strict unknowns and numeric strings are rejected 165ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a parent started during a DELETE never pins the deleted loop 895ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 1289ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-009: every ULID id route validates before repository lookup 713ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary missing-terminal 148ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary usage-only 136ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary expired-resume 156ms
+ ✓ src/wait-identity.test.ts > observed wait identities over real SQLite and API > rejects visit A answers at visit B without mutation, and accepts B once 1563ms
+ ✓ src/wait-identity.test.ts > observed wait identities over real SQLite and API > resets signal observations on a genuine heartbeat revisit 417ms
+ ✓ src/wait-identity.test.ts > observed wait identities over real SQLite and API > cannot lose a timer delivered synchronously by the injected timer port around parking 548ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > accepts only one racing API answer and rejects retry without changing the log 745ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > keeps the observed identity when SQLite is closed and reopened 1147ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 50 ms polling 502ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 1000 ms polling 627ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 570ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 50 394ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 50 606ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 50 409ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 50 911ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 50 682ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 50 593ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 1000 527ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 1000 522ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 1000 519ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 1000 508ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 1000 419ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 1000 483ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 693ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > requires an observed token and rejects unknown tokens without mutation 536ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > records one signal answer atomically when two API requests race 922ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > recovers a paused event-first park before its snapshot/status commit without advancing it 659ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > closes and reopens SQLite after the wake but before timer acknowledgement 651ms
+ ✓ src/wait-identity.test.ts > a delayed wake acknowledgement cannot replace the next observed wait 403ms
+ ✓ src/wait-identity.test.ts > redelivery queues a durable wake after its committed status response was lost 501ms
+ ✓ src/wait-identity.test.ts > retry repairs a durable input answer after its status transition failed 462ms
+ ✓ src/wait-identity.test.ts > retry repairs a durable signal answer after its status transition failed 591ms
+ ✓ src/wait-identity.test.ts > acknowledges timers for unreadable event history and keeps healthy work available 750ms
+ ✓ src/wait-identity.test.ts > acknowledges timers for unreadable row history and keeps healthy work available 586ms
+ ✓ src/wait-identity.test.ts > reports a paused input wait as INVALID_STATE without consuming its identity 756ms
+ ✓ src/wait-identity.test.ts > reports a paused signal wait as INVALID_STATE without consuming its identity 1876ms
+ ✓ src/wait-identity.test.ts > a paused timer acknowledgement cannot delete a resume re-arm at the same deadline 676ms
+ ✓ src/container.test.ts > default adapters > registers the Codex harness, structured completions, and the Codex evaluator and classifier registry 1163ms
+ ✓ src/container.test.ts > default adapters > starts without a Jev key and leaves Jev unavailable 455ms
+ ✓ src/container.test.ts > default adapters > refreshes Jev when its key secret is set or deleted through the API 428ms
+ ✓ src/container.test.ts > default adapters > ignores other secrets and other owners 206ms
+ ✓ src/container.test.ts > default adapters > does not notify when deleting a secret that does not exist 183ms
+ ✓ src/container.test.ts > default adapters > shares configured Noul and Choice classifier snapshots and invalidates them after key and enable changes 404ms
+ ✓ src/container.test.ts > Jev key at boot > seeds before recovery, refreshes metadata, and preserves a disabled built-in across real restarts 879ms
+ ✓ src/container.test.ts > Jev key at boot > seeds an encrypted local-owner secret once, keeps it across restarts, and never logs the value 295ms
+ ✓ src/container.test.ts > Jev key at boot > preserves an existing secret, including an empty value ("stored-key") 447ms
+ ✓ src/container.test.ts > Jev key at boot > preserves an existing secret, including an empty value ("") 240ms
+ ✓ src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({}) 185ms
+ ✓ src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({"GG_JEV_API_KEY":""}) 167ms
+ ✓ src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({"JEV_API_KEY":""}) 141ms
+ ✓ src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({"GG_JEV_API_KEY":"","JEV_API_KEY":"test-unused-fallback-key"}) 189ms
+ ✓ src/container.test.ts > Jev key at boot > seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key 240ms
+ ✓ src/container.test.ts > Jev key at boot > picks up a key stored before the process started 276ms
+ ✓ src/container.test.ts > container directory ownership > refuses a second container before opening or recovering the store, and releases on stop 249ms
+ ✓ src/container.test.ts > container directory ownership > releases ownership if container construction fails 142ms
+ ✓ src/container.test.ts > container directory ownership > releases ownership without recovery or writes when readiness fails during migration 235ms
+ ✓ src/container.test.ts > container directory ownership > serializes repeated starts and holds ownership until a stop during migration finishes 152ms
+ ✓ src/container.test.ts > configuration admission before startup writes > does not create SQLite/master-key files for an unknown process default 19ms
+ ✓ src/container.test.ts > configuration admission before startup writes > reads existing manual catalog entries without changing database bytes or rows on invalid effort 6066ms
+ ✓ src/container.test.ts > configuration admission before startup writes > refuses an old store before creating a master key or applying migrations 128ms
+ ✓ src/container.test.ts > admits a valid stored definition before recovery 193ms
+ ✓ src/container.test.ts > repeats cheap readiness checks inside migrate even after a protected preflight 174ms
+ ✓ src/container.test.ts > reparses external database definitions changed after construction before startup writes 541ms
+ ✓ src/container.test.ts > refuses malformed current definitions before master-key creation or database writes 3506ms
+ ✓ src/api.test.ts > system routes > serves health, version, openapi, and preflight 2687ms
+ ✓ src/api.test.ts > system routes > returns problem details for unknown routes and validation failures 161ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for manual 387ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for cron 1200ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for hook 218ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for event 232ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for poller 191ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for github-hook 249ms
+ ✓ src/api.test.ts > loops > keeps type through draft save, reopen, export and import for items-poller 273ms
+ ✓ src/api.test.ts > loops > creates, reads, drafts, validates, publishes, exports, imports, and deletes 1107ms
+ ✓ src/api.test.ts > loops > refuses to delete a loop with active runs and exports drafts on request 342ms
+ ✓ src/api.test.ts > runs > starts a run, lists, reads the thread and events, and streams nothing when complete 416ms
+ ✓ src/api.test.ts > runs > controls a waiting run: input validation, signals, pause, resume, cancel 887ms
+ ✓ src/api.test.ts > runs > hides runs of other owners and serves artifacts 1365ms
+ ✓ src/api.test.ts > settings, secrets, api keys, catalog, events > round-trips settings and secrets without exposing values 183ms
+ ✓ src/api.test.ts > settings, secrets, api keys, catalog, events > manages api keys and the model catalog 224ms
+ ✓ src/api.test.ts > settings, secrets, api keys, catalog, events > publishes and lists same-millisecond inbound events in reverse creation order 190ms
+ ✓ src/api.test.ts > authentication > rejects bad keys in local mode and honours scopes 309ms
+ ✓ src/api.test.ts > authentication > requires a key when configured, except for public routes 1177ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > identifies the adapters ecosystem defaults without changing catalog enablement 1255ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > returns source and enabled, refuses harness edit/delete/create and source spoofing 295ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > freezes hand-added legacy rows too, without removing their ability to toggle 287ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > PATCH only changes enabled for harness rows 237ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > PATCH only changes enabled for litellm rows 150ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > edits/deletes LiteLLM rows, preserves enabled when omitted, and cannot change source 228ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {} without a write 479ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {"enabled":"false"} without a write 410ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {"enabled":false,"displayName":"Oops"} without a write 459ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {"enabled":null} without a write 463ms
+ ✓ src/catalog.test.ts > catalog ownership and toggle routes > rejects unauthorized and wrong-scope writes before validating bodies; read/write scopes work 1349ms
+ ✓ src/catalog.test.ts > advisory model validation > ignores stale Codex models when the decision uses only an expression 399ms
+ ✓ src/catalog.test.ts > advisory model validation > rejects explicit unknown/wrong-family inference models and blocks unavailable selected models 289ms
+ ✓ src/catalog.test.ts > advisory model validation > rejects explicit unknown/wrong-family decision models and blocks unavailable selected models 359ms
+ ✓ src/catalog.test.ts > advisory model validation > rejects explicit unknown/wrong-family default models and blocks unavailable selected models 306ms
+ ✓ src/catalog.test.ts > advisory model validation > still requires ownership for validation 262ms
+ ✓ src/catalog.test.ts > uniform strict evaluator admission > keeps decisions subject to publication admission for an disabled model 292ms
+ ✓ src/catalog.test.ts > uniform strict evaluator admission > keeps decisions subject to publication admission for an unavailable harness 270ms
+ ✓ src/catalog.test.ts > uniform strict evaluator admission > reports explicit unknown model configuration even while its harness is unavailable 267ms
+ ✓ src/catalog.test.ts > uniform strict evaluator admission > returns a typed cutover refusal for old portable and bare definitions without saving them 666ms
+ ✓ src/catalog.test.ts > imports an automatic format-1 export as format 4 478ms
+ ✓ src/catalog.test.ts > imports an automatic format-2 export as format 4 450ms
+ ✓ src/catalog.test.ts > imports an automatic format-3 export as format 4 292ms
+ ✓ src/catalog.test.ts > refuses pending export review with item ids, hashes and reasons, and refuses supplied resolutions 133ms
+ ✓ src/catalog.test.ts > returns automatic rewrite notices alongside import validation issues 191ms
+ ✓ src/catalog.test.ts > keeps earlier-stage authored choices distinct from invalid source 128ms
+ ✓ src/catalog.test.ts > reports both invalid graph issues and pending reviews in one import refusal 114ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > rejects a signed-out child before the parent mutation or any run is recorded 1283ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks both the unready parent and ready child in one admission 209ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > shares one probe between same-harness parent and child nodes 2939ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > starts probes for distinct parent/child harnesses concurrently 971ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks the published child, ignoring an unready-harness draft 627ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks a numbered child version instead of its newer publication 296ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > honors the configured nesting limit 1 553ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > honors the configured nesting limit 2 723ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks a twice-referenced child once when ready 1063ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks a twice-referenced child once when auth 202ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > keeps the child pin when a new version publishes while its probe is pending 1180ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > freezes a draft root before probing and executes that same snapshot 669ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > does not hold the pin lock while probing; rechecks a deleted root 252ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > does not hold the pin lock while probing; rechecks a deleted child 237ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > honors a node depth override when collecting executable descendants 278ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > protects cycles while checking a nested harness once 292ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > collects a nested LLM decision harness as well as inference nodes 830ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the claude executable fixture through public nested admission 1271ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the codex executable fixture through public nested admission 1996ms
+ ✓ src/edges.test.ts > scopes > rejects every write route for a key without the matching scope 1457ms
+ ✓ src/edges.test.ts > loop and run route branches > shows the published version without a draft and reports a missing published export 329ms
+ ✓ src/edges.test.ts > loop and run route branches > starts runs with every optional body field, signals without a payload, and delivers caller return defaults 654ms
+ ✓ src/edges.test.ts > loop and run route branches > reports missing artifact content 403ms
+ ✓ src/edges.test.ts > loop and run route branches > skips unset harnesses and reports non-Error preflight failures 153ms
+ ✓ src/edges.test.ts > error handler > maps every error family to problem details 245ms
+ ✓ src/edges.test.ts > error handler > serves Swagger UI when enabled 1277ms
+ ✓ src/edges.test.ts > SSE framing > merges events appended during replay in order, sends heartbeats, and ignores events after the end 304ms
+ ✓ src/edges.test.ts > SSE terminal runs > waits out the grace when the status is terminal but the log has no terminal event 283ms
+ ✓ src/edges.test.ts > SSE terminal runs > ends on the terminal event that arrives during the grace 565ms
+ ✓ src/edges.test.ts > SSE terminal runs > keeps tailing a run that is not terminal 600ms
+ ✓ src/edges.test.ts > test helper > surfaces create and publish failures 278ms
+ ✓ src/edges.test.ts > composition defaults > opens a file database, generates a master key, and runs with default ports 569ms
+ ✓ src/preflight.test.ts > allows read-only CLI preflight alongside a container without changing its lock 2084ms
+ ✓ src/preflight.test.ts > individual checks > accepts Node 22 LTS 170ms
+ ✓ src/preflight.test.ts > individual checks > refuses unsupported Node 20.11.1 with the supported baseline 2ms
+ ✓ src/preflight.test.ts > individual checks > refuses unsupported Node 23.10.0 with the supported baseline 3ms
+ ✓ src/preflight.test.ts > individual checks > refuses unsupported Node 24.0.0 with the supported baseline 3ms
+ ✓ src/preflight.test.ts > individual checks > refuses unsupported Node garbage with the supported baseline 2ms
+ ✓ src/preflight.test.ts > individual checks > checks the data directory without creating it 37ms
+ ✓ src/preflight.test.ts > individual checks > reads the master key from the environment or the data directory without generating one 34ms
+ ✓ src/preflight.test.ts > individual checks > probes writability with a new file and never touches existing ones 35ms
+ ✓ src/preflight.test.ts > individual checks > lets concurrent preflights probe the same directory 102ms
+ ✓ src/preflight.test.ts > individual checks > accepts a missing database file only when start can create it 48ms
+ ✓ src/preflight.test.ts > runPreflight > passes when everything is in place 15ms
+ ✓ src/preflight.test.ts > runPreflight > warns about a database that is missing or behind, and skips checks that need it 71ms
+ ✓ src/preflight.test.ts > runPreflight > fails when a harness is not ready or none is configured 42ms
+ ✓ src/preflight.test.ts > runPreflight > only warns about Jev, and checks the default model against the catalog 76ms
+ ✓ src/preflight.test.ts > runPreflight > formats a readable table 13ms
+ ✓ src/preflight.test.ts > graphgoblin-api --preflight > reports a first run without creating anything 60ms
+ ✓ src/preflight.test.ts > graphgoblin-api --preflight > checks an installation that has started once 1974ms
+ ✓ src/preflight.test.ts > graphgoblin-api --preflight > warns about a database under directories start will create, and start creates them 2246ms
+ ✓ src/preflight.test.ts > graphgoblin-api --preflight > fails when the database cannot be created, read, or opened 635ms
+ ✓ src/preflight.test.ts > graphgoblin-api --preflight > opens an existing database named by a percent-encoded file URL 787ms
+ ✓ src/preflight.test.ts > graphgoblin-api --preflight > reports an in-memory database as unmigrated and bad configuration as a failure 33ms
+ ✓ src/preflight.test.ts > GET /system/preflight > reports on the running installation and requires credentials when keys are required 4853ms
+ ✓ src/definition-pins.test.ts > runs pin their definition across edits, Settings changes and a restart > keeps published and draft runs on their start definition and defaults 3061ms
+ ✓ src/definition-pins.test.ts > classifier bindings are pinned at start > calls the provider model a waiting run pinned, after a catalog edit and a restart 1364ms
+ ✓ src/definition-pins.test.ts > classifier bindings are pinned at start > starts and runs a classifier whose catalog id is an Object property name 377ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary starter draft without credentials, readiness or repository settings 1336ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary implementation draft without credentials, readiness or repository settings 580ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary review draft without credentials, readiness or repository settings 376ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary qa draft without credentials, readiness or repository settings 225ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates independent starter copies, keeps supplied names literal, and does not alter the package 538ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates independent implementation copies, keeps supplied names literal, and does not alter the package 437ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates independent review copies, keeps supplied names literal, and does not alter the package 497ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > creates independent qa copies, keeps supplied names literal, and does not alter the package 422ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > retains truthful missing model readiness issues without blocking draft creation 184ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > retains truthful disabled model readiness issues without blocking draft creation 150ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > retains truthful no-harness model readiness issues without blocking draft creation 159ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > saves normal prompt edits before defaults are configured and publishes after explicit configuration 618ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > still rejects explicit invalid choices and preserves the previous draft 166ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > refuses unknown templates and invalid requests without creating anything 318ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created starter draft owner scoped 300ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created implementation draft owner scoped 210ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created review draft owner scoped 226ms
+ ✓ src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created qa draft owner scoped 299ms
+ ✓ src/routes/template-drafts.test.ts > bounded manual starting-point execution > plans, implements and verifies a supplied task through distinct turns 574ms
+ ✓ src/routes/template-drafts.test.ts > bounded manual starting-point execution > reviews, fixes, then reviews again and preserves the prior findings as context 604ms
+ ✓ src/routes/template-drafts.test.ts > bounded manual starting-point execution > exhausts repeated review findings without returning approval 1035ms
+ ✓ src/routes/template-drafts.test.ts > bounded manual starting-point execution > assesses QA evidence with a separate challenge and reports missing evidence as failure 492ms
+ ✓ src/routes/template-drafts.test.ts > bounded manual starting-point execution > exhausts one unsound QA rerun without claiming a passing assessment 691ms
+ ✓ src/claude.test.ts > Claude public integration > keeps safe policy/model facts in the public typed preflight response 937ms
+ ✓ src/claude.test.ts > Claude public integration > runs exact claude-opus-5-5 inference and preserves normal output/usage 538ms
+ ✓ src/claude.test.ts > Claude public integration > runs exact claude-fable-5-1 inference and preserves normal output/usage 399ms
+ ✓ src/claude.test.ts > Claude public integration > runs exact claude-sonnet-5-5 inference and preserves normal output/usage 429ms
+ ✓ src/claude.test.ts > Claude public integration > runs exact claude-haiku-5-5 inference and preserves normal output/usage 452ms
+ ✓ src/claude.test.ts > Claude public integration > rejects static unsupported policy consistently across authoring endpoints 215ms
+ ✓ src/claude.test.ts > Claude public integration > blocks unavailable Claude publication without substituting Codex 149ms
+ ✓ src/claude.test.ts > Claude public integration > seeds Fable enabled, admits owner defaults and respects later owner disablement 245ms
+ ✓ src/claude.test.ts > Claude public integration > keeps the saved claude-sonnet-5-5 model and each supported effort identical through reopen and the harness request 1156ms
+ ✓ src/claude.test.ts > Claude public integration > keeps the saved claude-haiku-5-5 model and each supported effort identical through reopen and the harness request 1267ms
+ ✓ src/claude.test.ts > Claude public integration > refuses an unsupported claude-sonnet-5-5 effort at authoring and never sends it 177ms
+ ✓ src/claude.test.ts > Claude public integration > refuses an unsupported claude-haiku-5-5 effort at authoring and never sends it 304ms
+ ✓ src/claude.test.ts > Claude public integration > applies owner enable and disable switches to the new Claude models 487ms
+ ✓ src/claude.test.ts > Claude public integration > parses only explicit owner executable configuration without installation fallback 176ms
+ ✓ src/claude.test.ts > Claude public integration > keeps missing optional Claude a warning, but fails configured Claude readiness 229ms
+ ✓ src/qa.test.ts > owner defaults (Settings) reach the engine at run start > uses the saved defaults for the next run and the configuration after they are removed 1987ms
+ ✓ src/qa.test.ts > owner defaults (Settings) reach the engine at run start > rejects old reserved keys, invalid defaults, and invalid persisted configuration 205ms
+ ✓ src/qa.test.ts > validate, draft saves, and publish agree > reports cron, subloop, and template problems the same way everywhere 493ms
+ ✓ src/qa.test.ts > validate, draft saves, and publish agree > accepts a published subloop, a pinned version, and a self-reference 277ms
+ ✓ src/qa.test.ts > validate, draft saves, and publish agree > accepts a self-reference only when it resolves 283ms
+ ✓ src/qa.test.ts > validate, draft saves, and publish agree > import reports the same issues as create, including trigger checks 336ms
+ ✓ src/qa.test.ts > validate, draft saves, and publish agree > reports a missing subloop on import 155ms
+ ✓ src/qa.test.ts > export and import > round-trips: export, import, export again gives the same loop 307ms
+ ✓ src/qa.test.ts > run.queued carries the initial thread > records the seeded thread of a subloop child on its first event 513ms
+ ✓ src/qa.test.ts > request errors use stable problem codes > maps malformed, empty, and oversized bodies 159ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > authenticates exact malformed bytes before any decoding (body) 10ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > authenticates exact malformed bytes before any decoding (timestamp-body) 1ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > rejects raw duplicate credentials even if normalized headers contain one value (body) 0ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > rejects raw duplicate credentials even if normalized headers contain one value (timestamp-body) 0ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > rejects empty and whitespace JSON but accepts literal null (body) 2ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > rejects empty and whitespace JSON but accepts literal null (timestamp-body) 1ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > accepts body signing without timestamps and hashes identical content independently of signature casing and secret rotation 3ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > rejects ambiguous authentication headers and missing signatures with safe details 1ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > verifies before JSON/UTF8 parsing, then rejects correctly signed invalid bodies 3ms
+ ✓ src/triggers/webhook-body.test.ts > webhook byte authentication > preserves timestamp signing, window boundaries, Unix timestamps and literal JSON null 4ms
+ ✓ src/triggers/webhook-body.test.ts > general decoding and event metadata > decodes actual bytes after none authentication 2ms
+ ✓ src/triggers/webhook-body.test.ts > general decoding and event metadata > decodes actual bytes after body authentication 1ms
+ ✓ src/triggers/webhook-body.test.ts > general decoding and event metadata > decodes actual bytes after timestamp-body authentication 1ms
+ ✓ src/triggers/webhook-body.test.ts > general decoding and event metadata > allows empty text/bytes, bounds unsigned bytes and refuses unsigned invalid JSON/UTF8 1ms
+ ✓ src/triggers/webhook-body.test.ts > general decoding and event metadata > extracts constants, headers, escaped own-property/array/root pointers and scalar metadata 5ms
+ ✓ src/triggers/webhook-body.test.ts > general decoding and event metadata > rejects ambiguous raw header metadata and invalid scalars instead of using a fallback 1ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > requires a draft asset and never falls back to a configured graph 273ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > returns independent drafts across public creation calls 336ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > applies package bounds, format and graph validation to declared draft files 130ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > loads the actual source-only starter with current graph format and no repository support 459ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with invalid JSON without exposing its raw contents 573ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with non-array without exposing its raw contents 55ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with non-string entry without exposing its raw contents 80ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with too many entries without exposing its raw contents 66ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with parent traversal without exposing its raw contents 183ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with absolute path without exposing its raw contents 574ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with backslash path without exposing its raw contents 76ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses the oversized regular asset catalog.json before parsing it 56ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses the oversized regular asset recipe/manifest.json before parsing it 119ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses the oversized regular asset recipe/draft.json before parsing it 369ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a missing declared asset catalog.json as a safe package failure 42ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a missing declared asset recipe/manifest.json as a safe package failure 610ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a missing declared asset recipe/draft.json as a safe package failure 259ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses malformed JSON and unknown manifest fields 539ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects configured manifest fields instead of opening graphs or private support entries 63ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a schema-valid script node in a shipped draft 62ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a schema-valid subloop node in a shipped draft 106ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a schema-valid heartbeat node in a shipped draft 1227ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses nonmanual triggers and noncaller return channels 809ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses malformed exports, old format and dangling graph targets 246ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses duplicate template identities instead of returning a partial catalog 59ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects the root itself, lexical escapes and directory assets 66ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects a linked catalog root using a host-native directory link or junction 54ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects an ancestor alias even when the final root directory is not itself a link 52ms
+ ✓ src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects a linked interior component before reading its valid manifest 100ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > reads only manifests without provider, script or credential probes 1891ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > removes configured actions from routing and OpenAPI without allocating state 812ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > keeps catalogue reads scoped and unknown template IDs explicit 846ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > sanitizes trusted catalogue asset faults with status 409 249ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > sanitizes trusted catalogue asset faults with status 503 214ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > keeps arbitrary server errors sanitized as internal errors 224ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > maps a real missing catalogue asset to a sanitized package fault without allocating a loop 193ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > maps a real malformed catalogue asset to a sanitized package fault without allocating a loop 235ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > maps a real oversized catalogue asset to a sanitized package fault without allocating a loop 157ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > keeps ordinary returns and the unwrapped durable finalization marker 536ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > preserves ordinary script environment, stdin and JSON stdout through the container 294ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > preserves ordinary script cancel and finalization 299ms
+ ✓ src/routes/templates.test.ts > template API without runtime authority > preserves ordinary script timeout and finalization 1276ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > returns an empty final page 850ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > pages tied timestamps exactly once despite a newer insertion between requests 168ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > returns 500 items plus a cursor for the lookahead row and then a final null cursor 585ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > returns a null cursor for an exactly full final page 117ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > leaves damaged lookahead undecoded and continues past an empty unreadable page 129ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > applies each ordinary filter and their intersection 133ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > normalizes before=2026-10-02T14:00:00.000+02:00 to the canonical timestamp page 111ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > normalizes before=2026-10-02T07:00:00.000-05:00 to the canonical timestamp page 220ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > normalizes before=2026-10-02T12:00:00Z to the canonical timestamp page 137ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter  unchanged across every limit-one page 245ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter loopId=D2VJ25FGH4W4R19TMKZK3CGTBW unchanged across every limit-one page 249ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter status=succeeded unchanged across every limit-one page 212ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter status=succeeded,failed unchanged across every limit-one page 181ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter parent=none unchanged across every limit-one page 198ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter parent=2RPPNXBH1B9H3F1K4K6FJNSS4B unchanged across every limit-one page 251ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter before=2026-10-03T00:00:00.000Z unchanged across every limit-one page 273ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps filter loopId=D2VJ25FGH4W4R19TMKZK3CGTBW&status=failed&parent=2RPPNXBH1B9H3F1K4K6FJNSS4B&before=2026-10-03T00:00:00.000Z unchanged across every limit-one page 245ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > keeps the already-landed invalid-status response typed and readable 214ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > publishes the cursor description and bound in OpenAPI 528ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > scopes every page and snapshot to the authenticated owner 166ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > lists and reads canonical records with no template table or subject column 123ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects malformed, oversized, noncanonical and non-strict cursors with INVALID_CURSOR 129ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects the removed repository filter instead of widening results 103ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects the removed issue filter instead of widening results 174ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects the removed pullRequest filter instead of widening results 110ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects the removed head filter instead of widening results 104ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects the removed mergeSha filter instead of widening results 145ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects the removed templateInstanceId filter instead of widening results 123ms
+ ✓ src/routes/run-paging.test.ts > ordinary run paging > rejects invalid ordinary filters or limits 122ms
+ ✓ src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > is refused on every read of the loop and its versions with a per-loop diagnostic 1035ms
+ ✓ src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > is refused before a run starts, and a parent calling it fails before any child exists 294ms
+ ✓ src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > a run already pinned to a published version holding one fails explicitly before it executes again 305ms
+ ✓ src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > a run already pinned to a draft-run snapshot holding one fails explicitly before it executes again 267ms
+ ✓ src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > refuses a webhook delivery deterministically and logs the diagnostic, saving nothing 136ms
+ ✓ src/version-migration.test.ts > migrated SQLite versions through the API > preserves an old draft version and refuses startup or cutover until format 4 is available 1862ms
+ ✓ src/version-migration.test.ts > migrated SQLite versions through the API > preserves an old published version and refuses startup or cutover until format 4 is available 455ms
+ ✓ src/version-migration.test.ts > migrated SQLite versions through the API > recovers a current-format pinned run across restart mid-run without migration 7200ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > refuses a live sequence gap so reconnect cannot silently skip durable history 310ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 82ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 29ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1 and merges a durable live append between pages exactly once 31ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reports a held-live overflow explicitly instead of silently dropping history 11ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 2398ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 1861ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 436ms
+ ✓ src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1023ms
+ ✓ src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 391ms
+ ✓ src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 412ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 381ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 309ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 455ms
+ ✓ src/sse.test.ts > SSE event stream > stops writing when the client disconnects 4394ms
+ ✓ src/guide-examples.test.ts > executable guide examples > inventories every fence in guides 02 and 03 860ms
+ ✓ src/guide-examples.test.ts > executable guide examples > validates settings, imports the draft definition, saves, exports, publishes and executes it 547ms
+ ✓ src/guide-examples.test.ts > executable guide examples > executes the exact first-summary and API input, including its prompt and return mapping 791ms
+ ✓ src/guide-examples.test.ts > executable guide examples > executes the HTTP request in start-bash 760ms
+ ✓ src/guide-examples.test.ts > executable guide examples > executes the HTTP request in start-powershell 731ms
+ ✓ src/guide-examples.test.ts > executable guide examples > replays the documented node in replay-bash 890ms
+ ✓ src/guide-examples.test.ts > executable guide examples > replays the documented node in replay-powershell 547ms
+ ✓ src/guide-examples.test.ts > executable guide examples > resumes a fake external failure with resume-bash; refuses a finished run 442ms
+ ✓ src/guide-examples.test.ts > executable guide examples > resumes a fake external failure with resume-powershell; refuses a finished run 453ms
+ ✓ src/guide-examples.test.ts > executable guide examples > reads the documented events request in events-bash 529ms
+ ✓ src/guide-examples.test.ts > executable guide examples > reads the documented events request in events-powershell 1399ms
+ ✓ src/guide-examples.test.ts > executable guide examples > reads the documented events request in reconnect-bash 1689ms
+ ✓ src/guide-examples.test.ts > executable guide examples > reads the documented events request in returns-bash 478ms
+ ✓ src/guide-examples.test.ts > executable guide examples > reads the documented events request in returns-powershell 789ms
+ ✓ src/guide-examples.test.ts > executable guide examples > runs the bounded-repeat example to exactly three passes and an Exhausted exit 1221ms
+ ✓ src/guide-examples.test.ts > executable guide examples > validates the failure response shape and inventories the non-request snippets 271ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > maps unknown to a readiness issue, permits saving, and blocks publication 2416ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > maps cli-missing to a readiness issue, permits saving, and blocks publication 276ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > maps cli-incompatible to a readiness issue, permits saving, and blocks publication 197ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > maps auth to a readiness issue, permits saving, and blocks publication 183ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > maps quota to a readiness issue, permits saving, and blocks publication 371ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > maps transport to a readiness issue, permits saving, and blocks publication 211ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > never probes claude during draft writes, and refreshes once per validation 243ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > never probes codex during draft writes, and refreshes once per validation 183ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > shares rejected probes within a request and sanitizes the unknown result 168ms
+ ✓ src/model-readiness.test.ts > public authoring readiness > reports disabled and removed selections independently of failed CLI lookups 213ms
+ ✓ src/model-readiness.test.ts > probes distinct harnesses concurrently during validate 211ms
+ ✓ src/model-readiness.test.ts > probes distinct harnesses concurrently during preflight 210ms
+ ✓ src/model-readiness.test.ts > rejects run admission with fresh readiness before starting a turn 190ms
+ ✓ src/model-readiness.test.ts > does not probe while creating a template draft 671ms
+ ✓ src/model-readiness.test.ts > checks published readiness when an empty versionId uses the normal published fallback 183ms
+ ✓ src/model-readiness.test.ts > preserves quota detail with empty probe problems through validation, system preflight and run rejection 249ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart 120182ms
+ × src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent 74308ms
+   → expected 'queued' to be 'waiting' // Object.is equality
+   → Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent 25513ms
+ ✓ src/create-api-key.test.ts > parseCreateApiKeyArgs > reads the name and optional scopes 5ms
+ ✓ src/create-api-key.test.ts > parseCreateApiKeyArgs > explains unusable arguments 1ms
+ ✓ src/create-api-key.test.ts > parseCreateApiKeyArgs > refuses typos, strays, repeats, and missing values instead of granting * 1ms
+ ✓ src/create-api-key.test.ts > parseCreateApiKeyArgs > refuses empty scope entries from leading, trailing, or doubled commas 51ms
+ ✓ src/create-api-key.test.ts > parseCreateApiKeyArgs > exits 2 for a typo before touching storage 3ms
+ ✓ src/create-api-key.test.ts > graphgoblin-api --create-api-key > creates a key in a fresh data directory and prints the token once, to stdout only 857ms
+ ✓ src/create-api-key.test.ts > graphgoblin-api --create-api-key > opens a required-key server with the printed key 1491ms
+ ✓ src/create-api-key.test.ts > graphgoblin-api --create-api-key > refuses to write while a server holds the directory, then succeeds after stop 279ms
+ ✓ src/create-api-key.test.ts > graphgoblin-api --create-api-key > prints usage for bad arguments and the reason for bad configuration or storage 318ms
+ ✓ src/create-api-key.test.ts > graphgoblin-api --create-api-key > works against an in-memory database and the process streams by default 110ms
+ ✓ src/create-api-key.test.ts > configuration defaults for an installed checkout > defaults the data directory to ~/.graphgoblin 3ms
+ ✓ src/create-api-key.test.ts > configuration defaults for an installed checkout > serves the built web app by default, unless GG_WEB_DIST says otherwise 1ms
+ ✓ src/gates.test.ts > decision gate API admission > returns the visit-cap warning on all five admission paths while allowing an early non-repeat 3399ms
+ ✓ src/gates.test.ts > decision gate API admission > agrees across create, import, draft save, validate and publish, and persists runtime counts 1631ms
+ ✓ src/gates.test.ts > decision gate API admission > reports the same repeat-target graph issue on all five paths 2397ms
+ ✓ src/gates.test.ts > decision gate API admission > reports the same limit-unconnected graph issue on all five paths 381ms
+ ✓ src/gates.test.ts > decision gate API admission > reports the same terminal-edge graph issue on all five paths 1052ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects missing-max with a precise config path on every authoring endpoint 624ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects multiple-repeats with a precise config path on every authoring endpoint 812ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects reserved-id with a precise config path on every authoring endpoint 828ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects orphan-limit with a precise config path on every authoring endpoint 1914ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects invalid-time with a precise config path on every authoring endpoint 2158ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects removed exit field criteria on every authoring endpoint 1000ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects removed exit field predicate on every authoring endpoint 1621ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects removed exit field loopBack on every authoring endpoint 532ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects removed exit field return on every authoring endpoint 886ms
+ ✓ src/gates.test.ts > decision gate API admission > rejects removed exit field default on every authoring endpoint 507ms
+ ✓ src/durable-events.test.ts > user content in durable events > rejects a non-slug signal name before generating an event 3708ms
+ ✓ src/durable-events.test.ts > user content in durable events > fails oversized rendered input readably, and rejects malformed API inputs 1008ms
+ ✓ src/durable-events.test.ts > damaged history diagnostics > pages diagnostics across run and event bounds and rejects malformed cursors 3400ms
+ ✓ src/durable-events.test.ts > damaged history diagnostics > lists healthy runs and deletes an unrelated loop beside damaged active row history 877ms
+ ✓ src/durable-events.test.ts > damaged history diagnostics > lists healthy runs and deletes an unrelated loop beside damaged active event history 2462ms
+ ✓ src/durable-events.test.ts > damaged history diagnostics > identifies event and row damage without changing it and scopes results to the owner 1639ms
+ ✓ src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart 14325ms
+ ✓ src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > refuses a pagination result above 200 before lookup or admission and keeps process diagnostics private 3210ms
+ ✓ src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > refuses the child-buffer byte boundary before lookup or admission 3940ms
+ ✓ src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > refuses the final-array byte boundary before lookup or admission 3698ms
+ ✓ src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > observes only current state and cannot reconstruct a label transition between snapshots 6918ms
+ ↓ src/live.test.ts > API live smoke with the real Codex adapter > runs trigger -> inference -> exit through Codex and records usage
+ ↓ src/live.test.ts > API live smoke with the installed Claude CLI > runs trigger -> claude-sonnet-5-5 inference -> exit and records the requested model and effort
+ ↓ src/live.test.ts > API live smoke with the installed Claude CLI > runs trigger -> claude-haiku-5-5 inference -> exit and records the requested model and effort
+{"level":30,"time":1792803720532,"pid":48224,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5686"}
+{"level":30,"time":1792803720533,"pid":48224,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5686,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-eMwUfl","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792803720619,"pid":48224,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792803720630,"pid":48224,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":10.100500000000466,"msg":"request completed"}
+ ✓ src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close 48932ms
+ ✓ src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process 42214ms
+ ✓ src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes 50697ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup 25855ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure 26833ms
+ ↓ src/main.test.ts > built API entry and startup failures > releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGINT
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGTERM
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > handles a real signal before readiness, holds ownership through startup and shuts down once
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > exposes the token as a body field and an ETag on GET and PUT 2520ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > answers 409 DRAFT_CONFLICT with the server token when the copy is stale 2211ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > keeps saves without If-Match unconditional, and accepts * and weak or listed tags 1088ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > keeps the token across a publish, which does not change the content 644ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > lets only one of two concurrent saves with the same token win 362ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > accepts two editors saving the identical change from the same token 1999ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > keeps a publish from landing inside a draft save, so a published version never changes 861ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > answers 422 for an invalid draft and 409 when there is nothing to publish 998ms
+ ✓ src/drafts.test.ts > draft version tokens (If-Match) > refuses a conditional save of another owner’s or a missing loop with 404 180ms
+ ✓ src/drafts.test.ts > draft token helpers > hashes a definition and matches If-Match forms 196ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > removes armed schedules and webhook endpoints and disarms polls only after commit 6854ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > deletes terminal run history and artifacts and returns 204, then 404 920ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for queued and changes nothing 609ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for running and changes nothing 679ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for waiting and changes nothing 1351ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for paused and changes nothing 754ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > maps the transactional active-run refusal to 409 if a run appears after the route check 348ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > returns 500 and rolls back history on a mid-delete storage failure 1516ms
+ ✓ src/loop-deletion.test.ts > DELETE /loops/:id > keeps a cross-loop parent and its published subloop reference after deleting the child 1472ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > creates an exclusive lock with this PID and start time and releases it 72ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: false) 41ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: true) 55ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims its own PID from a previous process without an in-process hold 37ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses another live PID without replacing its lock 651ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > replaces a stale lock from a process that exited 1104ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EPERM 166ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EACCES 323ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with UNKNOWN 97ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "" 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{" 50ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "null" 77ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "1" 35ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{}" 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":\"1\"}" 49ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":0}" 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":-1}" 45ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":1.5}" 50ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > does not let a delayed repeated release remove a new acquisition 72ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > leaves a lock with a different ownership token intact on release 206ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > accepts a missing file during release 48ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a fresh lock 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale lock 431ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a own-pid lock 71ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale-reclaim lock 309ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: false) 1869ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: true) 725ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: false) 285ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: true) 619ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses a reclamation guard owned by another live PID 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses an existing reclamation guard without deleting either file 39ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > propagates filesystem errors instead of assuming a stale lock 151ms
+ ✓ src/replay.test.ts > POST /runs/{id}/replay > exposes the executable seed through replay events and the queued thread route without changing source bytes 2315ms
+ ✓ src/replay.test.ts > POST /runs/{id}/replay > forks a finished run at a node and runs it from there 1187ms
+ ✓ src/replay.test.ts > POST /runs/{id}/replay > answers 409 for a node the run never reached, 404 for unknown runs, 400 for bad bodies 1003ms
+ ✓ src/replay.test.ts > POST /runs/{id}/replay > requires the runs:write scope 998ms
+ ✓ src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest 33766ms
+ ✓ src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 22548ms
+ ✓ src/primitive-classifiers.test.ts > primitive classifier API admission and execution > executes the selected HTTP noul primitive with catalog provenance 3154ms
+ ✓ src/primitive-classifiers.test.ts > primitive classifier API admission and execution > executes the selected HTTP score primitive with catalog provenance 848ms
+ ✓ src/primitive-classifiers.test.ts > primitive classifier API admission and execution > rejects unsupported noul capability before calls 351ms
+ ✓ src/primitive-classifiers.test.ts > primitive classifier API admission and execution > rejects unsupported score capability before calls 452ms
+ ✓ src/primitive-classifiers.test.ts > primitive classifier API admission and execution > blocks disabled noul publication and rechecks an edited capability at runtime 1755ms
+ ✓ src/primitive-classifiers.test.ts > primitive classifier API admission and execution > blocks disabled score publication and rechecks an edited capability at runtime 1012ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks sync codex missing-session repair refusal with retriable=false 2204ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session repair refusal with retriable=false 548ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex missing-session repair refusal with retriable=false 1359ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks sync codex missing-session repair refusal with retriable=true 1285ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session repair refusal with retriable=true 470ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex missing-session repair refusal with retriable=true 342ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks sync claude missing-session repair refusal with retriable=false 516ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > blocks sync claude missing-session repair refusal with retriable=true 2538ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > exposes definitely-not-submitted and enforces its resume policy 781ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > exposes delivery-uncertain and enforces its resume policy 513ms
+ ✓ src/prompt-provenance.test.ts > inference recovery contract over the API > exposes session-missing and enforces its resume policy 832ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at missing over an earlier event 2476ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at termination over an earlier event 458ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cancel over an earlier event 541ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cleanup over an earlier event 533ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at missing over an earlier event 959ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at termination over an earlier event 2088ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cancel over an earlier event 644ms
+ ✓ src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cleanup over an earlier event 2115ms
+ ✓ src/prompt-failure-boundaries.test.ts > retains the committed codex repair when its append then throws 1542ms
+ ✓ src/prompt-failure-boundaries.test.ts > retains the committed claude repair when its append then throws 2583ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 1100 nested arrays 3194ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 3000 nested arrays 1201ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits the SQLite boundary and refuses the next depth without blocking the tail 2046ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > silently skips a consumed key even when its payload later exceeds the depth bound 836ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > keeps middle refusals unconsumed and successful keys deduplicated across store reopen 1681ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network preserves auth for both harnesses 20355ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > quota-network preserves quota for both harnesses 15279ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > stdout-quota-warning preserves quota for both harnesses 19668ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-empty preserves unknown for both harnesses 12944ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-unrecognised preserves unknown for both harnesses 13998ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stdout preserves auth for both harnesses 6965ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stderr preserves auth for both harnesses 9058ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > ready preserves ready for both harnesses 9364ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth preserves auth for both harnesses 13454ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > does not publish a stale running badge when the latest event log is unreadable 5136ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run status and identifies it through diagnostics 568ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run pinned and identifies it through diagnostics 1489ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run pinned and identifies it through diagnostics 1243ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run waiting and identifies it through diagnostics 1573ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run result and identifies it through diagnostics 1305ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run initial_thread and identifies it through diagnostics 1660ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run thread_snapshot and identifies it through diagnostics 1088ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run thread_snapshot and identifies it through diagnostics 3110ms
+ ✓ src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > finds older history beyond 500 unrelated runs, orders ties, and distinguishes no history 1944ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: none undefined > rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 3992ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: none undefined > uses payload and credential-free header bindings; invalid key expressions stay expression failures 768ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: none undefined > never invents a key and permits repeated unkeyed bodies 1018ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: none undefined > consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 1183ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 1774ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > uses payload and credential-free header bindings; invalid key expressions stay expression failures 893ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > never invents a key and permits repeated unkeyed bodies 662ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 622ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 1357ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > uses payload and credential-free header bindings; invalid key expressions stay expression failures 362ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > never invents a key and permits repeated unkeyed bodies 547ms
+ ✓ src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 351ms
+ ✓ src/units.test.ts > loadConfig > uses the contract model-name bound for process defaults 26ms
+ ✓ src/units.test.ts > loadConfig > applies defaults and derives the database url from the data directory 1ms
+ ✓ src/units.test.ts > loadConfig > parses overrides and rejects bad values 5ms
+ ✓ src/units.test.ts > loadConfig > resolves the Jev environment seed ({ GG_JEV_API_KEY: 'test-primary-key' }) 1ms
+ ✓ src/units.test.ts > loadConfig > resolves the Jev environment seed ({ JEV_API_KEY: 'test-fallback-key' }) 0ms
+ ✓ src/units.test.ts > loadConfig > resolves the Jev environment seed ({ …(2) }) 0ms
+ ✓ src/units.test.ts > loadConfig > resolves the Jev environment seed ({ GG_JEV_API_KEY: '' }) 0ms
+ ✓ src/units.test.ts > loadConfig > resolves the Jev environment seed ({ JEV_API_KEY: '' }) 0ms
+ ✓ src/units.test.ts > loadConfig > resolves the Jev environment seed ({ GG_JEV_API_KEY: '', …(1) }) 0ms
+ ✓ src/units.test.ts > UlidIds > produces valid, time-ordered, unique ULIDs 6ms
+ ✓ src/units.test.ts > loadMasterKey > uses the environment key when valid and rejects wrong lengths 57ms
+ ✓ src/units.test.ts > loadMasterKey > generates a key file once and reuses it, rejecting corrupt files 43ms
+ ✓ src/units.test.ts > emitOpenApi > writes a document with the expected paths 3021ms
+ ✓ src/units.test.ts > main > boots the server from environment configuration and shuts down 361ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > looks up depth-refused keys without admitting them or counting them toward the cap 23ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > validates every key before the single lookup and admits unseen candidates sequentially up to the default cap 4ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does no I/O for an empty set or any invalid key beyond the dispatch cap 5ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > stops at the first admission failure while preserving prior runs and leaves the tail for a later poll 2ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does not consume the dispatch cap for an atomic key reservation found after lookup 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > reports safe lookup failure without starting a run and skips fully seen sets 3ms
+ ✓ src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows omitted scopes default to wildcard without credentials 1451ms
+ ✓ src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows explicit wildcard without credentials 472ms
+ ✓ src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows arbitrary scopes without credentials 293ms
+ ✓ src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows empty scopes without credentials 409ms
+ ✓ src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows omitted scopes default to wildcard 426ms
+ ✓ src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows explicit wildcard 390ms
+ ✓ src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows arbitrary scopes 498ms
+ ✓ src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows empty scopes 258ms
+ ✓ src/api-key-scopes.test.ts > API-key creation by a wildcard caller > recognizes wildcard alongside other scopes 209ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows a held subset 688ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows all held scopes 556ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows read implied by write 373ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows write and its implied read together 247ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows an explicit empty list 206ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects a superset with multiple unheld scopes without creating a key 380ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects wildcard without creating a key 226ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects wildcard mixed with held scopes without creating a key 390ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects write when only read is held without creating a key 378ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > requires scopes explicitly without creating a key 269ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > does not let api-keys:write alone create an administrative key 509ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows a held subset 271ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows all held scopes 348ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows read implied by write 502ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows write and its implied read together 226ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows an explicit empty list 264ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects a superset with multiple unheld scopes without creating a key 275ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects wildcard without creating a key 162ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects wildcard mixed with held scopes without creating a key 210ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects write when only read is held without creating a key 480ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > requires scopes explicitly without creating a key 369ms
+ ✓ src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > does not let api-keys:write alone create an administrative key 356ms
+ ↓ src/perf.test.ts > performance baseline > runs 10 runs of 1000+ events in parallel and streams one over SSE
+ ✓ src/static.test.ts > loadConfig GG_WEB_DIST > resolves the directory when set and omits it otherwise 13ms
+ ✓ src/static.test.ts > static web app hosting > serves the shell at /app/ without caching 127ms
+ ✓ src/static.test.ts > static web app hosting > falls back to the shell for client-side routes 49ms
+ ✓ src/static.test.ts > static web app hosting > serves fingerprinted assets as immutable and the service worker as no-cache 79ms
+ ✓ src/static.test.ts > static web app hosting > answers a missing file with a 404 problem, not the shell 2ms
+ ✓ src/static.test.ts > static web app hosting > redirects / and /app to /app/ 1ms
+ ✓ src/static.test.ts > static web app hosting > leaves API routes and API 404s alone 7ms
+ ✓ src/static.test.ts > static web app hosting > keeps static routes out of the OpenAPI document 955ms
+ ✓ src/static.test.ts > static web app with GG_REQUIRE_API_KEY=true > serves the shell, assets, and redirects without a key 123ms
+ ✓ src/static.test.ts > static web app with GG_REQUIRE_API_KEY=true > keeps every API route guarded, including paths that try to escape /app/ 2ms
+ ✓ src/static.test.ts > static hosting disabled > does nothing without GG_WEB_DIST or when the directory has no build 1136ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > agrees across create, import, save, validate and publish for expression 2582ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > agrees across create, import, save, validate and publish for llm 736ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > agrees across create, import, save, validate and publish for classifier 293ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > reports the same invalid source path across authoring and publish for expression 432ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > reports the same invalid source path across authoring and publish for llm 587ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > refuses malformed format-1 source independently of pending review 2801ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > refuses malformed format-2 source independently of pending review 452ms
+ ✓ src/decision-admission.test.ts > evaluator-specific decision admission > refuses malformed format-3 source independently of pending review 655ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok 3255ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before 783ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after 1040ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok 1979ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before 848ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after 872ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_SESSION_MISSING retry=false storage=ok 1680ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_SESSION_MISSING retry=false storage=before 1262ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_SESSION_MISSING retry=false storage=after 782ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_SESSION_MISSING retry=true storage=ok 683ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_SESSION_MISSING retry=true storage=before 849ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_SESSION_MISSING retry=true storage=after 1498ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_ARGUMENTS_REJECTED retry=false storage=ok 1238ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_ARGUMENTS_REJECTED retry=false storage=before 921ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_ARGUMENTS_REJECTED retry=false storage=after 1092ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_ARGUMENTS_REJECTED retry=true storage=ok 864ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_ARGUMENTS_REJECTED retry=true storage=before 2417ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_ARGUMENTS_REJECTED retry=true storage=after 1178ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_INVALID_CONFIGURATION retry=false storage=ok 1356ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_INVALID_CONFIGURATION retry=false storage=before 1962ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_INVALID_CONFIGURATION retry=false storage=after 806ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_INVALID_CONFIGURATION retry=true storage=ok 1509ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_INVALID_CONFIGURATION retry=true storage=before 1672ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_INVALID_CONFIGURATION retry=true storage=after 1203ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_UNSUPPORTED_POLICY retry=false storage=ok 508ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_UNSUPPORTED_POLICY retry=false storage=before 1929ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_UNSUPPORTED_POLICY retry=false storage=after 979ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_UNSUPPORTED_POLICY retry=true storage=ok 740ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_UNSUPPORTED_POLICY retry=true storage=before 710ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_UNSUPPORTED_POLICY retry=true storage=after 678ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=false storage=ok 1631ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=false storage=before 1232ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=false storage=after 845ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=ok 1323ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=before 1642ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=after 1089ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=false storage=ok 2416ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=false storage=before 1091ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=false storage=after 1991ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=true storage=ok 1842ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=true storage=before 2860ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_AUTHENTICATED retry=true storage=after 1583ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=false storage=ok 2924ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=false storage=before 794ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=false storage=after 873ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=true storage=ok 1418ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=true storage=before 1680ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_QUOTA_EXHAUSTED retry=true storage=after 687ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TIMEOUT retry=false storage=ok 936ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TIMEOUT retry=false storage=before 742ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TIMEOUT retry=false storage=after 586ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TIMEOUT retry=true storage=ok 2625ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TIMEOUT retry=true storage=before 649ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TIMEOUT retry=true storage=after 630ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_INSTALLED retry=false storage=ok 982ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_INSTALLED retry=false storage=before 717ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_INSTALLED retry=false storage=after 1820ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_INSTALLED retry=true storage=ok 1183ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_INSTALLED retry=true storage=before 634ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_NOT_INSTALLED retry=true storage=after 2317ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=false storage=ok 963ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=false storage=before 375ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=false storage=after 607ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=ok 2776ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=before 858ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TRANSPORT_FAILED retry=true storage=after 2023ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TURN_FAILED retry=false storage=ok 1356ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TURN_FAILED retry=false storage=before 783ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TURN_FAILED retry=false storage=after 2038ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TURN_FAILED retry=true storage=ok 1604ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TURN_FAILED retry=true storage=before 766ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TURN_FAILED retry=true storage=after 1327ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok 1922ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before 432ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after 530ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok 778ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before 1192ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after 1670ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_SESSION_MISSING retry=false storage=ok 574ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_SESSION_MISSING retry=false storage=before 582ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_SESSION_MISSING retry=false storage=after 1762ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_SESSION_MISSING retry=true storage=ok 1042ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_SESSION_MISSING retry=true storage=before 437ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_SESSION_MISSING retry=true storage=after 1350ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_ARGUMENTS_REJECTED retry=false storage=ok 1823ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_ARGUMENTS_REJECTED retry=false storage=before 667ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_ARGUMENTS_REJECTED retry=false storage=after 1295ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_ARGUMENTS_REJECTED retry=true storage=ok 1122ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_ARGUMENTS_REJECTED retry=true storage=before 758ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_ARGUMENTS_REJECTED retry=true storage=after 1253ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_INVALID_CONFIGURATION retry=false storage=ok 1587ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_INVALID_CONFIGURATION retry=false storage=before 487ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_INVALID_CONFIGURATION retry=false storage=after 370ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_INVALID_CONFIGURATION retry=true storage=ok 764ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_INVALID_CONFIGURATION retry=true storage=before 636ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_INVALID_CONFIGURATION retry=true storage=after 1678ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_UNSUPPORTED_POLICY retry=false storage=ok 750ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_UNSUPPORTED_POLICY retry=false storage=before 924ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_UNSUPPORTED_POLICY retry=false storage=after 1364ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_UNSUPPORTED_POLICY retry=true storage=ok 1253ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_UNSUPPORTED_POLICY retry=true storage=before 574ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_UNSUPPORTED_POLICY retry=true storage=after 567ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=false storage=ok 1491ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=false storage=before 1422ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=false storage=after 667ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=ok 3063ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=before 850ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=after 794ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=false storage=ok 2232ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=false storage=before 1999ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=false storage=after 2021ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=true storage=ok 662ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=true storage=before 653ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_AUTHENTICATED retry=true storage=after 697ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=false storage=ok 2269ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=false storage=before 945ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=false storage=after 746ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=true storage=ok 1615ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=true storage=before 1269ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_QUOTA_EXHAUSTED retry=true storage=after 695ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TIMEOUT retry=false storage=ok 835ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TIMEOUT retry=false storage=before 832ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TIMEOUT retry=false storage=after 1194ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TIMEOUT retry=true storage=ok 1575ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TIMEOUT retry=true storage=before 529ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TIMEOUT retry=true storage=after 898ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_INSTALLED retry=false storage=ok 2051ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_INSTALLED retry=false storage=before 1410ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_INSTALLED retry=false storage=after 646ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_INSTALLED retry=true storage=ok 827ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_INSTALLED retry=true storage=before 813ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_NOT_INSTALLED retry=true storage=after 1783ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=false storage=ok 881ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=false storage=before 514ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=false storage=after 453ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=ok 868ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=before 527ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TRANSPORT_FAILED retry=true storage=after 1969ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TURN_FAILED retry=false storage=ok 990ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TURN_FAILED retry=false storage=before 357ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TURN_FAILED retry=false storage=after 316ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TURN_FAILED retry=true storage=ok 672ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TURN_FAILED retry=true storage=before 448ms
+ ✓ src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TURN_FAILED retry=true storage=after 489ms
+ ✓ src/prompt-evidence-matrix.test.ts > retries exact HTTP codex repair after append/read faults afterCommit=false 2132ms
+ ✓ src/prompt-evidence-matrix.test.ts > retries exact HTTP codex repair after append/read faults afterCommit=true 1240ms
+ ✓ src/prompt-evidence-matrix.test.ts > retries exact HTTP claude repair after append/read faults afterCommit=false 1483ms
+ ✓ src/prompt-evidence-matrix.test.ts > retries exact HTTP claude repair after append/read faults afterCommit=true 548ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > flags exactly the authenticated key for two clients, with revoked and foreign-owner records 1373ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a header 373ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a query 221ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a body 219ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a label 426ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a client 295ms
+ ✓ src/api-key-current.test.ts > current API key in required-key mode > flags nothing for a non-key actor, even when its id matches a key 452ms
+ ✓ src/api-key-current.test.ts > current API key in trusted mode > flags nothing with or without a valid bearer key 213ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=ok 2265ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=before 669ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=after 1930ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=ok 777ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=before 645ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=after 852ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=ok 1105ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=before 1129ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=after 908ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=ok 469ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=before 401ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=after 341ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=ok 347ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=before 517ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=after 680ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=ok 525ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=before 400ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=after 640ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=ok 455ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=before 357ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=after 620ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=ok 450ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=before 490ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=after 462ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=ok 540ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=before 407ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=after 505ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=ok 517ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=before 490ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=after 536ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at launch retry=false storage=ok 551ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at launch retry=false storage=before 542ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at launch retry=false storage=after 484ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at launch retry=true storage=ok 520ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at launch retry=true storage=before 448ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at launch retry=true storage=after 653ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at promise retry=false storage=ok 484ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at promise retry=false storage=before 517ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at promise retry=false storage=after 425ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at promise retry=true storage=ok 445ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at promise retry=true storage=before 584ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at promise retry=true storage=after 398ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at iterator retry=false storage=ok 597ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at iterator retry=false storage=before 350ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at iterator retry=false storage=after 669ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at iterator retry=true storage=ok 523ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at iterator retry=true storage=before 412ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at iterator retry=true storage=after 447ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at failed retry=false storage=ok 469ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at failed retry=false storage=before 377ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at failed retry=false storage=after 405ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at failed retry=true storage=ok 466ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at failed retry=true storage=before 728ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at failed retry=true storage=after 706ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at error retry=false storage=ok 605ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at error retry=false storage=before 496ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at error retry=false storage=after 699ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at error retry=true storage=ok 789ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at error retry=true storage=before 341ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_SESSION_MISSING at error retry=true storage=after 404ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at launch retry=false storage=ok 344ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at launch retry=false storage=before 361ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at launch retry=false storage=after 531ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at launch retry=true storage=ok 367ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at launch retry=true storage=before 318ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at launch retry=true storage=after 585ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at promise retry=false storage=ok 500ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at promise retry=false storage=before 455ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at promise retry=false storage=after 297ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at promise retry=true storage=ok 562ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at promise retry=true storage=before 501ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at promise retry=true storage=after 512ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at iterator retry=false storage=ok 302ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at iterator retry=false storage=before 519ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at iterator retry=false storage=after 506ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at iterator retry=true storage=ok 371ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at iterator retry=true storage=before 554ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at iterator retry=true storage=after 493ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=false storage=ok 599ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=false storage=before 676ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=false storage=after 286ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=true storage=ok 433ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=true storage=before 336ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at failed retry=true storage=after 378ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=false storage=ok 683ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=false storage=before 329ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=false storage=after 393ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=true storage=ok 313ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=true storage=before 306ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_ARGUMENTS_REJECTED at error retry=true storage=after 332ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at launch retry=false storage=ok 507ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at launch retry=false storage=before 377ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at launch retry=false storage=after 495ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at launch retry=true storage=ok 268ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at launch retry=true storage=before 443ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at launch retry=true storage=after 360ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at promise retry=false storage=ok 575ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at promise retry=false storage=before 967ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at promise retry=false storage=after 543ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at promise retry=true storage=ok 877ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at promise retry=true storage=before 613ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at promise retry=true storage=after 383ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at iterator retry=false storage=ok 308ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at iterator retry=false storage=before 259ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at iterator retry=false storage=after 566ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at iterator retry=true storage=ok 473ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at iterator retry=true storage=before 425ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at iterator retry=true storage=after 361ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at failed retry=false storage=ok 643ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at failed retry=false storage=before 857ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at failed retry=false storage=after 832ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at failed retry=true storage=ok 573ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at failed retry=true storage=before 590ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at failed retry=true storage=after 600ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at error retry=false storage=ok 396ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at error retry=false storage=before 605ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at error retry=false storage=after 696ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at error retry=true storage=ok 635ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at error retry=true storage=before 466ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_INVALID_CONFIGURATION at error retry=true storage=after 530ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=false storage=ok 489ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=false storage=before 513ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=false storage=after 467ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=true storage=ok 639ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=true storage=before 777ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at launch retry=true storage=after 1269ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=false storage=ok 422ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=false storage=before 618ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=false storage=after 318ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=true storage=ok 332ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=true storage=before 628ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at promise retry=true storage=after 323ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at iterator retry=false storage=ok 349ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at iterator retry=false storage=before 498ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at iterator retry=false storage=after 586ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at iterator retry=true storage=ok 556ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at iterator retry=true storage=before 471ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at iterator retry=true storage=after 480ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=false storage=ok 308ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=false storage=before 427ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=false storage=after 340ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=true storage=ok 373ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=true storage=before 299ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at failed retry=true storage=after 278ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=false storage=ok 391ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=false storage=before 330ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=false storage=after 472ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=true storage=ok 759ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=true storage=before 802ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_UNSUPPORTED_POLICY at error retry=true storage=after 560ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=ok 726ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=before 633ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=after 277ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=ok 909ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=before 883ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=after 952ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=false storage=ok 363ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=false storage=before 454ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=false storage=after 599ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=ok 944ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=before 657ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=after 1176ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=false storage=ok 468ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=false storage=before 393ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=false storage=after 402ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=ok 614ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=before 327ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=after 726ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=false storage=ok 480ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=false storage=before 416ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=false storage=after 296ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=ok 541ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=before 288ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=after 523ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=ok 371ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=before 300ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=after 276ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=ok 342ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=before 644ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=after 438ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=false storage=ok 581ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=false storage=before 590ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=false storage=after 535ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=true storage=ok 762ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=true storage=before 440ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at launch retry=true storage=after 1458ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=false storage=ok 1650ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=false storage=before 773ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=false storage=after 754ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=true storage=ok 708ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=true storage=before 811ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at promise retry=true storage=after 548ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=false storage=ok 1144ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=false storage=before 920ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=false storage=after 620ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=true storage=ok 733ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=true storage=before 555ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at iterator retry=true storage=after 668ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=false storage=ok 567ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=false storage=before 806ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=false storage=after 408ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=true storage=ok 410ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=true storage=before 425ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at failed retry=true storage=after 942ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=false storage=ok 878ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=false storage=before 727ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=false storage=after 504ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=true storage=ok 1004ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=true storage=before 726ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_AUTHENTICATED at error retry=true storage=after 791ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=ok 671ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=before 1142ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=false storage=after 1012ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=true storage=ok 699ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=true storage=before 734ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at launch retry=true storage=after 1070ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=false storage=ok 666ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=false storage=before 808ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=false storage=after 530ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=true storage=ok 950ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=true storage=before 802ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at promise retry=true storage=after 689ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=false storage=ok 940ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=false storage=before 408ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=false storage=after 702ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=true storage=ok 441ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=true storage=before 487ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at iterator retry=true storage=after 477ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=false storage=ok 659ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=false storage=before 495ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=false storage=after 834ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=true storage=ok 443ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=true storage=before 486ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at failed retry=true storage=after 446ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=false storage=ok 517ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=false storage=before 474ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=false storage=after 666ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=true storage=ok 691ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=true storage=before 418ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_QUOTA_EXHAUSTED at error retry=true storage=after 787ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=false storage=ok 436ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=false storage=before 430ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=false storage=after 619ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=true storage=ok 614ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=true storage=before 548ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at launch retry=true storage=after 780ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=false storage=ok 815ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=false storage=before 572ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=false storage=after 521ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=true storage=ok 729ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=true storage=before 833ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at promise retry=true storage=after 1156ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=false storage=ok 1030ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=false storage=before 1050ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=false storage=after 1124ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=true storage=ok 1041ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=true storage=before 1703ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at iterator retry=true storage=after 1133ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=false storage=ok 1042ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=false storage=before 1134ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=false storage=after 875ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=true storage=ok 1416ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=true storage=before 455ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at failed retry=true storage=after 890ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at error retry=false storage=ok 455ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at error retry=false storage=before 1582ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at error retry=false storage=after 764ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at error retry=true storage=ok 1011ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at error retry=true storage=before 845ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TIMEOUT at error retry=true storage=after 1112ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=false storage=ok 820ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=false storage=before 742ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=false storage=after 718ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=true storage=ok 1382ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=true storage=before 1025ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at launch retry=true storage=after 789ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=false storage=ok 1395ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=false storage=before 1075ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=false storage=after 945ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=true storage=ok 1430ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=true storage=before 811ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at promise retry=true storage=after 1268ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=false storage=ok 1568ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=false storage=before 680ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=false storage=after 510ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=true storage=ok 828ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=true storage=before 1047ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at iterator retry=true storage=after 697ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=false storage=ok 789ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=false storage=before 835ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=false storage=after 541ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=true storage=ok 1526ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=true storage=before 995ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at failed retry=true storage=after 1351ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=false storage=ok 2116ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=false storage=before 1056ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=false storage=after 1226ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=true storage=ok 784ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=true storage=before 1898ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_NOT_INSTALLED at error retry=true storage=after 1920ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=ok 1085ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=before 1447ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=false storage=after 1088ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=ok 763ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=before 849ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at launch retry=true storage=after 1046ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=false storage=ok 638ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=false storage=before 768ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=false storage=after 513ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=ok 643ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=before 908ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at promise retry=true storage=after 748ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=false storage=ok 673ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=false storage=before 598ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=false storage=after 399ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=ok 1291ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=before 1418ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at iterator retry=true storage=after 1103ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=false storage=ok 818ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=false storage=before 707ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=false storage=after 592ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=ok 870ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=before 1708ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at failed retry=true storage=after 1259ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=ok 587ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=before 1372ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=false storage=after 671ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=ok 838ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=before 490ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TRANSPORT_FAILED at error retry=true storage=after 713ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=false storage=ok 1317ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=false storage=before 1213ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=false storage=after 635ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=true storage=ok 455ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=true storage=before 728ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at launch retry=true storage=after 828ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=false storage=ok 871ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=false storage=before 755ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=false storage=after 757ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=true storage=ok 777ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=true storage=before 692ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at promise retry=true storage=after 555ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at iterator retry=false storage=ok 414ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at iterator retry=false storage=before 547ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at iterator retry=false storage=after 985ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at iterator retry=true storage=ok 740ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at iterator retry=true storage=before 625ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at iterator retry=true storage=after 427ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=false storage=ok 693ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=false storage=before 446ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=false storage=after 721ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=true storage=ok 689ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=true storage=before 479ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at failed retry=true storage=after 1120ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=false storage=ok 428ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=false storage=before 521ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=false storage=after 366ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=true storage=ok 362ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=true storage=before 338ms
+ ✓ src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TURN_FAILED at error retry=true storage=after 311ms
+ ✓ src/repair-start.test.ts > resubmits the exact saved repair after a synchronous restorable refusal 1409ms
+ ✓ src/repair-start.test.ts > refuses Resume without another call after synchronous repair HARNESS_ARGUMENTS_REJECTED 431ms
+ ✓ src/repair-start.test.ts > refuses Resume without another call after synchronous repair HARNESS_UNSUPPORTED_POLICY 1187ms
+ ✓ src/repair-start.test.ts > refuses Resume without another call after synchronous repair HARNESS_INVALID_CONFIGURATION 827ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > equals the scheduler across the March DST boundary without arming anything 1618ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > uses the server clock by default, supports seconds, and bounds the count 371ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"expression":"not cron"} 687ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"expression":""} 742ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"timezone":"Mars/Olympus"} 270ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"timezone":""} 265ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":0} 489ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":11} 473ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":1.5} 524ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"from":"tomorrow"} 397ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"unexpected":true} 385ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > keeps the CRON_INVALID field path on every admission endpoint (expression) 608ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > keeps the CRON_INVALID field path on every admission endpoint (timezone) 325ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > preserves type and before filters across limit-one tied pages, owner scope and exact exhaustion 2082ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > rejects invalid cursors and filter values with typed readable 4xx problems 482ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > does not decode damaged payload outside the requested page 388ms
+ ✓ src/routes/event-paging.test.ts > inbound event paging over real SQLite > does not decode damaged run_ids outside the requested page 211ms
+ ✓ src/loop-definition.test.ts > canonical loop definition inputs > reports each unknown root key with its own escaped pointer and message 1804ms
+ ✓ src/loop-definition.test.ts > canonical loop definition inputs > reports each unknown nested key with its own escaped pointer and message 357ms
+ ✓ src/loop-definition.test.ts > canonical loop definition inputs > rejects an unsupported inference harness with its node path 363ms
+ ✓ src/loop-definition.test.ts > canonical loop definition inputs > rejects a removed loop-default field valued codex everywhere 421ms
+ ✓ src/loop-definition.test.ts > canonical loop definition inputs > rejects a removed loop-default field valued wrong everywhere 220ms
+ ✓ src/subloop-failure.test.ts > subloop child failures over the API (#251) > a provider failure in a child fails the parent visibly, and resuming the parent resumes the child 4651ms
+ ✓ src/subloop-failure.test.ts > subloop child failures over the API (#251) > cancelling a child cancels the parent that awaits it 1130ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {} 2871ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {invalid-json 399ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > reports corruption inside the requested page after=1 limit=1 383ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > reports corruption inside the requested page after=0 limit=3 344ms
+ ✓ src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > uses sequence existence through exhaustion and retains owner scoping 395ms
+ ✓ src/model-issues-draft.test.ts > definition-aware draft admission > permits inherited unresolved readiness while keeping publication blocked 19ms
+ ✓ src/model-issues-draft.test.ts > definition-aware draft admission > keeps explicit inference and loop defaults and classifier errors invalid 1ms
+ ✓ src/model-issues-draft.test.ts > definition-aware draft admission > distinguishes inherited and explicit decision evaluator values 6ms
+ ✓ src/harness-switch.test.ts > saves, validates, publishes and starts the explicit switched codex choice without runtime substitution 3499ms
+ ✓ src/harness-switch.test.ts > saves, validates, publishes and starts the explicit switched claude choice without runtime substitution 541ms
+ ✓ src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild 7108ms
+ ✓ src/templates/catalog-package.test.ts > refuses a linked target root without touching files beyond the link 440ms
+ ✓ src/templates/catalog-package.test.ts > refuses a linked target ancestor without touching files beyond the link 404ms
+ ✓ src/templates/catalog-package.test.ts > refuses a linked target entry without touching files beyond the link 155ms
+ ✓ src/triggers/poll-http-bounds.test.ts > poll HTTP overflow diagnostics > refuses overflow without dispatch and exposes its typed code (items: false) 193ms
+ ✓ src/triggers/poll-http-bounds.test.ts > poll HTTP overflow diagnostics > refuses overflow without dispatch and exposes its typed code (items: true) 21ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > passes deeply nested valid probe JSON to candidate classification without a stack overflow 120ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts complete JSON without persisting process diagnostics 2ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects failures, timeouts, overflows and invalid JSON with fixed codes 3ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts script stdout at the exact raw-byte cap 12ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects 65,537 raw stdout bytes even when the overflow flag is false 1ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts provided or parsed HTTP JSON and rejects bad statuses or non-JSON responses 4ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves absent through execution, rejected updates and reopen 2565ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves null through execution, rejected updates and reopen 2259ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves false through execution, rejected updates and reopen 672ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves zero through execution, rejected updates and reopen 948ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves empty string through execution, rejected updates and reopen 820ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves array through execution, rejected updates and reopen 696ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves object through execution, rejected updates and reopen 982ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves nested null through execution, rejected updates and reopen 2068ms
+ ✓ src/run-json-values.test.ts > run result snapshots over file SQLite > preserves settings null and falsy JSON values across reopen 818ms
+ ✓ src/webhook-delivery-lifecycle.test.ts > loop deletion stops a webhook during in-flight without orphan events 1446ms
+ ✓ src/webhook-delivery-lifecycle.test.ts > loop deletion stops a webhook during backoff without orphan events 2329ms
+ ✓ src/artifact-integrity.test.ts > serves exact verified transcript bytes, reports corruption explicitly, repairs on put and distinguishes missing content 2255ms
+ ✓ src/ids.test.ts > UlidIds > strictly increases within one millisecond, including random-component carries 87ms
+ ✓ src/ids.test.ts > UlidIds > increases when time advances and does not reverse when the clock moves backwards 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+AssertionError: expected 'queued' to be 'waiting' // Object.is equality
+
+Expected: "waiting"
+Received: "queued"
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 64 passed | 2 skipped (67)
+      Tests  1 failed | 1326 passed | 8 skipped (1335)
+   Start at  19:45:00
+   Duration  2297.70s (tests 80%, import 18%, transform 2%)
+
+    Isolate  67 workers spawned · ~1.08s startup each (spawn + environment, per file)
+             at least ~71.21s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.2% ( 2105/2188 )
+Branches     : 92.62% ( 1344/1451 )
+Functions    : 94.23% ( 409/434 )
+Lines        : 97.8% ( 1915/1958 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

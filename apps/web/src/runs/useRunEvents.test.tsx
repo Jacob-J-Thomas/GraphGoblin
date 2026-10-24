@@ -59,6 +59,52 @@ function options(index = 0): SubscribeRunEventsOptions {
 }
 
 describe('run stream reachability', () => {
+  it('flushes an oversized single event immediately without dropping its payload', async () => {
+    vi.useFakeTimers();
+    mountStream();
+    await act(async () => {
+      await options().onEvent(
+        event(runId, 1, 'run.woken', {
+          nodeId: 'wait',
+          reason: 'manual',
+          payload: 'x'.repeat(600_000),
+        }),
+      );
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(1);
+  });
+  it('shows a slow-consumer reason during retry and clears it when the stream reopens', () => {
+    const { result } = mountStream();
+    act(() =>
+      options().onError?.(
+        new GraphGoblinApiError({
+          status: 503,
+          code: 'SSE_SLOW_CONSUMER',
+          detail: 'The reader fell behind; reconnecting from the last received event.',
+        }),
+        1,
+      ),
+    );
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toContain('The reader fell behind');
+    act(() => options().onOpen?.());
+    expect(result.current.status).toBe('live');
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('flushes a burst in bounded batches before the batching timer runs', async () => {
+    vi.useFakeTimers();
+    mountStream();
+    await act(async () => {
+      for (let seq = 1; seq <= 600; seq++)
+        await options().onEvent(event(runId, seq, 'run.started', { attempt: 1 }));
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events.length).toBeGreaterThanOrEqual(512);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(600);
+  });
   it('leaves an accepted clean close on the stream backoff without reporting an outage', () => {
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries');

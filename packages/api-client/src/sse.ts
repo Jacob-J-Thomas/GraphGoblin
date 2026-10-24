@@ -1,6 +1,6 @@
 import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
 import type { GraphGoblinClient } from './client.js';
-import { GraphGoblinApiError } from './errors.js';
+import { GraphGoblinApiError, type ProblemDetails } from './errors.js';
 
 /** Event types after which the API closes the stream and no further events can arrive. */
 export const TERMINAL_RUN_EVENT_TYPES: ReadonlySet<RunEvent['type']> = new Set([
@@ -195,14 +195,44 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
     if (!response.body) throw new Fatal(new Error('the event stream response has no body'));
     onOpen?.();
 
-    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    // Cancel the underlying reader directly as well as aborting fetch. In particular, no
+    // transform-stream cancellation can keep a stalled body read alive after close().
+    const cancelReader = () => {
+      void reader.cancel().catch(() => undefined);
+    };
+    controller.signal.addEventListener('abort', cancelReader, { once: true });
+    if (controller.signal.aborted) cancelReader();
     const parser = new SseParser();
     try {
       for (;;) {
         const { value, done } = await reader.read();
         if (done) return false;
-        for (const frame of parser.push(value)) {
+        for (const frame of parser.push(decoder.decode(value, { stream: true }))) {
           if (controller.signal.aborted) return true;
+          if (frame.event === 'stream.error') {
+            let problem: ProblemDetails;
+            try {
+              const body: unknown = JSON.parse(frame.data);
+              if (
+                typeof body !== 'object' ||
+                body === null ||
+                !('code' in body) ||
+                typeof body.code !== 'string' ||
+                !('status' in body) ||
+                typeof body.status !== 'number'
+              )
+                throw new Error('invalid stream problem');
+              problem = body as ProblemDetails;
+            } catch (cause) {
+              throw new Fatal(new RunEventParseError(frame, cause));
+            }
+            const error = new GraphGoblinApiError(problem);
+            // Control frames never advance lastSeq. Only slow consumers retry automatically;
+            // unreadable stored history needs repair and must not loop forever.
+            throw problem.code === 'SSE_SLOW_CONSUMER' ? error : new Fatal(error);
+          }
           let event: RunEvent;
           try {
             event = RunEventSchema.parse(JSON.parse(frame.data));
@@ -223,6 +253,7 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
         }
       }
     } finally {
+      controller.signal.removeEventListener('abort', cancelReader);
       await reader.cancel().catch(() => undefined);
     }
   }

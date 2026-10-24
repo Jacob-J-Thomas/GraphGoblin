@@ -158,7 +158,7 @@ async function boot() {
     reply.raw.once('finish', forget);
     reply.raw.once('close', forget);
   });
-  base = await app.listen({ host: '127.0.0.1', port: 0 });
+  base = await app.listen({ host: '127.0.0.1', port: options.port });
   return { base, bootMs: performance.now() - started, pid: process.pid };
 }
 async function size(file) {
@@ -449,7 +449,7 @@ async function close() {
   isClosed = true;
   clearInterval(sampling);
   if (manager && container) {
-    const unfinished = await container.repos.runs.listByStatus([
+    const unfinished = await container.repos.runs.listRunReferences([
       'queued',
       'running',
       'waiting',

@@ -344,7 +344,8 @@ describe('SSE framing', () => {
       const ids = [...response.body.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
       expect(ids).toEqual([1, 2, 3, 4]);
       expect(response.body).toContain(': heartbeat');
-      expect(response.body.trimEnd().endsWith('}')).toBe(true);
+      const data = [...response.body.matchAll(/^data: (.+)$/gm)];
+      expect(JSON.parse(data.at(-1)![1]!)).toMatchObject({ type: 'run.finished' });
       expect(listener).toBeUndefined();
     } finally {
       await app.close();

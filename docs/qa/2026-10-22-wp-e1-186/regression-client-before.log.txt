@@ -1,0 +1,242 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/packages/api-client
+
+ ↓ src/sse.test.ts > SseParser > parses id, event, and multi-line data; ignores comments and unknown fields
+ ↓ src/sse.test.ts > SseParser > handles CRLF and CR endings, including a CRLF split across chunks
+ ↓ src/sse.test.ts > SseParser > buffers partial lines and drops frames without data
+ × src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at data-newline without advancing the resume cursor 105ms
+   → expected [ …(3) ] to have a length of 2 but got 3
+ × src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at id-prefix without advancing the resume cursor 4ms
+   → expected [ …(3) ] to have a length of 2 but got 3
+ × src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control STORED_EVENT_INVALID without advancing the cursor or retrying 39ms
+   → expected Error: gave up on the event stream for ru… to match object { code: 'STORED_EVENT_INVALID', …(1) }
+ × src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control SSE_REPLAY_FAILED without advancing the cursor or retrying 35ms
+   → expected Error: gave up on the event stream for ru… to match object { code: 'SSE_REPLAY_FAILED', …(1) }
+ × src/sse.test.ts > subscribeRunEvents > rejects malformed stream controls without consuming their id 21ms
+   → expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+ × src/sse.test.ts > subscribeRunEvents > reports partial data without an id, then retries a slow control from the complete cursor 26ms
+   → expected RunEventParseError: invalid run event fra… { frame: { …(2) } } to match object { code: 'SSE_SLOW_CONSUMER' }
+(4 matching properties omitted from actual)
+ × src/sse.test.ts > subscribeRunEvents > reports a typed slow-consumer problem and resumes from the last delivered id 19ms
+   → expected [ …(2) ] to have a length of 1 but got 2
+ ↓ src/sse.test.ts > subscribeRunEvents > accepts exhausted completion and closes without reconnecting
+ ↓ src/sse.test.ts > subscribeRunEvents > delivers validated events in order, skips replays, and stops after a terminal event
+ ↓ src/sse.test.ts > subscribeRunEvents > reports each accepted connection through onOpen, before and without any event
+ ↓ src/sse.test.ts > subscribeRunEvents > reports invalid frames, advances past their id, and keeps going
+ ↓ src/sse.test.ts > subscribeRunEvents > retries refused connections and retryable statuses with capped exponential backoff
+ ↓ src/sse.test.ts > subscribeRunEvents > gives up after maxAttempts consecutive failures
+ ↓ src/sse.test.ts > subscribeRunEvents > rejects without retrying on non-retryable statuses and on a missing body
+ ↓ src/sse.test.ts > subscribeRunEvents > tolerates an unreadable error body
+ ↓ src/sse.test.ts > subscribeRunEvents > rejects when onEvent throws
+ ↓ src/sse.test.ts > subscribeRunEvents > reconnects after a stream error mid-read and resets backoff after progress
+ ↓ src/sse.test.ts > subscribeRunEvents > stops quietly when closed or aborted, including before it starts
+ ↓ src/sse.test.ts > subscribeRunEvents > stops when closed from inside onEvent or while waiting to retry
+ ↓ src/sse.test.ts > subscribeRunEvents > ends quietly when the stream finishes after close() aborts the read
+ ↓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting headers without cancelling the run
+ ↓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting body without cancelling the run
+ ↓ src/sse.test.ts > subscribeRunEvents > reconnects over real HTTP after the server drops the connection
+ ↓ src/sse.test.ts > defaultSleep > waits, and resolves early on abort
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at data-newline without advancing the resume cursor
+ FAIL  src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at id-prefix without advancing the resume cursor
+AssertionError: expected [ …(3) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/sse.test.ts:130:22
+    128|       }).done;
+    129|       expect(seen).toEqual([1, 2]);
+    130|       expect(errors).toHaveLength(2);
+       |                      ^
+    131|       expect(errors[0]).toBeInstanceOf(RunEventParseError);
+    132|       expect(errors[1]).toMatchObject({ code: 'SSE_SLOW_CONSUMER' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control STORED_EVENT_INVALID without advancing the cursor or retrying
+AssertionError: expected Error: gave up on the event stream for ru… to match object { code: 'STORED_EVENT_INVALID', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "code": "STORED_EVENT_INVALID",
+-   "problem": {
+-     "code": "STORED_EVENT_INVALID",
+-     "detail": "Stored history could not be read.",
+-     "status": 500,
++ Error {
++   "message": "gave up on the event stream for run 32TRRVEMQJJ0K90D4SRTRD74QW after 1 attempts",
++   "cause": Error {
++     "message": "the event stream closed before the run finished",
+    },
+  }
+
+ ❯ src/sse.test.ts:152:38
+    150|         backoff: { maxAttempts: 1 },
+    151|       });
+    152|       await expect(subscription.done).rejects.toMatchObject({ code, pr…
+       |                                      ^
+    153|       expect(subscription.lastSeq).toBe(1);
+    154|       expect(urls).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control SSE_REPLAY_FAILED without advancing the cursor or retrying
+AssertionError: expected Error: gave up on the event stream for ru… to match object { code: 'SSE_REPLAY_FAILED', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "code": "SSE_REPLAY_FAILED",
+-   "problem": {
+-     "code": "SSE_REPLAY_FAILED",
+-     "detail": "Stored history could not be read.",
+-     "status": 500,
++ Error {
++   "message": "gave up on the event stream for run 32TRRVEMQJJ0K90D4SRTRD74QW after 1 attempts",
++   "cause": Error {
++     "message": "the event stream closed before the run finished",
+    },
+  }
+
+ ❯ src/sse.test.ts:152:38
+    150|         backoff: { maxAttempts: 1 },
+    151|       });
+    152|       await expect(subscription.done).rejects.toMatchObject({ code, pr…
+       |                                      ^
+    153|       expect(subscription.lastSeq).toBe(1);
+    154|       expect(urls).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > rejects malformed stream controls without consuming their id
+AssertionError: expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+ ❯ src/sse.test.ts:167:36
+    165|       backoff: { maxAttempts: 1 },
+    166|     });
+    167|     await expect(subscription.done).rejects.toBeInstanceOf(RunEventPar…
+       |                                    ^
+    168|     expect(subscription.lastSeq).toBe(4);
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > reports partial data without an id, then retries a slow control from the complete cursor
+AssertionError: expected RunEventParseError: invalid run event fra… { frame: { …(2) } } to match object { code: 'SSE_SLOW_CONSUMER' }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "SSE_SLOW_CONSUMER",
++ RunEventParseError {
++   "message": "invalid run event frame",
++   "cause": ZodError {
++     "message": "[
++   {
++     \"code\": \"invalid_union\",
++     \"errors\": [],
++     \"note\": \"No matching discriminator\",
++     \"discriminator\": \"type\",
++     \"options\": [
++       \"delivery.queued\",
++       \"delivery.attempted\",
++       \"delivery.attempt_finished\",
++       \"delivery.finished\",
++       \"run.queued\",
++       \"run.started\",
++       \"run.finished\",
++       \"run.failed\",
++       \"run.paused\",
++       \"run.resumed\",
++       \"run.cancel_requested\",
++       \"run.cancelled\",
++       \"run.waiting\",
++       \"run.woken\",
++       \"iteration.incremented\",
++       \"node.started\",
++       \"node.finished\",
++       \"node.progress\",
++       \"harness.turn\",
++       \"harness.submission\",
++       \"harness.session\",
++       \"harness.usage\",
++       \"decision.made\",
++       \"exit.evaluated\",
++       \"signal.received\",
++       \"input.received\",
++       \"heartbeat.beat\",
++       \"child_run.started\",
++       \"child_run.finished\",
++       \"return.delivered\",
++       \"return.failed\"
++     ],
++     \"path\": [
++       \"type\"
++     ],
++     \"message\": \"Invalid discriminator value. Expected 'delivery.queued' | 'delivery.attempted' | 'delivery.attempt_finished' | 'delivery.finished' | 'run.queued' | 'run.started' | 'run.finished' | 'run.failed' | 'run.paused' | 'run.resumed' | 'run.cancel_requested' | 'run.cancelled' | 'run.waiting' | 'run.woken' | 'iteration.incremented' | 'node.started' | 'node.finished' | 'node.progress' | 'harness.turn' | 'harness.submission' | 'harness.session' | 'harness.usage' | 'decision.made' | 'exit.evaluated' | 'signal.received' | 'input.received' | 'heartbeat.beat' | 'child_run.started' | 'child_run.finished' | 'return.delivered' | 'return.failed'\"
++   }
++ ]",
++     "name": "ZodError",
++   },
++   "frame": {
++     "data": "{\"code\":\"SSE_SLOW_CONSUMER\",\"status\":503}",
++     "event": "stream.error",
++   },
++   "name": "RunEventParseError",
+  }
+
+ ❯ src/sse.test.ts:191:23
+    189|     await subscription.done;
+    190|     expect(errors[0]).toBeInstanceOf(RunEventParseError);
+    191|     expect(errors[1]).toMatchObject({ code: 'SSE_SLOW_CONSUMER' });
+       |                       ^
+    192|     expect(urls[1]).toMatch(/after=1$/);
+    193|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > reports a typed slow-consumer problem and resumes from the last delivered id
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/sse.test.ts:218:20
+    216|     });
+    217|     await subscription.done;
+    218|     expect(errors).toHaveLength(1);
+       |                    ^
+    219|     expect(errors[0]).toBeInstanceOf(GraphGoblinApiError);
+    220|     expect(errors[0]).toMatchObject({ code: 'SSE_SLOW_CONSUMER', probl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 20 skipped (27)
+   Start at  20:44:47
+   Duration  8.96s (transform 76%, import 21%, tests 4%)
+
+  Transform  transforming modules took 5.96s · 76% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\packages\api-client
+
