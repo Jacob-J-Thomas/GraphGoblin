@@ -105,6 +105,22 @@ D-005 reserves them for the orchestrator. Both native continuity scripts need ex
 in the orchestrator's signed-in context. Fake-harness tests establish neither native
 recall/retention nor provider compaction guarantees. No provider settings were changed.
 
+### Orchestrator live run (2026-10-24, D-005)
+
+The orchestrator ran both scripts unchanged from this worktree after `pnpm build`, with Node
+22.14.0 and the machine's existing sign-ins. Both passed with exactly two turns each: the
+adapter was recreated between the turns, the resumed turn reported the same provider session,
+and the provider recalled the nonce that only the first turn contained.
+
+| Harness | CLI     | Model / effort           | Turns | Same session | Nonce recalled | Log                                                                  |
+| ------- | ------- | ------------------------ | ----- | ------------ | -------------- | -------------------------------------------------------------------- |
+| Codex   | 0.160.0 | `gpt-6-luna` / low       | 2     | yes          | yes            | [orchestrator-live-codex.log.txt](orchestrator-live-codex.log.txt)   |
+| Claude  | 2.1.308 | `claude-haiku-5-5` / low | 2     | yes          | yes            | [orchestrator-live-claude.log.txt](orchestrator-live-claude.log.txt) |
+
+This proves native start and resume of a recorded session ID for both supported harnesses,
+which `resume-own` relies on; the selection of which ID to resume is proved by the engine
+tests above. The two scratch directories (`gg-wp-f4-33-*`) were left in the temp folder.
+
 ## Gate commands and results
 
 All commands below ran from the worktree with Node **22.14.0** first on PATH and
@@ -222,6 +238,7 @@ Completed: baseline reproduction; implementation; deterministic isolation/reset/
 scenarios; schema-driven editor and browser persistence; real API process restart;
 docs/reference/client generation and the listed passing static/build gates.
 
-Outstanding: failed broad coverage gates; native provider start/resume evidence for both
-harnesses; independent review/QA and owner product acceptance. No issue closure, merge,
+Outstanding at the implementer's report: failed broad coverage gates; native provider
+start/resume evidence for both harnesses (since supplied by the orchestrator's live run
+above); independent review/QA and owner product acceptance. No issue closure, merge,
 commit, publication, owner-runtime update or live-provider continuity claim is made.
