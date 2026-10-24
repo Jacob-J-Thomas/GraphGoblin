@@ -1,4 +1,4 @@
-﻿# WP-G2 / #240 implementation evidence
+# WP-G2 / #240 implementation evidence
 
 **Round 1 record.** The follow-up [round-2 report](round-2/README.md) removes the private browser harness and records the default-configuration result. The logs below remain the original round-1 evidence.
 
@@ -118,3 +118,9 @@ Observed outside scope, left unchanged:
 - The API run reported failures in `triggers/github-recipe.test.ts:144`, `subloop-restart.test.ts:133`, `:191` and `:253`, `main.test.ts:49`, `:67`, `:87` and `:101`, and the disposal hook at `retired-event-startup.test.ts:23`. Its result is 9 failed, 1,312 passed and 8 skipped, with no coverage percentages emitted.
 - Browser qualification is desktop Edge at 1440 by 900. No claim of separate mobile qualification or live-provider behaviour is made.
 - `TODO(#343 integration):` when integrating WP-D4, reconcile the Events browser seed helper (`e2e/events-refresh.spec.ts`, its current `POST /events` body) with the targeted-event request contract, then rebuild and rerun the spec. The present helper follows the accepted base's contract; no compatibility path is added.
+
+## Round 4 — final-audit blockers B1 and B2
+
+Base HEAD: 400bfdb0663247453121818eebad788f9c664a31. Both blockers reproduced before edits: B1 replaced the winning 200 rows with 100 and falsely reported newest; B2 retained Pending admission at the page boundary until explicit Refresh. After rebuilding, B1 retains the identical winning 200 rows and B2 shows Admitted automatically before manual Refresh; both audit invariants pass. The copied diagnostic uses a state-based wait because successful recovery stops the original helper's expected extra polls. See [round-4 report](round-4/README.md) for before/after reproductions, bounded anchored receipt reads, latest-refresh ownership, gate logs and the handoff. Independent QA evidence remains read-only.
+
+Round-4 web coverage passes 1,647 tests (98.94% lines, 94.98% branches); the default browser run passes 7 cases with retries disabled. The full gate set remains failed because of untouched client/infrastructure failures and an API worker crash. Required isolated reruns retain the client/infrastructure failures; the crashed API file passes 13/13 in isolation. Both original and isolated results are retained in the round-4 report.

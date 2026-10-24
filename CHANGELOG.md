@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. (#240)
+- Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. Obsolete Refresh responses cannot overwrite a newer snapshot across revisits; inclusive anchored receipt reads keep displaced pending rows up to date. (#240)
 
 - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
 

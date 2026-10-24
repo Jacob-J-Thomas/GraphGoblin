@@ -40,7 +40,7 @@ describe('EventsPage delivery dispositions', () => {
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
     const call = api
       .callsTo('GET', '/events')
-      .filter((call) => call.search.get('limit') !== '1')
+      .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor'))
       .at(-1)!;
     expect(call.search.get('type')).toBe('chosen');
     expect(call.search.get('before')).toBe('2099-01-01T00:00:00.000Z');
@@ -184,7 +184,9 @@ describe('EventsPage delivery dispositions', () => {
         }),
       ).toBeVisible();
       expect(
-        api.callsTo('GET', '/events').filter((call) => call.search.get('limit') !== '1'),
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
       ).toHaveLength(1);
 
       api.inbound = [
@@ -207,12 +209,16 @@ describe('EventsPage delivery dispositions', () => {
         expect(screen.getByText('ADMISSION_UNAVAILABLE')).toBeVisible();
       }
       expect(
-        api.callsTo('GET', '/events').filter((call) => call.search.get('limit') !== '1'),
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
       ).toHaveLength(2);
 
       await new Promise((resolve) => setTimeout(resolve, 2_200));
       expect(
-        api.callsTo('GET', '/events').filter((call) => call.search.get('limit') !== '1'),
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
       ).toHaveLength(2);
     } finally {
       view.unmount();
@@ -243,13 +249,17 @@ describe('EventsPage delivery dispositions', () => {
         }),
       ).toBeVisible();
       expect(
-        api.callsTo('GET', '/events').filter((call) => call.search.get('limit') !== '1'),
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
       ).toHaveLength(1);
 
       view.unmount();
       await new Promise((resolve) => setTimeout(resolve, 2_200));
       expect(
-        api.callsTo('GET', '/events').filter((call) => call.search.get('limit') !== '1'),
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
       ).toHaveLength(1);
     } finally {
       view.unmount();

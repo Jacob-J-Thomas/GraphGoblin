@@ -1,4 +1,25 @@
 import { control, expect, test } from './fixtures.js';
+import type { APIRequestContext } from '@playwright/test';
+
+async function postEvent(
+  request: APIRequestContext,
+  url: string,
+  type: string,
+  index: number | string,
+) {
+  expect(
+    (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+  ).toBe(202);
+}
+
+async function seedEvents(request: APIRequestContext, url: string, type: string, count: number) {
+  for (let start = 0; start < count; start += 20)
+    await Promise.all(
+      Array.from({ length: Math.min(20, count - start) }, (_, offset) =>
+        postEvent(request, url, type, start + offset),
+      ),
+    );
+}
 
 test('Events admits arrivals only on Refresh, preserves filters and pages again (#240)', async ({
   page,
@@ -149,4 +170,143 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`${url}/app/events?keep=reader`);
   await expect(refresh).toBeFocused();
+});
+
+test('Events drops an obsolete Refresh after clearing the filter, Back, a newer Refresh and paging (#240)', async ({
+  page,
+  request,
+}) => {
+  const url = String((await control(request, '/apps'))['url']);
+  await seedEvents(request, url, 'refresh-race', 201);
+  const path = '/app/events?type=refresh-race&before=2099-01-01T00%3A00%3A00.000Z&keep=reader';
+  await page.goto(url + path);
+  const more = page.getByRole('button', { name: 'Load more', exact: true });
+  const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
+  await more.click();
+  await expect(page.locator('tbody tr')).toHaveCount(200);
+  let unblock = () => {};
+  let captured = () => {};
+  let delivered = () => {};
+  const latch = new Promise<void>((resolve) => {
+    unblock = resolve;
+  });
+  const held = new Promise<void>((resolve) => {
+    captured = resolve;
+  });
+  const delivery = new Promise<void>((resolve) => {
+    delivered = resolve;
+  });
+  let hold = true;
+  await page.route('**/events?**', async (route) => {
+    const parsed = new URL(route.request().url());
+    const query = parsed.searchParams;
+    if (
+      parsed.pathname !== '/events' ||
+      !hold ||
+      query.get('type') !== 'refresh-race' ||
+      query.has('cursor') ||
+      query.has('limit') ||
+      query.has('anchor')
+    ) {
+      await route.continue();
+      return;
+    }
+    hold = false;
+    const response = await route.fetch();
+    captured();
+    await latch;
+    try {
+      await route.fulfill({ response });
+    } finally {
+      delivered();
+    }
+  });
+  try {
+    await refresh.click();
+    await held;
+    await page.getByRole('button', { name: 'Clear type filter', exact: true }).click();
+    await expect(refresh).toHaveAttribute('aria-busy', 'false');
+    await page.goBack();
+    await expect(page).toHaveURL(url + path);
+    await postEvent(request, url, 'refresh-race', 'winning-refresh');
+    await refresh.click();
+    await expect(page.locator('tbody tr').first()).toContainText('winning-refresh');
+    await more.click();
+    await expect(page.locator('tbody tr')).toHaveCount(200);
+    const snapshot = await page.locator('tbody').innerText();
+    const response = page.waitForResponse((result) => {
+      const query = new URL(result.url()).searchParams;
+      return (
+        query.get('type') === 'refresh-race' &&
+        !query.has('cursor') &&
+        !query.has('limit') &&
+        !query.has('anchor')
+      );
+    });
+    unblock();
+    await delivery;
+    await (await response).finished();
+    // Synchronize with response consumption and painting, without a timing sleep.
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    await expect(page.locator('tbody tr')).toHaveCount(200);
+    expect(await page.locator('tbody').innerText()).toBe(snapshot);
+    await expect(page.getByText('Showing the newest events.', { exact: true })).toBeVisible();
+    await expect(page).toHaveURL(url + path);
+  } finally {
+    unblock();
+    await page.unrouteAll({ behavior: 'wait' });
+  }
+});
+
+test('Events updates the hundredth pending receipt after a head arrival without Refresh (#240)', async ({
+  page,
+  request,
+}) => {
+  const url = String((await control(request, '/apps'))['url']);
+  await seedEvents(request, url, 'receipt-boundary', 101);
+  const first = (await (await request.get(url + '/events?type=receipt-boundary')).json()) as {
+    items: { id: string }[];
+  };
+  const receiptId = first.items[99]!.id;
+  let admitted = false;
+  // A valid response fixture controls UI delivery state; admission itself is not simulated evidence.
+  await page.route('**/events?**', async (route) => {
+    const parsed = new URL(route.request().url());
+    if (parsed.pathname !== '/events' || parsed.searchParams.get('type') !== 'receipt-boundary') {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    const body = (await response.json()) as {
+      items: { id: string; delivery?: { state: string; attempts: number } }[];
+      nextCursor: string | null;
+    };
+    body.items = body.items.map((item) =>
+      item.id === receiptId
+        ? { ...item, delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 } }
+        : item,
+    );
+    await route.fulfill({ response, json: body });
+  });
+  await page.goto(url + '/app/events?type=receipt-boundary');
+  await expect(page.getByText('Pending admission', { exact: true })).toBeVisible();
+  const ids = () =>
+    page
+      .locator('[data-testid^="payload-"]')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-testid')));
+  const before = await ids();
+  await postEvent(request, url, 'receipt-boundary', 'new-arrival');
+  admitted = true;
+  await expect(page.getByText('Admitted', { exact: true })).toBeVisible();
+  expect(await ids()).toEqual(before);
+  await expect(page.getByText('New events available', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Load more', exact: true }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(101);
+  expect(new Set(await ids()).size).toBe(101);
+  await page.unrouteAll({ behavior: 'wait' });
 });

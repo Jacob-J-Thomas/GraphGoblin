@@ -410,6 +410,18 @@ under the new filters. Inbound rows sharing a timestamp are ordered by ID, which
 creation order within one process. Unknown query parameters return 400, and `before` must
 be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
 
+For bounded receipt updates, `anchor=<eventId>` re-reads a page starting at that event,
+inclusive, with the same `type`, exclusive `before` and `limit` rules. It is mutually
+exclusive with `cursor` (`400 VALIDATION_FAILED` if combined). An unknown anchor, one
+owned by another reader, or one outside the filters returns an empty page. The server
+uses one indexed lookup and one inclusive SQL range; only the requested rows are decoded,
+and the usual opaque `nextCursor` continues strictly after the returned last row.
+The Events page uses each loaded page's first ID and loaded size for this read, then merges
+updates by ID without replacing its membership or continuation. Thus even a pending head
+or hundredth row displaced by many tied arrivals keeps updating, without scanning history.
+Manual Refresh responses are committed only by the latest request for that cached scope,
+including after filter changes and remounts; an obsolete completion changes no rows or status.
+
 `GET /runs/{id}/events` retains its sequence-number continuation, returning
 `{items, nextAfter, hasMore}`. One raw lookahead row determines `hasMore`; an exactly full
 final page returns false. Only requested rows are decoded and validated: malformed
