@@ -4,6 +4,11 @@ import type { RunEvent } from '@graphgoblin/contracts';
 import { UnreadableRunHistoryError, type EventStorePort } from '@graphgoblin/engine';
 
 const TERMINAL_EVENTS = new Set<RunEvent['type']>(['run.finished', 'run.failed', 'run.cancelled']);
+const LIFECYCLE_EVENTS = new Set<RunEvent['type']>([
+  ...TERMINAL_EVENTS,
+  'run.started',
+  'run.resumed',
+]);
 // The measured ~470-byte events make a page about 60 KiB: short reads/yields without a query
 // per event. A page bounds event count, not the intrinsic size of a single stored payload.
 const REPLAY_PAGE_SIZE = 128;
@@ -65,6 +70,9 @@ export async function streamRunEvents(
   let partialLineEnded = false;
   let observedLifecycle: RunEvent | undefined;
   let needsConfirmation = false;
+  // Set by every lifecycle notification, including ones a cursor past the durable tail never
+  // delivers; a confirmation that sees it set during its own reads starts over.
+  let lifecycleChanged = false;
   // Numeric header bounds are exclusive over integer seqs; negative bounds replay from 1.
   let last = Math.max(0, Math.floor(after));
   let heldBytes = 0;
@@ -224,6 +232,7 @@ export async function streamRunEvents(
         }
         if (!held.length) {
           if (!needsConfirmation) break;
+          lifecycleChanged = false;
           const consumed = await hasConsumedTerminal();
           if (closed) break;
           if (catchingUp || held.length) continue;
@@ -241,6 +250,9 @@ export async function streamRunEvents(
             await catchUp({ page });
             continue;
           }
+          // A cursor past the durable tail hides a resume racing this confirmation from the
+          // read above; any lifecycle change since the lookup means confirming again.
+          if (lifecycleChanged) continue;
           await writeText(`event: stream.complete\ndata: ${JSON.stringify({ after: last })}\n\n`);
           if (!closed) end();
           break;
@@ -262,7 +274,16 @@ export async function streamRunEvents(
   };
   // Replay/catch-up needs no live copies: committed notifications are returned by paged reads.
   unsubscribe = store.subscribe(runId, (event) => {
-    if (closed || failure || catchingUp || event.seq <= last) return;
+    if (closed || failure) return;
+    if (LIFECYCLE_EVENTS.has(event.type)) {
+      lifecycleChanged = true;
+      // Not delivered to a cursor already past it, but it still decides completion.
+      if (event.seq <= last && !catchingUp) {
+        needsConfirmation = true;
+        void flushLive();
+      }
+    }
+    if (catchingUp || event.seq <= last) return;
     const text = encode(event);
     const bytes = Buffer.byteLength(text);
     if (held.length >= MAX_HELD_EVENTS || heldBytes + bytes > MAX_HELD_BYTES) {

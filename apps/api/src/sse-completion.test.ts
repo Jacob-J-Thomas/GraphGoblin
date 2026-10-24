@@ -121,6 +121,83 @@ describe('authoritative SSE completion', () => {
     },
   );
 
+  const latestLifecycle = async (store: InMemoryEventStore, runId: string) =>
+    (await store.read(runId)).findLast((event) =>
+      ['run.cancelled', 'run.failed', 'run.finished', 'run.resumed', 'run.started'].includes(
+        event.type,
+      ),
+    );
+
+  it('completes a cursor past the durable tail when a later outcome lands at or below it', async () => {
+    const store = new InMemoryEventStore(new FakeClock());
+    const runId = FIXTURE_IDS.run;
+    await store.append(runId, [
+      { type: 'run.cancelled' },
+      { type: 'run.resumed', actor: { kind: 'user', id: 'local' } },
+    ]);
+    let scheduled = false;
+    const app = Fastify();
+    app.get('/', (request, reply) =>
+      streamRunEvents(request, reply, store, runId, 106, {
+        isTerminal: () => Promise.resolve(false),
+        lastLifecycleEvent: async () => {
+          const marker = await latestLifecycle(store, runId);
+          if (!scheduled) {
+            scheduled = true;
+            // The active run is cancelled after the stream opened; its seq is below the cursor.
+            setTimeout(() => void store.append(runId, [{ type: 'run.cancelled' }]), 50);
+          }
+          return marker;
+        },
+        closeSignal: AbortSignal.timeout(3_000),
+      }),
+    );
+    try {
+      const response = await app.inject('/');
+      expect(ids(response.body)).toEqual([]);
+      completion(response.body, 106);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('does not complete a cursor past the tail when a resume races the confirmation', async () => {
+    const store = new InMemoryEventStore(new FakeClock());
+    const runId = FIXTURE_IDS.run;
+    await store.append(runId, [
+      {
+        type: 'run.failed',
+        failure: { code: 'HARNESS_TURN_FAILED', message: 'retry', resumable: true },
+      },
+    ]);
+    let raced = false;
+    const app = Fastify();
+    app.get('/', (request, reply) =>
+      streamRunEvents(request, reply, store, runId, 112, {
+        // Status lags, so the first lookup is the post-catch-up confirmation itself.
+        isTerminal: () => Promise.resolve(false),
+        lastLifecycleEvent: async () => {
+          const marker = await latestLifecycle(store, runId);
+          if (!raced) {
+            raced = true;
+            await store.append(runId, [
+              { type: 'run.resumed', actor: { kind: 'user', id: 'local' } },
+            ]);
+          }
+          return marker;
+        },
+        // The run stays active, so the stream must still be open when this ends it.
+        closeSignal: AbortSignal.timeout(1_500),
+      }),
+    );
+    try {
+      const response = await app.inject('/');
+      expect(response.body).not.toContain('stream.complete');
+    } finally {
+      await app.close();
+    }
+  });
+
   it.each(['empty replay', 'audit suffix'] as const)(
     'confirms a consumed outcome while the run status still lags (%s)',
     async (shape) => {
