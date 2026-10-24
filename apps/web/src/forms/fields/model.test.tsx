@@ -253,7 +253,7 @@ describe('catalog field controls', () => {
 
     await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
     expect(model()).toHaveValue('claude-fable-5-1');
-    expect(model()).not.toHaveAccessibleDescription(/unavailable/);
+    expect(model()).not.toHaveAccessibleDescription(/read-only|not listed|not in the catalog/);
     expect(within(model()).getByRole('option', { name: /claude-fable-5-1/ })).toBeEnabled();
     expect(within(model()).getByRole('option', { name: /claude-opus-5-5/ })).toBeEnabled();
 
@@ -520,11 +520,8 @@ describe('catalog field controls', () => {
       api,
     );
     const group = screen.getByRole('form', { name: 'Decision' });
-    // Explicit selections are controls nested within the active model and effort unions.
-    const modelGroup = within(group).getByRole('group', { name: 'Model' });
-    const effortGroup = within(group).getByRole('group', { name: 'Effort' });
-    const model = within(modelGroup).getByLabelText('Value');
-    const effort = within(effortGroup).getByLabelText('Value');
+    const model = within(group).getByLabelText('Model');
+    const effort = within(group).getByLabelText('Effort');
     await waitFor(() => expect(model).not.toHaveAttribute('aria-readonly'));
     expect(model).toHaveValue('alpha');
     expect(within(model).getAllByRole('option')).toHaveLength(2);
@@ -536,7 +533,7 @@ describe('catalog field controls', () => {
         model: { mode: 'explicit', value: 'alpha' },
         effort: { mode: 'explicit', value: 'low' },
       }),
-      expect.objectContaining({ path: 'effort.value', kind: 'commit' }),
+      expect.objectContaining({ path: 'effort', kind: 'commit' }),
     );
   });
   it('shows an empty catalog with only the inherited choice and a Settings link', async () => {
@@ -546,7 +543,7 @@ describe('catalog field controls', () => {
       within(model())
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['(loop default)']);
+    ).toEqual(['(loop default) (gpt-6-luna)']);
     expect(model()).toHaveAccessibleDescription(/No enabled models/);
     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
     expect(change).not.toHaveBeenCalled();
@@ -568,7 +565,7 @@ describe('catalog field controls', () => {
       within(effort())
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['(inherited; the catalog suggests low)', 'low', 'high']);
+    ).toEqual(['Default (low)', 'low', 'high']);
     expect(effort()).toHaveValue('');
     await user.selectOptions(effort(), 'high');
     expect(change).toHaveBeenLastCalledWith(
@@ -847,30 +844,43 @@ describe('catalog field controls', () => {
     expect(model()).toHaveAccessibleDescription(/MODEL_DISABLED: Server warning for alpha/);
   });
 
-  it('registers loop defaults with Codex choices and an owner-default unset value', async () => {
-    const api = new FakeApi();
-    api.catalog = [entry('alpha'), entry('other', true, 'another')];
-    const change = vi.fn();
-    renderWith(
-      <SchemaForm
-        schema={LoopSettingsSchema}
-        value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
-        label="Settings"
-        onChange={change}
-        controls={LOOP_FIELD_CONTROLS}
-      />,
-      '/',
-      api,
-    );
-    await ready();
-    expect(within(model()).getByRole('option', { name: '(owner default)' })).toBeInTheDocument();
-    expect(within(model()).getAllByRole('option')).toHaveLength(2);
-    await userEvent.setup().selectOptions(model(), '');
-    expect(change.mock.lastCall?.[0]).toMatchObject({
-      defaults: { byHarness: { codex: {} } },
-    });
-    expect(within(effort()).getAllByRole('option')).toHaveLength(7);
-  });
+  it.each(['owner', 'process'] as const)(
+    'registers loop defaults with Codex choices and the inherited %s model',
+    async (level) => {
+      const api = new FakeApi();
+      api.catalog = [entry('alpha'), entry('other', true, 'another')];
+      if (level === 'owner')
+        api.settingsValues = {
+          defaults: { byHarness: { codex: { model: 'owner-model', effort: 'high' } } },
+        };
+      const change = vi.fn();
+      renderWith(
+        <SchemaForm
+          schema={LoopSettingsSchema}
+          value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
+          label="Settings"
+          onChange={change}
+          controls={LOOP_FIELD_CONTROLS}
+        />,
+        '/',
+        api,
+      );
+      await ready();
+      await waitFor(() =>
+        expect(
+          within(model()).getByRole('option', {
+            name: `(owner default) (${level === 'owner' ? 'owner-model' : 'gpt-6-luna'})`,
+          }),
+        ).toBeInTheDocument(),
+      );
+      expect(within(model()).getAllByRole('option')).toHaveLength(2);
+      await userEvent.setup().selectOptions(model(), '');
+      expect(change.mock.lastCall?.[0]).toMatchObject({
+        defaults: { byHarness: { codex: {} } },
+      });
+      expect(within(effort()).getAllByRole('option')).toHaveLength(7);
+    },
+  );
 
   it('uses the validated byHarness record key for mixed loop default model and effort choices', async () => {
     const api = new FakeApi();

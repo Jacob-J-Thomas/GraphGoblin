@@ -1,0 +1,33 @@
+Final recorded results for WP-F2b #205
+Node v22.14.0; pnpm invoked as pnpm.cmd on Windows.
+Branch codex-wp-f2b-205; base fbd48d3da5f162539964516a34d5de7e387d63c6.
+Uncommitted; no staging, commits, GitHub writes or owner-app operations.
+
+PASS pnpm typecheck (20 successful tasks; typecheck-final.log.txt)
+PASS pnpm lint (lint-final.log.txt; later fixture files also linted)
+PASS pnpm format:check (format-check-final.log.txt; final QA note formatted separately)
+PASS pnpm check:layers
+PASS pnpm check:deps
+PASS pnpm check:tokens
+PASS pnpm check:docs
+PASS pnpm --filter @graphgoblin/web test:coverage, VITEST_MAX_WORKERS=2
+  130 files, 1646 tests; lines 98.92%, branches 94.98%.
+PASS pnpm --filter @graphgoblin/contracts test:coverage
+  lines 99.74%, branches 95%.
+PASS pnpm --filter @graphgoblin/api-client test:coverage
+  lines 100%, branches 99.37%.
+PASS pnpm --filter @graphgoblin/api test:coverage, VITEST_MAX_WORKERS=2
+  65 files passed, 2 files skipped; 1322 tests passed, 8 existing opt-in/platform tests skipped.
+  lines 97.95%, branches 93.16%.
+PASS pnpm build (build.log.txt and browser-build.log.txt)
+PASS from apps/web: pnpm exec playwright test e2e/model-effort.spec.ts e2e/model-picker.spec.ts e2e/node-placement.spec.ts e2e/claude-harness.spec.ts --retries=0
+  42 passed, zero retries (browser-final.log.txt).
+PASS pnpm --filter @graphgoblin/api-client generate
+PASS pnpm docs:generate
+PASS git diff --check
+
+The original model-picker run reproduced four failures on the baseline. All eight model-picker cases pass in the final run.
+The two new layout regression cases failed before implementation: inference Effort was hidden, and LLM had no single labelled Effort control.
+Initial overlapping full web/API coverage runs failed; their original logs remain. Final full runs were isolated and limited to two workers, with no timeout, retry, threshold or exclusion changes.
+Initial browser fixture failures were corrected: duplicate Answer DOM wrappers, per-instance catalog targeting, and admission versus execution-time unsupported-effort refusal. The final complete browser set passes.
+Live provider turns were not run. Browser request assertions use the existing fake harness and decider.

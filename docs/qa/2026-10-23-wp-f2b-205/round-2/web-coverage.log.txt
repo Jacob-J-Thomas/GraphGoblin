@@ -1,0 +1,785 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:14 char:3
++   & pnpm.cmd @round2Args 2>&1 | Out-File -Encoding UTF8 -Append $roun ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/routing-review.test.ts (23 tests | 1 failed) 186443ms
+   ❯ routing review regressions (23)
+     × seeded sparse graphs preserve geometry and keep detours below twelve bends 70049ms
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 6 failed) 202064ms
+   × keeps type through editor save, device draft, reopen and export: {"type":"manual","exposeTo":["ui","mcp"],"inputSchema":{"type":"object"}} 16476ms
+   × keeps type through editor save, device draft, reopen and export: {"type":"cron","expression":"30 7 * * 1","timezone":"Europe/Paris"} 20881ms
+   × keeps type through editor save, device draft, reopen and export: {"type":"event","eventType":"build-ready","dedupeKey":"id"} 24010ms
+   ❯ trigger authoring (4)
+     × starts with five types, shows only their fields, and keeps signing under Webhook 20583ms
+     × previews, cancels and applies issues-poll as one undo step including graph and held input 20418ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20056ms
+ ❯ src/editor/EditorPage.restore.test.tsx (20 tests | 1 failed) 69047ms
+   ❯ restoring a set-aside copy (20)
+     × converts a v1 draft, archives the exact original and requires explicit first-save overwrite 6868ms
+ ❯ src/editor/ClassifierField.editor.test.tsx (6 tests | 1 failed) 44832ms
+   ❯ the classifier picker in the node editor (3)
+     × makes each pick an undo step of its own, however quick 20593ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/ClassifierField.editor.test.tsx > the classifier picker in the node editor > makes each pick an undo 
+step of its own, however quick
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/ClassifierField.editor.test.tsx:214:3
+    212|   });
+    213|
+    214|   it('makes each pick an undo step of its own, however quick', async (…
+       |   ^
+    215|     const user = userEvent.setup();
+    216|     setup('kev');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > converts a v1 draft, archives the exact 
+original and requires explicit first-save overwrite
+TestingLibraryElementError: Unable to find role="heading" and name "legacy device copy"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_8_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_8_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33maria-current[39m=[32m"page"[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_8_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_8_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33maria-current[39m=[32m"page"[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/editor/EditorPage.restore.test.tsx:129:25
+    127|     // Observe device/server loading before querying the restored edit…
+    128|     await waitForElementToBeRemoved(screen.getByText('Loading loop…'));
+    129|     expect(await screen.findByRole('heading', { name: 'legacy device c…
+       |                         ^
+    130|     await waitFor(async () => expect(await drafts.loadArchivedDrafts(l…
+    131|     expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/editor/routing-review.test.ts > routing review regressions > seeded sparse graphs preserve geometry and 
+keep detours below twelve bends
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/routing-review.test.ts:662:3
+    660|   });
+    661|
+    662|   it('seeded sparse graphs preserve geometry and keep detours below tw…
+       |   ^
+    663|     let seed = 0x182026;
+    664|     const random = () => (seed = (Math.imul(seed, 1664525) + 101390422…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > keeps type through editor save, device draft, reopen and export: 
+{"type":"manual","exposeTo":["ui","mcp"],"inputSchema":{"type":"object"}}
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 32 32"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33mheight[39m=[32m"17.4"[39m
+                [33mrx[39m=[32m"6.2"[39m
+                [33mwidth[39m=[32m"22"[39m
+                [33mx[39m=[32m"5"[39m
+                [33my[39m=[32m"8.8"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"5"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"27"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"13.3"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"18.7"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mGraph[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-accent"[39m
+              [36m>[39m
+                [0mGoblin[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_0_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"menu"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMenu[0m
+          [36m</button>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"Main"[39m
+            [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+            [33mid[39m=[32m"_r_0_"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33maria-current[39m=[32m"page"[39m
+              [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium 
+text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold 
+aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 
+max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised 
+active"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+  ...
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ timeout src/editor/TriggerEditor.test.tsx:57:77
+     55|     config.type[0]!.toUpperCase() + config.type.slice(1),
+     56|   );
+     57|   await waitFor(() => expect(api.callsTo('PUT', `/loops/${loop.id}/dra…
+       |                                                                             ^
+     58|     timeout: 4000,
+     59|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > keeps type through editor save, device draft, reopen and export: 
+{"type":"cron","expression":"30 7 * * 1","timezone":"Europe/Paris"}
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:42:3
+     40|     dedupeKey: 'id',
+     41|   }),
+     42| ])('keeps type through editor save, device draft, reopen and export: %…
+       |   ^
+     43|   const api = new FakeApi();
+     44|   const definition = newLoopDefinition('trigger round trip');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > keeps type through editor save, device draft, reopen and export: 
+{"type":"event","eventType":"build-ready","dedupeKey":"id"}
+AssertionError: expected [] to have a length of 1 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 32 32"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33mheight[39m=[32m"17.4"[39m
+                [33mrx[39m=[32m"6.2"[39m
+                [33mwidth[39m=[32m"22"[39m
+                [33mx[39m=[32m"5"[39m
+                [33my[39m=[32m"8.8"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"5"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"27"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"13.3"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"18.7"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mGraph[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-accent"[39m
+              [36m>[39m
+                [0mGoblin[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_17_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"menu"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMenu[0m
+          [36m</button>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"Main"[39m
+            [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+            [33mid[39m=[32m"_r_17_"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33maria-current[39m=[32m"page"[39m
+              [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium 
+text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold 
+aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 
+max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised 
+active"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+...
+
+- Expected
+
+ Test Files  4 failed | 126 passed (130)
+      Tests  9 failed | 1639 passed (1648)
+   Start at  22:19:37
+   Duration  5745.00s (tests 49%, environment 28%, setup 10%, import 10%, transform 2%, worker 1%)
+
+Environment  jsdom was created 130 times · 1514.97s total, 28% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
++ Received
+
+- 1
++ 0
+
+ ❯ timeout src/editor/TriggerEditor.test.tsx:57:77
+     55|     config.type[0]!.toUpperCase() + config.type.slice(1),
+     56|   );
+     57|   await waitFor(() => expect(api.callsTo('PUT', `/loops/${loop.id}/dra…
+       |                                                                             ^
+     58|     timeout: 4000,
+     59|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > trigger authoring > starts with five types, shows only their fields, and 
+keeps signing under Webhook
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:77:3
+     75|
+     76| describe('trigger authoring', () => {
+     77|   it('starts with five types, shows only their fields, and keeps signi…
+       |   ^
+     78|     const user = userEvent.setup();
+     79|     const dialog = await openTrigger();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > trigger authoring > previews, cancels and applies issues-poll as one undo 
+step including graph and held input
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:174:54
+    172|   });
+    173|
+    174|   it.each(['issues-poll', 'issues-labeled'] as const)(
+       |                                                      ^
+    175|     'previews, cancels and applies %s as one undo step including graph…
+    176|     async (preset) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > edits authentication, body and extraction by keyboard with one-step undo 
+and field validation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:245:1
+    243| });
+    244|
+    245| it('edits authentication, body and extraction by keyboard with one-ste…
+       | ^
+    246|   const user = userEvent.setup();
+    247|   const dialog = await openTrigger();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\web
+
+
+RESULT: pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 : exit 1; elapsed 5752.15s

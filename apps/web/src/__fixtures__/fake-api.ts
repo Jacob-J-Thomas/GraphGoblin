@@ -775,6 +775,10 @@ export class FakeApi {
     ['POST /runs/:id/signals/:name', () => json({ woke: true })],
     ['GET /settings', () => json(this.settingsValues)],
     [
+      'GET /system/model-defaults',
+      () => json({ byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }),
+    ],
+    [
       'PUT /settings',
       (call) => {
         Object.assign(this.settingsValues, call.body);

@@ -1,0 +1,74 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/domain exec vitest run src/model-resolution.test.ts; pnpm.cmd --filter @graphgoblin/engine exec vitest run src/claude-effort.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/packages/domain
+
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  02:45:24
+   Duration  2.46s (import 53%, transform 37%, tests 6%, worker 4%)
+
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/packages/engine
+
+ ❯ src/claude-effort.test.ts (5 tests | 5 failed) 36ms
+   × checks ready Claude capabilities at the shared request boundary: unsupported 26ms
+   × checks ready Claude capabilities at the shared request boundary: supported 2ms
+   × checks ready Claude capabilities at the shared request boundary: unknown 2ms
+   × checks ready Claude capabilities at the shared request boundary: unready 2ms
+   × checks ready Claude capabilities at the shared request boundary: unlisted 2ms
+pnpm.cmd : 
+At line:7 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/claude-effo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude-effort.test.ts > checks ready Claude capabilities at the shared request boundary: unsupported
+ FAIL  src/claude-effort.test.ts > checks ready Claude capabilities at the shared request boundary: supported
+ FAIL  src/claude-effort.test.ts > checks ready Claude capabilities at the shared request boundary: unknown
+ FAIL  src/claude-effort.test.ts > checks ready Claude capabilities at the shared request boundary: unready
+ FAIL  src/claude-effort.test.ts > checks ready Claude capabilities at the shared request boundary: unlisted
+ZodError: [
+  {
+    "code": "custom",
+    "path": [
+      "nodes",
+      1,
+      "config",
+      "harnessOptions",
+      "sandbox"
+    ],
+    "message": "Claude workspace-write cannot enforce the requested boundary; choose an explicit supported policy"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/claude-effort.test.ts:28:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  02:45:40
+   Duration  35.85s (transform 89%, import 11%)
+
+  Transform  transforming modules took 29.41s · 89% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\packages\engine
+
+RESULT: domain exit 0; engine exit 1

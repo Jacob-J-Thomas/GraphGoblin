@@ -1,0 +1,476 @@
+[
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/harness",
+          "message": "Invalid input: expected \"codex\""
+        }
+      ]
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {}
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PA6HSEP1Q5CA21TMNTXMDN",
+        "ownerId": "local",
+        "name": "QA205 2 inference codex",
+        "draftVersionId": "01M5PA6HSEP1Q5CA21TMNTXMDP",
+        "createdAt": "2026-10-24T06:40:02.350Z",
+        "updatedAt": "2026-10-24T06:40:02.350Z"
+      },
+      "draft": {
+        "id": "01M5PA6HSEP1Q5CA21TMNTXMDP",
+        "loopId": "01M5PA6HSEP1Q5CA21TMNTXMDN",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 2 inference codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T06:40:02.350Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {}
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PA6N7HH4BAZCRW7RRMF0G2",
+        "ownerId": "local",
+        "name": "QA205 3 llm codex",
+        "draftVersionId": "01M5PA6N7HH4BAZCRW7RRMF0G3",
+        "createdAt": "2026-10-24T06:40:05.873Z",
+        "updatedAt": "2026-10-24T06:40:05.873Z"
+      },
+      "draft": {
+        "id": "01M5PA6N7HH4BAZCRW7RRMF0G3",
+        "loopId": "01M5PA6N7HH4BAZCRW7RRMF0G2",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T06:40:05.873Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {}
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PA6PQRWK64NBACYAS23WM4",
+        "ownerId": "local",
+        "name": "QA205 4 classifier codex",
+        "draftVersionId": "01M5PA6PQRWK64NBACYAS23WM5",
+        "createdAt": "2026-10-24T06:40:07.416Z",
+        "updatedAt": "2026-10-24T06:40:07.416Z"
+      },
+      "draft": {
+        "id": "01M5PA6PQRWK64NBACYAS23WM5",
+        "loopId": "01M5PA6PQRWK64NBACYAS23WM4",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 4 classifier codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "classifier",
+                "model": "jev",
+                "question": "QA question",
+                "answer": {
+                  "type": "choice",
+                  "options": [
+                    {
+                      "id": "yes",
+                      "label": "Yes",
+                      "criteria": "yes"
+                    },
+                    {
+                      "id": "no",
+                      "label": "No",
+                      "criteria": "no"
+                    }
+                  ]
+                },
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                },
+                "recordAlternatives": true
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T06:40:07.416Z"
+      },
+      "issues": [
+        {
+          "code": "CLASSIFIER_SECRET_MISSING",
+          "severity": "warning",
+          "message": "Decision 'Work' (work), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked.",
+          "nodeId": "work",
+          "path": "config.model"
+        }
+      ]
+    }
+  }
+]

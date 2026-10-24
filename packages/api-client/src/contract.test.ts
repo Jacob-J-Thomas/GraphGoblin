@@ -55,6 +55,17 @@ async function until(predicate: () => Promise<boolean>, timeoutMs = 5000): Promi
 }
 
 describe('against the in-process API (local trusted mode)', () => {
+  it('reads process model defaults through the public resource', async () => {
+    const app = await createTestApp();
+    try {
+      const client = createGraphGoblinClient({ baseUrl: await listen(app) });
+      expect(await system.modelDefaults(client)).toEqual({
+        byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
+      });
+    } finally {
+      await app.close();
+    }
+  });
   let t: TestApp;
   let baseUrl: string;
   let client: GraphGoblinClient;
