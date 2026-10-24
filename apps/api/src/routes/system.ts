@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { ShutdownActionSchema, ShutdownStateSchema, ShutdownTransitionError } from '../shutdown.js';
 import { readinessOperation } from '../readiness-operation.js';
 import { z } from 'zod';
@@ -6,19 +7,26 @@ import type { Container } from '../container.js';
 import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
 
+const ShutdownSnapshotSchema = ShutdownStateSchema.extend({ controlToken: z.string() });
+
 const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
+  const incarnation = randomUUID();
+  const snapshot = (state: ReturnType<Container['shutdown']['state']>) => ({
+    ...state,
+    controlToken: `${incarnation}:${state.phase}`,
+  });
   app.get(
     '/system/shutdown',
     {
       schema: {
         tags: ['system'],
         summary: 'Observe gateway drain and force-stop state',
-        response: { 200: ShutdownStateSchema },
+        response: { 200: ShutdownSnapshotSchema },
       },
     },
-    () => container.shutdown.state(),
+    () => snapshot(container.shutdown.state()),
   );
   app.post(
     '/system/shutdown',
@@ -27,18 +35,27 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
         tags: ['system'],
         summary: 'Drain, keep waiting, or explicitly force-stop the gateway',
         body: z.strictObject({ action: ShutdownActionSchema }),
-        response: { 202: ShutdownStateSchema, 409: ShutdownStateSchema },
+        headers: z.looseObject({ 'x-graphgoblin-shutdown-token': z.string().min(1).optional() }),
+        response: { 202: ShutdownSnapshotSchema, 409: ShutdownSnapshotSchema },
       },
     },
     async (request, reply) => {
+      const observed = request.headers['x-graphgoblin-shutdown-token'];
+      const current = snapshot(container.shutdown.state());
+      // No await between comparison and dispatch: a delayed force must not acknowledge
+      // cleanup failure from another tab, or act on another gateway incarnation.
+      if (observed !== undefined && observed !== current.controlToken) {
+        reply.status(409);
+        return current;
+      }
       try {
         const state = await container.requestShutdown(request.body.action);
         reply.status(202);
-        return state;
+        return snapshot(state);
       } catch (error) {
         if (!(error instanceof ShutdownTransitionError)) throw error;
         reply.status(409);
-        return error.state;
+        return snapshot(error.state);
       }
     },
   );

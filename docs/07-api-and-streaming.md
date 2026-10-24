@@ -603,7 +603,18 @@ before expiry. A force cleanup failure offers `["force"]`: a further explicit fo
 code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
 terminations remain warnings without preventing normal completion. A drain observation
 failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
-#319 will build the browser interaction on these phases and controls.
+Shutdown responses also carry an opaque `controlToken` (#319). A client can send it
+in `x-graphgoblin-shutdown-token` on POST. The gateway checks it synchronously before
+dispatch and returns 409 with the current snapshot if the phase or gateway incarnation
+changed. This prevents a delayed force from acknowledging another request's newly
+failed cleanup. The browser always sends this precondition and resets confirmation
+when the token changes. Unconditional operator/API actions remain supported; signals
+and the controller's force semantics are unchanged. The token is a concurrency value,
+not an authentication credential. Reads require `system:read`; actions require
+`system:write`, including conditional actions.
+
+Existing `GET /runs/{id}` reads supply pinned loop names when permitted, with run IDs
+as the fallback. See docs/09 for the app-wide notice.
 
 Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
 503 before saving any inbound record or dedupe key, so the same Event can be retried after

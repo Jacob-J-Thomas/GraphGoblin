@@ -280,7 +280,19 @@ or `{ "action": "force" }` to interrupt. A second Ctrl+C or SIGTERM at least one
 Signals inside the second after each accepted signal are coalesced because pnpm may forward a duplicate of one
 keypress.
 Wait has no hidden kill timer. Cancelling a particular run remains a separate command.
-The browser shutdown-choice UI is follow-on #319; closing the tab only stops observation.
+Every browser page now shows the drain notice (#319), active runs linked to their
+inspectors, and **Keep waiting** / **Force stop**. Force requires confirmation naming
+the work and warning that external effects may be uncertain. Closing, reloading or
+navigating a tab only changes observation; none sends a shutdown action. Starting a
+drain remains a terminal/API operation.
+
+If another tab acts first, a 409 shows the current gateway state. A changed phase
+or restarted gateway closes any open force confirmation and requires a fresh choice. A lost action
+response has an unknown outcome and is never automatically retried. After HTTP
+closes, **Gateway stopped or disconnected** keeps the last state without repeated
+shutdown polling; **Check gateway state** explicitly checks after restart. This
+message alone does not prove process exit or resource release. Read access needs
+`system:read`; actions need `system:write`; optional run names use `runs:read`.
 
 Forced runs show `RUN_INTERRUPTED_BY_STOP`, the node and attempt, and possible external
 effects. They do not automatically resume. Inspect what happened before explicitly replaying.

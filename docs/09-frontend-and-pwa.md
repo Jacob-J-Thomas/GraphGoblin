@@ -762,3 +762,40 @@ Switching to Claude also starts its supported `read-only`/`never` policy; other 
 options remain for correction when unsupported. Runs never substitute models. Runtime resolution
 still uses node, loop, owner and process defaults; this action adds no runtime fallback or stored
 value migration. Model and effort remain under Advanced until the separate #205 change.
+
+## Gateway shutdown notice (#319)
+
+Every page observes `GET /system/shutdown`. While draining, a notice explains that
+independent starts are refused, active work may finish, and durable waits/pauses and
+queued independent work survive restart (D-038). Active run IDs link to inspectors;
+existing run reads supply the immutable pinned loop name, with IDs retained if those
+reads are unavailable or lack permission. Earlier unconfirmed terminations are listed
+separately from active force targets.
+
+At gateway grace expiry the notice explains the choice. **Keep waiting** acknowledges
+waiting with no browser countdown or automatic force. Both choices follow the gateway's
+advertised availability, including force before expiry. **Force stop** first opens a
+confirmation naming active runs, required child work, uncertain external effects, and
+non-automatic recovery. **Force exit** after `force-failed` separately confirms leaving
+the lock for next-start reclamation without confirmed process cleanup. `drain-failed`
+offers inspection, not an incompatible force transition. No browser control starts drain.
+
+Observation polls every ten seconds while the gateway is running and every two seconds
+once a shutdown phase is observed, with no automatic retry on failure, focus or
+reconnect. The stopped phase and observation errors stop this polling; ready/exiting
+continue to observe HTTP closure. An explicit **Check gateway state** performs a read, and
+the app's reachability probe refetches it after a transport failure once the API answers.
+A key without `system:read` (401/403) shows no notice while the gateway runs.
+A lost connection after any healthy snapshot, including a quick drain between polls, says
+**Gateway stopped or disconnected**, preserving the distinction between an observed
+phase and a lost connection. Existing application connectivity recovery retains its
+bounded backoff. Actions are never automatically retried; a lost action response
+reports an unknown outcome. A 409 replaces the displayed snapshot with the returned
+current state, including when another tab acted first. Each tab observes the gateway;
+navigation, reload and tab closure send no shutdown action. Each response includes an opaque `controlToken`. Choices send it as
+`x-graphgoblin-shutdown-token`; the gateway compares it synchronously before dispatch.
+A phase change or another gateway incarnation makes a stale choice return 409 instead
+of turning it into a different force operation. Changing the token unmounts any open
+confirmation, requiring a fresh deliberate choice. A missing token is an invalid
+snapshot and never permits an unguarded browser choice. These choices preserve engine
+drain, seal, force and recovery semantics (ADR-0049).

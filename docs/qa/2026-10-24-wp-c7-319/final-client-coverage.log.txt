@@ -1,0 +1,101 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --reporter=verbose
+At line:2 char:297
++ ... al-$GateName.log.txt"); & pnpm.cmd @GateArguments *> $gateLog; $gateE ...
++                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...eporter=verbose:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-319/packages/api-client
+      Coverage enabled with v8
+
+ ✓ src/sse.test.ts > SseParser > parses id, event, and multi-line data; ignores comments and unknown fields 5ms
+ ✓ src/sse.test.ts > SseParser > handles CRLF and CR endings, including a CRLF split across chunks 1ms
+ ✓ src/sse.test.ts > SseParser > buffers partial lines and drops frames without data 0ms
+ ✓ src/sse.test.ts > subscribeRunEvents > accepts exhausted completion and closes without reconnecting 23ms
+ ✓ src/sse.test.ts > subscribeRunEvents > delivers validated events in order, skips replays, and stops after a terminal event 12ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports each accepted connection through onOpen, before and without any event 8ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports invalid frames, advances past their id, and keeps going 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > retries refused connections and retryable statuses with capped exponential backoff 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > gives up after maxAttempts consecutive failures 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects without retrying on non-retryable statuses and on a missing body 5ms
+ ✓ src/sse.test.ts > subscribeRunEvents > tolerates an unreadable error body 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects when onEvent throws 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects after a stream error mid-read and resets backoff after progress 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops quietly when closed or aborted, including before it starts 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops when closed from inside onEvent or while waiting to retry 11ms
+ ✓ src/sse.test.ts > subscribeRunEvents > ends quietly when the stream finishes after close() aborts the read 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting headers without cancelling the run 63ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting body without cancelling the run 35ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects over real HTTP after the server drops the connection 65ms
+ ✓ src/sse.test.ts > defaultSleep > waits, and resolves early on abort 35ms
+ ✓ src/wait.test.ts > waitForRun > interrupts a stalled request on caller abort with the exact reason before any timer fires 91ms
+ ✓ src/wait.test.ts > waitForRun > resolves at the deadline without a snapshot and ignores a late success 3ms
+ ✓ src/wait.test.ts > waitForRun > polls until a terminal status 2ms
+ ✓ src/wait.test.ts > waitForRun > returns the latest snapshot when the timeout elapses, never sleeping past it 5ms
+ ✓ src/wait.test.ts > waitForRun > uses the real clock and timer by default 29ms
+ ✓ src/wait.test.ts > waitForRun > rejects with the abort reason when the signal fires 14ms
+ ✓ src/wait.test.ts > observation budgets > rejects an already aborted caller without making any request 1ms
+ ✓ src/wait.test.ts > observation budgets > returns no snapshot and makes no request with a zero budget 1ms
+ ✓ src/wait.test.ts > observation budgets > returns a fast success and disposes its deadline 2ms
+ ✓ src/wait.test.ts > observation budgets > ignores a response at the clock deadline even before the timer callback runs 1ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a request stalls past the deadline 2ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a sleep stalls past the deadline 2ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a body stalls past the deadline 3ms
+ ✓ src/wait.test.ts > observation budgets > keeps the last timely snapshot when a progress stalls past the deadline 1ms
+ ✓ src/wait.test.ts > observation budgets > aborts a non-cooperating sleep with the caller reason 1ms
+ ✓ src/wait.test.ts > observation budgets > propagates ordinary request, sleep and observer failures 2ms
+ ✓ src/wait.test.ts > observation budgets > stops for caller action before progress or another poll 1ms
+ ✓ src/wait.test.ts > keeps long deadlines within the JavaScript timer limit and cleans up after abort 1ms
+ ✓ src/wait.test.ts > resolves a long deadline at timeoutMs rather than the timer chunk boundary 1ms
+ ✓ src/wait.test.ts > preserves a caller abort raised during observation before starting a sleep 1ms
+ ✓ src/wait.test.ts > consumes a late transport rejection after the deadline 1ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > synthesises a code for non-problem bodies, preferring the body text 115ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > formats a message without detail 1ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > leaves detail empty when neither body nor status text has one 2ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > wraps transport failures as NETWORK_ERROR with status 0 14ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > describes non-Error transport failures 2ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > passes aborts and existing API errors through unchanged 4ms
+ ✓ src/errors.test.ts > createGraphGoblinClient > sends default headers and extra headers, and strips trailing slashes 12ms
+ ✓ src/errors.test.ts > unwrap > returns data on success, undefined for 204, and throws problem details otherwise 2ms
+ ✓ src/classifiers.test.ts > classifier client against the real API > agrees with generated schemas and executes all wrappers 416ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > reads system endpoints 313ms
+ ✓ src/classifiers.test.ts > classifier client against the real API > encodes ids, sends enabled-only PATCH, and propagates problem details 88ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > manages a loop through its whole lifecycle 434ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > returns typed automatic conversion notices on an old import 133ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > turns problem details into GraphGoblinApiError, including validation errors 19ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > starts a run, waits for it, and inspects it 332ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > preserves typed run pages including opaque cursors 308ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > drives a waiting run: input, signals, pause, resume, cancel 949ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > cancels observation independently of the running operation 803ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > streams run events over SSE until the run finishes, and resumes from a sequence 349ms
+ ✓ src/resources.test.ts > forwards list cancellation to the request without requiring it from existing callers 83ms
+ ✓ src/resources.test.ts > previews through the generated endpoint and forwards body and cancellation 4ms
+ ✓ src/resources.test.ts > exposes opaque cursors and carries every unchanged filter into following history requests 4ms
+ ✓ src/resources.test.ts > forwards run observation cancellation to GET without cancelling the run 3ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > rejects the SSE subscription for an unknown run without retrying 4ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > preserves catalog error paths when invalid defaults reject admission and publication 49ms
+ ✓ src/contract.test.ts > against the in-process API (local trusted mode) > covers settings, secrets, API keys, the model catalog, and inbound events 170ms
+ ✓ src/contract.test.ts > against the in-process API (API keys required) > returns a required current boolean for each client without changing key creation 28ms
+ ✓ src/contract.test.ts > against the in-process API (API keys required) > sends the bearer key and client kind on REST calls and on the SSE stream 512ms
+ ✓ src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup 3483ms
+ ✓ src/templates.test.ts > reads manifest-only catalogue entries through the generated API 2034ms
+ ✓ src/generated.test.ts > generated client artefacts > openapi.json and src/generated/schema.ts match the live API 4184ms
+
+ Test Files  8 passed (8)
+      Tests  72 passed (72)
+   Start at  16:03:37
+   Duration  46.92s (import 46%, transform 29%, tests 23%, worker 1%)
+
+     Import  247 modules were evaluated 606 times · 36.55s total, 46% of tracked time
+             ~4.19s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 284/284 )
+Branches     : 99.37% ( 160/161 )
+Functions    : 100% ( 90/90 )
+Lines        : 100% ( 246/246 )
+================================================================================

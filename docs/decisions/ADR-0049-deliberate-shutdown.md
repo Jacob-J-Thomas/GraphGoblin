@@ -130,3 +130,23 @@ This change adds no browser prompt, launcher or interactive UI. It does not impl
   stopped polling from consuming slots, but closing admission between the gate and the
   asynchronous store write retains the pre-existing slot/admission race. Atomic cron-slot
   admission remains outside this bolt.
+
+## Browser implementation amendment (2026-10-24, #319)
+
+The application shell now observes the existing controller through its typed routes.
+It offers only advertised wait/force choices, with an explicit force confirmation
+and a separate failed-cleanup exit confirmation. Existing run snapshots supply pinned
+loop names. Shutdown snapshots include an opaque concurrency token, and browser
+choices send it as `x-graphgoblin-shutdown-token`. A synchronous comparison before
+dispatch rejects stale phase/incarnation choices with the current 409 snapshot. This
+prevents a delayed force from acknowledging cleanup failure caused by another tab.
+A token change also resets confirmation. Unconditional API/operator requests retain
+the existing semantics; the controller and engine are unchanged. A stale action's 409 is a current-state
+snapshot. Tab lifecycle only observes, and network failures never resend actions.
+The UI does not initiate drain or change D-038, force, seal or recovery semantics.
+Two-second observation polling is an engineering choice to bound idle request cost;
+it stops on the stopped phase or errors and requires an explicit check after errors.
+Ready/exiting continue observing until HTTP closes, so the last notice does not stay
+permanently at stopping after a confirmed control response.
+A disconnected gateway is labelled stopped or disconnected, not fabricated as an
+observed `stopped` response. No new architecture decision is introduced.
