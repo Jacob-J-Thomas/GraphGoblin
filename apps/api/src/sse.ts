@@ -5,6 +5,7 @@ import type { EventStorePort } from '@graphgoblin/engine';
 const TERMINAL_EVENTS = new Set<RunEvent['type']>(['run.finished', 'run.failed', 'run.cancelled']);
 
 export interface SseOptions {
+  closeSignal?: AbortSignal;
   heartbeatMs?: number;
   /** Whether the run is already in a terminal status. Checked once, after reading replay. */
   isTerminal?: () => Promise<boolean>;
@@ -92,14 +93,17 @@ export async function streamRunEvents(
     clearInterval(heartbeat);
     clearTimeout(grace);
     unsubscribe();
+    options.closeSignal?.removeEventListener('abort', end);
     res.end();
   };
   res.once('close', end);
+  options.closeSignal?.addEventListener('abort', end, { once: true });
 
   for (const event of replay) write(event);
   replaying = false;
   for (const event of buffered.sort((a, b) => a.seq - b.seq)) write(event);
 
+  if (options.closeSignal?.aborted) end();
   if (closed || !terminal) return;
   // Terminal, and the replay held no terminal event: check whether the cursor already consumed
   // it or a second read can supply it. Event-before-status ordering means a healthy current log

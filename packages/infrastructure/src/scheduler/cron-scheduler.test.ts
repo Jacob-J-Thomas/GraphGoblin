@@ -361,3 +361,49 @@ describe('CronScheduler.recover (missed-fire policies)', () => {
     expect(fires[0]?.scheduledFor).toBe('2026-03-01T00:00:00.000Z');
   });
 });
+
+it('closed admission preserves due cron slots for the next process', async () => {
+  await store.replaceForVersion('loop', 'v1', [
+    draft({ nextFireAt: '2026-03-01T00:00:00.000Z', missedFirePolicy: 'run-once' }),
+  ]);
+  let open = false;
+  const scheduler = new CronScheduler(store, clock, { admissionOpen: () => open });
+  const fires = collect(scheduler);
+  const before = await store.listEnabled();
+  expect(await scheduler.poll()).toBe(0);
+  expect(await scheduler.recover()).toBe(0);
+  expect(await store.listEnabled()).toEqual(before);
+  expect(fires).toEqual([]);
+  open = true;
+  expect(await scheduler.poll()).toBe(1);
+  expect(fires).toHaveLength(1);
+});
+
+it.each(['poll', 'recover'] as const)(
+  'stops %s before consuming the next slot when admission closes',
+  async (method) => {
+    await store.replaceForVersion('loop', 'v1', [
+      draft({
+        triggerNodeId: 'a',
+        nextFireAt: '2026-03-01T00:00:00.000Z',
+        missedFirePolicy: 'run-once',
+      }),
+      draft({
+        triggerNodeId: 'b',
+        nextFireAt: '2026-03-01T00:00:00.000Z',
+        missedFirePolicy: 'run-once',
+      }),
+    ]);
+    let open = true;
+    const scheduler = new CronScheduler(store, clock, { admissionOpen: () => open });
+    const fires = collect(scheduler);
+    scheduler.onFire(() => {
+      open = false;
+    });
+    expect(await scheduler[method]()).toBe(1);
+    expect(fires).toHaveLength(1);
+    expect(
+      (await store.listDue(clock.now())).map((schedule) => schedule.triggerNodeId),
+    ).toHaveLength(1);
+  },
+);

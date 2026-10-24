@@ -1,0 +1,40 @@
+COMMAND: pnpm.cmd lint --concurrency=2 --cache=local:r
+$ turbo run lint --concurrency=2 --cache=local:r
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:lint: cache miss, executing e95068042acb00aa
+@graphgoblin/domain:lint: cache miss, executing 3063dac4af94302d
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/engine:lint: cache miss, executing d3d666b628590a25
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: cache miss, executing 7bdf08a61fbb2e95
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/infrastructure:lint: cache miss, executing 446d79e32c45f808
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: cache miss, executing 7992723c93cfd7de
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/infrastructure:lint: 
+@graphgoblin/infrastructure:lint: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\packages\infrastructure\src\process\scripts.test.ts
+@graphgoblin/infrastructure:lint:   328:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+@graphgoblin/infrastructure:lint:   340:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+@graphgoblin/infrastructure:lint:   349:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+@graphgoblin/infrastructure:lint: 
+@graphgoblin/infrastructure:lint: ✖ 3 problems (3 errors, 0 warnings)
+@graphgoblin/infrastructure:lint: 
+@graphgoblin/infrastructure:lint: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/infrastructure#lint:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\packages\infrastructure) C:\nvm4w\nodejs\pnpm.cmd run lint exited (1)
+
+ Tasks:    4 successful, 6 total
+Cached:    0 cached, 6 total
+  Time:    3m13.623s 
+Failed:    @graphgoblin/infrastructure#lint
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
+
+RESULT: {"command": "pnpm.cmd lint --concurrency=2 --cache=local:r", "exit": 1, "seconds": 202.35}

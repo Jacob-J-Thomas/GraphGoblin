@@ -1,0 +1,66 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timeout initiated
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+stdout | src/drain-regressions.test.ts > a timeout initiated before force remains a warning instead of this stop cleanup veto
+timeout stage: creating
+
+stdout | src/drain-regressions.test.ts > a timeout initiated before force remains a warning instead of this stop cleanup veto
+timeout stage: created
+
+stdout | src/drain-regressions.test.ts > a timeout initiated before force remains a warning instead of this stop cleanup veto
+timeout stage: manager started
+
+stdout | src/drain-regressions.test.ts > a timeout initiated before force remains a warning instead of this stop cleanup veto
+timeout stage: admitted {
+  id: '00000000000000000000000001',
+  ownerId: 'local',
+  loopId: '9XACTNHSV43SAS9RZR8YCB4TPZ',
+  versionId: 'QPTF3985EE1X3TNYT6FZT8TB3N',
+  pinned: {
+    source: 'published',
+    version: 1,
+    name: 'timeout before force',
+    label: 'timeout before force v1',
+    defaults: { owner: [Object], process: [Object] },
+    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+    classifiers: {}
+  },
+  invocationId: '00000000000000000000000002',
+  status: 'queued',
+  iteration: 1,
+  createdAt: '2026-10-02T12:00:00.000Z',
+  lastEventSeq: 1
+}
+
+ ❯ src/drain-regressions.test.ts (7 tests | 1 failed | 6 skipped) 5027ms
+   × a timeout initiated before force remains a warning instead of this stop cleanup veto 5024ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > a timeout initiated before force remains a warning instead of this stop cleanup veto
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/drain-regressions.test.ts:89:1
+     87| });
+     88|
+     89| it('a timeout initiated before force remains a warning instead of this…
+       | ^
+     90|   console.log('timeout stage: creating');
+     91|   const e = await createTestEngine(); e.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  00:39:08
+   Duration  10.16s (tests 52%, transform 25%, import 23%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timeout initiated", "exit": 1, "seconds": 11.53}

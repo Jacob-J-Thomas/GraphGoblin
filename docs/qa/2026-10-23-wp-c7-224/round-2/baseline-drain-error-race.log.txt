@@ -1,0 +1,42 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts -t observation failure during an open drain
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/shutdown-controller.test.ts (7 tests | 1 failed | 6 skipped) 1110ms
+   × an observation failure during an open drain keeps its origin when force races it 1108ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-controller.test.ts > an observation failure during an open drain keeps its origin when force races it
+AssertionError: expected 'force-failed' to be 'drain-failed' // Object.is equality
+
+Expected: "drain-failed"
+Received: "force-failed"
+
+ ❯ src/shutdown-controller.test.ts:220:59
+    218|   await controller.request('force');
+    219|   rejectDrain(new Error('drain observation failed'));
+    220|   await vi.waitFor(() => expect(controller.state().phase).toBe('drain-…
+       |                                                           ^
+    221|   await expect(controller.request('force')).rejects.toMatchObject({sta…
+    222|   e.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  00:45:22
+   Duration  35.92s (transform 83%, import 13%, tests 3%)
+
+  Transform  transforming modules took 27.21s · 83% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts -t observation failure during an open drain", "exit": 1, "seconds": 49.16}

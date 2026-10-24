@@ -1,0 +1,200 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine test:coverage
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/run-manager.test.ts (27 tests | 1 failed) 5900ms
+   ❯ failure and recovery (6)
+     × fails cleanly when the loop version disappears 213ms
+ ❯ src/adversarial.test.ts (42 tests | 1 failed) 6007ms
+   ❯ adversarial engine invariants (42)
+     × 1: queued pause, invalid resume, waiting cancel and terminal signals are typed 43ms
+ ❯ src/finalization.test.ts (44 tests | 3 failed) 8556ms
+   × terminal append survives crash before status: missing-version 23ms
+   × terminal append survives crash before status: missing-node 2ms
+   × cancel event before status: queued 1ms
+ ❯ src/replay.test.ts (7 tests | 1 failed) 957ms
+   ❯ replay-at-node (7)
+     × records the exact executable seed, keeps inherited counters and gates, and leaves the source byte-identical 268ms
+ ❯ src/recovery.test.ts (69 tests | 3 failed) 23700ms
+   × refuses startup when recovery encounters a store I/O failure 51ms
+   ❯ pins and timers (review probes) (9)
+     × two managers over the same stores both execute a queued run (single-manager restriction) 27ms
+   ❯ deletion against replay and root resolution (fourth round) (3)
+     × a run whose own version is deleted between resolution and registration is refused 5180ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > 1: queued pause, invalid resume, waiting cancel and terminal signals are typed
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/adversarial.test.ts:36:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/finalization.test.ts > terminal append survives crash before status: missing-version
+ FAIL  src/finalization.test.ts > terminal append survives crash before status: missing-node
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/finalization.test.ts:273:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/finalization.test.ts > cancel event before status: queued
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/finalization.test.ts:404:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/recovery.test.ts > refuses startup when recovery encounters a store I/O failure
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/recovery.test.ts:47:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/recovery.test.ts > pins and timers (review probes) > two managers over the same stores both execute a queued run (single-manager restriction)
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/recovery.test.ts:1012:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/recovery.test.ts > deletion against replay and root resolution (fourth round) > a run whose own version is deleted between resolution and registration is refused
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/recovery.test.ts:1155:3
+    1153|   });
+    1154|
+    1155|   it('a run whose own version is deleted between resolution and regist…
+       |   ^
+    1156|     const e = await createTestEngine();
+    1157|     e.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/replay.test.ts > replay-at-node > records the exact executable seed, keeps inherited counters and gates, and leaves the source byte-identical
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.replay src/run-manager.ts:1032:10
+ ❯ src/replay.test.ts:85:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/run-manager.test.ts > failure and recovery > fails cleanly when the loop version disappears
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/run-manager.test.ts:612:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+EngineRequestError: Independent admission is closed while the gateway shuts down
+ ❯ RunManager.assertAdmission src/run-manager.ts:440:13
+    438|   private assertAdmission(parentRunId?: string): void {
+    439|     if (this.stopped || this.forcing || (this.draining && (!parentRunI…
+    440|       throw new EngineRequestError('SHUTTING_DOWN', 'Independent admis…
+       |             ^
+    441|   }
+    442|
+ ❯ RunManager.prepareStart src/run-manager.ts:471:10
+ ❯ RunManager.startRun src/run-manager.ts:556:33
+ ❯ Object.start src/testing/scenario.ts:73:22
+ ❯ src/recovery.test.ts:1174:21
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SHUTTING_DOWN', details: undefined }
+This error originated in "src/recovery.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "a run whose own version is deleted between resolution and registration is refused". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  5 failed | 36 passed (41)
+      Tests  9 failed | 1577 passed (1586)
+     Errors  1 error
+   Start at  18:55:33
+   Duration  94.68s (transform 49%, tests 26%, import 24%, worker 1%)
+
+  Transform  transforming modules took 288.38s · 49% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine test:coverage", "exit": 1, "seconds": 117.29}

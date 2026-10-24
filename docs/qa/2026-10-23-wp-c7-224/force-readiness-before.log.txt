@@ -1,0 +1,43 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts -t does not publish ready --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/shutdown-controller.test.ts (2 tests | 1 failed | 1 skipped) 22ms
+   × does not publish ready while force cleanup is still pending after normal drain 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-controller.test.ts > does not publish ready while force cleanup is still pending after normal drain
+AssertionError: expected 'ready' to be 'forcing' // Object.is equality
+
+Expected: "forcing"
+Received: "ready"
+
+ ❯ src/shutdown-controller.test.ts:54:38
+     52|     controller.request('force');drained();
+     53|     await vi.advanceTimersByTimeAsync(0);
+     54|     expect(controller.state().phase).toBe('forcing');
+       |                                      ^
+     55|     expect(controller.closing.signal.aborted).toBe(false);
+     56|     cleaned();await vi.advanceTimersByTimeAsync(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  20:10:11
+   Duration  20.17s (transform 84%, import 15%)
+
+  Transform  transforming modules took 15.48s · 84% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts -t does not publish ready --maxWorkers=1", "exit": 1, "seconds": 27.39}

@@ -1,0 +1,81 @@
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:http';
+import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+// Run from the exact audit checkout with Node 22. Only REST, native processes and files.
+const root = process.cwd();
+const report = resolve('docs/qa/2026-10-23-wp-c7-224/round-3/' + (process.env.GG_R3_STAGE ?? 'before'));
+const store = await mkdtemp(join(tmpdir(), 'gg-wp-c7-224-r3-event-'));
+const port = 5760, receiverPort = 5761;
+const inherited = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.toUpperCase().startsWith('GG_') && !['JEV_API_KEY','NODE_V8_COVERAGE'].includes(k.toUpperCase())));
+const env = { ...inherited, GG_DATA_DIR: store, GG_DB_URL: 'file:' + join(store, 'graphgoblin.db').replaceAll('\\','/'), GG_HOST: '127.0.0.1', GG_PORT: String(port), GG_REQUIRE_API_KEY: 'true', GG_WEB_DIST: '', GG_SWAGGER_UI: 'false', GG_LOG_LEVEL: 'info', GG_TIMER_POLL_MS: '50', GG_SHUTDOWN_GRACE_MS: '100', GG_MAX_CONCURRENT_RUNS: '2' };
+const evidence = { head: '7650e9510181d5f47187629ae15d7b07af5fc6ec', store, port, receiverPort, observations: [] };
+const note = (kind, value) => { evidence.observations.push({ at: new Date().toISOString(), kind, value }); console.log(JSON.stringify({kind,value})); };
+const exists = async p => { try { await access(p); return true; } catch { return false; } };
+async function until(label, fn, ms = 20000) {
+  const start = Date.now();
+  while (Date.now() - start < ms) { const v = await fn(); if (v) return v; await sleep(25); }
+  throw new Error('Timed out: ' + label);
+}
+const processes = [];
+function launch(args = []) {
+  const child = spawn(process.execPath, [resolve('apps/api/dist/main.js'), ...args], { cwd: root, env, windowsHide: true, stdio: ['ignore','pipe','pipe'] });
+  const p = { child, stdout: '', stderr: '', ended: false };
+  child.stdout.on('data', b => p.stdout += b);
+  child.stderr.on('data', b => p.stderr += b);
+  p.exit = new Promise((res, rej) => { child.once('error',rej); child.once('close',(code,signal) => { p.ended=true; p.result={code,signal}; res(p.result); }); });
+  processes.push(p); return p;
+}
+let token, api, held, receiver;
+const release = join(store, 'release-active');
+const scriptStarted = join(store, 'active-started');
+const childStarted = join(store, 'child-started');
+async function call(method, path, body) {
+  const r = await fetch('http://127.0.0.1:' + port + path, { method, headers: { authorization: 'Bearer ' + token, ...(body === undefined ? {} : {'content-type':'application/json'}) }, ...(body === undefined ? {} : {body:JSON.stringify(body)}), signal: AbortSignal.timeout(10000) });
+  const text = await r.text(); let data; try { data=JSON.parse(text); } catch {data=text;}
+  return {status:r.status,data};
+}
+function definition(name, work = [], exit = {}) {
+  const nodes = [{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},...work,{id:'done',kind:'exit',label:'Done',config:exit}];
+  return {schemaVersion:4,name,nodes,edges:nodes.slice(1).map((n,i)=>({id:'e'+i,from:{node:nodes[i].id,port:'out'},to:{node:n.id}}))};
+}
+async function publish(def) {
+  const c=await call('POST','/loops',{definition:def});
+  if(c.status!==201) throw new Error('Create: '+JSON.stringify(c));
+  const id=c.data.loop.id; const p=await call('POST','/loops/'+id+'/publish');
+  if(p.status!==200) throw new Error('Publish: '+JSON.stringify(p)); return id;
+}
+async function start(id) { const r=await call('POST','/loops/'+id+'/runs',{}); if(r.status!==202)throw new Error(JSON.stringify(r)); return r.data.run; }
+const get = async id => (await call('GET','/runs/'+id)).data;
+async function boot() { api=launch(); await until('API readiness',()=>api.stdout.includes('GraphGoblin API listening'),60000); }
+try {
+  const cli=launch(['--create-api-key','audit event admission']);await cli.exit;
+  token=cli.stdout.match(/\bgg_[A-Za-z0-9_-]+/)?.[0];if(!token)throw new Error('Key setup');
+  await boot();
+  const holder=await publish(definition('Event concurrency holder',[{id:'hold',kind:'script',label:'Hold',config:{command:process.execPath,args:['-e',`const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(scriptStarted)},'running');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(t);process.exit(0)}},25);setTimeout(()=>process.exit(0),60000)`]}}]));
+  const heldRun=await start(holder);await until('holder native script',()=>exists(scriptStarted));
+  const targetDef=definition('Event concurrency target');targetDef.nodes[0].config={type:'event',eventType:'audit-drain-race'};
+  const target=await publish(targetDef);
+  const events=Array.from({length:6},(_,i)=>({type:'audit-drain-race',payload:{index:i},dedupeKey:'audit-stop-race-'+i}));
+  // Requests arrive concurrently through public HTTP; a live script keeps the listener open.
+  const pending=events.map(event=>call('POST','/events',event));
+  const drain=call('POST','/system/shutdown',{action:'drain'});
+  const answers=await Promise.all(pending);note('event responses',answers);note('drain response',await drain);
+  note('inbound records before restart',await call('GET','/events'));
+  note('target runs before restart',await call('GET','/runs?loopId='+target));
+  const lost=answers.map((r,i)=>({r,i})).filter(({r})=>r.status===202&&r.data.runIds.length===0&&!r.data.duplicate).map(({i})=>i);
+  note('accepted without run',lost);
+  await writeFile(release,'finish');await api.exit;note('first exit',api.result);
+  await boot();
+  note('target runs after restart',await call('GET','/runs?loopId='+target));
+  for(const i of lost)note('retry lost '+i,await call('POST','/events',events[i]));
+  await call('POST','/system/shutdown',{action:'drain'});await api.exit;note('second exit',api.result);
+} catch(error){note('error',String(error));process.exitCode=1;}
+finally {
+  await writeFile(release,'finish');
+  for(const [i,p] of processes.entries()) {if(!p.ended){p.child.kill('SIGKILL');await p.exit.catch(()=>{});}await writeFile(join(report,'event-race-process-'+i+'.log.txt'),(p.stdout+p.stderr).replaceAll(token??'NEVERMATCH','[disposable-key]'));}
+  await writeFile(join(report,'event-admission-race.json'),JSON.stringify(evidence,null,2));
+}

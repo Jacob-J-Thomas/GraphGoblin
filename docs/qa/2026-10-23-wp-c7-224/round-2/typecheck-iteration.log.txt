@@ -1,0 +1,67 @@
+COMMAND: pnpm.cmd typecheck
+$ turbo run typecheck
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 7f3b62587780c618
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 62d21ff1ec48cd31
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 85804a5558648b5e
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 1b30373e7e8c83b5
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing ecef6b69f83d0733
+@graphgoblin/engine:build: cache miss, executing afa31ba2528912a1
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:build: cache miss, executing 0a6af5fd97f24b7d
+@graphgoblin/infrastructure:build: cache miss, executing c0c921f8bc14cd95
+@graphgoblin/infrastructure:typecheck: cache miss, executing ceb4b39ad5a33f05
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 32815cb0146ebb86
+@graphgoblin/adapter-jev:build: cache miss, executing fb6b5dbb0ee8f264
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 4db5f18685c36ba2
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 1dd38f0425ff0f15
+@graphgoblin/api:typecheck: cache miss, executing 22914f3acee893f0
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:build: cache miss, executing 5d021a9a09b2ccb4
+@graphgoblin/api-client:typecheck: cache miss, executing 1191b7015756302b
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: cache miss, executing 2377fd5ae75dedc3
+@graphgoblin/web:typecheck: cache miss, executing 1ff5da646d157d80
+@graphgoblin/mcp:typecheck: cache miss, executing 66c3c866a62f25e4
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing b9663b2854d9c3a2
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: src/shutdown-admission.test.ts(27,76): error TS2353: Object literal may only specify known properties, and 'auth' does not exist in type '{ type: "webhook"; authentication?: { type?: "none" | undefined; } | { type: "hmac-sha256"; message: "body"; secretRef: string; header?: string | undefined; } | { type: "hmac-sha256"; message: "timestamp-body"; secretRef: string; header?: string | undefined; windowSeconds?: number | undefined; } | undefined; body?: ...'.
+@graphgoblin/api:typecheck: src/shutdown-controller.test.ts(21,44): error TS2740: Type 'Promise<unknown>' is missing the following properties from type 'ScriptRunResult': exitCode, stdout, stderr, stdoutBytes, and 4 more.
+@graphgoblin/api:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\apps\api) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    15 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    1m57.891s 
+Failed:    @graphgoblin/api#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.
+
+RESULT: {"command": "pnpm.cmd typecheck", "exit": 2, "seconds": 118.62}

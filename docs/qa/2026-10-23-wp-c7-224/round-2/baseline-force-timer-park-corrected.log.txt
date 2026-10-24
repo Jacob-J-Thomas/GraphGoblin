@@ -1,0 +1,56 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timer becoming due during force
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (9 tests | 1 failed | 8 skipped) 184ms
+   × a timer becoming due during force cleanup remains an unchanged durable park 181ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > a timer becoming due during force cleanup remains an unchanged durable park
+AssertionError: expected { …(13) } to deeply equal { …(13) }
+
+- Expected
++ Received
+
+@@ -30,11 +30,11 @@
+      "name": "timer during force",
+      "source": "published",
+      "version": 1,
+    },
+    "startedAt": "2026-10-02T12:00:00.000Z",
+-   "status": "waiting",
++   "status": "running",
+    "versionId": "SAE61Q7WSG0CYFAB6YZYN4Z1B3",
+    "waiting": {
+      "kind": "timer",
+      "nodeId": "work",
+      "startedSeq": 5,
+
+ ❯ src/drain-regressions.test.ts:336:47
+    334|   try {
+    335|     e.ports.clock.advance(1000); await e.ports.timers.fireDue(e.ports.…
+    336|     expect(await e.ports.runs.get(parked.id)).toEqual(before);
+       |                                               ^
+    337|   } finally { release(); await forced; manager.stop(); }
+    338| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  00:53:32
+   Duration  27.74s (transform 85%, import 14%, tests 1%)
+
+  Transform  transforming modules took 22.64s · 85% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timer becoming due during force", "exit": 1, "seconds": 33.17}
