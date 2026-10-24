@@ -1,0 +1,56 @@
+{
+  "name": "07-signal-component",
+  "startedAt": "2026-10-24T08:15:33.744Z",
+  "endedAt": "2026-10-24T08:15:35.050Z",
+  "checks": [
+    {
+      "name": "duplicate signals within 1 second coalesced - component only",
+      "pass": true,
+      "actual": [
+        "drain"
+      ],
+      "expected": [
+        "drain"
+      ]
+    },
+    {
+      "name": "later signal forces and its duplicate coalesces - component only",
+      "pass": true,
+      "actual": [
+        "drain",
+        "force"
+      ],
+      "expected": [
+        "drain",
+        "force"
+      ]
+    },
+    {
+      "name": "signal after API drain requests force - component only",
+      "pass": true,
+      "actual": [
+        "force"
+      ],
+      "expected": [
+        "force"
+      ]
+    }
+  ],
+  "records": [
+    {
+      "at": "2026-10-24T08:15:35.049Z",
+      "kind": "signal-actions-component-only",
+      "actions": [
+        {
+          "action": "drain",
+          "at": 1792829733757
+        },
+        {
+          "action": "force",
+          "at": 1792829735048
+        }
+      ],
+      "nativeEvidence": false
+    }
+  ]
+}

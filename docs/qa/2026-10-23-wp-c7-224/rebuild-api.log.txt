@@ -1,0 +1,29 @@
+COMMAND: pnpm.cmd build --filter=@graphgoblin/api... --concurrency=2 --cache=local:r
+$ turbo run build --filter=@graphgoblin/api... --concurrency=2 --cache=local:r
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/tooling
+   • Running build in 8 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:build: cache hit, replaying logs 62d21ff1ec48cd31
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs 1b30373e7e8c83b5
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 8e66f7398214c18f
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache miss, executing e3bc54787289063b
+@graphgoblin/adapter-jev:build: cache miss, executing 89caca24b825dc74
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache miss, executing 8a58ea964a08c3a5
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing 8300df9cbf423e5f
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+
+ Tasks:    7 successful, 7 total
+Cached:    2 cached, 7 total
+  Time:    4.6s 
+
+
+RESULT: {"command": "pnpm.cmd build --filter=@graphgoblin/api... --concurrency=2 --cache=local:r", "exit": 0, "seconds": 5.16}

@@ -1,0 +1,22 @@
+START 03b-admission
+{"scenario":"03b-admission","name":"manual refuses 503","pass":true,"actual":503,"expected":503}
+{"scenario":"03b-admission","name":"webhook refuses 503","pass":true,"actual":503,"expected":503}
+{"scenario":"03b-admission","name":"Event refuses 503 before recording","pass":true,"actual":503,"expected":503}
+{"scenario":"03b-admission","name":"replay refuses 503","pass":true,"actual":503,"expected":503}
+{"scenario":"03b-admission","name":"no manual webhook Event cron poll or replay run recorded","pass":true,"actual":["01M5PFMP54N85A63MGKDXSESXY"],"expected":["01M5PFMP54N85A63MGKDXSESXY"]}
+{"scenario":"03b-admission","name":"no inbound Event or webhook record","pass":true,"actual":[],"expected":[]}
+{"scenario":"03b-admission","name":"cron slot unchanged across multiple due ticks","pass":true,"actual":[{"id":"01M5PFMP2Y1YDG1KGZEKEH77N6","ownerId":"local","loopId":"01M5PFMP27NNBJ2PETEKHHQK4Y","versionId":"01M5PFMP27NNBJ2PETEKHHQK4Z","triggerNodeId":"start","expression":"*/2 * * * * *","timezone":"UTC","missedFirePolicy":"run-once","enabled":true,"nextFireAt":"2026-10-24T08:15:10.000Z","createdAt":"2026-10-24T08:15:08.381Z"}],"expected":[{"id":"01M5PFMP2Y1YDG1KGZEKEH77N6","ownerId":"local","loopId":"01M5PFMP27NNBJ2PETEKHHQK4Y","versionId":"01M5PFMP27NNBJ2PETEKHHQK4Z","triggerNodeId":"start","expression":"*/2 * * * * *","timezone":"UTC","missedFirePolicy":"run-once","enabled":true,"nextFireAt":"2026-10-24T08:15:10.000Z","createdAt":"2026-10-24T08:15:08.381Z"}]}
+{"scenario":"03b-admission","name":"same Event dedupeKey accepted after restart","pass":true,"actual":202,"expected":202}
+{"scenario":"03b-admission","name":"same Event was not consumed during refusal","pass":true,"actual":false,"expected":false}
+{"scenario":"03b-admission","name":"one Event creates one run","pass":true,"actual":1,"expected":1}
+{"scenario":"03b-admission","name":"same Event now deduplicates","pass":true,"actual":true,"expected":true}
+{"scenario":"03b-admission","name":"poll key still available after drain","pass":true,"actual":1,"expected":1}
+{"scenario":"03b-admission","name":"webhook recovers after restart","pass":true,"actual":202,"expected":202}
+{"scenario":"03b-admission","name":"manual recovers after restart","pass":true,"actual":202,"expected":202}
+START 07-signal-component
+{"scenario":"07-signal-component","name":"duplicate signals within 1 second coalesced - component only","pass":true,"actual":["drain"],"expected":["drain"]}
+{"scenario":"07-signal-component","name":"later signal forces and its duplicate coalesces - component only","pass":true,"actual":["drain","force"],"expected":["drain","force"]}
+{"scenario":"07-signal-component","name":"signal after API drain requests force - component only","pass":true,"actual":["force"],"expected":["force"]}
+START 08-default-config
+{"scenario":"08-default-config","name":"default grace is five minutes","pass":true,"actual":300000,"expected":300000}
+[{"name":"03b-admission","checks":14,"failed":[]},{"name":"07-signal-component","checks":3,"failed":[]},{"name":"08-default-config","checks":1,"failed":[]}]

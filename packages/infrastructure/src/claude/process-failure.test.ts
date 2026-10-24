@@ -24,6 +24,7 @@ const request = (signal = new AbortController().signal) => ({
 });
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.mocked(killTree).mockResolvedValue(true);
   child = new ChildProcess();
   child.stdin = new PassThrough();
   child.stdout = new PassThrough();
@@ -127,4 +128,23 @@ it('does not infer turn causes from stderr', async () => {
   child.emit('close', 1);
   expect(await result).not.toHaveProperty('failureState');
   expect(JSON.stringify(await result)).not.toContain('PRIVATE_BODY');
+});
+
+it('reports nonzero tree acknowledgement even if the root independently closes', async () => {
+  vi.mocked(killTree).mockResolvedValue(false);
+  const controller = new AbortController();
+  const pending = runClaudeProcess(request(controller.signal));
+  controller.abort();
+  child.emit('close', 0);
+  expect(await pending).toMatchObject({ terminationUnconfirmed: true, exitCode: null });
+});
+
+it('completes cancellation when tree acknowledgement precedes child close', async () => {
+  const controller = new AbortController();
+  const pending = runClaudeProcess(request(controller.signal));
+  controller.abort();
+  await Promise.resolve();
+  child.emit('close', null);
+  expect(await pending).not.toHaveProperty('terminationUnconfirmed');
+  expect(vi.getTimerCount()).toBe(0);
 });

@@ -1,0 +1,149 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (3 tests | 3 failed) 1193ms
+   × B1 normal drain completes with future timer and paused input unchanged 671ms
+   × B1 force leaves future timer and paused input unchanged 285ms
+   × B3 an earlier unconfirmed script timeout does not block normal drain 235ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > B1 normal drain completes with future timer and paused input unchanged
+AssertionError: durable parks must not hold a normal drain: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/drain-regressions.test.ts:17:64
+     15|   try {
+     16|     await vi.advanceTimersByTimeAsync(500);
+     17|     expect(done, 'durable parks must not hold a normal drain').toBe(tr…
+       |                                                                ^
+     18|     expect(await Promise.all([e.ports.runs.get(a.id), e.ports.runs.get…
+     19|   } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/drain-regressions.test.ts > B1 force leaves future timer and paused input unchanged
+AssertionError: expected [ { …(15) }, { …(16) } ] to deeply equal [ { …(13) }, { …(14) } ]
+
+- Expected
++ Received
+
+@@ -1,9 +1,20 @@
+  [
+    {
+      "createdAt": "2026-10-02T12:00:00.000Z",
+      "currentNodeId": "work",
++     "failure": {
++       "code": "RUN_INTERRUPTED_BY_STOP",
++       "details": {
++         "attempt": 1,
++         "effectMayHaveHappened": true,
++       },
++       "message": "Explicit force-stop interrupted this run; external effects may have happened",
++       "nodeId": "work",
++       "resumable": false,
++     },
++     "finishedAt": "2026-10-02T12:00:00.000Z",
+      "id": "00000000000000000000000001",
+      "invocationId": "00000000000000000000000002",
+      "iteration": 1,
+      "lastEventSeq": 1,
+      "loopId": "2S1QCH3YXEC0ASVE4PD60TAB71",
+@@ -31,11 +42,11 @@
+        "name": "future force",
+        "source": "published",
+        "version": 1,
+      },
+      "startedAt": "2026-10-02T12:00:00.000Z",
+-     "status": "waiting",
++     "status": "failed",
+      "versionId": "GWYPF3113ATQ4SJ566ZBMBMJ73",
+      "waiting": {
+        "kind": "timer",
+        "nodeId": "work",
+        "startedSeq": 5,
+@@ -44,10 +55,21 @@
+      },
+    },
+    {
+      "createdAt": "2026-10-02T12:00:00.000Z",
+      "currentNodeId": "work",
++     "failure": {
++       "code": "RUN_INTERRUPTED_BY_STOP",
++       "details": {
++         "attempt": 1,
++         "effectMayHaveHappened": true,
++       },
++       "message": "Explicit force-stop interrupted this run; external effects may have happened",
++       "nodeId": "work",
++       "resumable": false,
++     },
++     "finishedAt": "2026-10-02T12:00:00.000Z",
+      "id": "00000000000000000000000003",
+      "invocationId": "00000000000000000000000004",
+      "iteration": 1,
+      "lastEventSeq": 1,
+      "loopId": "2C880XCH2YM0W7YFJC10N1J7M2",
+@@ -76,11 +98,11 @@
+        "name": "paused force",
+        "source": "published",
+        "version": 1,
+      },
+      "startedAt": "2026-10-02T12:00:00.000Z",
+-     "status": "paused",
++     "status": "failed",
+      "versionId": "YX8BMDR7YKEXCHNXM4DM34ZCBZ",
+      "waiting": {
+        "kind": "input",
+        "nodeId": "work",
+        "prompt": "Answer",
+
+ ❯ src/drain-regressions.test.ts:35:81
+     33|   try {
+     34|     await e.manager.forceStop();
+     35|     expect(await Promise.all([e.ports.runs.get(a.id), e.ports.runs.get…
+       |                                                                                 ^
+     36|   } finally { e.manager.stop(); }
+     37| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/drain-regressions.test.ts > B3 an earlier unconfirmed script timeout does not block normal drain
+AssertionError: promise rejected "Error: Native process termination unconfi…" instead of resolving
+ ❯ src/drain-regressions.test.ts:45:47
+     43|   const run = await e.start(v.loopId); await e.manager.waitForIdle();
+     44|   expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('SCRIPT…
+     45|   try { await expect(e.manager.waitForDrain()).resolves.toBeUndefined(…
+       |                                               ^
+     46|   finally { e.manager.stop(); }
+     47| });
+
+Caused by: Error: Native process termination unconfirmed; ownership retained
+ ❯ RunManager.waitForDrain src/run-manager.ts:431:13
+ ❯ src/drain-regressions.test.ts:45:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  00:19:52
+   Duration  42.46s (transform 89%, import 8%, tests 3%)
+
+  Transform  transforming modules took 34.93s · 89% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts", "exit": 1, "seconds": 54.8}

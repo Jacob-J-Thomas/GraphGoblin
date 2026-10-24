@@ -1,0 +1,70 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/shutdown.test.ts (2 tests | 2 failed) 2303ms
+   × keeps input and status reachable while refusing independent starts during drain 1812ms
+   × offers a choice after grace, waits without a kill timer, and explicitly forces a parked run 488ms
+pnpm.cmd : 
+At line:2 char:225
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/sh ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown.test.ts > keeps input and status reachable while refusing independent starts during drain
+AssertionError: expected 404 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 404
+
+ ❯ src/shutdown.test.ts:27:30
+     25|   await api.idle();
+     26|   const stopped = await api.app.inject({ method: 'POST', url: '/system…
+     27|   expect(stopped.statusCode).toBe(202);
+       |                              ^
+     28|   expect((await api.app.inject('/system/shutdown')).json()).toMatchObj…
+     29|   const refused = await api.app.inject({ method: 'POST', url: `/loops/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/shutdown.test.ts > offers a choice after grace, waits without a kill timer, and explicitly forces a parked 
+run
+AssertionError: expected 404 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 404
+
+ ❯ src/shutdown.test.ts:44:110
+     42|   const run = started.json<{run:{id:string}}>().run;
+     43|   await api.idle();
+     44|   expect((await api.app.inject({method:'POST',url:'/system/shutdown',p…
+       |                                                                                                              ^
+     45|   await vi.waitFor(async () => expect((await api!.app.inject('/system/…
+     46|   expect((await api.app.inject({method:'POST',url:'/system/shutdown',p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  18:35:41
+   Duration  25.54s (transform 54%, import 36%, tests 10%)
+
+  Transform  transforming modules took 12.99s · 54% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+

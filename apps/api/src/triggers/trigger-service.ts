@@ -15,7 +15,7 @@ import {
   type ValidationIssue,
 } from '@graphgoblin/domain';
 import type { ClockPort, IdPort, Logger, RunManager, SecretsPort } from '@graphgoblin/engine';
-import { LoopUpgradeRequiredError } from '@graphgoblin/engine';
+import { EngineRequestError, LoopUpgradeRequiredError } from '@graphgoblin/engine';
 import {
   CronScheduler,
   type CronFire,
@@ -48,7 +48,7 @@ export interface TriggerServiceDeps {
   schedules: SqliteScheduleStore;
   endpoints: SqliteWebhookEndpoints;
   inbound: SqliteInboundEvents;
-  manager: Pick<RunManager, 'startRun' | 'receiveWebhook'>;
+  manager: Pick<RunManager, 'startRun' | 'receiveWebhook' | 'withAdmission'>;
   cron: CronScheduler;
   secretsFor(ownerId: string): Pick<SecretsPort, 'resolve'>;
   clock: ClockPort;
@@ -518,56 +518,60 @@ export class TriggerService {
    * An event whose `(type, dedupeKey)` was seen before is a duplicate and fires nothing.
    */
   async ingestEvent(input: EventIngest): Promise<EventIngestResult> {
-    const record: InboundEventRecord = {
-      id: this.deps.ids.next(),
-      ownerId: input.ownerId,
-      type: input.type,
-      payload: input.payload,
-      ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
-      source: input.source,
-      receivedAt: this.deps.clock.now().toISOString(),
-      runIds: [],
-    };
-    const inserted = await this.deps.inbound.insertUnlessDuplicate(
-      record,
-      input.dedupeKey
-        ? { ownerId: input.ownerId, type: input.type, dedupeKey: input.dedupeKey }
-        : undefined,
-    );
-    if (inserted.duplicate) {
-      return { event: inserted.duplicate, runIds: inserted.duplicate.runIds, duplicate: true };
-    }
-
-    const runIds: string[] = [];
-    for (const { loop, version, node } of await this.eventTriggers(input.ownerId, input.type)) {
-      const context = { loopId: loop.id, nodeId: node.id, eventId: record.id };
-      try {
-        const config = node.config as Config<'event'>;
-        const nodeKey = config.dedupeKey
-          ? stringKey(await evaluateExpression(config.dedupeKey, input.payload))
-          : undefined;
-        if (nodeKey && (await this.deps.runs.hasTriggerDedupe(loop.id, node.id, nodeKey))) {
-          continue;
-        }
-        const dedupeKey = nodeKey ?? input.dedupeKey;
-        const run = await this.deps.manager.startRun({
-          ownerId: input.ownerId,
-          loopId: loop.id,
-          versionId: version.id,
-          triggerNodeId: node.id,
-          triggerKind: 'event',
-          source: 'event',
-          caller: { kind: 'system', id: `event:${record.id}` },
-          payload: input.payload,
-          ...(dedupeKey ? { dedupeKey } : {}),
-        });
-        runIds.push(run.id);
-      } catch (error) {
-        this.deps.logger.error({ ...context, error: describe(error) }, 'event trigger failed');
+    // #343: hold this scope through the targeted transaction and durable admission.
+    return this.deps.manager.withAdmission(async (admission) => {
+      const record: InboundEventRecord = {
+        id: this.deps.ids.next(),
+        ownerId: input.ownerId,
+        type: input.type,
+        payload: input.payload,
+        ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+        source: input.source,
+        receivedAt: this.deps.clock.now().toISOString(),
+        runIds: [],
+      };
+      const inserted = await this.deps.inbound.insertUnlessDuplicate(
+        record,
+        input.dedupeKey
+          ? { ownerId: input.ownerId, type: input.type, dedupeKey: input.dedupeKey }
+          : undefined,
+      );
+      if (inserted.duplicate) {
+        return { event: inserted.duplicate, runIds: inserted.duplicate.runIds, duplicate: true };
       }
-    }
-    if (runIds.length > 0) await this.deps.inbound.setRunIds(record.id, runIds);
-    return { event: { ...record, runIds }, runIds, duplicate: false };
+
+      const runIds: string[] = [];
+      for (const { loop, version, node } of await this.eventTriggers(input.ownerId, input.type)) {
+        const context = { loopId: loop.id, nodeId: node.id, eventId: record.id };
+        try {
+          const config = node.config as Config<'event'>;
+          const nodeKey = config.dedupeKey
+            ? stringKey(await evaluateExpression(config.dedupeKey, input.payload))
+            : undefined;
+          if (nodeKey && (await this.deps.runs.hasTriggerDedupe(loop.id, node.id, nodeKey))) {
+            continue;
+          }
+          const dedupeKey = nodeKey ?? input.dedupeKey;
+          const run = await admission.startRun({
+            ownerId: input.ownerId,
+            loopId: loop.id,
+            versionId: version.id,
+            triggerNodeId: node.id,
+            triggerKind: 'event',
+            source: 'event',
+            caller: { kind: 'system', id: `event:${record.id}` },
+            payload: input.payload,
+            ...(dedupeKey ? { dedupeKey } : {}),
+          });
+          runIds.push(run.id);
+        } catch (error) {
+          if (error instanceof EngineRequestError && error.code === 'SHUTTING_DOWN') throw error;
+          this.deps.logger.error({ ...context, error: describe(error) }, 'event trigger failed');
+        }
+      }
+      if (runIds.length > 0) await this.deps.inbound.setRunIds(record.id, runIds);
+      return { event: { ...record, runIds }, runIds, duplicate: false };
+    });
   }
 
   private async eventTriggers(

@@ -1,0 +1,44 @@
+COMMAND: pnpm.cmd test:prompt-restart
+$ node --test apps/api/scripts/prompt-restart.integration.mjs
+TAP version 13
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-bQE11G","port":5660,"runId":"01M5NRJ4E07QVKHHMEY1XD0KA7","visitId":"01M5NRJ4E07QVKHHMEY1XD0KA7:5","recovered":"same session, continuation only"}
+# Subtest: a real kill of the built API continues accepted work from durable visit evidence
+ok 1 - a real kill of the built API continues accepted work from durable visit evidence
+  ---
+  duration_ms: 26281.1995
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-7ZWQsU","port":5660,"runId":"01M5NRJV38DT2PAJ1K4ZW69V8G","policy":"resume-previous","recovered":"blocked inherited conversation; no provider call"}
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+  ---
+  duration_ms: 30696.9711
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-KkZOaD","port":5660,"runId":"01M5NRKP8YZGZR6YYPN5NAG2QN","policy":"resume-named","recovered":"blocked inherited conversation; no provider call"}
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+ok 3 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+  ---
+  duration_ms: 24679.63
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-Ref3aJ","port":5660,"runId":"01M5NRMGGDY0A786H7MP1HAMR5","policy":"resume-previous","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# Subtest: a kill after Claude's result-only acceptance recovers resume-previous work
+ok 4 - a kill after Claude's result-only acceptance recovers resume-previous work
+  ---
+  duration_ms: 32197.9883
+  ...
+# {"dataDir":"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-JAPrQC","port":5660,"runId":"01M5NRNGWDV7ACSRCHYD92Q672","policy":"resume-named","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# Subtest: a kill after Claude's result-only acceptance recovers resume-named work
+ok 5 - a kill after Claude's result-only acceptance recovers resume-named work
+  ---
+  duration_ms: 46564.2452
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 172667.7654
+
+RESULT: {"command": "pnpm.cmd test:prompt-restart", "exit": 0, "seconds": 177.91}

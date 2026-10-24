@@ -375,6 +375,8 @@ export interface ScriptRunRequest {
 }
 
 export interface ScriptRunResult {
+  /** Tree termination failed or close was not observed by the native cleanup deadline. */
+  terminationUnconfirmed?: true;
   exitCode: number | null;
   stdout: string;
   stderr: string;
