@@ -22,7 +22,12 @@
 
 ## Loop definition (Decided shape, Draft details)
 
-Stored as JSON in `loop_versions.definition`, validated by `contracts`.
+Stored as JSON in `loop_versions.definition`, validated by `contracts`. Migration
+`0020_completion_deadline_defaults` materializes omitted `structuredTimeoutMs` and
+`runDeadlineSeconds` as null in drafts, published versions, immutable run snapshots,
+run pins, queued events and saved admission intents. Exports and API reads then include
+these defaults without a compatibility reader. Explicit authored limits are preserved.
+See ADR-0051.
 
 ```ts
 type LoopDefinition = {

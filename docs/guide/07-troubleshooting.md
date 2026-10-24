@@ -266,7 +266,8 @@ Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-a
 
 ## Structured completion timeout
 
-`STRUCTURED_COMPLETION_TIMEOUT` means an LLM decision or structured repair exceeded
+`STRUCTURED_COMPLETION_TIMEOUT` means an LLM decision evaluation or output-transform
+repair through the structured port exceeded
 the loop's **Structured completion milliseconds** limit. The failure names that limit
 and stores it in `details.timeoutMs`; the inspector shows the pinned value. The provider
 is aborted, the run slot is released and a late result cannot update the thread. Inspect

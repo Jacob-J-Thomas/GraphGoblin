@@ -1,0 +1,87 @@
+{"command": ["pnpm.cmd", "exec", "playwright", "test", "e2e/stored-loop-defaults.spec.ts", "--retries=0"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270\\apps\\web"}
+
+Running 2 tests using 1 worker
+
+(node:24756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\stored-loop-defaults.spec.ts:8:3 › editor reopens stored draft with omitted additive deadline defaults (16.3s)
+(node:42796) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42796) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\stored-loop-defaults.spec.ts:8:3 › editor reopens stored published with omitted additive deadline defaults (13.1s)
+
+
+  1) [chromium] › e2e\stored-loop-defaults.spec.ts:8:3 › editor reopens stored draft with omitted additive deadline defaults 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Stored draft', exact: true })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Stored draft', exact: true }) with timeout 10000ms
+      - waiting for getByRole('heading', { name: 'Stored draft', exact: true })
+
+
+      20 |       });
+      21 |       await page.goto(`${url}/app/loops/${loop.id}/edit`);
+    > 22 |       await expect(page.getByRole('heading', { name: `Stored ${status}`, exact: true })).toBeVisible();
+         |                                                                                          ^
+      23 |       await showLoopPanel(page);
+      24 |       await expect(page.getByRole('combobox', { name: 'Structured completion milliseconds mode' })).toHaveValue('unlimited');
+      25 |       await expect(page.getByRole('combobox', { name: 'Run deadline seconds mode' })).toHaveValue('unlimited');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-270\apps\web\e2e\stored-loop-defaults.spec.ts:22:90
+
+    Error Context: test-results\stored-loop-defaults-edito-4dc81--additive-deadline-defaults-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\stored-loop-defaults-edito-4dc81--additive-deadline-defaults-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\stored-loop-defaults-edito-4dc81--additive-deadline-defaults-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\stored-loop-defaults.spec.ts:8:3 › editor reopens stored published with omitted additive deadline defaults 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Stored published', exact: true })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Stored published', exact: true }) with timeout 10000ms
+      - waiting for getByRole('heading', { name: 'Stored published', exact: true })
+
+
+      20 |       });
+      21 |       await page.goto(`${url}/app/loops/${loop.id}/edit`);
+    > 22 |       await expect(page.getByRole('heading', { name: `Stored ${status}`, exact: true })).toBeVisible();
+         |                                                                                          ^
+      23 |       await showLoopPanel(page);
+      24 |       await expect(page.getByRole('combobox', { name: 'Structured completion milliseconds mode' })).toHaveValue('unlimited');
+      25 |       await expect(page.getByRole('combobox', { name: 'Run deadline seconds mode' })).toHaveValue('unlimited');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-270\apps\web\e2e\stored-loop-defaults.spec.ts:22:90
+
+    Error Context: test-results\stored-loop-defaults-edito-86ad3--additive-deadline-defaults-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\stored-loop-defaults-edito-86ad3--additive-deadline-defaults-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\stored-loop-defaults-edito-86ad3--additive-deadline-defaults-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\stored-loop-defaults.spec.ts:8:3 › editor reopens stored draft with omitted additive deadline defaults 
+    [chromium] › e2e\stored-loop-defaults.spec.ts:8:3 › editor reopens stored published with omitted additive deadline defaults 
+
+{"command": ["pnpm.cmd", "exec", "playwright", "test", "e2e/stored-loop-defaults.spec.ts", "--retries=0"], "exitCode": 1, "seconds": 142.218}

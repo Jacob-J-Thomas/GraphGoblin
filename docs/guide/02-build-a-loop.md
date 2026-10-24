@@ -387,8 +387,9 @@ Execution limits card shows the pinned values and absolute deadline, even after 
 An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
 
 Structured completion milliseconds is independently Unlimited by default. Choose Limited
-and enter milliseconds (the suggestion is 120000) to bound each LLM decision or structured
-repair call. The limit is pinned on the run. Expiry aborts the call, releases capacity and
+and enter milliseconds (the suggestion is 120000) to bound each LLM decision evaluation
+or output-transform repair through the structured port. Same-session inference schema
+repairs follow the node timeout and run deadline. The limit is pinned on the run. Expiry aborts the call, releases capacity and
 fails `STRUCTURED_COMPLETION_TIMEOUT`, naming the configured milliseconds. Late results
 are discarded. Unlimited removes this cutoff; explicit Cancel and other authored limits
 still apply. This is an execution deadline, not a usage budget.

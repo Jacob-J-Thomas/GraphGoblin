@@ -224,7 +224,17 @@ export async function repairValue<K extends NodeKind>(
         ctx.run.pinned.limits.structuredTimeoutMs,
         ctx.ports.logger,
         { runId: ctx.run.id, nodeId: ctx.node.id },
-      );
+      ).catch((error: unknown) => {
+        if (error instanceof RunFailureError && error.code === 'STRUCTURED_COMPLETION_TIMEOUT')
+          throw new RunFailureError(error.code, error.message, {
+            ...error.options,
+            details: {
+              timeoutMs: ctx.run.pinned.limits.structuredTimeoutMs,
+              provenance: { kind: 'llm', provider: 'codex', classifierId: null, model, effort },
+            },
+          });
+        throw error;
+      });
       const validation = validateJson(input.schema, completion.value);
       if (validation.ok) return { value: toJson(completion.value), repaired: true };
       errors = validation.errors;

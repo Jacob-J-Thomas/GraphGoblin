@@ -52,7 +52,7 @@ export const ExecutionLimitsSchema = z.strictObject({
     .default(null)
     .meta(
       field(
-        'Milliseconds per LLM decision or structured repair completion. No deadline by default; Unlimited removes this cutoff.',
+        'Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.',
         { control: 'execution-limit' },
       ),
     ),

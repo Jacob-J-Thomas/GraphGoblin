@@ -539,7 +539,8 @@ Authors may use script/decision nodes for their own usage-aware behavior.
 ## Structured completion deadlines (#270)
 
 `settings.structuredTimeoutMs` is a positive integer number of milliseconds per LLM
-route evaluation or `StructuredPort` repair attempt, or `null` for Unlimited. Omission
+decision evaluation or output-transform repair attempt through `StructuredPort`, or `null`
+for Unlimited. Omission
 means `null`: there is no default completion deadline. The editor's Loop tab exposes
 this control; Settings shows the default and the run inspector shows the effective
 value pinned in `run.pinned.limits`. Choosing Limited suggests 120,000 ms without
@@ -549,7 +550,8 @@ One engine helper owns the deadline around both port paths, independent of the a
 The clock starts at that port boundary, after admission and model/context preparation.
 It passes a combined abort signal, cancels overdue work and fails the node and run with
 `STRUCTURED_COMPLETION_TIMEOUT`, naming the duration in the message and
-`details.timeoutMs`; LLM decisions also include evaluation provider, model and effort
+`details.timeoutMs`; decisions and structured-port repairs also include the completion
+provider, resolved model and effort
 in `details.provenance`. This failure is resumable for a deliberate new attempt; no automatic
 retry occurs. The engine releases its run slot without waiting indefinitely for an
 uncooperative adapter. A late fulfillment or non-abort rejection is observed, discarded and logged
@@ -563,6 +565,8 @@ The first settled call outcome wins; the manager honours an observed run cancell
 before persisting a failure. A run deadline remains `RUN_DEADLINE_EXCEEDED`. Both signals
 also settle stalled structured calls. Unlimited removes only the completion timer:
 explicit run deadlines, node watchdogs, authored gate limits and Cancel still apply.
-Classifiers keep their provider timeout semantics; inference turns and their same-session
-repairs keep their explicit node/run signals. This is an elapsed completion deadline,
+Classifiers keep their provider timeout semantics. Inference output-schema repairs run
+as turns on the node's own `HarnessPort` session, outside this structured-port deadline.
+They follow the node's explicit `timeoutSeconds` (failing with `INFERENCE_TIMEOUT`) and
+the run deadline, just like the initial inference turn. This is an elapsed completion deadline,
 never a cost, token, subscription or usage budget. See ADR-0051.

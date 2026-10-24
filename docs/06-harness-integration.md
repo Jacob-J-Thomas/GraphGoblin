@@ -240,15 +240,19 @@ where route is an enum of declared route IDs. Schemas follow strict structured-o
 rules; the adapter validates the entire answer and confidence bounds without clamping
 or coercion. It is always `available()`; harness health is reported by `preflight`.
 
-The engine enforces the run's pinned `settings.structuredTimeoutMs` around route and
-repair calls. Omission/null means Unlimited; a finite authored value is milliseconds
+The engine enforces the run's pinned `settings.structuredTimeoutMs` around LLM decision
+evaluations and output-transform repairs through `StructuredPort`. Inference output-schema
+repairs instead run on the node's own `HarnessPort` session and follow its explicit
+`timeoutSeconds` and the run deadline; this completion limit does not bound them. Omission/null means Unlimited; a finite authored value is milliseconds
 per completion, not a usage budget. The Loop tab, Settings defaults and inspector
 expose it. `CodexStructured` checks abort before acquiring resources and again before
 starting, passes the signal into the harness/SDK call, explicitly cancels the session
 on abort and removes its temporary directory after cancellation cleanup. It never
 adds its own hidden completion deadline. The engine returns the typed
 `STRUCTURED_COMPLETION_TIMEOUT` without waiting forever for a port that ignores abort;
-late settlement is logged once and cannot reach the run's thread. Explicit Cancel
+late fulfillments and non-abort rejections are logged once and cannot reach the run's thread.
+Decision and structured-port repair timeouts include provider, resolved model and effort
+in `details.provenance`. Explicit Cancel
 remains cancellation, and an authored run deadline retains its own failure code.
 See [ADR-0051](decisions/ADR-0051-structured-completion-deadlines.md).
 
@@ -597,7 +601,7 @@ No readiness probes, probe directories, model selection or fallback policy chang
 | Codex client options          | Binary override, environment, authored sanitized config overrides; no GraphGoblin usage budget                                                                                                                                                                                                                                                                                                                                                                                    |
 | Codex no-turn probes / cancel | 15-second checks / five-second cancel grace; CLI job-object cancellation evidence has its existing platform qualification                                                                                                                                                                                                                                                                                                                                                         |
 | Codex transcript excerpts     | Command output detail keeps a labelled 16,384-character excerpt; display summaries are bounded. Final answer/protocol are not truncated by this excerpt                                                                                                                                                                                                                                                                                                                           |
-| Structured completion         | `settings.structuredTimeoutMs`: engine-enforced per-call deadline for LLM routes and structured repairs; null (default) is Unlimited. Abort cancels provider work; timeout is `STRUCTURED_COMPLETION_TIMEOUT`, and late results are discarded (#270)                                                                                                                                                                                                                              |
+| Structured completion         | `settings.structuredTimeoutMs`: engine-enforced per-call deadline for LLM decision evaluations and output-transform repairs through `StructuredPort`; same-session inference schema repairs follow node/run deadlines; null (default) is Unlimited. Abort cancels provider work; timeout is `STRUCTURED_COMPLETION_TIMEOUT`, and late results are discarded (#270)                                                                                                                |
 | External service              | Context windows, quotas, provider/CLI internals and service failures remain external limits with truthful failures                                                                                                                                                                                                                                                                                                                                                                |
 
 Additional bounded metadata is independent of execution: Claude invalidation names are
