@@ -2240,6 +2240,8 @@ export interface paths {
                 query?: {
                     type?: string;
                     before?: string;
+                    /** @description Re-read a page starting at this event, inclusive; mutually exclusive with cursor. */
+                    anchor?: string;
                     /** @description Opaque inbound-event cursor, at most 256 base64url characters. */
                     cursor?: string;
                     limit?: number;

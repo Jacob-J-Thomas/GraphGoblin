@@ -1,0 +1,208 @@
+import { createRequire } from 'node:module';
+import { readFileSync, writeFileSync, appendFileSync, mkdtempSync } from 'node:fs';
+import { spawn, execFileSync } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+const root = process.cwd();
+const out = path.join(root, 'docs/qa/2026-10-23-wp-g2-240-qa/round-2');
+const req = createRequire(path.join(root, 'apps/web/package.json'));
+const { chromium } = req('@playwright/test');
+const redact = s => String(s).replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+const save = (name, obj) => writeFileSync(path.join(out,name), redact(JSON.stringify(name==='browser-results.json' ? {...obj,widths:obj.widths.map(w=>({width:w.width,height:w.height,base:w.base,dataDir:w.dataDir,checks:w.checks,load:w.load,process:w.process,seedCount:w.seed.length}))} : obj,null,2))+'\n');
+const sleep = ms => new Promise(r => setTimeout(r,ms));
+const wait = async (f, timeout=12000) => { const start=Date.now(); let v; do { v=await f(); if(v) return v; await sleep(50); } while(Date.now()-start<timeout); throw new Error('wait timed out'); };
+const report = { head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(), node:process.version, started:new Date().toISOString(), widths:[] };
+if(report.head!=='cc1c3fceca4f9ed914915fd1e2a2e2fbde6cecd1') throw new Error('Wrong HEAD');
+const browser = await chromium.launch({ channel:'msedge', headless:true });
+report.browser = browser.version();
+let child;
+try {
+ for(const width of [1440,390]) {
+  const r = { width, height:900, checks:[], apiPages:[], requests:[], errors:[], seed:[], process:[] };
+  report.widths.push(r);
+  const note = (name, pass, actual) => { save(`${width}-${name}.json`,actual); r.checks.push({name,pass,evidence:`${width}-${name}.json`}); console.log(JSON.stringify({width,name,pass,actual:typeof actual==='object'?'[see JSON]':actual})); save('browser-results.json',report); };
+  const data = mkdtempSync(path.join(tmpdir(),'gg-qa-g2-240-'));
+  r.dataDir = redact(data);
+  let port;
+  for(let p=5820;p<=5829;p++) { const s=createServer(); try { await new Promise((res,rej)=>{s.once('error',rej);s.listen(p,'127.0.0.1',res);}); await new Promise(res=>s.close(res)); port=p; break; } catch {} }
+  if(!port) throw new Error('No allowed free port');
+  const base=`http://127.0.0.1:${port}`;
+  r.base=base;
+  const env={...process.env,GG_HOST:'127.0.0.1',GG_PORT:String(port),GG_DATA_DIR:data,GG_DB_URL:`file:${path.join(data,'graphgoblin.db').replaceAll('\\','/')}`,GG_REQUIRE_API_KEY:'true',GG_LOG_LEVEL:'silent',GG_WEB_DIST:path.join(root,'apps/web/dist')};
+  delete env.GG_JEV_API_KEY; delete env.JEV_API_KEY; delete env.GG_MASTER_KEY;
+  const keyOutput=execFileSync(process.execPath,['apps/api/dist/main.js','--create-api-key','qa-g2-240'],{env,encoding:'utf8'});
+  const token=keyOutput.match(/\bgg_[A-Za-z0-9_-]+/u)?.[0];
+  if(!token) throw new Error('No minted token');
+  r.apiKeyCreation=keyOutput.replaceAll(token,'[REDACTED DISPOSABLE TOKEN]');
+  const startServer=async()=>{
+   child=spawn(process.execPath,['--input-type=module','-'],{cwd:path.join(root,'apps/web'),env,stdio:['pipe','pipe','pipe','ipc'],windowsHide:true});
+   let ready=false;
+   child.stdout.on('data',b=>{const t=String(b); appendFileSync(path.join(out,`server-${width}.log.txt`),redact(t)); if(t.includes('"ready":true')) ready=true;});
+   child.stderr.on('data',b=>appendFileSync(path.join(out,`server-${width}.log.txt`),redact(String(b))));
+   child.stdin.end(readFileSync(path.join(out,'server.mjs.txt')));
+   await wait(()=>ready || (child.exitCode!==null && Promise.reject(new Error(`API exited ${child.exitCode}`))),60000);
+   r.process.push({action:'start',pid:child.pid,at:new Date().toISOString(),sameDataDir:r.dataDir});
+  };
+  const stopServer=async()=>{
+   const proc=child; const exit=once(proc,'exit'); proc.send('stop');
+   const code=await Promise.race([exit,sleep(15000).then(()=>{throw new Error('shutdown timeout');})]);
+   r.process.push({action:'stop',pid:proc.pid,exit:code,at:new Date().toISOString()}); child=undefined;
+  };
+  await startServer();
+  const api=async(url,body)=>{ const res=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{Authorization:`Bearer ${token}`,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})}); return {status:res.status,body:await res.json()}; };
+  const post=async(type,index)=>{const a=await api('/events',{type,payload:{index}}); if(a.status!==202) throw new Error(JSON.stringify(a)); const e=(a.body.event??a.body); r.seed.push({index,type,id:e.id??a.body.eventId,status:a.status}); return a;};
+  const ctx=await browser.newContext({viewport:{width,height:900}});
+  await ctx.addInitScript(({token})=>{localStorage.setItem('graphgoblin-api-key',token); window.__qaLongTasks=[]; new PerformanceObserver(list=>{for(const x of list.getEntries()) window.__qaLongTasks.push({startTime:x.startTime,duration:x.duration,name:x.name});}).observe({type:'longtask',buffered:true});},{token});
+  const page=await ctx.newPage();
+  page.on('pageerror',e=>r.errors.push(String(e)));
+  page.on('request',req=>{const u=new URL(req.url()); if(u.pathname==='/events') r.requests.push({at:Date.now(),url:u.pathname+u.search,method:req.method()});});
+  page.on('requestfailed',req=>{const u=new URL(req.url()); if(u.pathname==='/events') r.requests.push({at:Date.now(),url:u.pathname+u.search,failed:req.failure()});});
+  const snap=async()=>page.evaluate(()=>({
+   rows:[...document.querySelectorAll('tbody tr')].map(x=>({id:x.querySelector('[data-testid^="payload-"]')?.getAttribute('data-testid')?.replace(/^payload-/,''),text:x.innerText})),
+   scroll:{x:window.scrollX,y:window.scrollY,containers:[...document.querySelectorAll('*')].filter(x=>x.scrollTop>0).map(x=>({tag:x.tagName,id:x.id,top:x.scrollTop}))},
+   focus:{tag:document.activeElement?.tagName,text:document.activeElement?.textContent?.slice(0,180)},
+   statuses:[...document.querySelectorAll('[role="status"]')].map(x=>({text:x.textContent,html:x.outerHTML})),url:location.href,
+   visible:[...document.querySelectorAll('tbody tr')].filter(x=>{const b=x.getBoundingClientRect();return b.bottom>0&&b.top<innerHeight;}).map(x=>({id:x.querySelector('[data-testid^="payload-"]')?.getAttribute('data-testid'),top:x.getBoundingClientRect().top,bottom:x.getBoundingClientRect().bottom})),
+   buttons:[...document.querySelectorAll('button,a')].map(x=>({tag:x.tagName,text:x.textContent,name:x.getAttribute('aria-label'),href:x.getAttribute('href')})),
+   main:document.querySelector('body')?.innerText,
+  }));
+  const rows=()=>page.locator('tbody tr').count();
+  const refresh=()=>page.getByRole('button',{name:'Refresh',exact:true});
+  const more=()=>page.getByRole('button',{name:'Load more',exact:true});
+  const screenshot=async(name)=>{await page.screenshot({path:path.join(out,`${width}-${name}.png`)});};
+  const goto=async(q='')=>{await page.goto(base+'/app/events'+q); await wait(async()=>await rows()>0 || (await page.locator('body').innerText()).includes('No inbound events'));};
+  const ids=async()=> (await snap()).rows.map(x=>x.id);
+  const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  const cp=async(url)=>{const a=await api(url); r.apiPages.push({url,...a});return a.body;};
+  await goto();
+  const emptyStore=await snap();
+  note('empty-store',emptyStore.main.includes('No inbound events yet.'),emptyStore);
+  await screenshot('empty-store');
+  for(let i=0;i<301;i++) await post('qa-main',i);
+  await post('qa-other','excluded');
+  const query='?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z';
+  await goto(query); await wait(async()=>await rows()===100);
+  const first=await cp('/events?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z');
+  await more().click(); await wait(async()=>await rows()===200);
+  const second=await cp('/events?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z&cursor='+encodeURIComponent(first.nextCursor));
+  await more().click(); await wait(async()=>await rows()===300);
+  const third=await cp('/events?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z&cursor='+encodeURIComponent(second.nextCursor));
+  note('initial-3-page-api-agreement',equal(await ids(),[...first.items,...second.items,...third.items].map(x=>x.id)),{uiIds:await ids(),apiCounts:[first.items.length,second.items.length,third.items.length]});
+  await page.locator('tbody tr').nth(230).scrollIntoViewIfNeeded();
+  // Keep an actual keyboard-focusable payload disclosure within the older reading area.
+  const focusCandidate=page.locator('tbody tr').nth(230).locator('button,summary,a,[tabindex="0"]').first();
+  if(await focusCandidate.count()) await focusCandidate.focus();
+  const arrivalBefore=await snap();
+  const arrivalStart=Date.now(); await post('qa-main',`arrival-${width}`); const acceptedAt=Date.now();
+  await wait(()=>page.getByText('New events available',{exact:true}).count());
+  const noticedAt=Date.now(); const arrivalAfter=await snap();
+  r.arrival={arrivalStart,acceptedAt,noticedAt,latencyFromRequestMs:noticedAt-arrivalStart,latencyFrom202Ms:noticedAt-acceptedAt,before:arrivalBefore,after:arrivalAfter};
+  note('arrival-reading-preserved',equal(arrivalBefore.rows,arrivalAfter.rows)&&equal(arrivalBefore.scroll,arrivalAfter.scroll)&&equal(arrivalBefore.focus,arrivalAfter.focus),r.arrival);
+  note('notice-latency',noticedAt-acceptedAt<5000,{msFrom202:noticedAt-acceptedAt});
+  await screenshot('arrival-older-page');
+  // A further older page must use the pre-arrival boundary and exclude the arrival.
+  const fourth=await cp('/events?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z&cursor='+encodeURIComponent(third.nextCursor));
+  await more().click(); await wait(async()=>await rows()===301);
+  note('arrival-boundary-preserved',equal(await ids(),[...first.items,...second.items,...third.items,...fourth.items].map(x=>x.id)),{uiIds:await ids(),lastApiPage:fourth});
+  const axSession=await ctx.newCDPSession(page);
+  const ax=await axSession.send('Accessibility.getFullAXTree');
+  r.liveRegions=ax.nodes.filter(x=>x.role?.value==='status').map(x=>({role:x.role,name:x.name,properties:x.properties}));
+  note('polite-live-region',r.liveRegions.some(x=>x.properties?.some(p=>p.name==='live'&&p.value.value==='polite')),r.liveRegions);
+  await refresh().click(); await wait(async()=>await rows()===100 && (await refresh().getAttribute('aria-busy'))!=='true'); const refreshed=await snap();
+  const newest=await cp('/events?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z');
+  note('refresh-newest-and-filters',equal(await ids(),newest.items.map(x=>x.id))&&refreshed.url.endsWith(query),{snapshot:refreshed,api:newest});
+  note('refresh-position-explained',/newest|latest|page\s*1|showing\s*\d/i.test(refreshed.main),{main:refreshed.main,scroll:refreshed.scroll});
+  const newSecond=await cp('/events?type=qa-main&before=2099-01-01T00%3A00%3A00.000Z&cursor='+encodeURIComponent(newest.nextCursor));
+  await more().click(); await wait(async()=>await rows()===200);
+  const afterIds=await ids();
+  note('refresh-next-boundary',equal(afterIds,[...newest.items,...newSecond.items].map(x=>x.id))&&new Set(afterIds).size===200,{uiIds:afterIds,unique:new Set(afterIds).size});
+  r.pagingControls=await page.getByRole('button').allTextContents();
+  note('older-newer-controls',r.pagingControls.some(x=>x==='Load more'),{controls:r.pagingControls,actualModel:'cumulative Load more'});
+  await page.evaluate(()=>window.scrollTo(0,0)); await screenshot('filters-refresh');
+  const filterState=await snap();
+  note('url-filters-visible',filterState.main.includes('Type: qa-main')&&filterState.main.includes('Before: 2099-01-01T00:00:00.000Z'),filterState);
+  note('filter-clearing-controls',filterState.buttons.some(x=>/clear|remove/i.test(x.text)),{controls:filterState.buttons,filterDisplay:filterState.main.slice(0,300)});
+  await goto(query+'&keep=reader');
+  const beforeClear=await snap(); await refresh().focus(); await page.keyboard.press('Tab');
+  const clearType=page.getByRole('button',{name:'Clear type filter',exact:true});
+  const typeTab=await clearType.evaluate(x=>x===document.activeElement); await page.keyboard.press('Enter');
+  await wait(async()=>new URL(page.url()).searchParams.get('type')===null && await rows()===100);
+  const afterTypeClear=await snap(); const typeFocus=await refresh().evaluate(x=>x===document.activeElement);
+  await page.keyboard.press('Tab');
+  const clearBefore=page.getByRole('button',{name:'Clear before filter',exact:true});
+  const beforeTab=await clearBefore.evaluate(x=>x===document.activeElement); await page.keyboard.press('Enter');
+  await wait(async()=>new URL(page.url()).searchParams.get('before')===null && await rows()===100);
+  const afterBeforeClear=await snap(); const finalFocus=await refresh().evaluate(x=>x===document.activeElement);
+  const typeParams=new URL(afterTypeClear.url).searchParams, lastParams=new URL(afterBeforeClear.url).searchParams;
+  note('D2-keyboard-clear-controls',typeTab&&beforeTab&&typeFocus&&finalFocus&&typeParams.get('before')==='2099-01-01T00:00:00.000Z'&&typeParams.get('keep')==='reader'&&lastParams.get('keep')==='reader'&&!lastParams.has('type')&&!lastParams.has('before'),{before:beforeClear,afterTypeClear,afterBeforeClear,typeTab,beforeTab,typeFocus,finalFocus});
+  await goto('?type=qa-main'); const onlyType=await snap();
+  await refresh().click(); await wait(async()=>await rows()===100);
+  note('clear-before-via-url',onlyType.main.includes('Type: qa-main')&&!onlyType.main.includes('Before:')&&(await snap()).url.endsWith('?type=qa-main'),onlyType);
+  await goto('?before=2099-01-01T00%3A00%3A00.000Z'); const onlyBefore=await snap();
+  await refresh().click(); await wait(async()=>await rows()===100);
+  note('clear-type-via-url',onlyBefore.main.includes('Before:')&&!onlyBefore.main.includes('Type:')&&(await snap()).url.endsWith('?before=2099-01-01T00%3A00%3A00.000Z'),onlyBefore);
+  await goto('?type=qa-empty'); const filtered=await snap();
+  note('empty-filter-distinct',filtered.main.includes('No inbound events match these filters.')&&!filtered.main.includes('No inbound events yet.'),filtered);
+  await screenshot('empty-filter'); const emptyAccepted=Date.now(); await post('qa-empty',`match-${width}`);
+  await wait(()=>page.getByText('New events available',{exact:true}).count());
+  const emptyNotice=await snap(); const emptyLatency=Date.now()-emptyAccepted;
+  await refresh().click(); await wait(async()=>await rows()===1);
+  note('empty-arrival-refresh',emptyNotice.rows.length===0&&(await snap()).rows[0].text.includes(`match-${width}`),{latencyFromRequestMs:emptyLatency,beforeRefresh:emptyNotice,afterRefresh:await snap()});
+  // Keyboard-only traversal starts at a fresh document and records actual focused controls.
+  await goto(query); await wait(async()=>await rows()===100);
+  const tabStops=[];
+  for(let i=0;i<22;i++){await page.keyboard.press('Tab');tabStops.push(await page.evaluate(()=>({tag:document.activeElement.tagName,text:document.activeElement.textContent?.slice(0,120)})));}
+  r.tabStops=tabStops;
+  note('keyboard-refresh-reachable',tabStops.some(x=>x.tag==='BUTTON'&&x.text==='Refresh'),tabStops);
+  // Reconnect while an old page is visible; no outstanding availability notice.
+  await more().click(); await wait(async()=>await rows()===200);
+  await page.locator('tbody tr').nth(140).scrollIntoViewIfNeeded();
+  const preStop=await snap(); await stopServer();
+  await wait(()=>page.getByText('Could not check for new events. Refresh to try again.',{exact:true}).count(),15000);
+  const stopped=await snap();
+  note('api-outage-preserves-reader',equal(preStop.rows,stopped.rows)&&equal(preStop.scroll,stopped.scroll),{before:preStop,after:stopped});
+  await screenshot('api-down');
+  await startServer(); await wait(async()=>!(await page.getByText('Could not check for new events. Refresh to try again.',{exact:true}).count()),15000);
+  const recovered=await snap();
+  note('native-restart-preserves-reader',equal(preStop.rows,recovered.rows)&&equal(preStop.scroll,recovered.scroll),{before:preStop,after:recovered,process:r.process});
+  await stopServer();
+  const beforeFailedRefresh=await snap(); await refresh().evaluate(x=>x.focus({preventScroll:true})); await page.keyboard.press('Enter');
+  await wait(async()=>(await page.locator('[role="status"]').allTextContents()).some(x=>x.includes('Refresh failed. Your current events are still shown. Refresh to try again.')),15000);
+  const failedRefresh=await snap();
+  note('failed-refresh-keeps-rows',equal(beforeFailedRefresh.rows,failedRefresh.rows)&&beforeFailedRefresh.url===failedRefresh.url,{before:beforeFailedRefresh,after:failedRefresh});
+  await page.evaluate(()=>window.scrollTo(0,0)); await screenshot('failed-refresh');
+  await startServer(); await refresh().click(); await wait(async()=>await rows()===100);
+  // Negative supported REST boundaries; keep typed public response bodies.
+  const invalid={before:await api('/events?before=not-a-date'),cursor:await api('/events?cursor=not-a-cursor'),payload:await api('/events',{type:'',payload:{}})};
+  note('invalid-api-inputs',Object.values(invalid).every(x=>x.status>=400&&x.status<500),invalid);
+  // Exact load of 5,000 durable accepted events. No direct database injection.
+  for(let i=r.seed.length;i<5000;i++){await post('qa-load',i);if(i%1000===0)console.log(`seed ${width}: ${i}`);}
+  await goto(); await wait(async()=>await rows()===100);
+  await sleep(2200);
+  const loadStart=Date.now(); const longStart=await page.evaluate(()=>performance.now()); const requestStart=r.requests.length;
+  const latencies=[];
+  for(let i=0;i<12;i++) { const t=Date.now(); await page.evaluate(()=>new Promise(res=>requestAnimationFrame(()=>res(performance.now())))); latencies.push(Date.now()-t); await sleep(600); }
+  const background=r.requests.slice(requestStart).filter(x=>x.method==='GET');
+  const longTasks=await page.evaluate(start=>window.__qaLongTasks.filter(x=>x.startTime>=start),longStart);
+  r.load={storedPostCount:r.seed.length,loadStart,windowMs:Date.now()-loadStart,background,longTasks,interactionRoundTripMs:latencies,allLongTasks:await page.evaluate(()=>window.__qaLongTasks)};
+  note('load-only-limit-one',background.length>=3&&background.every(x=>new URL(base+x.url).searchParams.get('limit')==='1'),r.load);
+  note('load-responsiveness',longTasks.every(x=>x.duration<200)&&Math.max(...latencies)<500,r.load);
+  await screenshot('load-5000');
+  // Two-tab isolation and reload: a second reader deliberately refreshes, first reader stays put.
+  const held=await ids(); const other=await ctx.newPage(); await other.goto(base+'/app/events?type=qa-load');
+  await wait(async()=>await other.locator('tbody tr').count()===100);
+  await post('qa-load',`two-tab-${width}`);
+  await other.getByRole('button',{name:'Refresh',exact:true}).click();
+  await wait(async()=>(await other.locator('tbody tr').first().innerText()).includes(`two-tab-${width}`));
+  note('two-tab-isolation',equal(held,await ids()),{heldIds:held,afterIds:await ids(),secondTabFirst:await other.locator('tbody tr').first().innerText()});
+  await other.reload(); await wait(async()=>await other.locator('tbody tr').count()===100);
+  note('reload-filter-retained',other.url().endsWith('?type=qa-load'),{url:other.url(),rows:await other.locator('tbody tr').count()});
+  await other.close();
+  await ctx.close(); await stopServer();
+  save(`width-${width}.json`,r); save('browser-results.json',report);
+ }
+} catch(e) { report.fatal=redact(e.stack); console.error(e); }
+finally { if(child && child.exitCode===null) {child.send('stop'); await Promise.race([once(child,'exit'),sleep(10000)]);if(child.exitCode===null)child.kill();} await browser.close(); report.finished=new Date().toISOString(); save('browser-results.json',report); }
+if(report.fatal) process.exitCode=1;

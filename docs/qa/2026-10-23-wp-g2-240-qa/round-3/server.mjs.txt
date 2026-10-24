@@ -1,0 +1,21 @@
+import { createContainer, buildApp, loadConfig } from '@graphgoblin/api';
+import { FakeHarness } from '@graphgoblin/engine/testing';
+const config = loadConfig(process.env);
+const owner = await createContainer(config, {
+  harnesses: { codex: new FakeHarness([], 'codex'), claude: new FakeHarness([], 'claude') },
+  startTimers: false,
+});
+await owner.start();
+const app = await buildApp(owner, { logger: false });
+await app.listen({ host: config.host, port: config.port });
+console.log(JSON.stringify({ ready: true, pid: process.pid, port: config.port }));
+process.on('message', async (message) => {
+  if (message === 'stop') {
+    await app.close();
+    await owner.stop();
+    console.log('STOPPED');
+    process.exit(0);
+  }
+});
+
+process.on('disconnect', async () => { await app.close(); await owner.stop(); process.exit(0); });

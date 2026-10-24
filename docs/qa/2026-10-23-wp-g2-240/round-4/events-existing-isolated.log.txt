@@ -1,0 +1,55 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-240/apps/web
+
+ ❯ src/events/EventsPage.test.tsx (7 tests | 2 failed) 12884ms
+   ❯ EventsPage delivery dispositions (5)
+     × refreshes a pending receipt when it becomes admitted and stops polling 2220ms
+     × refreshes a pending receipt when it becomes failed and stops polling 2623ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/events/EventsP ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events/EventsPage.test.tsx > EventsPage delivery dispositions > refreshes a pending receipt when it becomes 
+admitted and stops polling
+ FAIL  src/events/EventsPage.test.tsx > EventsPage delivery dispositions > refreshes a pending receipt when it becomes 
+failed and stops polling
+AssertionError: expected [ { method: 'GET', …(5) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/events/EventsPage.test.tsx:211:9
+    209|       expect(
+    210|         api.callsTo('GET', '/events').filter((call) => call.search.get…
+    211|       ).toHaveLength(2);
+       |         ^
+    212|
+    213|       await new Promise((resolve) => setTimeout(resolve, 2_200));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  06:14:19
+   Duration  56.45s (transform 45%, tests 23%, environment 14%, import 13%, setup 5%)
+
+  Transform  transforming modules took 25.30s · 45% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\web
+
+EXIT_CODE=1

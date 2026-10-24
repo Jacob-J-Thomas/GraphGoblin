@@ -1,0 +1,20 @@
+﻿import { existsSync, readdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+const redact = s => s.replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+const git = (...args) => execFileSync('git', args, {encoding:'utf8'}).trim();
+const present = existsSync('node_modules');
+const sample = present ? readdirSync('node_modules').slice(0, 5) : [];
+const result = {
+  checkedAt: new Date().toISOString(),
+  worktree: redact(process.cwd()),
+  expectedHead: 'fb37c1b04ae23003b7020aaace2530f932b50a84',
+  actualHead: git('rev-parse', 'HEAD'),
+  branch: git('branch', '--show-current'),
+  node: process.version,
+  nodeExecutable: redact(process.execPath),
+  dependencies: {path:'node_modules', exists:present, entrySample:sample, missingOrEmpty:!present || sample.length===0},
+  action:'STOP: no install, linking, build, server, API seeding or browser checks performed'
+};
+writeFileSync(path.join('docs','qa','2026-10-23-wp-g2-240-qa','preflight.json'),JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify(result,null,2));

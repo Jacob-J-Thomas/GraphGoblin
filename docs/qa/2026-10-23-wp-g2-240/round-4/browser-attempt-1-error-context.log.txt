@@ -1,0 +1,147 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: events-refresh.spec.ts >> Events updates the hundredth pending receipt after a head arrival without Refresh (#240)
+- Location: e2e\events-refresh.spec.ts:264:1
+
+# Error details
+
+```
+SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+```
+
+```
+Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+  - navigating to "http://127.0.0.1:56277/app/events?type=receipt-boundary", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  193 |   const held = new Promise<void>((resolve) => {
+  194 |     captured = resolve;
+  195 |   });
+  196 |   const delivery = new Promise<void>((resolve) => {
+  197 |     delivered = resolve;
+  198 |   });
+  199 |   let hold = true;
+  200 |   await page.route('**/events?**', async (route) => {
+  201 |     const query = new URL(route.request().url()).searchParams;
+  202 |     if (
+  203 |       !hold ||
+  204 |       query.get('type') !== 'refresh-race' ||
+  205 |       query.has('cursor') ||
+  206 |       query.has('limit') ||
+  207 |       query.has('anchor')
+  208 |     ) {
+  209 |       await route.continue();
+  210 |       return;
+  211 |     }
+  212 |     hold = false;
+  213 |     const response = await route.fetch();
+  214 |     captured();
+  215 |     await latch;
+  216 |     try {
+  217 |       await route.fulfill({ response });
+  218 |     } finally {
+  219 |       delivered();
+  220 |     }
+  221 |   });
+  222 |   try {
+  223 |     await refresh.click();
+  224 |     await held;
+  225 |     await page.getByRole('button', { name: 'Clear type filter', exact: true }).click();
+  226 |     await expect(refresh).toHaveAttribute('aria-busy', 'false');
+  227 |     await page.goBack();
+  228 |     await expect(page).toHaveURL(url + path);
+  229 |     await postEvent(request, url, 'refresh-race', 'winning-refresh');
+  230 |     await refresh.click();
+  231 |     await expect(page.locator('tbody tr').first()).toContainText('winning-refresh');
+  232 |     await more.click();
+  233 |     await expect(page.locator('tbody tr')).toHaveCount(200);
+  234 |     const snapshot = await page.locator('tbody').innerText();
+  235 |     const response = page.waitForResponse((result) => {
+  236 |       const query = new URL(result.url()).searchParams;
+  237 |       return (
+  238 |         query.get('type') === 'refresh-race' &&
+  239 |         !query.has('cursor') &&
+  240 |         !query.has('limit') &&
+  241 |         !query.has('anchor')
+  242 |       );
+  243 |     });
+  244 |     unblock();
+  245 |     await delivery;
+  246 |     await (await response).finished();
+  247 |     // Synchronize with response consumption and painting, without a timing sleep.
+  248 |     await page.evaluate(
+  249 |       () =>
+  250 |         new Promise<void>((resolve) =>
+  251 |           requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  252 |         ),
+  253 |     );
+  254 |     await expect(page.locator('tbody tr')).toHaveCount(200);
+  255 |     expect(await page.locator('tbody').innerText()).toBe(snapshot);
+  256 |     await expect(page.getByText('Showing the newest events.', { exact: true })).toBeVisible();
+  257 |     await expect(page).toHaveURL(url + path);
+  258 |   } finally {
+  259 |     unblock();
+  260 |     await page.unrouteAll({ behavior: 'wait' });
+  261 |   }
+  262 | });
+  263 | 
+  264 | test('Events updates the hundredth pending receipt after a head arrival without Refresh (#240)', async ({
+  265 |   page,
+  266 |   request,
+  267 | }) => {
+  268 |   const url = String((await control(request, '/apps'))['url']);
+  269 |   await seedEvents(request, url, 'receipt-boundary', 101);
+  270 |   const first = (await (await request.get(url + '/events?type=receipt-boundary')).json()) as {
+  271 |     items: { id: string }[];
+  272 |   };
+  273 |   const receiptId = first.items[99]!.id;
+  274 |   let admitted = false;
+  275 |   // A valid response fixture controls UI delivery state; admission itself is not simulated evidence.
+  276 |   await page.route('**/events?**', async (route) => {
+  277 |     if (new URL(route.request().url()).searchParams.get('type') !== 'receipt-boundary') {
+  278 |       await route.continue();
+  279 |       return;
+  280 |     }
+  281 |     const response = await route.fetch();
+  282 |     const body = (await response.json()) as {
+  283 |       items: { id: string; delivery?: { state: string; attempts: number } }[];
+  284 |       nextCursor: string | null;
+  285 |     };
+  286 |     body.items = body.items.map((item) =>
+  287 |       item.id === receiptId
+  288 |         ? { ...item, delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 } }
+  289 |         : item,
+  290 |     );
+  291 |     await route.fulfill({ response, json: body });
+  292 |   });
+> 293 |   await page.goto(url + '/app/events?type=receipt-boundary');
+      |              ^ Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+  294 |   await expect(page.getByText('Pending admission', { exact: true })).toBeVisible();
+  295 |   const ids = () =>
+  296 |     page
+  297 |       .locator('[data-testid^="payload-"]')
+  298 |       .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-testid')));
+  299 |   const before = await ids();
+  300 |   await postEvent(request, url, 'receipt-boundary', 'new-arrival');
+  301 |   admitted = true;
+  302 |   await expect(page.getByText('Admitted', { exact: true })).toBeVisible();
+  303 |   expect(await ids()).toEqual(before);
+  304 |   await expect(page.getByText('New events available', { exact: true })).toBeVisible();
+  305 |   await page.getByRole('button', { name: 'Load more', exact: true }).click();
+  306 |   await expect(page.locator('tbody tr')).toHaveCount(101);
+  307 |   expect(new Set(await ids()).size).toBe(101);
+  308 |   await page.unrouteAll({ behavior: 'wait' });
+  309 | });
+  310 | 
+```

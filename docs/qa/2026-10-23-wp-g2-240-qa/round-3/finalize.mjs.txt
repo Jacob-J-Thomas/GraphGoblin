@@ -1,0 +1,57 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import net from 'node:net';
+import {execFileSync} from 'node:child_process';
+const root=process.cwd(),out=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-3');
+const git=(args)=>execFileSync('git',args,{encoding:'utf8',env:{...process.env,GIT_OPTIONAL_LOCKS:'0'}});
+const head=git(['rev-parse','HEAD']).trim();
+if(head!=='987b70f72b71b132a19918978d03d8ea09bef040')throw new Error('HEAD changed');
+const profile=process.env.USERPROFILE,drive=profile.slice(0,2);
+const aliases=Array.from({length:4},(_,depth)=>profile.split('\\').join('\\'.repeat(2**depth)));
+const tails=Array.from({length:4},(_,depth)=>profile.slice(2).split('\\').join('\\'.repeat(2**depth)));
+function clean(value){
+ let text=String(value);
+ for(const alias of aliases)text=text.replaceAll(alias,'%USERPROFILE%');
+ text=text.replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%');
+ const lines=text.split('\n');
+ for(let i=0;i<lines.length-1;i++){
+  const left=lines[i].trimEnd();if(!left.endsWith(drive))continue;
+  for(const tail of tails){const index=lines[i+1].indexOf(tail);if(index<0)continue;lines[i]=left.slice(0,-drive.length)+'%USERPROFILE%'+lines[i+1].slice(index+tail.length);lines[i+1]='';break;}
+ }
+ text=lines.join('\n');for(const tail of tails)text=text.replaceAll(tail,'%USERPROFILE%');
+ return text.replace(/\bgg_[A-Za-z0-9_-]{20,}\b/g,'[REDACTED DISPOSABLE TOKEN]').replace(/^\uFEFF/,'');
+}
+const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+let prior={};try{prior=JSON.parse(fs.readFileSync(path.join(out,'artifact-audit.json'),'utf8'));}catch{}
+const transformations=prior.transformations??[];
+for(const name of fs.readdirSync(out)){
+ if(!/\.(txt|json|md)$/.test(name)||name==='artifact-audit.json'||name==='artifact-manifest.json')continue;
+ const file=path.join(out,name),before=fs.readFileSync(file),encoding=before[0]===255&&before[1]===254?'utf16le':'utf8',after=Buffer.from(clean(before.toString(encoding)),'utf8');
+ if(!before.equals(after)){fs.writeFileSync(file,after);transformations.push({name,fromBytes:before.length,toBytes:after.length,fromSHA256:sha(before),toSHA256:sha(after),reason:'UTF-16/BOM normalization if present; user path and disposable-token redaction, including wrapped terminal path fragments'});}
+}
+const omitted=[];
+for(const name of fs.readdirSync(out)){
+ const file=path.join(out,name);if(fs.statSync(file).size<=1000000)continue;
+ const bytes=fs.readFileSync(file),archive=fs.mkdtempSync(path.join(os.tmpdir(),'gg-qa-g2-240-r3-not-kept-')),destination=path.resolve(archive,name);
+ if(!destination.startsWith(path.resolve(archive)+path.sep))throw new Error('Unsafe destination');
+ omitted.push({name,bytes:bytes.length,sha256:sha(bytes)});fs.renameSync(file,destination);
+}
+if(omitted.length)fs.writeFileSync(path.join(out,'NOT-KEPT.md'),'# Captures not kept\n\n'+omitted.map(x=>x.name+': '+x.bytes+' bytes; SHA-256 '+x.sha256).join('\n')+'\n');
+const tracked=git(['diff','--name-only']).trim();if(tracked)throw new Error('Unexpected tracked changes: '+tracked);
+fs.writeFileSync(path.join(out,'final-state.log.txt'),clean('HEAD '+head+'\n'+git(['status','--short'])+'\nTracked changes:\n'+tracked+'\n'));
+const ports=[];for(let port=5920;port<=5929;port++){
+ const server=net.createServer();try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});await new Promise(resolve=>server.close(resolve));ports.push({port,free:true});}catch(error){ports.push({port,free:false,code:error.code});}
+}
+fs.writeFileSync(path.join(out,'cleanup-check.json'),JSON.stringify({at:new Date().toISOString(),ports,nativeProcessTreeTermination:'not attempted directly; sandbox denial supplied in task (D-015); standard native fixtures remain qualified by their failure logs'},null,2)+'\n');
+const excluded=['artifact-manifest.json','artifact-audit.json'];
+const manifest=fs.readdirSync(out).filter(name=>!excluded.includes(name)).sort().map(name=>{const bytes=fs.readFileSync(path.join(out,name));return{name,bytes:bytes.length,sha256:sha(bytes)};});
+fs.writeFileSync(path.join(out,'artifact-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+const md=fs.readFileSync(path.join(out,'README.md'),'utf8'),links=[...md.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]).filter(s=>!s.startsWith('http'));
+const missing=links.filter(s=>!fs.existsSync(path.resolve(out,s))),unlinked=fs.readdirSync(out).filter(n=>n!=='README.md'&&!links.includes(n)),oversized=manifest.filter(x=>x.bytes>1000000),hashMismatch=manifest.filter(x=>sha(fs.readFileSync(path.join(out,x.name)))!==x.sha256);
+const rawPaths=manifest.filter(x=>/\.(txt|json|md)$/.test(x.name)&&[...aliases,...tails,profile.replaceAll('\\','/')].some(p=>fs.readFileSync(path.join(out,x.name),'utf8').includes(p))).map(x=>x.name);
+const audit={head,at:new Date().toISOString(),manifestConvention:'Final delivered local bytes; not a claim about later Git-normalized committed bytes. Manifest and audit exclude themselves to avoid recursive hashes.',lineEndings:'Existing CRLF/LF retained except wrapped terminal path fragments joined during redaction; QA Markdown formatted by Prettier.',manifestFiles:manifest.length,missing,unlinked,oversized,hashMismatch,rawPaths,omitted,transformations,ports};
+fs.writeFileSync(path.join(out,'artifact-audit.json'),JSON.stringify(audit,null,2)+'\n');
+console.log(JSON.stringify({manifestFiles:manifest.length,missing,unlinked,oversized:oversized.length,hashMismatch:hashMismatch.length,rawPaths,ports}));
+if(missing.length||unlinked.length||oversized.length||hashMismatch.length||rawPaths.length)process.exitCode=1;

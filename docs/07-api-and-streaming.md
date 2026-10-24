@@ -473,6 +473,18 @@ under the new filters. Inbound rows sharing a timestamp are ordered by ID, which
 creation order within one process. Unknown query parameters return 400, and `before` must
 be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
 
+For bounded receipt updates, `anchor=<eventId>` re-reads a page starting at that event,
+inclusive, with the same `type`, exclusive `before` and `limit` rules. It is mutually
+exclusive with `cursor` (`400 VALIDATION_FAILED` if combined). An unknown anchor, one
+owned by another reader, or one outside the filters returns an empty page. The server
+uses one indexed lookup and one inclusive SQL range; only the requested rows are decoded,
+and the usual opaque `nextCursor` continues strictly after the returned last row.
+The Events page uses each loaded page's first ID and loaded size for this read, then merges
+updates by ID without replacing its membership or continuation. Thus even a pending head
+or hundredth row displaced by many tied arrivals keeps updating, without scanning history.
+Manual Refresh responses are committed only by the latest request for that cached scope,
+including after filter changes and remounts; an obsolete completion changes no rows or status.
+
 `GET /runs/{id}/events` retains its sequence-number continuation, returning
 `{items, nextAfter, hasMore}`. One raw lookahead row determines `hasMore`; an exactly full
 final page returns false. Only requested rows are decoded and validated: malformed
@@ -484,12 +496,14 @@ This sequence cursor remains a number; it is not interchangeable with list curso
 
 Runs and Events append older rows through a new outline **Load more** button.
 Filters remain part of the query key and every page request; changing a filter selects
-its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
-filters. The control is busy only during a next-page fetch, so background polling does
+its own history. Runs expose loop/status/parent selects; Events displays active `type` and
+`before` filters from its URL. The control is busy only during a next-page fetch, so background polling does
 not block it. End-of-list text appears after an append and receives keyboard focus
 when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
 show an error with a retry through the same button. Runs retain their five-second polling;
-Events retain pending-delivery polling. No manual Events refresh is added here.
+Events retain pending-delivery polling for existing rows, with loaded membership and cursors
+kept stable. A separate `limit=1` read announces newer arrivals; **Refresh** deliberately
+reloads the newest page within the same filters. See [09](09-frontend-and-pwa.md) for the page behaviour (#240).
 
 ### Pinned definitions (ADR-0041)
 

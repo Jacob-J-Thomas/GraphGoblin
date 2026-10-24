@@ -197,19 +197,18 @@ async function startApp(
 }
 
 const main = await startApp({}, false, false, { id: 'main' });
-const mainPort = Number(new URL(main.url).port);
 const workerPath = join(dist, 'sw.js');
 const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
 let workerBuild = 0;
 
 /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
-async function setApiListening(listening: boolean): Promise<void> {
-  const server = main.app.app.server;
+async function setApiListening(instance: E2eInstance, listening: boolean): Promise<void> {
+  const server = instance.app.app.server;
   if (listening === server.listening) return;
   if (listening) {
     await new Promise<void>((done, reject) => {
       server.once('error', reject);
-      server.listen(mainPort, '127.0.0.1', () => {
+      server.listen(Number(new URL(instance.url).port), '127.0.0.1', () => {
         server.removeListener('error', reject);
         done();
       });
@@ -292,7 +291,7 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       );
       return { ok: true };
     case '/api/listener':
-      await setApiListening(body['listening'] !== false);
+      await setApiListening(selectedInstance(body), body['listening'] !== false);
       return { ok: true };
     case '/worker/build':
       workerBuild += 1;
@@ -584,7 +583,7 @@ async function stop(): Promise<void> {
   if (stopping) return;
   stopping = true;
   controlServer.close();
-  await setApiListening(true);
+  for (const instance of instances.values()) await setApiListening(instance, true);
   await writeFile(workerPath, originalWorker);
   for (const app of apps) await app.close();
   for (const close of closers) await close();

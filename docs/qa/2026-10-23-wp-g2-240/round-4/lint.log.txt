@@ -1,0 +1,52 @@
+pnpm.cmd : $ turbo run lint
+At line:6 char:3
++   & pnpm.cmd $gate *> $file
++   ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run lint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/adapter-codex:lint: cache miss, executing 05e771d22d848ac6
+@graphgoblin/mcp:lint: cache miss, executing 6b7c0cdd96ce544a
+@graphgoblin/web:lint: cache miss, executing 27ea0b29f99dd2e3
+@graphgoblin/contracts:lint: cache hit, replaying logs 5a275a8e2ce83ca0
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/domain:lint: cache miss, executing 2d5afd2e65fcc423
+@graphgoblin/engine:lint: cache miss, executing 2dd88002cff6a6e7
+@graphgoblin/api:lint: cache miss, executing 10f0e592691f75d5
+@graphgoblin/api-client:lint: cache miss, executing 6a92900987b3f4c1
+@graphgoblin/infrastructure:lint: cache miss, executing e8cb9ddef5a5e643
+@graphgoblin/adapter-jev:lint: cache miss, executing 6b1c2a60877fc2d3
+@graphgoblin/plugin-codex:lint: cache miss, executing 654c291f180204a9
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/mcp:lint: $ eslint .
+@graphgoblin/plugin-codex:lint: $ eslint .
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/web:lint: $ eslint .
+@graphgoblin/api:lint: $ eslint .
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/web:lint: 
+@graphgoblin/web:lint: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-240\apps\web\src\runs\inspector\ThreadViewer.tsx
+@graphgoblin/web:lint:   106:9  warning  useState should be destructured into a value and setter pair, e.g., const [state, setState] = useState(...)  @eslint-react/use-state
+@graphgoblin/web:lint: 
+@graphgoblin/web:lint: ✖ 1 problem (0 errors, 1 warning)
+@graphgoblin/web:lint: 
+
+ Tasks:    11 successful, 11 total
+Cached:    1 cached, 11 total
+  Time:    2m45.216s 
+
+EXIT_CODE=0
