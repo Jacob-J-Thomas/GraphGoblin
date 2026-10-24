@@ -1,0 +1,514 @@
+{
+  "exported": {
+    "format": "graphgoblin-loop",
+    "formatVersion": 4,
+    "exportedAt": "2026-10-24T09:02:54.686Z",
+    "loop": {
+      "schemaVersion": 4,
+      "name": "Independent QA 11",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": null,
+        "runDeadlineSeconds": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 80
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "worker",
+          "label": "Worker",
+          "ui": {
+            "x": 260,
+            "y": 80
+          },
+          "kind": "inference",
+          "config": {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "session": {
+              "policy": "resume-own",
+              "resetAfterVisits": 9007199254740991
+            },
+            "prompt": {
+              "template": "Exact task Î©: preserve spaces  / {{ vars.sentinel }} / {{ messages.last.content }}"
+            },
+            "input": [],
+            "harnessOptions": {
+              "sandbox": "read-only",
+              "approval": "never"
+            },
+            "output": {
+              "captureTranscript": "artifact",
+              "toMessages": "final",
+              "transforms": []
+            }
+          }
+        },
+        {
+          "id": "reviewer",
+          "label": "Reviewer",
+          "ui": {
+            "x": 520,
+            "y": 80
+          },
+          "kind": "inference",
+          "config": {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "session": {
+              "policy": "resume-own"
+            },
+            "prompt": {
+              "template": "Review {{ messages.last.content }} / {{ vars.sentinel }}"
+            },
+            "input": [],
+            "harnessOptions": {
+              "sandbox": "read-only",
+              "approval": "never"
+            },
+            "output": {
+              "captureTranscript": "artifact",
+              "toMessages": "final",
+              "transforms": []
+            }
+          }
+        },
+        {
+          "id": "gate",
+          "label": "Gate",
+          "ui": {
+            "x": 780,
+            "y": 80
+          },
+          "kind": "decision",
+          "config": {
+            "kind": "expression",
+            "jsonata": "\"repeat\"",
+            "maxPasses": 2,
+            "routes": [
+              {
+                "id": "repeat",
+                "label": "Repeat",
+                "repeat": true
+              },
+              {
+                "id": "finish",
+                "label": "Finish"
+              }
+            ]
+          }
+        },
+        {
+          "id": "seed",
+          "label": "Seed",
+          "ui": {
+            "x": 1040,
+            "y": 80
+          },
+          "kind": "mutate",
+          "config": {
+            "operations": [
+              {
+                "op": "set",
+                "path": "/vars/sentinel",
+                "value": {
+                  "kind": "literal",
+                  "value": "never erase"
+                }
+              },
+              {
+                "op": "append-message",
+                "role": "note",
+                "content": "shared seed"
+              }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 1300,
+            "y": 80
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "start-out-seed",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "seed",
+            "port": "in"
+          }
+        },
+        {
+          "id": "seed-out-worker",
+          "from": {
+            "node": "seed",
+            "port": "out"
+          },
+          "to": {
+            "node": "worker",
+            "port": "in"
+          }
+        },
+        {
+          "id": "worker-out-reviewer",
+          "from": {
+            "node": "worker",
+            "port": "out"
+          },
+          "to": {
+            "node": "reviewer",
+            "port": "in"
+          }
+        },
+        {
+          "id": "reviewer-out-gate",
+          "from": {
+            "node": "reviewer",
+            "port": "out"
+          },
+          "to": {
+            "node": "gate",
+            "port": "in"
+          }
+        },
+        {
+          "id": "gate-repeat-worker",
+          "from": {
+            "node": "gate",
+            "port": "repeat"
+          },
+          "to": {
+            "node": "worker",
+            "port": "in"
+          }
+        },
+        {
+          "id": "gate-limit-reached-done",
+          "from": {
+            "node": "gate",
+            "port": "limit-reached"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "gate-finish-done",
+          "from": {
+            "node": "gate",
+            "port": "finish"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  },
+  "imported": {
+    "loop": {
+      "id": "01M5PJC575A0BND33TFDH9Y7XJ",
+      "ownerId": "local",
+      "name": "Independent QA 11",
+      "draftVersionId": "01M5PJC575A0BND33TFDH9Y7XK",
+      "createdAt": "2026-10-24T09:02:54.693Z",
+      "updatedAt": "2026-10-24T09:02:54.693Z"
+    },
+    "draft": {
+      "id": "01M5PJC575A0BND33TFDH9Y7XK",
+      "loopId": "01M5PJC575A0BND33TFDH9Y7XJ",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Independent QA 11",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": null,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "worker",
+            "label": "Worker",
+            "ui": {
+              "x": 260,
+              "y": 80
+            },
+            "kind": "inference",
+            "config": {
+              "harness": "codex",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "session": {
+                "policy": "resume-own",
+                "resetAfterVisits": 9007199254740991
+              },
+              "prompt": {
+                "template": "Exact task Î©: preserve spaces  / {{ vars.sentinel }} / {{ messages.last.content }}"
+              },
+              "input": [],
+              "harnessOptions": {
+                "sandbox": "read-only",
+                "approval": "never"
+              },
+              "output": {
+                "captureTranscript": "artifact",
+                "toMessages": "final",
+                "transforms": []
+              }
+            }
+          },
+          {
+            "id": "reviewer",
+            "label": "Reviewer",
+            "ui": {
+              "x": 520,
+              "y": 80
+            },
+            "kind": "inference",
+            "config": {
+              "harness": "codex",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "session": {
+                "policy": "resume-own"
+              },
+              "prompt": {
+                "template": "Review {{ messages.last.content }} / {{ vars.sentinel }}"
+              },
+              "input": [],
+              "harnessOptions": {
+                "sandbox": "read-only",
+                "approval": "never"
+              },
+              "output": {
+                "captureTranscript": "artifact",
+                "toMessages": "final",
+                "transforms": []
+              }
+            }
+          },
+          {
+            "id": "gate",
+            "label": "Gate",
+            "ui": {
+              "x": 780,
+              "y": 80
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"repeat\"",
+              "maxPasses": 2,
+              "routes": [
+                {
+                  "id": "repeat",
+                  "label": "Repeat",
+                  "repeat": true
+                },
+                {
+                  "id": "finish",
+                  "label": "Finish"
+                }
+              ]
+            }
+          },
+          {
+            "id": "seed",
+            "label": "Seed",
+            "ui": {
+              "x": 1040,
+              "y": 80
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "set",
+                  "path": "/vars/sentinel",
+                  "value": {
+                    "kind": "literal",
+                    "value": "never erase"
+                  }
+                },
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "shared seed"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 1300,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out-seed",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "seed",
+              "port": "in"
+            }
+          },
+          {
+            "id": "seed-out-worker",
+            "from": {
+              "node": "seed",
+              "port": "out"
+            },
+            "to": {
+              "node": "worker",
+              "port": "in"
+            }
+          },
+          {
+            "id": "worker-out-reviewer",
+            "from": {
+              "node": "worker",
+              "port": "out"
+            },
+            "to": {
+              "node": "reviewer",
+              "port": "in"
+            }
+          },
+          {
+            "id": "reviewer-out-gate",
+            "from": {
+              "node": "reviewer",
+              "port": "out"
+            },
+            "to": {
+              "node": "gate",
+              "port": "in"
+            }
+          },
+          {
+            "id": "gate-repeat-worker",
+            "from": {
+              "node": "gate",
+              "port": "repeat"
+            },
+            "to": {
+              "node": "worker",
+              "port": "in"
+            }
+          },
+          {
+            "id": "gate-limit-reached-done",
+            "from": {
+              "node": "gate",
+              "port": "limit-reached"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "gate-finish-done",
+            "from": {
+              "node": "gate",
+              "port": "finish"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T09:02:54.693Z"
+    },
+    "issues": [],
+    "notices": []
+  }
+}

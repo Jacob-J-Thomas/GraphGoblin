@@ -1,0 +1,54 @@
+// Reproducible evidence inventory and gate summary. Run after logs are complete.
+import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
+import { resolve, join, relative } from 'node:path';
+import { createHash } from 'node:crypto';
+const out = resolve('docs/qa/2026-10-23-wp-f4-33-qa');
+async function walk(dir) { const list = []; for (const e of await readdir(dir, { withFileTypes: true })) { const p = join(dir, e.name); if (e.isDirectory()) list.push(...await walk(p)); else list.push(p); } return list.sort(); }
+async function read(p) { const b = await readFile(p); return b[0] === 255 && b[1] === 254 ? b.subarray(2).toString('utf16le') : b.toString('utf8').replace(/^\uFEFF/, ''); }
+const portable = s => s.replaceAll(process.env.USERPROFILE.replaceAll('\\', '\\\\'), '%USERPROFILE%').replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%');
+for (const path of await walk(out)) if (/\.(txt|json)$/.test(path)) await writeFile(path, portable(await read(path)));
+const logs = {};
+for (const file of await walk(out)) if (file.endsWith('.log.txt')) logs[relative(out, file).replaceAll('\\', '/')] = await read(file);
+const original = JSON.parse(await read(join(out, 'runtime-results.json'))); const corrected = JSON.parse(await read(join(out, 'runtime-corrected/runtime-results.json'))); const final = new Map(original.map(r => [r.name, r])); corrected.forEach(r => final.set(r.name, r));
+const browser = JSON.parse(await read(join(out, 'browser-results.json')));
+const adjacent = JSON.parse(await read(join(out, 'adjacent-results.json')));
+const functional = { runtime: [...final.values()], viewportFlows: browser, adjacent, result: [...final.values(), ...browser, ...adjacent].some(r => r.result === 'FAIL') ? 'FAIL' : 'PASS' };
+await writeFile(join(out, 'consolidated-results.json'), JSON.stringify(functional, null, 2));
+const gateRows = [];
+const overlapEvidence = [];
+for (const harness of ['codex', 'claude']) {
+  const ids = corrected.find(r => r.name === harness + ' parallel forks children').detail.parallel;
+  const ranges = [];
+  for (const id of ids) {
+    const e = JSON.parse(await read(join(out, 'runtime-corrected', harness + '-isolated-' + id + '.json'))).events;
+    ranges.push({ id, start: e.find(x => x.type === 'node.started' && x.nodeId === 'worker').ts, end: e.find(x => x.type === 'node.finished' && x.nodeId === 'worker').ts });
+  }
+  const overlapMs = Math.min(...ranges.map(r => Date.parse(r.end))) - Math.max(...ranges.map(r => Date.parse(r.start)));
+  if (overlapMs <= 0) throw Error('Parallel turns did not overlap: ' + JSON.stringify(ranges));
+  overlapEvidence.push({ harness, ranges, overlapMs });
+}
+await writeFile(join(out, 'concurrency-overlap.json'), JSON.stringify(overlapEvidence, null, 2));
+for (const [command, file] of [['pnpm.cmd build','build'], ['pnpm.cmd typecheck','typecheck'], ['pnpm.cmd lint','lint'], ['pnpm.cmd check:layers','layers'], ['pnpm.cmd check:deps','deps'], ['pnpm.cmd check:docs','docs'], ['pnpm.cmd check:tokens','tokens']]) gateRows.push({ command, result: 'PASS (exit 0)', evidence: file + '.log.txt' });
+const packages = ['contracts', 'engine', 'infrastructure', 'adapter-codex', 'api-client', 'api', 'web'];
+for (const pkg of packages) {
+  const evidence = `coverage-${pkg}.log.txt`; const log = logs[evidence] ?? ''; const lines = log.match(/^Lines\s*:\s*([^\r\n]+)/m)?.[1]; const branches = log.match(/^Branches\s*:\s*([^\r\n]+)/m)?.[1];
+  gateRows.push({ command: `pnpm.cmd --filter @graphgoblin/${pkg} test:coverage`, result: pkg === 'api' ? 'FAIL / interrupted; no completed coverage summary' : /Tests\s+\d+ failed/.test(log) || !lines ? 'FAIL' : 'PASS', evidence, lines: lines ?? 'unavailable', branches: branches ?? 'unavailable', tests: log.match(/^\s*Tests\s+([^\r\n]+)/m)?.[1] ?? 'incomplete' });
+}
+const reruns = Object.keys(logs).filter(f => f.startsWith('isolated-') && f !== 'isolated-admission.log.txt').sort().map(evidence => { const log = logs[evidence]; return { evidence, result: /Tests\s+\d+ failed/.test(log) || !/Tests\s+\d+ passed/.test(log) ? 'FAIL' : 'PASS', tests: log.match(/^\s*Tests\s+([^\r\n]+)/m)?.[1] ?? 'incomplete', duration: log.match(/^\s*Duration\s+([^\r\n]+)/m)?.[1] ?? 'incomplete' }; });
+await writeFile(join(out, 'gate-results.json'), JSON.stringify({ gates: gateRows, isolatedReruns: reruns, finalVerdict: 'FAIL: required validation is not clean; requested feature scenarios passed' }, null, 2));
+let md = await read(join(out, 'README.md'));
+const gates = '| Command | Actual | Evidence |\n| --- | --- | --- |\n' + gateRows.map(g => `| \`${g.command}\` | ${g.result}${g.lines ? '; lines ' + g.lines + ', branches ' + g.branches + '; tests ' + g.tests : ''} | [${g.evidence}](${g.evidence}) |`).join('\n') + '\n\n`pnpm.cmd format:check` is run after this report is assembled; its final result is recorded in `format-check.log.txt`. `pnpm.cmd check:licenses` was not run: no dependency was added or changed. No generated production files were edited by QA. Coverage commands ran directly per package (no Turbo coverage cache). Infrastructure/API coverage is not claimed from partial or failing results.\n\n### One isolated rerun per affected infrastructure file\n\nThe original infrastructure run had 12 failures / 762 passes (774 tests), 5 failed / 46 passed files, duration 202.13 s. Unchanged files were each run once, sequentially, after broad suites stopped, with `pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run <file> --maxWorkers=1 --no-file-parallelism --reporter=verbose`. No timeout was increased and no test or threshold changed.\n\n| File/run evidence | Isolated result | Tests | Duration |\n| --- | --- | --- | --- |\n' + reruns.map(r => `| [${r.evidence}](${r.evidence}) | ${r.result} | ${r.tests} | ${r.duration} |`).join('\n') + '\n\nThe unchanged API `src/retired-event-startup.test.ts` emitted one cold-start failure after 85.223 s (file 105.380 s); broad API coverage did not finish and was stopped after roughly seven minutes. Its isolated rerun was **not run**: the shared subprocess fixture unconditionally chooses ports 5600â€“5699, outside this brief\'s 5830â€“5839 restriction. `api-rerun-limit.log.txt` preserves that fixture evidence. This unresolved verification gap prevents a clean QA sign-off. Passing isolated tests do not change the original coverage gate result.\n';
+md = md.replace('GATE_RESULTS_PENDING', gates).replace('FINAL_VERDICT_PENDING', '**fail** (validation incomplete/failed)');
+md = md.replace('**Functional result: all seven requested case groups passed. Final gate verdict is recorded below after the remaining checks.**', '**Verdict: fail at the pinned head because required validation is not clean. All seven requested feature case groups passed; no #33 behavior defect was reproduced.**');
+const notKept = [];
+const artifacts = [];
+for (const file of await walk(out)) { const name = relative(out, file).replaceAll('\\', '/'); if (['README.md', 'evidence-manifest.json', 'NOT-KEPT.md'].includes(name)) continue; const bytes = await readFile(file); const entry = { path: name, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }; if (bytes.length > 1000000) notKept.push(entry); else artifacts.push(entry); }
+assertNoOversize();
+function assertNoOversize() { if (notKept.length) throw Error('Oversize captures need moving out of the kept evidence folder before report finalization: ' + JSON.stringify(notKept)); }
+await writeFile(join(out, 'NOT-KEPT.md'), '# Omitted captures\n\nNo retained capture exceeds 1,000,000 bytes. No oversized capture was cited or kept. Build outputs, disposable stores and coverage HTML are working state outside the evidence folder and are not cited evidence.\n');
+await writeFile(join(out, 'evidence-manifest.json'), JSON.stringify(artifacts, null, 2));
+const inventory = '[Evidence hashes and byte sizes](evidence-manifest.json) Â· [Omitted captures](NOT-KEPT.md)\n\n| Artifact | Bytes |\n| --- | ---: |\n' + artifacts.map(a => `| [${a.path}](${a.path}) | ${a.bytes} |`).join('\n');
+md = md.replace('ARTIFACT_INVENTORY_PENDING', inventory.replace('| Artifact | Bytes |', '| Artifact |').replace('| --- | ---: |', '| --- |').replace(/ \| \d+ \|/g, ' |'));
+await writeFile(join(out, 'README.md'), md);
+console.log(JSON.stringify({ runtimeChecks: final.size, runtimePassed: [...final.values()].filter(r => r.result === 'PASS').length, viewportFlows: browser.length, artifacts: artifacts.length, isolatedReruns: reruns, verdict: 'FAIL: validation' }));
+
