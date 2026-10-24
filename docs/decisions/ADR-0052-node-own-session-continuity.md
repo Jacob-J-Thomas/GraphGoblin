@@ -1,6 +1,6 @@
 # ADR-0052 - Opt-in per-node provider conversation continuity
 
-Date: 2026-10-23. Status: Proposed implementation for #33; independent review pending.
+Date: 2026-10-23. Status: Accepted (2026-10-24): reviewed by the orchestrator, live start-and-resume checks passed for Codex and Claude, independent QA passed.
 
 ## Context
 

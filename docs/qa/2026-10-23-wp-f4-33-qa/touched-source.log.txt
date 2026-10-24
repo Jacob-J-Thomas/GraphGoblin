@@ -1,0 +1,220 @@
+diff --git a/packages/contracts/src/nodes.ts b/packages/contracts/src/nodes.ts
+index ddd43ba7..8bc312fb 100644
+--- a/packages/contracts/src/nodes.ts
++++ b/packages/contracts/src/nodes.ts
+@@ -148,6 +148,26 @@ export const SessionPolicySchema = z.discriminatedUnion('policy', [
+   z.strictObject({ policy: z.literal('fresh') }),
+   z.strictObject({ policy: z.literal('resume-previous') }),
+   z.strictObject({ policy: z.literal('resume-named'), key: SlugSchema }),
++  z.strictObject({
++    // Opt-in: fresh stays the inference default. Input/template controls independently select
++    // loop context; owning a provider conversation never changes the shared thread.
++    policy: z.literal('resume-own'),
++    // No default or product-imposed cap. Safe positive integers keep the visit modulo exact;
++    // N completed visits share a conversation, and visit N+1 starts fresh. Retries/repairs
++    // remain inside a visit. This bounds conversations, not provider turns or tokens.
++    resetAfterVisits: z
++      .number()
++      .int()
++      .positive()
++      .max(Number.MAX_SAFE_INTEGER)
++      .optional()
++      .meta(
++        field(
++          "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
++          { title: 'Reset after visits' },
++        ),
++      ),
++  }),
+ ]);
+ export type SessionPolicy = z.infer<typeof SessionPolicySchema>;
+ 
+@@ -247,7 +267,9 @@ export const InferenceConfigSchema = z
+       ),
+     ),
+     session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
+-      field('Start fresh, resume the previous session, or resume a named session.'),
++      field(
++        "Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.",
++      ),
+     ),
+     prompt: z
+       .strictObject({ template: TemplateSchema })
+diff --git a/packages/engine/src/handlers/inference-turn.ts b/packages/engine/src/handlers/inference-turn.ts
+index eb639a70..ec5f6088 100644
+--- a/packages/engine/src/handlers/inference-turn.ts
++++ b/packages/engine/src/handlers/inference-turn.ts
+@@ -17,9 +17,12 @@ export interface PendingTurn {
+ export function visitTurn(
+   events: readonly RunEvent[],
+   nodeId: string,
+-): { visitId: string; pending?: PendingTurn } {
++): { visitId: string; pending?: PendingTurn; completedVisits: number; completedAttempt?: number } {
+   let visitId = '';
+   let pending: PendingTurn | undefined;
++  let completedVisits = 0;
++  let attempt: number | undefined;
++  let completedAttempt: number | undefined;
+   for (const event of events) {
+     if (event.type === 'run.failed' && event.failure.nodeId === nodeId) {
+       const evidence = event.failure.inference;
+@@ -46,10 +49,16 @@ export function visitTurn(
+     }
+     if (!('nodeId' in event) || event.nodeId !== nodeId) continue;
+     if (event.type === 'node.finished') {
++      // Durable completion, not a locally finished session row, advances continuity/reset.
++      completedVisits += 1;
++      completedAttempt = attempt;
+       visitId = '';
+       pending = undefined;
+     }
+-    if (event.type === 'node.started' && !visitId) visitId = event.runId + ':' + event.seq;
++    if (event.type === 'node.started') {
++      attempt = event.attempt;
++      if (!visitId) visitId = event.runId + ':' + event.seq;
++    }
+     if (event.type === 'harness.turn' && event.visitId === visitId) {
+       pending = {
+         turn: {
+@@ -72,7 +81,12 @@ export function visitTurn(
+       pending.accepted ||= event.marker !== undefined;
+     }
+   }
+-  return { visitId, ...(pending ? { pending } : {}) };
++  return {
++    visitId,
++    completedVisits,
++    ...(completedAttempt === undefined ? {} : { completedAttempt }),
++    ...(pending ? { pending } : {}),
++  };
+ }
+ 
+ export function provenance(pending: PendingTurn): PromptProvenance {
+diff --git a/packages/engine/src/handlers/inference.ts b/packages/engine/src/handlers/inference.ts
+index 2b47850d..52dc919b 100644
+--- a/packages/engine/src/handlers/inference.ts
++++ b/packages/engine/src/handlers/inference.ts
+@@ -314,6 +314,28 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+             config.harness,
+           )
+         )?.sessionId;
++      } else if (config.session.policy === 'resume-own' && visit.completedVisits > 0) {
++        const reset = config.session.resetAfterVisits;
++        // Pending turns above retain #244's exact retry/continuation and inherited-ID rules,
++        // including at a reset boundary. Forks/children have separate run IDs and logs.
++        if (reset === undefined || visit.completedVisits % reset !== 0) {
++          const previous =
++            visit.completedAttempt === undefined
++              ? undefined
++              : await ctx.ports.sessions.forNodeAttempt(
++                  ctx.run.id,
++                  ctx.node.id,
++                  visit.completedAttempt,
++                  config.harness,
++                );
++          if (!previous?.sessionId)
++            throw new RunFailureError(
++              'HARNESS_SESSION_MISSING',
++              'The completed node visit has no recorded provider session. An explicit fresh-session choice is required.',
++              { nodeId: ctx.node.id, resumable: false },
++            );
++          resumeId = previous.sessionId;
++        }
+       }
+     }
+     const beginTurn = (
+diff --git a/packages/engine/src/ports.ts b/packages/engine/src/ports.ts
+index 697b8c7d..69c9886d 100644
+--- a/packages/engine/src/ports.ts
++++ b/packages/engine/src/ports.ts
+@@ -152,6 +152,16 @@ export interface HarnessSessionRecord {
+ export interface HarnessSessionRepository {
+   upsert(row: HarnessSessionRecord): Promise<void>;
+   forNode(runId: string, nodeId: string): Promise<HarnessSessionRecord | undefined>;
++  /** Exact row for the last durably completed visit, whose final attempt comes from its log.
++   * Attempts restart on each visit: the highest attempt can belong to an older visit.
++   * Harness is part of selection even though the current immutable node pins its harness.
++   */
++  forNodeAttempt(
++    runId: string,
++    nodeId: string,
++    attempt: number,
++    harness: HarnessId,
++  ): Promise<HarnessSessionRecord | undefined>;
+   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
+   byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
+ }
+diff --git a/packages/engine/src/testing/fakes.ts b/packages/engine/src/testing/fakes.ts
+index 46fdf792..97ba261b 100644
+--- a/packages/engine/src/testing/fakes.ts
++++ b/packages/engine/src/testing/fakes.ts
+@@ -396,6 +396,22 @@ export class InMemorySessionRepository implements HarnessSessionRepository {
+       .sort((a, b) => b.attempt - a.attempt);
+     return Promise.resolve(rows[0]);
+   }
++  forNodeAttempt(
++    runId: string,
++    nodeId: string,
++    attempt: number,
++    harness: HarnessId,
++  ): Promise<HarnessSessionRecord | undefined> {
++    return Promise.resolve(
++      this.rows.find(
++        (r) =>
++          r.runId === runId &&
++          r.nodeId === nodeId &&
++          r.attempt === attempt &&
++          r.harness === harness,
++      ),
++    );
++  }
+   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
+     const rows = this.rows
+       .filter((r) => r.runId === runId && r.harness === harness && r.sessionId)
+diff --git a/packages/infrastructure/src/sqlite/sessions.ts b/packages/infrastructure/src/sqlite/sessions.ts
+index 3839f127..baf03eaf 100644
+--- a/packages/infrastructure/src/sqlite/sessions.ts
++++ b/packages/infrastructure/src/sqlite/sessions.ts
+@@ -54,6 +54,23 @@ export class SqliteSessionRepository implements HarnessSessionRepository {
+     return row ? toRecord(row) : undefined;
+   }
+ 
++  async forNodeAttempt(
++    runId: string,
++    nodeId: string,
++    attempt: number,
++    harness: HarnessId,
++  ): Promise<HarnessSessionRecord | undefined> {
++    const row = await this.db.query.harnessSessions.findFirst({
++      where: and(
++        eq(harnessSessions.runId, runId),
++        eq(harnessSessions.nodeId, nodeId),
++        eq(harnessSessions.attempt, attempt),
++        eq(harnessSessions.harness, harness),
++      ),
++    });
++    return row ? toRecord(row) : undefined;
++  }
++
+   async latestWithSession(
+     runId: string,
+     harness: HarnessId,
+diff --git a/pnpm-workspace.yaml b/pnpm-workspace.yaml
+index d511f158..65331357 100644
+--- a/pnpm-workspace.yaml
++++ b/pnpm-workspace.yaml
+@@ -10,3 +10,14 @@ overrides:
+ # Dependency lifecycle scripts allowed to run (pnpm blocks all others). esbuild only validates its binary.
+ allowBuilds:
+   esbuild: true
++
++# Accepted advisories, each test-only and unreachable from shipped code. Remove an entry as soon as
++# its fixed version installs on the Node 22 patch used for local gates.
++auditConfig:
++  ignoreGhsas:
++    # undici < 8.12.2 (denial of service through excessive content encodings). undici is reached
++    # only through jsdom, the web test environment, which talks to local test servers; no workspace
++    # imports it and no built app bundles it. The fixed 8.12.x cannot load on Node 22.14 (it needs
++    # zlib's zstd support), which the local gates still use (ADR-0040 patch-floor gap). Remove this
++    # entry and take undici >= 8.12.2 when the local Node 22 is updated to 22.22.2 or later.
++    - GHSA-xjj6-f33q-929c
