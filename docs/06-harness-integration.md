@@ -112,6 +112,16 @@ retained on the container or module. Run admission pins the checked version and 
 prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
 become underscores); catalog/configuration issues retain their existing codes.
 
+Claude's ready `models` list also constrains the effective model and effort (#205). Manual
+admission resolves each pinned inference/LLM selection with the run's pinned owner/process
+defaults and its definition's loop defaults, rejecting `EFFORT_UNSUPPORTED` on the node before
+recording the run. Request resolution in the engine checks the catalog before every adapter
+request (manual and automatic starts, subloop children, resumes and recovery) and does not probe
+the CLI per request: Claude's catalog rows are seeded from the adapter's own capability table, so
+the catalog check enforces the same efforts. An unknown or unready probe retains the existing
+readiness handling; no capability check substitutes a model or effort or claims provider
+entitlement. The editor intersects the same ready capabilities with the catalog's effort choices.
+
 Manual UI/API/MCP trigger start checks the engine's frozen root definition (published version or
 draft snapshot) and every executable pinned subloop definition, recursively. Both `latest` and
 numbered child references use the published records the engine prepared for this start, never a

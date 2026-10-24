@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { HarnessDefaults, ModelCatalogEntry } from '@graphgoblin/contracts';
+import type {
+  ClaudeModelCapability,
+  HarnessDefaults,
+  ModelCatalogEntry,
+} from '@graphgoblin/contracts';
 import {
   resolveHarnessModel,
   validateHarnessDefaults,
@@ -165,6 +169,35 @@ const claudeBase: HarnessModelResolutionInput = {
   },
 };
 describe('independent Claude model defaults', () => {
+  it.each([undefined, 'high'] as const)(
+    'refuses effective effort absent from ready capabilities (explicit=%s)',
+    (effort) => {
+      expect(
+        resolveHarnessModel({
+          ...claudeBase,
+          ...(effort !== undefined ? { effort } : {}),
+          claudeCapabilities: [{ model: opus.model, efforts: ['low'] }],
+        }),
+      ).toMatchObject({ status: 'invalid', code: 'EFFORT_UNSUPPORTED', path: 'effort' });
+    },
+  );
+  it('checks the selected model, accepts supported effort, and leaves Codex independent', () => {
+    expect(
+      resolveHarnessModel({
+        ...claudeBase,
+        effort: 'low',
+        claudeCapabilities: [{ model: opus.model, efforts: ['low'] }],
+      }),
+    ).toMatchObject({ status: 'ready', model: opus.model, effort: 'low' });
+    const lists: ClaudeModelCapability[][] = [[], [{ model: 'another-model', efforts: ['low'] }]];
+    for (const claudeCapabilities of lists)
+      expect(
+        resolveHarnessModel({ ...claudeBase, effort: 'low', claudeCapabilities }),
+      ).toMatchObject({ code: 'EFFORT_UNSUPPORTED' });
+    expect(resolveHarnessModel({ ...base, claudeCapabilities: [] })).toMatchObject({
+      status: 'ready',
+    });
+  });
   it('uses exact family settings and never catalog guidance or another family fallback', () => {
     expect(resolveHarnessModel(claudeBase)).toEqual({
       status: 'ready',

@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-240/apps/web
+
+ ❯ src/api/queries.reconnect.test.tsx (31 tests | 1 failed | 30 skipped) 275ms
+   ❯ query reconnect (31)
+     × recovers the cold offline Events query 270ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web exec vitest run src/ap ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Events query
+AssertionError: expected "vi.fn()" to be called 3 times, but got 4 times
+ ❯ src/api/queries.reconnect.test.tsx:150:26
+    148|       await waitFor(() => expect(view.result.current.isSuccess).toBe(t…
+    149|       expect(view.result.current.data).toBeDefined();
+    150|       expect(view.fetch).toHaveBeenCalledTimes(3);
+       |                          ^
+    151|     } finally {
+    152|       view.unmount();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 skipped (31)
+   Start at  19:28:14
+   Duration  44.36s (transform 62%, import 19%, environment 13%, setup 5%, tests 1%)
+
+  Transform  transforming modules took 26.58s · 62% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\web
+
+EXIT_CODE=1

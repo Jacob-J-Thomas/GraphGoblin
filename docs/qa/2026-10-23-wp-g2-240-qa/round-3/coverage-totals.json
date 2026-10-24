@@ -1,0 +1,158 @@
+[
+  {
+    "package": "web",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2",
+    "exit": 0,
+    "ms": 1937216,
+    "files": "133 passed (133)",
+    "tests": "1648 passed (1648)",
+    "coverage": {
+      "lines": {
+        "total": 7568,
+        "covered": 7487,
+        "skipped": 0,
+        "pct": 98.92
+      },
+      "statements": {
+        "total": 8757,
+        "covered": 8584,
+        "skipped": 0,
+        "pct": 98.02
+      },
+      "functions": {
+        "total": 2314,
+        "covered": 2279,
+        "skipped": 0,
+        "pct": 98.48
+      },
+      "branches": {
+        "total": 8210,
+        "covered": 7799,
+        "skipped": 0,
+        "pct": 94.99
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "coverageIsComplete": true,
+    "coverageSource": "coverage-web-summary.json",
+    "log": "web-coverage.log.txt",
+    "failureHeadings": []
+  },
+  {
+    "package": "api",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2",
+    "exit": 0,
+    "ms": 875504,
+    "files": "64 passed | 2 skipped (66)",
+    "tests": "1323 passed | 8 skipped (1331)",
+    "coverage": {
+      "lines": {
+        "total": 1858,
+        "covered": 1822,
+        "skipped": 0,
+        "pct": 98.06
+      },
+      "statements": {
+        "total": 2077,
+        "covered": 2006,
+        "skipped": 0,
+        "pct": 96.58
+      },
+      "functions": {
+        "total": 420,
+        "covered": 397,
+        "skipped": 0,
+        "pct": 94.52
+      },
+      "branches": {
+        "total": 1406,
+        "covered": 1313,
+        "skipped": 0,
+        "pct": 93.38
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "coverageIsComplete": true,
+    "coverageSource": "coverage-api-summary.json",
+    "log": "api-coverage.log.txt",
+    "failureHeadings": []
+  },
+  {
+    "package": "infrastructure",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2",
+    "exit": 1,
+    "ms": 414117,
+    "files": "5 failed | 46 passed (51)",
+    "tests": "9 failed | 766 passed (775)",
+    "coverage": null,
+    "coverageIsComplete": false,
+    "coverageSource": null,
+    "log": "infrastructure-coverage.log.txt",
+    "failureHeadings": [
+      " FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      " FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"','2026-10-17T00:00:00.000Z')"
+    ]
+  },
+  {
+    "package": "api-client",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage --maxWorkers=2",
+    "exit": 0,
+    "ms": 46919,
+    "files": "8 passed (8)",
+    "tests": "73 passed (73)",
+    "coverage": {
+      "lines": {
+        "total": 246,
+        "covered": 246,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 284,
+        "covered": 284,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 90,
+        "covered": 90,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 161,
+        "covered": 160,
+        "skipped": 0,
+        "pct": 99.37
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "coverageIsComplete": true,
+    "coverageSource": "coverage-api-client-summary.json",
+    "log": "api-client-coverage.log.txt",
+    "failureHeadings": []
+  }
+]

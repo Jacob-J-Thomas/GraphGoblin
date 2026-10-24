@@ -1,7 +1,11 @@
 import { ShutdownActionSchema, ShutdownStateSchema, ShutdownTransitionError } from '../shutdown.js';
 import { readinessOperation } from '../readiness-operation.js';
 import { z } from 'zod';
-import { HarnessPreflightSchema, HarnessIdSchema } from '@graphgoblin/contracts';
+import {
+  HarnessPreflightSchema,
+  HarnessIdSchema,
+  HarnessDefaultsSchema,
+} from '@graphgoblin/contracts';
 import type { Container } from '../container.js';
 import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
@@ -9,6 +13,17 @@ import { API_VERSION, type ApiInstance } from '../types.js';
 const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
+  app.get(
+    '/system/model-defaults',
+    {
+      schema: {
+        tags: ['system'],
+        summary: 'Process model and effort defaults, before loop and owner overrides',
+        response: { 200: HarnessDefaultsSchema },
+      },
+    },
+    () => container.config.defaults,
+  );
   app.get(
     '/system/shutdown',
     {

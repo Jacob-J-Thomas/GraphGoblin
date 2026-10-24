@@ -365,8 +365,12 @@ const LlmSourceSchema = z.strictObject({
   kind: z.literal('llm').meta(field('Use a structured Codex evaluation.')),
   instructions: TemplateSchema.meta(field('Liquid instructions rendered against the full thread.')),
   harness: z.literal('codex').meta(field('Implemented structured evaluator harness.')),
-  model: ModelSelectionSchema.meta(field('Inherit or explicitly select the model.')),
-  effort: EffortSelectionSchema.meta(field('Inherit or explicitly select reasoning effort.')),
+  model: ModelSelectionSchema.meta(
+    field('Inherit or explicitly select the model.', { control: 'model-selection' }),
+  ),
+  effort: EffortSelectionSchema.meta(
+    field('Inherit or explicitly select reasoning effort.', { control: 'effort-selection' }),
+  ),
 });
 export const LlmDecisionConfigSchema = LlmSourceSchema.extend({
   ...GateLimits,
