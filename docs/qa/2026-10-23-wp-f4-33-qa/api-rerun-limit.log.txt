@@ -1,0 +1,52 @@
+Isolated API cold-start rerun not run: immutable fixture has no port-range/prefix option. Broad suite used a fixture-chosen port 5677; not a fixed port.
+Source: apps/api/src/testing/api-subprocess.ts
+33:   });
+34: }
+35: 
+36: async function freePort(): Promise<number> {
+37:   const offset = Math.floor(Math.random() * 100);
+38:   for (let index = 0; index < 100; index++) {
+39:     const port = 5600 + ((offset + index) % 100);
+40:     const server = createServer();
+41:     const available = await new Promise<boolean>((resolve, reject) => {
+42:       server.once('error', (error: NodeJS.ErrnoException) =>
+43:         error.code === 'EADDRINUSE' ? resolve(false) : reject(error),
+44:       );
+45:       server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
+46:     });
+47:     if (available) return port;
+48:   }
+49:   throw new Error('No disposable API port is free in 5600-5699');
+50: }
+51: 
+121: export async function createApiProcessFixture() {
+122:   try {
+123:     await access(entry);
+124:   } catch (cause) {
+125:     throw new Error('Built API entry is missing; run pnpm build before API subprocess tests.', {
+126:       cause,
+127:     });
+128:   }
+129:   const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-process-'));
+130:   const databaseFile = join(dataDir, 'graphgoblin.db');
+131:   const lockPath = join(dataDir, 'graphgoblin.lock');
+132:   const port = await freePort();
+133:   const inherited = Object.fromEntries(
+134:     Object.entries(process.env).filter(
+135:       ([name]) =>
+136:         !name.toUpperCase().startsWith('GG_') &&
+137:         name.toUpperCase() !== 'JEV_API_KEY' &&
+138:         name.toUpperCase() !== 'NODE_V8_COVERAGE',
+139:     ),
+140:   );
+141:   const env: NodeJS.ProcessEnv = {
+142:     ...inherited,
+143:     ...(process.env.GG_API_SUBPROCESS_V8_COVERAGE === '1'
+144:       ? { NODE_V8_COVERAGE: join(dataDir, 'v8') }
+145:       : {}),
+146:     GG_DATA_DIR: dataDir,
+147:     GG_DB_URL: `file:${databaseFile.replaceAll('\\', '/')}`,
+148:     GG_HOST: '127.0.0.1',
+149:     GG_PORT: String(port),
+150:     GG_LOG_LEVEL: 'info',
+151:     GG_REQUIRE_API_KEY: 'true',

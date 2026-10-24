@@ -17,9 +17,12 @@ export interface PendingTurn {
 export function visitTurn(
   events: readonly RunEvent[],
   nodeId: string,
-): { visitId: string; pending?: PendingTurn } {
+): { visitId: string; pending?: PendingTurn; completedVisits: number; completedAttempt?: number } {
   let visitId = '';
   let pending: PendingTurn | undefined;
+  let completedVisits = 0;
+  let attempt: number | undefined;
+  let completedAttempt: number | undefined;
   for (const event of events) {
     if (event.type === 'run.failed' && event.failure.nodeId === nodeId) {
       const evidence = event.failure.inference;
@@ -46,10 +49,16 @@ export function visitTurn(
     }
     if (!('nodeId' in event) || event.nodeId !== nodeId) continue;
     if (event.type === 'node.finished') {
+      // Durable completion, not a locally finished session row, advances continuity/reset.
+      completedVisits += 1;
+      completedAttempt = attempt;
       visitId = '';
       pending = undefined;
     }
-    if (event.type === 'node.started' && !visitId) visitId = event.runId + ':' + event.seq;
+    if (event.type === 'node.started') {
+      attempt = event.attempt;
+      if (!visitId) visitId = event.runId + ':' + event.seq;
+    }
     if (event.type === 'harness.turn' && event.visitId === visitId) {
       pending = {
         turn: {
@@ -72,7 +81,12 @@ export function visitTurn(
       pending.accepted ||= event.marker !== undefined;
     }
   }
-  return { visitId, ...(pending ? { pending } : {}) };
+  return {
+    visitId,
+    completedVisits,
+    ...(completedAttempt === undefined ? {} : { completedAttempt }),
+    ...(pending ? { pending } : {}),
+  };
 }
 
 export function provenance(pending: PendingTurn): PromptProvenance {

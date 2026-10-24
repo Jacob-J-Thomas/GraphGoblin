@@ -1,0 +1,30 @@
+// Independent QA fixture: built public API composition; only external harness ports are fakes.
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root = process.env.GG_QA_ROOT;
+const mod = p => import(pathToFileURL(resolve(root, p)).href);
+const { createContainer, buildApp, loadConfig } = await mod('apps/api/dist/index.js');
+const { FakeHarness } = await mod('packages/engine/dist/testing/index.js');
+const codex = new FakeHarness([], 'codex');
+const claude = new FakeHarness([], 'claude');
+claude.preflightResult = {
+  ...claude.preflightResult,
+  authMethod: 'claude.ai',
+  supportedPolicies: [{ sandbox: 'read-only', approval: 'never', permissionMode: 'dontAsk', tools: ['Read', 'Glob', 'Grep'], authMethod: 'claude.ai', boundary: 'builtin-tools', network: 'unconfined' }],
+  models: [{ model: 'claude-opus-5-5', efforts: ['low', 'medium', 'high', 'xhigh', 'max'] }],
+};
+const container = await createContainer(loadConfig(process.env), { harnesses: { codex, claude }, startTimers: false });
+await container.start();
+const { token } = await container.repos.apiKeys.create('local', 'independent-qa', ['*']);
+const app = await buildApp(container, { logger: false });
+await app.listen({ host: '127.0.0.1', port: Number(process.env.GG_PORT) });
+process.send({ type: 'ready', token, pid: process.pid });
+process.on('message', async message => {
+  try {
+    let result;
+    if (message.op === 'script') { (message.harness === 'claude' ? claude : codex).script(message.turns); result = { ok: true }; }
+    if (message.op === 'inspect') result = Object.fromEntries(Object.entries({ codex, claude }).map(([id, h]) => [id, { started: h.started, resumed: h.resumed, cancelled: h.cancelled }]));
+    if (message.op === 'stop') { await app.close(); await container.stop(); process.exit(0); }
+    process.send({ type: 'reply', id: message.id, result });
+  } catch (error) { process.send({ type: 'reply', id: message.id, error: String(error) }); }
+});

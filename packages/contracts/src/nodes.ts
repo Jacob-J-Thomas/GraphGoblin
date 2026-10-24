@@ -148,6 +148,26 @@ export const SessionPolicySchema = z.discriminatedUnion('policy', [
   z.strictObject({ policy: z.literal('fresh') }),
   z.strictObject({ policy: z.literal('resume-previous') }),
   z.strictObject({ policy: z.literal('resume-named'), key: SlugSchema }),
+  z.strictObject({
+    // Opt-in: fresh stays the inference default. Input/template controls independently select
+    // loop context; owning a provider conversation never changes the shared thread.
+    policy: z.literal('resume-own'),
+    // No default or product-imposed cap. Safe positive integers keep the visit modulo exact;
+    // N completed visits share a conversation, and visit N+1 starts fresh. Retries/repairs
+    // remain inside a visit. This bounds conversations, not provider turns or tokens.
+    resetAfterVisits: z
+      .number()
+      .int()
+      .positive()
+      .max(Number.MAX_SAFE_INTEGER)
+      .optional()
+      .meta(
+        field(
+          "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+          { title: 'Reset after visits' },
+        ),
+      ),
+  }),
 ]);
 export type SessionPolicy = z.infer<typeof SessionPolicySchema>;
 
@@ -247,7 +267,9 @@ export const InferenceConfigSchema = z
       ),
     ),
     session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
-      field('Start fresh, resume the previous session, or resume a named session.'),
+      field(
+        "Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.",
+      ),
     ),
     prompt: z
       .strictObject({ template: TemplateSchema })
