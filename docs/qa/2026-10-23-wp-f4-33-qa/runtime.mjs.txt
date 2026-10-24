@@ -1,0 +1,122 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { mkdtemp, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-23-wp-f4-33-qa/runtime-corrected');
+await (await import('node:fs/promises')).mkdir(out, { recursive: true });
+const temp = await mkdtemp(join(tmpdir(), 'gg-qa-f4-33-'));
+const fixture = join(temp, 'api-fixture.mjs');
+await copyFile(resolve('docs/qa/2026-10-23-wp-f4-33-qa/api-fixture.mjs.txt'), fixture);
+const { singleNodeLoop } = await import(pathToFileURL(resolve('packages/engine/dist/testing/index.js')));
+const libsqlPath = resolve('packages/infrastructure/node_modules/@libsql/client/lib-esm/node.js');
+const { createClient } = await import(pathToFileURL(libsqlPath));
+const records = [];
+let child, token, rpcId = 0;
+const origin = 'http://127.0.0.1:5831';
+const portable = x => JSON.parse(JSON.stringify(x).replaceAll(process.env.USERPROFILE.replaceAll('\\', '\\\\'), '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%'));
+async function save(name, value) { await writeFile(join(out, name + '.json'), JSON.stringify(portable(value), null, 2)); }
+async function start() {
+  const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GG_')));
+  Object.assign(env, { GG_QA_ROOT: root, GG_DATA_DIR: temp, GG_DB_URL: `file:${join(temp, 'graphgoblin.db').replaceAll('\\', '/')}`, GG_PORT: '5831', GG_HOST: '127.0.0.1', GG_REQUIRE_API_KEY: 'true', GG_SWAGGER_UI: 'false', GG_WEB_DIST: resolve('apps/web/dist'), GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64') });
+  child = spawn(process.execPath, [fixture], { env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+  child.stdout.on('data', b => process.stdout.write(b)); child.stderr.on('data', b => process.stderr.write(b));
+  const ready = await new Promise((yes, no) => { const timer = setTimeout(() => no(Error('API ready deadline')), 60000); child.on('message', m => { if (m.type === 'ready') { clearTimeout(timer); yes(m); } }); child.once('exit', c => no(Error('API exited ' + c))); });
+  token = ready.token; return ready.pid;
+}
+async function stop() { if (!child || child.exitCode !== null) return; const done = once(child, 'exit'); child.kill('SIGKILL'); await done; }
+async function rpc(op, body = {}) { const id = ++rpcId; return new Promise((yes, no) => { const timer = setTimeout(() => no(Error('IPC deadline')), 15000); const fn = m => { if (m.id === id) { clearTimeout(timer); child.off('message', fn); m.error ? no(Error(m.error)) : yes(m.result); } }; child.on('message', fn); child.send({ id, op, ...body }); }); }
+async function api(path, body, method = body === undefined ? 'GET' : 'POST', expected) {
+  const res = await fetch(origin + path, { method, headers: { authorization: 'Bearer ' + token, ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  const value = await res.json(); if (expected !== undefined) assert.equal(res.status, expected, path + ': ' + JSON.stringify(value)); else assert.ok(res.ok, path + ': ' + res.status + ' ' + JSON.stringify(value)); return value;
+}
+async function until(fn) { const deadline = Date.now() + 60000; while (true) { const result = await fn(); if (result) return result; assert.ok(Date.now() < deadline, 'state deadline'); await delay(35); } }
+const sessions = events => events.filter(e => e.type === 'harness.session');
+const turns = events => events.filter(e => e.type === 'harness.turn');
+async function events(id) { return (await api(`/runs/${id}/events?limit=1000`)).items; }
+async function terminal(id) { return until(async () => { const r = await api('/runs/' + id); return ['succeeded', 'failed', 'cancelled'].includes(r.status) && r; }); }
+async function settled(id) { const r = await terminal(id); assert.equal(r.status, 'succeeded', JSON.stringify(r)); return r; }
+function edge(from, to, port = 'out') { return { id: `${from}-${port}-${to}`, from: { node: from, port }, to: { node: to } }; }
+let sequence = 0;
+function cycle(policy = { policy: 'resume-own' }, visits = 7, harness = 'codex', wait = false, reviewerPolicy = { policy: 'resume-own' }) {
+  const worker = { id: 'worker', kind: 'inference', label: 'Worker', config: { harness, model: harness === 'codex' ? 'gpt-6-luna' : 'claude-opus-5-5', effort: 'low', harnessOptions: { sandbox: 'read-only', approval: 'never' }, session: policy, prompt: { template: 'Exact task Î©: preserve spaces  / {{ vars.sentinel }} / {{ messages.last.content }}' } } };
+  const d = singleNodeLoop('Independent QA ' + (++sequence), worker);
+  d.settings = { maxNodeVisits: null };
+  d.nodes.splice(2, 0,
+    { id: 'reviewer', kind: 'inference', label: 'Reviewer', config: { ...worker.config, session: reviewerPolicy, prompt: { template: 'Review {{ messages.last.content }} / {{ vars.sentinel }}' } } },
+    { id: 'gate', kind: 'decision', label: 'Gate', config: { kind: 'expression', jsonata: '"repeat"', routes: [{ id: 'repeat', label: 'Repeat', repeat: true }, { id: 'finish', label: 'Finish' }], maxPasses: visits } },
+    { id: 'seed', kind: 'mutate', label: 'Seed', config: { operations: [{ op: 'set', path: '/vars/sentinel', value: { kind: 'literal', value: 'never erase' } }, { op: 'append-message', content: 'shared seed' }] } },
+    ...(wait ? [{ id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: 'Continue next worker visit' } }] : []));
+  d.edges = [edge('start', 'seed'), edge('seed', 'worker'), edge('worker', 'reviewer'), edge('reviewer', 'gate'), edge('gate', wait ? 'wait' : 'worker', 'repeat'), ...(wait ? [edge('wait', 'worker')] : []), edge('gate', 'done', 'limit-reached'), edge('gate', 'done', 'finish')];
+  d.nodes.forEach((n, i) => n.ui = { x: i * 260, y: 80 }); return d;
+}
+async function publish(d) { const created = await api('/loops', { definition: d }, 'POST', 201); await api(`/loops/${created.loop.id}/publish`, {}); return created.loop.id; }
+async function run(loop) { return (await api(`/loops/${loop}/runs`, {})).run.id; }
+async function collect(id) { return { run: await api('/runs/' + id), events: await events(id), thread: await api(`/runs/${id}/thread`) }; }
+const rerun = new Set(JSON.parse(await readFile(resolve('docs/qa/2026-10-23-wp-f4-33-qa/runtime-results.json'), 'utf8')).filter(r => r.result === 'FAIL').map(r => r.name));
+async function check(name, fn) { if (!rerun.has(name)) return; try { const detail = await fn(); records.push({ name, result: 'PASS', detail }); console.log('PASS ' + name); } catch (e) { records.push({ name, result: 'FAIL', error: e.stack }); console.error('FAIL ' + name + ': ' + e.stack); } await save('runtime-results', records); }
+try {
+  const initialPid = await start();
+  await save('environment', { revision: '7d76abd0e1330273e6efe3f0f82907e59061111d', node: process.version, origin, temp, initialPid, fakeOnly: true });
+  for (const harness of ['codex', 'claude']) for (const reset of [1, 2, 3, undefined]) await check(`${harness} reset ${reset ?? 'blank'}`, async () => {
+    const visits = reset === undefined ? 12 : 7;
+    const loop = await publish(cycle({ policy: 'resume-own', ...(reset === undefined ? {} : { resetAfterVisits: reset }) }, visits, harness));
+    const id = await run(loop); await settled(id); const evidence = await collect(id); await save(`${harness}-reset-${reset ?? 'blank'}`, evidence);
+    const ss = sessions(evidence.events); const worker = ss.filter(x => x.nodeId === 'worker'); const reviewer = ss.filter(x => x.nodeId === 'reviewer');
+    assert.equal(worker.length, visits); assert.equal(reviewer.length, visits);
+    worker.forEach((s, i) => { const fresh = i === 0 || (reset !== undefined && i % reset === 0); assert.equal(s.mode, fresh ? 'fresh' : 'resumed'); if (i) assert.equal(s.sessionId === worker[i - 1].sessionId, !fresh); });
+    assert.equal(new Set(reviewer.map(x => x.sessionId)).size, 1); assert.ok(reviewer.every((s, i) => s.mode === (i ? 'resumed' : 'fresh'))); assert.ok(worker.every(w => w.sessionId !== reviewer[0].sessionId));
+    const ts = turns(evidence.events); for (const node of ['worker', 'reviewer']) { const nt = ts.filter(t => t.nodeId === node); const ns = ss.filter(t => t.nodeId === node); nt.forEach((t, i) => assert.equal(t.resumeSessionId, ns[i].mode === 'fresh' ? undefined : ns[i].sessionId)); }
+    assert.equal(evidence.thread.vars.sentinel, 'never erase'); assert.equal(evidence.thread.messages.filter(m => m.nodeId === 'worker').length, visits); assert.equal(evidence.thread.messages.filter(m => m.nodeId === 'reviewer').length, visits); assert.ok(evidence.thread.messages.some(m => m.content === 'shared seed')); assert.ok(ts.every(t => t.prompt.includes('never erase')));
+    return { id, workerModes: worker.map(s => s.mode), reviewerSession: reviewer[0].sessionId, messages: evidence.thread.messages.length, vars: evidence.thread.vars };
+  });
+  for (const policy of [{ policy: 'fresh' }, { policy: 'resume-previous' }, { policy: 'resume-named', key: 'shared-control' }]) await check(policy.policy + ' control', async () => {
+    const loop = await publish(cycle(policy, 3, 'codex', false, policy)); const id = await run(loop); await settled(id); const e = await collect(id); await save(policy.policy, e); const ss = sessions(e.events); assert.equal(ss.length, 6);
+    if (policy.policy === 'fresh') assert.equal(new Set(ss.map(s => s.sessionId)).size, 6); else { assert.equal(new Set(ss.map(s => s.sessionId)).size, 1); assert.ok(ss.slice(1).every(s => s.mode === 'resumed')); }
+    if (policy.policy === 'resume-named') { const second = await run(loop); await settled(second); const se = await collect(second); await save('resume-named-second-run', se); assert.equal(sessions(se.events)[0].sessionId, ss[0].sessionId); }
+    return ss.map(s => ({ nodeId: s.nodeId, mode: s.mode, sessionId: s.sessionId }));
+  });
+  for (const harness of ['codex', 'claude']) await check(harness + ' parallel forks children', async () => {
+    const loop = await publish(cycle({ policy: 'resume-own', resetAfterVisits: 3 }, 7, harness));
+    await rpc('script', { harness, turns: [{ delayMs: 400 }, { delayMs: 400 }] });
+    const ids = await Promise.all([run(loop), run(loop)]); await Promise.all(ids.map(settled));
+    const forkIds = []; for (const nodeId of ['worker', 'reviewer']) { const f = (await api(`/runs/${ids[0]}/replay`, { nodeId })).run.id; await settled(f); forkIds.push(f); }
+    const parent = await publish(singleNodeLoop('Independent child ' + harness, { id: 'sub', kind: 'subloop', label: 'Child', config: { loopRef: { loopId: loop } } }));
+    const parentId = await run(parent); await settled(parentId); const pe = await collect(parentId); await save(harness + '-parent', pe);
+    const childId = pe.events.find(e => e.type === 'child_run.started').childRunId;
+    const all = [...ids, ...forkIds, childId]; const handles = [];
+    for (const id of all) { const e = await collect(id); await save(harness + '-isolated-' + id, e); for (const node of ['worker', 'reviewer']) { const first = sessions(e.events).find(s => s.nodeId === node); assert.equal(first.mode, 'fresh'); assert.equal(turns(e.events).find(t => t.nodeId === node).resumeSessionId, undefined); handles.push(first.sessionId); } }
+    assert.equal(new Set(handles).size, handles.length); return { parallel: ids, forks: forkIds, childId, distinctHandles: handles };
+  });
+  await check('real process restart between visits', async () => {
+    const loop = await publish(cycle({ policy: 'resume-own' }, 2, 'codex', true)); const id = await run(loop); const waiting = await until(async () => { const r = await api('/runs/' + id); return r.status === 'waiting' && r; }); const before = await collect(id); await save('restart-before', before);
+    await stop(); const newPid = await start(); assert.notEqual(newPid, initialPid); await api(`/runs/${id}/input`, { waitId: waiting.waiting.waitId, input: null }); await settled(id); const after = await collect(id); await save('restart-after', after); const ss = sessions(after.events); for (const node of ['worker', 'reviewer']) { const s = ss.filter(x => x.nodeId === node); assert.equal(s[1].mode, 'resumed'); assert.equal(s[1].sessionId, s[0].sessionId); }
+    const calls = await rpc('inspect'); await save('restart-requests', calls); assert.equal(calls.codex.started.length, 0); assert.equal(calls.codex.resumed.length, 2); return { id, initialPid, newPid, sessions: ss };
+  });
+  await check('deleted SQLite session row', async () => {
+    const loop = await publish(cycle({ policy: 'resume-own' }, 2, 'codex', true)); const id = await run(loop); const waiting = await until(async () => { const r = await api('/runs/' + id); return r.status === 'waiting' && r; }); await save('missing-row-before', await collect(id)); const before = await rpc('inspect');
+    const db = createClient({ url: `file:${join(temp, 'graphgoblin.db').replaceAll('\\', '/')}` }); const removed = await db.execute({ sql: 'DELETE FROM harness_sessions WHERE run_id = ? AND node_id = ?', args: [id, 'worker'] }); db.close(); assert.ok(removed.rowsAffected > 0);
+    await api(`/runs/${id}/input`, { waitId: waiting.waiting.waitId, input: null }); const failed = await terminal(id); const evidence = await collect(id); const after = await rpc('inspect'); await save('missing-row-after', { ...evidence, removedRows: removed.rowsAffected, before, after }); assert.equal(failed.failure.code, 'HARNESS_SESSION_MISSING'); assert.equal(failed.failure.resumable, false); assert.equal(after.codex.started.length, before.codex.started.length); assert.equal(after.codex.resumed.length, before.codex.resumed.length); await api(`/runs/${id}/resume`, {}, 'POST', 409); return { id, removedRows: removed.rowsAffected, failure: failed.failure };
+  });
+  for (const harness of ['codex', 'claude']) await check(harness + ' refused reset prompt', async () => {
+    const loop = await publish(cycle({ policy: 'resume-own', resetAfterVisits: 1 }, 2, harness)); await rpc('script', { harness, turns: [{}, {}, { announceSession: false, accepted: false, submission: 'definitely-not-submitted', error: { code: 'HARNESS_TURN_FAILED', message: 'QA refusal before submission', retriable: true } }] }); const id = await run(loop); const failure = await terminal(id); assert.equal(failure.status, 'failed'); const before = await events(id); const authored = turns(before).at(-1); await api(`/runs/${id}/resume`, {}); await settled(id); const evidence = await collect(id); await save(harness + '-refusal', { before, ...evidence }); const retried = turns(evidence.events).filter(t => t.visitId === authored.visitId); assert.equal(retried.length, 2); assert.equal(retried[1].prompt, authored.prompt); assert.equal(retried[1].turnId, authored.turnId); assert.equal(retried[1].resumeSessionId, undefined); return { id, prompt: authored.prompt, turnId: authored.turnId, failure: failure.failure };
+  });
+  for (const harness of ['codex', 'claude']) await check(harness + ' cancel resumed own turn', async () => {
+    const loop = await publish(cycle({ policy: 'resume-own' }, 3, harness)); const before = (await rpc('inspect'))[harness]; await rpc('script', { harness, turns: [{}, {}, { delayMs: 60000 }] }); const id = await run(loop); await until(async () => (await events(id)).some(e => e.type === 'harness.session' && e.mode === 'resumed')); await api(`/runs/${id}/cancel`, {}); assert.equal((await terminal(id)).status, 'cancelled'); const after = (await rpc('inspect'))[harness]; await save(harness + '-cancel', { ...(await collect(id)), before, after }); assert.equal(after.started.length - before.started.length, 2); assert.equal(after.resumed.length - before.resumed.length, 1); return { id, starts: 2, resumes: 1, cancelled: after.cancelled };
+  });
+  for (const reset of [undefined, 3, Number.MAX_SAFE_INTEGER]) await check('export import ' + (reset ?? 'blank'), async () => {
+    const loop = await publish(cycle({ policy: 'resume-own', ...(reset === undefined ? {} : { resetAfterVisits: reset }) }, 2)); const exported = await api(`/loops/${loop}/export`); const imported = await api('/loops/import', exported, 'POST', 201); const original = exported.loop.nodes.find(n => n.id === 'worker').config.session; const actual = imported.draft.definition.nodes.find(n => n.id === 'worker').config.session; await save('roundtrip-' + (reset ?? 'blank'), { exported, imported }); assert.deepEqual(actual, original); return actual;
+  });
+  for (const value of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '2', null]) await check('invalid API reset ' + value, async () => { const def = cycle({ policy: 'resume-own', resetAfterVisits: value }, 2); const result = await api('/loops', { definition: def }, 'POST', 400); await save('invalid-reset-' + String(value).replace('.', '-'), result); return result; });
+  // Browser automation uses this same independent disposable process. The token stays only in temp.
+  await writeFile(join(temp, 'browser-connection.json'), JSON.stringify({ origin, token, temp, out, root }));
+  await writeFile(join(out, 'browser-ready.log.txt'), 'API ready at ' + origin + '; connection file in disposable store.\n');
+  console.log('BROWSER_CONNECTION=' + join(temp, 'browser-connection.json'));
+  await save('runtime-summary', { checks: records.length, passed: records.filter(r => r.result === 'PASS').length, failed: records.filter(r => r.result === 'FAIL').length, retainedTemp: temp });
+  if (process.env.GG_QA_KEEP_SERVER === '1') { process.on('SIGTERM', async () => { await stop(); process.exit(0); }); await new Promise(() => {}); }
+} finally { if (process.env.GG_QA_KEEP_SERVER !== '1') await stop(); }
+

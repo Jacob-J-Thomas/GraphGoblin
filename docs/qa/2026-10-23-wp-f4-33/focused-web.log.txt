@@ -1,0 +1,47 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-33/apps/web
+
+ ❯ src/forms/session-policy.test.tsx (1 test | 1 failed) 2591ms
+   × authors opt-in own continuity and an optional visible reset using the schema controls 2589ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web exec vitest run src/fo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forms/session-policy.test.tsx > authors opt-in own continuity and an optional visible reset using the 
+schema controls
+Error: expect(element).toHaveAttribute("min", "0") // element.getAttribute("min") === "0"
+
+Expected the element to have attribute:
+  min="0"
+Received:
+  min="1"
+ ❯ src/forms/session-policy.test.tsx:36:17
+     34|   const reset = within(session).getByLabelText('Reset after visits');
+     35|   expect(reset).toHaveValue(null);
+     36|   expect(reset).toHaveAttribute('min', '0');
+       |                 ^
+     37|   expect(within(session).getByText(/Blank means no automatic reset/)).…
+     38|   await user.type(reset, '2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  22:12:55
+   Duration  62.10s (transform 36%, environment 33%, import 14%, setup 13%, tests 4%)
+
+  Transform  transforming modules took 20.95s · 36% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 33\apps\web
+

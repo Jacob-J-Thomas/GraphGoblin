@@ -1,0 +1,116 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-33/packages/infrastructure
+
+ ✓ src/process/scripts.test.ts > ProcessScripts > returns raw captured byte counts and truncation for default capture, including incomplete EOF 209ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 0 with default and explicit bounds 297ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 1 with default and explicit bounds 517ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 2 with default and explicit bounds 359ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 3 with default and explicit bounds 774ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 4 with default and explicit bounds 1066ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 5 with default and explicit bounds 1342ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 6 with default and explicit bounds 555ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 7 with default and explicit bounds 650ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 8 with default and explicit bounds 358ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 9 with default and explicit bounds 529ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 10 with default and explicit bounds 600ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 11 with default and explicit bounds 701ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 0 on both streams 305ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 1 on both streams 736ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 2 on both streams 990ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 3 on both streams 1056ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 4 on both streams 323ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 5 on both streams 399ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 6 on both streams 265ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 7 on both streams 334ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 8 on both streams 354ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 9 on both streams 796ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 10 on both streams 467ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 11 on both streams 749ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > replaces an incomplete trailing sequence at clean EOF on both streams 816ms
+ × src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8239ms
+   → native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality
+ ✓ src/process/scripts.test.ts > ProcessScripts > captures stdout, stderr, exit code, env, args, and stdin 1835ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > closes stdin when none is provided 814ms
+ × src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout 15109ms
+   → Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted 15106ms
+   → Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ src/process/scripts.test.ts > ProcessScripts > reports spawn failures as a null exit code with a message 42ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > caps captured output 2051ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture 4851ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > reports exact-cap output as complete and does not emit a cap-split UTF8 suffix 4601ms
+ ✓ src/process/scripts.test.ts > ProcessScripts > uses fixed spawn diagnostics without echoing a credential-bearing command 23ms
+ ✓ src/process/scripts.test.ts > killTree > does nothing without a pid 0ms
+ ✓ src/process/scripts.test.ts > killTree > uses taskkill on Windows and falls back to kill when taskkill is missing 0ms
+ ✓ src/process/scripts.test.ts > killTree > signals the process group on POSIX and falls back to kill on failure 0ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // 
+Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle…
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already 
+aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already…
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 36 passed (39)
+   Start at  04:32:18
+   Duration  69.19s (tests 100%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f4-
+  │ 33\packages\infrastructure
+

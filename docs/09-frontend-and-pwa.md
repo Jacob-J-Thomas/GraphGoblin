@@ -418,6 +418,15 @@ Inference and decision forms separate Settings and Context. D1 retains that plac
 | Subloop   | `loopRef`, `input.mode`, `output.mode`                                                                   | Input mapping: other `input` fields. Output mapping: other `output` fields. Limits: `depthLimitOverride`                                                                                                                                                                                                                                                   | none                                                                                                                      |
 | Mutate    | `operations`, each collapsed to its kind and path                                                        | none                                                                                                                                                                                                                                                                                                                                                       | none                                                                                                                      |
 
+**Inference own-session control (#33).** Session on Settings includes opt-in
+`resume-own`; the default remains `fresh`. Own policy reveals **Reset after visits**
+as a basic optional number field. Blank means no automatic reset; positive safe
+integers reset only that node's provider conversation after N completed visits.
+Help explains authored tasks, deliberate loop-context input, node/run/harness
+isolation, and keeping main-loop context. Existing schema-driven select/number
+controls provide validation and keyboard operation; model/effort layout is unchanged
+by this bolt. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
 | Decision evaluator                     | Settings basic                                                                | Settings Advanced                                                                         | Context                                                                  |
 | -------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Expression                             | `kind`, `jsonata`, `routes`                                                   | none                                                                                      | none                                                                     |
