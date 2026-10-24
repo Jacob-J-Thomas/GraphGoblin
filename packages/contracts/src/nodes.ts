@@ -232,8 +232,6 @@ export const InferenceConfigSchema = z
     model: ModelNameSchema.optional().meta(
       field('Model; inherits within this harness from loop, owner, then process defaults.', {
         control: 'model',
-        advanced: true,
-        group: 'Model',
       }),
     ),
     effort: EffortSchema.optional().meta(
@@ -241,8 +239,6 @@ export const InferenceConfigSchema = z
         'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
         {
           control: 'effort',
-          advanced: true,
-          group: 'Model',
         },
       ),
     ),

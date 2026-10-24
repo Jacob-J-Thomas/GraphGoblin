@@ -335,6 +335,8 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
       return { ok: true };
+    case '/deciders/requests':
+      return { routes: selectedInstance(body).app.codex.routes };
     case '/deciders/route':
       target.jev.choose = (request) => {
         target.jev.choices.push(request);
@@ -356,7 +358,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { ok: true };
     }
     case '/catalog/upsert':
-      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
+      await selectedInstance(body).app.container.repos.catalog.upsert(
+        ModelCatalogEntrySchema.parse(
+          Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'instanceId')),
+        ),
+      );
       return { ok: true };
     case '/timers/poll':
       await target.container.timers.poll();

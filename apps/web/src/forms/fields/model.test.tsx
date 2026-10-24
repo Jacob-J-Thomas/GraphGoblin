@@ -522,9 +522,8 @@ describe('catalog field controls', () => {
     const group = screen.getByRole('form', { name: 'Decision' });
     // Explicit selections are controls nested within the active model and effort unions.
     const modelGroup = within(group).getByRole('group', { name: 'Model' });
-    const effortGroup = within(group).getByRole('group', { name: 'Effort' });
     const model = within(modelGroup).getByLabelText('Value');
-    const effort = within(effortGroup).getByLabelText('Value');
+    const effort = within(group).getByLabelText('Effort');
     await waitFor(() => expect(model).not.toHaveAttribute('aria-readonly'));
     expect(model).toHaveValue('alpha');
     expect(within(model).getAllByRole('option')).toHaveLength(2);
@@ -536,7 +535,7 @@ describe('catalog field controls', () => {
         model: { mode: 'explicit', value: 'alpha' },
         effort: { mode: 'explicit', value: 'low' },
       }),
-      expect.objectContaining({ path: 'effort.value', kind: 'commit' }),
+      expect.objectContaining({ path: 'effort', kind: 'commit' }),
     );
   });
   it('shows an empty catalog with only the inherited choice and a Settings link', async () => {
@@ -546,7 +545,7 @@ describe('catalog field controls', () => {
       within(model())
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['(loop default)']);
+    ).toEqual(['(loop default) (gpt-6-luna)']);
     expect(model()).toHaveAccessibleDescription(/No enabled models/);
     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
     expect(change).not.toHaveBeenCalled();
@@ -568,7 +567,7 @@ describe('catalog field controls', () => {
       within(effort())
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['(inherited; the catalog suggests low)', 'low', 'high']);
+    ).toEqual(['Default (low)', 'low', 'high']);
     expect(effort()).toHaveValue('');
     await user.selectOptions(effort(), 'high');
     expect(change).toHaveBeenLastCalledWith(

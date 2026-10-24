@@ -16,6 +16,8 @@ import {
   keys,
   useModelCatalog,
   usePreflight,
+  useSettings,
+  useProcessModelDefaults,
   type HarnessPreflightItem,
 } from '../../api/queries.js';
 import { harnessReadiness, readinessLine } from '../../api/readiness.js';
@@ -23,7 +25,9 @@ import { Icon } from '../../components/icons/index.js';
 import { Button, HelpText, Select } from '../../components/ui/index.js';
 import { shapeOf, unwrap, type FieldShape, type Schema } from '../introspect.js';
 import { isUnset } from '../unset.js';
+import { NodeOutputsContext } from '../EarlierNodeOutputs.js';
 import { fieldMeta, FormScopeContext, Row, useField, type FieldProps } from './shared.js';
+import { DefaultField } from './structure.js';
 
 /** Read the shared queries at action time; this hook never starts or refetches a lookup. */
 export function useHarnessSwitch() {
@@ -207,6 +211,9 @@ function defaultsHarnessField(
 
 function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown) {
   const scope = use(FormScopeContext)!;
+  const node = use(NodeOutputsContext);
+  const settings = useSettings();
+  const processDefaults = useProcessModelDefaults();
   const segments = name.split('.');
   const defaultsField = defaultsHarnessField(scope.schema, name);
   const defaultsByHarness: unknown = useWatch({
@@ -263,12 +270,26 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
   });
   const model = selection ? (kind === 'model' ? value : selectedModel) : selectedModel;
   const selected =
-    selection && kind === 'effort' && typeof model === 'object' && model !== null
+    kind === 'effort' && typeof model === 'object' && model !== null
       ? (model as { mode?: unknown; value?: unknown }).mode === 'explicit'
         ? (model as { value?: unknown }).value
         : undefined
       : model;
   const current = typeof selected === 'string' && !isUnset(selected) ? selected : undefined;
+  const owner = HarnessDefaultsSchema.safeParse(settings.data?.['defaults'] ?? {});
+  const loop = HarnessDefaultsSchema.safeParse(node?.definition.settings?.defaults ?? {});
+  const levels = [
+    ...(!defaultsField && loop.success ? [loop.data] : []),
+    ...(owner.success ? [owner.data] : []),
+    ...(processDefaults.data ? [processDefaults.data] : []),
+  ].map((defaults) => defaults.byHarness[HarnessIdSchema.parse(harnessId)]);
+  // Missing/failed Settings cannot certify that a lower-level fallback is effective.
+  const defaultsKnown = settings.data !== undefined && owner.success && loop.success;
+  const inherited = {
+    model: defaultsKnown ? levels.find((level) => level?.model !== undefined)?.model : undefined,
+    effort: defaultsKnown ? levels.find((level) => level?.effort !== undefined)?.effort : undefined,
+  };
+  const effectiveModel = current ?? inherited.model;
   return {
     query,
     preflightQuery,
@@ -279,7 +300,9 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
     harnessPreflight,
     modelCapabilities,
     hasClaudeAdmission,
-    entry: entries.find((entry) => entry.model === current),
+    entry: entries.find((entry) => entry.model === (kind === 'model' ? current : effectiveModel)),
+    inherited,
+    defaultsPending: settings.isPending || processDefaults.isPending,
     catalogNoticeId: `${scope.id}-${sibling(name, 'model')}-catalog`,
   };
 }
@@ -290,7 +313,8 @@ function CatalogField({
   label,
   kind,
   unsetLabel = '(loop default)',
-}: FieldProps & { kind: 'model' | 'effort'; unsetLabel?: string }) {
+  selection = false,
+}: FieldProps & { kind: 'model' | 'effort'; unsetLabel?: string; selection?: boolean }) {
   const field = useField(name, 'commit');
   const { help, required } = fieldMeta(schema);
   const {
@@ -303,12 +327,20 @@ function CatalogField({
     modelCapabilities,
     hasClaudeAdmission,
     entry,
+    inherited,
+    defaultsPending,
     catalogNoticeId,
   } = useCatalogField(name, kind, field.value);
   const harnessName = harnessDisplayName(harnessId);
   const id = useId();
   const noticeId = kind === 'model' ? catalogNoticeId : `${id}-effort`;
-  const value = typeof field.value === 'string' ? field.value : '';
+  const raw =
+    selection && typeof field.value === 'object' && field.value !== null
+      ? (field.value as { mode?: unknown; value?: unknown }).mode === 'explicit'
+        ? (field.value as { value?: unknown }).value
+        : undefined
+      : field.value;
+  const value = typeof raw === 'string' ? raw : '';
   const unavailable =
     query.data === undefined || ((kind === 'model' || !entry) && !hasClaudeAdmission);
   // An inherited Claude model must support any offered effort, without choosing a model for it.
@@ -316,7 +348,16 @@ function CatalogField({
     harnessId === 'claude'
       ? inheritedClaudeEfforts(availableEntries, modelCapabilities)
       : EffortSchema.options;
-  const efforts: readonly string[] = entry?.efforts ?? inheritedEfforts;
+  const efforts: readonly string[] = entry
+    ? entry.efforts.filter(
+        (effort) =>
+          harnessId !== 'claude' ||
+          !hasClaudeAdmission ||
+          modelCapabilities?.some(
+            (capability) => capability.model === entry.model && capability.efforts.includes(effort),
+          ),
+      )
+    : inheritedEfforts;
   const unsupported = kind === 'effort' && !unavailable && value !== '' && !efforts.includes(value);
   const capability =
     kind === 'model' ? modelCapabilities?.find((item) => item.model === value) : undefined;
@@ -452,10 +493,14 @@ function CatalogField({
       : efforts.map((effort) => ({ value: effort, label: effort }));
   const placeholder =
     kind === 'model'
-      ? unsetLabel
-      : entry
-        ? `(inherited; the catalog suggests ${entry.defaultEffort})`
-        : '(inherited effort)';
+      ? `${unsetLabel}${unsetLabel === '(loop default)' && inherited.model ? ` (${inherited.model})` : ''}`
+      : `Default (${inherited.effort ?? (defaultsPending ? 'checking…' : 'unavailable')})`;
+  const inheritedUnsupported =
+    kind === 'effort' &&
+    value === '' &&
+    inherited.effort !== undefined &&
+    !unavailable &&
+    !efforts.includes(inherited.effort);
   return (
     <Row
       name={name}
@@ -494,10 +539,20 @@ function CatalogField({
               onBlur={field.onBlur}
               onChange={(event) => {
                 if (unavailable) event.currentTarget.value = value;
-                else field.onChange(event.target.value || undefined);
+                else
+                  field.onChange(
+                    selection
+                      ? event.target.value
+                        ? { mode: 'explicit', value: event.target.value }
+                        : { mode: 'inherit' }
+                      : event.target.value || undefined,
+                  );
               }}
             >
-              <option value="">{placeholder}</option>
+              <option value="">
+                {placeholder}
+                {inheritedUnsupported ? ' (not supported by this model)' : ''}
+              </option>
               {unavailable ? (
                 value !== '' ? (
                   <option value={value} disabled>
@@ -564,4 +619,26 @@ export function LoopModelField(props: FieldProps) {
 }
 export function EffortField(props: FieldProps) {
   return <CatalogField {...props} kind="effort" />;
+}
+export function EffortSelectionField(props: FieldProps) {
+  return <CatalogField {...props} kind="effort" selection />;
+}
+
+/** Keep the model's existing explicit/inherit editor, with the inherited identity in sight. */
+export function ModelSelectionField(props: FieldProps) {
+  const value: unknown = useWatch({ name: props.name });
+  const { inherited, defaultsPending } = useCatalogField(`${props.name}.value`, 'model', undefined);
+  return (
+    <>
+      <DefaultField {...props} />
+      {typeof value === 'object' &&
+      value !== null &&
+      'mode' in value &&
+      value.mode === 'inherit' ? (
+        <HelpText>
+          Default model: {inherited.model ?? (defaultsPending ? 'checking…' : 'unavailable')}
+        </HelpText>
+      ) : null}
+    </>
+  );
 }

@@ -104,6 +104,7 @@ describe('adversarial API invariants', () => {
       '/events',
       '/harness/preflight',
       '/system/preflight',
+      '/system/model-defaults',
     ]) {
       expect(
         (await t.app.inject({ url, headers: { authorization: `Bearer ${key.token}` } })).statusCode,
@@ -172,6 +173,7 @@ describe('adversarial API invariants', () => {
     'GET /events': 'events:read',
     'POST /events': 'events:write',
     'GET /system/preflight': 'system:read',
+    'GET /system/model-defaults': 'system:read',
     'GET /harness/preflight': 'system:read',
   };
 
