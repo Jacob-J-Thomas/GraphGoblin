@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { replayThread } from '@graphgoblin/domain';
+import { replayThread, replayStateAt } from '@graphgoblin/domain';
 import { AppendConflictError } from './errors.js';
 import { RunManager } from './run-manager.js';
 import {
@@ -536,6 +536,7 @@ describe('thread checkpoints (review finding 9)', () => {
       r.id,
       { ...checkpoint.thread, vars: { ...checkpoint.thread.vars, marker: true } },
       checkpoint.seq,
+      checkpoint.replayState!,
     );
     await e.manager.provideInput(
       r.id,
@@ -546,19 +547,22 @@ describe('thread checkpoints (review finding 9)', () => {
     expect((await e.ports.runs.getThread(r.id))?.vars['marker']).toBe(true);
   });
 
-  it.each(['ahead of the log', 'without a seq'] as const)(
+  it.each(['ahead of the log', 'without a snapshot'] as const)(
     'ignores a checkpoint %s and replays from the initial thread',
     async (kind) => {
       const e = await createTestEngine();
       const r = await waitingRun(e);
       const checkpoint = (await e.ports.runs.getThreadCheckpoint(r.id))!;
-      await e.ports.runs.saveThread(
-        r.id,
-        { ...checkpoint.thread, vars: { marker: true } },
-        kind === 'without a seq' ? undefined : checkpoint.seq + 100,
-      );
+      if (kind === 'without a snapshot') e.ports.runs.dropThreadSnapshot(r.id);
+      else
+        await e.ports.runs.saveThread(
+          r.id,
+          { ...checkpoint.thread, vars: { marker: true } },
+          checkpoint.seq + 100,
+          checkpoint.replayState!,
+        );
       expect(await e.ports.runs.getThreadCheckpoint(r.id)).toEqual(
-        kind === 'without a seq' ? undefined : expect.anything(),
+        kind === 'without a snapshot' ? undefined : expect.anything(),
       );
       await e.manager.provideInput(
         r.id,
@@ -592,14 +596,16 @@ describe('thread checkpoints (review finding 9)', () => {
     let blocked = false;
     let runId = '';
     // Crash right after the checkpoint for the mutate completion is written.
-    const spy = vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
-      await save(id, thread, seq);
-      if (thread.messages.length === 1 && !blocked) {
-        runId = id;
-        blocked = true;
-        return hang();
-      }
-    });
+    const spy = vi
+      .spyOn(e.ports.runs, 'saveThread')
+      .mockImplementation(async (id, thread, seq, replayState) => {
+        await save(id, thread, seq, replayState);
+        if (thread.messages.length === 1 && !blocked) {
+          runId = id;
+          blocked = true;
+          return hang();
+        }
+      });
     await e.start(e.publish(def).loopId);
     await vi.waitFor(() => expect(blocked).toBe(true));
     e.manager.stop();
@@ -651,7 +657,12 @@ describe('thread checkpoints (review finding 9)', () => {
       { type: 'run.waiting', nodeId: 'wait', wait: r.waiting! },
     ]);
     const thread = replayThread((await e.ports.runs.getInitialThread(r.id))!, e.events(r.id));
-    await e.ports.runs.saveThread(r.id, thread, stored.at(-1)!.seq);
+    await e.ports.runs.saveThread(
+      r.id,
+      thread,
+      stored.at(-1)!.seq,
+      replayStateAt(e.events(r.id), stored.at(-1)!.seq),
+    );
     const started = performance.now();
     await e.manager.provideInput(
       r.id,

@@ -403,18 +403,20 @@ describe('decision gates', () => {
       }
       return out;
     });
-    const s = vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
-      const repeat = thread.gates.gate?.passes === 2;
-      if (repeat && boundary === 'before-snapshot') {
-        blocked = true;
-        return hang();
-      }
-      await save(id, thread, seq);
-      if (repeat && boundary === 'after-snapshot') {
-        blocked = true;
-        return hang();
-      }
-    });
+    const s = vi
+      .spyOn(e.ports.runs, 'saveThread')
+      .mockImplementation(async (id, thread, seq, replayState) => {
+        const repeat = thread.gates.gate?.passes === 2;
+        if (repeat && boundary === 'before-snapshot') {
+          blocked = true;
+          return hang();
+        }
+        await save(id, thread, seq, replayState);
+        if (repeat && boundary === 'after-snapshot') {
+          blocked = true;
+          return hang();
+        }
+      });
     const u = vi.spyOn(e.ports.runs, 'update').mockImplementation(async (id, changes) => {
       const repeat =
         changes.currentNodeId === 'work' && decisions(e, id).at(-1)?.gate?.passes === 2;

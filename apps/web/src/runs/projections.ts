@@ -11,7 +11,7 @@ import type {
   LoopDefinition,
   ReturnChannel,
 } from '@graphgoblin/contracts';
-import { getAtPointer, replayStateAt, replayThread } from '@graphgoblin/domain';
+import { getAtPointer, reconcileThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
@@ -54,7 +54,7 @@ export function threadAt(
   events: readonly RunEvent[],
   seq: number,
 ): ContextThread {
-  return replayThread(initial, events, seq);
+  return reconcileThread(initial, events, undefined, seq);
 }
 
 /**
@@ -131,17 +131,10 @@ export function createThreadCache(limit = 32): ThreadCache {
       let result: ReplayResult;
       if (base === undefined) result = tryThreadAt(init, events, seq);
       else {
-        const baseSeq = base.seq;
-        const from = events.findIndex((e) => e.seq > baseSeq);
         try {
           result = {
             ok: true,
-            thread: replayThread(
-              base.thread,
-              from === -1 ? [] : events.slice(from),
-              seq,
-              replayStateAt(events, base.seq),
-            ),
+            thread: reconcileThread(init, events, base, seq),
           };
         } catch (error) {
           result = { ok: false, error: error instanceof Error ? error.message : String(error) };

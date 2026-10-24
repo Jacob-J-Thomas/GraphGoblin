@@ -1,0 +1,29 @@
+// Independent full replay for these fixtures; deliberately does not import domain replay.
+import assert from 'node:assert/strict';
+export function replay(seed, events, upto = Infinity) {
+  const t = structuredClone(seed);
+  let open, strict = false;
+  const parts = p => p.split('/').slice(1).map(s => s.replaceAll('~1', '/').replaceAll('~0', '~'));
+  const location = p => { const a = parts(p); const key = a.pop(); let parent = t; for (const k of a) parent = parent[k]; return { parent, key }; };
+  const value = p => parts(p).reduce((a, k) => a[k], t);
+  const remove = p => { const {parent,key} = location(p); if (Array.isArray(parent)) parent.splice(Number(key),1); else delete parent[key]; };
+  const add = (p,v,replace = false) => { const {parent,key} = location(p); if (Array.isArray(parent) && !replace) parent.splice(key === '-' ? parent.length : Number(key),0,structuredClone(v)); else parent[key] = structuredClone(v); };
+  for (const e of events) {
+    if (e.seq > upto) break;
+    if (e.type === 'node.started') { open = e.nodeId; strict = true; t.counters.nodeVisits[open] = (t.counters.nodeVisits[open] ?? 0)+1; }
+    if (e.type === 'node.finished' && (!strict || open === e.nodeId)) {
+      open = undefined;
+      for (const p of e.patch) {
+        if (p.op === 'add') add(p.path,p.value);
+        else if (p.op === 'replace') add(p.path,p.value,true);
+        else if (p.op === 'remove') remove(p.path);
+        else if (p.op === 'test') assert.deepEqual(value(p.path),p.value);
+        else if (p.op === 'copy' || p.op === 'move') { const v = structuredClone(value(p.from)); if (p.op === 'move') remove(p.from); add(p.path,v); }
+        else throw Error('Unsupported oracle operation '+p.op);
+      }
+    }
+    if (e.type === 'iteration.incremented') t.run.iteration = e.to;
+    if (e.type === 'decision.made' && e.gate) t.gates[e.nodeId] = {passes:e.gate.passes};
+  }
+  return t;
+}

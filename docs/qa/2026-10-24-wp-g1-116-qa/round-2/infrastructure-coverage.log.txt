@@ -1,0 +1,14 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:22 char:2
++  & pnpm.cmd @argv *> (Join-Path $qa ($job.name+'.log.txt'))
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-g1-116-2/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 33868ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30134ms

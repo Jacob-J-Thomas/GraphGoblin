@@ -1,0 +1,120 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, writeFile, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, dirname } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fork, spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:net';
+const root=process.env.QA_ROOT, out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa'), src=dirname(fileURLToPath(import.meta.url));
+const reqWeb=createRequire(join(root,'apps/web/package.json'));
+const {chromium}=reqWeb('@playwright/test');
+const reqMcp=createRequire(join(root,'apps/mcp/package.json'));
+const mod=async p=>import(pathToFileURL(reqMcp.resolve(p)).href);
+const {Client}=await mod('@modelcontextprotocol/sdk/client/index.js');
+const {InMemoryTransport}=await mod('@modelcontextprotocol/sdk/inMemory.js');
+const {createMcpServer}=await import(pathToFileURL(join(root,'apps/mcp/dist/index.js')).href);
+const results={revision:'d7371f25b87ee4d474d1bb75258a851e3cde648f',runtime:process.version,checks:[],observations:[],processes:[],limits:[]};
+let proc, browser, contexts=[], token, port, data, client, mcp, serial=0;
+const pending=new Map();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const sanitize=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(token??'TOKEN_NOT_CREATED','[DISPOSABLE_KEY_REDACTED]');
+const save=async(name,v)=>writeFile(join(out,name),sanitize(typeof v==='string'?v:JSON.stringify(v,null,2)));
+const digest=v=>createHash('sha256').update(typeof v==='string'?v:JSON.stringify(v)).digest('hex');
+const ctrl=(op,args)=>new Promise((resolve,reject)=>{const id=++serial;const timer=setTimeout(()=>{pending.delete(id);reject(Error('IPC timeout '+op));},120000);pending.set(id,{resolve:v=>{clearTimeout(timer);resolve(v);},reject:e=>{clearTimeout(timer);reject(e);}});proc.send({id,op,args});});
+async function poll(f,label,ms=30000){ const until=Date.now()+ms; let last; do {try {const v=await f();if(v)return v;}catch(e){last=String(e);}await sleep(150);}while(Date.now()<until);throw Error('Poll timeout '+label+(last?' '+last:'')); }
+async function check(name,f){console.log('CHECK '+name);const started=performance.now();try{const detail=await f();results.checks.push({name,pass:true,ms:performance.now()-started,detail});console.log('PASS '+name);}catch(e){results.checks.push({name,pass:false,ms:performance.now()-started,error:e.stack});console.log('FAIL '+name+' '+e.message);}await save('results.json',results);}
+async function http(path,method='GET',body,probe){const start=performance.now();const response=await fetch('http://127.0.0.1:'+port+path,{method,headers:{Authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{}),...(probe?{'x-qa-probe':probe}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});const text=await response.text();let json;try{json=JSON.parse(text);}catch{json=text;}return{status:response.status,body:json,ms:performance.now()-start};}
+async function api(path,method='GET',body,probe){const r=await http(path,method,body,probe);assert.ok(r.status>=200&&r.status<300,method+' '+path+' '+JSON.stringify(r));return r.body;}
+async function publish(def){const v=await api('/loops','POST',{definition:def});await api('/loops/'+v.loop.id+'/publish','POST');return v.loop.id;}
+const start=id=>api('/loops/'+id+'/runs','POST',{}).then(v=>v.run);
+const status=(id,s)=>poll(async()=>{const r=await api('/runs/'+id);return r.status===s?r:false;},s);
+async function connectMcp(){mcp=createMcpServer({apiUrl:'http://127.0.0.1:'+port,apiKey:token});client=new Client({name:'Independent-QA-116',version:'1'});const [a,b]=InMemoryTransport.createLinkedPair();await mcp.connect(b);await client.connect(a);}
+async function call(name,id){const r=await client.callTool({name,arguments:{runId:id}});assert.ok(!r.isError,JSON.stringify(r));return JSON.parse(r.content.find(c=>c.type==='text').text);}
+async function spawnServer(){
+  proc=fork(join(src,'server.mjs'),[],{env:{...process.env,QA_ROOT:root,QA_PORT:String(port),QA_DATA:data},execArgv:['--expose-gc'],silent:true,windowsHide:true});
+  let log='';proc.stdout.on('data',d=>{log+=d;});proc.stderr.on('data',d=>{log+=d;});
+  const ready=await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('server startup timeout '+log)),120000);proc.on('message',m=>{if(m.ready){clearTimeout(t);resolve(m);}else if(m.id){const p=pending.get(m.id);if(p){pending.delete(m.id);m.error?p.reject(Error(m.error)):p.resolve(m.value);}}});proc.once('exit',code=>{clearTimeout(t);reject(Error('server exited '+code+' '+log));});});
+  results.processes.push(ready);await save('native-processes.json',results.processes);
+  proc.on('exit',()=>{void save('server-'+ready.pid+'.log.txt',log||'(No product log output.)\n');});
+  return ready;
+}
+async function stopServer(){const p=proc;await ctrl('close');await new Promise(resolve=>{if(p.exitCode!==null)resolve();else p.once('exit',resolve);});}
+async function openTab(context,id){const p=await context.newPage();await p.goto('http://127.0.0.1:'+port+'/app/runs/'+id);await p.getByRole('button',{name:'Full thread JSON',exact:true}).click();return p;}
+async function browserThread(p){await p.bringToFront();return JSON.parse(await p.getByTestId('thread-json').innerText());}
+async function observe(label,id,tabs,expectedStatus){
+  const before=await ctrl('state',{id});
+  const rest=await api('/runs/'+id+'/thread'), run=await api('/runs/'+id), tool=await call('get_run_thread',id), toolRun=await call('get_run',id);
+  assert.deepEqual(rest,before.oracle);assert.deepEqual(tool,rest);assert.equal(run.status,expectedStatus);assert.equal(toolRun.status,run.status);
+  const views=[];
+  for(const item of tabs){const p=item.page;let latest;await poll(async()=>{latest=await browserThread(p);try{assert.deepEqual(latest,rest);return true;}catch{return false;}},label+' browser '+item.width);const actual=await browserThread(p);const body=await p.locator('body').innerText();const overflow=await p.evaluate(()=>({viewport:innerWidth,body:document.body.scrollWidth,document:document.documentElement.scrollWidth}));await p.screenshot({path:join(out,label+'-'+item.name+'-'+item.width+'.png'),fullPage:true});views.push({name:item.name,width:item.width,thread:actual,body,overflow});}
+  const after=await ctrl('state',{id});
+  assert.equal(after.snapshotHash,before.snapshotHash);assert.equal(after.recordHash,before.recordHash);assert.equal(after.eventHash,before.eventHash);
+  const obs={label,id,status:run.status,rest,mcp:tool,run,views,stored:before,afterHashes:{snapshot:after.snapshotHash,record:after.recordHash,events:after.eventHash},readsUnchanged:true};
+  await save(label+'.json',obs);results.observations.push({label,id,status:run.status,seq:run.lastEventSeq,vars:rest.vars,visits:rest.counters.nodeVisits,readsUnchanged:true});
+  return obs;
+}
+try {
+  data=await mkdtemp(join(tmpdir(),'gg-qa-g1-116-data-'));
+  for(let p=5870;p<=5879;p++){try{await new Promise((resolve,reject)=>{const s=createServer();s.once('error',reject);s.listen(p,'127.0.0.1',()=>s.close(resolve));});port=p;break;}catch{}}
+  assert.ok(port,'No permitted free port');
+  const cli=spawn(process.execPath,[join(root,'apps/api/dist/main.js'),'--create-api-key','independent-qa-116'],{env:{...process.env,GG_DATA_DIR:data,GG_PORT:String(port),GG_LOG_LEVEL:'silent'},windowsHide:true});
+  let stdout='',stderr='';cli.stdout.on('data',d=>stdout+=d);cli.stderr.on('data',d=>stderr+=d);const exit=await new Promise(r=>cli.once('exit',r));assert.equal(exit,0,stderr);token=stdout.match(/gg_[A-Za-z0-9_-]+/)?.[0];assert.ok(token,'key token format');await save('key-cli.log.txt',stdout+'\nSTDERR:\n'+stderr);
+  await spawnServer();await connectMcp();
+  browser=await chromium.launch({channel:'msedge',headless:true});
+  const tools=(await client.listTools()).tools.map(t=>t.name);await save('mcp-tools.json',tools);
+  const definitions=await ctrl('definitions');await save('definitions.json',definitions);
+  const loop=await publish(definitions.main);const run=await start(loop);const tabs=[];
+  for(const width of [1440,390]){const c=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'});contexts.push(c);await c.addInitScript(v=>localStorage.setItem('graphgoblin-api-key',v),token);for(const name of ['open','reload'])tabs.push({page:await openTab(c,run.id),width,name});}
+  await ctrl('start');await status(run.id,'failed');await ctrl('idle');
+  await check('failure: REST MCP four Edge tabs and immutable stored bytes',async()=>{const o=await observe('failed',run.id,tabs,'failed');assert.deepEqual(o.rest.vars,{prepared:true});assert.equal(o.rest.counters.nodeVisits.work,1);return{seq:o.run.lastEventSeq,vars:o.rest.vars,workVisits:1};});
+  for(const t of tabs.filter(t=>t.name==='reload')){await t.page.reload();await t.page.getByRole('button',{name:'Full thread JSON',exact:true}).click();}
+  await check('native API restart while failed, tabs kept open',async()=>{
+    const oldPid=proc.pid;await client.close();await mcp.close();await stopServer();await sleep(2500);await spawnServer();await ctrl('start');await connectMcp();assert.notEqual(proc.pid,oldPid);const o=await observe('restart-failed',run.id,tabs,'failed');return{oldPid,newPid:proc.pid,seq:o.run.lastEventSeq};
+  });
+  await ctrl('mode','hold');await api('/runs/'+run.id+'/resume','POST');await poll(()=>ctrl('held'),'held resumed script');
+  await check('resume unfinished: only visit increment and no returned failing patch',async()=>{const o=await observe('resumed-unfinished',run.id,tabs,'running');assert.deepEqual(o.rest.vars,{prepared:true});assert.equal(o.rest.counters.nodeVisits.work,2);return{seq:o.run.lastEventSeq,vars:o.rest.vars,workVisits:2};});
+  for(const t of tabs.filter(t=>t.name==='reload')){await t.page.reload();await t.page.getByRole('button',{name:'Full thread JSON',exact:true}).click();}
+  await check('mid-resume reload matches existing tabs',async()=>{const o=await observe('midway-reload',run.id,tabs,'running');return{seq:o.run.lastEventSeq};});
+  await ctrl('release');await status(run.id,'succeeded');await ctrl('idle');
+  await check('success: existing and midway-reloaded tabs follow resume after API restart',async()=>{const o=await observe('succeeded',run.id,tabs,'succeeded');assert.deepEqual(o.rest.vars,{prepared:true,completed:true});assert.equal(o.rest.counters.nodeVisits.work,2);return{seq:o.run.lastEventSeq,vars:o.rest.vars};});
+  await check('keyboard access and viewport overflow',async()=>{const detail=[];for(const t of tabs.filter(t=>t.name==='open')){await t.page.getByRole('button',{name:'Full thread JSON',exact:true}).focus();await t.page.keyboard.press('Enter');assert.equal(await t.page.getByTestId('thread-json').count(),0);await t.page.keyboard.press('Enter');assert.equal(await t.page.getByTestId('thread-json').count(),1);detail.push({width:t.width,overflow:await t.page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)});}return detail;});
+  for(const c of contexts)await c.close();contexts=[];
+  await check('negative reads and invalid repeated controls do not mutate run',async()=>{const before=await ctrl('state',{id:run.id});const invalidId=await http('/runs/not-a-ulid/thread'),missing=await http('/runs/01AAAAAAAAAAAAAAAAAAAAAAAA/thread'),repeat=await http('/runs/'+run.id+'/resume','POST');const unauthed=await fetch('http://127.0.0.1:'+port+'/runs/'+run.id+'/thread');assert.equal(invalidId.status,400);assert.equal(missing.status,404);assert.equal(unauthed.status,401);assert.equal(repeat.status,409);const after=await ctrl('state',{id:run.id});assert.equal(after.recordHash,before.recordHash);assert.equal(after.eventHash,before.eventHash);assert.equal(after.snapshotHash,before.snapshotHash);const d={invalidId,missing,repeatedResume:repeat,unauthorized:unauthed.status};await save('negative.json',d);return d;});
+  await ctrl('mode','success');
+  await check('replay fork uses own seed and leaves source unchanged',async()=>{const before=await ctrl('state',{id:run.id});const forked=(await api('/runs/'+run.id+'/replay','POST',{nodeId:'work'})).run;await status(forked.id,'succeeded');await ctrl('idle');const f=await ctrl('state',{id:forked.id});assert.deepEqual(await api('/runs/'+forked.id+'/thread'),f.oracle);assert.deepEqual(await call('get_run_thread',forked.id),f.oracle);assert.equal(f.oracle.run.id,forked.id);assert.equal(f.seed.vars.prepared,true);assert.equal(f.oracle.counters.nodeVisits.work,2);const after=await ctrl('state',{id:run.id});assert.equal(before.recordHash,after.recordHash);assert.equal(before.eventHash,after.eventHash);await save('fork.json',{sourceId:run.id,beforeHashes:{record:before.recordHash,events:before.eventHash},afterHashes:{record:after.recordHash,events:after.eventHash},fork:f});return{forkId:forked.id,vars:f.oracle.vars,visits:f.oracle.counters.nodeVisits};});
+  await check('subloop child reconciles separately and parent receives result',async()=>{const childLoop=await publish(definitions.child),parentLoop=await publish(await ctrl('parent',childLoop)),parent=await start(parentLoop);await status(parent.id,'succeeded');await ctrl('idle');const listed=await api('/runs?parent='+parent.id);assert.equal(listed.items.length,1);const child=listed.items[0],states=[];for(const id of [parent.id,child.id]){const s=await ctrl('state',{id});assert.deepEqual(await api('/runs/'+id+'/thread'),s.oracle);assert.deepEqual(await call('get_run_thread',id),s.oracle);assert.equal(s.oracle.run.id,id);states.push(s);}assert.equal(states[1].oracle.vars.childOnly,73);assert.ok(states[0].oracle.vars.childResult);assert.equal(states[0].oracle.vars.childOnly,undefined);await save('children.json',states);return{parentId:parent.id,childId:child.id,parentVars:states[0].oracle.vars,childVars:states[1].oracle.vars};});
+  const waitLoop=await publish(definitions.wait),waiting=await start(waitLoop);await status(waiting.id,'waiting');await ctrl('idle');
+  await check('checkpoint boundaries node.started run.waiting node.finished run.finished',async()=>{
+    const final=await ctrl('state',{id:run.id}),parked=await ctrl('state',{id:waiting.id}),outcomes=[];
+    for(const type of ['node.started','run.waiting','node.finished','run.finished']){
+      const s=type==='run.waiting'?parked:final;const e=s.events.find(e=>e.type===type);assert.ok(e,type);const boundary=await ctrl('checkpoint',{id:s.record.id,seq:e.seq});await ctrl('metrics');const before=await ctrl('state',{id:s.record.id}),actual=await api('/runs/'+s.record.id+'/thread'),metrics=await ctrl('metrics'),after=await ctrl('state',{id:s.record.id});assert.deepEqual(actual,s.oracle);assert.equal(before.snapshotHash,after.snapshotHash);assert.equal(metrics.reads.length,1);assert.equal(metrics.reads[0].after,e.seq-1);outcomes.push({boundary,reads:metrics.reads,oracle:actual});
+    }await save('boundaries.json',outcomes);return outcomes.map(o=>({boundary:o.boundary,reads:o.reads}));
+  });
+  await check('cancel waiting run: no invented input patch and stable repeated reads',async()=>{await api('/runs/'+waiting.id+'/cancel','POST');await status(waiting.id,'cancelled');await ctrl('idle');const before=await ctrl('state',{id:waiting.id});for(let i=0;i<5;i++)assert.deepEqual(await api('/runs/'+waiting.id+'/thread'),before.oracle);const after=await ctrl('state',{id:waiting.id});assert.equal(before.recordHash,after.recordHash);assert.equal(before.snapshotHash,after.snapshotHash);assert.equal(before.eventHash,after.eventHash);await save('cancelled.json',after);return{status:after.record.status,vars:after.oracle.vars,visits:after.oracle.counters.nodeVisits};});
+  await check('unsequenced and nonexistent checkpoint use seed and full history',async()=>{const observations=[];for(const op of ['unsequenced','invalid-checkpoint']){await ctrl(op,run.id);const before=await ctrl('state',{id:run.id});await ctrl('metrics');assert.deepEqual(await api('/runs/'+run.id+'/thread'),before.oracle);const m=await ctrl('metrics');assert.ok(m.reads.some(r=>r.after===0));assert.equal((await ctrl('state',{id:run.id})).snapshotHash,before.snapshotHash);observations.push({op,reads:m.reads});}await save('fallback.json',observations);return observations;});
+  await check('recovery-written failure checkpoint falls back and agrees with full replay',async()=>{
+    await ctrl('mode','fail');const r=await start(loop);await status(r.id,'failed');await ctrl('idle');await ctrl('stop');await ctrl('recovery-arm',r.id);await ctrl('delay',false);await ctrl('start');await status(r.id,'failed');await ctrl('idle');const before=await ctrl('state',{id:r.id});const seq=before.snapshot.thread_snapshot_seq,event=before.events.find(e=>e.seq===seq);assert.ok(event);assert.notEqual(event.type,'node.finished');await ctrl('metrics');const read=await api('/runs/'+r.id+'/thread'),metrics=await ctrl('metrics');assert.deepEqual(read,before.oracle);assert.ok(metrics.reads.some(r=>r.after===0));const after=await ctrl('state',{id:r.id});assert.equal(before.snapshotHash,after.snapshotHash);await save('recovery.json',{before,read,metrics,afterHash:after.snapshotHash});await ctrl('delay',true);return{checkpointSeq:seq,checkpointType:event.type,reads:metrics.reads};
+  });
+  await ctrl('stop');
+  const minimal=await publish(definitions.minimal);
+  await check('bounded reads with 10000 durable synthetic events',async()=>{
+    const r=await start(minimal);await ctrl('append-pairs',{id:r.id,from:0,count:5000});const s=await ctrl('state',{id:r.id,events:false}),last=s.record.lastEventSeq,samples=[];
+    for(const [name,seq] of [['current',last],['lagging-200-events',last-200]]){
+      await ctrl('checkpoint',{id:r.id,seq});const before=await ctrl('state',{id:r.id,events:false});
+      for(let i=0;i<6;i++){await ctrl('metrics');const response=await http('/runs/'+r.id+'/thread','GET',undefined,name+'-'+i),m=await ctrl('metrics');assert.equal(response.status,200);assert.deepEqual(response.body,s.oracle);assert.deepEqual(m.reads.map(v=>({after:v.after,rows:v.rows})),[{after:seq-1,rows:last-seq+1}]);if(i>0)samples.push({name,checkpointSeq:seq,httpMs:response.ms,reads:m.reads,api:m.timings});}
+      assert.equal((await ctrl('state',{id:r.id,events:false})).snapshotHash,before.snapshotHash);
+    }
+    const summary=['current','lagging-200-events'].map(name=>{const a=samples.filter(s=>s.name===name),ms=a.map(s=>s.httpMs).sort((a,b)=>a-b);return{name,medianMs:ms[2],minMs:ms[0],maxMs:ms[4],rows:a[0].reads[0].rows};});const record={runId:r.id,totalEvents:s.eventCount,lastSeq:last,warmups:1,samplesPerCase:5,summary,samples,oracle:s.oracle};await save('bounded-read.json',record);return summary;
+  });
+  await check('six concurrent polling readers during 1500 quick durable appends',async()=>{
+    const r=await start(minimal);const initial=await ctrl('state',{id:r.id});const startMem=await ctrl('gc');await ctrl('metrics');const appending=ctrl('live-append',{id:r.id,count:1500});let done=false;appending.finally(()=>done=true);const readers=await Promise.all(Array.from({length:6},async(_,reader)=>{let previous=-1,requests=0;const excerpts=[];while(!done||requests<20){const x=await api('/runs/'+r.id+'/thread');const measured=x.vars.measured??-1;assert.ok(measured>=previous,'reader regressed '+previous+' -> '+measured);assert.ok(measured<=1499);assert.ok([measured+1,measured+2].includes(x.counters.nodeVisits.measure??0),'unfinished visit counter invalid');if(requests%20===0)excerpts.push({request:requests,measured,visits:x.counters.nodeVisits.measure});previous=measured;requests++;if(requests>3000)throw Error('Reader runaway');}return{reader,requests,last:previous,excerpts};}));await appending;const final=await ctrl('state',{id:r.id,events:false});for(let i=0;i<6;i++)assert.deepEqual(await api('/runs/'+r.id+'/thread'),final.oracle);assert.equal(final.oracle.vars.measured,1499);const endMem=await ctrl('gc');const detail={readers,totalRequests:readers.reduce((s,r)=>s+r.requests,0),events:final.eventCount,startMem,endMem,heapGrowth:endMem.heapUsed-startMem.heapUsed,finalVars:final.oracle.vars,initialSnapshotHash:initial.snapshotHash,finalSnapshotHash:final.snapshotHash};assert.equal(detail.initialSnapshotHash,detail.finalSnapshotHash);await save('load.json',detail);return detail;
+  });
+} catch(e){results.fatal=e.stack;console.log('FATAL '+e.stack);}
+finally {
+  for(const c of contexts)await c.close().catch(()=>{});
+  await browser?.close().catch(()=>{});await client?.close().catch(()=>{});await mcp?.close().catch(()=>{});
+  if(proc?.connected){await ctrl('release').catch(()=>{});await stopServer().catch(e=>{results.shutdownError=String(e);proc.kill();});}
+  await save('results.json',results);console.log(JSON.stringify({checks:results.checks.map(c=>({name:c.name,pass:c.pass})),fatal:results.fatal}));
+}

@@ -128,6 +128,25 @@ outcome is not a resumable node failure. A run paused while parked (or while par
 to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
 keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
 
+## Thread reads and delayed snapshots (#116, ADR-0053)
+
+The durable event log determines the thread for both execution and observation. Domain
+`reconcileThread` is the shared owner: start from the actual admitted initial thread, or a
+checkpoint whose sequence exists in the observed history, then replay later durable events.
+Writers persist the open-visit replay state with the snapshot and sequence (ADR-0053); a
+completion event alone cannot prove that a different visit is closed. Current-thread reads
+without stored state replay the full prefix; reads never backfill it.
+An unsequenced checkpoint, one beyond that history, or one beyond a requested historical event
+is ignored. A `node.started` contributes its visit counter; a patch is applied only from a
+durable `node.finished`, once for its open visit. A failed or resumed unfinished node therefore
+exposes its start without exposing an uncommitted patch.
+
+`RunManager.getThread` uses this same rule as execution and the inspector, including during
+failure, resume and success. It never saves a repaired snapshot, advances the cursor, finalizes
+a run or changes execution state. Snapshots remain an optimization maintained by execution.
+Reads racing appends describe the event prefix they observed; a later read can observe more
+events. No cross-request transaction or global synchronization is implied.
+
 ## Which definition a run executes (Decided, ADR-0041)
 
 A run executes one immutable definition record for its whole life: the record its `versionId` names. Every executor start (the first, a wake after a wait, a resume, crash recovery) and every replay fork loads that record, never the loop's live draft. A published start pins the published version. A draft start (`allowDraft`, a test run) freezes the draft it read and validated into a `snapshot` record with its own id and the draft's number; the admission port commits the snapshot, the run, its initial thread and its `run.queued` event in one transaction. Editing, saving or publishing the draft afterwards never reaches the run. A snapshot cannot be started directly (`VERSION_NOT_PUBLISHED`), is not part of the version history, and storage triggers refuse its change, or its deletion while a run pins it.

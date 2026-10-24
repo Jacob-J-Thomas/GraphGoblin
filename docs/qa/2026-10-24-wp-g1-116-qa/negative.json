@@ -1,0 +1,42 @@
+{
+  "invalidId": {
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/id",
+          "message": "must be a ULID"
+        }
+      ]
+    },
+    "ms": 6.188299999994342
+  },
+  "missing": {
+    "status": 404,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/run-not-found",
+      "title": "run not found",
+      "status": 404,
+      "code": "RUN_NOT_FOUND",
+      "detail": "run 01AAAAAAAAAAAAAAAAAAAAAAAA not found"
+    },
+    "ms": 4.442699999999604
+  },
+  "repeatedResume": {
+    "status": 409,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/invalid-state",
+      "title": "invalid state",
+      "status": 409,
+      "code": "INVALID_STATE",
+      "detail": "cannot resume a run that is succeeded"
+    },
+    "ms": 7.103799999997136
+  },
+  "unauthorized": 401
+}

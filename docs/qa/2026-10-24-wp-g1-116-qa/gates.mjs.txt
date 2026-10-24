@@ -1,0 +1,18 @@
+// Serial QA gates. pnpm first; only use local binaries if the specified store-lock error occurs.
+import {spawn} from 'node:child_process';
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+const root=process.env.QA_ROOT,out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa');
+const gates=[
+  ['typecheck','pnpm.cmd typecheck','node_modules\\.bin\\turbo.cmd run typecheck'],
+  ['lint','pnpm.cmd lint','node_modules\\.bin\\turbo.cmd run lint'],
+  ['layers','pnpm.cmd check:layers','node tooling/scripts/check-layers.mjs'],
+  ['deps','pnpm.cmd check:deps','node_modules\\.bin\\depcruise.cmd packages apps --config .dependency-cruiser.cjs'],
+  ['tokens','pnpm.cmd check:tokens','node tooling/scripts/check-design-tokens.mjs'],
+  ['domain-coverage','pnpm.cmd --filter @graphgoblin/domain test:coverage','node_modules\\.bin\\vitest.cmd run --coverage',join(root,'packages/domain')],
+  ['engine-coverage','pnpm.cmd --filter @graphgoblin/engine test:coverage','node_modules\\.bin\\vitest.cmd run --coverage',join(root,'packages/engine')],
+  ['web-focused','pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/projections.test.ts src/runs/follow-run-attempts.test.ts src/runs/useRunEvents.test.tsx --maxWorkers=1','node_modules\\.bin\\vitest.cmd run src/runs/projections.test.ts src/runs/follow-run-attempts.test.ts src/runs/useRunEvents.test.tsx --maxWorkers=1',join(root,'apps/web')],
+];
+const results=[];
+async function run(command,cwd=root){return new Promise(resolve=>{const p=spawn(command,{cwd,shell:true,windowsHide:true,env:process.env});let log='';p.stdout.on('data',d=>log+=d);p.stderr.on('data',d=>log+=d);p.on('exit',code=>resolve({code,log}));});}
+for(const[name,command,fallback,packageDir]of gates){console.log('GATE '+name);const begin=performance.now();let r=await run(command);await writeFile(join(out,name+'.log.txt'),r.log);const record={name,command,code:r.code,ms:performance.now()-begin};if(r.code&&r.log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')){console.log('STORE LOCK fallback '+name);r=await run(fallback,packageDir??root);await writeFile(join(out,name+'-fallback.log.txt'),r.log);record.fallback={command:fallback,cwd:packageDir??root,code:r.code};}results.push(record);await writeFile(join(out,'gates.json'),JSON.stringify(results,null,2));console.log('EXIT '+name+' '+r.code);}
