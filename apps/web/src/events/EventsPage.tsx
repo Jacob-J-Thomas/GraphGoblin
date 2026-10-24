@@ -1,9 +1,10 @@
 import { HistoryState } from '../components/HistoryState.js';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useInboundEvents } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import {
   Badge,
+  Button,
   BoundedValue,
   Card,
   CELL_PREVIEW_CHARS,
@@ -113,14 +114,46 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
  * of other runs, with the runs each one started.
  */
 export function EventsPage() {
-  const query = useInboundEvents();
+  const [params] = useSearchParams();
+  const type = params.get('type');
+  const before = params.get('before');
+  const filters = { ...(type ? { type } : {}), ...(before ? { before } : {}) };
+  const query = useInboundEvents(filters);
   return (
     <Page>
-      <PageHeader title="Events" />
+      <PageHeader
+        title="Events"
+        actions={
+          <Button
+            variant="outline"
+            disabled={query.isFetching}
+            onClick={() => void query.refresh()}
+          >
+            Refresh
+          </Button>
+        }
+      >
+        <span role="status" className="text-sm text-muted">
+          {query.newerAvailable
+            ? 'New events available'
+            : query.newerCheckFailed
+              ? 'Could not check for new events. Refresh to try again.'
+              : null}
+        </span>
+      </PageHeader>
+      {type || before ? (
+        <p className="text-sm text-muted">
+          {type ? `Type: ${type}` : null}
+          {type && before ? ' · ' : null}
+          {before ? `Before: ${before}` : null}
+        </p>
+      ) : null}
       <HistoryState query={query} what="Events">
         {(items) =>
           items.length === 0 ? (
-            <p className="text-sm text-muted">No inbound events yet.</p>
+            <p className="text-sm text-muted">
+              {type || before ? 'No inbound events match these filters.' : 'No inbound events yet.'}
+            </p>
           ) : (
             <Card flush>
               <Table stack="lg">
