@@ -1,0 +1,27 @@
+// Final evidence and tracked-state verification; no product writes.
+import assert from 'node:assert/strict';
+import {readFile,writeFile,readdir,stat,copyFile} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=join(process.cwd(),'docs/qa/2026-10-24-wp-d4-343-qa');
+const text=async n=>{const b=await readFile(join(dir,n));return b.toString(b[0]===255?'utf16le':'utf8').replace(/^\uFEFF/,'')};
+if(process.argv.includes('--prepare')){
+ const n='report-generator.mjs.txt';let t=await text(n);
+ t=t.split('\n').map(l=>l.startsWith(' t=t.replace(/C:') ? String.raw` t=t.replace(/C:\r?\n\s*│ /g,'C:'); for(const p of [process.env.USERPROFILE,process.env.USERPROFILE.replaceAll('\\','/'),JSON.stringify(process.env.USERPROFILE).slice(1,-1)]) t=t.replaceAll(p,'%USERPROFILE%'); t=t.replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]');` : l).join('\n');
+ t=t.replace('no link, install, commit, index change','no link, workspace install, commit, index change');
+ await writeFile(join(dir,n),t);
+ await writeFile(join(dir,'qa-verification.json'),'{}\n');
+ await writeFile(join(dir,'qa-verification.log.txt'),'Final verification pending.\n');
+ const tmp=join(tmpdir(),'gg-qa-d4-343-report-generator.mjs');await copyFile(join(dir,n),tmp);
+ const r=spawnSync(process.execPath,[tmp],{encoding:'utf8',windowsHide:true});assert.equal(r.status,0,r.stderr);await writeFile(join(dir,'report-generation.log.txt'),r.stdout);console.log(r.stdout);
+}else{
+ const report=await text('README.md');const files=await readdir(dir);const unlinked=files.filter(n=>n!=='README.md'&&!report.includes(']('+n+')'));assert.deepEqual(unlinked,[],'Unlinked artifacts');
+ const broken=[];for(const m of report.matchAll(/\]\(([^)]+)\)/g)){const target=m[1];if(!target.startsWith('http')&&!target.startsWith('#'))try{await stat(join(dir,target))}catch{broken.push(target)}}assert.deepEqual(broken,[]);
+ const oversized=[],userPaths=[],tokens=[];for(const n of files){const size=(await stat(join(dir,n))).size;if(size>1000000)oversized.push({n,size});if(/\.(txt|json|md)$/.test(n)){const t=await text(n);if(t.includes(process.env.USERPROFILE)||t.includes(process.env.USERPROFILE.split('\\').at(-1)))userPaths.push(n);if(/gg_[A-Za-z0-9_-]{20,}/.test(t))tokens.push(n)}}
+ assert.deepEqual(oversized,[]);assert.deepEqual(userPaths,[]);assert.deepEqual(tokens,[]);
+ const git=args=>{const r=spawnSync('git',args,{encoding:'utf8',windowsHide:true});assert.equal(r.status,0);return r.stdout.trim()};
+ const head=git(['rev-parse','HEAD']);assert.equal(head,'9dcf40fa7cc478fcd5b75ebb92cd464d2fb548c2');const tracked=git(['diff','--name-only']),index=git(['diff','--cached','--name-only']);assert.equal(tracked,'');assert.equal(index,'');
+ const state={head,branch:git(['branch','--show-current']),trackedDiff:tracked,indexDiff:index,status:git(['status','--short']),artifactCount:files.length,allArtifactsLinked:true,allLinksExist:true,allCapturesAtMost1000000:true,userPathsNormalized:true,noDisposableBearerTokens:true};
+ await writeFile(join(dir,'qa-verification.json'),JSON.stringify(state,null,2));await writeFile(join(dir,'qa-verification.log.txt'),'PASS: pinned HEAD; no tracked/index diff; every artifact linked; no missing link, oversized capture, local user path or bearer token.\n');console.log(state);
+}
