@@ -6,6 +6,7 @@ import {
   type ContextThread,
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
+import type { ReplayState } from '@graphgoblin/domain';
 import { RunManager, type ScriptPort } from '@graphgoblin/engine';
 import { SqliteRunRepository } from '@graphgoblin/infrastructure/sqlite';
 import { buildApp } from '../app.js';
@@ -14,14 +15,19 @@ import { loadConfig } from '../config.js';
 
 /** Delayed writes injected at the public repository port. Events still commit to real SQLite. */
 class DelayedSnapshots extends SqliteRunRepository {
-  pending: { runId: string; thread: ContextThread; seq?: number }[] = [];
-  override saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
-    this.pending.push({ runId, thread, ...(seq === undefined ? {} : { seq }) });
+  pending: { runId: string; thread: ContextThread; seq: number; replayState: ReplayState }[] = [];
+  override saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
+    this.pending.push({ runId, thread, seq, replayState });
     return Promise.resolve();
   }
   async flush(): Promise<void> {
     for (const item of this.pending.splice(0))
-      await super.saveThread(item.runId, item.thread, item.seq);
+      await super.saveThread(item.runId, item.thread, item.seq, item.replayState);
   }
 }
 export const threadHistoryLoop: LoopDefinitionInput = {

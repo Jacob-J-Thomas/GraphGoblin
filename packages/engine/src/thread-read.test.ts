@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { reconcileThread } from '@graphgoblin/domain';
+import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
 import { RunManager } from './run-manager.js';
 import type { EventStorePort } from './ports.js';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
@@ -52,6 +52,7 @@ it('catches up a completed checkpoint without replaying a duplicate completion p
     t.run.id,
     reconcileThread(t.initial, t.history, undefined, finished.seq),
     finished.seq,
+    replayStateAt(t.history, finished.seq),
   );
   await t.engine.ports.events.append(t.run.id, [
     {
@@ -74,7 +75,7 @@ it('catches up a completed checkpoint without replaying a duplicate completion p
     },
   ]);
 });
-it('derives the open visit at a parked checkpoint without reading its prefix', async () => {
+it('uses the recorded open visit at a parked checkpoint without reading its prefix', async () => {
   const t = await setup(true);
   const checkpoint = await t.engine.ports.runs.getThreadCheckpoint(t.run.id);
   if (!checkpoint) throw new Error('No park');
@@ -92,28 +93,32 @@ it('derives the open visit at a parked checkpoint without reading its prefix', a
   expect(t.reads[0]?.after).toBe(checkpoint.seq - 1);
   expect(t.reads).toHaveLength(1);
 });
-it('falls back to the full seed/history when the checkpoint event is missing or its state is ambiguous', async () => {
-  for (const missing of [true, false]) {
-    const t = await setup();
-    const seq = missing ? 999 : t.history.find((e) => e.type === 'exit.evaluated')?.seq;
-    if (!seq) throw new Error('No boundary');
-    await t.engine.ports.runs.saveThread(
-      t.run.id,
-      reconcileThread(t.initial, t.history, undefined, seq),
-      seq,
-    );
-    expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
-    expect(t.reads.map((r) => r.after)).toEqual([seq - 1, 0]);
-  }
-});
-it('replays the full history when no sequenced checkpoint exists', async () => {
+it('falls back to the full seed/history when the checkpoint event is missing', async () => {
   const t = await setup();
-  await t.engine.ports.runs.saveThread(t.run.id, t.initial);
+  await t.engine.ports.runs.saveThread(t.run.id, t.initial, 999, { strict: false });
+  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
+  expect(t.reads.map((r) => r.after)).toEqual([998, 0]);
+});
+it('uses writer-recorded state even when the event type does not identify an open visit', async () => {
+  const t = await setup();
+  const seq = t.history.find((e) => e.type === 'exit.evaluated')!.seq;
+  await t.engine.ports.runs.saveThread(
+    t.run.id,
+    reconcileThread(t.initial, t.history, undefined, seq),
+    seq,
+    replayStateAt(t.history, seq),
+  );
+  expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
+  expect(t.reads.map((r) => r.after)).toEqual([seq - 1]);
+});
+it('replays the full history when no checkpoint exists', async () => {
+  const t = await setup();
+  t.engine.ports.runs.dropThreadSnapshot(t.run.id);
   expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
   expect(t.reads.map((r) => r.after)).toEqual([0]);
 });
 
-it('derives an unfinished started checkpoint without applying a patch early', async () => {
+it('uses a recorded unfinished started checkpoint without applying a patch early', async () => {
   const t = await setup();
   const start = t.history.findLast((e) => e.type === 'node.started');
   if (!start) throw new Error('No start');
@@ -121,6 +126,7 @@ it('derives an unfinished started checkpoint without applying a patch early', as
     t.run.id,
     reconcileThread(t.initial, t.history, undefined, start.seq),
     start.seq,
+    replayStateAt(t.history, start.seq),
   );
   expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
   expect(t.reads.map((r) => r.after)).toEqual([start.seq - 1]);

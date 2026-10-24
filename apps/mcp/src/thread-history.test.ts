@@ -1,3 +1,4 @@
+import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
 import { expect, it } from 'vitest';
 import { createThreadHistoryFixture } from '@graphgoblin/api/testing';
 import { ContextThreadSchema, RunRecordSchema } from '@graphgoblin/contracts';
@@ -8,7 +9,7 @@ import { createMcpServer } from './server.js';
 
 it('MCP reads agree through persisted failure and resume with stale snapshots', async () => {
   const t = await createThreadHistoryFixture();
-  const apiUrl = await t.app.listen({ port: 5932, host: '127.0.0.1' });
+  const apiUrl = await t.app.listen({ port: 0, host: '127.0.0.1' });
   const server = createMcpServer({ apiUrl });
   const client = new Client({ name: 'thread-history-test', version: '1' });
   const [ct, st] = InMemoryTransport.createLinkedPair();
@@ -53,6 +54,76 @@ it('MCP reads agree through persisted failure and resume with stale snapshots', 
   } finally {
     await client.close();
     await server.close();
+    await t.close();
+  }
+});
+
+it('MCP preserves a different open visit at a persisted delayed-duplicate checkpoint', async () => {
+  const t = await createThreadHistoryFixture();
+  t.manager.stop();
+  let runId: string | undefined;
+  const apiUrl = await t.app.listen({ port: 0, host: '127.0.0.1' });
+  const server = createMcpServer({ apiUrl });
+  const client = new Client({ name: 'checkpoint-state-test', version: '1' });
+  const [ct, st] = InMemoryTransport.createLinkedPair();
+  await server.connect(st);
+  await client.connect(ct);
+  try {
+    const response = await t.app.inject({
+      method: 'POST',
+      url: '/loops/' + t.loopId + '/runs',
+      payload: {},
+    });
+    const run = RunRecordSchema.parse(response.json<{ run: unknown }>().run);
+    runId = run.id;
+    const initial = (await t.repos.runs.getInitialThread(run.id))!;
+    await t.repos.events.append(run.id, [
+      { type: 'node.started', nodeId: 'a', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
+      {
+        type: 'node.finished',
+        nodeId: 'a',
+        durationMs: 1,
+        patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
+      },
+      { type: 'node.started', nodeId: 'b', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
+      {
+        type: 'node.finished',
+        nodeId: 'a',
+        durationMs: 1,
+        patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
+      },
+    ]);
+    const prefix = await t.repos.events.read(run.id);
+    const seq = prefix.at(-1)!.seq;
+    await t.repos.runs.saveThread(
+      run.id,
+      reconcileThread(initial, prefix),
+      seq,
+      replayStateAt(prefix, seq),
+    );
+    await t.repos.events.append(run.id, [
+      {
+        type: 'node.finished',
+        nodeId: 'b',
+        durationMs: 1,
+        patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
+      },
+    ]);
+    const before = await t.bytes(run.id);
+    const result = CallToolResultSchema.parse(
+      await client.callTool({ name: 'get_run_thread', arguments: { runId: run.id } }),
+    );
+    expect(result.isError).toBeFalsy();
+    const text = result.content[0];
+    if (text?.type !== 'text') throw new Error('Missing tool result');
+    const thread = ContextThreadSchema.parse(JSON.parse(text.text));
+    expect(thread.vars.items).toEqual(['a', 'b']);
+    expect(thread).toEqual(reconcileThread(initial, await t.repos.events.read(run.id)));
+    expect(await t.bytes(run.id)).toBe(before);
+  } finally {
+    await client.close();
+    await server.close();
+    if (runId) await t.manager.cancel(runId);
     await t.close();
   }
 });

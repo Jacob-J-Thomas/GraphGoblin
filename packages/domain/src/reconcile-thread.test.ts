@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { sampleThread } from '@graphgoblin/contracts/testing';
 import { reconcileThread } from './reconcile-thread.js';
-import type { ThreadReplayEvent } from './replay.js';
+import { replayStateAt, type ThreadReplayEvent } from './replay.js';
 
 it('reconciles only durable completions and carries visits across every verified checkpoint', () => {
   const initial = sampleThread({ vars: {} });
@@ -81,4 +81,43 @@ it('uses a proven checkpoint state with only its boundary event and tail', () =>
   expect(reconcileThread(initial, history, checkpoint, 1)).toEqual(
     reconcileThread(initial, history, undefined, 1),
   );
+});
+
+it('carries a different open visit past a delayed duplicate completion at the checkpoint', () => {
+  const initial = sampleThread({ vars: {} });
+  const events: ThreadReplayEvent[] = [
+    { seq: 1, type: 'node.started', nodeId: 'a' },
+    {
+      seq: 2,
+      type: 'node.finished',
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
+    },
+    { seq: 3, type: 'node.started', nodeId: 'b' },
+    {
+      seq: 4,
+      type: 'node.finished',
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
+    },
+    {
+      seq: 5,
+      type: 'node.finished',
+      nodeId: 'b',
+      patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
+    },
+  ];
+  const checkpoint = {
+    seq: 4,
+    thread: reconcileThread(initial, events, undefined, 4),
+    replayState: replayStateAt(events, 4),
+  };
+  expect(checkpoint.replayState).toEqual({ openNodeId: 'b', strict: true });
+  expect(reconcileThread(checkpoint.thread, events.slice(3), checkpoint)).toEqual(
+    reconcileThread(initial, events),
+  );
+  expect(reconcileThread(checkpoint.thread, events.slice(3), checkpoint).vars.items).toEqual([
+    'a',
+    'b',
+  ]);
 });

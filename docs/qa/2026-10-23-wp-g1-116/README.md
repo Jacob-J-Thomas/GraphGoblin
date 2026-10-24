@@ -1,4 +1,6 @@
-# WP-G1 #116: round-2 implementation handoff
+# WP-G1 #116: implementation evidence
+
+The round-2 record below is historical. The round-3 subsection supersedes its event-type boundary proof and no-migration decision; earlier logs and measurements retain their original provenance.
 
 ## 1. Branch and worktree
 
@@ -11,7 +13,124 @@
 
 The three requested #116 review changes are implemented. Validation is complete below. The full web unit gate failed one untouched legacy-editor assertion; its isolated rerun passed. All other requested gates and all three browser runs passed.
 
-### Bounded current-thread reads and measurements
+### Round 3: persist the checkpoint replay proof (2026-10-24)
+
+**Head and scope.** Started at `b8536e38d16ffeb3264bd89f8d380fd13582eb06` on codex-wp-g1-116. Work stays uncommitted in the assigned worktree; the orchestrator owns commits, QA and audit round 2. No sub-agents or directory deletions. The independent QA folder is unchanged. Read the auditor's report, both drivers and both durable-history captures before production edits: [report capture](round-3-audit-report.txt), [duplicate driver](round-3-audit-duplicate-browser-corrected.mjs.txt), [recovery driver](round-3-audit-supplement.mjs.txt), [duplicate REST/MCP/browser evidence](round-3-audit-duplicate-browser-corrected.json), [recovery evidence](round-3-audit-recovery-duplicate.json). These are attributed historical audit evidence, with local profile paths redacted.
+
+**Persisted-state design.** RunRepository.saveThread now requires (runId, thread, seq, replayState), where domain ReplayState has required strict:boolean and optional openNodeId. SQL migration 0018_thread_checkpoint_replay_state adds nullable runs.thread_snapshot_replay_state; its Drizzle schema, snapshot and journal entry are additive. One UPDATE saves the snapshot, sequence and replay state. Existing snapshots retain NULL. getThreadCheckpoint returns the recorded state when present. getThread reads only after checkpoint.seq-1 if state is present, verifies the first returned event is the checkpoint's sequence, and supplies that stored state to reconcileThread. Missing state/sequence/event falls back to full history; reads do not backfill. loadThread still receives the full log. Boundary event types never supply proof.
+
+| Writer                                                              | Recorded replay state                     | Basis                                                                           |
+| ------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| Executor park, after its node.started and run.waiting               | strict:true, openNodeId: current node     | That execution visit remains unfinished                                         |
+| Executor exit, after its matching node.finished and terminal append | strict:true, no open node                 | The executor completed its own visit                                            |
+| Executor done/decision, after its matching node.finished            | strict:true, no open node                 | The executor completed its own visit                                            |
+| Recovery completeFromLog                                            | replayStateAt(events,lastSeq)             | Full durable history preserves a different open visit across delayed duplicates |
+| Measurement/controlled checkpoint fixtures                          | replayStateAt of the full recorded prefix | Honest explicit checkpoint proof through the public port                        |
+
+The in-memory fake and the delayed SQLite snapshot adapter both carry the state. Snapshot clearing clears it too. All port decorators forward it. The adversarial snapshot test compares each executor writer's state with replayStateAt. No compatibility parsing or event-type inference is introduced. Migration 0018 may need renumbering if WP-D4/#389 lands its migration first.
+
+**Reproduction and regressions.** The baseline component is an immutable capture of d9abfac7:packages/engine/src/run-manager.ts (SHA-256 9995f2fd72d5176287f21d8a66fe772d224dd8798774a7bffebd65e8b93184b7), loaded by Vitest resolution instead of altering code under test. Its [source capture](round-3-d9abfac7-run-manager.ts.txt), [engine configuration](round-3-engine-baseline.config.ts.txt), [REST configuration](round-3-api-baseline.config.ts.txt), [MCP configuration](round-3-mcp-baseline.config.ts.txt) and baseline test captures are retained. The six-event and recovery cases use supported run/event repository ports and public RunManager methods; REST/MCP use real persisted SQLite and the SDK linked transport to HTTP. The additional NULL-state probe combines the same immutable d9abfac7 reader with the new shipped-migration fixture; it is a reader regression, not a claim that d9abfac7 shipped the new column.
+
+| Reader / case                                                                                    | At checkpoint                  | After later durable completion, d9abfac7 reader | After correction                                                                                         |
+| ------------------------------------------------------------------------------------------------ | ------------------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| RunManager, queued -> started A -> finished A -> started B -> duplicate finished A -> finished B | items:[a], B open, seq 5       | items:[a], fails expected [a,b]                 | items:[a,b], full replay agrees                                                                          |
+| REST, same six persisted events                                                                  | items:[a], B open, seq 5       | items:[a], fails expected [a,b]                 | items:[a,b], complete thread equals full replay; row/event bytes unchanged                               |
+| MCP, same six persisted events                                                                   | items:[a], B open, seq 5       | items:[a], fails expected [a,b]                 | items:[a,b], complete thread equals full replay; row/event bytes unchanged                               |
+| Actual recovery-written checkpoint after durable failure and delayed earlier-node completion     | items:[a], failed B still open | items:[a], fails expected [a,b]                 | items:[a,b]; recovery persisted strict:true/openNodeId:b                                                 |
+| Stored snapshot without replay state after shipped SQL migration                                 | NULL state, duplicate boundary | items:[a], fails expected [a,b]                 | Full-history read; items:[a,b], no read-side write; next checkpoint carries persisted state after reopen |
+| Current / lagging proven checkpoints                                                             | Honest persisted state         | Existing ordinary bounded cases already passed  | Counting tests require exactly boundary plus tail, never the prefix                                      |
+
+[Engine baseline failures](round-3-engine-before.log.txt), [REST baseline failure](round-3-api-baseline-corrected.log.txt), [MCP baseline failure](round-3-mcp-baseline-corrected.log.txt), [NULL-state baseline failure](round-3-unproven-baseline.log.txt). Each behavioral failure is expected [a,b], received [a]. The initial REST/MCP attempts timed out in fixture cleanup because their intentionally stopped manager retained a queued run; cleanup was corrected through public cancel after assertions, with both original logs retained. No production change preceded the corrected duplicate reproductions.
+
+Focused corrected runs: engine 9/9, shipped migration/storage 1/1 and REST 4/4 passed. MCP's new duplicate regression passed; its existing lifecycle case exceeded its unchanged five-second timeout in that focused run (1 passed/1 failed). [Engine](round-3-engine-focused.log.txt), [migration/storage](round-3-infrastructure-focused.log.txt), [REST](round-3-api-focused.log.txt), [MCP](round-3-mcp-focused.log.txt). The first typecheck caught the new snapshot column missing from RunRecordRow's internal-field omission; that type was corrected. A diff review also caught and corrected locale-decoding corruption before gates.
+
+**Measurements, browser and required gates.** The fresh physical SQLite/loopback HTTP experiment used 10,008 events, a current snapshot and a snapshot 200 events behind, one warm-up then five samples per case. Every complete returned thread matched full replay. Current: one decoded row/read, median 11.357 ms (range 5.206-86.185); lagging: 201 rows/read, median 11.291 ms (range 9.350-26.730). The existing round-2 numbers below remain historical. Load varied; no timing improvement is attributed to the state correction. [New samples](round-3-measure.json), [command log](round-3-measure.log.txt).
+
+Built-code persisted probes also exercised the actual executor failure/recovery writer on physical SQLite, then REST and MCP after a later durable completion. Both full threads match canonical replay, including the other open visit and its later patch; stored run/event bytes hash identically before and after reads. [Driver](round-3-reproduce.mjs.txt), [complete observations and hashes](round-3-reproductions.json), [log](round-3-reproduce.log.txt). These use controlled script behavior and in-process recovery, without native process replacement or provider claims.
+
+N1 uses port 0 and the returned address. N3 registers requestfailed for the inspected run before taking the browser offline and awaits the actual failed request before restoring connectivity. The default-harness built-app browser command passed once, with retries disabled: [log](round-3-browser.log.txt), [observations](round-3-browser.json), [spec capture](round-3-browser.spec.ts.txt). The recorded outage is net::ERR_INTERNET_DISCONNECTED on the inspected run's metadata request. Failure, resumed-unfinished and success agree across REST, the open tab and the reloaded tab; work visits are 1/2/2, the unfinished patch is absent, and persisted run/event bytes remain unchanged. Runtime: Node 22.14.0; browser test 28.1 seconds, command about 64.8 seconds. No fixed browser port or private harness.
+
+**Required commands and results.** Root checks ran with Node 22 first on PATH. Typecheck/lint were repeated after the historical migration fixtures were corrected; their final runs and the build all passed. Lint retains the existing ThreadViewer.tsx:106 warning; Turbo emitted nonfatal cache I/O access warnings. Formatting, layer/dependency checks and generated-doc checks passed. No thresholds, exclusions, existing timeout budgets or runtime test assertions were relaxed.
+
+| Command                                                                                        | Result                                                     | Evidence                                                                                       |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| pnpm.cmd typecheck                                                                             | PASS, including final run                                  | [initial corrected run](round-3-typecheck.log.txt), [final](round-3-final-typecheck.log.txt)   |
+| pnpm.cmd lint                                                                                  | PASS, existing warning                                     | [final](round-3-final-lint.log.txt)                                                            |
+| pnpm.cmd format                                                                                | PASS; later changed documentation/fixtures also formatted  | [root](round-3-format.log.txt), [fixture formatting](round-3-migration-fixture-format.log.txt) |
+| pnpm.cmd check:layers                                                                          | PASS                                                       | [log](round-3-check-layers.log.txt)                                                            |
+| pnpm.cmd check:deps                                                                            | PASS                                                       | [log](round-3-check-deps.log.txt)                                                              |
+| pnpm.cmd check:docs                                                                            | PASS                                                       | [log](round-3-check-docs.log.txt)                                                              |
+| pnpm.cmd --filter @graphgoblin/domain test:coverage                                            | FAIL: untouched conversion timeout                         | [log](round-3-domain-coverage.log.txt)                                                         |
+| pnpm.cmd --filter @graphgoblin/engine test:coverage                                            | FAIL: untouched child-wake wait assertion                  | [log](round-3-engine-coverage.log.txt)                                                         |
+| pnpm.cmd --filter @graphgoblin/infrastructure test:coverage                                    | FAIL: historical fixture setup and native/timeout failures | [original log](round-3-infrastructure-coverage.log.txt)                                        |
+| pnpm.cmd --filter @graphgoblin/api test:coverage                                               | FAIL: untouched subloop-restart cleanup hook               | [log](round-3-api-coverage.log.txt)                                                            |
+| pnpm.cmd --filter @graphgoblin/mcp test:coverage                                               | PASS                                                       | [log](round-3-mcp-coverage.log.txt)                                                            |
+| pnpm.cmd build                                                                                 | PASS                                                       | [log](round-3-final-build.log.txt)                                                             |
+| pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/thread-history.spec.ts --retries=0 | PASS: 1/1, default configuration/harness                   | [log](round-3-browser.log.txt)                                                                 |
+
+[Root command/exit record](round-3-root-results.json), [full package command/exit record](round-3-coverage-results.json), [final typecheck/lint/build/browser record](round-3-final-results.json). These are local command results, not a fresh PR CI observation.
+
+| Package / run                            | Files                          | Tests                                          | Fresh lines               | Fresh branches            |
+| ---------------------------------------- | ------------------------------ | ---------------------------------------------- | ------------------------- | ------------------------- |
+| domain                                   | 30 passed, 1 failed            | 595 passed, 1 failed (596)                     | Not emitted after failure | Not emitted after failure |
+| engine                                   | 41 passed, 1 failed            | 1597 passed, 1 failed (1598)                   | Not emitted after failure | Not emitted after failure |
+| infrastructure, original                 | 43 passed, 9 failed            | 709 passed, 64 failed (773)                    | Not emitted after failure | Not emitted after failure |
+| infrastructure, after fixture correction | 47 passed, 5 failed            | 762 passed, 11 failed (773)                    | 98.74% (2195/2223)        | 95.09% (1784/1876)        |
+| api                                      | 64 passed, 1 failed, 2 skipped | 1324 passed, 1 failed, 8 existing skips (1333) | Not emitted after failure | Not emitted after failure |
+| mcp                                      | 10 passed                      | 51 passed (51)                                 | 96.66% (232/240)          | 95.39% (207/217)          |
+
+The second infrastructure run followed an actual fixture correction, not a retry to clear a flaky gate. Its exact command was pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --coverage.reportOnFailure: [log](round-3-infrastructure-after-fixtures-coverage.log.txt), [command/reason record](round-3-extra-results.json), [coverage summary](round-3-infrastructure-after-fixtures-coverage-summary.json). The reporting-only flag emits truthful coverage even on test failure; it does not turn the suite green. MCP's [fresh coverage summary](round-3-mcp-coverage-summary.json) is also retained. Fresh measured coverage exceeds the thresholds in both reporting packages; domain, engine and API have no fresh coverage qualification from their failed runs. Historical percentages below are not substituted. [Derived test-result index](round-3-test-results.json).
+
+Four historical SQLite fixtures rewound the migration ledger while leaving the new column installed, producing SQLITE_ERROR: duplicate column name: thread_snapshot_replay_state. Their setup now drops that structural addition before replaying the corresponding shipped migrations. Each corrected file passed its one isolated run, and all four pass in the final full infrastructure run. This changes test fixture reconstruction, not production migration tolerance or the protected offline-upgrade implementation.
+
+Every initially untouched failing file was run alone exactly once with --maxWorkers=1. The isolated pass does not waive the original failed full gate; no second isolated attempt was made. [Isolated command/exit record](round-3-isolated-results.json), [API isolated command/exit record](round-3-extra-results.json).
+
+| Package and isolated file                                  | Result                             | Evidence                                                                                  |
+| ---------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| domain: src/convert-v3-v4/conversion.test.ts               | 102 passed                         | [log](round-3-isolated-domain-src-convert-v3-v4-conversion-test-ts.log.txt)               |
+| engine: src/awaited-children.test.ts                       | 24 passed                          | [log](round-3-isolated-engine-src-awaited-children-test-ts.log.txt)                       |
+| infrastructure: src/sqlite/catalog.test.ts                 | 7 passed after fixture correction  | [log](round-3-isolated-infrastructure-src-sqlite-catalog-test-ts.log.txt)                 |
+| infrastructure: src/sqlite/delivery-runs.test.ts           | 31 passed after fixture correction | [log](round-3-isolated-infrastructure-src-sqlite-delivery-runs-test-ts.log.txt)           |
+| infrastructure: src/sqlite/history-summaries.test.ts       | 16 passed after fixture correction | [log](round-3-isolated-infrastructure-src-sqlite-history-summaries-test-ts.log.txt)       |
+| infrastructure: src/sqlite/webhook-receipt-upgrade.test.ts | 27 passed after fixture correction | [log](round-3-isolated-infrastructure-src-sqlite-webhook-receipt-upgrade-test-ts.log.txt) |
+| infrastructure: src/adversarial.test.ts                    | 19 passed, 1 failed                | [log](round-3-isolated-infrastructure-src-adversarial-test-ts.log.txt)                    |
+| infrastructure: src/claude/process.test.ts                 | 2 passed, 3 failed                 | [log](round-3-isolated-infrastructure-src-claude-process-test-ts.log.txt)                 |
+| infrastructure: src/claude/readiness.test.ts               | 20 passed, 1 failed                | [log](round-3-isolated-infrastructure-src-claude-readiness-test-ts.log.txt)               |
+| infrastructure: src/process/scripts.test.ts                | 36 passed, 3 failed                | [log](round-3-isolated-infrastructure-src-process-scripts-test-ts.log.txt)                |
+| infrastructure: src/sqlite/upgrade.test.ts                 | 26 passed                          | [log](round-3-isolated-infrastructure-src-sqlite-upgrade-test-ts.log.txt)                 |
+| api: src/subloop-restart.test.ts                           | 1 passed, 2 failed                 | [log](round-3-isolated-api-src-subloop-restart-test-ts.log.txt)                           |
+
+**D-015 and residual full-suite failures.** Native process-control validation remains unavailable in this sandbox. ProcessScripts cancellation with incomplete UTF-8 explicitly failed its native process-tree termination assertion; its timeout/abort cases timed out. The adversarial real-child/grandchild abort case also timed out. Claude process deadline/overflow/abort/descendant cases produced EBUSY cleanup and descendant-output failures; its no-turn hang case retained an assertion failure. API hard-kill subloop restart exceeded its 180-second test budget and the child-finished-while-down cleanup hook exceeded 60 seconds in isolation. These commands were attempted, not skipped; successful termination/restart is not established. The exact logs above retain their assertions and output rather than treating every failure as proven sandbox causation. SQLite upgrade's full-run timeouts, the conversion timeout and the child-wake wait failure passed alone, with cause unestablished. Infrastructure's final 11 failures include three SQLite-upgrade timeouts in addition to native-boundary cases. No additional isolated retry was used to clear the changed full-run observations.
+
+**Files and shared ranges.** Thirty-five source/doc files changed, plus this evidence folder. [Complete file and candidate-line inventory](round-3-changed-files.json) names every changed hunk, including files outside primary ownership. Shared-file edits are restricted to the checkpoint port, getThread/snapshot handling and the additive column:
+
+| Shared file                                  | Final candidate line ranges                      |
+| -------------------------------------------- | ------------------------------------------------ |
+| packages/engine/src/run-manager.ts           | 47; 1067; 1069-1072; 1740; 1799; 1818; 1855-1856 |
+| packages/engine/src/ports.ts                 | 1; 124-132                                       |
+| packages/infrastructure/src/sqlite/schema.ts | 1; 89-92                                         |
+
+Changed files by package:
+
+- Domain: src/replay.ts (required strict state and corrected duplicate comment), src/reconcile-thread.ts (writer-proof documentation), src/reconcile-thread.test.ts (delayed other-node duplicate).
+- Engine: src/ports.ts, src/run-manager.ts, src/testing/fakes.ts; src/checkpoint-state.test.ts (new), src/thread-read.test.ts, src/adversarial.test.ts, src/recovery.test.ts and src/handlers/gates.test.ts (port forwarding/state invariants).
+- Infrastructure: src/sqlite/schema.ts, runs.ts, run-row.ts; drizzle/0018_thread_checkpoint_replay_state.sql, meta/_journal.json, meta/0018_snapshot.json; src/sqlite/checkpoint-state.test.ts (new), storage.test.ts, json-values.test.ts, loop-deletion.test.ts and the four historical fixture files listed above.
+- API: src/testing/thread-history.ts, src/thread-history.test.ts, src/wait-identity.test.ts and scripts/thread-read-measure.ts. MCP: src/thread-history.test.ts. Web: e2e/thread-history.spec.ts.
+- Docs: docs/05-execution-engine.md, docs/07-api-and-streaming.md, ADR-0053 and CHANGELOG.md (existing #116 bullet, including port/migration upgrade notes). No generated route/node schema changed; check:docs passed.
+
+The delayed snapshot adapter and all test decorators forward the required state. Final code captures remain text: [engine regression](round-3-engine-regression.test.ts.txt), [storage regression](round-3-storage-regression.test.ts.txt), [REST regression](round-3-api-regression.test.ts.txt), [MCP regression](round-3-mcp-regression.test.ts.txt), [measurement script](round-3-thread-read-measure.ts.txt). useRunEvents, the independent QA folder, editor restore/routing tests, protected upgrade implementation, #255 and #185 are unchanged. No dependency or ownership boundary is expanded.
+
+**Evidence integrity and handoff.** Added captures live only in this folder; code copies end in .txt, local profile paths are %USERPROFILE%, and retained sizes/hashes are computed from final bytes in the candidate and evidence manifests. The previous checker capture is preserved as the round-2 capture. The first [checker preflight](round-3-checker-preflight.log.txt) exposed a report-copy suffix that its bare-name parser split; the report copy was renamed to a plain .txt name before the final check. No new capture exceeds 1,000,000 bytes; existing NOT-KEPT entries keep their historical provenance. Final checker, after final artifact formatting and integrity verification:
+
+```text
+docs\qa\2026-10-23-wp-g1-116: 174 files, 282 citations, 5 recorded as not kept, 0 missing
+```
+
+[Current checker capture](qa-refs.log.txt). The invoked command is node %USERPROFILE%\.claude\codex-runs\GraphGoblin\tools\check-qa-refs.mjs docs\qa\2026-10-23-wp-g1-116.
+
+Implementation and B1/N1/N3 regressions are complete. Full local package gates remain failed/unqualified as shown, with no claim of clean CI or acceptance. PR #397 CI is the clean full-suite signal. The orchestrator must commit, then run independent QA and audit round 2; renumber the additive migration if #389 lands first. Disposable stores/test artifacts are retained for orchestrator cleanup. No commit, push, merge, rebase, stash, branch switch, index change, sub-agent, owner app/store access, provider turn or manual directory deletion was performed.
+
+### Bounded current-thread reads and measurements (round 2, superseded proof)
 
 `RunManager.getThread` requests `events.read(runId, checkpoint.seq - 1)` and requires the first returned event's sequence to equal the checkpoint's. It derives a small replay state only at provable boundaries, then calls the same domain `reconcileThread` owner:
 
@@ -55,7 +174,7 @@ Reference checker, run after the final gates and artifact formatting:
 docs\qa\2026-10-23-wp-g1-116: 91 files, 152 citations, 5 recorded as not kept, 0 missing
 ```
 
-[Reference-checker capture](qa-refs.log.txt). The checker is invoked last with Node 22 using the orchestrator-provided script and this folder as its argument.
+[Round-2 reference-checker capture](round-2-qa-refs.log.txt). The checker is invoked last with Node 22 using the orchestrator-provided script and this folder as its argument.
 
 ## 3. Files changed
 

@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { writeFile } from 'node:fs/promises';
+import { createThreadHistoryFixture } from '@graphgoblin/api/testing';
+import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { createMcpServer } from './dist/index.js';
+const hash = value => createHash('sha256').update(value).digest('hex');
+const start = nodeId => ({ type:'node.started', nodeId, kind:'mutate', attempt:1, configHash:'0'.repeat(64) });
+const finish = (nodeId, path, value) => ({ type:'node.finished', nodeId, durationMs:1, patch:[{ op:'add', path, value }] });
+const observations=[];
+for (const kind of ['six-event-duplicate','recovery-written-checkpoint']) {
+ const t=await createThreadHistoryFixture();
+ const apiUrl=await t.app.listen({host:'127.0.0.1',port:5934});
+ const server=createMcpServer({apiUrl});
+ const client=new Client({name:'wp-g1-116-round-3',version:'1'});
+ const [ct,st]=InMemoryTransport.createLinkedPair();
+ await server.connect(st); await client.connect(ct);
+ let runId;
+ try {
+  if(kind==='six-event-duplicate')t.manager.stop();
+  const response=await t.app.inject({method:'POST',url:'/loops/'+t.loopId+'/runs',payload:{}});
+  assert.equal(response.statusCode,202); const run=response.json().run; runId=run.id;
+  if(kind==='six-event-duplicate') {
+   await t.repos.events.append(runId,[start('a'),finish('a','/vars/items',['a']),start('b'),finish('a','/vars/items/-','duplicate')]);
+   const prefix=await t.repos.events.read(runId),seq=prefix.at(-1).seq,seed=await t.repos.runs.getInitialThread(runId);
+   await t.repos.runs.saveThread(runId,reconcileThread(seed,prefix),seq,replayStateAt(prefix,seq));
+   await t.repos.events.append(runId,[finish('b','/vars/items/-','b')]);
+  } else {
+   await t.manager.waitForIdle();assert.equal((await t.manager.getRun(runId)).status,'failed');
+   await t.snapshots.flush();t.manager.stop();
+   await t.repos.events.append(runId,[finish('prepare','/vars/duplicate',true)]);
+   await t.repos.runs.update(runId,{status:'running',finishedAt:undefined});await t.repos.runs.clearFinalized(runId);
+   await t.manager.start();await t.manager.waitForIdle();
+   assert.equal((await t.manager.getRun(runId)).status,'failed');await t.snapshots.flush();
+   await t.repos.events.append(runId,[finish('work','/vars/completed',true)]);
+  }
+  const checkpoint=await t.repos.runs.getThreadCheckpoint(runId);
+  assert.deepEqual(checkpoint.replayState,{strict:true,openNodeId:kind==='six-event-duplicate'?'b':'work'});
+  const before=await t.bytes(runId),history=await t.repos.events.read(runId),seed=await t.repos.runs.getInitialThread(runId);
+  const full=reconcileThread(seed,history),http=await fetch(apiUrl+'/runs/'+runId+'/thread');assert.ok(http.ok);const rest=await http.json();
+  const result=await client.callTool({name:'get_run_thread',arguments:{runId}});assert.ok(!result.isError);const mcp=JSON.parse(result.content.find(c=>c.type==='text').text);
+  assert.deepEqual(rest,full);assert.deepEqual(mcp,full);
+  if(kind==='six-event-duplicate')assert.deepEqual(rest.vars.items,['a','b']);else assert.deepEqual(rest.vars,{prepared:true,completed:true});
+  const after=await t.bytes(runId);assert.equal(after,before);
+  observations.push({kind,checkpoint,history,full,rest,mcp,storedBytesBeforeSha256:hash(before),storedBytesAfterSha256:hash(after),readsUnchanged:true});
+ } finally {
+  await client.close();await server.close();
+  if(runId&&(await t.manager.getRun(runId)).status==='queued')await t.manager.cancel(runId);
+  await t.close();
+ }
+}
+await writeFile(process.env.GG_THREAD_REPRO_OUTPUT,JSON.stringify({runtime:process.version,head:'b8536e38d16ffeb3264bd89f8d380fd13582eb06',observations},null,2)+'\n');
+console.log('Both persisted REST/MCP probes agree with full replay; stored bytes unchanged.');

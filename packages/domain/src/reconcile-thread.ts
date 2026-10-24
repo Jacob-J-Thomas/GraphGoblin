@@ -4,7 +4,7 @@ import { replayStateAt, replayThread, type ThreadReplayEvent, type ReplayState }
 export interface ThreadCheckpoint {
   thread: ContextThread;
   seq: number;
-  /** A bounded reader may supply state proven from this checkpoint event and write order. */
+  /** State recorded by the checkpoint writer; absent snapshots require the full prefix. */
   replayState?: ReplayState;
 }
 

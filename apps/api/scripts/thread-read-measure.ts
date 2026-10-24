@@ -7,7 +7,7 @@ import {
   RunRecordSchema,
   CURRENT_DEFINITION_FORMAT,
 } from '@graphgoblin/contracts';
-import { reconcileThread } from '@graphgoblin/domain';
+import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
 import { RunManager, type EventDraft, type EventStorePort } from '@graphgoblin/engine';
 import { buildApp } from '../src/app.js';
 import { createContainer } from '../src/container.js';
@@ -97,6 +97,7 @@ try {
       run.id,
       reconcileThread(initial, history, undefined, seq),
       seq,
+      replayStateAt(history, seq),
     );
     const ms: number[] = [];
     const counts: typeof reads = [];

@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Reconcile current-thread reads from verified checkpoints and durable event tails; keep open and reloaded inspectors following resumed failed runs without applying unfinished patches or writing execution state. (#116)
+- Reconcile current-thread reads from verified checkpoints and durable event tails; keep open and reloaded inspectors following resumed failed runs without applying unfinished patches or writing execution state. Persist each checkpoint's open-visit replay state so a delayed duplicate completion cannot hide another node's durable patch. **Upgrade:** SQL 0018 adds nullable `thread_snapshot_replay_state`; existing snapshots use full replay until the next checkpoint write. Implementations of `RunRepository.saveThread` must supply `(runId, thread, seq, replayState)`. (#116)
 
 - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
 

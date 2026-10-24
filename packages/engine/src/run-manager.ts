@@ -44,6 +44,7 @@ import {
   renderTemplate,
   reconcileThread,
   replayThread,
+  replayStateAt,
   stableHash,
   stableStringify,
   threadView,
@@ -1063,25 +1064,12 @@ export class RunManager {
   /** Read-only thread through the durable event tail; snapshots are verified caches. */
   async getThread(runId: string): Promise<ContextThread | undefined> {
     const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
-    if (checkpoint) {
+    if (checkpoint?.replayState) {
       const tail = await this.ports.events.read(runId, checkpoint.seq - 1);
-      const boundary = tail[0];
-      if (boundary?.seq === checkpoint.seq) {
-        // One execution token: started/waiting names its open visit. The engine writes a
-        // matching node.finished before checkpointing a completion or appending run.finished,
-        // so those boundaries have strict replay with no open visit. Recovery can checkpoint
-        // other terminal/progress events; their state is ambiguous and needs the full prefix.
-        if (boundary.type === 'node.started' || boundary.type === 'run.waiting')
-          return reconcileThread(checkpoint.thread, tail, {
-            ...checkpoint,
-            replayState: { strict: true, openNodeId: boundary.nodeId },
-          });
-        if (boundary.type === 'node.finished' || boundary.type === 'run.finished')
-          return reconcileThread(checkpoint.thread, tail, {
-            ...checkpoint,
-            replayState: { strict: true },
-          });
-      }
+      // Only the writer can establish which visit was open at this sequence. A completion
+      // may be a delayed duplicate of another node and cannot prove that the visit closed.
+      if (tail[0]?.seq === checkpoint.seq)
+        return reconcileThread(checkpoint.thread, tail, checkpoint);
     }
     const initial = await this.ports.runs.getInitialThread(runId);
     if (!initial) return undefined;
@@ -1749,7 +1737,7 @@ export class RunManager {
         // relying on in-memory allocation. Each heartbeat park gets a fresh token.
         const wait: WaitSpec = { ...result.wait, startedSeq, waitId: runId + ':' + startedSeq };
         const seq = await appendAll([{ type: 'run.waiting', nodeId, wait }]);
-        await this.ports.runs.saveThread(runId, thread, seq);
+        await this.ports.runs.saveThread(runId, thread, seq, { strict: true, openNodeId: nodeId });
         const parked = await this.ports.runs.transition(runId, ['running'], {
           status: 'waiting',
           waiting: wait,
@@ -1808,7 +1796,7 @@ export class RunManager {
           },
           ...queuedWebhooks(result, thread, this.ports.ids),
         ]);
-        await this.ports.runs.saveThread(runId, thread, seq);
+        await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
         await this.finish(run, def, thread, result);
         return;
       }
@@ -1827,7 +1815,7 @@ export class RunManager {
         ...(result.kind === 'done' ? (result.records ?? []) : []),
         finishedDraft,
       ]);
-      await this.ports.runs.saveThread(runId, thread, seq);
+      await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
       const edge = outgoingEdge(def, nodeId, result.route);
       if (!edge) {
         await this.failRun(runId, {
@@ -1864,7 +1852,8 @@ export class RunManager {
     if (isTerminal(run.status)) return true;
     // The snapshot may predate the terminal append: bring it up to the end of the log.
     const thread = await this.loadThread(run, events);
-    await this.ports.runs.saveThread(run.id, thread, (events.at(-1) as RunEvent).seq);
+    const seq = (events.at(-1) as RunEvent).seq;
+    await this.ports.runs.saveThread(run.id, thread, seq, replayStateAt(events, seq));
     const changes: RunRecordChanges =
       terminal.type === 'run.cancelled'
         ? { status: 'cancelled', waiting: undefined }

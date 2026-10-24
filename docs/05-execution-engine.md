@@ -133,6 +133,9 @@ keeps its child. Its timers are re-armed and a child that finished meanwhile is 
 The durable event log determines the thread for both execution and observation. Domain
 `reconcileThread` is the shared owner: start from the actual admitted initial thread, or a
 checkpoint whose sequence exists in the observed history, then replay later durable events.
+Writers persist the open-visit replay state with the snapshot and sequence (ADR-0053); a
+completion event alone cannot prove that a different visit is closed. Current-thread reads
+without stored state replay the full prefix; reads never backfill it.
 An unsequenced checkpoint, one beyond that history, or one beyond a requested historical event
 is ignored. A `node.started` contributes its visit counter; a patch is applied only from a
 durable `node.finished`, once for its open visit. A failed or resumed unfinished node therefore

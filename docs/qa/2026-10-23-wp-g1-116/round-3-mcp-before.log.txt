@@ -1,0 +1,42 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/mcp
+
+ ❯ src/thread-history.test.ts (2 tests | 1 failed | 1 skipped) 5036ms
+   × MCP preserves a different open visit at a persisted delayed-duplicate checkpoint 5033ms
+pnpm.cmd : 
+At line:19 char:1
++ pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/thread-history ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/thread-history.test.ts > MCP preserves a different open visit at a persisted delayed-duplicate checkpoint
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/thread-history.test.ts:61:1
+     59| });
+     60|
+     61| it('MCP preserves a different open visit at a persisted delayed-duplic…
+       | ^
+     62|   const t = await createThreadHistoryFixture();
+     63|   t.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  05:38:57
+   Duration  23.81s (transform 41%, import 37%, tests 22%)
+
+  Transform  transforming modules took 9.29s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\mcp
+

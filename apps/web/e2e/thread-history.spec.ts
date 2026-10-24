@@ -78,8 +78,12 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
     }
     await check('failed');
     // Lose the transport while both tabs hold a terminal event, then resume from another client.
+    const failedPoll = context.waitForEvent('requestfailed', {
+      predicate: (request) => request.url().startsWith(ready.url + '/runs/' + run.id),
+    });
     await context.setOffline(true);
-    await open.waitForTimeout(2500);
+    const outage = await failedPoll;
+    expect(outage.failure()?.errorText).toBeTruthy();
     expect((await request.post(ready.url + '/runs/' + run.id + '/resume')).ok()).toBe(true);
     await action('working');
     await context.setOffline(false);
@@ -88,7 +92,14 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
     await check('succeeded');
     await action('flush');
     if (process.env['GG_THREAD_EVIDENCE'])
-      await writeFile(process.env['GG_THREAD_EVIDENCE'], JSON.stringify(observations, null, 2));
+      await writeFile(
+        process.env['GG_THREAD_EVIDENCE'],
+        JSON.stringify(
+          { outage: { url: outage.url(), error: outage.failure()?.errorText }, observations },
+          null,
+          2,
+        ),
+      );
     for (const item of observations) {
       const expected = {
         prepared: true,

@@ -1,3 +1,4 @@
+import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
 import { buildApp } from './app.js';
 import { createContainer } from './container.js';
 import { loadConfig } from './config.js';
@@ -102,5 +103,62 @@ it('reopens the persisted failed history and reconciles reads without writing it
   } finally {
     await app.close();
     await reopened.stop();
+  }
+});
+
+it('REST preserves a different open visit at a persisted delayed-duplicate checkpoint', async () => {
+  const t = await createThreadHistoryFixture();
+  t.manager.stop();
+  let runId: string | undefined;
+  try {
+    const response = await t.app.inject({
+      method: 'POST',
+      url: '/loops/' + t.loopId + '/runs',
+      payload: {},
+    });
+    const { run } = response.json<{ run: RunRecord }>();
+    runId = run.id;
+    const initial = (await t.repos.runs.getInitialThread(run.id))!;
+    await t.repos.events.append(run.id, [
+      { type: 'node.started', nodeId: 'a', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
+      {
+        type: 'node.finished',
+        nodeId: 'a',
+        durationMs: 1,
+        patch: [{ op: 'add', path: '/vars/items', value: ['a'] }],
+      },
+      { type: 'node.started', nodeId: 'b', kind: 'mutate', attempt: 1, configHash: '0'.repeat(64) },
+      {
+        type: 'node.finished',
+        nodeId: 'a',
+        durationMs: 1,
+        patch: [{ op: 'add', path: '/vars/items/-', value: 'duplicate' }],
+      },
+    ]);
+    const prefix = await t.repos.events.read(run.id);
+    const seq = prefix.at(-1)!.seq;
+    await t.repos.runs.saveThread(
+      run.id,
+      reconcileThread(initial, prefix),
+      seq,
+      replayStateAt(prefix, seq),
+    );
+    await t.repos.events.append(run.id, [
+      {
+        type: 'node.finished',
+        nodeId: 'b',
+        durationMs: 1,
+        patch: [{ op: 'add', path: '/vars/items/-', value: 'b' }],
+      },
+    ]);
+    const before = await t.bytes(run.id);
+    const result = await t.app.inject('/runs/' + run.id + '/thread');
+    expect(result.statusCode).toBe(200);
+    expect(result.json<ContextThread>().vars.items).toEqual(['a', 'b']);
+    expect(result.json()).toEqual(reconcileThread(initial, await t.repos.events.read(run.id)));
+    expect(await t.bytes(run.id)).toBe(before);
+  } finally {
+    if (runId) await t.manager.cancel(runId);
+    await t.close();
   }
 });
