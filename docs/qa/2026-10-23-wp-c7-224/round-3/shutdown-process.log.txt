@@ -1,0 +1,39 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/shutdown-process.test.ts (11 tests | 1 failed | 3 skipped) 171175ms
+   × native drain rechecks a wake during delivery cleanup and completes its required child before closing controls 45334ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-process.test.ts > native drain rechecks a wake during delivery cleanup and completes its required child before closing controls
+TypeError: fetch failed
+ ❯ src/shutdown-process.test.ts:179:30
+    177|     held!.end('accepted');
+    178|     await eventually(async () => {
+    179|       const events = (await (await a.call('GET', `/runs/${delivered.id…
+       |                              ^
+    180|         items: { type: string }[];
+    181|       };
+ ❯ eventually src/testing/api-subprocess.ts:18:12
+ ❯ src/shutdown-process.test.ts:178:5
+
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:5766
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4078, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 5766 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed | 3 skipped (11)
+   Start at  07:47:25
+   Duration  172.06s (tests 100%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts --maxWorkers=1", "exit": 1, "seconds": 174.28}

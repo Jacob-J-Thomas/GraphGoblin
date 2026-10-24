@@ -3,7 +3,7 @@ import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/doma
 import { ProbeBodyOverflowError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import { PROBE_MAX_BODY_BYTES, type ProbeResponse } from '../ports.js';
-import { jsonOrText, outputPatch, toJson } from './common.js';
+import { jsonOrText, outputPatch, toJson, withTimeout } from './common.js';
 
 async function probe(
   ctx: NodeContext<'heartbeat'>,
@@ -49,21 +49,46 @@ async function probe(
     case 'script': {
       const args: string[] = [];
       for (const arg of spec.args) args.push(await renderTemplate(arg, view));
-      const result = await ctx.ports.scripts.run({
-        command: spec.command,
-        args,
-        cwd: await ctx.services.workingDirectory(),
-        env: {},
-        timeoutMs: spec.timeoutSeconds * 1000,
-        signal: ctx.signal,
-      });
+      const cwd = await ctx.services.workingDirectory();
+      // Preserve the first abort cause while native cleanup returns. An authored probe
+      // timeout remains predicate input; an unconfirmed stop interruption owns a veto.
+      const timeout = withTimeout(
+        ctx.signal,
+        spec.timeoutSeconds,
+        () => new Error('probe timeout'),
+      );
+      let result;
+      try {
+        result = await ctx.ports.scripts.run({
+          command: spec.command,
+          args,
+          cwd,
+          env: {},
+          timeoutMs: spec.timeoutSeconds * 1000,
+          signal: timeout.signal,
+        });
+      } finally {
+        timeout.dispose();
+      }
+      if (
+        result.terminationUnconfirmed &&
+        timeout.signal.reason instanceof RunFailureError &&
+        timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP'
+      ) {
+        throw new RunFailureError(
+          'SCRIPT_TERMINATION_UNCONFIRMED',
+          'Heartbeat probe termination was not confirmed during explicit stop',
+          { nodeId: ctx.node.id, resumable: false, details: { interruptedByStop: true } },
+        );
+      }
       return toJson({
         exitCode: result.exitCode,
         // This UTF-16 display slice is not a byte cap.
         stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
         stderr: result.stderr.slice(-4000),
         json: jsonOrText(result.stdout),
-        timedOut: result.timedOut,
+        timedOut: result.timedOut || timeout.timedOut(),
+        ...(result.terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
       });
     }
     case 'signal-count': {

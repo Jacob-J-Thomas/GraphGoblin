@@ -1,0 +1,38 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timer becoming due during force
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (9 tests | 1 failed | 8 skipped) 119ms
+   × a timer becoming due during force cleanup remains an unchanged durable park 116ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > a timer becoming due during force cleanup remains an unchanged durable park
+TypeError: e.ports.timers.poll is not a function
+ ❯ src/drain-regressions.test.ts:335:55
+    333|   const forced = manager.forceStop(); await cancelling;
+    334|   try {
+    335|     e.ports.clock.advance(1000); await e.ports.timers.poll(e.ports.clo…
+       |                                                       ^
+    336|     expect(await e.ports.runs.get(parked.id)).toEqual(before);
+    337|   } finally { release(); await forced; manager.stop(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  00:52:16
+   Duration  15.44s (transform 79%, import 20%, tests 1%)
+
+  Transform  transforming modules took 11.48s · 79% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timer becoming due during force", "exit": 1, "seconds": 22.12}

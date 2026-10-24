@@ -33,9 +33,7 @@ export function listening(port: number): Promise<boolean> {
   });
 }
 
-async function freePort(): Promise<number> {
-  const start = 5600,
-    count = 100;
+async function freePort(start = 5600, count = 100): Promise<number> {
   const offset = Math.floor(Math.random() * count);
   for (let index = 0; index < count; index++) {
     const port = start + ((offset + index) % count);
@@ -120,7 +118,9 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
   };
 }
 
-export async function createApiProcessFixture() {
+export async function createApiProcessFixture(
+  options: { prefix?: string; portStart?: number; portCount?: number } = {},
+) {
   try {
     await access(entry);
   } catch (cause) {
@@ -128,10 +128,15 @@ export async function createApiProcessFixture() {
       cause,
     });
   }
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-process-'));
+  const dataDir = await mkdtemp(
+    join(tmpdir(), options.prefix ?? process.env.GG_TEST_STORE_PREFIX ?? 'gg-api-process-'),
+  );
   const databaseFile = join(dataDir, 'graphgoblin.db');
   const lockPath = join(dataDir, 'graphgoblin.lock');
-  const port = await freePort();
+  const port = await freePort(
+    options.portStart ?? Number(process.env.GG_TEST_PORT_START ?? 5600),
+    options.portCount ?? Number(process.env.GG_TEST_PORT_COUNT ?? 100),
+  );
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(
       ([name]) =>

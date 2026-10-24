@@ -4353,6 +4353,8 @@
               "HARNESS_TRANSPORT_FAILED",
               "HARNESS_OUTPUT_LIMIT",
               "RUN_DEADLINE_EXCEEDED",
+              "RUN_INTERRUPTED_BY_STOP",
+              "SCRIPT_TERMINATION_UNCONFIRMED",
               "HARNESS_DELIVERY_UNCERTAIN",
               "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
@@ -13201,6 +13203,8 @@
               "HARNESS_TRANSPORT_FAILED",
               "HARNESS_OUTPUT_LIMIT",
               "RUN_DEADLINE_EXCEEDED",
+              "RUN_INTERRUPTED_BY_STOP",
+              "SCRIPT_TERMINATION_UNCONFIRMED",
               "HARNESS_DELIVERY_UNCERTAIN",
               "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
@@ -17610,6 +17614,252 @@
     }
   },
   "paths": {
+    "/system/shutdown": {
+      "get": {
+        "summary": "Observe gateway drain and force-stop state",
+        "tags": [
+          "system"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Drain, keep waiting, or explicitly force-stop the gateway",
+        "tags": [
+          "system"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "drain",
+                      "wait",
+                      "force"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Liveness check",

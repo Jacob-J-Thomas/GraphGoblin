@@ -1,0 +1,428 @@
+[
+  {
+    "capture": "baseline-blockers-engine.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts",
+    "exit": 1,
+    "seconds": 54.8
+  },
+  {
+    "capture": "baseline-blocker-event.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-admission.test.ts",
+    "exit": 1,
+    "seconds": 142.5
+  },
+  {
+    "capture": "baseline-build.log.txt",
+    "command": "pnpm.cmd build",
+    "exit": 0,
+    "seconds": 261.69
+  },
+  {
+    "capture": "targeted-engine.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts src/drain.test.ts",
+    "exit": 1,
+    "seconds": 18.54
+  },
+  {
+    "capture": "typecheck-iteration.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 2,
+    "seconds": 118.62
+  },
+  {
+    "capture": "targeted-api.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts",
+    "exit": 1,
+    "seconds": 18.48
+  },
+  {
+    "capture": "typecheck-new.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 2,
+    "seconds": 78.78
+  },
+  {
+    "capture": "targeted-engine-current.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts src/drain.test.ts",
+    "exit": 1,
+    "seconds": 11.67
+  },
+  {
+    "capture": "targeted-api-current.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts",
+    "exit": 1,
+    "seconds": 17.65
+  },
+  {
+    "capture": "targeted-corrected.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts",
+    "exit": 1,
+    "seconds": 21.06
+  },
+  {
+    "capture": "targeted-admission-corrected.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-admission.test.ts",
+    "exit": 0,
+    "seconds": 13.94
+  },
+  {
+    "capture": "client-generate.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client generate",
+    "exit": 0,
+    "seconds": 19.89
+  },
+  {
+    "capture": "docs-generate.log.txt",
+    "command": "pnpm.cmd docs:generate",
+    "exit": 0,
+    "seconds": 1.75
+  },
+  {
+    "capture": "timeout-diagnostic.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timeout initiated",
+    "exit": 1,
+    "seconds": 11.53
+  },
+  {
+    "capture": "heartbeat-diagnostic.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t heartbeat unconfirmed",
+    "exit": 0,
+    "seconds": 6.59
+  },
+  {
+    "capture": "targeted-final.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts src/drain.test.ts",
+    "exit": 1,
+    "seconds": 22.06
+  },
+  {
+    "capture": "engine-regressions-observable.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts src/drain.test.ts",
+    "exit": 0,
+    "seconds": 8.92
+  },
+  {
+    "capture": "format.log.txt",
+    "command": "pnpm.cmd format",
+    "exit": 0,
+    "seconds": 202.57
+  },
+  {
+    "capture": "typecheck.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 2,
+    "seconds": 50.67
+  },
+  {
+    "capture": "baseline-drain-error-race.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts -t observation failure during an open drain",
+    "exit": 1,
+    "seconds": 49.16
+  },
+  {
+    "capture": "focused-api-final.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts",
+    "exit": 0,
+    "seconds": 28.19
+  },
+  {
+    "capture": "lint.log.txt",
+    "command": "pnpm.cmd lint",
+    "exit": 0,
+    "seconds": 246.13
+  },
+  {
+    "capture": "check-docs.log.txt",
+    "command": "pnpm.cmd check:docs",
+    "exit": 0,
+    "seconds": 25.02
+  },
+  {
+    "capture": "check-layers.log.txt",
+    "command": "pnpm.cmd check:layers",
+    "exit": 0,
+    "seconds": 8.6
+  },
+  {
+    "capture": "check-deps.log.txt",
+    "command": "pnpm.cmd check:deps",
+    "exit": 0,
+    "seconds": 58.65
+  },
+  {
+    "capture": "baseline-force-parent-park.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t parked parent untouched",
+    "exit": 1,
+    "seconds": 60.35
+  },
+  {
+    "capture": "baseline-force-timer-park.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timer becoming due during force",
+    "exit": 1,
+    "seconds": 22.12
+  },
+  {
+    "capture": "typecheck-final.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 0,
+    "seconds": 316.13
+  },
+  {
+    "capture": "baseline-force-timer-park-corrected.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t timer becoming due during force",
+    "exit": 1,
+    "seconds": 33.17
+  },
+  {
+    "capture": "build.log.txt",
+    "command": "pnpm.cmd build",
+    "exit": 0,
+    "seconds": 90.73
+  },
+  {
+    "capture": "engine-coverage.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage",
+    "exit": 0,
+    "seconds": 87.73
+  },
+  {
+    "capture": "typecheck-complete.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 0,
+    "seconds": 120.53
+  },
+  {
+    "capture": "native-windows.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 247.69
+  },
+  {
+    "capture": "build-complete.log.txt",
+    "command": "pnpm.cmd build",
+    "exit": 0,
+    "seconds": 48.02
+  },
+  {
+    "capture": "baseline-forwarded-force.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-signals.test.ts",
+    "exit": 1,
+    "seconds": 28.48
+  },
+  {
+    "capture": "signals-final.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-signals.test.ts",
+    "exit": 0,
+    "seconds": 3.92
+  },
+  {
+    "capture": "build-signals.log.txt",
+    "command": "pnpm.cmd build",
+    "exit": 0,
+    "seconds": 62.37
+  },
+  {
+    "capture": "format-final.log.txt",
+    "command": "pnpm.cmd exec prettier --write CHANGELOG.md apps/api/scripts/recovery-process.integration.mjs apps/api/scripts/wait-restart.acceptance.mjs apps/api/src/config.ts apps/api/src/container.ts apps/api/src/definition-pins.test.ts apps/api/src/main.test.ts apps/api/src/main.ts apps/api/src/routes/system.ts apps/api/src/shutdown-admission.test.ts apps/api/src/shutdown-controller.test.ts apps/api/src/shutdown-process.test.ts apps/api/src/shutdown-signals.test.ts apps/api/src/shutdown-signals.ts apps/api/src/shutdown.test.ts apps/api/src/shutdown.ts apps/api/src/testing/api-subprocess.ts apps/api/src/testing/test-app.ts apps/api/src/triggers/github-recipe.test.ts apps/api/src/triggers/poll-http-bounds.test.ts apps/api/src/triggers/poll.ts apps/api/src/triggers/trigger-service.ts docs/05-execution-engine.md docs/07-api-and-streaming.md docs/11-security-and-distribution.md docs/decisions/ADR-0049-deliberate-shutdown.md docs/guide/07-troubleshooting.md docs/qa/2026-10-23-wp-c7-224/round-2/README.md docs/qa/2026-10-23-wp-c7-224/round-2/baseline-blocker-event.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-blockers-engine.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-build.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-drain-error-race.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-force-parent-park.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-force-timer-park-corrected.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-force-timer-park.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-forwarded-force.result.json docs/qa/2026-10-23-wp-c7-224/round-2/build-complete.result.json docs/qa/2026-10-23-wp-c7-224/round-2/build-signals.result.json docs/qa/2026-10-23-wp-c7-224/round-2/build.result.json docs/qa/2026-10-23-wp-c7-224/round-2/check-deps.result.json docs/qa/2026-10-23-wp-c7-224/round-2/check-docs.result.json docs/qa/2026-10-23-wp-c7-224/round-2/check-layers.result.json docs/qa/2026-10-23-wp-c7-224/round-2/client-generate.result.json docs/qa/2026-10-23-wp-c7-224/round-2/docs-generate.result.json docs/qa/2026-10-23-wp-c7-224/round-2/engine-coverage.result.json docs/qa/2026-10-23-wp-c7-224/round-2/engine-regressions-observable.result.json docs/qa/2026-10-23-wp-c7-224/round-2/focused-api-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/format.result.json docs/qa/2026-10-23-wp-c7-224/round-2/heartbeat-diagnostic.result.json docs/qa/2026-10-23-wp-c7-224/round-2/lint.result.json docs/qa/2026-10-23-wp-c7-224/round-2/native-windows.result.json docs/qa/2026-10-23-wp-c7-224/round-2/signals-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-admission-corrected.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-api-current.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-api.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-corrected.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-engine-current.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-engine.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/timeout-diagnostic.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-complete.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-iteration.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-new.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck.result.json docs/reference/api.md packages/api-client/src/generated/schema.ts packages/engine/src/drain-regressions.test.ts packages/engine/src/drain.test.ts packages/engine/src/errors.ts packages/engine/src/handlers/heartbeat.ts packages/engine/src/handlers/inference.ts packages/engine/src/handlers/script.ts packages/engine/src/run-manager.ts packages/infrastructure/src/process/shutdown.test.ts packages/infrastructure/src/scheduler/cron-scheduler.test.ts packages/infrastructure/src/scheduler/cron-scheduler.ts",
+    "exit": 1,
+    "seconds": 3.71
+  },
+  {
+    "capture": "format-final-node22.log.txt",
+    "command": "pnpm.cmd exec prettier --write CHANGELOG.md apps/api/scripts/recovery-process.integration.mjs apps/api/scripts/wait-restart.acceptance.mjs apps/api/src/config.ts apps/api/src/container.ts apps/api/src/definition-pins.test.ts apps/api/src/main.test.ts apps/api/src/main.ts apps/api/src/routes/system.ts apps/api/src/shutdown-admission.test.ts apps/api/src/shutdown-controller.test.ts apps/api/src/shutdown-process.test.ts apps/api/src/shutdown-signals.test.ts apps/api/src/shutdown-signals.ts apps/api/src/shutdown.test.ts apps/api/src/shutdown.ts apps/api/src/testing/api-subprocess.ts apps/api/src/testing/test-app.ts apps/api/src/triggers/github-recipe.test.ts apps/api/src/triggers/poll-http-bounds.test.ts apps/api/src/triggers/poll.ts apps/api/src/triggers/trigger-service.ts docs/05-execution-engine.md docs/07-api-and-streaming.md docs/11-security-and-distribution.md docs/decisions/ADR-0049-deliberate-shutdown.md docs/guide/07-troubleshooting.md docs/qa/2026-10-23-wp-c7-224/round-2/README.md docs/qa/2026-10-23-wp-c7-224/round-2/baseline-blocker-event.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-blockers-engine.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-build.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-drain-error-race.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-force-parent-park.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-force-timer-park-corrected.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-force-timer-park.result.json docs/qa/2026-10-23-wp-c7-224/round-2/baseline-forwarded-force.result.json docs/qa/2026-10-23-wp-c7-224/round-2/build-complete.result.json docs/qa/2026-10-23-wp-c7-224/round-2/build-signals.result.json docs/qa/2026-10-23-wp-c7-224/round-2/build.result.json docs/qa/2026-10-23-wp-c7-224/round-2/check-deps.result.json docs/qa/2026-10-23-wp-c7-224/round-2/check-docs.result.json docs/qa/2026-10-23-wp-c7-224/round-2/check-layers.result.json docs/qa/2026-10-23-wp-c7-224/round-2/client-generate.result.json docs/qa/2026-10-23-wp-c7-224/round-2/docs-generate.result.json docs/qa/2026-10-23-wp-c7-224/round-2/engine-coverage.result.json docs/qa/2026-10-23-wp-c7-224/round-2/engine-regressions-observable.result.json docs/qa/2026-10-23-wp-c7-224/round-2/focused-api-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/format-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/format.result.json docs/qa/2026-10-23-wp-c7-224/round-2/heartbeat-diagnostic.result.json docs/qa/2026-10-23-wp-c7-224/round-2/lint.result.json docs/qa/2026-10-23-wp-c7-224/round-2/native-windows.result.json docs/qa/2026-10-23-wp-c7-224/round-2/signals-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-admission-corrected.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-api-current.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-api.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-corrected.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-engine-current.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-engine.result.json docs/qa/2026-10-23-wp-c7-224/round-2/targeted-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/timeout-diagnostic.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-complete.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-final.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-iteration.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck-new.result.json docs/qa/2026-10-23-wp-c7-224/round-2/typecheck.result.json docs/reference/api.md packages/api-client/openapi.json packages/api-client/src/generated/schema.ts packages/engine/src/drain-regressions.test.ts packages/engine/src/drain.test.ts packages/engine/src/errors.ts packages/engine/src/handlers/heartbeat.ts packages/engine/src/handlers/inference.ts packages/engine/src/handlers/script.ts packages/engine/src/run-manager.ts packages/infrastructure/src/process/shutdown.test.ts packages/infrastructure/src/scheduler/cron-scheduler.test.ts packages/infrastructure/src/scheduler/cron-scheduler.ts",
+    "exit": 0,
+    "seconds": 23.4
+  },
+  {
+    "capture": "infrastructure-coverage.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1",
+    "exit": 1,
+    "seconds": 815.38
+  },
+  {
+    "capture": "client-coverage.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage",
+    "exit": 1,
+    "seconds": 104.33
+  },
+  {
+    "capture": "api-coverage.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage",
+    "exit": 1,
+    "seconds": 1262.1
+  },
+  {
+    "capture": "recovery-process.log.txt",
+    "command": "pnpm.cmd test:recovery-process",
+    "exit": 0,
+    "seconds": 66.37
+  },
+  {
+    "capture": "wait-restart.log.txt",
+    "command": "pnpm.cmd test:wait-restart",
+    "exit": 0,
+    "seconds": 188.59
+  },
+  {
+    "capture": "baseline-heartbeat-force.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --testNamePattern force retains ownership when its heartbeat --maxWorkers=1",
+    "exit": 1,
+    "seconds": 51.22
+  },
+  {
+    "capture": "sqlite-upgrade-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1",
+    "exit": 1,
+    "seconds": 274.58
+  },
+  {
+    "capture": "baseline-heartbeat-force-corrected.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --testNamePattern force retains ownership when its heartbeat --maxWorkers=1",
+    "exit": 1,
+    "seconds": 25.94
+  },
+  {
+    "capture": "client-templates-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client exec vitest run src/templates.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 44.48
+  },
+  {
+    "capture": "typecheck-round2-final.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 0,
+    "seconds": 195.8
+  },
+  {
+    "capture": "format-heartbeat.log.txt",
+    "command": "pnpm.cmd exec prettier --write packages/engine/src/drain-regressions.test.ts packages/engine/src/handlers/heartbeat.ts docs/decisions/ADR-0049-deliberate-shutdown.md apps/api/src/main.test.ts",
+    "exit": 0,
+    "seconds": 37.22
+  },
+  {
+    "capture": "heartbeat-causality.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 79.85
+  },
+  {
+    "capture": "lint-round2-final.log.txt",
+    "command": "pnpm.cmd lint",
+    "exit": 0,
+    "seconds": 330.21
+  },
+  {
+    "capture": "api-main-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 142.56
+  },
+  {
+    "capture": "format-fixture-fence.log.txt",
+    "command": "pnpm.cmd exec prettier --write apps/api/src/main.test.ts",
+    "exit": 0,
+    "seconds": 2.21
+  },
+  {
+    "capture": "api-shutdown-process-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 158.39
+  },
+  {
+    "capture": "api-subloop-restart-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers=1",
+    "exit": 1,
+    "seconds": 356.23
+  },
+  {
+    "capture": "api-github-recipe-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/triggers/github-recipe.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 40.0
+  },
+  {
+    "capture": "api-catalog-package-isolated.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/templates/catalog-package.test.ts --maxWorkers=1",
+    "exit": 0,
+    "seconds": 20.8
+  },
+  {
+    "capture": "engine-coverage-final.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage",
+    "exit": 0,
+    "seconds": 84.57
+  },
+  {
+    "capture": "typecheck-heartbeat-final.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 0,
+    "seconds": 225.1
+  },
+  {
+    "capture": "lint-heartbeat-final.log.txt",
+    "command": "pnpm.cmd lint",
+    "exit": 0,
+    "seconds": 208.47
+  },
+  {
+    "capture": "format-cancel-control.log.txt",
+    "command": "pnpm.cmd exec prettier --write apps/api/src/shutdown.test.ts",
+    "exit": 0,
+    "seconds": 4.01
+  },
+  {
+    "capture": "build-heartbeat-final.log.txt",
+    "command": "pnpm.cmd build",
+    "exit": 0,
+    "seconds": 84.03
+  },
+  {
+    "capture": "api-coverage-serial.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 --coverage.reportOnFailure",
+    "exit": 1,
+    "seconds": 1471.03
+  },
+  {
+    "capture": "client-coverage-serial.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage --maxWorkers=1",
+    "exit": 0,
+    "seconds": 43.27
+  },
+  {
+    "capture": "check-docs-final.log.txt",
+    "command": "pnpm.cmd check:docs",
+    "exit": 0,
+    "seconds": 1.75
+  },
+  {
+    "capture": "infrastructure-coverage-diagnostic.log.txt",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure",
+    "exit": 1,
+    "seconds": 383.82
+  },
+  {
+    "capture": "typecheck-handoff.log.txt",
+    "command": "pnpm.cmd typecheck",
+    "exit": 0,
+    "seconds": 93.09
+  },
+  {
+    "capture": "lint-handoff.log.txt",
+    "command": "pnpm.cmd lint",
+    "exit": 0,
+    "seconds": 167.25
+  },
+  {
+    "capture": "format-evidence.log.txt",
+    "command": "pnpm.cmd exec prettier --write docs/qa/2026-10-23-wp-c7-224/round-2/**/*.{md,json}",
+    "exit": 0,
+    "seconds": 2.4
+  },
+  {
+    "capture": "format-check-final.log.txt",
+    "command": "pnpm.cmd format:check",
+    "exit": 0,
+    "seconds": 133.92
+  }
+]

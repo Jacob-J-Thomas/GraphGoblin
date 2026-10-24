@@ -1,0 +1,2097 @@
+{
+  "name": "03b-admission",
+  "startedAt": "2026-10-24T08:14:45.158Z",
+  "endedAt": "2026-10-24T08:15:33.739Z",
+  "checks": [
+    {
+      "name": "manual refuses 503",
+      "pass": true,
+      "actual": 503,
+      "expected": 503
+    },
+    {
+      "name": "webhook refuses 503",
+      "pass": true,
+      "actual": 503,
+      "expected": 503
+    },
+    {
+      "name": "Event refuses 503 before recording",
+      "pass": true,
+      "actual": 503,
+      "expected": 503
+    },
+    {
+      "name": "replay refuses 503",
+      "pass": true,
+      "actual": 503,
+      "expected": 503
+    },
+    {
+      "name": "no manual webhook Event cron poll or replay run recorded",
+      "pass": true,
+      "actual": [
+        "01M5PFMP54N85A63MGKDXSESXY"
+      ],
+      "expected": [
+        "01M5PFMP54N85A63MGKDXSESXY"
+      ]
+    },
+    {
+      "name": "no inbound Event or webhook record",
+      "pass": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "name": "cron slot unchanged across multiple due ticks",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5PFMP2Y1YDG1KGZEKEH77N6",
+          "ownerId": "local",
+          "loopId": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+          "versionId": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+          "triggerNodeId": "start",
+          "expression": "*/2 * * * * *",
+          "timezone": "UTC",
+          "missedFirePolicy": "run-once",
+          "enabled": true,
+          "nextFireAt": "2026-10-24T08:15:10.000Z",
+          "createdAt": "2026-10-24T08:15:08.381Z"
+        }
+      ],
+      "expected": [
+        {
+          "id": "01M5PFMP2Y1YDG1KGZEKEH77N6",
+          "ownerId": "local",
+          "loopId": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+          "versionId": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+          "triggerNodeId": "start",
+          "expression": "*/2 * * * * *",
+          "timezone": "UTC",
+          "missedFirePolicy": "run-once",
+          "enabled": true,
+          "nextFireAt": "2026-10-24T08:15:10.000Z",
+          "createdAt": "2026-10-24T08:15:08.381Z"
+        }
+      ]
+    },
+    {
+      "name": "same Event dedupeKey accepted after restart",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    },
+    {
+      "name": "same Event was not consumed during refusal",
+      "pass": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "name": "one Event creates one run",
+      "pass": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "same Event now deduplicates",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "poll key still available after drain",
+      "pass": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "webhook recovers after restart",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    },
+    {
+      "name": "manual recovers after restart",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    }
+  ],
+  "records": [
+    {
+      "at": "2026-10-24T08:14:58.589Z",
+      "kind": "key-cli",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "stdout": "Created API key \"Independent QA\" (id 01M5PFMBGFWCTB3KPT3EJR94HY, scopes *).\nCopy the token now; it is shown only this once and only its hash is stored:\n\n  [disposable-key]\n\nSend it as \"Authorization: Bearer <token>\", or paste it into the web app when it asks for a key.\n",
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-24T08:15:08.168Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:15:08.168Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-admission-tgiFlF",
+      "port": 5860,
+      "pid": 60620
+    },
+    {
+      "at": "2026-10-24T08:15:08.220Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA admission holder",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "admission-holder",
+              "kind": "script",
+              "label": "admission-holder",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-admission-tgiFlF\\\\admission-holder-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-admission-tgiFlF\\\\admission-holder-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "admission-holder"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "admission-holder",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFMNXDC3HZ2HCVVAZKDJED",
+          "ownerId": "local",
+          "name": "QA admission holder",
+          "draftVersionId": "01M5PFMNXDC3HZ2HCVVAZKDJEE",
+          "createdAt": "2026-10-24T08:15:08.204Z",
+          "updatedAt": "2026-10-24T08:15:08.204Z"
+        },
+        "draft": {
+          "id": "01M5PFMNXDC3HZ2HCVVAZKDJEE",
+          "loopId": "01M5PFMNXDC3HZ2HCVVAZKDJED",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA admission holder",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "admission-holder",
+                "label": "admission-holder",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-admission-tgiFlF\\\\admission-holder-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-admission-tgiFlF\\\\admission-holder-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "admission-holder",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "admission-holder",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.204Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.243Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMNXDC3HZ2HCVVAZKDJED/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFMNXDC3HZ2HCVVAZKDJEE",
+          "loopId": "01M5PFMNXDC3HZ2HCVVAZKDJED",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA admission holder",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "admission-holder",
+                "label": "admission-holder",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-admission-tgiFlF\\\\admission-holder-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-admission-tgiFlF\\\\admission-holder-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "admission-holder",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "admission-holder",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.204Z",
+          "publishedAt": "2026-10-24T08:15:08.232Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.259Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA manual",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFMNYW25F0T1TQG0QG55H1",
+          "ownerId": "local",
+          "name": "QA manual",
+          "draftVersionId": "01M5PFMNYW25F0T1TQG0QG55H2",
+          "createdAt": "2026-10-24T08:15:08.252Z",
+          "updatedAt": "2026-10-24T08:15:08.252Z"
+        },
+        "draft": {
+          "id": "01M5PFMNYW25F0T1TQG0QG55H2",
+          "loopId": "01M5PFMNYW25F0T1TQG0QG55H1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA manual",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.252Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.275Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMNYW25F0T1TQG0QG55H1/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFMNYW25F0T1TQG0QG55H2",
+          "loopId": "01M5PFMNYW25F0T1TQG0QG55H1",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA manual",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.252Z",
+          "publishedAt": "2026-10-24T08:15:08.268Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.293Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA webhook",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "webhook",
+                "authentication": {
+                  "type": "none"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFMNZXKZM4AMBVD2716YCY",
+          "ownerId": "local",
+          "name": "QA webhook",
+          "draftVersionId": "01M5PFMNZXKZM4AMBVD2716YCZ",
+          "createdAt": "2026-10-24T08:15:08.285Z",
+          "updatedAt": "2026-10-24T08:15:08.285Z"
+        },
+        "draft": {
+          "id": "01M5PFMNZXKZM4AMBVD2716YCZ",
+          "loopId": "01M5PFMNZXKZM4AMBVD2716YCY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA webhook",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "none"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.285Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.314Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMNZXKZM4AMBVD2716YCY/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFMNZXKZM4AMBVD2716YCZ",
+          "loopId": "01M5PFMNZXKZM4AMBVD2716YCY",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA webhook",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "none"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.285Z",
+          "publishedAt": "2026-10-24T08:15:08.301Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.330Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA Event",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "event",
+                "eventType": "qa-stop"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFMP146CMYBV4ZXVKWW6JY",
+          "ownerId": "local",
+          "name": "QA Event",
+          "draftVersionId": "01M5PFMP146CMYBV4ZXVKWW6JZ",
+          "createdAt": "2026-10-24T08:15:08.324Z",
+          "updatedAt": "2026-10-24T08:15:08.324Z"
+        },
+        "draft": {
+          "id": "01M5PFMP146CMYBV4ZXVKWW6JZ",
+          "loopId": "01M5PFMP146CMYBV4ZXVKWW6JY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA Event",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "qa-stop"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.324Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.346Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMP146CMYBV4ZXVKWW6JY/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFMP146CMYBV4ZXVKWW6JZ",
+          "loopId": "01M5PFMP146CMYBV4ZXVKWW6JY",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA Event",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "qa-stop"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.324Z",
+          "publishedAt": "2026-10-24T08:15:08.338Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.366Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA cron",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "cron",
+                "expression": "*/2 * * * * *",
+                "timezone": "UTC",
+                "missedFirePolicy": "run-once"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+          "ownerId": "local",
+          "name": "QA cron",
+          "draftVersionId": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+          "createdAt": "2026-10-24T08:15:08.359Z",
+          "updatedAt": "2026-10-24T08:15:08.359Z"
+        },
+        "draft": {
+          "id": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+          "loopId": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA cron",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "cron",
+                  "expression": "*/2 * * * * *",
+                  "timezone": "UTC",
+                  "missedFirePolicy": "run-once",
+                  "enabled": true
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.359Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.387Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMP27NNBJ2PETEKHHQK4Y/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+          "loopId": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA cron",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "cron",
+                  "expression": "*/2 * * * * *",
+                  "timezone": "UTC",
+                  "missedFirePolicy": "run-once",
+                  "enabled": true
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.359Z",
+          "publishedAt": "2026-10-24T08:15:08.377Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.407Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA poll",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "poll",
+                "intervalSeconds": 5,
+                "probe": {
+                  "kind": "none"
+                },
+                "fireWhen": "true",
+                "dedupeKey": "\"qa-poll-key\""
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFMP3E89YJZMGA6SG8ZQR8",
+          "ownerId": "local",
+          "name": "QA poll",
+          "draftVersionId": "01M5PFMP3FG7RTEMAVZ4JPAHZT",
+          "createdAt": "2026-10-24T08:15:08.398Z",
+          "updatedAt": "2026-10-24T08:15:08.398Z"
+        },
+        "draft": {
+          "id": "01M5PFMP3FG7RTEMAVZ4JPAHZT",
+          "loopId": "01M5PFMP3E89YJZMGA6SG8ZQR8",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA poll",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "poll",
+                  "intervalSeconds": 5,
+                  "probe": {
+                    "kind": "none"
+                  },
+                  "fireWhen": "true",
+                  "dedupeKey": "\"qa-poll-key\"",
+                  "enabled": true
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.398Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.426Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMP3E89YJZMGA6SG8ZQR8/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFMP3FG7RTEMAVZ4JPAHZT",
+          "loopId": "01M5PFMP3E89YJZMGA6SG8ZQR8",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA poll",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "poll",
+                  "intervalSeconds": 5,
+                  "probe": {
+                    "kind": "none"
+                  },
+                  "fireWhen": "true",
+                  "dedupeKey": "\"qa-poll-key\"",
+                  "enabled": true
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:15:08.398Z",
+          "publishedAt": "2026-10-24T08:15:08.417Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.437Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/loops/01M5PFMNZXKZM4AMBVD2716YCY/triggers",
+      "status": 200,
+      "data": {
+        "schedules": [],
+        "webhooks": [
+          {
+            "id": "01M5PFMP0H0CC7FQJDSHX07KF7",
+            "ownerId": "local",
+            "loopId": "01M5PFMNZXKZM4AMBVD2716YCY",
+            "versionId": "01M5PFMNZXKZM4AMBVD2716YCZ",
+            "triggerNodeId": "start",
+            "path": "/hooks/YLHj9reGTLHE9K4UK94IY3ndk1qLNNYOFJhpKlfjixo",
+            "authentication": {
+              "type": "none"
+            },
+            "configurationAvailable": true,
+            "body": {
+              "type": "json"
+            },
+            "eventType": {
+              "source": "constant",
+              "value": "webhook"
+            },
+            "enabled": true,
+            "createdAt": "2026-10-24T08:15:08.304Z"
+          }
+        ],
+        "polls": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.444Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/loops/01M5PFMP27NNBJ2PETEKHHQK4Y/triggers",
+      "status": 200,
+      "data": {
+        "schedules": [
+          {
+            "id": "01M5PFMP2Y1YDG1KGZEKEH77N6",
+            "ownerId": "local",
+            "loopId": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+            "versionId": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+            "triggerNodeId": "start",
+            "expression": "*/2 * * * * *",
+            "timezone": "UTC",
+            "missedFirePolicy": "run-once",
+            "enabled": true,
+            "nextFireAt": "2026-10-24T08:15:10.000Z",
+            "createdAt": "2026-10-24T08:15:08.381Z"
+          }
+        ],
+        "webhooks": [],
+        "polls": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:08.472Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMNXDC3HZ2HCVVAZKDJED/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PFMP54N85A63MGKDXSESXY",
+          "ownerId": "local",
+          "loopId": "01M5PFMNXDC3HZ2HCVVAZKDJED",
+          "versionId": "01M5PFMNXDC3HZ2HCVVAZKDJEE",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA admission holder",
+            "label": "QA admission holder v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PFMP54N85A63MGKDXSESXZ",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:15:08.452Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.428Z",
+      "kind": "condition",
+      "label": "admission hold"
+    },
+    {
+      "at": "2026-10-24T08:15:09.436Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs?limit=500",
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "id": "01M5PFMP54N85A63MGKDXSESXY",
+            "ownerId": "local",
+            "loopId": "01M5PFMNXDC3HZ2HCVVAZKDJED",
+            "versionId": "01M5PFMNXDC3HZ2HCVVAZKDJEE",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA admission holder",
+              "label": "QA admission holder v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5PFMP54N85A63MGKDXSESXZ",
+            "status": "running",
+            "currentNodeId": "admission-holder",
+            "iteration": 1,
+            "createdAt": "2026-10-24T08:15:08.452Z",
+            "startedAt": "2026-10-24T08:15:08.478Z",
+            "lastEventSeq": 5
+          }
+        ],
+        "nextCursor": null
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.442Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/events",
+      "status": 200,
+      "data": {
+        "items": [],
+        "nextCursor": null
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.455Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:15:09.447Z",
+        "choiceAt": "2026-10-24T08:15:09.647Z",
+        "activeRunIds": [
+          "01M5PFMP54N85A63MGKDXSESXY"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.461Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMNYW25F0T1TQG0QG55H1/runs",
+      "body": {},
+      "status": 503,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/shutting-down",
+        "title": "shutting down",
+        "status": 503,
+        "code": "SHUTTING_DOWN",
+        "detail": "Independent admission is closed while the gateway shuts down"
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.468Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/hooks/YLHj9reGTLHE9K4UK94IY3ndk1qLNNYOFJhpKlfjixo",
+      "body": {
+        "value": "drain"
+      },
+      "status": 503,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/webhook-admission-failed",
+        "title": "webhook admission failed",
+        "status": 503,
+        "code": "WEBHOOK_ADMISSION_FAILED",
+        "detail": "the delivery could not be admitted; retry later"
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.474Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/events",
+      "body": {
+        "type": "qa-stop",
+        "payload": {
+          "value": 224
+        },
+        "dedupeKey": "same-after-restart"
+      },
+      "status": 503,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/shutting-down",
+        "title": "shutting down",
+        "status": 503,
+        "code": "SHUTTING_DOWN",
+        "detail": "Independent admission is closed while the gateway shuts down"
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:09.481Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/runs/01M5PFMP54N85A63MGKDXSESXY/replay",
+      "body": {
+        "nodeId": "admission-holder"
+      },
+      "status": 503,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/shutting-down",
+        "title": "shutting down",
+        "status": 503,
+        "code": "SHUTTING_DOWN",
+        "detail": "Independent admission is closed while the gateway shuts down"
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:15.829Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs?limit=500",
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "id": "01M5PFMP54N85A63MGKDXSESXY",
+            "ownerId": "local",
+            "loopId": "01M5PFMNXDC3HZ2HCVVAZKDJED",
+            "versionId": "01M5PFMNXDC3HZ2HCVVAZKDJEE",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA admission holder",
+              "label": "QA admission holder v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5PFMP54N85A63MGKDXSESXZ",
+            "status": "running",
+            "currentNodeId": "admission-holder",
+            "iteration": 1,
+            "createdAt": "2026-10-24T08:15:08.452Z",
+            "startedAt": "2026-10-24T08:15:08.478Z",
+            "lastEventSeq": 5
+          }
+        ],
+        "nextCursor": null
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:15.834Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/events",
+      "status": 200,
+      "data": {
+        "items": [],
+        "nextCursor": null
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:15.840Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/loops/01M5PFMP27NNBJ2PETEKHHQK4Y/triggers",
+      "status": 200,
+      "data": {
+        "schedules": [
+          {
+            "id": "01M5PFMP2Y1YDG1KGZEKEH77N6",
+            "ownerId": "local",
+            "loopId": "01M5PFMP27NNBJ2PETEKHHQK4Y",
+            "versionId": "01M5PFMP27NNBJ2PETEKHHQK4Z",
+            "triggerNodeId": "start",
+            "expression": "*/2 * * * * *",
+            "timezone": "UTC",
+            "missedFirePolicy": "run-once",
+            "enabled": true,
+            "nextFireAt": "2026-10-24T08:15:10.000Z",
+            "createdAt": "2026-10-24T08:15:08.381Z"
+          }
+        ],
+        "webhooks": [],
+        "polls": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:29.153Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:15:29.153Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-admission-tgiFlF",
+      "port": 5860,
+      "pid": 55984
+    },
+    {
+      "at": "2026-10-24T08:15:29.192Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/events",
+      "body": {
+        "type": "qa-stop",
+        "payload": {
+          "value": 224
+        },
+        "dedupeKey": "same-after-restart"
+      },
+      "status": 202,
+      "data": {
+        "id": "01M5PFNACPWBXPCHC6MSF34MFW",
+        "ownerId": "local",
+        "type": "qa-stop",
+        "payload": {
+          "value": 224
+        },
+        "dedupeKey": "same-after-restart",
+        "source": "api",
+        "receivedAt": "2026-10-24T08:15:29.174Z",
+        "runIds": [
+          "01M5PFNACX8PW64N8EK6931GB9"
+        ],
+        "duplicate": false
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:29.207Z",
+      "kind": "condition",
+      "label": "event child run"
+    },
+    {
+      "at": "2026-10-24T08:15:29.317Z",
+      "kind": "condition",
+      "label": "01M5PFNACX8PW64N8EK6931GB9 succeeded"
+    },
+    {
+      "at": "2026-10-24T08:15:29.323Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/events",
+      "body": {
+        "type": "qa-stop",
+        "payload": {
+          "value": 224
+        },
+        "dedupeKey": "same-after-restart"
+      },
+      "status": 202,
+      "data": {
+        "id": "01M5PFNACPWBXPCHC6MSF34MFW",
+        "ownerId": "local",
+        "type": "qa-stop",
+        "payload": {
+          "value": 224
+        },
+        "dedupeKey": "same-after-restart",
+        "source": "api",
+        "receivedAt": "2026-10-24T08:15:29.174Z",
+        "runIds": [
+          "01M5PFNACX8PW64N8EK6931GB9"
+        ],
+        "duplicate": true
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:33.281Z",
+      "kind": "condition",
+      "label": "poll starts after restart"
+    },
+    {
+      "at": "2026-10-24T08:15:33.302Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs?loopId=01M5PFMP3E89YJZMGA6SG8ZQR8",
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "id": "01M5PFNEBP5BW376KY5QKTD0Z6",
+            "ownerId": "local",
+            "loopId": "01M5PFMP3E89YJZMGA6SG8ZQR8",
+            "versionId": "01M5PFMP3FG7RTEMAVZ4JPAHZT",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA poll",
+              "label": "QA poll v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5PFNEBP5BW376KY5QKTD0Z7",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-24T08:15:33.238Z",
+            "startedAt": "2026-10-24T08:15:33.246Z",
+            "finishedAt": "2026-10-24T08:15:33.292Z",
+            "lastEventSeq": 8
+          }
+        ],
+        "nextCursor": null
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:33.320Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/hooks/YLHj9reGTLHE9K4UK94IY3ndk1qLNNYOFJhpKlfjixo",
+      "body": {
+        "value": "restart"
+      },
+      "status": 202,
+      "data": {
+        "accepted": true
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:33.354Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFMNYW25F0T1TQG0QG55H1/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PFNEEXYG9ZN2CXQVEYAPN4",
+          "ownerId": "local",
+          "loopId": "01M5PFMNYW25F0T1TQG0QG55H1",
+          "versionId": "01M5PFMNYW25F0T1TQG0QG55H2",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA manual",
+            "label": "QA manual v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PFNEEXYG9ZN2CXQVEYAPN5",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:15:33.341Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:33.394Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:15:33.372Z",
+        "choiceAt": "2026-10-24T08:15:33.572Z",
+        "activeRunIds": [
+          "01M5PFNEE1BWD0WKKCJER9MXAA",
+          "01M5PFNEEXYG9ZN2CXQVEYAPN4"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:33.735Z",
+      "kind": "exit",
+      "action": "drain",
+      "response": {
+        "status": 202,
+        "data": {
+          "phase": "draining",
+          "graceMs": 200,
+          "startedAt": "2026-10-24T08:15:33.372Z",
+          "choiceAt": "2026-10-24T08:15:33.572Z",
+          "activeRunIds": [
+            "01M5PFNEE1BWD0WKKCJER9MXAA",
+            "01M5PFNEEXYG9ZN2CXQVEYAPN4"
+          ],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ]
+        }
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "elapsedMs": 381,
+      "lockExists": false
+    }
+  ]
+}

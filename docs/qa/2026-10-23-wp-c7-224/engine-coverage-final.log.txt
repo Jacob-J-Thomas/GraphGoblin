@@ -1,0 +1,50 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/drain.test.ts (6 tests | 1 failed) 2878ms
+   × force settles a run that is still committing its timer park 2086ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain.test.ts > force settles a run that is still committing its timer park
+Error: force did not settle the parking run
+ ❯ Timeout.<anonymous> src/drain.test.ts:156:93
+    154|   let timer:ReturnType<typeof setTimeout>|undefined;
+    155|   try {
+    156|     await Promise.race([forced,new Promise<never>((_r,reject)=>{timer=…
+       |                                                                                             ^
+    157|     expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('RUN_…
+    158|   } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 40 passed (41)
+      Tests  1 failed | 1586 passed (1587)
+   Start at  19:31:43
+   Duration  295.15s (import 48%, tests 36%, transform 14%, worker 2%)
+
+     Import  155 modules were evaluated 369 times · 215.55s total, 48% of tracked time
+             ~30.08s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.34% ( 2850/2958 )
+Branches     : 92.32% ( 2202/2385 )
+Functions    : 98.46% ( 513/521 )
+Lines        : 97.67% ( 2608/2670 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2 --coverage.reportOnFailure", "exit": 1, "seconds": 309.36}

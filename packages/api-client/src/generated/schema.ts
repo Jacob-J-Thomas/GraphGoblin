@@ -10,6 +10,108 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/system/shutdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Observe gateway drain and force-stop state */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Drain, keep waiting, or explicitly force-stop the gateway */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        action: "drain" | "wait" | "force";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -3652,7 +3754,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5733,7 +5835,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
