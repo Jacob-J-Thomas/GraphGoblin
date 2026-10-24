@@ -534,3 +534,32 @@ loop controls, pass limits and any authored watchdogs to permit intentionally in
 execution, ending through authored exits, Cancel or an external/resource failure.
 GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
 Authors may use script/decision nodes for their own usage-aware behavior.
+
+## Deliberate shutdown (#224, ADR-0049)
+
+The container owns shutdown state. Normal stop first closes independent admission, then
+stops cron/poll/Event sources and webhook retry admission. Started logical runs and their
+children retain execution slots as needed, input, cancellation, resume of paused active
+work and durable timers. A child created after drain starts is required work and can run;
+unstarted independent queue entries remain durable for the next process. A paused or
+input-waiting active run can hold drain indefinitely.
+
+`GG_SHUTDOWN_GRACE_MS` defaults to 300,000 ms (five minutes), an engineering choice to give
+interactive work time to finish. Expiry exposes `awaiting-choice` and logs the wait/force
+controls; it never cancels work. `wait` has no timer. Logical drain completion is checked
+every 50 ms, an engineering tradeoff between prompt observation and polling cost. Actual
+timer execution retains `GG_TIMER_POLL_MS`.
+
+Explicit force aborts the active family, including parked/queued children, and awaits
+executor cleanup. `run.failed` with `RUN_INTERRUPTED_BY_STOP` retains node and attempt
+(`details.attempt`), marks possible external effects and forbids automatic resume.
+Native tree cleanup errors retain `SCRIPT_TERMINATION_UNCONFIRMED` or
+`HARNESS_TERMINATION_UNCONFIRMED`. Script cleanup allows five seconds for acknowledgement
+and close, an engineering reporting bound after force, not a normal-stop kill deadline.
+Failed cleanup retains HTTP, store and lock in `force-failed` for inspection.
+
+D-021 still stops retry backoffs without cancelling the bounded in-flight delivery attempt;
+pending deliveries and webhook admissions recover on the next start. After applicable
+work and finalization settle, SSE inspectors close, HTTP closes, timers and the manager
+stop, SQLite closes, and only then is ownership released. See [API controls](07-api-and-streaming.md)
+and [signals and Compose](11-security-and-distribution.md). #319 supplies the interactive UI.

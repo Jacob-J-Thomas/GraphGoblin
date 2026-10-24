@@ -64,6 +64,8 @@ describe('built API entry and startup failures', () => {
     expect(await listening(f.port)).toBe(false);
   }, 60_000);
 
+  // A case can launch four cold CLIs; keep each child's 60 s deadline while allowing
+  // aggregate startup under load (measured in docs/qa/2026-10-23-wp-c7-224/native-cli-metrics.log.txt).
   it('dispatches the API-key and preflight CLIs with their real exit codes', async () => {
     const f = await fixture();
     const token = await f.createKey();
@@ -82,7 +84,7 @@ describe('built API entry and startup failures', () => {
     expect(preflight.stdout).toContain('FAIL');
     expect(preflight.stderr).not.toContain('a key name is required');
     expect(await listening(f.port)).toBe(false);
-  }, 60_000);
+  }, 180_000);
 
   it('releases ownership on a real corrupt-database startup fault before HTTP setup', async () => {
     const f = await fixture();
@@ -112,7 +114,7 @@ describe('built API entry and startup failures', () => {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
     expect(await listening(f.port)).toBe(false);
-  }, 60_000);
+  }, 180_000);
 
   // POSIX permits a literal '*' asset name; Win32 rejects it. Static registration then collides
   // with the SPA wildcard, producing a real post-container buildApp failure, unlike corrupt SQL.

@@ -57,6 +57,13 @@ async function probe(
         timeoutMs: spec.timeoutSeconds * 1000,
         signal: ctx.signal,
       });
+      if (result.terminationUnconfirmed)
+        throw new RunFailureError(
+          'SCRIPT_TERMINATION_UNCONFIRMED',
+          'Heartbeat script tree termination was not confirmed',
+          { nodeId: ctx.node.id, resumable: false },
+        );
+
       return toJson({
         exitCode: result.exitCode,
         // This UTF-16 display slice is not a byte cap.

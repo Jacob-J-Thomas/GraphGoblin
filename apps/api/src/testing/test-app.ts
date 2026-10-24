@@ -101,8 +101,14 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     },
     idle: () => container.manager.waitForIdle(),
     async close() {
+      // Teardown is a storage/component boundary, not an operator stop. C2 reopens this store.
+      // If a test did request managed shutdown, settle that sequence before closing resources.
+      if (!['running', 'stopped'].includes(container.shutdown.state().phase)) {
+        container.requestShutdown('force');
+        await container.shutdown.drain();
+      }
       await app.close();
-      await container.stop();
+      await container.dispose();
       await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
     },
   };

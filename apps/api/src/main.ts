@@ -27,15 +27,17 @@ export async function main(): Promise<{
   };
 
   let shuttingDown = false;
+  let forceRequested = false;
   const shutdown = async (signal: string): Promise<void> => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    logger.info({ signal }, 'shutting down');
-    // A signal during startup must not release ownership while recovery is still running.
+    if (shuttingDown) forceRequested = true;
+    else {
+      shuttingDown = true;
+      logger.info({ signal }, 'shutting down');
+    }
+    container?.prepareShutdown();
+    // Startup keeps ownership until recovery settles, including repeated signals.
     await startup.catch(() => undefined);
-    removeSignals();
-    await stop();
-    process.exit(0);
+    container?.requestShutdown(forceRequested ? 'force' : 'drain');
   };
   const onSigint = (): void => void shutdown('SIGINT');
   const onSigterm = (): void => void shutdown('SIGTERM');
@@ -45,14 +47,32 @@ export async function main(): Promise<{
   const startup = (async () => {
     const owner = await createContainer(config, { logger });
     container = owner;
+    if (shuttingDown) owner.prepareShutdown();
     await owner.start();
     const server = await buildApp(owner, { logger });
     app = server;
+    let closing = false;
+    server.addHook('preClose', () => {
+      closing = true;
+      return Promise.resolve();
+    });
     server.addHook('onClose', async () => {
       removeSignals();
-      await owner.stop();
+      if (owner.shutdown.state().phase === 'ready') await owner.dispose();
+      else await owner.stop();
     });
     await server.listen({ host: config.host, port: config.port });
+    // HTTP (including SSE and controls) stays open until logical runs and cleanup settle.
+    void owner
+      .waitForShutdown()
+      .then(async () => {
+        if (closing) return;
+        await server.close();
+        await owner.dispose();
+        removeSignals();
+        process.exit(0);
+      })
+      .catch((error) => logger.error({ error }, 'shutdown failed'));
     logger.info(
       {
         host: config.host,

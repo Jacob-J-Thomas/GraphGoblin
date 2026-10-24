@@ -522,3 +522,24 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
+
+## Gateway shutdown (#224)
+
+`GET /system/shutdown` requires `system:read` and returns `phase`, `graceMs`,
+`activeRunIds`, `choices`, and optional `startedAt`, `choiceAt`, `error`.
+`POST /system/shutdown` requires `system:write` and a strict body
+`{ "action": "drain" | "wait" | "force" }`, returning 202 and that snapshot.
+Phases are running, draining, awaiting-choice, forcing, force-failed, ready and stopped.
+The default grace is five minutes (`GG_SHUTDOWN_GRACE_MS`). At expiry, choices are
+`["wait", "force"]`; wait acknowledges the notice without adding a timeout. Force is
+available before expiry too. Repeated controls are idempotent. The response acknowledges
+the command, not completed cleanup. The process exits after successful cleanup, so ready
+and stopped may not be observable through HTTP. #319 will build the browser interaction.
+
+Independent start/replay and unrelated resume admission returns 503 `SHUTTING_DOWN`
+while draining. Status, input, cancellation, required timers and child continuations remain
+available. `RUN_INTERRUPTED_BY_STOP` is a failed, non-resumable execution with `nodeId`
+and `details.attempt`; possible external effects are explicit. Cleanup failure uses the
+specific termination-unconfirmed code and retains the process/store lock for investigation.
+Execution SSE still closes at a run's terminal event. At final gateway shutdown, inspectors
+of queued work also close without a fabricated terminal event; that work resumes next start.

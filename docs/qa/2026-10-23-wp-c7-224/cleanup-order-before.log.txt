@@ -1,0 +1,42 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/shutdown.test.ts -t acknowledgement precedes --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/infrastructure
+
+ ❯ src/process/shutdown.test.ts (4 tests | 1 failed | 3 skipped) 19ms
+   × completes cleanup when tree acknowledgement precedes root close 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/process/shutdown.test.ts > completes cleanup when tree acknowledgement precedes root close
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/process/shutdown.test.ts:66:16
+     64|   f.killer.emit('close',0);await Promise.resolve();await Promise.resol…
+     65|   f.root.emit('close',null);await Promise.resolve();await Promise.reso…
+     66|   expect(done).toBe(true);
+       |                ^
+     67|   expect(await f.pending).not.toHaveProperty('terminationUnconfirmed');
+     68| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  19:19:36
+   Duration  5.99s (transform 61%, import 33%, tests 3%, worker 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\infrastructure
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/shutdown.test.ts -t acknowledgement precedes --maxWorkers=1", "exit": 1, "seconds": 40.3}
