@@ -699,12 +699,18 @@ it.skipIf(process.platform !== 'win32')(
       }
     });
     await a.call('POST', '/system/shutdown', { action: 'force' });
-    await eventually(
-      async () =>
-        a.child.exited ||
-        ((await (await a.call('GET', '/system/shutdown')).json()) as { phase: string }).phase ===
-          'force-failed',
-    );
+    await eventually(async () => {
+      if (a.child.exited) return true;
+      try {
+        const state = (await (await a.call('GET', '/system/shutdown')).json()) as {
+          phase: string;
+        };
+        return state.phase === 'force-failed';
+      } catch {
+        // A host that confirms termination closes the listener while this poll is in flight.
+        return false;
+      }
+    });
     if (a.child.exited)
       context.skip(
         'D-015 unconfirmed termination requires sandbox taskkill denial; this host confirmed termination',
