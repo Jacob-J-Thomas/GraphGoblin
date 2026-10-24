@@ -1,0 +1,55 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+const dir = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const source = await readFile(join(dir,'runtime.mjs.txt'),'utf8');
+const helpers=source.slice(0,source.indexOf("await scenario('01-drain-family'"))
+  .replace("'runtime-summary.json'","'delivery-corrected-summary.json'")
+  .replace('const deadline = Date.now() + timeout;',"const deadline = Date.now() + (label === 'API listening' ? 60000 : timeout);");
+const exercise=`
+await scenario('11b-delivery-cleanup',async()=>{
+  const {createServer: httpServer}=await import('node:http');
+  const f=await fixture('delivery');
+  const receiverPort=await freePort();
+  const receipts=[];
+  let pending;
+  let held=true;
+  const server=httpServer(async(req,res)=>{
+    let body='';for await(const chunk of req)body+=chunk;
+    receipts.push({at:new Date().toISOString(),key:req.headers['idempotency-key'],body:JSON.parse(body)});
+    if(held) pending=res; else {res.writeHead(200);res.end('ok');}
+  });
+  await new Promise((res,rej)=>{server.once('error',rej);server.listen(receiverPort,'127.0.0.1',res)});
+  try{
+    const def=definition('QA delivery cleanup');
+    def.nodes.at(-1).config={returns:'{"qa":224}',destinations:[{kind:'webhook',url:'http://127.0.0.1:'+receiverPort+'/return'}]};
+    const id=await publish(f,def);
+    const r=await start(f,id);
+    await until('delivery in flight',()=>Boolean(pending));
+    await waitRun(f,r.id,'succeeded');
+    await call(f,'POST','/system/shutdown',{action:'drain'});
+    await sleep(900);
+    check('in-flight delivery retains API and lock',!f.current.ended&&await exists(f.lock));
+    check('delivery holds drain until bounded outcome',(await state(f)).phase,'awaiting-choice');
+    check('no second delivery started during drain',receipts.length,1);
+    held=false;pending.writeHead(503);pending.end('try after restart');
+    const exit=await f.current.exit;
+    check('drain records delivery outcome and exits',exit.code,0);
+    check('no retry launched while stopping',receipts.length,1);
+    note('delivery-before-restart',{receipts});
+    await boot(f);
+    await until('delivery recovered',()=>receipts.length===2,20000);
+    check('same delivery key after restart',receipts[1].key,receipts[0].key);
+    const re=await until('delivery succeeded recorded',async()=>{const e=await events(f,r.id);return e.some(x=>x.type==='delivery.succeeded')&&e});
+    check('execution completed once across return retry',re.filter(e=>e.type==='run.finished').length,1);
+    note('delivery-after-restart',{receipts,events:re});
+    await stop(f);
+  }finally{
+    pending?.end();server.closeAllConnections();await new Promise(res=>server.close(res));
+  }
+});
+console.log(JSON.stringify(summary));
+process.exitCode=summary.some(s=>s.error||s.failed.length)?1:0;
+`;
+const generated=helpers+exercise;
+await writeFile(join(dir,'delivery-corrected-generated.mjs.txt'),generated);
+await import('data:text/javascript;base64,'+Buffer.from(generated).toString('base64'));

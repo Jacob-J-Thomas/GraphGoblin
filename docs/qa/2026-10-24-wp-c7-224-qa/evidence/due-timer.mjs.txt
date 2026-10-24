@@ -1,0 +1,41 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+const dir = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const source = await readFile(join(dir, 'runtime.mjs.txt'), 'utf8');
+const helpers = source.slice(0, source.indexOf("await scenario('01-drain-family'"))
+  .replace("'runtime-summary.json'", "'due-summary.json'")
+  .replace('const deadline = Date.now() + timeout;', "const deadline = Date.now() + (label === 'API listening' ? 60000 : timeout);");
+const exercise = `
+await scenario('10-already-due-timer',async()=>{
+  const f=await fixture('already-due',{GG_TIMER_POLL_MS:'60000'});
+  const id=await publish(f,definition('QA already due timer',[timerNode(1)]));
+  const due=await start(f,id); await waitRun(f,due.id,'waiting');
+  const paused=await start(f,id); await waitRun(f,paused.id,'waiting');
+  await call(f,'POST','/runs/'+paused.id+'/pause',{});
+  const pausedBefore=await run(f,paused.id,false);
+  const h=held(f,'due-keeper');
+  const holder=await publish(f,definition('QA due keeper',[h.node]));
+  const hold=await start(f,holder); await until('due keeper started',()=>exists(h.marker));
+  await sleep(1200);
+  check('timer really due and still waiting before drain',(await run(f,due.id,false)).status,'waiting');
+  const untilAt=(await run(f,due.id)).waiting.until;
+  check('due wall time precedes stop',Date.parse(untilAt)<Date.now());
+  await call(f,'POST','/system/shutdown',{action:'drain'});
+  await waitRun(f,due.id,'succeeded');
+  check('drain delivers already-due timer before normal poll', (await run(f,due.id,false)).status,'succeeded');
+  check('paused overdue timer not woken by drain',await run(f,paused.id,false),pausedBefore);
+  await events(f,due.id);
+  await writeFile(h.release,'finish'); check('due timer drain clean exit',(await f.current.exit).code,0);
+  f.env.GG_TIMER_POLL_MS='50'; await boot(f);
+  check('overdue pause preserved across restart',await run(f,paused.id,false),pausedBefore);
+  check('resume overdue pause accepted',(await call(f,'POST','/runs/'+paused.id+'/resume',{})).status,200);
+  await waitRun(f,paused.id,'succeeded');
+  check('resumed overdue pause finishes once',(await events(f,paused.id)).filter(e=>e.type==='node.finished'&&e.nodeId==='timer').length,1);
+  await stop(f);
+});
+console.log(JSON.stringify(summary));
+process.exitCode=summary.some(s=>s.error||s.failed.length)?1:0;
+`;
+const generated=helpers+exercise;
+await writeFile(join(dir,'due-generated.mjs.txt'),generated);
+await import('data:text/javascript;base64,'+Buffer.from(generated).toString('base64'));

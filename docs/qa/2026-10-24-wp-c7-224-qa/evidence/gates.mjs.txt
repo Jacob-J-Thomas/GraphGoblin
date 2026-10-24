@@ -1,0 +1,55 @@
+import { spawn } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+const out = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const tasks = [
+  ['typecheck', 'typecheck'],
+  ['lint', 'lint'],
+  ['layers', 'check:layers'],
+  ['deps', 'check:deps'],
+  ['docs', 'check:docs'],
+  ['engine-coverage', '--filter @graphgoblin/engine test:coverage'],
+  ['contracts-coverage', '--filter @graphgoblin/contracts test:coverage'],
+  ['api-focused', '--filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown.test.ts src/shutdown-admission.test.ts --maxWorkers=1'],
+  ['infra-focused', '--filter @graphgoblin/infrastructure exec vitest run src/process/shutdown.test.ts src/scheduler/cron-scheduler.test.ts --maxWorkers=1'],
+];
+const results = [];
+const scrub = v => v.replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'), '%USERPROFILE%');
+async function command(cmd) {
+  const startedAt = new Date().toISOString();
+  const t = Date.now();
+  const child = spawn('cmd.exe', ['/d','/s','/c', cmd], { windowsHide: true, env: process.env, stdio: ['ignore','pipe','pipe'] });
+  let output = '';
+  child.stdout.on('data', b => output += b);
+  child.stderr.on('data', b => output += b);
+  const exit = await new Promise((res,rej) => { child.on('error',rej); child.on('close',(code,signal) => res({code,signal})); });
+  return { cmd, startedAt, elapsedMs: Date.now()-t, ...exit, output: scrub(output) };
+}
+for (const [name, task] of tasks) {
+  console.log('START ' + name);
+  const result = await command('pnpm.cmd ' + task);
+  await writeFile(join(out, name + '.log.txt'), result.output);
+  const { output, ...metadata } = result;
+  results.push({ name, ...metadata });
+  console.log(JSON.stringify({ name, ...metadata }));
+  // Only the user-authorized pnpm store-lock failure permits tool-binary fallback.
+  if (result.output.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')) {
+    const fallbacks = {
+      typecheck: 'node_modules\\.bin\\turbo.cmd run typecheck',
+      lint: 'node_modules\\.bin\\turbo.cmd run lint',
+      layers: 'node tooling/scripts/check-layers.mjs',
+      deps: 'node_modules\\.bin\\depcruise.cmd packages apps --config .dependency-cruiser.cjs',
+      docs: 'node_modules\\.bin\\turbo.cmd run build --filter=@graphgoblin/contracts && node tooling/scripts/gen-docs.mjs --check',
+      'engine-coverage': 'cd packages/engine && ..\\..\\node_modules\\.bin\\vitest.cmd run --coverage',
+      'contracts-coverage': 'cd packages/contracts && ..\\..\\node_modules\\.bin\\vitest.cmd run --coverage',
+      'api-focused': 'cd apps/api && ..\\..\\node_modules\\.bin\\vitest.cmd run src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown.test.ts src/shutdown-admission.test.ts --maxWorkers=1',
+      'infra-focused': 'cd packages/infrastructure && ..\\..\\node_modules\\.bin\\vitest.cmd run src/process/shutdown.test.ts src/scheduler/cron-scheduler.test.ts --maxWorkers=1',
+    };
+    const fallback = await command(fallbacks[name]);
+    await writeFile(join(out,name+'-fallback.log.txt'), fallback.output);
+    const {output: fallbackOutput, ...fallbackMeta} = fallback;
+    results.push({name:name+'-fallback', ...fallbackMeta});
+    console.log(JSON.stringify({name:name+'-fallback', ...fallbackMeta}));
+  }
+  await writeFile(join(out,'gates-results.json'), JSON.stringify(results,null,2)+'\n');
+}

@@ -1,0 +1,968 @@
+{
+  "name": "04-controls",
+  "startedAt": "2026-10-24T08:11:15.710Z",
+  "endedAt": "2026-10-24T08:11:47.738Z",
+  "checks": [
+    {
+      "name": "initial state running",
+      "pass": true,
+      "actual": "running",
+      "expected": "running"
+    },
+    {
+      "name": "initial wait impossible",
+      "pass": true,
+      "actual": 409,
+      "expected": 409
+    },
+    {
+      "name": "GET requires authentication",
+      "pass": true,
+      "actual": 401,
+      "expected": 401
+    },
+    {
+      "name": "POST requires authentication",
+      "pass": true,
+      "actual": 401,
+      "expected": 401
+    },
+    {
+      "name": "invalid key refuses",
+      "pass": true,
+      "actual": 401,
+      "expected": 401
+    },
+    {
+      "name": "system:read GET allowed",
+      "pass": true,
+      "actual": 200,
+      "expected": 200
+    },
+    {
+      "name": "system:read POST denied",
+      "pass": true,
+      "actual": 403,
+      "expected": 403
+    },
+    {
+      "name": "system:write GET denied",
+      "pass": false,
+      "actual": 200,
+      "expected": 403
+    },
+    {
+      "name": "unrelated scope denied",
+      "pass": true,
+      "actual": 403,
+      "expected": 403
+    },
+    {
+      "name": "malformed shutdown {}",
+      "pass": true,
+      "actual": 400,
+      "expected": 400
+    },
+    {
+      "name": "malformed shutdown {\"action\":\"kill\"}",
+      "pass": true,
+      "actual": 400,
+      "expected": 400
+    },
+    {
+      "name": "malformed shutdown {\"action\":\"drain\",\"unexpected\":true}",
+      "pass": true,
+      "actual": 400,
+      "expected": 400
+    },
+    {
+      "name": "malformed shutdown {\"action\":null}",
+      "pass": true,
+      "actual": 400,
+      "expected": 400
+    },
+    {
+      "name": "system:write drain allowed",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    },
+    {
+      "name": "drain response has active run",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "duplicate drain idempotent",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    },
+    {
+      "name": "wait returns draining",
+      "pass": true,
+      "actual": "draining",
+      "expected": "draining"
+    },
+    {
+      "name": "wait clears automatic notice countdown",
+      "pass": true,
+      "actual": "draining",
+      "expected": "draining"
+    },
+    {
+      "name": "control drain exits cleanly",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "restart resets controller",
+      "pass": true,
+      "actual": "running",
+      "expected": "running"
+    }
+  ],
+  "records": [
+    {
+      "at": "2026-10-24T08:11:29.540Z",
+      "kind": "key-cli",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "stdout": "Created API key \"Independent QA\" (id 01M5PFE0239H14YNYG9J9G8FZC, scopes *).\nCopy the token now; it is shown only this once and only its hash is stored:\n\n  [disposable-key]\n\nSend it as \"Authorization: Bearer <token>\", or paste it into the web app when it asks for a key.\n",
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-24T08:11:38.135Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:11:38.135Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-controls-5W29hm",
+      "port": 5860,
+      "pid": 55176
+    },
+    {
+      "at": "2026-10-24T08:11:38.144Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "running",
+        "graceMs": 200,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.151Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "wait"
+      },
+      "status": 409,
+      "data": {
+        "phase": "running",
+        "graceMs": 200,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.153Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 401,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/unauthorized",
+        "title": "unauthorized",
+        "status": 401,
+        "code": "UNAUTHORIZED",
+        "detail": "an API key is required"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.155Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 401,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/unauthorized",
+        "title": "unauthorized",
+        "status": 401,
+        "code": "UNAUTHORIZED",
+        "detail": "an API key is required"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.157Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 401,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/unauthorized",
+        "title": "unauthorized",
+        "status": 401,
+        "code": "UNAUTHORIZED",
+        "detail": "the API key is missing, malformed, or revoked"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.166Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/api-keys",
+      "body": {
+        "label": "read",
+        "scopes": [
+          "system:read"
+        ]
+      },
+      "status": 201,
+      "data": {
+        "key": {
+          "id": "01M5PFE8SK67854AS8FWWT59EV",
+          "ownerId": "local",
+          "label": "read",
+          "scopes": [
+            "system:read"
+          ],
+          "createdAt": "2026-10-24T08:11:38.163Z"
+        },
+        "token": "[disposable-key]"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.171Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/api-keys",
+      "body": {
+        "label": "write",
+        "scopes": [
+          "system:write"
+        ]
+      },
+      "status": 201,
+      "data": {
+        "key": {
+          "id": "01M5PFE8SSBJ1921XB3WB49Y72",
+          "ownerId": "local",
+          "label": "write",
+          "scopes": [
+            "system:write"
+          ],
+          "createdAt": "2026-10-24T08:11:38.170Z"
+        },
+        "token": "[disposable-key]"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.178Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/api-keys",
+      "body": {
+        "label": "runs",
+        "scopes": [
+          "runs:write"
+        ]
+      },
+      "status": 201,
+      "data": {
+        "key": {
+          "id": "01M5PFE8T099EVTDJMNMZQR592",
+          "ownerId": "local",
+          "label": "runs",
+          "scopes": [
+            "runs:write"
+          ],
+          "createdAt": "2026-10-24T08:11:38.176Z"
+        },
+        "token": "[disposable-key]"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.181Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "running",
+        "graceMs": 200,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.185Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 403,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/forbidden",
+        "title": "forbidden",
+        "status": 403,
+        "code": "FORBIDDEN",
+        "detail": "this key lacks the \"system:write\" scope"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.188Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "running",
+        "graceMs": 200,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.192Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 403,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/forbidden",
+        "title": "forbidden",
+        "status": 403,
+        "code": "FORBIDDEN",
+        "detail": "this key lacks the \"system:write\" scope"
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.198Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {},
+      "status": 400,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/action",
+            "message": "Invalid option: expected one of \"drain\"|\"wait\"|\"force\""
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.202Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "kill"
+      },
+      "status": 400,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/action",
+            "message": "Invalid option: expected one of \"drain\"|\"wait\"|\"force\""
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.206Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain",
+        "unexpected": true
+      },
+      "status": 400,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/unexpected",
+            "message": "Unrecognized key \"unexpected\""
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.210Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": null
+      },
+      "status": 400,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/action",
+            "message": "Invalid option: expected one of \"drain\"|\"wait\"|\"force\""
+          }
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.248Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA control work",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "control-holder",
+              "kind": "script",
+              "label": "control-holder",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-controls-5W29hm\\\\control-holder-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-controls-5W29hm\\\\control-holder-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "control-holder"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "control-holder",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PFE8VRFX80E8F4RNX28QMK",
+          "ownerId": "local",
+          "name": "QA control work",
+          "draftVersionId": "01M5PFE8VRFX80E8F4RNX28QMM",
+          "createdAt": "2026-10-24T08:11:38.232Z",
+          "updatedAt": "2026-10-24T08:11:38.232Z"
+        },
+        "draft": {
+          "id": "01M5PFE8VRFX80E8F4RNX28QMM",
+          "loopId": "01M5PFE8VRFX80E8F4RNX28QMK",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA control work",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "control-holder",
+                "label": "control-holder",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-controls-5W29hm\\\\control-holder-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-controls-5W29hm\\\\control-holder-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "control-holder",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "control-holder",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:11:38.232Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.267Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFE8VRFX80E8F4RNX28QMK/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PFE8VRFX80E8F4RNX28QMM",
+          "loopId": "01M5PFE8VRFX80E8F4RNX28QMK",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA control work",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "control-holder",
+                "label": "control-holder",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-controls-5W29hm\\\\control-holder-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-controls-5W29hm\\\\control-holder-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "control-holder",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "control-holder",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:11:38.232Z",
+          "publishedAt": "2026-10-24T08:11:38.257Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.299Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PFE8VRFX80E8F4RNX28QMK/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PFE8X2DDPE6CZ50SBYRVDZ",
+          "ownerId": "local",
+          "loopId": "01M5PFE8VRFX80E8F4RNX28QMK",
+          "versionId": "01M5PFE8VRFX80E8F4RNX28QMM",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA control work",
+            "label": "QA control work v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PFE8X30DVNTFZD32585R60",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:11:38.274Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.675Z",
+      "kind": "condition",
+      "label": "control work started"
+    },
+    {
+      "at": "2026-10-24T08:11:38.686Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:11:38.679Z",
+        "choiceAt": "2026-10-24T08:11:38.879Z",
+        "activeRunIds": [
+          "01M5PFE8X2DDPE6CZ50SBYRVDZ"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.691Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:11:38.679Z",
+        "choiceAt": "2026-10-24T08:11:38.879Z",
+        "activeRunIds": [
+          "01M5PFE8X2DDPE6CZ50SBYRVDZ"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:38.887Z",
+      "kind": "condition",
+      "label": "controls awaiting-choice"
+    },
+    {
+      "at": "2026-10-24T08:11:38.891Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "wait"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:11:38.679Z",
+        "choiceAt": "2026-10-24T08:11:38.879Z",
+        "activeRunIds": [
+          "01M5PFE8X2DDPE6CZ50SBYRVDZ"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:39.562Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:11:38.679Z",
+        "choiceAt": "2026-10-24T08:11:38.879Z",
+        "activeRunIds": [
+          "01M5PFE8X2DDPE6CZ50SBYRVDZ"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:47.524Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:11:47.524Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-controls-5W29hm",
+      "port": 5860,
+      "pid": 36536
+    },
+    {
+      "at": "2026-10-24T08:11:47.557Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "running",
+        "graceMs": 200,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:47.566Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:11:47.565Z",
+        "choiceAt": "2026-10-24T08:11:47.765Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:11:47.735Z",
+      "kind": "exit",
+      "action": "drain",
+      "response": {
+        "status": 202,
+        "data": {
+          "phase": "draining",
+          "graceMs": 200,
+          "startedAt": "2026-10-24T08:11:47.565Z",
+          "choiceAt": "2026-10-24T08:11:47.765Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ]
+        }
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "elapsedMs": 177,
+      "lockExists": false
+    }
+  ]
+}

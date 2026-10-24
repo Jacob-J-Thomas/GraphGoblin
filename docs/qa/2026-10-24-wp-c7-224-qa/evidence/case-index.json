@@ -1,0 +1,103 @@
+[
+  {
+    "file": "01-drain-family.json",
+    "name": "01-drain-family",
+    "checks": 23,
+    "failed": [
+      {
+        "name": "SSE still open after parent while keeper active",
+        "pass": false,
+        "actual": false,
+        "expected": true
+      },
+      {
+        "name": "both SSE streams close after final keeper release",
+        "pass": false,
+        "actual": false,
+        "expected": true
+      }
+    ]
+  },
+  {
+    "file": "02-parks-pauses.json",
+    "name": "02-parks-pauses",
+    "checks": 19,
+    "failed": []
+  },
+  {
+    "file": "03-admission.json",
+    "name": "03-admission",
+    "checks": 0,
+    "failed": [],
+    "error": "Error: Timed out: API listening"
+  },
+  {
+    "file": "03b-admission.json",
+    "name": "03b-admission",
+    "checks": 14,
+    "failed": []
+  },
+  {
+    "file": "04-controls.json",
+    "name": "04-controls",
+    "checks": 20,
+    "failed": [
+      {
+        "name": "system:write GET denied",
+        "pass": false,
+        "actual": 200,
+        "expected": 403
+      }
+    ]
+  },
+  {
+    "file": "05-force-native-D015.json",
+    "name": "05-force-native-D015",
+    "checks": 12,
+    "failed": []
+  },
+  {
+    "file": "06-earlier-timeout-heartbeat.json",
+    "name": "06-earlier-timeout-heartbeat",
+    "checks": 8,
+    "failed": []
+  },
+  {
+    "file": "07-signal-component.json",
+    "name": "07-signal-component",
+    "checks": 3,
+    "failed": []
+  },
+  {
+    "file": "08-default-config.json",
+    "name": "08-default-config",
+    "checks": 1,
+    "failed": []
+  },
+  {
+    "file": "09-force-fake-harness.json",
+    "name": "09-force-fake-harness",
+    "checks": 11,
+    "failed": []
+  },
+  {
+    "file": "10-already-due-timer.json",
+    "name": "10-already-due-timer",
+    "checks": 8,
+    "failed": []
+  },
+  {
+    "file": "11-delivery-cleanup.json",
+    "name": "11-delivery-cleanup",
+    "checks": 0,
+    "failed": [],
+    "error": "Error: Create: {\"status\":400,\"data\":{\"type\":\"https://graphgoblin.dev/problems/validation-failed\",\"title\":\"validation failed\",\"status\":400,\"code\":\"VALIDATION_FAILED\",\"detail\":\"the request did not match the schema\",\"errors\":[{\"path\":\"/definition/nodes/1/config/return\",\"message\":\"Unrecognized key \\\"return\\\"\"}]}}"
+  },
+  {
+    "file": "11b-delivery-excerpt.json",
+    "name": "11b-delivery-cleanup",
+    "checks": 8,
+    "failed": [],
+    "error": "Error: Timed out: delivery succeeded recorded"
+  }
+]
