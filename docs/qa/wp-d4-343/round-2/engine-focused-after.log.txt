@@ -1,0 +1,45 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/packages/engine
+
+ ❯ src/event-admission.test.ts (10 tests | 1 failed) 1345ms
+   × isolates the webhook sweep after a failed failure, including boot 349ms
+pnpm.cmd : 
+At line:137 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/event-admis ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/event-admission.test.ts > isolates the webhook sweep after a failed failure, including boot
+AssertionError: expected 'pending' to be 'admitted' // Object.is equality
+
+Expected: "admitted"
+Received: "pending"
+
+ ❯ src/event-admission.test.ts:189:27
+    187|   await engine.manager.waitForIdle();
+    188|   const healthy = kind === 'event' ? await admission.get(webhook.id) :…
+    189|   expect(healthy?.status).toBe('admitted');
+       |                           ^
+    190|   expect(engine.ports.logger.lines).toContainEqual(expect.objectContai…
+    191|     level: 'error', obj: { code: kind === 'event' ? 'EVENT_RECOVERY_FA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  00:44:21
+   Duration  32.44s (transform 77%, import 18%, tests 5%)
+
+  Transform  transforming modules took 22.03s · 77% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\packages\engine
+

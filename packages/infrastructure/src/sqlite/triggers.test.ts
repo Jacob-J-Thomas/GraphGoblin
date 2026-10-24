@@ -154,9 +154,11 @@ describe('SqliteInboundEvents', () => {
     ...overrides,
   });
 
-  it('inserts, lists newest first, pages, and records started runs', async () => {
+  it('inserts, lists newest first, pages, and reads stored run links', async () => {
     const events = new SqliteInboundEvents(handle.db);
-    await events.insert(event('e1', { receivedAt: '2026-10-02T12:00:00.000Z' }));
+    await events.insert(
+      event('e1', { receivedAt: '2026-10-02T12:00:00.000Z', runIds: ['r1', 'r2'] }),
+    );
     await events.insert(
       event('e2', { receivedAt: '2026-10-02T12:01:00.000Z', type: 'other', dedupeKey: 'k' }),
     );
@@ -169,46 +171,10 @@ describe('SqliteInboundEvents', () => {
     expect(
       (await events.page('local', { before: '2026-10-02T12:01:00.000Z' })).items.map((e) => e.id),
     ).toEqual(['e1']);
-    await events.setRunIds('e1', ['r1', 'r2']);
     expect(await events.get('e1')).toMatchObject({ runIds: ['r1', 'r2'] });
     expect((await events.get('e2'))?.dedupeKey).toBe('k');
     expect((await events.get('e1'))?.dedupeKey).toBeUndefined();
     expect(await events.get('missing')).toBeUndefined();
-  });
-
-  it('finds duplicates by type, source, and window, and inserts atomically', async () => {
-    const events = new SqliteInboundEvents(handle.db);
-    const first = await events.insertUnlessDuplicate(
-      event('e1', { dedupeKey: 'k', source: 'webhook:ep1' }),
-      { ownerId: 'local', type: 'issue.ready', dedupeKey: 'k' },
-    );
-    expect(first.duplicate).toBeUndefined();
-    const second = await events.insertUnlessDuplicate(event('e2', { dedupeKey: 'k' }), {
-      ownerId: 'local',
-      type: 'issue.ready',
-      dedupeKey: 'k',
-    });
-    expect(second.duplicate?.id).toBe('e1');
-    expect(await events.get('e2')).toBeUndefined();
-    await events.insertUnlessDuplicate(event('e3'), undefined);
-    expect(await events.get('e3')).toBeDefined();
-
-    expect(
-      await events.findDuplicate({ ownerId: 'local', dedupeKey: 'k', source: 'webhook:ep1' }),
-    ).toMatchObject({ id: 'e1' });
-    expect(
-      await events.findDuplicate({ ownerId: 'local', dedupeKey: 'k', source: 'webhook:ep2' }),
-    ).toBeUndefined();
-    expect(
-      await events.findDuplicate({
-        ownerId: 'local',
-        dedupeKey: 'k',
-        since: '2026-10-02T12:00:01.000Z',
-      }),
-    ).toBeUndefined();
-    expect(
-      await events.findDuplicate({ ownerId: 'local', dedupeKey: 'k', type: 'other' }),
-    ).toBeUndefined();
   });
 });
 

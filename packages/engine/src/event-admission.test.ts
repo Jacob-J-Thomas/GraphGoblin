@@ -1,7 +1,8 @@
-﻿import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestEngine, type TestEngine } from './testing/scenario.js';
 import { AdmissionConflictError } from './admission.js';
+import { RunManager } from './run-manager.js';
 let engine: TestEngine;
 afterEach(() => {
   engine?.manager.stop();
@@ -127,3 +128,94 @@ it('classifies an immutable intent conflict and a removed version permanently', 
     failureCode: 'EVENT_TARGET_REMOVED',
   });
 });
+
+it.each(['EVENT_ADMISSION_EXHAUSTED', 'EVENT_INTENT_CONFLICT'] as const)(
+  'fake releases the authored node key after %s',
+  async (code) => {
+    const { claim, input, store } = await setup();
+    const create = vi.spyOn(store, 'create').mockRejectedValue(Error('disk fault'));
+    await engine.manager.receiveEvent({ ...claim, nodeDedupeKey: 'key' }, input);
+    await engine.manager.waitForWebhookRecovery();
+    await store.failed(claim.id, code);
+    create.mockRestore();
+    const next = {
+      ...claim,
+      id: engine.ports.ids.next(),
+      inbound: { ...claim.inbound, id: engine.ports.ids.next(), dedupeKey: 'r2' },
+      nodeDedupeKey: 'key',
+    };
+    const accepted = await engine.manager.receiveEvent(next, input);
+    expect(accepted.receipt.status).toBe('pending');
+    await engine.manager.waitForIdle();
+    expect(await store.get(next.id)).toMatchObject({ status: 'admitted' });
+    expect(engine.ports.runs.runs.size).toBe(1);
+  },
+);
+
+it.each([
+  ['event', 'due'],
+  ['event', 'failed'],
+  ['webhook', 'due'],
+  ['webhook', 'failed'],
+] as const)(
+  'isolates the %s sweep after a %s operation failure, including boot',
+  async (kind, operation) => {
+    const { claim, input, store } = await setup();
+    const definition = minimalLoop();
+    definition.name = 'webhook sweep';
+    definition.nodes[0]!.config = { type: 'webhook' };
+    const version = engine.publish(definition);
+    const webhook = {
+      id: engine.ports.ids.next(),
+      ownerId: 'local',
+      loopId: version.loopId,
+      triggerNodeId: 'start',
+      contentHash: 'a'.repeat(64),
+      inbound: {
+        ...claim.inbound,
+        id: engine.ports.ids.next(),
+        type: 'webhook',
+        source: 'webhook:ep',
+      },
+    };
+    const admission = engine.ports.admission;
+    const blocked = vi.spyOn(admission, 'create').mockRejectedValue(Error('disk fault'));
+    await engine.manager.receiveEvent(claim, input);
+    await engine.manager.receiveWebhook(webhook, {
+      ...input,
+      loopId: version.loopId,
+      versionId: version.id,
+      triggerKind: 'webhook',
+      source: 'webhook',
+    });
+    await engine.manager.waitForWebhookRecovery();
+    blocked.mockRestore();
+    engine.ports.clock.advance(5000);
+    const broken = kind === 'event' ? store : admission;
+    if (operation === 'due') vi.spyOn(broken, 'due').mockRejectedValueOnce(Error('due fault'));
+    else {
+      if (kind === 'event') vi.spyOn(store, 'create').mockRejectedValue(Error('create fault'));
+      else {
+        // Events delegate their commit to this same fake adapter; fault only the webhook receipt.
+        const create = admission.create.bind(admission);
+        vi.spyOn(admission, 'create').mockImplementation((intent, receiptId, onCommitted) => {
+          if (receiptId === webhook.id) return Promise.reject(Error('create fault'));
+          return create(intent, receiptId, onCommitted);
+        });
+      }
+      vi.spyOn(broken, 'failed').mockRejectedValueOnce(Error('metadata fault'));
+    }
+    engine.manager.stop();
+    engine.manager = new RunManager(engine.ports, engine.settings);
+    await expect(engine.manager.start()).resolves.toBeUndefined();
+    await engine.manager.waitForIdle();
+    const healthy = kind === 'event' ? await admission.get(webhook.id) : await store.get(claim.id);
+    expect(healthy?.status).toBe('admitted');
+    expect(engine.ports.logger.lines).toContainEqual(
+      expect.objectContaining({
+        level: 'error',
+        obj: { code: kind === 'event' ? 'EVENT_RECOVERY_FAILED' : 'WEBHOOK_RECOVERY_FAILED' },
+      }),
+    );
+  },
+);

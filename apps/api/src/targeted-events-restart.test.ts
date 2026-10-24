@@ -1,4 +1,4 @@
-﻿/** Real built API process deaths around receipt commit and run admission; real SQLite, no provider turns. */
+/** Real built API process deaths around receipt commit and run admission; real SQLite, no provider turns. */
 import { afterEach, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { createFakePorts } from '@graphgoblin/engine/testing';
@@ -16,11 +16,7 @@ it.each(['before-receipt', 'pending-before-run', 'after-run'] as const)(
   async (phase) => {
     const milestone = (name: string) => process.stdout.write(`[${phase}] ${name}\n`);
     milestone('fixture');
-    const f = await createApiProcessFixture({
-      prefix: 'gg-wp-d4-',
-      portStart: 5750,
-      portCount: 10,
-    });
+    const f = await createApiProcessFixture();
     fixtures.push(f);
     milestone('key');
     const token = await f.createKey();
@@ -41,9 +37,10 @@ it.each(['before-receipt', 'pending-before-run', 'after-run'] as const)(
       const process = f.run();
       try {
         await f.ready(process, token);
-      } finally {
+      } catch (error) {
         milestone('startup stdout: ' + process.stdout);
         milestone('startup stderr: ' + process.stderr);
+        throw error;
       }
       milestone('ready');
       return process;

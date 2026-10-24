@@ -1,4 +1,4 @@
-﻿import type { RunRecord } from '@graphgoblin/contracts';
+import type { RunRecord } from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
@@ -54,6 +54,7 @@ export class InMemoryEventAdmission implements EventAdmissionPort {
           r.ownerId === input.ownerId &&
           r.loopId === input.loopId &&
           r.triggerNodeId === input.triggerNodeId &&
+          (r.status === 'pending' || r.status === 'admitted') &&
           r.intent?.initialThread.invocation.trigger.dedupeKey === key,
       ) ||
         this.hasKey(input.ownerId, input.loopId, input.triggerNodeId, key));

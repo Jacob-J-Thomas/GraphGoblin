@@ -738,15 +738,24 @@ export class RunManager {
   retryPendingWebhooks(): Promise<void> {
     if (this.webhookRecovery) return this.webhookRecovery;
     this.webhookRecovery = (async () => {
-      const eventDue = await this.ports.admission.events.due(this.now(), 5);
-      for (const receipt of eventDue) {
-        if (this.stopped) break;
-        await this.dispatchEvent(receipt);
+      // A failed ledger read or retry-metadata write must not block the other intake path or boot.
+      try {
+        const eventDue = await this.ports.admission.events.due(this.now(), 5);
+        for (const receipt of eventDue) {
+          if (this.stopped) break;
+          await this.dispatchEvent(receipt);
+        }
+      } catch {
+        this.ports.logger.error({ code: 'EVENT_RECOVERY_FAILED' }, 'event recovery failed');
       }
-      const due = await this.ports.admission.due(this.now(), 5);
-      for (const receipt of due) {
-        if (this.stopped) break;
-        await this.dispatchWebhook(receipt);
+      try {
+        const due = await this.ports.admission.due(this.now(), 5);
+        for (const receipt of due) {
+          if (this.stopped) break;
+          await this.dispatchWebhook(receipt);
+        }
+      } catch {
+        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook recovery failed');
       }
     })().finally(() => {
       this.webhookRecovery = undefined;

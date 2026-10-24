@@ -10,7 +10,6 @@ import {
   desc,
   eq,
   getTableColumns,
-  gte,
   inArray,
   lt,
   lte,
@@ -331,15 +330,6 @@ export interface InboundEventRecord {
   };
 }
 
-export interface InboundEventDedupeQuery {
-  ownerId: string;
-  dedupeKey: string;
-  type?: string;
-  source?: string;
-  /** Only events received at or after this instant count. */
-  since?: string;
-}
-
 type EventRow = typeof inboundEvents.$inferSelect;
 
 function toInboundEvent(row: EventRow): InboundEventRecord {
@@ -375,13 +365,6 @@ export class SqliteInboundEvents {
   async insert(event: InboundEventRecord): Promise<InboundEventRecord> {
     await this.db.insert(inboundEvents).values(toRow(event));
     return event;
-  }
-
-  async setRunIds(id: string, runIds: readonly string[]): Promise<void> {
-    await this.db
-      .update(inboundEvents)
-      .set({ runIds: [...runIds] })
-      .where(eq(inboundEvents.id, id));
   }
 
   async get(id: string): Promise<InboundEventRecord | undefined> {
@@ -499,49 +482,4 @@ export class SqliteInboundEvents {
         : record;
     });
   }
-
-  /** The most recent event with the same dedupe key in the given scope. */
-  async findDuplicate(query: InboundEventDedupeQuery): Promise<InboundEventRecord | undefined> {
-    const [row] = await this.db
-      .select()
-      .from(inboundEvents)
-      .where(dedupeFilter(query))
-      .orderBy(desc(inboundEvents.receivedAt))
-      .limit(1);
-    return row ? toInboundEvent(row) : undefined;
-  }
-
-  /**
-   * Insert `event` unless an event matching `dedupe` already exists, atomically. Returns the
-   * existing event as `duplicate` when there is one.
-   */
-  async insertUnlessDuplicate(
-    event: InboundEventRecord,
-    dedupe: InboundEventDedupeQuery | undefined,
-  ): Promise<{ event: InboundEventRecord; duplicate?: InboundEventRecord }> {
-    return this.db.transaction(async (tx) => {
-      if (dedupe) {
-        const [row] = await tx
-          .select()
-          .from(inboundEvents)
-          .where(dedupeFilter(dedupe))
-          .orderBy(desc(inboundEvents.receivedAt))
-          .limit(1);
-        if (row) return { event, duplicate: toInboundEvent(row) };
-      }
-      await tx.insert(inboundEvents).values(toRow(event));
-      return { event };
-    });
-  }
-}
-
-function dedupeFilter(query: InboundEventDedupeQuery): SQL | undefined {
-  const filters: SQL[] = [
-    eq(inboundEvents.ownerId, query.ownerId),
-    eq(inboundEvents.dedupeKey, query.dedupeKey),
-  ];
-  if (query.type !== undefined) filters.push(eq(inboundEvents.type, query.type));
-  if (query.source !== undefined) filters.push(eq(inboundEvents.source, query.source));
-  if (query.since !== undefined) filters.push(gte(inboundEvents.receivedAt, query.since));
-  return and(...filters);
 }

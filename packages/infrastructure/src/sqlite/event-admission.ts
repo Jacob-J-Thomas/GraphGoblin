@@ -1,4 +1,4 @@
-﻿import { and, asc, eq, getTableColumns, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, inArray, lte, sql } from 'drizzle-orm';
 import { isJsonValue } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
@@ -122,6 +122,7 @@ export class SqliteEventAdmission implements EventAdmissionPort {
                 eq(eventReceipts.loopId, input.loopId),
                 eq(eventReceipts.triggerNodeId, input.triggerNodeId),
                 eq(eventReceipts.nodeKey, input.nodeDedupeKey),
+                inArray(eventReceipts.status, ['pending', 'admitted']),
               ),
             )
             .limit(1)

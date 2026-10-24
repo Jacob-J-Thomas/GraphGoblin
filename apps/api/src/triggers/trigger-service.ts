@@ -25,7 +25,11 @@ import type {
   EventAdmissionPort,
   EventReceipt,
 } from '@graphgoblin/engine';
-import { EngineRequestError, LoopUpgradeRequiredError } from '@graphgoblin/engine';
+import {
+  AdmissionConflictError,
+  EngineRequestError,
+  LoopUpgradeRequiredError,
+} from '@graphgoblin/engine';
 import {
   CronScheduler,
   type CronFire,
@@ -555,19 +559,32 @@ export class TriggerService {
     if (!loop || loop.ownerId !== input.ownerId)
       throw new EngineRequestError('LOOP_NOT_FOUND', 'target loop not found');
     if (input.dedupeKey) {
-      const saved = await this.deps.eventAdmission.find(
-        input.ownerId,
-        loop.id,
-        input.type,
-        input.dedupeKey,
-        input.triggerNodeId,
-      );
-      if (saved.length > 1)
-        return fail(
-          'EVENT_TRIGGER_AMBIGUOUS',
-          'specify triggerNodeId to identify the accepted delivery',
+      try {
+        const saved = await this.deps.eventAdmission.find(
+          input.ownerId,
+          loop.id,
+          input.type,
+          input.dedupeKey,
+          input.triggerNodeId,
         );
-      if (saved[0]) return this.eventResult(saved[0], true);
+        if (saved.length > 1)
+          return fail(
+            'EVENT_TRIGGER_AMBIGUOUS',
+            'specify triggerNodeId to identify the accepted delivery',
+          );
+        if (saved[0]) return this.eventResult(saved[0], true);
+      } catch (error) {
+        if (!(error instanceof AdmissionConflictError)) throw error;
+        this.deps.logger.error(
+          { code: 'STORED_EVENT_INVALID', loopId: loop.id },
+          'saved event delivery is unreadable',
+        );
+        throw new EventIntakeError(
+          'STORED_EVENT_INVALID',
+          'the saved Event delivery is unreadable; inspect stored history',
+          500,
+        );
+      }
     }
     if (!loop.currentVersionId)
       throw new EngineRequestError('VERSION_NOT_PUBLISHED', 'target loop has no published version');

@@ -1,10 +1,10 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let t: TestApp;
 beforeEach(async () => {
-  t = await createTestApp({ tempPrefix: 'gg-wp-d4-' });
+  t = await createTestApp();
 });
 afterEach(async () => {
   await t.close();
@@ -189,6 +189,9 @@ it('reuses one original delivery across concurrent keyed retries and admits unke
   expect(new Set(replies.map((r) => r.json<{ id: string }>().id)).size).toBe(1);
   await settle();
   const first = (await listed())[0]!;
+  const thread = await t.app.inject(`/runs/${first.runIds[0]!}/thread`);
+  expect(thread.statusCode).toBe(200);
+  expect(thread.json()).toMatchObject({ invocation: { trigger: { dedupeKey: 'key' } } });
   expect(
     (await post(loopId, { dedupeKey: 'key', payload: { changed: true } })).json(),
   ).toMatchObject({
@@ -310,6 +313,13 @@ it('preserves node expression dedupe and refuses expression failures before acce
   expect(response.statusCode).toBe(422);
   expect(response.json()).toMatchObject({ code: 'EVENT_KEY_EXPRESSION_FAILED' });
   expect(response.body).not.toContain('private');
+  expect(t.logger.lines).toContainEqual(
+    expect.objectContaining({
+      level: 'warn',
+      msg: 'event key expression failed',
+      obj: { code: 'EVENT_KEY_EXPRESSION_FAILED', loopId: brokenId, nodeId: 'start' },
+    }),
+  );
 });
 
 it('bounds persistent admission failures and keeps failed keyed deliveries truthful', async () => {
@@ -335,33 +345,52 @@ it('bounds persistent admission failures and keeps failed keyed deliveries truth
   expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
 });
 
-it('runs independent requests concurrently within configured capacity', async () => {
-  await t.close();
-  t = await createTestApp({ tempPrefix: 'gg-wp-d4-', env: { GG_MAX_CONCURRENT_RUNS: '2' } });
-  t.harness.script([{ delayMs: 1000 }, { delayMs: 1000 }]);
-  const definition = eventLoop();
-  definition.nodes.splice(1, 0, {
-    id: 'work',
-    kind: 'inference',
-    label: 'Work',
-    config: { harness: 'codex', prompt: { template: 'work' } },
-  });
-  definition.edges = [
-    { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
-    { id: 'b', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
-  ];
-  const loopId = await t.publishLoop(definition);
-  const responses = await Promise.all([post(loopId), post(loopId)]);
-  expect(responses.map((r) => r.statusCode)).toEqual([202, 202]);
-  await vi.waitFor(() => expect(t.harness.started).toHaveLength(2));
-  const running = await t.container.repos.runs.list({ loopId });
-  expect(running.map((r) => r.status)).toEqual(['running', 'running']);
-  await settle();
-  expect((await t.container.repos.runs.list({ loopId })).map((r) => r.status)).toEqual([
-    'succeeded',
-    'succeeded',
-  ]);
-});
+it(
+  'runs independent requests concurrently within configured capacity',
+  { timeout: 30_000 },
+  async () => {
+    await t.close();
+    t = await createTestApp({ env: { GG_MAX_CONCURRENT_RUNS: '2' } });
+    t.harness.script([{ delayMs: 60_000 }, { delayMs: 60_000 }]);
+    const definition = eventLoop();
+    definition.nodes.splice(1, 0, {
+      id: 'work',
+      kind: 'inference',
+      label: 'Work',
+      config: { harness: 'codex', prompt: { template: 'work' } },
+    });
+    definition.edges = [
+      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+      { id: 'b', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+    ];
+    const loopId = await t.publishLoop(definition);
+    try {
+      const responses = await Promise.all([post(loopId), post(loopId)]);
+      expect(responses.map((r) => r.statusCode)).toEqual([202, 202]);
+      await vi.waitFor(
+        async () => {
+          expect(t.harness.started).toHaveLength(2);
+          expect((await t.container.repos.runs.list({ loopId })).map((r) => r.status)).toEqual([
+            'running',
+            'running',
+          ]);
+        },
+        { timeout: 20_000 },
+      );
+    } finally {
+      for (const run of await t.container.repos.runs.list({ loopId })) {
+        expect(
+          (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/cancel` })).statusCode,
+        ).toBe(200);
+      }
+      await settle();
+    }
+    expect((await t.container.repos.runs.list({ loopId })).map((r) => r.status)).toEqual([
+      'cancelled',
+      'cancelled',
+    ]);
+  },
+);
 
 it('keeps URL webhook acknowledgements and targeting; refuses deep input with a safe logged code', async () => {
   const definition = eventLoop();
@@ -478,4 +507,67 @@ it('refuses non-finite deeply nested JSON without entering a recursive validator
   expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
   expect(response.body.length).toBeLessThan(512);
   expect(await listed()).toEqual([]);
+});
+
+it.each(['EVENT_ADMISSION_EXHAUSTED', 'EVENT_INTENT_CONFLICT'] as const)(
+  'releases the authored node key after %s for a new request key',
+  async (failureCode) => {
+    const definition = eventLoop();
+    definition.nodes[0]!.config = { type: 'event', eventType: 'ready', dedupeKey: 'issue' };
+    const loopId = await t.publishLoop(definition);
+    await fault('BEFORE INSERT ON runs');
+    expect((await post(loopId, { payload: { issue: 7 }, dedupeKey: 'r1' })).statusCode).toBe(202);
+    await settle();
+    if (failureCode === 'EVENT_ADMISSION_EXHAUSTED') {
+      for (let i = 0; i < 7; i++) {
+        t.clock.advance(300_000);
+        await t.container.manager.retryPendingWebhooks();
+      }
+      await clearFault();
+    } else {
+      await clearFault();
+      await t.container.handle.client.execute("UPDATE event_receipts SET intent='{'");
+      t.clock.advance(5000);
+      await t.container.manager.retryPendingWebhooks();
+    }
+    const failed = (await listed())[0]!;
+    expect(failed.delivery).toMatchObject({ state: 'failed', failureCode });
+    expect((await post(loopId, { payload: { issue: 7 }, dedupeKey: 'r1' })).json()).toMatchObject({
+      id: failed.id,
+      duplicate: true,
+      delivery: { state: 'failed', failureCode },
+    });
+    const next = await post(loopId, { payload: { issue: 7 }, dedupeKey: 'r2' });
+    expect(next.statusCode).toBe(202);
+    expect(next.json()).toMatchObject({ delivery: { state: 'pending' } });
+    expect(next.json<{ id: string }>().id).not.toBe(failed.id);
+    await settle();
+    expect(await t.container.repos.runs.list({ loopId })).toHaveLength(1);
+    expect(await listed()).toContainEqual(
+      expect.objectContaining({
+        id: next.json<{ id: string }>().id,
+        delivery: { state: 'admitted', attempts: 0 },
+      }),
+    );
+  },
+);
+
+it('returns a typed stored-history error for a corrupt keyed retry without rewriting it', async () => {
+  const loopId = await t.publishLoop(eventLoop());
+  await fault('BEFORE INSERT ON runs');
+  await post(loopId, { dedupeKey: 'corrupt-inbound' });
+  await settle();
+  await clearFault();
+  await t.container.handle.client.execute("UPDATE inbound_events SET payload='private-corruption'");
+  const response = await post(loopId, { dedupeKey: 'corrupt-inbound' });
+  expect(response.statusCode).toBe(500);
+  expect(response.json()).toMatchObject({ code: 'STORED_EVENT_INVALID' });
+  expect(response.body).not.toContain('private-corruption');
+  expect(
+    (await t.container.handle.client.execute('SELECT payload FROM inbound_events')).rows,
+  ).toEqual([{ payload: 'private-corruption' }]);
+  expect(
+    (await t.container.handle.client.execute('SELECT id FROM event_receipts')).rows,
+  ).toHaveLength(1);
+  expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
 });
