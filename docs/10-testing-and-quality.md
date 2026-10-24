@@ -62,7 +62,7 @@ Exit evidence after the decision-gate redesign (#129) has a [capability inventor
 8. Licence allowlist check over the full dependency tree.
 9. Generated reference docs are current (`pnpm check:docs`).
 10. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
-11. Dependency audit for known vulnerabilities, failing on high and critical.
+11. Dependency audit for known vulnerabilities, failing on high and critical. An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
 12. Build every package and app.
 13. Playwright E2E on the built app.
 14. Build the container image on the default branch.
