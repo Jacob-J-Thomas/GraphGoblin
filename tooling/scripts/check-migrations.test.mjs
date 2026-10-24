@@ -45,6 +45,11 @@ test('migration gate rejects a journal that would renumber, skip or misdiff migr
       journal.entries.at(-1).when = journal.entries.at(-2).when;
       return /timestamp not after/;
     },
+    // A future timestamp sorts after the next migration drizzle-kit generates with the clock.
+    async (_folder, journal) => {
+      journal.entries.at(-1).when = Date.now() + 86_400_000;
+      return /timestamp in the future/;
+    },
     async (folder) => {
       const name = (await readdir(join(folder, 'meta'))).filter((n) =>
         n.endsWith('_snapshot.json'),

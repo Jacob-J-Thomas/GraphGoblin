@@ -13,10 +13,12 @@ const require = createRequire(join(infrastructure, 'package.json'));
 /**
  * drizzle-kit numbers the next migration from the last journal index and diffs against the
  * lexically latest snapshot; the migrator skips an entry older than the newest applied one.
- * So every entry's index must equal its position and its tag number, timestamps must rise,
- * and the snapshots that exist (data-only migrations may have none) must chain by prevId.
+ * So every entry's index must equal its position and its tag number, timestamps must rise and
+ * never lie ahead of the clock (drizzle-kit stamps a new migration with the current time, which
+ * would then sort before such an entry), and the snapshots that exist (data-only migrations may
+ * have none) must chain by prevId.
  */
-export async function checkJournal(folder = join(infrastructure, 'drizzle')) {
+export async function checkJournal(folder = join(infrastructure, 'drizzle'), now = Date.now()) {
   const problems = [];
   const { entries } = JSON.parse(await readFile(join(folder, 'meta/_journal.json'), 'utf8'));
   const sql = new Set((await readdir(folder)).filter((name) => name.endsWith('.sql')));
@@ -27,6 +29,7 @@ export async function checkJournal(folder = join(infrastructure, 'drizzle')) {
     if (!sql.delete(`${entry.tag}.sql`)) problems.push(`${entry.tag}: no SQL file`);
     if (position > 0 && !(entry.when > entries[position - 1].when))
       problems.push(`${entry.tag}: timestamp not after ${entries[position - 1].tag}`);
+    if (entry.when > now) problems.push(`${entry.tag}: timestamp in the future`);
   });
   for (const name of sql) problems.push(`${name}: not in the journal`);
   const snapshots = (await readdir(join(folder, 'meta')))
