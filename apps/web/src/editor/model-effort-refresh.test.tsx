@@ -352,6 +352,49 @@ function effortOptions() {
 }
 
 for (const kind of ['inference', 'llm'] as const)
+  it(`${kind} treats the inherited model as unknown until process defaults first load`, async () => {
+    const api = new FakeApi();
+    api.catalog = ['gpt-6-luna', 'gpt-6.1-sol'].map((model) => ({
+      harness: 'codex',
+      model,
+      displayName: model,
+      efforts: ['low', 'high'],
+      defaultEffort: 'low',
+      enabled: true,
+      source: 'harness' as const,
+    }));
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    api.override('GET /system/model-defaults', async () => {
+      await held;
+      return Response.json(defaults());
+    });
+    const { queryClient } = renderWith(nodeForm(kind, 'max'), '/', api);
+    await waitFor(() => expect(queryClient.getQueryData(keys.settings)).toBeDefined());
+    await waitFor(() => expect(queryClient.getQueryData(keys.catalog)).toBeDefined());
+    await waitFor(() =>
+      expect(effortOptions()).toEqual([
+        ['Default (checking…)', false],
+        ['max (effort support unknown)', true],
+        ['low', false],
+        ['high', false],
+      ]),
+    );
+    act(() => {
+      release();
+    });
+    await expectDefault('low');
+    expect(effortOptions()).toEqual([
+      ['Default (low)', false],
+      ['max (not supported by this model)', true],
+      ['low', false],
+      ['high', false],
+    ]);
+  });
+
+for (const kind of ['inference', 'llm'] as const)
   it.each([
     ['owner', undefined],
     ['owner', 'max'],
