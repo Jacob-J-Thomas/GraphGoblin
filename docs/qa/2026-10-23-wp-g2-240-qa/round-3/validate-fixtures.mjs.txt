@@ -1,0 +1,7 @@
+import fs from 'node:fs';import {createRequire} from 'node:module';import path from 'node:path';
+const req=createRequire(path.join(process.cwd(),'packages/domain/package.json')),Ajv=req('ajv');
+const doc=JSON.parse(fs.readFileSync('packages/api-client/openapi.json','utf8')),ajv=new Ajv({strict:false,validateFormats:false});ajv.addSchema(doc,'gg');
+const validate=ajv.compile({$ref:'gg#/paths/~1events/get/responses/200/content/application~1json/schema'}),o='docs/qa/2026-10-23-wp-g2-240-qa/round-3/';
+const event=JSON.parse(fs.readFileSync(o+'api-owned-inclusive-anchor.json','utf8')).actual.body.items[0],checks=[];
+for(const delivery of[{state:'pending',attempts:0},{state:'admitted',attempts:1},{state:'failed',attempts:3,failureCode:'ADMISSION_FAILED'},{state:'invalid',attempts:-1}]){const actual=validate({items:[{...event,delivery}],nextCursor:null});checks.push({delivery,expected:delivery.state!=='invalid',actual,pass:actual===(delivery.state!=='invalid'),errors:validate.errors});}
+fs.writeFileSync(o+'delivery-fixture-validation.json',JSON.stringify({source:'packages/api-client/openapi.json GET /events 200 public schema',checks},null,2));

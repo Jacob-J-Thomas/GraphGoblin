@@ -1,0 +1,56 @@
+import { createRequire } from 'node:module';
+import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { spawn, execFileSync } from 'node:child_process';
+import { once } from 'node:events';
+import path from 'node:path';
+const root=process.cwd(),out=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-3');
+const {chromium}=createRequire(path.join(root,'apps/web/package.json'))('@playwright/test');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const wait=async f=>{for(let i=0;i<1200;i++){if(await f())return;await sleep(50);}throw new Error('supplemental timeout');};
+const redact=s=>String(s).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const save=(n,o)=>writeFileSync(path.join(out,n),redact(JSON.stringify(o,null,2))+'\n');
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const all=[];
+let child;
+try {for(const width of [1440,390]) {
+ const baseline=JSON.parse(readFileSync(path.join(out,`width-${width}.json`),'utf8'));
+ const data=baseline.dataDir.replace('%USERPROFILE%',process.env.USERPROFILE);
+ const base=baseline.base;
+ const env={...process.env,GG_HOST:'127.0.0.1',GG_PORT:new URL(base).port,GG_DATA_DIR:data,GG_DB_URL:`file:${path.join(data,'graphgoblin.db').replaceAll('\\','/')}`,GG_REQUIRE_API_KEY:'true',GG_LOG_LEVEL:'silent',GG_WEB_DIST:path.join(root,'apps/web/dist')};
+ delete env.GG_JEV_API_KEY;delete env.JEV_API_KEY;delete env.GG_MASTER_KEY;
+ const key=execFileSync(process.execPath,['apps/api/dist/main.js','--create-api-key','supplemental-qa'],{env,encoding:'utf8'}).match(/\bgg_[A-Za-z0-9_-]+/u)[0];
+ const start=async()=>{let ready=false;child=spawn(process.execPath,['--input-type=module','-'],{cwd:path.join(root,'apps/web'),env,stdio:['pipe','pipe','pipe','ipc'],windowsHide:true});child.stdout.on('data',b=>{appendFileSync(path.join(out,`supplemental-server-${width}.log.txt`),redact(b));if(String(b).includes('"ready":true'))ready=true;});child.stderr.on('data',b=>appendFileSync(path.join(out,`supplemental-server-${width}.log.txt`),redact(b)));child.stdin.end(readFileSync(path.join(out,'server.mjs.txt')));await wait(()=>ready);};
+ const stop=async()=>{const p=child;const done=once(p,'exit');p.send('stop');await done;child=undefined;};
+ await start();
+ const context=await browser.newContext({viewport:{width,height:900}});
+ await context.addInitScript(key=>localStorage.setItem('graphgoblin-api-key',key),key);
+ const page=await context.newPage();
+ await page.goto(base+'/app/events?type=qa-main');await wait(async()=>await page.locator('tbody tr').count()===100);
+ await page.getByRole('button',{name:'Load more',exact:true}).click();await wait(async()=>await page.locator('tbody tr').count()===200);
+ await page.locator('tbody tr').nth(140).scrollIntoViewIfNeeded();
+ const snapshot=()=>page.evaluate(()=>({y:window.scrollY,rows:[...document.querySelectorAll('tbody tr')].map(x=>x.querySelector('[data-testid^="payload-"]')?.getAttribute('data-testid')),visible:[...document.querySelectorAll('tbody tr')].filter(x=>{const b=x.getBoundingClientRect();return b.bottom>0&&b.top<innerHeight;}).map(x=>({id:x.querySelector('[data-testid^="payload-"]')?.getAttribute('data-testid'),top:x.getBoundingClientRect().top,bottom:x.getBoundingClientRect().bottom})),status:[...document.querySelectorAll('[role="status"]')].map(x=>x.textContent),focus:document.activeElement?.textContent?.slice(0,100)}));
+ const before=await snapshot();await stop();
+ await wait(async()=>await page.getByText('Could not check for new events. Refresh to try again.',{exact:true}).count());
+ const down=await snapshot();await start();
+ await wait(async()=>!await page.getByText('Could not check for new events. Refresh to try again.',{exact:true}).count());
+ const recovered=await snapshot();
+ const anchor={width,before,down,recovered,sameRows:JSON.stringify(before.rows)===JSON.stringify(down.rows),sameVisibleRows:before.visible.length===down.visible.length&&before.visible.every((v,i)=>v.id===down.visible[i].id&&Math.abs(v.top-down.visible[i].top)<1),scrollDelta:down.y-before.y,recoverySameVisible:before.visible.length===recovered.visible.length&&before.visible.every((v,i)=>v.id===recovered.visible[i].id&&Math.abs(v.top-recovered.visible[i].top)<1)};
+ save(`${width}-outage-anchor.json`,anchor);
+ console.log(JSON.stringify({width,outageSameVisible:anchor.sameVisibleRows,scrollDelta:anchor.scrollDelta,recoverySameVisible:anchor.recoverySameVisible}));
+ // A newer-events notice is already present when checks start failing.
+ const post=await fetch(base+'/events',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({type:'qa-main',payload:{index:`notice-then-failure-${width}`}})});
+ await wait(async()=>await page.getByText('New events available',{exact:true}).count());
+ const beforeNoticeOutage=await snapshot();await stop();await sleep(6000);
+ const withNoticeDown=await snapshot();
+ await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(out,`${width}-notice-outage.png`)});
+ await start(); await wait(async()=>!(await snapshot()).status.some(x=>x.includes('Could not check for new events')));
+ const withNoticeRecovered=await snapshot();
+ await page.screenshot({path:path.join(out,`${width}-notice-recovered.png`)});await stop();
+ const noticeOutage={width,postStatus:post.status,before:beforeNoticeOutage,after:withNoticeDown,recovered:withNoticeRecovered,recoveryClearsFailure:!withNoticeRecovered.status.some(x=>x.includes('Could not check for new events'))&&withNoticeRecovered.status.some(x=>x.includes('New events available')),checkFailureMessagePresent:withNoticeDown.status.some(x=>x.includes('Could not check for new events'))};
+ save(`${width}-notice-outage.json`,noticeOutage);
+ 
+ console.log(JSON.stringify({width,noticeOutageErrorVisible:noticeOutage.checkFailureMessagePresent,status:withNoticeDown.status}));
+ all.push({width,anchor:{sameVisible:anchor.sameVisibleRows,delta:anchor.scrollDelta,recovered:anchor.recoverySameVisible},noticeOutage:noticeOutage.checkFailureMessagePresent});
+ await context.close();
+ }} catch(e){save('supplemental-fatal.json',{error:redact(e.stack)});process.exitCode=1;}
+finally{if(child&&child.exitCode===null){child.send('stop');await Promise.race([once(child,'exit'),sleep(10000)]);if(child.exitCode===null)console.log('D-015: no native termination attempted');}await browser.close();save('supplemental-results.json',all);}
