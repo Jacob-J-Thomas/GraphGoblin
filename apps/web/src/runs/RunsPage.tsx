@@ -41,7 +41,6 @@ export function RunsPage() {
   };
   const loopsQuery = useLoops();
   const runsQuery = useRuns(query, 5000);
-  const names = new Map((loopsQuery.data ?? []).map((l) => [l.id, l.name]));
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -141,10 +140,15 @@ export function RunsPage() {
                         </Link>
                       </Td>
                       <Td label="Loop" className="wrap-anywhere">
-                        {names.get(run.loopId) ?? run.loopId}
+                        {run.pinned.name}
                       </Td>
                       <Td label="Status">
                         <RunStatusBadge status={run.status} />
+                        {run.status === 'failed' && run.failure ? (
+                          <p className="mt-1 text-xs wrap-anywhere text-muted">
+                            {run.failure.code}: {run.failure.message}
+                          </p>
+                        ) : null}
                       </Td>
                       <Td label="Started" className="text-sm whitespace-nowrap text-muted">
                         {formatDateTime(run.startedAt ?? run.createdAt)}

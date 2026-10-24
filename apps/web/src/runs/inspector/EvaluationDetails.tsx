@@ -9,7 +9,14 @@ import {
 } from '@graphgoblin/contracts';
 import { Card } from '../../components/ui/index.js';
 import { Fragment } from 'react';
-import { answerDescription, describeEvent, observationDescription } from '../projections.js';
+import {
+  answerDescription,
+  describeEvent,
+  formatProbability,
+  nodeName,
+  observationDescription,
+  routeName,
+} from '../projections.js';
 
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
@@ -89,7 +96,17 @@ function truthThreshold(definition: LoopDefinition | undefined, nodeId: string |
     ? (node.config.truthThreshold ?? 0.5)
     : undefined;
 }
-function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; prefix?: string }) {
+function ClassifierDetails({
+  answer,
+  prefix = '',
+  definition,
+  nodeId,
+}: {
+  answer: ClassifierAnswer;
+  prefix?: string;
+  definition?: LoopDefinition | undefined;
+  nodeId?: string | undefined;
+}) {
   return (
     <>
       {answer.type === 'score' ? (
@@ -117,7 +134,10 @@ function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; 
         >
           {Object.entries(answer.probabilities).map(([key, value]) => (
             <li key={key}>
-              <code>{key}</code>: {value}
+              <code>
+                {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
+              </code>
+              : <span title={String(value)}>{formatProbability(value)}</span>
             </li>
           ))}
         </ul>
@@ -154,8 +174,8 @@ function DecisionAcceptance({
             : config.minConfidence === undefined
               ? 'No minimum configured in run version'
               : confidence === null
-                ? `Not recorded; run-version minimum ${config.minConfidence}`
-                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${config.minConfidence}`}
+                ? `Not recorded; run-version minimum ${formatProbability(config.minConfidence)}`
+                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${formatProbability(config.minConfidence)}`}
       </dd>
     </>
   );
@@ -224,16 +244,20 @@ function ObservationDetails({
       {answer?.type === 'noul' ? (
         <>
           <dt>True probability</dt>
-          <dd>{answer.trueProbability ?? 'Not recorded'}</dd>
+          <dd>{formatProbability(answer.trueProbability)}</dd>
           <dt>True-probability threshold</dt>
-          <dd>{threshold ?? 'Unknown (run version unavailable)'}</dd>
+          <dd>
+            {threshold === undefined
+              ? 'Unknown (run version unavailable)'
+              : formatProbability(threshold)}
+          </dd>
         </>
       ) : null}
       {confidence !== null || provenance.kind !== 'expression' ? (
         <>
           <dt>{provenance.kind === 'llm' ? 'Self-reported confidence' : 'Confidence'}</dt>
           <dd>
-            {confidence ?? 'Not recorded'}
+            {formatProbability(confidence)}
             {provenance.kind === 'llm' ? (
               <span className="ml-1 text-muted">
                 (reported by the evaluator; informational only, not a calibrated classifier score)
@@ -274,8 +298,11 @@ export function EvaluationDetails({
   const rejection = rejectedEvaluation(event);
   if (event.type === 'run.failed' && !rejection) return null;
   return (
-    <Card title="Evaluation details">
-      <p>{describeEvent(event)}</p>
+    <Card title="Evaluation details" bodyClassName="min-w-0 wrap-anywhere">
+      <p>{describeEvent(event, definition)}</p>
+      {'nodeId' in event ? (
+        <p className="text-sm text-muted">Node: {nodeName(definition, event.nodeId)}</p>
+      ) : null}
       {event.type === 'exit.evaluated' ? (
         <p>
           Exit outcome: {event.outcome}. This exit is terminal.{' '}
@@ -333,7 +360,7 @@ export function EvaluationDetails({
                 <dd>{event.gate.passes}</dd>
                 <dt>Repeat route</dt>
                 <dd>
-                  <code>{event.gate.repeatRouteId}</code>
+                  <code>{routeName(definition, event.nodeId, event.gate.repeatRouteId)}</code>
                 </dd>
                 <dt>Maximum passes</dt>
                 <dd>{event.gate.maxPasses ?? 'Unlimited'}</dd>
@@ -368,7 +395,11 @@ export function EvaluationDetails({
             />
           </dl>
           {event.observation.kind === 'classifier' ? (
-            <ClassifierDetails answer={event.observation.answer} />
+            <ClassifierDetails
+              answer={event.observation.answer}
+              definition={definition}
+              nodeId={event.nodeId}
+            />
           ) : null}
           {event.diagnostics.length ? (
             <ul aria-label="Evaluation diagnostics" className="mt-2 grid gap-2 text-sm">
@@ -400,11 +431,15 @@ export function EvaluationDetails({
                 )}
               />
               <dt>Minimum confidence</dt>
-              <dd>{rejection.minConfidence}</dd>
+              <dd>{formatProbability(rejection.minConfidence)}</dd>
               <Identity value={rejection.provenance} />
             </dl>
           </section>
-          <ClassifierDetails answer={rejection.answer} />
+          <ClassifierDetails
+            answer={rejection.answer}
+            definition={definition}
+            nodeId={event.type === 'run.failed' ? event.failure.nodeId : undefined}
+          />
         </>
       ) : null}
     </Card>

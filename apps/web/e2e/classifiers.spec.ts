@@ -537,7 +537,7 @@ test('a classifier Choice gate explains its options, refuses a duplicate label, 
   await page.goto(`${target.url}/app/runs/${runId}`);
   await expect(
     page.getByText(
-      'Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
+      'Last gate decision: Gate (gate) chose Again (again) on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
       { exact: true },
     ),
   ).toBeVisible();
