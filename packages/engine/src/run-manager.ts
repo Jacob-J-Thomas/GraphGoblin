@@ -75,6 +75,8 @@ import { createInitialThread, type InitialThreadInput } from './thread.js';
 import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 import { boundedFailure } from './event-validation.js';
 import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
+import { visitTurn } from './handlers/inference-turn.js';
+import { childSessionRecovered } from './session-recovery.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -1037,7 +1039,10 @@ export class RunManager {
         return this.mustGet(runId);
       }
     }
-    if (run.status === 'failed' && run.failure?.resumable) {
+    if (
+      run.status === 'failed' &&
+      (run.failure?.resumable || (await childSessionRecovered(this.ports, run)))
+    ) {
       // Leaving a terminal status: the intent is written first, like every terminal transition.
       // The finalization marker of the failure is cleared so the run's next terminal outcome is
       // finalized again; recovery completes a resume whose `run.resumed` is durable. It waits for
@@ -1051,7 +1056,7 @@ export class RunManager {
         const terminal = terminalEvent(await this.ports.events.read(runId));
         if (
           current.status !== 'failed' ||
-          !current.failure?.resumable ||
+          !(current.failure?.resumable || (await childSessionRecovered(this.ports, current))) ||
           terminal?.seq !== observed
         ) {
           return undefined;
@@ -1078,6 +1083,70 @@ export class RunManager {
     await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
     this.enqueue(runId);
     return updated;
+  }
+
+  /** Explicitly abandon only the failed node's missing provider conversation (#265). */
+  async recoverSession(
+    runId: string,
+    nodeId: string,
+    failureSeq: number,
+    actor: Actor = SYSTEM_ACTOR,
+  ): Promise<RunRecord> {
+    return this.withWork(async () => {
+      this.assertAdmissionOpen();
+      return this.withRunLock(runId, async () => {
+        const run = await this.mustGet(runId);
+        const events = await this.ports.events.read(runId);
+        const failed = terminalEvent(events);
+        const missing = run.failure?.missingSession;
+        const version = await this.ports.loops.getVersion(run.versionId);
+        const node = version && nodeById(version.definition, nodeId);
+        const visit = visitTurn(events, nodeId);
+        if (
+          run.status !== 'failed' ||
+          run.failure?.code !== 'HARNESS_SESSION_MISSING' ||
+          run.failure.nodeId !== nodeId ||
+          run.currentNodeId !== nodeId ||
+          failed?.type !== 'run.failed' ||
+          failed.seq !== failureSeq ||
+          !missing ||
+          missing.visitId !== visit.visitId ||
+          node?.kind !== 'inference' ||
+          node.config.harness !== missing.harness
+        )
+          throw new EngineRequestError(
+            'INVALID_STATE',
+            'The observed missing-session failure is no longer current for this inference node',
+          );
+        const authored = events.find(
+          (event) =>
+            event.type === 'harness.turn' &&
+            event.nodeId === nodeId &&
+            event.visitId === visit.visitId &&
+            event.promptKind === 'authored',
+        );
+        await this.ports.runs.clearFinalized(runId);
+        // The choice, actor/time and resume intent commit in one event. Startup already completes
+        // durable resumes; no transient flag or session-row rewrite can lose this decision.
+        await this.ports.events.append(runId, [
+          {
+            type: 'run.resumed',
+            actor,
+            freshSession: {
+              ...missing,
+              nodeId,
+              failureSeq,
+              priorContextCarried: false,
+              ...(authored?.type === 'harness.turn' ? { prompt: authored.prompt } : {}),
+            },
+          },
+        ]);
+        const resumed = await this.completeResume(runId);
+        if (!resumed)
+          throw new EngineRequestError('INVALID_STATE', 'The run changed during session recovery');
+        return resumed;
+      });
+    });
   }
 
   /** Move a failed run whose resume is durable back to running and queue it. */

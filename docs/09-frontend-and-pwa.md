@@ -762,3 +762,17 @@ Switching to Claude also starts its supported `read-only`/`never` policy; other 
 options remain for correction when unsupported. Runs never substitute models. Runtime resolution
 still uses node, loop, owner and process defaults; this action adds no runtime fallback or stored
 value migration. Model and effort remain under Advanced until the separate #205 change.
+
+### Missing-session recovery control (#265)
+
+The inspector names a missing provider handle and its origin in the failure alert.
+For an eligible inference failure it offers **Start fresh session for <node>**.
+The explanation states that prior provider conversation is not carried over, earlier
+provider actions are not undone, and configured context mode, selected loop inputs,
+model and effort remain the same. Leaving the choice untouched keeps the run failed.
+The control waits for the observed failed event and disables during submission;
+API refusals remain visible. Plain Resume is never a fresh-session fallback.
+
+A durable recovery note shows who chose, when, which node, and the lost prior
+handle/origin after reload or completion. Inspector edits are confined to failure
+and recovery controls; evidence projections and the event-stream hook are unchanged.

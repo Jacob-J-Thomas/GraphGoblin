@@ -11,6 +11,7 @@ import { Alert, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
+import { SessionRecoveryControls } from './inspector/SessionRecoveryControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
@@ -147,6 +148,7 @@ export function RunInspectorPage() {
                 <FailedChildLink details={run.failure.details} />
               </Alert>
             ) : null}
+            <SessionRecoveryControls run={run} events={log.events} />
             {latestExit ? (
               <Card title="Exit evaluation">
                 <p>{describeEvent(latestExit)}</p>

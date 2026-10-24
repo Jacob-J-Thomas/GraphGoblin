@@ -146,6 +146,7 @@ describe('adversarial API invariants', () => {
     'POST /runs/{id}/cancel': 'runs:write',
     'POST /runs/{id}/pause': 'runs:write',
     'POST /runs/{id}/resume': 'runs:write',
+    'POST /runs/{id}/recover-session': 'runs:write',
     'POST /runs/{id}/input': 'runs:write',
     'POST /runs/{id}/signals/{name}': 'runs:write',
     'POST /runs/{id}/replay': 'runs:write',

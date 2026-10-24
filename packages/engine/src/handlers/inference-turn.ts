@@ -4,6 +4,7 @@ import type { HarnessEvent } from '../ports.js';
 import { RunFailureError } from '../errors.js';
 
 type Turn = Extract<RunEvent, { type: 'harness.turn' }>;
+type FreshSession = NonNullable<Extract<RunEvent, { type: 'run.resumed' }>['freshSession']>;
 export interface PendingTurn {
   turn: Pick<Turn, 'visitId' | 'turnId' | 'prompt' | 'promptKind' | 'resumeSessionId' | 'harness'>;
   submission: PromptProvenance['submission'];
@@ -17,13 +18,28 @@ export interface PendingTurn {
 export function visitTurn(
   events: readonly RunEvent[],
   nodeId: string,
-): { visitId: string; pending?: PendingTurn; completedVisits: number; completedAttempt?: number } {
+): {
+  visitId: string;
+  pending?: PendingTurn;
+  completedVisits: number;
+  completedAttempt?: number;
+  freshSession?: FreshSession;
+} {
   let visitId = '';
   let pending: PendingTurn | undefined;
   let completedVisits = 0;
   let attempt: number | undefined;
   let completedAttempt: number | undefined;
+  let freshSession: FreshSession | undefined;
   for (const event of events) {
+    if (
+      event.type === 'run.resumed' &&
+      event.freshSession?.nodeId === nodeId &&
+      event.freshSession.visitId === visitId
+    ) {
+      freshSession = event.freshSession;
+      pending = undefined;
+    }
     if (event.type === 'run.failed' && event.failure.nodeId === nodeId) {
       const evidence = event.failure.inference;
       if (evidence?.visitId === visitId) {
@@ -54,6 +70,7 @@ export function visitTurn(
       completedAttempt = attempt;
       visitId = '';
       pending = undefined;
+      freshSession = undefined;
     }
     if (event.type === 'node.started') {
       attempt = event.attempt;
@@ -86,6 +103,7 @@ export function visitTurn(
     completedVisits,
     ...(completedAttempt === undefined ? {} : { completedAttempt }),
     ...(pending ? { pending } : {}),
+    ...(freshSession ? { freshSession } : {}),
   };
 }
 

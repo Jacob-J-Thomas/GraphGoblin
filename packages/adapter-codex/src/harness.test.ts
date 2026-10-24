@@ -74,6 +74,7 @@ describe('CodexHarness.start', () => {
       }
       const session = harness.resume('missing-id', request(), new AbortController().signal);
       const events = await drain(session);
+      expect(events.filter((event) => event.type === 'session')).toEqual([]);
       expect(events.at(-1)).toMatchObject({
         type: 'error',
         code: 'HARNESS_SESSION_MISSING',
@@ -279,7 +280,7 @@ describe('CodexHarness.start', () => {
 });
 
 describe('CodexHarness.resume', () => {
-  it('announces the known session id at once and passes the node settings to resumeThread', async () => {
+  it('confirms native session identity and passes the node settings to resumeThread', async () => {
     const codex = ReplayCodex.fromFixtures('message', 'message');
     const harness = new CodexHarness({ clientFactory: codex.factory });
     const settings = {
@@ -305,7 +306,11 @@ describe('CodexHarness.resume', () => {
     await expect(resumed.sessionId).resolves.toBe(id);
     const events = await drain(resumed);
     // The fixture's own thread.started repeats the id; it is not announced twice.
-    expect(events[0]).toEqual({ type: 'session', sessionId: id, mode: 'resumed' });
+    expect(events.find((event) => event.type === 'session')).toEqual({
+      type: 'session',
+      sessionId: id,
+      mode: 'resumed',
+    });
     expect(events.filter((e) => e.type === 'session')).toHaveLength(1);
     expect(codex.runs[1]).toMatchObject({ kind: 'resume', threadId: id, input: 'again' });
     // resumeThread receives exactly the options startThread received.
@@ -322,7 +327,7 @@ describe('CodexHarness.resume', () => {
     });
   });
 
-  it('uses the request settings for a session this process did not start', async () => {
+  it('rejects a different native session instead of claiming reuse', async () => {
     const codex = new ReplayCodex(
       {
         events: [
@@ -347,10 +352,8 @@ describe('CodexHarness.resume', () => {
       new AbortController().signal,
     );
     const sessions = (await drain(session)).filter((e) => e.type === 'session');
-    expect(sessions).toEqual([
-      { type: 'session', sessionId: 'abc', mode: 'resumed' },
-      { type: 'session', sessionId: 'other', mode: 'resumed' },
-    ]);
+    expect(sessions).toEqual([]);
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
     // Model and effort fall back to the harness defaults when the request names none.
     expect(codex.runs[0]?.threadOptions).toEqual({
       model: 'gpt-6-sol',
@@ -580,4 +583,30 @@ describe('createCodexAdapters', () => {
     expect(factory).toHaveBeenCalledOnce();
     expect(cliRunner).not.toHaveBeenCalled();
   });
+});
+
+it('does not record reuse when native initialization precedes a missing-session refusal', async () => {
+  const harness = new CodexHarness({
+    clientFactory: () => ({
+      startThread: () => {
+        throw new Error('Expected resume');
+      },
+      resumeThread: () => ({
+        runStreamed: () =>
+          Promise.resolve({
+            events: (async function* () {
+              yield await Promise.resolve({ type: 'thread.started', thread_id: 'removed-handle' });
+              yield {
+                type: 'turn.failed',
+                error: { message: 'No rollout found with session id removed-handle' },
+              };
+            })(),
+          }),
+      }),
+    }),
+  });
+  const session = harness.resume('removed-handle', request(), new AbortController().signal);
+  const events = await drain(session);
+  expect(events.filter((event) => event.type === 'session')).toEqual([]);
+  await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
 });

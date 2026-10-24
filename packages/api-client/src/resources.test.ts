@@ -113,3 +113,18 @@ it('forwards run observation cancellation to GET without cancelling the run', as
   expect(requests[0]!.signal.aborted).toBe(true);
   expect(requests[1]!.signal.aborted).toBe(false);
 });
+
+it('sends an explicit missing-session choice through the generated client endpoint', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://api',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({ status: 'running' }));
+    },
+  });
+  await runs.recoverSession(client, 'run', { nodeId: 'worker', failureSeq: 17 });
+  expect(requests[0]!.url).toBe('http://api/runs/run/recover-session');
+  expect(requests[0]!.method).toBe('POST');
+  expect(await requests[0]!.json()).toEqual({ nodeId: 'worker', failureSeq: 17 });
+});

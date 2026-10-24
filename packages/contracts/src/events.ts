@@ -13,6 +13,7 @@ import { OutcomeSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
 import {
   TurnSubmissionSchema,
+  FreshSessionChoiceSchema,
   RunFailureSchema,
   RunPinSchema,
   RunStatusSchema,
@@ -138,7 +139,12 @@ export const RunEventSchema = z.discriminatedUnion('type', [
   }),
   z.strictObject({ ...Base, type: z.literal('run.failed'), failure: RunFailureSchema }),
   z.strictObject({ ...Base, type: z.literal('run.paused'), actor: Actor }),
-  z.strictObject({ ...Base, type: z.literal('run.resumed'), actor: Actor }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('run.resumed'),
+    actor: Actor,
+    freshSession: FreshSessionChoiceSchema.optional(),
+  }),
   z.strictObject({ ...Base, type: z.literal('run.cancel_requested'), actor: Actor }),
   z.strictObject({ ...Base, type: z.literal('run.cancelled') }),
   z.strictObject({
