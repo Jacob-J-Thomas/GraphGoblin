@@ -1,5 +1,6 @@
 import { access, chmod, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { createServer, type ServerResponse } from 'node:http';
 import { afterEach, expect, it } from 'vitest';
 import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
 import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
@@ -76,6 +77,206 @@ const input = {
   label: 'Input',
   config: { mode: 'input', prompt: 'Answer' },
 } as const;
+
+it('native drain rechecks a wake during delivery cleanup and completes its required child before closing controls', async () => {
+  const a = await boot({ GG_MAX_CONCURRENT_RUNS: '2' });
+  const release = join(a.f.dataDir, 'release-woken-script');
+  const started = join(a.f.dataDir, 'woken-script-started');
+  const childStarted = join(a.f.dataDir, 'required-child-started');
+  let held: ServerResponse | undefined;
+  const receiver = createServer((req, res) => {
+    req.resume();
+    held = res;
+  });
+  let receiverPort = 5760;
+  while (receiverPort <= 5769 && (await listening(receiverPort))) receiverPort++;
+  if (receiverPort > 5769) throw new Error('No disposable receiver port is free');
+  await new Promise<void>((resolve, reject) => {
+    receiver.once('error', reject);
+    receiver.listen(receiverPort, '127.0.0.1', resolve);
+  });
+  try {
+    const leaf = await a.publish(
+      loop('Required child after wake', [
+        {
+          id: 'marker',
+          kind: 'script',
+          label: 'Child marker',
+          config: {
+            command: process.execPath,
+            args: [
+              '-e',
+              `require('node:fs').writeFileSync(${JSON.stringify(childStarted)},'done')`,
+            ],
+          },
+        },
+      ]),
+    );
+    const parent = await a.publish(
+      loop('Wake during cleanup', [
+        input,
+        {
+          id: 'hold',
+          kind: 'script',
+          label: 'Hold',
+          config: {
+            command: process.execPath,
+            args: [
+              '-e',
+              `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(started)},'active');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(t);process.exit(0)}},25);setTimeout(()=>process.exit(0),30000)`,
+            ],
+          },
+        },
+        {
+          id: 'child',
+          kind: 'subloop',
+          label: 'Required child',
+          config: { loopRef: { loopId: leaf } },
+        },
+      ]),
+    );
+    const run = await a.start(parent);
+    await eventually(async () => (await a.run(run.id)).status === 'waiting');
+    const waiting = (await a.run(run.id)).waiting!;
+    const returned = loop('Held return response', []);
+    const exit = returned.nodes.find((n) => n.kind === 'exit');
+    if (!exit || exit.kind !== 'exit') throw new Error('Missing exit');
+    exit.config = {
+      returns: '"held"',
+      destinations: [{ kind: 'webhook', url: `http://127.0.0.1:${receiverPort}/return` }],
+    };
+    const delivered = await a.start(await a.publish(returned));
+    await eventually(() => held !== undefined);
+    const sse = await fetch(`${a.origin}/runs/${run.id}/events`, {
+      headers: { ...a.headers, accept: 'text/event-stream' },
+    });
+    let streamClosed = false;
+    const text = sse.text().then((value) => {
+      streamClosed = true;
+      return value;
+    });
+    await a.call('POST', '/system/shutdown', { action: 'drain' });
+    await eventually(
+      async () =>
+        ((await (await a.call('GET', '/system/shutdown')).json()) as { phase: string }).phase ===
+        'awaiting-choice',
+    );
+    expect(
+      (await a.call('POST', `/runs/${run.id}/input`, { waitId: waiting.waitId, input: 'continue' }))
+        .status,
+    ).toBe(200);
+    await eventually(async () => {
+      try {
+        await access(started);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    held!.writeHead(200);
+    held!.end('accepted');
+    await eventually(async () => {
+      const events = (await (await a.call('GET', `/runs/${delivered.id}/events`)).json()) as {
+        items: { type: string }[];
+      };
+      return events.items.some((event) => event.type === 'delivery.finished');
+    });
+    expect(streamClosed).toBe(false);
+    expect((await a.run(run.id)).status).toBe('running');
+    expect((await a.call('POST', '/runs/00000000000000000000000000/cancel', {})).status).toBe(404);
+    expect((await a.call('POST', '/system/shutdown', { action: 'probe-only' })).status).toBe(400);
+    await writeFile(release, 'finish');
+    expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
+    await expect(access(childStarted)).resolves.toBeUndefined();
+    expect(await text).toContain('event: run.finished');
+    await expect(access(a.f.lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
+  } finally {
+    await writeFile(release, 'finish');
+    held?.end();
+    receiver.closeAllConnections();
+    await new Promise<void>((resolve) => receiver.close(() => resolve()));
+  }
+}, 120_000);
+
+it('native racing Events retain admitted work or reusable keys through drain and restart', async () => {
+  const a = await boot();
+  const release = join(a.f.dataDir, 'release-event-race');
+  const started = join(a.f.dataDir, 'event-race-started');
+  try {
+    const holder = await a.publish(
+      loop('Event race holder', [
+        {
+          id: 'hold',
+          kind: 'script',
+          label: 'Hold',
+          config: {
+            command: process.execPath,
+            args: [
+              '-e',
+              `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(started)},'active');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(t);process.exit(0)}},25);setTimeout(()=>process.exit(0),30000)`,
+            ],
+          },
+        },
+      ]),
+    );
+    await a.start(holder);
+    await eventually(async () => {
+      try {
+        await access(started);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    const definition = loop('Racing Event target', []);
+    definition.nodes[0] = {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Event',
+      config: { type: 'event', eventType: 'drain-race' },
+    };
+    const target = await a.publish(definition);
+    const events = Array.from({ length: 6 }, (_, i) => ({
+      type: 'drain-race',
+      payload: { i },
+      dedupeKey: `race-${i}`,
+    }));
+    const pending = events.map((event) => a.call('POST', '/events', event));
+    const draining = a.call('POST', '/system/shutdown', { action: 'drain' });
+    const responses = await Promise.all(pending);
+    const statuses = responses.map((r) => r.status);
+    for (const response of responses) {
+      const body = (await response.json()) as { runIds?: string[]; code?: string };
+      if (response.status === 202) expect(body.runIds).not.toHaveLength(0);
+      else {
+        expect(response.status).toBe(503);
+        expect(body.code).toBe('SHUTTING_DOWN');
+      }
+    }
+    expect((await draining).status).toBe(202);
+    await writeFile(release, 'finish');
+    expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
+    const restarted = a.f.run();
+    await a.f.ready(restarted, a.token);
+    for (const [i, event] of events.entries()) {
+      const response = await a.call('POST', '/events', event);
+      expect(response.status).toBe(202);
+      const body = (await response.json()) as { runIds: string[]; duplicate: boolean };
+      expect(body.runIds).not.toHaveLength(0);
+      expect(body.duplicate).toBe(statuses[i] === 202);
+    }
+    await eventually(async () => {
+      const runs = (await (await a.call('GET', `/runs?loopId=${target}`)).json()) as {
+        items: RunRecord[];
+      };
+      return runs.items.length === 6 && runs.items.every((run) => run.status === 'succeeded');
+    });
+    await a.call('POST', '/system/shutdown', { action: 'drain' });
+    expect(await restarted.waitForExit()).toEqual({ code: 0, signal: null });
+  } finally {
+    await writeFile(release, 'finish');
+  }
+}, 120_000);
 
 it('native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work', async () => {
   const a = await boot({ GG_MAX_CONCURRENT_RUNS: '2' });

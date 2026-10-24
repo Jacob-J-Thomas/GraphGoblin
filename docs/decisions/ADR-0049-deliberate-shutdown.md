@@ -28,7 +28,12 @@ Independent admission closes synchronously before drain is awaited. Manual, cron
 poll, Event, replay and unrelated resume cannot create work. Inbound Event ingestion checks
 the public manager admission boundary before allocating or inserting its record/dedupe key;
 refusal returns 503 `SHUTTING_DOWN`. Webhooks return 503 `WEBHOOK_ADMISSION_FAILED`.
-Commit-time checks also refuse starts whose admission/preflight was already in flight.
+Every intake holds a lease from its first admission check through its durable outcome.
+An intake accepted before closure may finish admission; independent runs admitted during drain
+remain queued for restart. `withAdmission` extends this boundary across an inbound source's
+receipt/dedupe and linkage writes, using its scoped `startRun`. The callback must await those
+writes and cannot reuse its capability after returning. A closed intake is refused before
+allocation; a racing drain cannot invalidate a scope after its receipt has been saved.
 Cron leaves due slots untouched when admission is closed; poll refusals consume no durable
 business key. Existing independent queue entries remain durable and unstarted.
 
@@ -44,6 +49,14 @@ and resumability. After restart, past wall-clock waits become eligible; pauses s
 D-021 remains in force: stop the webhook retry sweep and wake delivery backoffs; allow an
 in-flight delivery attempt to record its bounded outcome, but do not start another attempt.
 Pending receipts and pending deliveries are durable recovery work.
+
+The final quiescence decision is atomic with wake/intake admission: commands reserve a lease
+before their first await. Drain rechecks after asynchronous recovery and delivery cleanup,
+then validates lease generation, executor/family queue state and due wakes before sealing
+without another await. A later input, signal, resume or cancellation is refused before a write;
+a later timer delivery retains its durable row for restart. A wake accepted during cleanup
+holds drain through its continuations, including a child created afterwards. Open intake
+leases hold ownership only until their writes settle; durable parks still do not hold drain.
 
 Force aborts active executors and interrupts queued members of the captured family.
 It never fails existing durable parks or paused runs, including parked parents and children.

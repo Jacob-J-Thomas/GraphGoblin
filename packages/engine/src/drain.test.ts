@@ -4,7 +4,7 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { expect, it, vi } from 'vitest';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 
-it('refuses every independent admission source after drain, including a slow in-flight admission', async () => {
+it('refuses new independent sources while an earlier intake remains recoverably queued', async () => {
   const e = await createTestEngine();
   const v = e.publish(minimalLoop());
   let release!: () => void;
@@ -24,7 +24,9 @@ it('refuses every independent admission source after drain, including a slow in-
   await reached;
   await e.manager.beginDrain();
   release();
-  await expect(pending).rejects.toMatchObject({ code: 'SHUTTING_DOWN' });
+  const admitted = await pending;
+  expect(admitted.status).toBe('queued');
+  expect(admitted.startedAt).toBeUndefined();
   for (const source of [
     'manual.api',
     'manual.ui',

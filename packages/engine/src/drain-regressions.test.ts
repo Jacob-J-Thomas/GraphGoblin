@@ -98,8 +98,6 @@ it('B1 normal drain completes with future timer and paused input unchanged', asy
     expect(done, 'durable parks must not hold a normal drain').toBe(true);
     expect(await Promise.all([e.ports.runs.get(a.id), e.ports.runs.get(b.id)])).toEqual(before);
   } finally {
-    await e.manager.cancel(a.id);
-    await e.manager.cancel(b.id);
     await vi.advanceTimersByTimeAsync(50);
     await drain;
     e.manager.stop();

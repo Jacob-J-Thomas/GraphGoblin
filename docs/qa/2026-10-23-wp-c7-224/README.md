@@ -207,3 +207,12 @@ Retained logs are normalized to UTF-8 with local user paths written as `%USERPRO
 No capture exceeds 1,000,000 bytes and no oversized capture was discarded.
 `CAPTURE-MANIFEST.json` records retained artifact sizes and SHA-256 hashes after redaction;
 `SOURCE-MANIFEST.json` records the changed source/docs outside this evidence directory.
+
+### Round 3: final audit races
+
+At base `7650e9510181d5f47187629ae15d7b07af5fc6ec`, the two audit drivers reproduced
+premature SSE/control closure during awakened native work and five lost racing Events out
+of six. The [round-3 report](round-3/README.md) records the admission leases, atomic drain
+handoff, before/after native evidence and all gate results. Driver copies are retained as
+`.mjs.txt` and logs as `.log.txt` beside that report. Earlier manifests and the independent
+QA folder are unchanged; the orchestrator recomputes committed-byte manifests after review.

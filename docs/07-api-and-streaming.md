@@ -558,3 +558,10 @@ Only this shutdown's own unconfirmed native interruption blocks release in force
 After applicable execution/delivery cleanup, SSE inspectors (including queued runs) close,
 HTTP closes, SQLite closes and the lock is released. The explicit failed-stop exit instead
 preserves ownership for dead-PID reclamation. See ADR-0049 and docs/11.
+
+An intake accepted before drain can finish recording its durable run/receipt while shutdown
+waits; independent runs admitted then remain queued for restart. A new closed intake returns
+503 before recording anything. At the final quiescent handoff, mutating run commands are
+sealed atomically with wake admission: a late command returns 503 `SHUTTING_DOWN` before
+writing, while an earlier accepted wake keeps controls and SSE open until its runnable family
+settles. Durable future parks and pauses still recover on the next start.

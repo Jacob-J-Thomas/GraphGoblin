@@ -540,9 +540,15 @@ Authors may use script/decision nodes for their own usage-aware behavior.
 The container owns shutdown state. Normal stop closes independent admission and stops
 cron/poll sources and webhook retries. Started runs and descendants form the permitted
 family while drain is open; required children created during drain can still start.
-Independent queue entries remain durable and unstarted for the next process. Events are
+Independent queue entries remain durable and unstarted for the next process. New Events are
 refused with 503 before their inbound record or dedupe key is saved; cron leaves due slots
-untouched and refused poll candidates consume no durable dedupe key.
+untouched and refused poll candidates consume no durable dedupe key. Intake already accepted
+before drain holds a lease through its durable outcome. Its admitted independent runs can
+remain queued for restart; closing admission cannot strand a saved Event key without its work.
+`RunManager.withAdmission` reserves this boundary before a caller allocates receipts and
+provides a scoped `startRun`; the caller awaits all receipt, admission and linkage writes
+inside the callback. Manual, webhook, cron, poll and replay manager commands use the same
+lease accounting. The capability expires when the callback returns.
 
 D-038 defines completion as no active executor, no queued family member and no family wake
 already due. Future timers, input/signal waits, parents waiting on parked children and paused
@@ -551,6 +557,14 @@ and force unchanged. Input, signals, cancellation and timers work while drain is
 wake holds drain until its continuation finishes or parks again. Due timer/timeout wakes
 are delivered before quiescence; after restart past wall-clock waits become eligible and
 paused runs remain paused.
+
+Quiescence is rechecked after every asynchronous cleanup observation, including delivery
+cleanup. Input, signal, timer and other mutating run commands acquire a work lease before
+their first await. Drain validates the lease generation, executor/queue state and nearest
+due wake, then seals further commands without an intervening await. A wake therefore either
+holds ownership through runnable completion or is refused with `SHUTTING_DOWN` before any
+write. A future timer stays durable when the seal wins. Required child continuations finish
+before SSE/HTTP close even when their parent woke during a held delivery response.
 
 `GG_SHUTDOWN_GRACE_MS` defaults to 300,000 ms (five minutes), an engineering choice to give
 interactive work time to finish. Expiry exposes `awaiting-choice` and logs wait/force controls;
