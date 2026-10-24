@@ -114,3 +114,5 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     },
   };
 }
+
+export { createThreadHistoryFixture } from './thread-history.js';

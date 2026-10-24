@@ -1,0 +1,83 @@
+{
+  "label": "after-bounded-read",
+  "runtime": "v22.14.0",
+  "events": 10008,
+  "finalSeq": 10008,
+  "warmupPerCase": 1,
+  "samplesPerCase": 5,
+  "transport": "loopback HTTP, physical SQLite, controlled appended node pairs",
+  "samples": [
+    {
+      "name": "current",
+      "checkpointSeq": 10008,
+      "ms": [
+        45.6913999999997,
+        57.12780000000021,
+        6.041699999999764,
+        10.581600000001345,
+        25.8140999999996
+      ],
+      "medianMs": 25.8140999999996,
+      "minMs": 6.041699999999764,
+      "maxMs": 57.12780000000021,
+      "reads": [
+        {
+          "afterSeq": 10007,
+          "rows": 1
+        },
+        {
+          "afterSeq": 10007,
+          "rows": 1
+        },
+        {
+          "afterSeq": 10007,
+          "rows": 1
+        },
+        {
+          "afterSeq": 10007,
+          "rows": 1
+        },
+        {
+          "afterSeq": 10007,
+          "rows": 1
+        }
+      ]
+    },
+    {
+      "name": "lagging-200-events",
+      "checkpointSeq": 9808,
+      "ms": [
+        12.3153999999995,
+        32.56910000000062,
+        90.52179999999862,
+        13.036999999998443,
+        21.826999999999316
+      ],
+      "medianMs": 21.826999999999316,
+      "minMs": 12.3153999999995,
+      "maxMs": 90.52179999999862,
+      "reads": [
+        {
+          "afterSeq": 9807,
+          "rows": 201
+        },
+        {
+          "afterSeq": 9807,
+          "rows": 201
+        },
+        {
+          "afterSeq": 9807,
+          "rows": 201
+        },
+        {
+          "afterSeq": 9807,
+          "rows": 201
+        },
+        {
+          "afterSeq": 9807,
+          "rows": 201
+        }
+      ]
+    }
+  ]
+}

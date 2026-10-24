@@ -1,0 +1,110 @@
+// Disposable native API process; only public constructors/ports, no patches to product code.
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+import { replay } from './oracle.mjs';
+const root = process.env.QA_ROOT;
+const load = p => import(pathToFileURL(join(root,p)).href);
+const {createContainer,buildApp,loadConfig} = await load('apps/api/dist/index.js');
+const {RunManager} = await load('packages/engine/dist/index.js');
+const {FakeHarness} = await load('packages/engine/dist/testing/index.js');
+const {SqliteRunRepository} = await load('packages/infrastructure/dist/sqlite/index.js');
+const {CURRENT_DEFINITION_FORMAT} = await load('packages/contracts/dist/index.js');
+const logs = [], readLog = [], timings = [];
+let mode = 'fail', held = false, release;
+const scripts = { async run(request,signal) {
+  const selected = mode;
+  if (selected === 'hold') {
+    held = true;
+    await new Promise(resolve => { release = resolve; signal?.addEventListener('abort',resolve,{once:true}); });
+    held = false;
+  }
+  const stdout = JSON.stringify([{op:'add',path:'/vars/completed',value:true}]);
+  return {exitCode:selected === 'fail' ? 1 : 0,stdout,stderr:'',stdoutBytes:Buffer.byteLength(stdout),stderrBytes:0,stdoutOverflow:false,stderrOverflow:false,timedOut:false};
+}};
+const logger = Object.fromEntries(['debug','info','warn','error'].map(k=>[k,(...a)=>logs.push({level:k,args:a})]));
+const base = await createContainer(loadConfig({GG_DATA_DIR:process.env.QA_DATA,GG_PORT:process.env.QA_PORT,GG_REQUIRE_API_KEY:'true',GG_WEB_DIST:join(root,'apps/web/dist'),GG_SWAGGER_UI:'false',GG_LOG_LEVEL:'silent'}),{scripts,harnesses:{codex:new FakeHarness()},startTimers:false,logger});
+// Start/migrate the standard container, then compose the tested manager with supported ports.
+await base.start(); base.manager.stop(); await base.manager.waitForIdle();
+class Delayed extends SqliteRunRepository {
+  pending = []; delay = true;
+  async saveThread(id,t,seq) {
+    if (!this.delay) return super.saveThread(id,t,seq);
+    this.pending.push({id,t:structuredClone(t),seq});
+  }
+  async flush() { for (const {id,t,seq} of this.pending.splice(0)) await super.saveThread(id,t,seq); }
+}
+const snapshots = new Delayed(base.handle.db);
+const counted = {
+  append:(...a)=>base.ports.events.append(...a),
+  subscribe:(...a)=>base.ports.events.subscribe(...a),
+  async read(id,after=0,limit) { const rows = await base.ports.events.read(id,after,limit); readLog.push({id,after,rows:rows.length}); if(readLog.length>2000) readLog.shift(); return rows; }
+};
+const manager = new RunManager({...base.ports,runs:snapshots,events:counted},base.settings);
+const app = await buildApp({...base,manager},{logger:false});
+app.addHook('onResponse',async(req,reply)=>{ if(req.headers['x-qa-probe']) timings.push({probe:req.headers['x-qa-probe'],status:reply.statusCode,ms:reply.elapsedTime}); });
+await app.listen({host:'127.0.0.1',port:Number(process.env.QA_PORT)});
+const hash = v => createHash('sha256').update(v).digest('hex');
+async function state(id,includeEvents=true) {
+  const record = await base.repos.runs.get(id);
+  const seed = await base.repos.runs.getInitialThread(id);
+  const events = await base.repos.events.read(id);
+  const snapshot = (await base.handle.client.execute({sql:'SELECT thread_snapshot, thread_snapshot_seq FROM runs WHERE id=?',args:[id]})).rows[0];
+  const raw = JSON.stringify((await base.handle.client.execute({sql:'SELECT * FROM runs WHERE id=?',args:[id]})).rows);
+  const eventBytes = JSON.stringify((await base.handle.client.execute({sql:'SELECT * FROM run_events WHERE run_id=? ORDER BY seq',args:[id]})).rows);
+  return {record,seed,oracle:replay(seed,events),...(includeEvents?{events}:{}),eventCount:events.length,snapshot,snapshotHash:hash(JSON.stringify(snapshot)),recordHash:hash(raw),eventHash:hash(eventBytes)};
+}
+const trigger = {id:'start',kind:'trigger',label:'Start',config:{type:'manual'}};
+const done = {id:'done',kind:'exit',label:'Done',config:{returns:'vars'}};
+const edge = (a,b) => ({id:a+'-'+b,from:{node:a,port:'out'},to:{node:b}});
+async function control(op,a) {
+  if(op==='mode') { mode=a; return {mode}; }
+  if(op==='start') { await manager.start(); return true; }
+  if(op==='stop') { manager.stop(); await manager.waitForIdle(); return true; }
+  if(op==='idle') { await manager.waitForIdle(); return true; }
+  if(op==='held') return held;
+  if(op==='release') { release?.(); return true; }
+  if(op==='state') return state(a.id,a.events!==false);
+  if(op==='metrics') { const m={reads:readLog.splice(0),timings:timings.splice(0),memory:process.memoryUsage(),pending:snapshots.pending.length,logs:logs.splice(0)}; return m; }
+  if(op==='flush') { await snapshots.flush(); return true; }
+  if(op==='delay') { snapshots.delay=a; return true; }
+  if(op==='definitions') return {
+    main:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Independent snapshot QA',nodes:[trigger,{id:'prepare',kind:'mutate',label:'Prepare',config:{operations:[{op:'set',path:'/vars/prepared',value:{kind:'literal',value:true}}]}},{id:'work',kind:'script',label:'Work',config:{command:'qa-fake-script',stdout:'patch'}},done],edges:[edge('start','prepare'),edge('prepare','work'),edge('work','done')]},
+    minimal:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Independent minimal QA',nodes:[trigger,done],edges:[edge('start','done')]},
+    wait:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Independent wait QA',nodes:[trigger,{id:'park',kind:'wait',label:'Park',config:{mode:'input',prompt:'QA value'}},done],edges:[edge('start','park'),edge('park','done')]},
+    child:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Independent child QA',nodes:[trigger,{id:'child-value',kind:'mutate',label:'Child value',config:{operations:[{op:'set',path:'/vars/childOnly',value:{kind:'literal',value:73}}]}},done],edges:[edge('start','child-value'),edge('child-value','done')]}
+  };
+  if(op==='parent') return {schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Independent parent QA',nodes:[trigger,{id:'child',kind:'subloop',label:'Child',config:{loopRef:{loopId:a},input:{mode:'fresh'},output:{resultTo:{lastOutput:true,var:'childResult'}}}},done],edges:[edge('start','child'),edge('child','done')]};
+  if(op==='checkpoint') {
+    const seed=await base.repos.runs.getInitialThread(a.id),events=await base.repos.events.read(a.id);
+    await base.repos.runs.saveThread(a.id,replay(seed,events,a.seq),a.seq);
+    return {seq:a.seq,type:events.find(e=>e.seq===a.seq)?.type};
+  }
+  if(op==='invalid-checkpoint') { const seed=await base.repos.runs.getInitialThread(a); await base.repos.runs.saveThread(a,seed,999999); return true; }
+  if(op==='unsequenced') { const seed=await base.repos.runs.getInitialThread(a); await base.repos.runs.saveThread(a,seed); return true; }
+  if(op==='recovery-arm') {
+    // Supported repository simulation of the status write lost after durable failure.
+    await base.repos.runs.update(a,{status:'running',finishedAt:undefined});
+    await base.repos.runs.clearFinalized(a); return true;
+  }
+  if(op==='append-pairs') {
+    const batch=[]; for(let i=a.from;i<a.from+a.count;i++) batch.push({type:'node.started',nodeId:'measure',kind:'mutate',attempt:i+1,configHash:'0'.repeat(64)},{type:'node.finished',nodeId:'measure',durationMs:1,patch:[{op:'add',path:'/vars/measured',value:i}]});
+    for(let i=0;i<batch.length;i+=200) await base.repos.events.append(a.id,batch.slice(i,i+200));
+    return true;
+  }
+  if(op==='live-append') {
+    // Controlled durable appender, concurrent with real HTTP readers. No fake execution claim.
+    for(let i=0;i<a.count;i++) {
+      await base.repos.events.append(a.id,[{type:'node.started',nodeId:'measure',kind:'mutate',attempt:i+1,configHash:'0'.repeat(64)},{type:'node.finished',nodeId:'measure',durationMs:1,patch:[{op:'add',path:'/vars/measured',value:i}]}]);
+      if(i%25===0) await new Promise(r=>setTimeout(r,1));
+    } return true;
+  }
+  if(op==='gc') { global.gc?.(); return process.memoryUsage(); }
+  if(op==='close') { release?.(); manager.stop(); await manager.waitForIdle(); app.closeAllConnections?.(); await app.close(); await base.stop(); return 'closed'; }
+  throw Error('Unknown control '+op);
+}
+process.on('message',async({id,op,args})=>{
+  try { const value=await control(op,args); process.send({id,value},()=>{if(op==='close')process.exit(0);}); }
+  catch(e) { process.send({id,error:e.stack??String(e)}); }
+});
+process.send({ready:true,pid:process.pid,dataDir:process.env.QA_DATA,port:Number(process.env.QA_PORT),runtime:process.version});

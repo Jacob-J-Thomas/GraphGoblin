@@ -1,0 +1,17 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$qa = Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-g1-116-qa/round-2'
+$records = @()
+$jobs = @(
+ @{name='sqlite-focused'; args=@('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/sqlite/checkpoint-state.test.ts','src/sqlite/catalog.test.ts','src/sqlite/delivery-runs.test.ts','src/sqlite/history-summaries.test.ts','src/sqlite/json-values.test.ts','src/sqlite/loop-deletion.test.ts','src/sqlite/storage.test.ts','src/sqlite/webhook-receipt-upgrade.test.ts','--maxWorkers=1')},
+ @{name='mcp-coverage'; args=@('--filter','@graphgoblin/mcp','test:coverage','--maxWorkers=1')},
+ @{name='web-coverage'; args=@('--filter','@graphgoblin/web','test:coverage','--maxWorkers=2')},
+ @{name='api-coverage'; args=@('--filter','@graphgoblin/api','test:coverage','--maxWorkers=2')}
+)
+foreach ($job in $jobs) {
+ $argv = $job.args
+ $start = Get-Date
+ & pnpm.cmd @argv *> (Join-Path $qa ($job.name+'.log.txt'))
+ $code = $LASTEXITCODE
+ $records += @{name=$job.name; command=('pnpm.cmd '+($argv -join ' ')); exit=$code; seconds=((Get-Date)-$start).TotalSeconds}
+ $records | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $qa 'gates-rest.json')
+}

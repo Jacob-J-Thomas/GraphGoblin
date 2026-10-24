@@ -1,0 +1,387 @@
+{
+  "revision": "d7371f25b87ee4d474d1bb75258a851e3cde648f",
+  "runtime": "v22.14.0",
+  "checks": [
+    {
+      "name": "failure: REST MCP four Edge tabs and immutable stored bytes",
+      "pass": true,
+      "ms": 2764.9026999999987,
+      "detail": {
+        "seq": 9,
+        "vars": {
+          "prepared": true
+        },
+        "workVisits": 1
+      }
+    },
+    {
+      "name": "native API restart while failed, tabs kept open",
+      "pass": true,
+      "ms": 10741.466200000003,
+      "detail": {
+        "oldPid": 60876,
+        "newPid": 59304,
+        "seq": 9
+      }
+    },
+    {
+      "name": "resume unfinished: only visit increment and no returned failing patch",
+      "pass": true,
+      "ms": 6313.642699999997,
+      "detail": {
+        "seq": 11,
+        "vars": {
+          "prepared": true
+        },
+        "workVisits": 2
+      }
+    },
+    {
+      "name": "mid-resume reload matches existing tabs",
+      "pass": true,
+      "ms": 792.614800000003,
+      "detail": {
+        "seq": 11
+      }
+    },
+    {
+      "name": "success: existing and midway-reloaded tabs follow resume after API restart",
+      "pass": true,
+      "ms": 1288.0924000000014,
+      "detail": {
+        "seq": 18,
+        "vars": {
+          "prepared": true,
+          "completed": true
+        }
+      }
+    },
+    {
+      "name": "keyboard access and viewport overflow",
+      "pass": true,
+      "ms": 3266.2918999999965,
+      "detail": [
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "name": "negative reads and invalid repeated controls do not mutate run",
+      "pass": true,
+      "ms": 33.24209999998857,
+      "detail": {
+        "invalidId": {
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/id",
+                "message": "must be a ULID"
+              }
+            ]
+          },
+          "ms": 6.188299999994342
+        },
+        "missing": {
+          "status": 404,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/run-not-found",
+            "title": "run not found",
+            "status": 404,
+            "code": "RUN_NOT_FOUND",
+            "detail": "run 01AAAAAAAAAAAAAAAAAAAAAAAA not found"
+          },
+          "ms": 4.442699999999604
+        },
+        "repeatedResume": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "cannot resume a run that is succeeded"
+          },
+          "ms": 7.103799999997136
+        },
+        "unauthorized": 401
+      }
+    },
+    {
+      "name": "replay fork uses own seed and leaves source unchanged",
+      "pass": false,
+      "ms": 261.03630000000703,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 2\n\n    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-scripts-5d3c777bbc3d45d487c21be81fd2234e/runner.mjs:86:523\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-scripts-5d3c777bbc3d45d487c21be81fd2234e/runner.mjs:27:106)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-scripts-5d3c777bbc3d45d487c21be81fd2234e/runner.mjs:86:3"
+    },
+    {
+      "name": "subloop child reconciles separately and parent receives result",
+      "pass": true,
+      "ms": 1653.7505999999994,
+      "detail": {
+        "parentId": "01M5PFB5SYPS8G9TC510DECWB6",
+        "childId": "01M5PFB605Y2026QHZZSD1M68C",
+        "parentVars": {
+          "childResult": {
+            "childOnly": 73
+          }
+        },
+        "childVars": {
+          "childOnly": 73
+        }
+      }
+    },
+    {
+      "name": "checkpoint boundaries node.started run.waiting node.finished run.finished",
+      "pass": true,
+      "ms": 91.15980000000854,
+      "detail": [
+        {
+          "boundary": {
+            "seq": 3,
+            "type": "node.started"
+          },
+          "reads": [
+            {
+              "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+              "after": 2,
+              "rows": 16
+            }
+          ]
+        },
+        {
+          "boundary": {
+            "seq": 6,
+            "type": "run.waiting"
+          },
+          "reads": [
+            {
+              "id": "01M5PFB7DWV89V0NJ0X4HQ674E",
+              "after": 5,
+              "rows": 1
+            }
+          ]
+        },
+        {
+          "boundary": {
+            "seq": 4,
+            "type": "node.finished"
+          },
+          "reads": [
+            {
+              "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+              "after": 3,
+              "rows": 15
+            }
+          ]
+        },
+        {
+          "boundary": {
+            "seq": 17,
+            "type": "run.finished"
+          },
+          "reads": [
+            {
+              "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+              "after": 16,
+              "rows": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cancel waiting run: no invented input patch and stable repeated reads",
+      "pass": true,
+      "ms": 71.48889999999665,
+      "detail": {
+        "status": "cancelled",
+        "vars": {},
+        "visits": {
+          "start": 1,
+          "park": 1
+        }
+      }
+    },
+    {
+      "name": "unsequenced and nonexistent checkpoint use seed and full history",
+      "pass": true,
+      "ms": 41.010900000008405,
+      "detail": [
+        {
+          "op": "unsequenced",
+          "reads": [
+            {
+              "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+              "after": 0,
+              "rows": 18
+            }
+          ]
+        },
+        {
+          "op": "invalid-checkpoint",
+          "reads": [
+            {
+              "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+              "after": 999998,
+              "rows": 0
+            },
+            {
+              "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+              "after": 0,
+              "rows": 18
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "recovery-written failure checkpoint falls back and agrees with full replay",
+      "pass": true,
+      "ms": 226.93769999999495,
+      "detail": {
+        "checkpointSeq": 9,
+        "checkpointType": "run.failed",
+        "reads": [
+          {
+            "id": "01M5PFB7TJZT245SD1EVHXCTA0",
+            "after": 8,
+            "rows": 1
+          },
+          {
+            "id": "01M5PFB7TJZT245SD1EVHXCTA0",
+            "after": 0,
+            "rows": 9
+          }
+        ]
+      }
+    },
+    {
+      "name": "bounded reads with 10000 durable synthetic events",
+      "pass": true,
+      "ms": 5310.4967999999935,
+      "detail": [
+        {
+          "name": "current",
+          "medianMs": 5.638800000000629,
+          "minMs": 5.426500000001397,
+          "maxMs": 6.991200000004028,
+          "rows": 1
+        },
+        {
+          "name": "lagging-200-events",
+          "medianMs": 10.97149999999965,
+          "minMs": 10.504899999999907,
+          "maxMs": 13.532100000011269,
+          "rows": 201
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "label": "failed",
+      "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+      "status": "failed",
+      "seq": 9,
+      "vars": {
+        "prepared": true
+      },
+      "visits": {
+        "start": 1,
+        "prepare": 1,
+        "work": 1
+      },
+      "readsUnchanged": true
+    },
+    {
+      "label": "restart-failed",
+      "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+      "status": "failed",
+      "seq": 9,
+      "vars": {
+        "prepared": true
+      },
+      "visits": {
+        "start": 1,
+        "prepare": 1,
+        "work": 1
+      },
+      "readsUnchanged": true
+    },
+    {
+      "label": "resumed-unfinished",
+      "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+      "status": "running",
+      "seq": 11,
+      "vars": {
+        "prepared": true
+      },
+      "visits": {
+        "start": 1,
+        "prepare": 1,
+        "work": 2
+      },
+      "readsUnchanged": true
+    },
+    {
+      "label": "midway-reload",
+      "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+      "status": "running",
+      "seq": 11,
+      "vars": {
+        "prepared": true
+      },
+      "visits": {
+        "start": 1,
+        "prepare": 1,
+        "work": 2
+      },
+      "readsUnchanged": true
+    },
+    {
+      "label": "succeeded",
+      "id": "01M5PFA6GG8B9G8M8NXDEVMX9E",
+      "status": "succeeded",
+      "seq": 18,
+      "vars": {
+        "prepared": true,
+        "completed": true
+      },
+      "visits": {
+        "start": 1,
+        "prepare": 1,
+        "work": 2,
+        "done": 1
+      },
+      "readsUnchanged": true
+    }
+  ],
+  "processes": [
+    {
+      "ready": true,
+      "pid": 60876,
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-116-data-6WOobu",
+      "port": 5870,
+      "runtime": "v22.14.0"
+    },
+    {
+      "ready": true,
+      "pid": 59304,
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-116-data-6WOobu",
+      "port": 5870,
+      "runtime": "v22.14.0"
+    }
+  ],
+  "limits": []
+}

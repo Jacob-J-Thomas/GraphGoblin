@@ -1,3 +1,4 @@
+import type { ReplayState } from '@graphgoblin/domain';
 import { sql } from 'drizzle-orm';
 import type { RunAdmission, WebhookFailureCode } from '@graphgoblin/engine';
 import type {
@@ -85,6 +86,10 @@ export const runs = sqliteTable(
     threadSnapshot: text('thread_snapshot', { mode: 'json' }).$type<ContextThread>(),
     /** The last event seq the snapshot reflects, when it is a verified checkpoint. */
     threadSnapshotSeq: integer('thread_snapshot_seq'),
+    /** Writer-recorded replay state at the snapshot seq; NULL checkpoints need their prefix. */
+    threadSnapshotReplayState: text('thread_snapshot_replay_state', {
+      mode: 'json',
+    }).$type<ReplayState>(),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
     /**

@@ -1,0 +1,74 @@
+{
+  "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-116-tail-TldPAe",
+  "port": 5872,
+  "checks": [
+    {
+      "name": "run.waiting checkpoint accepts the finished wait patch from its tail",
+      "pass": true,
+      "detail": {
+        "checkpoint": 6,
+        "finalSeq": 15,
+        "output": {
+          "nodeId": "park",
+          "value": {
+            "answer": 42
+          },
+          "at": "2026-10-24T08:17:06.796Z"
+        },
+        "reads": [
+          {
+            "id": "01M5PFR9FD0QT64BB1E3C7H619",
+            "after": 5,
+            "rows": 10
+          }
+        ]
+      }
+    },
+    {
+      "name": "resumed unfinished script cancellation excludes its returned patch",
+      "pass": true,
+      "detail": {
+        "status": "cancelled",
+        "vars": {
+          "prepared": true
+        },
+        "visits": {
+          "start": 1,
+          "prepare": 1,
+          "work": 2
+        }
+      }
+    },
+    {
+      "name": "resume reconciles the tail of a recovery-written run.failed checkpoint",
+      "pass": true,
+      "detail": {
+        "checkpointSeq": 9,
+        "finalSeq": 18,
+        "reads": [
+          {
+            "id": "01M5PFRA74AT951YKEXGVY439T",
+            "after": 8,
+            "rows": 10
+          },
+          {
+            "id": "01M5PFRA74AT951YKEXGVY439T",
+            "after": 0,
+            "rows": 18
+          }
+        ],
+        "vars": {
+          "prepared": true,
+          "completed": true
+        }
+      }
+    }
+  ],
+  "process": {
+    "ready": true,
+    "pid": 19192,
+    "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-116-tail-TldPAe",
+    "port": 5872,
+    "runtime": "v22.14.0"
+  }
+}

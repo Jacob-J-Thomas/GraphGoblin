@@ -1,0 +1,26 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$qa = Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-g1-116-qa/round-2'
+$records = @()
+$jobs = @(
+ @{name='typecheck'; args=@('typecheck')},
+ @{name='lint'; args=@('lint')},
+ @{name='format-check'; args=@('format:check')},
+ @{name='layers'; args=@('check:layers')},
+ @{name='deps'; args=@('check:deps')},
+ @{name='tokens'; args=@('check:tokens')},
+ @{name='migrations'; args=@('check:migrations')},
+ @{name='domain-coverage'; args=@('--filter','@graphgoblin/domain','test:coverage')},
+ @{name='engine-coverage'; args=@('--filter','@graphgoblin/engine','test:coverage')},
+ @{name='infrastructure-coverage'; args=@('--filter','@graphgoblin/infrastructure','test:coverage','--maxWorkers=1')},
+ @{name='mcp-coverage'; args=@('--filter','@graphgoblin/mcp','test:coverage','--maxWorkers=1')},
+ @{name='web-coverage'; args=@('--filter','@graphgoblin/web','test:coverage','--maxWorkers=1')},
+ @{name='api-coverage'; args=@('--filter','@graphgoblin/api','test:coverage','--maxWorkers=1')}
+)
+foreach ($job in $jobs) {
+ $argv = $job.args
+ $start = Get-Date
+ & pnpm.cmd @argv *> (Join-Path $qa ($job.name+'.log.txt'))
+ $code = $LASTEXITCODE
+ $records += @{name=$job.name; command=('pnpm.cmd '+($argv -join ' ')); exit=$code; seconds=((Get-Date)-$start).TotalSeconds}
+ $records | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $qa 'gates.json')
+}

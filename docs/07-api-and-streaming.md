@@ -123,6 +123,69 @@ Responses and exports use format 4. The server-store cutover remains separate:
 unconverted stores still stop before ordinary migrations or recovery. No tolerant
 runtime reader is added. See the CHANGELOG upgrade notes.
 
+## Current thread and resumed history (#116)
+
+`GET /runs/{id}/thread` and MCP `get_run_thread` reconstruct the current thread through
+the observed durable event tail, using verified snapshots only as a cache. A delayed snapshot
+cannot hide completed patches or an unfinished node's visit count. These reads do not write
+snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-record
+projection (status, position, result and failure); the record contains no context-thread
+snapshot. Separate reads can observe different event prefixes while execution advances.
+
+A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
+Observers following all attempts first catch up with JSON event pages after their stored
+cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
+Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
+whether to follow a live tail when a page overtakes the captured run record. Terminal observation
+checks a lagging run record until its status agrees and refreshes metadata without needing another
+event. A resumable failure continues checks because another client may resume it; other terminal
+outcomes stop once the run record agrees. This leaves return-delivery finalization separate.
+
+### Bounded current-thread reads (#116)
+
+Each checkpoint writer records the thread, its sequence and the domain `ReplayState`
+(`{ openNodeId?: string; strict: boolean }`) together. Executor parking records that visit open;
+its own matching completion records no open visit. Recovery computes `replayStateAt(events, seq)`
+from the full durable history. A `node.finished` boundary alone cannot prove a closed visit:
+a delayed duplicate for A can leave B open. Readers never infer state from event types.
+
+When stored state is present, current-thread reads request only the checkpoint boundary and its
+tail using `events.read(runId, checkpoint.seq - 1)` and require the first returned sequence to be
+the checkpoint's. Domain `reconcileThread` carries the recorded state through the tail. Missing
+boundaries, unsequenced snapshots and snapshots without stored state use the full admitted
+seed/history. Execution's `loadThread` retains its full history for its other recovery needs.
+No read writes or repairs a checkpoint.
+
+SQL migration `0018_thread_checkpoint_replay_state` adds nullable JSON text
+`runs.thread_snapshot_replay_state`. Existing snapshots retain NULL and use full-prefix replay
+until a writer saves the next checkpoint; no state is guessed or backfilled. Snapshot, sequence
+and state are replaced in one repository update. The required `RunRepository.saveThread` port
+arguments are `(runId, thread, seq, replayState)`.
+
+A fresh round-3 Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite
+with 10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).
+Each case had one warm-up and five measured reads, comparing the complete returned thread with
+full replay. The lagging checkpoint omitted 200 events. The machine was loaded, including other
+validation work; these elapsed samples describe this fixture, not an SLA or a speedup caused by
+persisting state.
+
+| Checkpoint         | Decoded rows per read | Round-3 median (ms) | Observed range (ms) |
+| ------------------ | --------------------: | ------------------: | ------------------: |
+| current            |                     1 |              11.357 |        5.206-86.185 |
+| lagging-200-events |                   201 |              11.291 |        9.350-26.730 |
+
+The structural result remains one decoded boundary row for a current checkpoint and boundary
+plus 200 tail rows for the lagging case. The earlier round-2 full-history measurements decoded
+10,008 rows per read (medians 311.421/222.919 ms); its bounded implementation decoded 1/201 rows
+(medians 25.814/21.827 ms), but its event-type proof failed the delayed-duplicate case. The
+persisted-state correction restores replay equivalence while keeping that bound. Timing samples
+from different loaded runs are observations, not a controlled comparison of the state fix.
+
+Fresh samples and counted port reads: `docs/qa/2026-10-23-wp-g1-116/round-3-measure.json`.
+Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-before.json` and
+`docs/qa/2026-10-23-wp-g1-116/measure-after.json`. The repeatable script is
+`apps/api/scripts/thread-read-measure.ts`.
+
 ## SSE protocol (Decided)
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
