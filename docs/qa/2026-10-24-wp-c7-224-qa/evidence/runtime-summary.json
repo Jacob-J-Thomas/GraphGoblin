@@ -1,0 +1,89 @@
+{
+  "node": "v22.14.0",
+  "platform": "win32",
+  "cases": [
+    {
+      "name": "01-drain-family",
+      "checks": 23,
+      "failed": [
+        {
+          "name": "SSE still open after parent while keeper active",
+          "pass": false,
+          "actual": false,
+          "expected": true
+        },
+        {
+          "name": "both SSE streams close after final keeper release",
+          "pass": false,
+          "actual": false,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "name": "02-parks-pauses",
+      "checks": 19,
+      "failed": []
+    },
+    {
+      "name": "03-admission",
+      "checks": 0,
+      "failed": [],
+      "error": "Error: Timed out: API listening\n    at until (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/[eval1]:32:9)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processTimers (node:internal/timers:526:9)\n    at async boot (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/[eval1]:78:3)\n    at async fixture (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/[eval1]:71:3)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/[eval1]:274:13\n    at async scenario (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/[eval1]:144:9)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-224/[eval1]:273:1"
+    },
+    {
+      "name": "04-controls",
+      "checks": 20,
+      "failed": [
+        {
+          "name": "system:write GET denied",
+          "pass": false,
+          "actual": 200,
+          "expected": 403
+        }
+      ]
+    },
+    {
+      "name": "05-force-native-D015",
+      "checks": 12,
+      "failed": []
+    },
+    {
+      "name": "06-earlier-timeout-heartbeat",
+      "checks": 8,
+      "failed": []
+    }
+  ],
+  "inventory": [
+    {
+      "name": "family",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-family-TMmYYq",
+      "port": 5860
+    },
+    {
+      "name": "parks",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-parks-0lU1nw",
+      "port": 5860
+    },
+    {
+      "name": "admission",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-admission-MdO0Uf",
+      "port": 5860
+    },
+    {
+      "name": "controls",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-controls-5W29hm",
+      "port": 5860
+    },
+    {
+      "name": "force",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-force-ZiUc9W",
+      "port": 5860
+    },
+    {
+      "name": "prior-timeout",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-prior-timeout-lMps8R",
+      "port": 5860
+    }
+  ]
+}

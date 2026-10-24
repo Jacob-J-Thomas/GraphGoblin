@@ -1,0 +1,51 @@
+: connected
+
+id: 1
+event: run.queued
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":1,"ts":"2026-10-24T08:17:45.255Z","type":"run.queued","versionId":"01M5PFSF7VTACZEFJE5S11PZHG","pinned":{"source":"published","version":1,"name":"QA force fake harness","label":"QA force fake harness v1","defaults":{"owner":{"byHarness":{}},"process":{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}},"limits":{"maxNodeVisits":10,"runDeadlineSeconds":null},"classifiers":{}},"initialThread":{"schemaVersion":1,"run":{"id":"01M5PFSF97JSR56B5E15F1775W","loopId":"01M5PFSF7VTACZEFJE5S11PZHF","versionId":"01M5PFSF7VTACZEFJE5S11PZHG","iteration":1},"invocation":{"id":"01M5PFSF98NAW6861HV32K7X7S","source":"manual.api","caller":{"kind":"api-key","id":"01M5PFSA8HZA7K4HHF8Q2SV2FE"},"trigger":{"nodeId":"start","kind":"manual","payload":null,"receivedAt":"2026-10-24T08:17:45.255Z"}},"messages":[],"vars":{},"artifacts":[],"outputs":{},"gates":{},"counters":{"nodeVisits":{},"usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}}}
+
+id: 2
+event: run.started
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":2,"ts":"2026-10-24T08:17:45.293Z","type":"run.started","attempt":1}
+
+id: 3
+event: node.started
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":3,"ts":"2026-10-24T08:17:45.302Z","type":"node.started","nodeId":"start","kind":"trigger","attempt":1,"configHash":"527dee9c4254fe4e"}
+
+id: 4
+event: node.finished
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":4,"ts":"2026-10-24T08:17:45.314Z","type":"node.finished","nodeId":"start","patch":[{"op":"add","path":"/outputs/start","value":{"nodeId":"start","value":null,"at":"2026-10-24T08:17:45.309Z"}},{"op":"add","path":"/lastOutput","value":{"nodeId":"start","value":null,"at":"2026-10-24T08:17:45.309Z"}}],"route":"out","durationMs":2}
+
+id: 5
+event: node.started
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":5,"ts":"2026-10-24T08:17:45.332Z","type":"node.started","nodeId":"infer","kind":"inference","attempt":1,"configHash":"441daef8384f31c3"}
+
+id: 6
+event: harness.turn
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":6,"ts":"2026-10-24T08:17:45.346Z","type":"harness.turn","nodeId":"infer","visitId":"01M5PFSF97JSR56B5E15F1775W:5","turnId":"01M5PFSFC1DS8ZHPD0MG7TY96Y","harness":"codex","promptKind":"authored","prompt":"Hold for explicit force"}
+
+id: 7
+event: harness.session
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":7,"ts":"2026-10-24T08:17:45.354Z","type":"harness.session","nodeId":"infer","harness":"codex","sessionId":"fake-session-1","mode":"fresh","model":"gpt-6-luna","effort":"low"}
+
+id: 8
+event: harness.submission
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":8,"ts":"2026-10-24T08:17:45.357Z","type":"harness.submission","nodeId":"infer","visitId":"01M5PFSF97JSR56B5E15F1775W:5","turnId":"01M5PFSFC1DS8ZHPD0MG7TY96Y","submission":"submitted","marker":"fake.accepted"}
+
+id: 9
+event: node.progress
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":9,"ts":"2026-10-24T08:17:45.361Z","type":"node.progress","nodeId":"infer","progress":{"item":{"id":"i1","summary":"must not appear","type":"message"}}}
+
+id: 10
+event: harness.usage
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":10,"ts":"2026-10-24T08:17:45.366Z","type":"harness.usage","nodeId":"infer","usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}
+
+id: 11
+event: harness.submission
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":11,"ts":"2026-10-24T08:17:45.781Z","type":"harness.submission","nodeId":"infer","visitId":"01M5PFSF97JSR56B5E15F1775W:5","turnId":"01M5PFSFC1DS8ZHPD0MG7TY96Y","submission":"delivery-uncertain"}
+
+id: 12
+event: run.failed
+data: {"runId":"01M5PFSF97JSR56B5E15F1775W","seq":12,"ts":"2026-10-24T08:17:45.794Z","type":"run.failed","failure":{"code":"RUN_INTERRUPTED_BY_STOP","message":"Explicit force-stop interrupted this run; external effects may have happened","nodeId":"infer","resumable":false,"details":{"attempt":1,"effectMayHaveHappened":true}}}
+
+

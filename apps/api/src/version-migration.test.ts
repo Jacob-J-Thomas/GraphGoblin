@@ -14,7 +14,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   await t.app.close();
-  await t.container.stop();
+  await t.container.dispose();
   await rm(t.dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
@@ -130,7 +130,7 @@ describe('migrated SQLite versions through the API', () => {
 
   it('recovers a current-format pinned run across restart mid-run without migration', async () => {
     await t.app.close();
-    await t.container.stop();
+    await t.container.dispose();
     // Run file-backed libsql in a child so Windows releases every native file handle before
     // the parent removes the directory. The child uses its own store and never binds a port.
     const script = `
@@ -167,7 +167,7 @@ describe('migrated SQLite versions through the API', () => {
         runId = started.json().run.id;
         await first.manager.waitForIdle();
         assert.equal((await first.repos.runs.get(runId)).status, 'waiting');
-      } finally { await app.close(); await first.stop(); }
+      } finally { await app.close(); await first.dispose(); }
       const second = await createContainer(config, overrides);
       try {
         await second.start();
@@ -189,7 +189,7 @@ describe('migrated SQLite versions through the API', () => {
         await second.manager.waitForIdle();
         assert.equal((await second.repos.runs.get(replay.json().run.id)).status, 'succeeded');
         assert.equal(harness.started.length, 2);
-      } finally { await app.close(); await second.stop(); }
+      } finally { await app.close(); await second.dispose(); }
       process.stdout.write('migration recovery succeeded');
     `;
     const { stdout } = await promisify(execFile)(

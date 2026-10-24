@@ -1,0 +1,178 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792822264254,"pid":19360,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5769"}
+{"level":30,"time":1792822264255,"pid":19360,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5769,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-c7-224-iKmV2Y","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792822264745,"pid":19360,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792822264764,"pid":19360,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":10.534299999999348,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 5 failed | 4 skipped) 310812ms
+   ❯ built API entry and startup failures (6)
+     × holds ownership while listening and releases it on supported HTTP close 69042ms
+     × serves authenticated requests using a binary-created key and refuses a competing process 60260ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60183ms
+     × releases ownership on a real corrupt-database startup fault before HTTP setup 60246ms
+     × releases ownership after a real occupied-port listen failure 61078ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 47432ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20022ms
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 376820ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180916ms
+     × the built API recovers a child finished while down with one continuation per parent 153806ms
+ ❯ src/templates/catalog-package.test.ts (4 tests | 1 failed) 35802ms
+   × ships only declared starting-point assets and removes stale files on rebuild 20096ms
+ ❯ src/shutdown-process.test.ts (9 tests | 1 failed | 3 skipped) 586425ms
+   × native force preserves durable timer, paused input, and parked parent/child across restart 120270ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/main.test.ts:16:1
+     14|   return created;
+     15| }
+     16| afterEach(async () => {
+       | ^
+     17|   for (const created of fixtures.splice(0)) await created.dispose();
+     18| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:49:3
+     47|   }, 60_000);
+     48|
+     49|   it('serves authenticated requests using a binary-created key and ref…
+       |   ^
+     50|     const f = await fixture();
+     51|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:69:3
+     67|   // A case can launch four cold CLIs; keep each child's 60 s deadline…
+     68|   // aggregate startup under load (measured in docs/qa/2026-10-23-wp-c…
+     69|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     70|     const f = await fixture();
+     71|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:89:3
+     87|   }, 60_000);
+     88|
+     89|   it('releases ownership on a real corrupt-database startup fault befo…
+       |   ^
+     90|     const f = await fixture();
+     91|     await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:103:3
+    101|   }, 60_000);
+    102|
+    103|   it('releases ownership after a real occupied-port listen failure', a…
+       |   ^
+    104|     const f = await fixture();
+    105|     await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/shutdown-process.test.ts > native force preserves durable timer, paused input, and parked parent/child across restart
+Error: Test timed out in 120000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/shutdown-process.test.ts:306:37
+    304| );
+    305|
+    306| it.each(['drain', 'force'] as const)(
+       |                                     ^
+    307|   'native %s preserves durable timer, paused input, and parked parent/…
+    308|   async (action) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/triggers/github-recipe.test.ts:144:3
+    142| }
+    143| describe('documented GitHub polling recipe with a controlled local CLI…
+    144|   it('curates all pages, drains five then the tail, and retains seen k…
+       |   ^
+    145|     const fixtureData = await fixture();
+    146|     const { first, clock, id } = fixtureData;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates/catalog-package.test.ts:49:1
+     47| }
+     48|
+     49| it('ships only declared starting-point assets and removes stale files …
+       | ^
+     50|   const root = await temporaryRoot();
+     51|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  5 failed | 65 passed | 2 skipped (72)
+      Tests  10 failed | 1334 passed | 11 skipped (1355)
+   Start at  01:09:50
+   Duration  645.14s (tests 70%, import 22%, transform 7%, worker 1%)
+
+    Isolate  72 workers spawned · ~3.21s startup each (spawn + environment, per file)
+             at least ~17.80s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api test:coverage", "exit": 1, "seconds": 1262.1}

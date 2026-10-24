@@ -685,12 +685,31 @@ export const inferenceHandler: NodeHandler<'inference'> = {
           {
             ...failure.options,
             inference: provenance(pending),
+            ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
+              ? {
+                  details: {
+                    ...(typeof details === 'object' && details !== null && !Array.isArray(details)
+                      ? details
+                      : { cause: details ?? null }),
+                    interruptedByStop:
+                      timeout.signal.reason instanceof RunFailureError &&
+                      timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+                  },
+                }
+              : {}),
             ...(failures.recording.length
               ? {
                   details: {
                     ...(typeof details === 'object' && details !== null && !Array.isArray(details)
                       ? details
                       : { cause: details ?? null }),
+                    ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
+                      ? {
+                          interruptedByStop:
+                            timeout.signal.reason instanceof RunFailureError &&
+                            timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+                        }
+                      : {}),
                     recording: failures.recording,
                   },
                 }

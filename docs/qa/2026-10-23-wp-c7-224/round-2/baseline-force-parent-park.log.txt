@@ -1,0 +1,76 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t parked parent untouched
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (8 tests | 1 failed | 7 skipped) 548ms
+   × force leaves a parked parent untouched when its executing child is interrupted 546ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > force leaves a parked parent untouched when its executing child is interrupted
+AssertionError: expected { …(15) } to deeply equal { …(13) }
+
+- Expected
++ Received
+
+@@ -1,8 +1,19 @@
+  {
+    "createdAt": "2026-10-02T12:00:00.000Z",
+    "currentNodeId": "sub",
++   "failure": {
++     "code": "RUN_INTERRUPTED_BY_STOP",
++     "details": {
++       "attempt": 1,
++       "effectMayHaveHappened": true,
++     },
++     "message": "Explicit force-stop interrupted this run; external effects may have happened",
++     "nodeId": "sub",
++     "resumable": false,
++   },
++   "finishedAt": "2026-10-02T12:00:00.000Z",
+    "id": "00000000000000000000000001",
+    "invocationId": "00000000000000000000000002",
+    "iteration": 1,
+    "lastEventSeq": 1,
+    "loopId": "BD4YTP8KKPR11VN1GPJ0GZK83N",
+@@ -30,11 +41,11 @@
+      "name": "parked force parent",
+      "source": "published",
+      "version": 1,
+    },
+    "startedAt": "2026-10-02T12:00:00.000Z",
+-   "status": "waiting",
++   "status": "failed",
+    "versionId": "GXAKGADB9W58SZZ3VTFH37NJRR",
+    "waiting": {
+      "childRunId": "00000000000000000000000003",
+      "kind": "child",
+      "nodeId": "sub",
+
+ ❯ src/drain-regressions.test.ts:312:42
+    310|   expect(before?.waiting?.kind).toBe('child');
+    311|   await e.manager.forceStop();
+    312|   expect(await e.ports.runs.get(run.id)).toEqual(before);
+       |                                          ^
+    313|   const child = (await e.ports.runs.listChildren(run.id))[0]!;
+    314|   expect(child.failure?.code).toBe('RUN_INTERRUPTED_BY_STOP');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  00:49:46
+   Duration  43.43s (transform 87%, import 11%, tests 1%)
+
+  Transform  transforming modules took 33.73s · 87% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts -t parked parent untouched", "exit": 1, "seconds": 60.35}

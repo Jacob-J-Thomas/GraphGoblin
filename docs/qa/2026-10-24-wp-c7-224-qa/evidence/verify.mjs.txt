@@ -1,0 +1,45 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {resolve,join} from 'node:path';
+const dir=resolve('docs/qa/2026-10-24-wp-c7-224-qa');
+const out=join(dir,'evidence');
+const digest=b=>createHash('sha256').update(b).digest('hex');
+const decode=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');
+const profilePattern=process.env.USERPROFILE.split(/[\\/]/).map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('[\\\\/]+');
+const scrub=s=>s.replace(new RegExp(profilePattern,'gi'),'%USERPROFILE%').replace(/\bgg_[A-Za-z0-9_-]+/g,'[disposable-key]');
+for(const name of await readdir(out)){
+ if(name==='CAPTURE-MANIFEST.json'||name==='verification.json')continue;
+ const path=join(out,name);if(!(await stat(path)).isFile())continue;
+ await writeFile(path,scrub(decode(await readFile(path))));
+}
+const readme=await readFile(join(dir,'README.md'),'utf8');
+const names=await readdir(out);
+const links=[...readme.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]).filter(s=>!/^https?:/.test(s));
+const missing=[];
+for(const target of links){try{await stat(join(dir,target));}catch{missing.push(target);}}
+const unlinked=names.filter(name=>!links.includes('evidence/'+name));
+const jsonFailures=[];
+const tooLarge=[];
+const pathLeaks=[];
+for(const name of names){
+ if(['CAPTURE-MANIFEST.json','verification.json'].includes(name))continue;
+ const b=await readFile(join(out,name));
+ if(b.length>1000000)tooLarge.push({name,size:b.length});
+ const s=b.toString('utf8');
+ if(name.endsWith('.json'))try{JSON.parse(s)}catch(e){jsonFailures.push({name,error:String(e)})}
+ if(new RegExp(profilePattern,'i').test(s))pathLeaks.push(name);
+}
+const git=args=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const format=JSON.parse(await readFile(join(out,'format-result.json'),'utf8'));
+const checks={head:git(['rev-parse','HEAD']),branch:git(['branch','--show-current']),trackedChanges:git(['diff','--name-only']),stagedChanges:git(['diff','--cached','--name-only']),status:git(['status','--short']),missingLinks:missing,unlinkedArtifacts:unlinked,invalidJson:jsonFailures,oversizedKept:tooLarge,localPathLeaks:pathLeaks,format};
+const pass=checks.head==='8a2dac1b0cb93bae3368422594f31986fcb1afef'&&checks.branch==='codex-qa-wp-c7-224'&&!checks.trackedChanges&&!checks.stagedChanges&&![missing,unlinked,jsonFailures,tooLarge,pathLeaks].some(a=>a.length)&&format.checkExit===0;
+await writeFile(join(out,'verification.json'),scrub(JSON.stringify({at:new Date().toISOString(),pass,checks},null,2))+'\n');
+const files=[];
+for(const rel of ['README.md','NOT-KEPT.md',...names.filter(n=>n!=='CAPTURE-MANIFEST.json').map(n=>'evidence/'+n)]){
+ const b=await readFile(join(dir,rel));files.push({path:rel,bytes:b.length,sha256:digest(b)});
+}
+await writeFile(join(out,'CAPTURE-MANIFEST.json'),JSON.stringify({at:new Date().toISOString(),head:checks.head,encoding:'UTF-8; user paths and disposable API tokens redacted before hashing',selfExcluded:true,files},null,2)+'\n');
+for(const f of files)if(digest(await readFile(join(dir,f.path)))!==f.sha256)throw new Error('Hash changed '+f.path);
+console.log(JSON.stringify({pass,filesVerified:files.length,checks}));
+process.exitCode=pass?0:1;

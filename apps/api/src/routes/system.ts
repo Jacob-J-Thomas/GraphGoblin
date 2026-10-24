@@ -1,3 +1,4 @@
+import { ShutdownActionSchema, ShutdownStateSchema, ShutdownTransitionError } from '../shutdown.js';
 import { readinessOperation } from '../readiness-operation.js';
 import { z } from 'zod';
 import { HarnessPreflightSchema, HarnessIdSchema } from '@graphgoblin/contracts';
@@ -8,6 +9,39 @@ import { API_VERSION, type ApiInstance } from '../types.js';
 const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
+  app.get(
+    '/system/shutdown',
+    {
+      schema: {
+        tags: ['system'],
+        summary: 'Observe gateway drain and force-stop state',
+        response: { 200: ShutdownStateSchema },
+      },
+    },
+    () => container.shutdown.state(),
+  );
+  app.post(
+    '/system/shutdown',
+    {
+      schema: {
+        tags: ['system'],
+        summary: 'Drain, keep waiting, or explicitly force-stop the gateway',
+        body: z.strictObject({ action: ShutdownActionSchema }),
+        response: { 202: ShutdownStateSchema, 409: ShutdownStateSchema },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const state = await container.requestShutdown(request.body.action);
+        reply.status(202);
+        return state;
+      } catch (error) {
+        if (!(error instanceof ShutdownTransitionError)) throw error;
+        reply.status(409);
+        return error.state;
+      }
+    },
+  );
   app.get(
     '/healthz',
     {

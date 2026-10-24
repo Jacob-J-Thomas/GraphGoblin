@@ -48,7 +48,7 @@ export interface TriggerServiceDeps {
   schedules: SqliteScheduleStore;
   endpoints: SqliteWebhookEndpoints;
   inbound: SqliteInboundEvents;
-  manager: Pick<RunManager, 'startRun' | 'receiveWebhook'>;
+  manager: Pick<RunManager, 'startRun' | 'receiveWebhook' | 'assertAdmissionOpen'>;
   cron: CronScheduler;
   secretsFor(ownerId: string): Pick<SecretsPort, 'resolve'>;
   clock: ClockPort;
@@ -518,6 +518,8 @@ export class TriggerService {
    * An event whose `(type, dedupeKey)` was seen before is a duplicate and fires nothing.
    */
   async ingestEvent(input: EventIngest): Promise<EventIngestResult> {
+    // Keep this boundary before any inbound insert, including targeted Event admission (#343).
+    this.deps.manager.assertAdmissionOpen();
     const record: InboundEventRecord = {
       id: this.deps.ids.next(),
       ownerId: input.ownerId,

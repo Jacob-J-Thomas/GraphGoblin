@@ -46,6 +46,7 @@ export function problem(
 }
 
 const ENGINE_STATUS: Record<EngineRequestError['code'], number> = {
+  SHUTTING_DOWN: 503,
   LOOP_NOT_FOUND: 404,
   RUN_NOT_FOUND: 404,
   TRIGGER_NOT_FOUND: 404,

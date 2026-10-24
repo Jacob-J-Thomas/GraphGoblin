@@ -1,0 +1,205 @@
+import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, writeFile, access } from 'node:fs/promises';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+// Independent QA: built production main, real HTTP, real SQLite, no provider calls.
+// Run from the repository root: Get-Content -Raw <this file> | node --input-type=module
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const entry = "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-fake-bootstrap-ipgvRB\\bootstrap.mjs";
+const summary = [];
+const inventory = [];
+let context;
+const scrub = value => String(value).replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%').replace(/\bgg_[A-Za-z0-9_-]+/g, '[disposable-key]');
+const save = async (name, value) => writeFile(join(out, name), scrub(typeof value === 'string' ? value : JSON.stringify(value, null, 2)) + '\n');
+function note(kind, data) { context.records.push({ at: new Date().toISOString(), kind, ...data }); }
+function check(name, actual, expected = true) {
+  const pass = JSON.stringify(actual) === JSON.stringify(expected);
+  context.checks.push({ name, pass, actual, expected });
+  console.log(JSON.stringify({ scenario: context.name, name, pass, actual, expected }));
+  return pass;
+}
+async function until(label, fn, timeout = 20000) {
+  const deadline = Date.now() + (label === 'API listening' ? 60000 : timeout);
+  while (Date.now() < deadline) {
+    const result = await fn();
+    if (result) { note('condition', { label }); return result; }
+    await sleep(40);
+  }
+  throw new Error('Timed out: ' + label);
+}
+async function exists(path) { try { await access(path); return true; } catch { return false; } }
+function launch(args, env) {
+  const child = spawn(process.execPath, [entry, ...args], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const p = { child, stdout: '', stderr: '', ended: false, code: undefined };
+  child.stdout.on('data', b => p.stdout += b);
+  child.stderr.on('data', b => p.stderr += b);
+  p.exit = new Promise((res, rej) => {
+    child.once('error', rej);
+    child.once('close', (code, signal) => { p.ended = true; p.code = code; res({ code, signal }); });
+  });
+  return p;
+}
+async function freePort() {
+  for (let port = 5860; port <= 5869; port++) {
+    const server = createServer();
+    const available = await new Promise(res => {
+      server.once('error', () => res(false));
+      server.listen(port, '127.0.0.1', () => server.close(() => res(true)));
+    });
+    if (available) return port;
+  }
+  throw new Error('All allowed ports occupied');
+}
+async function fixture(name, options = {}) {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-qa-c7-224-' + name + '-'));
+  const port = await freePort();
+  const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.toUpperCase().startsWith('GG_') && !['JEV_API_KEY', 'NODE_V8_COVERAGE'].includes(key.toUpperCase())));
+  const env = { ...inherited, GG_HOST: '127.0.0.1', GG_PORT: String(port), GG_DATA_DIR: dataDir, GG_DB_URL: 'file:' + join(dataDir, 'graphgoblin.db').replaceAll('\\', '/'), GG_REQUIRE_API_KEY: 'true', GG_WEB_DIST: '', GG_SWAGGER_UI: 'false', GG_LOG_LEVEL: 'info', GG_TIMER_POLL_MS: '50', GG_MAX_CONCURRENT_RUNS: '2', GG_SHUTDOWN_GRACE_MS: '200', ...options };
+  const cli = launch(['--create-api-key', 'Independent QA'], env);
+  const keyExit = await cli.exit;
+  if (keyExit.code !== 0) throw new Error('Key CLI: ' + cli.stderr);
+  const token = cli.stdout.match(/\bgg_[A-Za-z0-9_-]+/)?.[0];
+  if (!token) throw new Error('No CLI token');
+  note('key-cli', { exit: keyExit, stdout: scrub(cli.stdout), stderr: scrub(cli.stderr) });
+  const f = { name, dataDir, port, env, token, processes: [], releases: [], origin: 'http://127.0.0.1:' + port, lock: join(dataDir, 'graphgoblin.lock') };
+  context.fixtures.push(f);
+  inventory.push({ name, dataDir, port });
+  await boot(f);
+  return f;
+}
+async function boot(f) {
+  const p = launch([], f.env);
+  f.current = p;
+  f.processes.push(p);
+  await until('API listening', async () => {
+    if (p.ended) throw new Error('API exited: ' + p.stderr);
+    try { return (await fetch(f.origin + '/healthz', { signal: AbortSignal.timeout(1000) })).status === 200; } catch { return false; }
+  });
+  note('boot', { dataDir: f.dataDir, port: f.port, pid: p.child.pid });
+  return p;
+}
+async function call(f, method, path, body, opts = {}) {
+  const headers = { ...(opts.noAuth ? {} : { authorization: 'Bearer ' + (opts.token ?? f.token) }), ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...opts.headers };
+  const response = await fetch(f.origin + path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(15000) });
+  const text = await response.text();
+  let data; try { data = JSON.parse(text); } catch { data = text; }
+  if (!opts.quiet) note('http', { method, path, body, status: response.status, data });
+  return { status: response.status, data };
+}
+function definition(name, work = [], trigger = { type: 'manual' }) {
+  const nodes = [{ id: 'start', kind: 'trigger', label: 'Start', config: trigger }, ...work, { id: 'done', kind: 'exit', label: 'Done', config: {} }];
+  return { schemaVersion: 4, name, nodes, edges: nodes.slice(1).map((n, i) => ({ id: 'e' + i, from: { node: nodes[i].id, port: 'out' }, to: { node: n.id } })) };
+}
+const inputNode = { id: 'ask', kind: 'wait', label: 'Question', config: { mode: 'input', prompt: 'QA answer' } };
+const timerNode = seconds => ({ id: 'timer', kind: 'wait', label: 'Timer', config: { mode: 'duration', seconds } });
+const scriptNode = (id, code, extra = {}) => ({ id, kind: 'script', label: id, config: { command: process.execPath, args: ['-e', code], ...extra } });
+function held(f, id) {
+  const release = join(f.dataDir, id + '-release');
+  const marker = join(f.dataDir, id + '-started');
+  f.releases.push(release);
+  return { release, marker, node: scriptNode(id, `const f=require('node:fs');f.writeFileSync(${JSON.stringify(marker)},String(process.pid));const i=setInterval(()=>{if(f.existsSync(${JSON.stringify(release)}))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)` ) };
+}
+async function publish(f, def) {
+  const created = await call(f, 'POST', '/loops', { definition: def });
+  if (created.status !== 201) throw new Error('Create: ' + JSON.stringify(created));
+  const id = created.data.loop.id;
+  const result = await call(f, 'POST', '/loops/' + id + '/publish');
+  if (result.status !== 200) throw new Error('Publish: ' + JSON.stringify(result));
+  return id;
+}
+async function start(f, id) {
+  const r = await call(f, 'POST', '/loops/' + id + '/runs', {});
+  if (r.status !== 202) throw new Error('Start: ' + JSON.stringify(r));
+  return r.data.run;
+}
+async function run(f, id, quiet = true) { return (await call(f, 'GET', '/runs/' + id, undefined, { quiet })).data; }
+async function state(f, quiet = false) { return (await call(f, 'GET', '/system/shutdown', undefined, { quiet })).data; }
+async function waitRun(f, id, status) { return until(id + ' ' + status, async () => { const r = await run(f, id); return r.status === status && r; }); }
+async function events(f, id) { return (await call(f, 'GET', '/runs/' + id + '/events?limit=1000')).data.items; }
+async function stop(f, action = 'drain') {
+  const t = Date.now();
+  const r = await call(f, 'POST', '/system/shutdown', { action });
+  const exit = await Promise.race([f.current.exit, sleep(20000).then(() => { throw new Error('Stop did not exit'); })]);
+  note('exit', { action, response: r, exit, elapsedMs: Date.now() - t, lockExists: await exists(f.lock) });
+  return { ...exit, elapsedMs: Date.now() - t };
+}
+async function sse(f, id, label) {
+  const response = await fetch(f.origin + '/runs/' + id + '/events', { headers: { authorization: 'Bearer ' + f.token, accept: 'text/event-stream' } });
+  const s = { closed: false, text: '', openedAt: Date.now() };
+  s.done = (async () => {
+    for await (const chunk of response.body) s.text += Buffer.from(chunk).toString();
+    s.closed = true; s.closedAt = Date.now();
+    await save(context.name + '-' + label + '-sse.log.txt', s.text);
+  })();
+  return s;
+}
+
+async function scenario(name, fn) {
+  context = { name, startedAt: new Date().toISOString(), checks: [], records: [], fixtures: [] };
+  console.log('START ' + name);
+  try { await fn(); } catch (error) { context.error = error.stack; console.log('ERROR ' + name + ': ' + error.stack); }
+  finally {
+    for (const f of context.fixtures) {
+      for (const path of f.releases) await writeFile(path, 'QA release');
+      if (!f.current.ended) {
+        try {
+          const s = await state(f, true);
+          await call(f, 'POST', '/system/shutdown', { action: s.phase === 'force-failed' ? 'force' : 'drain' });
+          await Promise.race([f.current.exit, sleep(15000)]);
+        } catch (error) { note('cleanup-error', { error: String(error) }); }
+        if (!f.current.ended) { note('cleanup-root-only-kill', { pid: f.current.child.pid }); f.current.child.kill(); await f.current.exit; }
+      }
+      for (let i = 0; i < f.processes.length; i++) {
+        await save(name + '-api-' + (i + 1) + '.log.txt', f.processes[i].stdout + '\nSTDERR\n' + f.processes[i].stderr);
+      }
+    }
+    const result = { name, startedAt: context.startedAt, endedAt: new Date().toISOString(), checks: context.checks, records: context.records, error: context.error };
+    await save(name + '.json', result);
+    summary.push({ name, checks: result.checks.length, failed: result.checks.filter(c => !c.pass), error: result.error });
+    await save('fake-force-summary.json', { node: process.version, platform: process.platform, cases: summary, inventory });
+  }
+}
+
+
+await scenario('09-force-fake-harness', async()=>{
+  const f = await fixture('fake-force');
+  note('evidence-tier',{kind:'built API in real process, injected FakeHarness, real SQLite',nativeProcessTreeEvidence:false,bootstrapDir:"%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-fake-bootstrap-ipgvRB"});
+  const infer = {id:'infer',kind:'inference',label:'Fake native boundary',config:{harness:'codex',prompt:{template:'Hold for explicit force'}}};
+  const id = await publish(f,definition('QA force fake harness',[infer]));
+  const r = await start(f,id);
+  await until('inference turn submitted',async()=> (await events(f,r.id)).some(e=>e.type==='harness.submission'));
+  const queued = await start(f,id);
+  // There are two slots; both executions are interrupted. A separate park is preserved.
+  const inputLoop = await publish(f,definition('QA park with fake force',[inputNode]));
+  const parked = await start(f,inputLoop);
+  // The second fake has an immediate turn and frees its slot. The parked input becomes durable.
+  const before = await waitRun(f,parked.id,'waiting');
+  await sleep(100);
+  const stream = await sse(f,r.id,'forced');
+  const t = Date.now();
+  const response = await call(f,'POST','/system/shutdown',{action:'force'});
+  check('fake-harness force accepted',response.status,202);
+  note('force-answer',{state:response.data});
+  const exit = await f.current.exit; await stream.done;
+  check('fake-harness force exits zero after cleanup',exit.code,0);
+  check('force stream has truthful failure',stream.text.includes('event: run.failed'));
+  check('force releases lock after cleanup',await exists(f.lock),false);
+  note('force-elapsed',{elapsedMs:Date.now()-t});
+  await boot(f);
+  const failed = await run(f,r.id,false);
+  check('interruption status',failed.status,'failed');
+  check('interruption code',failed.failure?.code,'RUN_INTERRUPTED_BY_STOP');
+  check('interruption node identity',failed.failure?.nodeId,'infer');
+  check('interruption attempt',failed.failure?.details?.attempt,1);
+  check('forced work nonresumable',failed.failure?.resumable,false);
+  check('park preserved during another executor force',await run(f,parked.id,false),before);
+  check('blind resume refused', (await call(f,'POST','/runs/'+r.id+'/resume',{})).status,409);
+  await events(f,r.id);
+  await stop(f);
+});
+console.log(JSON.stringify(summary));
+process.exitCode=summary.some(s=>s.error||s.failed.length)?1:0;
