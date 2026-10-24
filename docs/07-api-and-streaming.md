@@ -134,14 +134,19 @@ runtime reader is added. See the CHANGELOG upgrade notes.
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
 - Replay reads at most 128 events per repository page, writes that page before reading the next,
   and yields to the event loop between pages. Stored history and execution context stay complete.
-  Live appends during replay/drain wait in a queue capped at 256 events or 1 MiB of encoded UTF-8
-  frames. Overlap with replay is deduplicated by sequence and the handoff is sorted by sequence.
+  Replay/catch-up ignores live notifications: subsequent log pages return their committed events.
+  After a short page, live notifications are enabled before another cursor read, closing the
+  read/switch race. Full pages continue catch-up; a short confirmation page hands off to live.
+  The live queue is capped at 256 events or 1 MiB of encoded UTF-8 frames. Overflow, an oversized
+  live event or a live sequence gap clears that queue and resumes paged reads on this connection,
+  without a failure or dropped durable history. Overlap is deduplicated and handoff is sorted.
+  Contiguity is checked only for live notifications; replay follows authoritative repository order.
 - Every write honours backpressure: after `write` returns false, no more payload or heartbeat
   bytes are written until `drain`. Large event frames are written in 16 KiB chunks; normal Node
   pending writes are capped at 256 KiB. Event payloads are not truncated. A page still occupies
   the intrinsic memory of its events, plus one serialized event; these bounds control incidental
   buffering, not supported stored-value size. Heartbeats are skipped while replay/drain is busy.
-- Queue overflow, an outstanding-write ceiling, or 5 seconds without `drain` sends an id-less
+- An outstanding-write ceiling or 5 seconds without `drain` sends an id-less
   `event: stream.error` with Problem Details: status `503`, code `SSE_SLOW_CONSUMER`, and detail
   "The reader fell behind; reconnecting from the last received event." This ends the response.
   The one bounded control frame may exceed the normal write ceiling; a peer that never drains
@@ -154,11 +159,13 @@ runtime reader is added. See the CHANGELOG upgrade notes.
   boundary. A wholly accepted frame is left intact. Invalid partial data can be reported as a
   parse error; the complete-event cursor remains unchanged.
   `after` and `Last-Event-ID` remain exclusive sequence cursors and control frames carry no id.
-  The API client surfaces controls as `GraphGoblinApiError`; only `SSE_SLOW_CONSUMER` retries
+  The API client surfaces controls as `GraphGoblinApiError`; `SSE_SLOW_CONSUMER` and `SSE_REPLAY_FAILED` retry
   automatically with the existing exponential backoff. It reports via `onError` before retry,
   resets backoff on event progress, and rejects `done` when `maxAttempts` is exhausted. A later
-  page read failure ends with `STORED_EVENT_INVALID` or `SSE_REPLAY_FAILED` and rejects `done`
-  without automatic retries. History browsing follows in #186 round 2.
+  page corruption ends with fatal `STORED_EVENT_INVALID`; other read failures end with retryable
+  `SSE_REPLAY_FAILED`, matching first-page HTTP 5xx handling. Controls never advance the cursor.
+  The client's `onEvent(event, jsonBytes)` supplies the received JSON's estimated UTF-16 byte size
+  for batching without another serialization. History browsing follows in #186 round 2.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 
 ## Evaluation events

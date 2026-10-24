@@ -1,0 +1,68 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+stdout | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events
+{"probe":"memory","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 1047ms
+stdout | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events
+{"probe":"sqlite","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 3615ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id 214ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id 151ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 240ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > scans multiple terminal pages before closing an already consumed cursor 5ms
+ × src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling through a real corked high-water-mark transport 27ms
+   → expected false to be true // Object.is equality
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader 472ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 64ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 15ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once 85ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure 67ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure 37ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 2583ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-bounds.tes ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling through a real corked 
+high-water-mark transport
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/sse-catchup.test.ts:208:52
+    206|     try {
+    207|       const text = await (await fetch(base)).text();
+    208|       expect(text.includes('event: stream.error')).toBe(true);
+       |                                                    ^
+    209|       expect(text.includes('SSE_SLOW_CONSUMER')).toBe(true);
+    210|       expect(ids(text)).toEqual([...Array.from({ length: 128 }, (_, i)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 13 passed (14)
+   Start at  02:18:20
+   Duration  26.60s (import 37%, tests 34%, transform 29%)
+
+  Transform  transforming modules took 7.46s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

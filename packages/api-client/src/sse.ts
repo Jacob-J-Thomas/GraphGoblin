@@ -90,8 +90,11 @@ export interface SubscribeRunEventsOptions {
   runId: string;
   /** Start after this sequence number (exclusive). Default 0: the whole log. */
   after?: number;
-  /** Called once per event, in `seq` order, never twice for one `seq`. Awaited before the next. */
-  onEvent: (event: RunEvent) => void | Promise<void>;
+  /**
+   * Called once per event, in `seq` order, never twice for one `seq`. Awaited before the next.
+   * jsonBytes estimates UTF-16 bytes from the received JSON text, without serializing again.
+   */
+  onEvent: (event: RunEvent, jsonBytes: number) => void | Promise<void>;
   /**
    * Called for recoverable problems: a dropped or refused connection before each retry (with the
    * 1-based attempt number), or a frame that failed `RunEventSchema` validation (attempt 0).
@@ -229,9 +232,11 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
               throw new Fatal(new RunEventParseError(frame, cause));
             }
             const error = new GraphGoblinApiError(problem);
-            // Control frames never advance lastSeq. Only slow consumers retry automatically;
-            // unreadable stored history needs repair and must not loop forever.
-            throw problem.code === 'SSE_SLOW_CONSUMER' ? error : new Fatal(error);
+            // Controls never advance lastSeq. Corrupt history needs repair; other server-side
+            // failures follow the same retry policy as an equivalent HTTP response.
+            throw problem.code !== 'STORED_EVENT_INVALID' && retryable(problem.status)
+              ? error
+              : new Fatal(error);
           }
           let event: RunEvent;
           try {
@@ -244,7 +249,7 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
           }
           if (event.seq <= lastSeq) continue;
           try {
-            await onEvent(event);
+            await onEvent(event, frame.data.length * 2);
           } catch (error) {
             throw new Fatal(error);
           }

@@ -133,7 +133,7 @@ describe('subscribeRunEvents', () => {
       expect(urls[1]).toMatch(/after=1$/);
     },
   );
-  it.each(['STORED_EVENT_INVALID', 'SSE_REPLAY_FAILED'])(
+  it.each(['STORED_EVENT_INVALID'])(
     'rejects a fatal stream control %s without advancing the cursor or retrying',
     async (code) => {
       const problem = { status: 500, code, detail: 'Stored history could not be read.' };
@@ -191,35 +191,52 @@ describe('subscribeRunEvents', () => {
     expect(errors[1]).toMatchObject({ code: 'SSE_SLOW_CONSUMER' });
     expect(urls[1]).toMatch(/after=1$/);
   });
-  it('reports a typed slow-consumer problem and resumes from the last delivered id', async () => {
-    const problem = {
-      status: 503,
-      code: 'SSE_SLOW_CONSUMER',
-      detail: 'The reader fell behind; reconnecting from the last received event.',
-    };
-    const { fetch, urls } = scripted([
-      stream([frame(event(1)), `event: stream.error\ndata: ${JSON.stringify(problem)}\n\n`]),
-      stream([frame(event(2, 'run.cancelled'))]),
-    ]);
-    const errors: unknown[] = [];
-    const seen: number[] = [];
-    const subscription = subscribeRunEvents({
+  it.each(['SSE_SLOW_CONSUMER', 'SSE_REPLAY_FAILED'])(
+    'reports a typed %s problem and retries from the last delivered id',
+    async (code) => {
+      const problem = {
+        status: code === 'SSE_SLOW_CONSUMER' ? 503 : 500,
+        code,
+        detail: 'The reader fell behind; reconnecting from the last received event.',
+      };
+      const { fetch, urls } = scripted([
+        stream([frame(event(1)), `event: stream.error\ndata: ${JSON.stringify(problem)}\n\n`]),
+        stream([frame(event(2, 'run.cancelled'))]),
+      ]);
+      const errors: unknown[] = [];
+      const seen: number[] = [];
+      const subscription = subscribeRunEvents({
+        client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+        runId,
+        onEvent: (e) => {
+          seen.push(e.seq);
+        },
+        onError: (error) => {
+          errors.push(error);
+        },
+        sleep: recordingSleep().sleep,
+      });
+      await subscription.done;
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toBeInstanceOf(GraphGoblinApiError);
+      expect(errors[0]).toMatchObject({ code, problem });
+      expect(seen).toEqual([1, 2]);
+      expect(urls[1]).toMatch(/after=1$/);
+    },
+  );
+  it('provides the received JSON size to batch consumers without another serialization', async () => {
+    const value = event(1, 'run.cancelled');
+    const json = JSON.stringify(value);
+    const { fetch } = scripted([stream([`data: ${json}\nid: 1\n\n`])]);
+    const received: number[] = [];
+    await subscribeRunEvents({
       client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
       runId,
-      onEvent: (e) => {
-        seen.push(e.seq);
+      onEvent: (_event, jsonBytes) => {
+        received.push(jsonBytes);
       },
-      onError: (error) => {
-        errors.push(error);
-      },
-      sleep: recordingSleep().sleep,
-    });
-    await subscription.done;
-    expect(errors).toHaveLength(1);
-    expect(errors[0]).toBeInstanceOf(GraphGoblinApiError);
-    expect(errors[0]).toMatchObject({ code: 'SSE_SLOW_CONSUMER', problem });
-    expect(seen).toEqual([1, 2]);
-    expect(urls[1]).toMatch(/after=1$/);
+    }).done;
+    expect(received).toEqual([json.length * 2]);
   });
   it('accepts exhausted completion and closes without reconnecting', async () => {
     const finished: RunEvent = {

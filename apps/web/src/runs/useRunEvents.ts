@@ -97,7 +97,10 @@ export function useRunEvents(
         },
         onError: (err, attempt) => {
           if (!current() || attempt === 0) return; // Invalid frames are not connection drops.
-          if (err instanceof GraphGoblinApiError && err.code === 'SSE_SLOW_CONSUMER') {
+          if (
+            err instanceof GraphGoblinApiError &&
+            (err.code === 'SSE_SLOW_CONSUMER' || err.code === 'SSE_REPLAY_FAILED')
+          ) {
             inTransportBackoff = false;
             openedAt = undefined;
             flush();
@@ -125,18 +128,14 @@ export function useRunEvents(
             { cancelRefetch: false },
           );
         },
-        onEvent: (event) => {
+        onEvent: (event, bytes) => {
           if (!current()) return;
           if (event.seq > lastSeq) {
             lastSeq = event.seq;
             reportedOutage = false;
           }
-          const bytes = JSON.stringify(event).length * 2;
-          if (
-            buffer.length &&
-            (buffer.length >= MAX_BATCH_EVENTS || bufferBytes + bytes > MAX_BATCH_BYTES)
-          )
-            flush();
+          // The transport already has JSON text. Reuse its size rather than serializing here.
+          if (buffer.length && bufferBytes + bytes > MAX_BATCH_BYTES) flush();
           buffer.push(event);
           bufferBytes += bytes;
           if (buffer.length >= MAX_BATCH_EVENTS || bufferBytes >= MAX_BATCH_BYTES) {

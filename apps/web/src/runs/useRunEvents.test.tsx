@@ -58,12 +58,16 @@ function options(index = 0): SubscribeRunEventsOptions {
   return subscribe.mock.calls[index]![0];
 }
 
+function emit(index: number, value: Parameters<SubscribeRunEventsOptions['onEvent']>[0]) {
+  return options(index).onEvent(value, JSON.stringify(value).length * 2);
+}
 describe('run stream reachability', () => {
   it('flushes an oversized single event immediately without dropping its payload', async () => {
     vi.useFakeTimers();
     mountStream();
     await act(async () => {
-      await options().onEvent(
+      await emit(
+        0,
         event(runId, 1, 'run.woken', {
           nodeId: 'wait',
           reason: 'manual',
@@ -73,31 +77,34 @@ describe('run stream reachability', () => {
     });
     expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(1);
   });
-  it('shows a slow-consumer reason during retry and clears it when the stream reopens', () => {
-    const { result } = mountStream();
-    act(() =>
-      options().onError?.(
-        new GraphGoblinApiError({
-          status: 503,
-          code: 'SSE_SLOW_CONSUMER',
-          detail: 'The reader fell behind; reconnecting from the last received event.',
-        }),
-        1,
-      ),
-    );
-    expect(result.current.status).toBe('error');
-    expect(result.current.error).toContain('The reader fell behind');
-    act(() => options().onOpen?.());
-    expect(result.current.status).toBe('live');
-    expect(result.current.error).toBeUndefined();
-  });
+  it.each(['SSE_SLOW_CONSUMER', 'SSE_REPLAY_FAILED'])(
+    'shows a %s reason during retry and clears it when the stream reopens',
+    (code) => {
+      const { result } = mountStream();
+      act(() =>
+        options().onError?.(
+          new GraphGoblinApiError({
+            status: code === 'SSE_SLOW_CONSUMER' ? 503 : 500,
+            code,
+            detail: 'The reader fell behind; reconnecting from the last received event.',
+          }),
+          1,
+        ),
+      );
+      expect(result.current.status).toBe('error');
+      expect(result.current.error).toContain('The reader fell behind');
+      act(() => options().onOpen?.());
+      expect(result.current.status).toBe('live');
+      expect(result.current.error).toBeUndefined();
+    },
+  );
 
   it('flushes a burst in bounded batches before the batching timer runs', async () => {
     vi.useFakeTimers();
     mountStream();
     await act(async () => {
       for (let seq = 1; seq <= 600; seq++)
-        await options().onEvent(event(runId, seq, 'run.started', { attempt: 1 }));
+        await emit(0, event(runId, seq, 'run.started', { attempt: 1 }));
     });
     expect(useRunEventStore.getState().runs[runId]?.events.length).toBeGreaterThanOrEqual(512);
     await act(async () => {
@@ -139,7 +146,7 @@ describe('run stream reachability', () => {
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
     await act(async () => {
-      await options().onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(0, event(runId, 5, 'run.started', { attempt: 1 }));
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
     });
     act(() => options().onError?.(GraphGoblinApiError.network('refused'), 1));
@@ -150,7 +157,7 @@ describe('run stream reachability', () => {
     expect(subscribe).toHaveBeenCalledTimes(2);
     act(() => options(1).onOpen?.());
     await act(async () => {
-      await options(1).onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(1, event(runId, 5, 'run.started', { attempt: 1 }));
     });
     act(() => options(1).onError?.(new TypeError('reader failed'), 2));
     expect(reads).toHaveBeenCalledTimes(1);
@@ -158,7 +165,8 @@ describe('run stream reachability', () => {
     act(() => markApiReachable());
     expect(subscribe).toHaveBeenCalledTimes(2);
     await act(async () => {
-      await options(1).onEvent(
+      await emit(
+        1,
         event(runId, 6, 'node.started', {
           nodeId: 'wait',
           attempt: 1,
@@ -322,7 +330,7 @@ describe('run stream reachability', () => {
     vi.useFakeTimers();
     const view = mountStream();
     await act(async () => {
-      await options().onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(0, event(runId, 5, 'run.started', { attempt: 1 }));
     });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);

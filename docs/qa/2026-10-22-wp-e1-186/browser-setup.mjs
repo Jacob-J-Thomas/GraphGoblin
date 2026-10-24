@@ -16,6 +16,6 @@ export default async function setup() {
   }), { harnesses: { codex: new FakeHarness() }, startTimers: false });
   await container.start();
   const app = await buildApp(container, { logger: false });
-  process.env.GG_E2E_BASE_URL = await app.listen({ host: '127.0.0.1', port: 5743 });
+  process.env.GG_E2E_BASE_URL = await app.listen({ host: '127.0.0.1', port: 0 });
   return async () => { await app.close(); await container.stop(); };
 }

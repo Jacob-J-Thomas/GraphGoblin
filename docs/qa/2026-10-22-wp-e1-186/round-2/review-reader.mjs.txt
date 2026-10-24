@@ -1,0 +1,20 @@
+// Review probe (not product code): one raw-socket SSE reader in its own process.
+import { readReplay } from '../../tooling/perf/replay.mjs';
+
+const [base, runId, after = '0', pauseMs = '0'] = process.argv.slice(2);
+const result = await readReplay(base, runId, {
+  after: Number(after),
+  pauseMs: Number(pauseMs),
+  stopAfter: Infinity,
+  progress: () => {},
+});
+process.stdout.write(
+  JSON.stringify({
+    firstMs: result.firstMs,
+    totalMs: result.totalMs,
+    events: result.events,
+    gaps: result.gaps,
+    lastSeq: result.lastSeq,
+    receivedBytes: result.receivedBytes,
+  }),
+);

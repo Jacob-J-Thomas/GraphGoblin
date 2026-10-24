@@ -110,6 +110,11 @@ and separate heap samples. Engineering bounds are ADR-0050. API regressions exer
 replay with a concurrent append, bounded held live events, and a paused real socket against
 SQLite followed by complete cursor recovery. Client and hook regressions cover typed failure,
 resume cursor, visible retry reason and early batch flush. The tests were run red on the base.
+The round-1 7,078 ms replay and 569 ms loop maximum were host contention, as established by the
+reviewer's [interleaved same-host A/B](qa/2026-10-22-wp-e1-186/round-2/review-ab-bench-out.json)
+(41,001 events, three rounds): base 3,525.67 ms total / 2,569.01 ms stall / 2,561.28 ms first event;
+round-1 head 3,315.19 ms / 180.75 ms / 17.83 ms. The benchmark and reader source are retained
+with that evidence; this comparison is separate from the original non-interleaved runs.
 Shared-host observations are not a quiet-host performance guarantee. History browsing follows
 in #186 round 2.
 

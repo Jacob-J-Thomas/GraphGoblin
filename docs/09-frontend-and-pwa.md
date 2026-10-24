@@ -233,8 +233,10 @@ Consequences include removal of a loop's versions and triggers and unavailable s
 
 `useRunEvents` retains the 100 ms batching window but flushes early at 256 events or
 1 MiB of estimated UTF-16 JSON storage, including during throttled browser timers.
+The client supplies the received JSON text's size as `onEvent`'s second argument,
+so the hook does not serialize events again merely to measure them.
 A single larger event flushes immediately; no payload is truncated or removed from
-the per-run history. A typed `SSE_SLOW_CONSUMER` error flushes the old batch and shows
+the per-run history. A typed `SSE_SLOW_CONSUMER` or `SSE_REPLAY_FAILED` error flushes the old batch and shows
 the server's one-sentence reason as the stream error while the client retries from
 its last delivered event. A successful open clears that error. Slow-consumer errors
 do not report the API as unreachable. Fatal stream controls use the ordinary error

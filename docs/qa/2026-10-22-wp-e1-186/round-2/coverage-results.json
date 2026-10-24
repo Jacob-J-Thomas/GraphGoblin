@@ -1,0 +1,50 @@
+[
+  {
+    "name": "coverage-api",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure=true",
+    "exitCode": 1,
+    "log": ".tmp/r2-coverage-api.log.txt"
+  },
+  {
+    "name": "alone-api-src-adversarial.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/adversarial.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r2-alone-api-src-adversarial.test.ts.log.txt"
+  },
+  {
+    "name": "alone-api-src-main.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r2-alone-api-src-main.test.ts.log.txt"
+  },
+  {
+    "name": "alone-api-src-nested-readiness.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/nested-readiness.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r2-alone-api-src-nested-readiness.test.ts.log.txt"
+  },
+  {
+    "name": "alone-api-src-subloop-restart.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 1,
+    "log": ".tmp/r2-alone-api-src-subloop-restart.test.ts.log.txt"
+  },
+  {
+    "name": "alone-api-src-templates-catalog-package.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/templates/catalog-package.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r2-alone-api-src-templates-catalog-package.test.ts.log.txt"
+  },
+  {
+    "name": "coverage-api-client",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage --coverage.reportOnFailure=true",
+    "exitCode": 0,
+    "log": ".tmp/r2-coverage-api-client.log.txt"
+  },
+  {
+    "name": "coverage-web",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --coverage.reportOnFailure=true --maxWorkers=1",
+    "exitCode": 0,
+    "log": ".tmp/r2-coverage-web.log.txt"
+  }
+]

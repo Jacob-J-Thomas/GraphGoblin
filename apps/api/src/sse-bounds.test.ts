@@ -16,7 +16,7 @@ const draft = { type: 'run.woken', nodeId: 'wait', reason: 'manual' } as const;
 const ids = (text: string) => [...text.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
 
 describe('bounded SSE transport', () => {
-  it('refuses a live sequence gap so reconnect cannot silently skip durable history', async () => {
+  it('catches up a live sequence gap from durable history without failing the reader', async () => {
     const events = new InMemoryEventStore(new FakeClock());
     await events.append(runId, [draft]);
     const store: EventStorePort = {
@@ -30,13 +30,13 @@ describe('bounded SSE transport', () => {
     };
     const app = Fastify();
     app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
-    const base = await app.listen({ host: '127.0.0.1', port: 5742 });
+    const base = await app.listen({ host: '127.0.0.1', port: 0 });
     try {
       const response = await fetch(base);
       await events.append(runId, [draft, draft, { type: 'run.cancelled' }]);
       const text = await response.text();
-      expect(text.includes('event: stream.error')).toBe(true);
-      expect(ids(text)).toEqual([1]);
+      expect(text.includes('event: stream.error')).toBe(false);
+      expect(ids(text)).toEqual((await events.read(runId)).map((e) => e.seq));
     } finally {
       await app.close();
     }
@@ -78,38 +78,39 @@ describe('bounded SSE transport', () => {
   );
 
   it.each(['count', 'bytes'] as const)(
-    'reports a held-live %s overflow explicitly without losing history',
+    'bounds the held-live %s queue by catching up from the log without a stream failure',
     async (kind) => {
       const events = new InMemoryEventStore(new FakeClock());
       await events.append(runId, [draft]);
-      let appended = false;
+      const reads: number[] = [];
       const store: EventStorePort = {
         append: (...args) => events.append(...args),
         subscribe: (...args) => events.subscribe(...args),
         read: async (id, after, limit) => {
-          const page = await events.read(id, after, limit);
-          if (!appended) {
-            appended = true;
-            const burst =
-              kind === 'count'
-                ? Array.from({ length: 300 }, () => draft)
-                : [{ ...draft, payload: 'x'.repeat(1_048_576) }];
-            await events.append(id, [...burst, { type: 'run.cancelled' }]);
-          }
-          return page;
+          reads.push(after ?? 0);
+          return events.read(id, after, limit);
         },
       };
       const app = Fastify();
       app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
+      const base = await app.listen({ host: '127.0.0.1', port: 0 });
       try {
-        const response = await app.inject('/');
-        expect(response.body.includes('event: stream.error')).toBe(true);
-        expect(response.body.includes('SSE_SLOW_CONSUMER')).toBe(true);
+        const response = await fetch(base);
+        const burst =
+          kind === 'count'
+            ? Array.from({ length: 300 }, () => draft)
+            : [{ ...draft, payload: 'x'.repeat(1_048_576) }];
+        await events.append(runId, [...burst, { type: 'run.cancelled' }]);
+        const body = await response.text();
+        expect(body.includes('event: stream.error')).toBe(false);
         const stored = await events.read(runId);
         expect(stored).toHaveLength(kind === 'count' ? 302 : 3);
-        const base = await app.listen({ host: '127.0.0.1', port: kind === 'count' ? 5744 : 5745 });
-        const replay = await (await fetch(base)).text();
-        const recovered = [...replay.matchAll(/^data: (.+)$/gm)].map((match) =>
+        // Recovery must consult the log before draining the burst, demonstrating a bounded
+        // handoff through the public read port rather than inspecting the private queue.
+        expect(reads.slice(0, 2)).toEqual([0, 1]);
+        expect(reads.length).toBeGreaterThan(2);
+        expect(reads[2]).toBeLessThanOrEqual(2);
+        const recovered = [...body.matchAll(/^data: (.+)$/gm)].map((match) =>
           RunEventSchema.parse(JSON.parse(match[1]!)),
         );
         expect(recovered).toEqual(stored);
@@ -187,7 +188,7 @@ describe('bounded SSE transport', () => {
         request.query.after ? { drainTimeoutMs: 5_000 } : options,
       ),
     );
-    const base = await app.listen({ host: '127.0.0.1', port: 5741 });
+    const base = await app.listen({ host: '127.0.0.1', port: 0 });
     try {
       const text = await new Promise<string>((resolve, reject) => {
         const req = get(base, (response) => {

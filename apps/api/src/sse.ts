@@ -55,6 +55,7 @@ export async function streamRunEvents(
   let closed = false;
   let started = false;
   let busy = true;
+  let catchingUp = true;
   let blocked = false;
   let partialFrame = false;
   let partialLineEnded = false;
@@ -146,38 +147,90 @@ export async function streamRunEvents(
     `event: ${event.type}\ndata: ${JSON.stringify(event)}\nid: ${event.seq}\n\n`;
   const write = async (event: RunEvent, text = encode(event)): Promise<void> => {
     if (closed || event.seq <= last) return;
-    // A late/out-of-order notification must never move the cursor over unseen durable history.
-    // Reconnect replays that history in repository order, even if the live notifier fell behind.
-    if (event.seq !== last + 1) {
-      fail(slowConsumer());
-      return;
-    }
     await writeText(text, true);
     if (closed) return;
     last = event.seq;
     if (TERMINAL_EVENTS.has(event.type)) end();
   };
+  const enterCatchup = (): void => {
+    catchingUp = true;
+    held.length = 0;
+    heldBytes = 0;
+  };
+  const readFailure = (error: unknown): void => {
+    const corrupt = error instanceof UnreadableRunHistoryError;
+    const code = corrupt ? 'STORED_EVENT_INVALID' : 'SSE_REPLAY_FAILED';
+    fail({
+      type: `urn:graphgoblin:problem:${code}`,
+      title: 'Event replay failed',
+      status: 500,
+      code,
+      detail: corrupt
+        ? 'Stored history could not be read; repair the reported run history.'
+        : 'Event replay was interrupted; reconnecting from the last received event.',
+    });
+  };
+  const catchUp = async (pending: { page?: RunEvent[] } = {}): Promise<void> => {
+    let shouldYield = false;
+    while (!closed) {
+      if (shouldYield) await yieldToLoop();
+      if (closed) return;
+      const page = pending.page ?? (await store.read(runId, last, REPLAY_PAGE_SIZE));
+      // Transfer the caller's first page. Subsequent pages are scoped to this iteration,
+      // so they can be released before the next yield and read.
+      delete pending.page;
+      if (closed) return;
+      // Repository order is authoritative, including any durable sequence gaps. Contiguity is
+      // checked only for live notifications, where a gap means we must consult the log.
+      for (const event of page) {
+        await write(event);
+        if (closed) return;
+      }
+      const full = page.length === REPLAY_PAGE_SIZE;
+      if (full) {
+        enterCatchup();
+        shouldYield = true;
+      } else if (catchingUp) {
+        // Activate live notifications FIRST, then confirm the tail with another read. Since
+        // notification follows commit, an append is in that read or held for the live writer.
+        catchingUp = false;
+        shouldYield = false;
+      } else return;
+    }
+  };
   const flushLive = async (): Promise<void> => {
     if (busy || closed) return;
     busy = true;
     try {
-      while (held.length && !closed) {
+      while (!closed) {
+        if (catchingUp) {
+          await catchUp();
+          continue;
+        }
+        if (!held.length) break;
         held.sort((a, b) => a.event.seq - b.event.seq);
         const next = held.shift()!;
         heldBytes -= next.bytes;
+        if (next.event.seq > last + 1) {
+          enterCatchup();
+          continue;
+        }
         await write(next.event, next.text);
       }
+    } catch (error) {
+      if (!closed) readFailure(error);
     } finally {
       busy = false;
     }
   };
-  // Subscribe before the first read; every held duplicate is skipped against the written cursor.
+  // Replay/catch-up needs no live copies: committed notifications are returned by paged reads.
   unsubscribe = store.subscribe(runId, (event) => {
-    if (closed || failure || event.seq <= last) return;
+    if (closed || failure || catchingUp || event.seq <= last) return;
     const text = encode(event);
     const bytes = Buffer.byteLength(text);
     if (held.length >= MAX_HELD_EVENTS || heldBytes + bytes > MAX_HELD_BYTES) {
-      fail(slowConsumer());
+      enterCatchup();
+      void flushLive();
       return;
     }
     held.push({ event, text, bytes });
@@ -200,11 +253,12 @@ export async function streamRunEvents(
     }
   };
   try {
-    let page = await store.read(runId, after, REPLAY_PAGE_SIZE);
+    const pending = { page: await store.read(runId, after, REPLAY_PAGE_SIZE) };
     if (closed) return;
     const terminal = (await options.isTerminal?.()) ?? false;
     if (closed) return;
-    const consumedTerminal = terminal && page.length === 0 ? await hasConsumedTerminal() : false;
+    const consumedTerminal =
+      terminal && pending.page.length === 0 ? await hasConsumedTerminal() : false;
     if (closed) return;
     reply.hijack();
     res.writeHead(200, {
@@ -230,18 +284,7 @@ export async function streamRunEvents(
         });
       }
     }, options.heartbeatMs ?? 15_000);
-    for (;;) {
-      for (const event of page) {
-        await write(event);
-        if (closed) return;
-      }
-      if (page.length < REPLAY_PAGE_SIZE) break;
-      page = []; // Release the previous page before yielding/reading the next.
-      await yieldToLoop();
-      if (closed) return;
-      page = await store.read(runId, last, REPLAY_PAGE_SIZE);
-      if (closed) return;
-    }
+    await catchUp(pending);
     busy = false;
     await flushLive();
     if (closed || !terminal) return;
@@ -257,13 +300,6 @@ export async function streamRunEvents(
       cleanup();
       throw error;
     }
-    fail({
-      type: 'urn:graphgoblin:problem:SSE_REPLAY_FAILED',
-      title: 'Event replay failed',
-      status: 500,
-      code:
-        error instanceof UnreadableRunHistoryError ? 'STORED_EVENT_INVALID' : 'SSE_REPLAY_FAILED',
-      detail: 'Stored history could not be read; retry after repairing the reported run history.',
-    });
+    readFailure(error);
   }
 }
