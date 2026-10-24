@@ -2213,6 +2213,12 @@ export class RunManager {
   private async childOutcome(childRunId: string): Promise<ChildOutcome> {
     const child = await this.mustGet(childRunId);
     const thread = await this.getThread(childRunId);
+    const completions = (await this.ports.events.read(childRunId)).filter(
+      (event) =>
+        event.type === 'run.finished' ||
+        event.type === 'run.failed' ||
+        event.type === 'run.cancelled',
+    ).length;
     return {
       runId: childRunId,
       status: child.status,
@@ -2220,6 +2226,7 @@ export class RunManager {
       ...(child.result !== undefined ? { result: child.result } : {}),
       ...(child.failure ? { failure: child.failure } : {}),
       ...(thread ? { thread } : {}),
+      completions,
     };
   }
 

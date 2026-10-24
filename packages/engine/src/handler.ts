@@ -42,6 +42,11 @@ export interface ChildOutcome {
   /** The child's runtime failure; absent for an authored Failure exit, which is an outcome. */
   failure?: RunFailure;
   thread?: ContextThread;
+  /**
+   * How many times the child has reached a terminal status: its terminal events. A resume and a
+   * new terminal status add one, so the parent can tell a new completion from one it recorded.
+   */
+  completions: number;
 }
 
 /** Services the executor hands to handlers. Everything that touches the outside world goes through here. */

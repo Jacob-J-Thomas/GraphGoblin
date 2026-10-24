@@ -231,8 +231,11 @@ async function finishWithChild(
   child: ChildOutcome,
 ): Promise<NodeResult> {
   // The completion and this node's `node.finished` are separate writes. A process that died
-  // between them re-runs this visit on recovery, so record the completion only once (#398).
-  if (!completionRecorded(await ctx.services.events(), ctx.node.id, child.runId))
+  // between them re-runs this visit on recovery, so record each completion of the child once
+  // (#398); a resumed child's new terminal status is a new completion and is recorded.
+  if (
+    recordedCompletions(await ctx.services.events(), ctx.node.id, child.runId) < child.completions
+  )
     await ctx.services.record({
       type: 'child_run.finished',
       nodeId: ctx.node.id,
@@ -278,27 +281,21 @@ function failedSinceAwaiting(events: readonly RunEvent[], nodeId: string): boole
 }
 
 /**
- * Whether this visit already recorded the child's completion and nothing has happened since that
- * makes a new record true. A `run.failed` after the record means the run was explicitly resumed
- * from that failure, so the resumed child's completion is a new fact and is recorded again.
+ * How many completions of this child the run has recorded. A child id belongs to one visit, so
+ * every record for it is this visit's; comparing with the child's own terminal events tells a
+ * completion already recorded before a crash from a new one after the child was resumed.
  */
-function completionRecorded(
+function recordedCompletions(
   events: readonly RunEvent[],
   nodeId: string,
   childRunId: string,
-): boolean {
-  for (let i = events.length - 1; i >= 0; i -= 1) {
-    const event = events[i] as RunEvent;
-    if (event.type === 'run.failed') return false;
-    if (event.type === 'node.finished' && event.nodeId === nodeId) return false;
-    if (
+): number {
+  return events.filter(
+    (event) =>
       event.type === 'child_run.finished' &&
       event.nodeId === nodeId &&
-      event.childRunId === childRunId
-    )
-      return true;
-  }
-  return false;
+      event.childRunId === childRunId,
+  ).length;
 }
 
 /** The child this node started during its current, unfinished visit, from the run's log. */
