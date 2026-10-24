@@ -1,0 +1,19 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const dir=path.resolve('docs/qa/2026-10-23-wp-f2b-205-qa');
+const profile=process.env.USERPROFILE;
+const clean=s=>s.split(JSON.stringify(profile).slice(1,-1)).join('%USERPROFILE%').split(profile).join('%USERPROFILE%').split(profile.replaceAll('\\','/')).join('%USERPROFILE%').split(JSON.stringify(profile.slice(2)).slice(1,-1)).join('%USERPROFILE%').split(profile.slice(2)).join('%USERPROFILE%');
+for(const name of await readdir(dir)){if(!/\.(json|txt|md)$/.test(name))continue;let b=await readFile(path.join(dir,name));let s=b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');const t=clean(s);if(t!==s||b[0]===255&&b[1]===254)await writeFile(path.join(dir,name),t);}
+const env={...process.env,GIT_OPTIONAL_LOCKS:'0'};
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',env}).trim();if(head!=='a258f7703d16032cb3180c632068db5ac42f657d')throw Error('HEAD changed');
+const status=execFileSync('git',['status','--short'],{encoding:'utf8',env}).trim();if(status!=='?? docs/qa/2026-10-23-wp-f2b-205-qa/')throw Error('Unexpected changed files: '+status);
+await writeFile(path.join(dir,'final-state.log.txt'),`HEAD ${head}\n${status}\nNo staging or commit commands were issued.\n`);
+const ports={};for(const port of [5840,5841]){try{await fetch(`http://127.0.0.1:${port}/healthz`,{signal:AbortSignal.timeout(1500)});ports[port]='responding';}catch{ports[port]='closed';}}if(Object.values(ports).some(x=>x!=='closed'))throw Error('QA listener remains');
+const files=(await readdir(dir)).sort();const md=await readFile(path.join(dir,'README.md'),'utf8');const links=new Set([...md.matchAll(/\]\(\.\/([^)]+)\)/g)].map(m=>m[1]));const missingIndex=files.filter(n=>n!=='README.md'&&!links.has(n));if(missingIndex.length)throw Error('Unlinked artifacts: '+missingIndex.join(', '));for(const name of links)if(!files.includes(name))throw Error('Broken link '+name);
+let jsonCount=0;for(const name of files){if(name==='SHA256SUMS.log.txt')continue;const b=await readFile(path.join(dir,name));if(b.length>1000000)throw Error('Oversize artifact '+name);if(name.endsWith('.json')){JSON.parse(b.toString('utf8'));jsonCount++;}if(/\.(txt|json|md)$/.test(name)){const s=b.toString('utf8');if(s.includes(profile)||s.includes(JSON.stringify(profile).slice(1,-1))||s.includes(profile.replaceAll('\\','/')))throw Error('Unredacted path '+name);}}
+await writeFile(path.join(dir,'final-validation.json'),JSON.stringify({head,onlyQaFolderChanged:true,linkedArtifacts:links.size,jsonFilesParsed:jsonCount,oversizeArtifacts:0,ports,node:process.version},null,2));
+const lines=[];for(const name of files){if(name==='SHA256SUMS.log.txt')continue;const b=await readFile(path.join(dir,name));lines.push(`${createHash('sha256').update(b).digest('hex')}  ${b.length}  ${name}`);}await writeFile(path.join(dir,'SHA256SUMS.log.txt'),lines.join('\n')+'\n');
+for(const line of lines){const [hash,size,name]=line.split('  ');const b=await readFile(path.join(dir,name));if(b.length!==Number(size)||createHash('sha256').update(b).digest('hex')!==hash)throw Error('Hash mismatch '+name);}
+console.log(JSON.stringify({head,files:files.length,links:links.size,hashesVerified:lines.length,ports}));

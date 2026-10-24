@@ -1,0 +1,16 @@
+import { spawn } from 'node:child_process';
+import { writeFile, open } from 'node:fs/promises';
+import path from 'node:path';
+const out = path.resolve('docs/qa/2026-10-23-wp-f2b-205-qa');
+const tasks = ['typecheck','lint','format:check','check:layers','check:deps',...['contracts','domain','api-client','api','web'].map(p=>`--filter @graphgoblin/${p} test:coverage`),'check:docs','check:tokens'];
+const results=[];
+for (const [i,task] of tasks.entries()) {
+  const log=`gate-${String(i+1).padStart(2,'0')}.log.txt`;
+  const h=await open(path.join(out,log),'w');
+  const start=Date.now();
+  const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',`pnpm.cmd ${task}`],{stdio:['ignore',h.fd,h.fd],windowsHide:true});
+  const code=await new Promise(r=>child.on('exit',r)); await h.close();
+  results.push({command:`pnpm.cmd ${task}`,code,seconds:(Date.now()-start)/1000,log});
+  await writeFile(path.join(out,'gates.json'),JSON.stringify(results,null,2));
+  console.log(JSON.stringify(results.at(-1)));
+}
