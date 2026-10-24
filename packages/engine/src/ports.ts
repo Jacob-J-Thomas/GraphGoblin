@@ -122,7 +122,7 @@ export interface RunRepository {
   getThread(runId: string): Promise<ContextThread | undefined>;
   /**
    * Save the thread snapshot. `seq` is the last event it reflects: the thread equals the initial
-   * thread with every event up to `seq` replayed. Without `seq` it is a plain snapshot for reads.
+   * thread with every event up to `seq` replayed. Without `seq` it cannot accelerate reconstruction.
    */
   saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void>;
   /** The snapshot with the `seq` it reflects, when it was saved with one. */

@@ -123,6 +123,24 @@ Responses and exports use format 4. The server-store cutover remains separate:
 unconverted stores still stop before ordinary migrations or recovery. No tolerant
 runtime reader is added. See the CHANGELOG upgrade notes.
 
+## Current thread and resumed history (#116)
+
+`GET /runs/{id}/thread` and MCP `get_run_thread` reconstruct the current thread through
+the observed durable event tail, using verified snapshots only as a cache. A delayed snapshot
+cannot hide completed patches or an unfinished node's visit count. These reads do not write
+snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-record
+projection (status, position, result and failure); the record contains no context-thread
+snapshot. Separate reads can observe different event prefixes while execution advances.
+
+A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
+Observers following all attempts first catch up with JSON event pages after their stored
+cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
+Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
+whether to follow a live tail when a page overtakes the captured run record. Terminal observation
+checks a lagging run record until its status agrees and refreshes metadata without needing another
+event. A resumable failure continues checks because another client may resume it; other terminal
+outcomes stop once the run record agrees. This leaves return-delivery finalization separate.
+
 ## SSE protocol (Decided)
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.

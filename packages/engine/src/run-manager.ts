@@ -42,7 +42,7 @@ import {
   outcomeStatus,
   outgoingEdge,
   renderTemplate,
-  replayStateAt,
+  reconcileThread,
   replayThread,
   stableHash,
   stableStringify,
@@ -1060,13 +1060,12 @@ export class RunManager {
     return this.ports.runs.get(runId);
   }
 
-  /** Current thread: the snapshot when present, otherwise a replay of the log. */
+  /** Read-only thread through the durable event tail; snapshots are verified caches. */
   async getThread(runId: string): Promise<ContextThread | undefined> {
-    const snapshot = await this.ports.runs.getThread(runId);
-    if (snapshot) return snapshot;
+    const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
     const initial = await this.ports.runs.getInitialThread(runId);
     if (!initial) return undefined;
-    return replayThread(initial, await this.ports.events.read(runId));
+    return reconcileThread(initial, await this.ports.events.read(runId), checkpoint);
   }
 
   // ---------------------------------------------------------------------------
@@ -2275,29 +2274,12 @@ export class RunManager {
     return dir;
   }
 
-  /**
-   * The executor always starts from the log, never the snapshot: a crash (or a failure) can leave
-   * the snapshot behind the last `node.started` or `node.finished`, and the log is the source of
-   * truth (docs/05). The snapshot only serves reads.
-   */
+  /** Execution and public reads share the same verified-checkpoint reconstruction. */
   private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
-    // A verified checkpoint: the snapshot names the seq it reflects, and that event is in the log,
-    // so only the events after it are replayed. A checkpoint is always written after its event,
-    // so one the log does not reach (or a snapshot without a seq) is ignored.
     const checkpoint = await this.ports.runs.getThreadCheckpoint(run.id);
-    if (checkpoint && events.some((e) => e.seq === checkpoint.seq)) {
-      // The visit open at the checkpoint carries over, so a duplicate completion straddling it
-      // is applied once, exactly as a full replay would.
-      return replayThread(
-        checkpoint.thread,
-        events.filter((e) => e.seq > checkpoint.seq),
-        undefined,
-        replayStateAt(events, checkpoint.seq),
-      );
-    }
     const initial = await this.ports.runs.getInitialThread(run.id);
     if (!initial) throw new Error(`run ${run.id} has no initial thread`);
-    return replayThread(initial, events);
+    return reconcileThread(initial, events, checkpoint);
   }
 
   private async resolveVersion(input: StartRunInput): Promise<LoopVersionRecord> {
