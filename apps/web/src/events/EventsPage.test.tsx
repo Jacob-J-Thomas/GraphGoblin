@@ -27,7 +27,7 @@ describe('EventsPage delivery dispositions', () => {
           }
         : {}),
     }));
-    renderApp('/events?type=ignored&before=invalid', api);
+    renderApp('/events?type=chosen&before=2099-01-01T00%3A00%3A00.000Z', api);
     const disclosure = await screen.findByText('Webhook configuration');
     await user.click(disclosure);
     const expanded = disclosure.closest('details')!;
@@ -38,9 +38,12 @@ describe('EventsPage delivery dispositions', () => {
     await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(201));
     await waitFor(() => expect(screen.getByText('All events loaded.')).toHaveFocus());
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
-    const call = api.callsTo('GET', '/events').at(-1)!;
-    expect(call.search.has('type')).toBe(false);
-    expect(call.search.has('before')).toBe(false);
+    const call = api
+      .callsTo('GET', '/events')
+      .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor'))
+      .at(-1)!;
+    expect(call.search.get('type')).toBe('chosen');
+    expect(call.search.get('before')).toBe('2099-01-01T00:00:00.000Z');
     expect(call.search.get('cursor')).toBe('event-99');
     expect(expanded).toBeInTheDocument();
     expect(expanded).toHaveAttribute('open');
@@ -180,7 +183,11 @@ describe('EventsPage delivery dispositions', () => {
           timeout: 5_000,
         }),
       ).toBeVisible();
-      expect(api.callsTo('GET', '/events')).toHaveLength(1);
+      expect(
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
+      ).toHaveLength(1);
 
       api.inbound = [
         {
@@ -201,10 +208,18 @@ describe('EventsPage delivery dispositions', () => {
       } else {
         expect(screen.getByText('ADMISSION_UNAVAILABLE')).toBeVisible();
       }
-      expect(api.callsTo('GET', '/events')).toHaveLength(2);
+      expect(
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
+      ).toHaveLength(2);
 
       await new Promise((resolve) => setTimeout(resolve, 2_200));
-      expect(api.callsTo('GET', '/events')).toHaveLength(2);
+      expect(
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
+      ).toHaveLength(2);
     } finally {
       view.unmount();
       view.queryClient.clear();
@@ -233,11 +248,19 @@ describe('EventsPage delivery dispositions', () => {
           timeout: 5_000,
         }),
       ).toBeVisible();
-      expect(api.callsTo('GET', '/events')).toHaveLength(1);
+      expect(
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
+      ).toHaveLength(1);
 
       view.unmount();
       await new Promise((resolve) => setTimeout(resolve, 2_200));
-      expect(api.callsTo('GET', '/events')).toHaveLength(1);
+      expect(
+        api
+          .callsTo('GET', '/events')
+          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
+      ).toHaveLength(1);
     } finally {
       view.unmount();
       view.queryClient.clear();

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { replayThread } from '@graphgoblin/domain';
+import { replayStateAt, replayThread } from '@graphgoblin/domain';
 import { RunManager } from './run-manager.js';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { FakeStructured } from './testing/fakes.js';
@@ -236,13 +236,18 @@ describe('adversarial engine invariants', () => {
     const replayed: unknown[] = [];
     // Every checkpoint equals a replay of the log up to the seq it names.
     const save = e.ports.runs.saveThread.bind(e.ports.runs);
-    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
-      if (seq !== undefined) {
-        snapshots.push(thread);
-        replayed.push(replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq));
-      }
-      return save(id, thread, seq);
-    });
+    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(
+      async (id, thread, seq, replayState) => {
+        if (seq !== undefined) {
+          expect(replayState).toEqual(replayStateAt(e.events(id), seq));
+          snapshots.push(thread);
+          replayed.push(
+            replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq),
+          );
+        }
+        return save(id, thread, seq, replayState);
+      },
+    );
     const r = await e.runToIdle(v.loopId);
     expect(r.status).toBe('succeeded');
     expect(e.events(r.id).map((x) => x.seq)).toEqual(e.events(r.id).map((_, i) => i + 1));

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "538bb7e2-caa9-4662-b4ff-f64fb32259bd",
+  "id": "499a365d-5940-470c-8777-ccde6586e04a",
   "prevId": "3620a69d-d7e9-44d9-badb-64a098680fe4",
   "tables": {
     "api_keys": {
@@ -161,145 +161,6 @@
       },
       "uniqueConstraints": {},
       "checkConstraints": {}
-    },
-    "event_receipts": {
-      "name": "event_receipts",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "loop_id": {
-          "name": "loop_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "version_id": {
-          "name": "version_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "trigger_node_id": {
-          "name": "trigger_node_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "inbound_id": {
-          "name": "inbound_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "request_key": {
-          "name": "request_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "node_key": {
-          "name": "node_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "intent": {
-          "name": "intent",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "attempts": {
-          "name": "attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "next_attempt_at": {
-          "name": "next_attempt_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "failure_code": {
-          "name": "failure_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "event_receipts_inbound_idx": {
-          "name": "event_receipts_inbound_idx",
-          "columns": ["inbound_id"],
-          "isUnique": true
-        },
-        "event_receipts_request_idx": {
-          "name": "event_receipts_request_idx",
-          "columns": ["owner_id", "loop_id", "trigger_node_id", "event_type", "request_key"],
-          "isUnique": true
-        },
-        "event_receipts_due_idx": {
-          "name": "event_receipts_due_idx",
-          "columns": ["status", "next_attempt_at"],
-          "isUnique": false
-        },
-        "event_receipts_node_key_idx": {
-          "name": "event_receipts_node_key_idx",
-          "columns": ["owner_id", "loop_id", "trigger_node_id", "node_key"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "event_receipt_status_check": {
-          "name": "event_receipt_status_check",
-          "value": "\"event_receipts\".\"status\" IN ('deduplicated','pending','admitted','failed')"
-        },
-        "event_receipt_intent_check": {
-          "name": "event_receipt_intent_check",
-          "value": "(\"event_receipts\".\"status\" = 'deduplicated' AND \"event_receipts\".\"intent\" IS NULL) OR (\"event_receipts\".\"status\" <> 'deduplicated' AND \"event_receipts\".\"intent\" IS NOT NULL)"
-        }
-      }
     },
     "harness_sessions": {
       "name": "harness_sessions",
@@ -907,6 +768,13 @@
         },
         "pinned": {
           "name": "pinned",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "thread_snapshot_replay_state": {
+          "name": "thread_snapshot_replay_state",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

@@ -234,29 +234,57 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
       schema: {
         tags: ['events'],
         summary: 'Stored inbound events, newest first with stable paging',
-        querystring: z.strictObject({
-          type: z.string().max(128).optional(),
-          before: TimestampSchema.optional(),
-          cursor: z.string().optional().register(openApiRegistry, {
-            description: 'Opaque inbound-event cursor, at most 256 base64url characters.',
-            maxLength: 256,
+        querystring: z
+          .strictObject({
+            type: z.string().max(128).optional(),
+            before: TimestampSchema.optional(),
+            anchor: UlidSchema.optional().register(openApiRegistry, {
+              description:
+                'Re-read a page starting at this event, inclusive; mutually exclusive with cursor.',
+            }),
+            cursor: z.string().optional().register(openApiRegistry, {
+              description: 'Opaque inbound-event cursor, at most 256 base64url characters.',
+              maxLength: 256,
+            }),
+            limit: z.coerce.number().int().min(1).max(500).optional(),
+          })
+          .refine((query) => query.anchor === undefined || query.cursor === undefined, {
+            message: 'Choose either anchor or cursor.',
+            path: ['anchor'],
           }),
-          limit: z.coerce.number().int().min(1).max(500).optional(),
-        }),
         response: {
           200: z.object({ items: z.array(InboundEventSchema), nextCursor: z.string().nullable() }),
         },
       },
     },
     async (request) => {
+      const before = request.query.before
+        ? new Date(request.query.before).toISOString()
+        : undefined;
+      const anchor = request.query.anchor
+        ? await repos.inbound.get(request.query.anchor)
+        : undefined;
+      if (
+        request.query.anchor &&
+        (!anchor ||
+          anchor.ownerId !== request.auth.ownerId ||
+          (request.query.type && anchor.type !== request.query.type) ||
+          (before && anchor.receivedAt >= before))
+      )
+        return { items: [], nextCursor: null };
+      const limit = request.query.limit ?? 100;
       const page = await repos.inbound.page(request.auth.ownerId, {
-        limit: request.query.limit ?? 100,
+        limit,
         ...(request.query.type ? { type: request.query.type } : {}),
-        ...(request.query.before ? { before: new Date(request.query.before).toISOString() } : {}),
+        ...(before ? { before } : {}),
         ...(request.query.cursor !== undefined
           ? { cursor: decodeEventCursor(request.query.cursor) }
-          : {}),
+          : anchor
+            ? { anchor }
+            : {}),
       });
+      // An indexed anchor lookup plus one bounded older page includes the loaded head,
+      // even after arbitrary arrivals (or timestamp ties); no history-prefix scan.
       return {
         items: await triggers.describeInbound(page.items),
         nextCursor: page.next ? encodeEventCursor(page.next) : null,

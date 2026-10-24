@@ -1,0 +1,47 @@
+pnpm.cmd : $ vitest run --coverage
+At line:7 char:3
++   & pnpm.cmd --filter "@graphgoblin/$wp116Package" test:coverage *> $ ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/packages/domain
+      Coverage enabled with v8
+
+ ❯ src/convert-v3-v4/conversion.test.ts (102 tests | 1 failed) 23399ms
+   ❯ E2 review regressions (24)
+     × re-review F1 resolves every invalidated source with two authored gates (explicit return: false) 5232ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/convert-v3-v4/conversion.test.ts > E2 review regressions > re-review F1 resolves every invalidated source 
+with two authored gates (explicit return: false)
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/convert-v3-v4/conversion.test.ts:620:25
+    618|   });
+    619|
+    620|   it.each([false, true])(
+       |                         ^
+    621|     're-review F1 resolves every invalidated source with two authored …
+    622|     async (explicitReturn) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 30 passed (31)
+      Tests  1 failed | 595 passed (596)
+   Start at  05:56:58
+   Duration  51.27s (tests 45%, transform 29%, import 24%, worker 2%)
+
+  Transform  transforming modules took 60.79s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\packages\domain
+

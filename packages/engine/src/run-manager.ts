@@ -44,8 +44,9 @@ import {
   outcomeStatus,
   outgoingEdge,
   renderTemplate,
-  replayStateAt,
+  reconcileThread,
   replayThread,
+  replayStateAt,
   stableHash,
   stableStringify,
   threadView,
@@ -129,6 +130,7 @@ export interface RunStartPlan {
   root: LoopVersionRecord;
   versions: ReadonlyMap<string, LoopVersionRecord>;
   subloopVersions: Readonly<Record<string, string>>;
+  defaults: PinnedDefaults;
 }
 
 /** A scoped intake capability. Retain it only inside withAdmission's callback. */
@@ -717,6 +719,7 @@ export class RunManager {
         root: prepared.version,
         versions,
         subloopVersions: intent.queued.subloopVersions ?? {},
+        defaults: prepared.run.pinned.defaults,
       });
       const admitted = await this.withPinLock(async () => {
         await this.assertVersionPresent(prepared.sourceId, input.loopId);
@@ -1488,13 +1491,19 @@ export class RunManager {
     return this.ports.runs.get(runId);
   }
 
-  /** Current thread: the snapshot when present, otherwise a replay of the log. */
+  /** Read-only thread through the durable event tail; snapshots are verified caches. */
   async getThread(runId: string): Promise<ContextThread | undefined> {
-    const snapshot = await this.ports.runs.getThread(runId);
-    if (snapshot) return snapshot;
+    const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
+    if (checkpoint?.replayState) {
+      const tail = await this.ports.events.read(runId, checkpoint.seq - 1);
+      // Only the writer can establish which visit was open at this sequence. A completion
+      // may be a delayed duplicate of another node and cannot prove that the visit closed.
+      if (tail[0]?.seq === checkpoint.seq)
+        return reconcileThread(checkpoint.thread, tail, checkpoint);
+    }
     const initial = await this.ports.runs.getInitialThread(runId);
     if (!initial) return undefined;
-    return replayThread(initial, await this.ports.events.read(runId));
+    return reconcileThread(initial, await this.ports.events.read(runId), checkpoint);
   }
 
   // ---------------------------------------------------------------------------
@@ -2222,7 +2231,7 @@ export class RunManager {
         // relying on in-memory allocation. Each heartbeat park gets a fresh token.
         const wait: WaitSpec = { ...result.wait, startedSeq, waitId: runId + ':' + startedSeq };
         const seq = await appendAll([{ type: 'run.waiting', nodeId, wait }]);
-        await this.ports.runs.saveThread(runId, thread, seq);
+        await this.ports.runs.saveThread(runId, thread, seq, { strict: true, openNodeId: nodeId });
         const parked = await this.ports.runs.transition(runId, ['running'], {
           status: 'waiting',
           waiting: wait,
@@ -2281,7 +2290,7 @@ export class RunManager {
           },
           ...queuedWebhooks(result, thread, this.ports.ids),
         ]);
-        await this.ports.runs.saveThread(runId, thread, seq);
+        await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
         await this.finish(run, def, thread, result);
         return;
       }
@@ -2300,7 +2309,7 @@ export class RunManager {
         ...(result.kind === 'done' ? (result.records ?? []) : []),
         finishedDraft,
       ]);
-      await this.ports.runs.saveThread(runId, thread, seq);
+      await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
       const edge = outgoingEdge(def, nodeId, result.route);
       if (!edge) {
         await this.failRun(runId, {
@@ -2337,7 +2346,8 @@ export class RunManager {
     if (isTerminal(run.status)) return true;
     // The snapshot may predate the terminal append: bring it up to the end of the log.
     const thread = await this.loadThread(run, events);
-    await this.ports.runs.saveThread(run.id, thread, (events.at(-1) as RunEvent).seq);
+    const seq = (events.at(-1) as RunEvent).seq;
+    await this.ports.runs.saveThread(run.id, thread, seq, replayStateAt(events, seq));
     const changes: RunRecordChanges =
       terminal.type === 'run.cancelled'
         ? { status: 'cancelled', waiting: undefined }
@@ -2795,29 +2805,12 @@ export class RunManager {
     return dir;
   }
 
-  /**
-   * The executor always starts from the log, never the snapshot: a crash (or a failure) can leave
-   * the snapshot behind the last `node.started` or `node.finished`, and the log is the source of
-   * truth (docs/05). The snapshot only serves reads.
-   */
+  /** Execution and public reads share the same verified-checkpoint reconstruction. */
   private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
-    // A verified checkpoint: the snapshot names the seq it reflects, and that event is in the log,
-    // so only the events after it are replayed. A checkpoint is always written after its event,
-    // so one the log does not reach (or a snapshot without a seq) is ignored.
     const checkpoint = await this.ports.runs.getThreadCheckpoint(run.id);
-    if (checkpoint && events.some((e) => e.seq === checkpoint.seq)) {
-      // The visit open at the checkpoint carries over, so a duplicate completion straddling it
-      // is applied once, exactly as a full replay would.
-      return replayThread(
-        checkpoint.thread,
-        events.filter((e) => e.seq > checkpoint.seq),
-        undefined,
-        replayStateAt(events, checkpoint.seq),
-      );
-    }
     const initial = await this.ports.runs.getInitialThread(run.id);
     if (!initial) throw new Error(`run ${run.id} has no initial thread`);
-    return replayThread(initial, events);
+    return reconcileThread(initial, events, checkpoint);
   }
 
   private async resolveVersion(input: StartRunInput): Promise<LoopVersionRecord> {

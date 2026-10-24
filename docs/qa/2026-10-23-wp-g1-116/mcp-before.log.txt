@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/mcp
+
+ ❯ src/thread-history.test.ts (1 test | 1 failed) 1635ms
+   × MCP reads agree through persisted failure and resume with stale snapshots 1633ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/th ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/thread-history.test.ts > MCP reads agree through persisted failure and resume with stale snapshots
+AssertionError: expected {} to deeply equal { prepared: true }
+
+- Expected
++ Received
+
+- {
+-   "prepared": true,
+- }
++ {}
+
+ ❯ src/thread-history.test.ts:35:27
+     33|       expect(RunRecordSchema.parse(await call('get_run', run.id)).stat…
+     34|       const thread = ContextThreadSchema.parse(await call('get_run_thr…
+     35|       expect(thread.vars).toEqual({ prepared: true, ...(status === 'su…
+       |                           ^
+     36|       expect(thread.counters.nodeVisits.work).toBe(status === 'failed'…
+     37|       expect(await t.bytes(run.id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  21:54:26
+   Duration  30.22s (transform 66%, import 28%, tests 6%)
+
+  Transform  transforming modules took 18.40s · 66% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\mcp
+

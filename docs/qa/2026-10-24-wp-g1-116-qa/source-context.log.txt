@@ -1,0 +1,152 @@
+## Engine bounded read and recovery source
+  }
+
+  /** Read-only thread through the durable event tail; snapshots are verified caches. */
+  async getThread(runId: string): Promise<ContextThread | undefined> {
+    const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
+    if (checkpoint) {
+      const tail = await this.ports.events.read(runId, checkpoint.seq - 1);
+      const boundary = tail[0];
+      if (boundary?.seq === checkpoint.seq) {
+        // One execution token: started/waiting names its open visit. The engine writes a
+        // matching node.finished before checkpointing a completion or appending run.finished,
+        // so those boundaries have strict replay with no open visit. Recovery can checkpoint
+        // other terminal/progress events; their state is ambiguous and needs the full prefix.
+        if (boundary.type === 'node.started' || boundary.type === 'run.waiting')
+          return reconcileThread(checkpoint.thread, tail, {
+            ...checkpoint,
+            replayState: { strict: true, openNodeId: boundary.nodeId },
+          });
+        if (boundary.type === 'node.finished' || boundary.type === 'run.finished')
+          return reconcileThread(checkpoint.thread, tail, {
+            ...checkpoint,
+            replayState: { strict: true },
+          });
+      }
+    }
+    const initial = await this.ports.runs.getInitialThread(runId);
+    if (!initial) return undefined;
+    return reconcileThread(initial, await this.ports.events.read(runId), checkpoint);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Internals: scheduling
+  // ---------------------------------------------------------------------------
+
+  private enqueue(runId: string): void {
+    if (this.active.has(runId)) {
+   * Complete a run whose terminal event is already in the log but whose status is not terminal
+   * (the process died between the two writes): apply the recorded outcome without executing
+   * anything, then finalize. Returns whether the log had such an event. `def` is absent when the
+   * run's version is gone; returns declared on its exit then cannot be delivered.
+   */
+  private async completeFromLog(
+    run: RunRecord,
+    def: LoopDefinition | undefined,
+    events: readonly RunEvent[],
+  ): Promise<boolean> {
+    const terminal = terminalEvent(events);
+    if (!terminal) return false;
+    this.recovering.delete(run.id);
+    if (isTerminal(run.status)) return true;
+    // The snapshot may predate the terminal append: bring it up to the end of the log.
+    const thread = await this.loadThread(run, events);
+    await this.ports.runs.saveThread(run.id, thread, (events.at(-1) as RunEvent).seq);
+    const changes: RunRecordChanges =
+      terminal.type === 'run.cancelled'
+        ? { status: 'cancelled', waiting: undefined }
+        : terminal.type === 'run.failed'
+          ? { status: 'failed', failure: terminal.failure }
+          : {
+              status: terminal.status,
+              outcome: terminal.outcome,
+              ...(terminal.result !== undefined ? { result: terminal.result } : {}),
+              currentNodeId: undefined,
+              waiting: undefined,
+              pausedAt: undefined,
+            };
+    const done = await this.ports.runs.transition(run.id, ACTIVE_STATUSES, {
+      ...changes,
+      finishedAt: this.now(),
+## Replay first-visit contract
+   * is the source thread as it was just before `nodeId` first started, and which starts executing
+   * at `nodeId`. The fork has its own id and event log; the source is untouched, and its child
+   * runs are not copied (a subloop node in the fork starts a new child).
+   */
+  async replay(input: ReplayRunInput): Promise<RunRecord> {
+    const source = await this.mustGet(input.runId);
+    const events = await this.ports.events.read(source.id);
+    const firstStart = events.find(
+      (e): e is Extract<RunEvent, { type: 'node.started' }> =>
+        e.type === 'node.started' && e.nodeId === input.nodeId,
+    );
+    if (!firstStart) {
+      throw new EngineRequestError(
+        'REPLAY_NODE_NOT_REACHED',
+        `run ${source.id} never started node ${input.nodeId}`,
+      );
+    }
+    const version = await this.ports.loops.getVersion(source.versionId);
+    if (!version || !nodeById(version.definition, input.nodeId)) {
+      throw new EngineRequestError(
+        'INVALID_STATE',
+        `node ${input.nodeId} is not in loop version ${source.versionId}`,
+      );
+    }
+    assertCurrentDefinition(version);
+    const initial = await this.ports.runs.getInitialThread(source.id);
+## Current thread documentation
+## Current thread and resumed history (#116)
+
+`GET /runs/{id}/thread` and MCP `get_run_thread` reconstruct the current thread through
+the observed durable event tail, using verified snapshots only as a cache. A delayed snapshot
+cannot hide completed patches or an unfinished node's visit count. These reads do not write
+snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-record
+projection (status, position, result and failure); the record contains no context-thread
+snapshot. Separate reads can observe different event prefixes while execution advances.
+
+A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
+Observers following all attempts first catch up with JSON event pages after their stored
+cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
+Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
+whether to follow a live tail when a page overtakes the captured run record. Terminal observation
+checks a lagging run record until its status agrees and refreshes metadata without needing another
+event. A resumable failure continues checks because another client may resume it; other terminal
+outcomes stop once the run record agrees. This leaves return-delivery finalization separate.
+
+### Bounded current-thread reads (#116)
+
+Current-thread reads first request only the checkpoint boundary and its tail using
+`events.read(runId, checkpoint.seq - 1)` and verify that the first returned sequence is the
+checkpoint's. Bounded replay state follows from the engine's single execution token and write
+order: a `node.started` or `run.waiting` names the open visit; a matching `node.finished` closes
+it, and an exit's `run.finished` follows that completion in the same append. These boundaries
+therefore prove strict replay state without their prefix. Other boundary kinds, a missing
+boundary, or an unsequenced snapshot fall back to the full admitted seed/history. This fallback
+covers recovery snapshots at failed/cancelled or later progress/delivery events whose open visit
+is not established by that event alone. Execution's `loadThread` keeps its existing full history.
+The proven state is an in-memory reconciliation input, not a new stored field or migration.
+
+A controlled Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite with
+10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).
+Each case had one warm-up and five measured reads, comparing the complete returned thread with
+full replay. The lagging checkpoint omitted 200 events. The machine was loaded; these elapsed
+times describe this fixture, not an SLA or a claim about the different #190 workload.
+
+| Checkpoint         | Rows before | Rows after | Median before (ms) | Median after (ms) |
+| ------------------ | ----------: | ---------: | -----------------: | ----------------: |
+| current            |       10008 |          1 |            311.421 |            25.814 |
+| lagging-200-events |       10008 |        201 |            222.919 |            21.827 |
+
+The structural result is one decoded boundary row for a current checkpoint and boundary plus
+200 tail rows for the lagging case, rather than a history-sized read. The raw samples and
+counted port reads are in `docs/qa/2026-10-23-wp-g1-116/measure-before.json` and
+`docs/qa/2026-10-23-wp-g1-116/measure-after.json`; the repeatable script is
+`apps/api/scripts/thread-read-measure.ts`.
+
+## SSE protocol (Decided)
+## Inspector contract
+- **Run inspector.** The timeline comes from `subscribeRunEvents`; events are kept per run in session storage, so a reload resumes after the stored cursor. A cached terminal event triggers JSON history reconciliation rather than permanently suppressing the stream. After a terminal subscription, finite JSON pages catch up through an observed run cursor; active execution opens a new SSE tail, while resumable failures are checked every two seconds for a resume from another client. Durable lifecycle events choose the tail state if a page overtakes the captured run record; two-second checks then refresh metadata until the record agrees. Success, cancellation and non-resumable failures stop polling once that status agrees. Unmounting cancels observation and discards late responses. Selecting an event reconstructs the thread at that point with `reconcileThread` from `domain` (starting from the initial thread recorded on `run.queued`, and counting `node.started` for node visits, which the engine keeps outside patches); a `node.finished` event also shows its patch with the value before and after each path; reconstruction results are cached per sequence while the log grows (`createThreadCache`, #259), and every shown value is bounded on screen with the whole text and an exact download on request (`BoundedValue`). A progress drawer groups `node.progress`, harness session, usage, decision, and heartbeat events per node. Waiting runs show an input form generated from the wait node's `inputSchema` (or a signal form); cancel, pause, and resume are buttons.
+- **Settings.** The model catalog enables/disables every entry through PATCH using #8's Switch, named "Enable <display name>". The reusable Settings EnableSwitch marks its switch aria-disabled and aria-busy, ignores activation, and shows an hourglass with Enabling/Disabling while saving; a polite status announces Enabled/Disabled. Keyboard focus stays on the pending switch, including concurrent requests on different rows; a deliberate move to another control is preserved. A refusal restores the previous state and announces a plain sentence through MutationError with section-specific messages for MODEL_MANAGED_BY_HARNESS, LITELLM_NOT_CONFIGURED, or MODEL_NOT_FOUND. A 404 refreshes the catalog, preserves its reason in a section-level live region until the next toggle clears it, and focuses the heading when the switch had focus as it was activated and its row has since disappeared. The switch is recorded at activation (`ToggleFailure.opener`), so this also holds when another refresh removed the row while the PATCH was pending and focus had already fallen to the page body (`restoreVanishedToggleFocus` in `settings/shared.tsx`). Successful updates refresh the catalog so the Default model select removes disabled entries from new choices and restores enabled ones. A saved default remains selected as "<name> (disabled)" or "<id> (not in catalog)", with a diagnostic that the invalid or unavailable selection must be corrected before publication or execution. Harness rows have no Edit/Delete actions in the DOM. Add is hidden until a LiteLLM row exists. Row presence is a temporary proxy until #25 supplies a provider-configured signal. When Add is hidden, a short note explains that local models will appear once the LiteLLM adapter is configured and names the Settings guide section Choose a model and effort without a network link. The note waits until the catalog loads. With local entries, only LiteLLM rows offer Edit/Delete; editing metadata omits enabled so it cannot revert a concurrent toggle. Regression coverage is in SettingsPage.test.tsx, settings/shared.test.tsx, and Edge e2e/actions.spec.ts; both-theme screenshots are in docs/qa/2026-10-04-issue-24-catalog/. Settings also manages default model and effort (stored under owner `defaults.byHarness`, which the engine reads at run start ahead of the harness-keyed process `GG_DEFAULTS`), write-only secrets, API keys (the token is shown once), harness preflight, and an install hint.
+## CHANGELOG #116
+- Reconcile current-thread reads from verified checkpoints and durable event tails; keep open and reloaded inspectors following resumed failed runs without applying unfinished patches or writing execution state. (#116)

@@ -1,0 +1,80 @@
+pnpm.cmd : $ turbo run typecheck
+At line:21 char:1
++ pnpm.cmd typecheck *> typecheck.log.txt
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing b398d7d41186a1bd
+@graphgoblin/contracts:typecheck: cache miss, executing bcbab0a90e8be1c5
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:typecheck: cache miss, executing 92fd68dca56e0fd1
+@graphgoblin/domain:build: cache miss, executing 1a6a64ba56a086ed
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 80add80b3fa587ae
+@graphgoblin/engine:typecheck: cache miss, executing 8fed4483cd54883f
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 10bb8b130fd98535
+@graphgoblin/infrastructure:typecheck: cache miss, executing a004a286e3f6cb46
+@graphgoblin/adapter-codex:build: cache miss, executing ba88e19432ead561
+@graphgoblin/adapter-jev:build: cache miss, executing 19aa302ec2232fc4
+@graphgoblin/infrastructure:build: cache miss, executing 2dccd0de37ae5033
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 51e7c072499aa0d3
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing dba00f9463f7f682
+@graphgoblin/api:typecheck: cache miss, executing 053dc12e9f7d4da7
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 8e636cf1679db535
+@graphgoblin/api-client:typecheck: cache miss, executing 5f597af540379287
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: cache miss, executing 33769f6d9e38e13b
+@graphgoblin/mcp:typecheck: cache miss, executing 7a2988a1804b8e62
+@graphgoblin/mcp:build: cache miss, executing 73454a82c06b5b32
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing b09bd137117fa515
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: src/editor/model-effort.test.tsx(23,64): error TS2769: No overload matches this call.
+@graphgoblin/web:typecheck:   Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement | null', gave the following error.
+@graphgoblin/web:typecheck:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+@graphgoblin/web:typecheck:   Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement | null', gave the following error.
+@graphgoblin/web:typecheck:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+@graphgoblin/web:typecheck: src/editor/model-effort.test.tsx(24,68): error TS2769: No overload matches this call.
+@graphgoblin/web:typecheck:   Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement[]', gave the following error.
+@graphgoblin/web:typecheck:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+@graphgoblin/web:typecheck:   Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement[]', gave the following error.
+@graphgoblin/web:typecheck:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+@graphgoblin/web:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/web#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web) C:\nvm4w\nodejs\pnpm.cmd run 
+typecheck exited (2)
+
+ Tasks:    18 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    5m46.527s 
+Failed:    @graphgoblin/web#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

@@ -154,6 +154,26 @@ describe('SqliteInboundEvents', () => {
     ...overrides,
   });
 
+  it('re-reads inclusive anchored pages without decoding a damaged lookahead row', async () => {
+    const store = new SqliteInboundEvents(handle.db);
+    for (const id of ['a', 'b', 'c', 'z']) await store.insert(event(id));
+    const anchored = await store.page('local', { anchor: event('c'), limit: 2 });
+    expect(anchored.items.map((row) => row.id)).toEqual(['c', 'b']);
+    expect(anchored.next).toEqual({ receivedAt: FIXTURE_TS, id: 'b' });
+    expect(
+      (await store.page('local', { cursor: anchored.next! })).items.map((row) => row.id),
+    ).toEqual(['a']);
+    expect((await store.page('local', { anchor: event('a'), limit: 1 })).next).toBeNull();
+    expect((await store.page('other', { anchor: event('c') })).items).toEqual([]);
+    await handle.client.execute({
+      sql: 'UPDATE inbound_events SET payload = ? WHERE id = ?',
+      args: ['{invalid', 'b'],
+    });
+    const single = await store.page('local', { anchor: event('c'), limit: 1 });
+    expect(single.items.map((row) => row.id)).toEqual(['c']);
+    expect(single.next).toEqual({ receivedAt: FIXTURE_TS, id: 'c' });
+  });
+
   it('inserts, lists newest first, pages, and reads stored run links', async () => {
     const events = new SqliteInboundEvents(handle.db);
     await events.insert(

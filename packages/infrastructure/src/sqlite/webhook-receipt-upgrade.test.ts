@@ -50,6 +50,8 @@ beforeEach(async () => {
   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
   // A pre-0015 fixture must not retain the later targeted Event ledger.
   await handle.client.execute('DROP TABLE event_receipts');
+
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
   await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at>=1792454400000');
 });
 afterEach(() => handle.close());

@@ -25,6 +25,7 @@ describe('SQLite history queries', () => {
   afterEach(() => handle.close());
   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
     await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
     const historyMigration = readMigrationFiles({
       migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
     }).find((migration) =>

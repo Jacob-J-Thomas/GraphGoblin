@@ -1,0 +1,15 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/domain exec vitest run src/adversarial.test.ts src/upgrade.test.ts src/convert-v3-v4/conversion.test.ts --maxWorkers=1 -t "singleton codex|two authored gates|nested failing"
+REASON: Initial default-worker coverage failed two 5000ms tests and one subprocess case after its 10000ms spawn timeout. Diagnose worker contention with the original assertions and timeouts.
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/packages/domain
+
+
+ Test Files  3 passed (3)
+      Tests  6 passed | 186 skipped (192)
+   Start at  22:12:40
+   Duration  56.90s (tests 58%, transform 24%, import 17%, worker 1%)
+
+    Isolate  3 workers spawned · ~2.27s startup each (spawn + environment, per file)
+             at least ~4.54s faster with isolate: false — reuses workers across files instead of one per file
+
+RESULT: exit 0

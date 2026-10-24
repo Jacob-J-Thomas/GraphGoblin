@@ -1,0 +1,73 @@
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=process.env.AUDIT_ROOT;
+const load=p=>import(pathToFileURL(join(root,p)).href);
+const {createContainer,buildApp,loadConfig}=await load('apps/api/dist/index.js');
+const {RunManager}=await load('packages/engine/dist/index.js');
+const {FakeHarness}=await load('packages/engine/dist/testing/index.js');
+const {SqliteRunRepository}=await load('packages/infrastructure/dist/sqlite/index.js');
+const {replayThread,replayStateAt}=await load('packages/domain/dist/index.js');
+const {CURRENT_DEFINITION_FORMAT}=await load('packages/contracts/dist/index.js');
+let mode='fail',held=false,release;
+const scripts={async run(request,signal){
+ const selected=mode;
+ if(selected==='hold'){held=true;await new Promise(r=>{release=r;signal?.addEventListener('abort',r,{once:true});});held=false;}
+ const stdout=JSON.stringify([{op:'add',path:'/vars/completed',value:true}]);
+ return {exitCode:selected==='fail'?1:0,stdout,stderr:'',stdoutBytes:Buffer.byteLength(stdout),stderrBytes:0,stdoutOverflow:false,stderrOverflow:false,timedOut:false};
+}};
+const base=await createContainer(loadConfig({GG_DATA_DIR:process.env.AUDIT_DATA,GG_PORT:process.env.AUDIT_PORT,GG_MASTER_KEY:Buffer.alloc(32,7).toString('base64'),GG_WEB_DIST:join(root,'apps/web/dist'),GG_SWAGGER_UI:'false',GG_LOG_LEVEL:'silent'}),{scripts,harnesses:{codex:new FakeHarness()},startTimers:false});
+await base.start();base.manager.stop();await base.manager.waitForIdle();
+class Snapshots extends SqliteRunRepository{
+ delay=true;pending=[];
+ async saveThread(id,thread,seq,replayState){if(!this.delay)return super.saveThread(id,thread,seq,replayState);this.pending.push({id,thread:structuredClone(thread),seq,replayState});}
+ async flush(){for(const a of this.pending.splice(0))await super.saveThread(a.id,a.thread,a.seq,a.replayState);}
+}
+const snapshots=new Snapshots(base.handle.db),reads=[];
+const events={append:(...a)=>base.ports.events.append(...a),subscribe:(...a)=>base.ports.events.subscribe(...a),async read(id,after=0,limit){const rows=await base.ports.events.read(id,after,limit);reads.push({id,after,rows:rows.length});return rows;}};
+const manager=new RunManager({...base.ports,runs:snapshots,events},base.settings);
+const app=await buildApp({...base,manager},{logger:false});
+await app.listen({host:'127.0.0.1',port:Number(process.env.AUDIT_PORT)});
+const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const trigger={id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},done={id:'done',kind:'exit',label:'Done',config:{returns:'vars'}};
+const edge=(a,b)=>({id:a+'-'+b,from:{node:a,port:'out'},to:{node:b}});
+const definitions={
+ main:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Audit thread failure resume',nodes:[trigger,{id:'prepare',kind:'mutate',label:'Prepare',config:{operations:[{op:'set',path:'/vars/prepared',value:{kind:'literal',value:true}}]}},{id:'work',kind:'script',label:'Work',config:{command:'audit-script-port',stdout:'patch'}},done],edges:[edge('start','prepare'),edge('prepare','work'),edge('work','done')]},
+ minimal:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Audit thread boundary',nodes:[trigger,done],edges:[edge('start','done')]},
+ wait:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Audit wait',nodes:[trigger,{id:'wait',kind:'wait',label:'Wait',config:{mode:'input',prompt:'Audit input'}},done],edges:[edge('start','wait'),edge('wait','done')]},
+ child:{schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Audit child',nodes:[trigger,{id:'value',kind:'mutate',label:'Value',config:{operations:[{op:'set',path:'/vars/childOnly',value:{kind:'literal',value:73}}]}},done],edges:[edge('start','value'),edge('value','done')]}
+};
+async function state(id){
+ const run=await base.repos.runs.get(id),seed=await base.repos.runs.getInitialThread(id),history=await base.repos.events.read(id),checkpoint=await base.repos.runs.getThreadCheckpoint(id);
+ const raw=(await base.handle.client.execute({sql:'SELECT * FROM runs WHERE id=?',args:[id]})).rows;
+ const rawEvents=(await base.handle.client.execute({sql:'SELECT * FROM run_events WHERE run_id=? ORDER BY seq',args:[id]})).rows;
+ return {run,seed,events:history,checkpoint,oracle:replayThread(seed,history),rowHash:hash(raw),eventHash:hash(rawEvents)};
+}
+async function command(op,a){
+ switch(op){
+ case 'definitions':return definitions;
+ case 'parent':return {schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Audit parent',nodes:[trigger,{id:'child',kind:'subloop',label:'Child',config:{loopRef:{loopId:a},input:{mode:'fresh'},output:{resultTo:{lastOutput:true,var:'childResult'}}}},done],edges:[edge('start','child'),edge('child','done')]};
+ case 'start':await manager.start();return true;
+ case 'stop':manager.stop();await manager.waitForIdle();return true;
+ case 'idle':await manager.waitForIdle();return true;
+ case 'mode':mode=a;return true;
+ case 'held':return held;
+ case 'release':release?.();return true;
+ case 'delay':snapshots.delay=a;return true;
+ case 'flush':await snapshots.flush();return true;
+ case 'metrics':return reads.splice(0);
+ case 'state':return state(a);
+ case 'append':return base.repos.events.append(a.id,a.events);
+ case 'checkpoint':{const s=await state(a.id);await base.repos.runs.saveThread(a.id,replayThread(s.seed,s.events,a.seq),a.seq,replayStateAt(s.events,a.seq));return true;}
+ case 'unsequenced':return base.handle.client.execute({sql:'UPDATE runs SET thread_snapshot_seq=NULL,thread_snapshot_replay_state=NULL WHERE id=?',args:[a]});
+ case 'damage-state':return base.handle.client.execute({sql:'UPDATE runs SET thread_snapshot_replay_state=? WHERE id=?',args:[a.text,a.id]});
+ case 'raw':return {runs:(await base.handle.client.execute('SELECT * FROM runs ORDER BY id')).rows,events:(await base.handle.client.execute('SELECT * FROM run_events ORDER BY run_id,seq')).rows};
+ case 'delete-event':return base.handle.client.execute({sql:'DELETE FROM run_events WHERE run_id=? AND seq=?',args:[a.id,a.seq]});
+ case 'arm-recovery':await base.repos.runs.update(a,{status:'running',finishedAt:undefined});await base.repos.runs.clearFinalized(a);return true;
+ case 'close':release?.();manager.stop();await app.close();await base.stop();return true;
+ default:throw Error('Unknown control '+op);
+ }
+}
+process.on('message',async({id,op,args})=>{try{const value=await command(op,args);process.send({id,value},()=>{if(op==='close')process.exit(0);});}catch(e){process.send({id,error:e.stack});}});
+process.send({ready:true,pid:process.pid,port:Number(process.env.AUDIT_PORT),runtime:process.version});
+

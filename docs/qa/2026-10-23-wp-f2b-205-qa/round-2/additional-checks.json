@@ -1,0 +1,2829 @@
+[
+  {
+    "name": "Corrected fixture: F1 Claude same-tab Settings save",
+    "status": "pass",
+    "seconds": 2.911,
+    "details": {
+      "id": "01M5PTN5KP5PRTG9Z88YWFE55G",
+      "controls": [
+        {
+          "id": "_r_q_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "(loop default) (claude-fable-5-1)",
+              "disabled": false
+            },
+            {
+              "value": "claude-fable-5-1",
+              "text": "Claude Fable 5.1 (claude-fable-5-1)",
+              "disabled": false
+            },
+            {
+              "value": "claude-haiku-5-5",
+              "text": "Claude Haiku 5.5 (claude-haiku-5-5)",
+              "disabled": false
+            },
+            {
+              "value": "claude-opus-5-5",
+              "text": "Claude Opus 5.5 (claude-opus-5-5)",
+              "disabled": false
+            },
+            {
+              "value": "claude-sonnet-5-5",
+              "text": "Claude Sonnet 5.5 (claude-sonnet-5-5)",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_q_-help _r_q_-default",
+          "description": "Model; inherits within this harness from loop, owner, then process defaults. Default model: claude-fable-5-1."
+        },
+        {
+          "id": "_r_s_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "Default (high)",
+              "disabled": false
+            },
+            {
+              "value": "low",
+              "text": "low",
+              "disabled": false
+            },
+            {
+              "value": "medium",
+              "text": "medium",
+              "disabled": false
+            },
+            {
+              "value": "high",
+              "text": "high",
+              "disabled": false
+            },
+            {
+              "value": "xhigh",
+              "text": "xhigh",
+              "disabled": false
+            },
+            {
+              "value": "max",
+              "text": "max",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_s_-help _r_s_-default",
+          "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort. Default effort: high."
+        },
+        {
+          "id": "_r_u_",
+          "name": null,
+          "value": "0",
+          "options": [
+            {
+              "value": "0",
+              "text": "fresh",
+              "disabled": false
+            },
+            {
+              "value": "1",
+              "text": "resume-previous",
+              "disabled": false
+            },
+            {
+              "value": "2",
+              "text": "resume-named",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_u_-help",
+          "description": "Start fresh, resume the previous session, or resume a named session."
+        },
+        {
+          "id": "_r_13_",
+          "name": null,
+          "value": "0",
+          "options": [
+            {
+              "value": "0",
+              "text": "Read-only — built-in tools only; no OS or read-path isolation",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_13_-policy-help",
+          "description": "Read-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined."
+        },
+        {
+          "id": "_r_15_",
+          "name": null,
+          "value": "never",
+          "options": [
+            {
+              "value": "never",
+              "text": "never",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_15_-help",
+          "description": "Claude supports never approval only; choose a supported policy above to correct this value."
+        }
+      ],
+      "result": {
+        "admission": 202,
+        "run": {
+          "id": "01M5PTN85948WFE01QSY53RASA",
+          "ownerId": "local",
+          "loopId": "01M5PTN5KP5PRTG9Z88YWFE55G",
+          "versionId": "01M5PTN5KP5PRTG9Z88YWFE55H",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 1 inference claude",
+            "label": "QA205 1 inference claude v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "high"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PTN85948WFE01QSY53RASB",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-24T11:27:41.225Z",
+          "startedAt": "2026-10-24T11:27:41.261Z",
+          "finishedAt": "2026-10-24T11:27:41.408Z",
+          "lastEventSeq": 15
+        },
+        "requests": [
+          {
+            "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f2b-205-2-DXj1x4\\workspaces\\01M5PTN85948WFE01QSY53RASA",
+            "model": "claude-fable-5-1",
+            "effort": "high",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never"
+            },
+            "turn": {
+              "prompt": "QA choose"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Process defaults refresh dialog-open after real server restart",
+    "status": "pass",
+    "seconds": 25.156,
+    "details": {
+      "id": "01M5PTN8CTEBD2E745NKWE5SAN",
+      "oldPid": 20280,
+      "newPid": 38856,
+      "before": "Default (low)",
+      "next": {
+        "model": "gpt-6.1-sol",
+        "effort": "high"
+      },
+      "trigger": "node opened",
+      "controls": [
+        {
+          "id": "_r_25_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "(loop default) (gpt-6.1-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.5",
+              "text": "GPT-5.5 (gpt-5.5)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-luna",
+              "text": "GPT-5.6 Luna (gpt-5.6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-sol",
+              "text": "GPT-5.6 Sol (gpt-5.6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-terra",
+              "text": "GPT-5.6 Terra (gpt-5.6-terra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-astra",
+              "text": "GPT-6 Astra (gpt-6-astra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-luna",
+              "text": "GPT-6 Luna (gpt-6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-sol",
+              "text": "GPT-6 Sol (gpt-6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6.1-sol",
+              "text": "GPT-6.1 Sol (gpt-6.1-sol)",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_25_-help _r_25_-default",
+          "description": "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6.1-sol."
+        },
+        {
+          "id": "_r_27_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "Default (high)",
+              "disabled": false
+            },
+            {
+              "value": "minimal",
+              "text": "minimal",
+              "disabled": false
+            },
+            {
+              "value": "low",
+              "text": "low",
+              "disabled": false
+            },
+            {
+              "value": "medium",
+              "text": "medium",
+              "disabled": false
+            },
+            {
+              "value": "high",
+              "text": "high",
+              "disabled": false
+            },
+            {
+              "value": "xhigh",
+              "text": "xhigh",
+              "disabled": false
+            },
+            {
+              "value": "max",
+              "text": "max",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_27_-help _r_27_-default",
+          "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: high."
+        },
+        {
+          "id": "_r_29_",
+          "name": null,
+          "value": "0",
+          "options": [
+            {
+              "value": "0",
+              "text": "fresh",
+              "disabled": false
+            },
+            {
+              "value": "1",
+              "text": "resume-previous",
+              "disabled": false
+            },
+            {
+              "value": "2",
+              "text": "resume-named",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_29_-help",
+          "description": "Start fresh, resume the previous session, or resume a named session."
+        }
+      ],
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f2b-205-2-DXj1x4\\workspaces\\01M5PTP0QNVQ8F9JYDW7C1S3EV",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "options": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "QA choose"
+        }
+      },
+      "runId": "01M5PTP0QNVQ8F9JYDW7C1S3EV"
+    }
+  },
+  {
+    "name": "Process defaults refresh focus-return after real server restart",
+    "status": "pass",
+    "seconds": 21.461,
+    "details": {
+      "id": "01M5PTP0Z6VNW37MRWJ1EFZDDJ",
+      "oldPid": 38856,
+      "newPid": 38972,
+      "before": "Default (high)",
+      "next": {
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "trigger": "visible",
+      "controls": [
+        {
+          "id": "_r_q_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "(loop default) (gpt-6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.5",
+              "text": "GPT-5.5 (gpt-5.5)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-luna",
+              "text": "GPT-5.6 Luna (gpt-5.6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-sol",
+              "text": "GPT-5.6 Sol (gpt-5.6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-terra",
+              "text": "GPT-5.6 Terra (gpt-5.6-terra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-astra",
+              "text": "GPT-6 Astra (gpt-6-astra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-luna",
+              "text": "GPT-6 Luna (gpt-6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-sol",
+              "text": "GPT-6 Sol (gpt-6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6.1-sol",
+              "text": "GPT-6.1 Sol (gpt-6.1-sol)",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_q_-help _r_q_-default",
+          "description": "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+        },
+        {
+          "id": "_r_s_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "Default (low)",
+              "disabled": false
+            },
+            {
+              "value": "minimal",
+              "text": "minimal",
+              "disabled": false
+            },
+            {
+              "value": "low",
+              "text": "low",
+              "disabled": false
+            },
+            {
+              "value": "medium",
+              "text": "medium",
+              "disabled": false
+            },
+            {
+              "value": "high",
+              "text": "high",
+              "disabled": false
+            },
+            {
+              "value": "xhigh",
+              "text": "xhigh",
+              "disabled": false
+            },
+            {
+              "value": "max",
+              "text": "max",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_s_-help _r_s_-default",
+          "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: low."
+        },
+        {
+          "id": "_r_u_",
+          "name": null,
+          "value": "0",
+          "options": [
+            {
+              "value": "0",
+              "text": "fresh",
+              "disabled": false
+            },
+            {
+              "value": "1",
+              "text": "resume-previous",
+              "disabled": false
+            },
+            {
+              "value": "2",
+              "text": "resume-named",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_u_-help",
+          "description": "Start fresh, resume the previous session, or resume a named session."
+        }
+      ],
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f2b-205-2-DXj1x4\\workspaces\\01M5PTPNPKF618C6KY5TA9VV0B",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "options": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "QA choose"
+        }
+      },
+      "runId": "01M5PTPNPKF618C6KY5TA9VV0B"
+    }
+  },
+  {
+    "name": "Process defaults refresh visible-return after real server restart",
+    "status": "pass",
+    "seconds": 24.337,
+    "details": {
+      "id": "01M5PTPNY3YFA7NTWP3QC414F1",
+      "oldPid": 38972,
+      "newPid": 14152,
+      "before": "Default (low)",
+      "next": {
+        "model": "gpt-6.1-sol",
+        "effort": "high"
+      },
+      "trigger": "visible",
+      "controls": [
+        {
+          "id": "_r_q_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "(loop default) (gpt-6.1-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.5",
+              "text": "GPT-5.5 (gpt-5.5)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-luna",
+              "text": "GPT-5.6 Luna (gpt-5.6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-sol",
+              "text": "GPT-5.6 Sol (gpt-5.6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-terra",
+              "text": "GPT-5.6 Terra (gpt-5.6-terra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-astra",
+              "text": "GPT-6 Astra (gpt-6-astra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-luna",
+              "text": "GPT-6 Luna (gpt-6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-sol",
+              "text": "GPT-6 Sol (gpt-6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6.1-sol",
+              "text": "GPT-6.1 Sol (gpt-6.1-sol)",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_q_-help _r_q_-default",
+          "description": "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6.1-sol."
+        },
+        {
+          "id": "_r_s_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "Default (high)",
+              "disabled": false
+            },
+            {
+              "value": "minimal",
+              "text": "minimal",
+              "disabled": false
+            },
+            {
+              "value": "low",
+              "text": "low",
+              "disabled": false
+            },
+            {
+              "value": "medium",
+              "text": "medium",
+              "disabled": false
+            },
+            {
+              "value": "high",
+              "text": "high",
+              "disabled": false
+            },
+            {
+              "value": "xhigh",
+              "text": "xhigh",
+              "disabled": false
+            },
+            {
+              "value": "max",
+              "text": "max",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_s_-help _r_s_-default",
+          "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: high."
+        },
+        {
+          "id": "_r_u_",
+          "name": null,
+          "value": "0",
+          "options": [
+            {
+              "value": "0",
+              "text": "fresh",
+              "disabled": false
+            },
+            {
+              "value": "1",
+              "text": "resume-previous",
+              "disabled": false
+            },
+            {
+              "value": "2",
+              "text": "resume-named",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_u_-help",
+          "description": "Start fresh, resume the previous session, or resume a named session."
+        }
+      ],
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f2b-205-2-DXj1x4\\workspaces\\01M5PTQDFK3MCQVB0HZRFZMEQD",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "options": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "QA choose"
+        }
+      },
+      "runId": "01M5PTQDFK3MCQVB0HZRFZMEQD"
+    }
+  },
+  {
+    "name": "Process defaults refresh same-tab-save after real server restart",
+    "status": "pass",
+    "seconds": 28.719,
+    "details": {
+      "id": "01M5PTQDPR0V8FMEYDCZN6FRD7",
+      "oldPid": 14152,
+      "newPid": 59292,
+      "before": "Default (high)",
+      "next": {
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "trigger": "Settings model save with inherited process effort",
+      "controls": [
+        {
+          "id": "_r_q_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "(loop default) (gpt-6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.5",
+              "text": "GPT-5.5 (gpt-5.5)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-luna",
+              "text": "GPT-5.6 Luna (gpt-5.6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-sol",
+              "text": "GPT-5.6 Sol (gpt-5.6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-5.6-terra",
+              "text": "GPT-5.6 Terra (gpt-5.6-terra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-astra",
+              "text": "GPT-6 Astra (gpt-6-astra)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-luna",
+              "text": "GPT-6 Luna (gpt-6-luna)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6-sol",
+              "text": "GPT-6 Sol (gpt-6-sol)",
+              "disabled": false
+            },
+            {
+              "value": "gpt-6.1-sol",
+              "text": "GPT-6.1 Sol (gpt-6.1-sol)",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_q_-help _r_q_-default",
+          "description": "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+        },
+        {
+          "id": "_r_s_",
+          "name": null,
+          "value": "",
+          "options": [
+            {
+              "value": "",
+              "text": "Default (low)",
+              "disabled": false
+            },
+            {
+              "value": "minimal",
+              "text": "minimal",
+              "disabled": false
+            },
+            {
+              "value": "low",
+              "text": "low",
+              "disabled": false
+            },
+            {
+              "value": "medium",
+              "text": "medium",
+              "disabled": false
+            },
+            {
+              "value": "high",
+              "text": "high",
+              "disabled": false
+            },
+            {
+              "value": "xhigh",
+              "text": "xhigh",
+              "disabled": false
+            },
+            {
+              "value": "max",
+              "text": "max",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_s_-help _r_s_-default",
+          "description": "Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. Default effort: low."
+        },
+        {
+          "id": "_r_u_",
+          "name": null,
+          "value": "0",
+          "options": [
+            {
+              "value": "0",
+              "text": "fresh",
+              "disabled": false
+            },
+            {
+              "value": "1",
+              "text": "resume-previous",
+              "disabled": false
+            },
+            {
+              "value": "2",
+              "text": "resume-named",
+              "disabled": false
+            }
+          ],
+          "describedBy": "_r_u_-help",
+          "description": "Start fresh, resume the previous session, or resume a named session."
+        }
+      ],
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f2b-205-2-DXj1x4\\workspaces\\01M5PTR9BTH051ERFT017A3JAH",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "options": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "QA choose"
+        }
+      },
+      "runId": "01M5PTR9BTH051ERFT017A3JAH"
+    }
+  },
+  {
+    "name": "Actual MCP start_run capability refusal and supported low",
+    "status": "pass",
+    "seconds": 20.882,
+    "details": {
+      "id": "01M5PTRXRN75Y4WW6N5WX298YG",
+      "rejected": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"EFFORT_UNSUPPORTED\",\n    \"severity\": \"error\",\n    \"loopId\": \"01M5PTRXRN75Y4WW6N5WX298YG\",\n    \"versionId\": \"01M5PTRXRPF16T3Z93KG9P9ARW\",\n    \"nodeId\": \"work\",\n    \"path\": \"config.effort\",\n    \"message\": \"The selected reasoning effort is not supported by this model\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "runCountRejected": 0,
+      "requestCountRejected": 0,
+      "supported": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"runId\": \"01M5PTRXVF92SWGV80483RF9Y0\",\n  \"loopId\": \"01M5PTRXRN75Y4WW6N5WX298YG\",\n  \"versionId\": \"01M5PTRXRPF16T3Z93KG9P9ARW\",\n  \"definition\": \"QA205 6 inference claude v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"QA205 6 inference claude\",\n    \"label\": \"QA205 6 inference claude v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {\n          \"claude\": {\n            \"model\": \"claude-opus-5-5\",\n            \"effort\": \"low\"\n          }\n        }\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          },\n          \"claude\": {\n            \"model\": \"claude-opus-5-5\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "runId": "01M5PTRXVF92SWGV80483RF9Y0",
+          "loopId": "01M5PTRXRN75Y4WW6N5WX298YG",
+          "versionId": "01M5PTRXRPF16T3Z93KG9P9ARW",
+          "definition": "QA205 6 inference claude v1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 6 inference claude",
+            "label": "QA205 6 inference claude v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "low"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "status": "queued",
+          "next": "Call wait_for_run with this runId to wait for the result."
+        }
+      },
+      "run": {
+        "id": "01M5PTRXVF92SWGV80483RF9Y0",
+        "ownerId": "local",
+        "loopId": "01M5PTRXRN75Y4WW6N5WX298YG",
+        "versionId": "01M5PTRXRPF16T3Z93KG9P9ARW",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 6 inference claude",
+          "label": "QA205 6 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRXVGZW8E5Y4E5PYHGPMX",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T11:29:41.743Z",
+        "startedAt": "2026-10-24T11:29:41.757Z",
+        "finishedAt": "2026-10-24T11:29:41.858Z",
+        "lastEventSeq": 15
+      },
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f2b-205-2-DXj1x4\\workspaces\\01M5PTRXVF92SWGV80483RF9Y0",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "options": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "QA choose"
+        }
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex inference direct",
+    "status": "pass",
+    "seconds": 0.255,
+    "details": {
+      "id": "01M5PTRY56W3929PGHS3PBVE4G",
+      "rootId": "01M5PTRY56W3929PGHS3PBVE4G",
+      "startResponse": {
+        "id": "01M5PTRY6PECJ55CWZAWKHAYVQ",
+        "ownerId": "local",
+        "loopId": "01M5PTRY56W3929PGHS3PBVE4G",
+        "versionId": "01M5PTRY56W3929PGHS3PBVE4H",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 7 inference codex",
+          "label": "QA205 7 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRY6PECJ55CWZAWKHAYVR",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:29:42.102Z",
+        "lastEventSeq": 1
+      },
+      "result": {
+        "id": "01M5PTRY6PECJ55CWZAWKHAYVQ",
+        "ownerId": "local",
+        "loopId": "01M5PTRY56W3929PGHS3PBVE4G",
+        "versionId": "01M5PTRY56W3929PGHS3PBVE4H",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 7 inference codex",
+          "label": "QA205 7 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRY6PECJ55CWZAWKHAYVR",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:42.102Z",
+        "startedAt": "2026-10-24T11:29:42.115Z",
+        "finishedAt": "2026-10-24T11:29:42.176Z",
+        "lastEventSeq": 6
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex inference event",
+    "status": "pass",
+    "seconds": 0.294,
+    "details": {
+      "id": "01M5PTRYDQN6ZD6NH9KFPBNPXH",
+      "rootId": "01M5PTRYDQN6ZD6NH9KFPBNPXH",
+      "startResponse": {
+        "status": 202,
+        "body": {
+          "id": "01M5PTRYEWXW8R9PAKXV1VYN7B",
+          "ownerId": "local",
+          "type": "qa205-8",
+          "payload": null,
+          "source": "api",
+          "receivedAt": "2026-10-24T11:29:42.364Z",
+          "runIds": [
+            "01M5PTRYF4G26G8P59VCV6AJ9G"
+          ],
+          "duplicate": false
+        }
+      },
+      "result": {
+        "id": "01M5PTRYF4G26G8P59VCV6AJ9G",
+        "ownerId": "local",
+        "loopId": "01M5PTRYDQN6ZD6NH9KFPBNPXH",
+        "versionId": "01M5PTRYDQN6ZD6NH9KFPBNPXJ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 8 inference codex",
+          "label": "QA205 8 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRYF4G26G8P59VCV6AJ9H",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:42.372Z",
+        "startedAt": "2026-10-24T11:29:42.387Z",
+        "finishedAt": "2026-10-24T11:29:42.430Z",
+        "lastEventSeq": 6
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex inference child",
+    "status": "pass",
+    "seconds": 0.369,
+    "details": {
+      "id": "01M5PTRYQ0JMZ9RVKG219VDAJH",
+      "rootId": "01M5PTRYR5MGFVBAJ54NMXJMZC",
+      "startResponse": {
+        "id": "01M5PTRYSM6TXMWB050AQGQBCQ",
+        "ownerId": "local",
+        "loopId": "01M5PTRYR5MGFVBAJ54NMXJMZC",
+        "versionId": "01M5PTRYR5MGFVBAJ54NMXJMZD",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 10 inference codex",
+          "label": "QA205 10 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRYSM6TXMWB050AQGQBCR",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:29:42.708Z",
+        "lastEventSeq": 1
+      },
+      "result": {
+        "id": "01M5PTRYSM6TXMWB050AQGQBCQ",
+        "ownerId": "local",
+        "loopId": "01M5PTRYR5MGFVBAJ54NMXJMZC",
+        "versionId": "01M5PTRYR5MGFVBAJ54NMXJMZD",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 10 inference codex",
+          "label": "QA205 10 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRYSM6TXMWB050AQGQBCR",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5PTRYSM6TXMWB050AQGQBCQ:5",
+          "nodeId": "work",
+          "kind": "child",
+          "childRunId": "01M5PTRYW6A7FMSDEW50SDZZBF",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "subloop child 01M5PTRYW6A7FMSDEW50SDZZBF failed: The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5PTRYW6A7FMSDEW50SDZZBF",
+            "childNodeId": "work",
+            "childDetails": [
+              {
+                "level": "owner",
+                "harness": "codex",
+                "resolution": {
+                  "status": "invalid",
+                  "code": "EFFORT_UNSUPPORTED",
+                  "path": "effort",
+                  "message": "The default reasoning effort is not supported by its model"
+                }
+              }
+            ]
+          }
+        },
+        "createdAt": "2026-10-24T11:29:42.708Z",
+        "startedAt": "2026-10-24T11:29:42.731Z",
+        "finishedAt": "2026-10-24T11:29:42.903Z",
+        "lastEventSeq": 11
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex inference resume",
+    "status": "pass",
+    "seconds": 0.479,
+    "details": {
+      "id": "01M5PTRZ33G75T1GPDFXCJQJQ3",
+      "rootId": "01M5PTRZ33G75T1GPDFXCJQJQ3",
+      "startResponse": {
+        "status": 200,
+        "body": {
+          "id": "01M5PTRZ3XRR8D78QMG1ENWYKA",
+          "ownerId": "local",
+          "loopId": "01M5PTRZ33G75T1GPDFXCJQJQ3",
+          "versionId": "01M5PTRZ33G75T1GPDFXCJQJQ4",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 11 inference codex",
+            "label": "QA205 11 inference codex v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6.1-sol",
+                    "effort": "high"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PTRZ3XRR8D78QMG1ENWYKB",
+          "status": "waiting",
+          "currentNodeId": "wait",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5PTRZ3XRR8D78QMG1ENWYKA:5",
+            "nodeId": "wait",
+            "kind": "signal",
+            "signalName": "go",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T11:29:43.037Z",
+          "startedAt": "2026-10-24T11:29:43.049Z",
+          "lastEventSeq": 8
+        }
+      },
+      "result": {
+        "id": "01M5PTRZ3XRR8D78QMG1ENWYKA",
+        "ownerId": "local",
+        "loopId": "01M5PTRZ33G75T1GPDFXCJQJQ3",
+        "versionId": "01M5PTRZ33G75T1GPDFXCJQJQ4",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 11 inference codex",
+          "label": "QA205 11 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRZ3XRR8D78QMG1ENWYKB",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:43.037Z",
+        "startedAt": "2026-10-24T11:29:43.049Z",
+        "finishedAt": "2026-10-24T11:29:43.342Z",
+        "lastEventSeq": 14
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex inference replay",
+    "status": "pass",
+    "seconds": 0.458,
+    "details": {
+      "id": "01M5PTRZJDT8YDP3RK3EXST98X",
+      "rootId": "01M5PTRZJDT8YDP3RK3EXST98X",
+      "startResponse": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5PTRZT8EYXSC2SZWCBP6ZA3",
+            "ownerId": "local",
+            "loopId": "01M5PTRZJDT8YDP3RK3EXST98X",
+            "versionId": "01M5PTRZJDT8YDP3RK3EXST98Y",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 12 inference codex",
+              "label": "QA205 12 inference codex v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6.1-sol",
+                      "effort": "high"
+                    }
+                  }
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "claude": {
+                      "model": "claude-opus-5-5",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5PTRZT9H8D3WA1CW6FRQQG9",
+            "status": "queued",
+            "currentNodeId": "work",
+            "iteration": 1,
+            "createdAt": "2026-10-24T11:29:43.753Z",
+            "lastEventSeq": 1
+          }
+        }
+      },
+      "result": {
+        "id": "01M5PTRZT8EYXSC2SZWCBP6ZA3",
+        "ownerId": "local",
+        "loopId": "01M5PTRZJDT8YDP3RK3EXST98X",
+        "versionId": "01M5PTRZJDT8YDP3RK3EXST98Y",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 12 inference codex",
+          "label": "QA205 12 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTRZT9H8D3WA1CW6FRQQG9",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:43.753Z",
+        "startedAt": "2026-10-24T11:29:43.764Z",
+        "finishedAt": "2026-10-24T11:29:43.783Z",
+        "lastEventSeq": 4
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex llm direct",
+    "status": "pass",
+    "seconds": 0.249,
+    "details": {
+      "id": "01M5PTS00XP2WZBDP5DQCMGCWM",
+      "rootId": "01M5PTS00XP2WZBDP5DQCMGCWM",
+      "startResponse": {
+        "id": "01M5PTS01XE8AB052E51S2BJPC",
+        "ownerId": "local",
+        "loopId": "01M5PTS00XP2WZBDP5DQCMGCWM",
+        "versionId": "01M5PTS00XP2WZBDP5DQCMGCWN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 13 llm codex",
+          "label": "QA205 13 llm codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS01XE8AB052E51S2BJPD",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:29:43.997Z",
+        "lastEventSeq": 1
+      },
+      "result": {
+        "id": "01M5PTS01XE8AB052E51S2BJPC",
+        "ownerId": "local",
+        "loopId": "01M5PTS00XP2WZBDP5DQCMGCWM",
+        "versionId": "01M5PTS00XP2WZBDP5DQCMGCWN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 13 llm codex",
+          "label": "QA205 13 llm codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS01XE8AB052E51S2BJPD",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:43.997Z",
+        "startedAt": "2026-10-24T11:29:44.006Z",
+        "finishedAt": "2026-10-24T11:29:44.043Z",
+        "lastEventSeq": 6
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex llm event",
+    "status": "pass",
+    "seconds": 0.259,
+    "details": {
+      "id": "01M5PTS08J757AVH5XM9R2DYTA",
+      "rootId": "01M5PTS08J757AVH5XM9R2DYTA",
+      "startResponse": {
+        "status": 202,
+        "body": {
+          "id": "01M5PTS09PN6W193GRQJEREW00",
+          "ownerId": "local",
+          "type": "qa205-14",
+          "payload": null,
+          "source": "api",
+          "receivedAt": "2026-10-24T11:29:44.246Z",
+          "runIds": [
+            "01M5PTS0A05THQ9AX1TWTK2NX2"
+          ],
+          "duplicate": false
+        }
+      },
+      "result": {
+        "id": "01M5PTS0A05THQ9AX1TWTK2NX2",
+        "ownerId": "local",
+        "loopId": "01M5PTS08J757AVH5XM9R2DYTA",
+        "versionId": "01M5PTS08J757AVH5XM9R2DYTB",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 14 llm codex",
+          "label": "QA205 14 llm codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS0A05THQ9AX1TWTK2NX3",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:44.256Z",
+        "startedAt": "2026-10-24T11:29:44.270Z",
+        "finishedAt": "2026-10-24T11:29:44.313Z",
+        "lastEventSeq": 6
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex llm child",
+    "status": "pass",
+    "seconds": 0.278,
+    "details": {
+      "id": "01M5PTS0GSF0W08N1SJACY1RX2",
+      "rootId": "01M5PTS0HK5NKMGSCPRR97A7AV",
+      "startResponse": {
+        "id": "01M5PTS0JK557HZF0NFEMHDBRK",
+        "ownerId": "local",
+        "loopId": "01M5PTS0HK5NKMGSCPRR97A7AV",
+        "versionId": "01M5PTS0HK5NKMGSCPRR97A7AW",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 16 inference codex",
+          "label": "QA205 16 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS0JK557HZF0NFEMHDBRM",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:29:44.531Z",
+        "lastEventSeq": 1
+      },
+      "result": {
+        "id": "01M5PTS0JK557HZF0NFEMHDBRK",
+        "ownerId": "local",
+        "loopId": "01M5PTS0HK5NKMGSCPRR97A7AV",
+        "versionId": "01M5PTS0HK5NKMGSCPRR97A7AW",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 16 inference codex",
+          "label": "QA205 16 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS0JK557HZF0NFEMHDBRM",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5PTS0JK557HZF0NFEMHDBRK:5",
+          "nodeId": "work",
+          "kind": "child",
+          "childRunId": "01M5PTS0MKDRCQZC4F1NJRKP79",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "subloop child 01M5PTS0MKDRCQZC4F1NJRKP79 failed: The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5PTS0MKDRCQZC4F1NJRKP79",
+            "childNodeId": "work",
+            "childDetails": [
+              {
+                "level": "owner",
+                "harness": "codex",
+                "resolution": {
+                  "status": "invalid",
+                  "code": "EFFORT_UNSUPPORTED",
+                  "path": "effort",
+                  "message": "The default reasoning effort is not supported by its model"
+                }
+              }
+            ]
+          }
+        },
+        "createdAt": "2026-10-24T11:29:44.531Z",
+        "startedAt": "2026-10-24T11:29:44.541Z",
+        "finishedAt": "2026-10-24T11:29:44.705Z",
+        "lastEventSeq": 11
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex llm resume",
+    "status": "pass",
+    "seconds": 0.465,
+    "details": {
+      "id": "01M5PTS0SZ0QBEC7440GGNWWMT",
+      "rootId": "01M5PTS0SZ0QBEC7440GGNWWMT",
+      "startResponse": {
+        "status": 200,
+        "body": {
+          "id": "01M5PTS0TRRTXFE6XBCNKZHG3D",
+          "ownerId": "local",
+          "loopId": "01M5PTS0SZ0QBEC7440GGNWWMT",
+          "versionId": "01M5PTS0SZ0QBEC7440GGNWWMV",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 17 llm codex",
+            "label": "QA205 17 llm codex v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6.1-sol",
+                    "effort": "high"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PTS0TRRTXFE6XBCNKZHG3E",
+          "status": "waiting",
+          "currentNodeId": "wait",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5PTS0TRRTXFE6XBCNKZHG3D:5",
+            "nodeId": "wait",
+            "kind": "signal",
+            "signalName": "go",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T11:29:44.792Z",
+          "startedAt": "2026-10-24T11:29:44.802Z",
+          "lastEventSeq": 8
+        }
+      },
+      "result": {
+        "id": "01M5PTS0TRRTXFE6XBCNKZHG3D",
+        "ownerId": "local",
+        "loopId": "01M5PTS0SZ0QBEC7440GGNWWMT",
+        "versionId": "01M5PTS0SZ0QBEC7440GGNWWMV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 17 llm codex",
+          "label": "QA205 17 llm codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS0TRRTXFE6XBCNKZHG3E",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:44.792Z",
+        "startedAt": "2026-10-24T11:29:44.802Z",
+        "finishedAt": "2026-10-24T11:29:45.078Z",
+        "lastEventSeq": 14
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard codex llm replay",
+    "status": "pass",
+    "seconds": 0.432,
+    "details": {
+      "id": "01M5PTS18NSWP34SQR32FW8F1F",
+      "rootId": "01M5PTS18NSWP34SQR32FW8F1F",
+      "startResponse": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5PTS1FWHBPMWFVV2PMJ98V1",
+            "ownerId": "local",
+            "loopId": "01M5PTS18NSWP34SQR32FW8F1F",
+            "versionId": "01M5PTS18NSWP34SQR32FW8F1G",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 18 llm codex",
+              "label": "QA205 18 llm codex v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6.1-sol",
+                      "effort": "high"
+                    }
+                  }
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "claude": {
+                      "model": "claude-opus-5-5",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5PTS1FWHBPMWFVV2PMJ98V2",
+            "status": "queued",
+            "currentNodeId": "work",
+            "iteration": 1,
+            "createdAt": "2026-10-24T11:29:45.468Z",
+            "lastEventSeq": 1
+          }
+        }
+      },
+      "result": {
+        "id": "01M5PTS1FWHBPMWFVV2PMJ98V1",
+        "ownerId": "local",
+        "loopId": "01M5PTS18NSWP34SQR32FW8F1F",
+        "versionId": "01M5PTS18NSWP34SQR32FW8F1G",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 18 llm codex",
+          "label": "QA205 18 llm codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6.1-sol",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS1FWHBPMWFVV2PMJ98V2",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "codex",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:45.468Z",
+        "startedAt": "2026-10-24T11:29:45.477Z",
+        "finishedAt": "2026-10-24T11:29:45.501Z",
+        "lastEventSeq": 4
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard claude inference direct",
+    "status": "pass",
+    "seconds": 0.223,
+    "details": {
+      "id": "01M5PTS1PHCR29SN60Q5W2Y1N1",
+      "rootId": "01M5PTS1PHCR29SN60Q5W2Y1N1",
+      "startResponse": {
+        "id": "01M5PTS1QG69BACAPGE685KNNZ",
+        "ownerId": "local",
+        "loopId": "01M5PTS1PHCR29SN60Q5W2Y1N1",
+        "versionId": "01M5PTS1PJF67HMAQ4CS9A9A6G",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 19 inference claude",
+          "label": "QA205 19 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS1QG69BACAPGE685KNP0",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:29:45.712Z",
+        "lastEventSeq": 1
+      },
+      "result": {
+        "id": "01M5PTS1QG69BACAPGE685KNNZ",
+        "ownerId": "local",
+        "loopId": "01M5PTS1PHCR29SN60Q5W2Y1N1",
+        "versionId": "01M5PTS1PJF67HMAQ4CS9A9A6G",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 19 inference claude",
+          "label": "QA205 19 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS1QG69BACAPGE685KNP0",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "claude",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:45.712Z",
+        "startedAt": "2026-10-24T11:29:45.721Z",
+        "finishedAt": "2026-10-24T11:29:45.765Z",
+        "lastEventSeq": 6
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard claude inference event",
+    "status": "pass",
+    "seconds": 0.254,
+    "details": {
+      "id": "01M5PTS1Y1JS8GND9HN5M3ZKJ7",
+      "rootId": "01M5PTS1Y1JS8GND9HN5M3ZKJ7",
+      "startResponse": {
+        "status": 202,
+        "body": {
+          "id": "01M5PTS1YZ8TNWVAA9GRKJDY0W",
+          "ownerId": "local",
+          "type": "qa205-20",
+          "payload": null,
+          "source": "api",
+          "receivedAt": "2026-10-24T11:29:45.951Z",
+          "runIds": [
+            "01M5PTS1ZB7XKX4WM3ZYC9V6MV"
+          ],
+          "duplicate": false
+        }
+      },
+      "result": {
+        "id": "01M5PTS1ZB7XKX4WM3ZYC9V6MV",
+        "ownerId": "local",
+        "loopId": "01M5PTS1Y1JS8GND9HN5M3ZKJ7",
+        "versionId": "01M5PTS1Y1JS8GND9HN5M3ZKJ8",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 20 inference claude",
+          "label": "QA205 20 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS1ZB7XKX4WM3ZYC9V6MW",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "claude",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:45.963Z",
+        "startedAt": "2026-10-24T11:29:45.974Z",
+        "finishedAt": "2026-10-24T11:29:46.011Z",
+        "lastEventSeq": 6
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard claude inference child",
+    "status": "pass",
+    "seconds": 0.27,
+    "details": {
+      "id": "01M5PTS264G8N49YYY5EXZ5CVG",
+      "rootId": "01M5PTS27123MGC7T00RNG2JCK",
+      "startResponse": {
+        "id": "01M5PTS282ZK2M7EX66X5M5ATN",
+        "ownerId": "local",
+        "loopId": "01M5PTS27123MGC7T00RNG2JCK",
+        "versionId": "01M5PTS27123MGC7T00RNG2JCM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 22 inference codex",
+          "label": "QA205 22 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS282ZK2M7EX66X5M5ATP",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:29:46.241Z",
+        "lastEventSeq": 1
+      },
+      "result": {
+        "id": "01M5PTS282ZK2M7EX66X5M5ATN",
+        "ownerId": "local",
+        "loopId": "01M5PTS27123MGC7T00RNG2JCK",
+        "versionId": "01M5PTS27123MGC7T00RNG2JCM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 22 inference codex",
+          "label": "QA205 22 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS282ZK2M7EX66X5M5ATP",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5PTS282ZK2M7EX66X5M5ATN:5",
+          "nodeId": "work",
+          "kind": "child",
+          "childRunId": "01M5PTS29QRV65D3TW2NET54B3",
+          "startedSeq": 5
+        },
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "subloop child 01M5PTS29QRV65D3TW2NET54B3 failed: The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "childRunId": "01M5PTS29QRV65D3TW2NET54B3",
+            "childNodeId": "work",
+            "childDetails": [
+              {
+                "level": "owner",
+                "harness": "claude",
+                "resolution": {
+                  "status": "invalid",
+                  "code": "EFFORT_UNSUPPORTED",
+                  "path": "effort",
+                  "message": "The default reasoning effort is not supported by its model"
+                }
+              }
+            ]
+          }
+        },
+        "createdAt": "2026-10-24T11:29:46.241Z",
+        "startedAt": "2026-10-24T11:29:46.250Z",
+        "finishedAt": "2026-10-24T11:29:46.406Z",
+        "lastEventSeq": 11
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard claude inference resume",
+    "status": "pass",
+    "seconds": 0.456,
+    "details": {
+      "id": "01M5PTS2F3RAHB4VFSQT85Q98B",
+      "rootId": "01M5PTS2F3RAHB4VFSQT85Q98B",
+      "startResponse": {
+        "status": 200,
+        "body": {
+          "id": "01M5PTS2FWYMBC2CDE458SS49R",
+          "ownerId": "local",
+          "loopId": "01M5PTS2F3RAHB4VFSQT85Q98B",
+          "versionId": "01M5PTS2F3RAHB4VFSQT85Q98C",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA205 23 inference claude",
+            "label": "QA205 23 inference claude v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "high"
+                  }
+                }
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PTS2FWYMBC2CDE458SS49S",
+          "status": "waiting",
+          "currentNodeId": "wait",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5PTS2FWYMBC2CDE458SS49R:5",
+            "nodeId": "wait",
+            "kind": "signal",
+            "signalName": "go",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T11:29:46.492Z",
+          "startedAt": "2026-10-24T11:29:46.502Z",
+          "lastEventSeq": 8
+        }
+      },
+      "result": {
+        "id": "01M5PTS2FWYMBC2CDE458SS49R",
+        "ownerId": "local",
+        "loopId": "01M5PTS2F3RAHB4VFSQT85Q98B",
+        "versionId": "01M5PTS2F3RAHB4VFSQT85Q98C",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 23 inference claude",
+          "label": "QA205 23 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS2FWYMBC2CDE458SS49S",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "claude",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:46.492Z",
+        "startedAt": "2026-10-24T11:29:46.502Z",
+        "finishedAt": "2026-10-24T11:29:46.764Z",
+        "lastEventSeq": 14
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "Catalog guard claude inference replay",
+    "status": "pass",
+    "seconds": 0.44,
+    "details": {
+      "id": "01M5PTS2YH27E7B9FWK973KEAD",
+      "rootId": "01M5PTS2YH27E7B9FWK973KEAD",
+      "startResponse": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5PTS35WD13DQDK24JM7KCYC",
+            "ownerId": "local",
+            "loopId": "01M5PTS2YH27E7B9FWK973KEAD",
+            "versionId": "01M5PTS2YH27E7B9FWK973KEAE",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA205 24 inference claude",
+              "label": "QA205 24 inference claude v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {
+                    "claude": {
+                      "model": "claude-fable-5-1",
+                      "effort": "high"
+                    }
+                  }
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "claude": {
+                      "model": "claude-opus-5-5",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5PTS35WD13DQDK24JM7KCYD",
+            "status": "queued",
+            "currentNodeId": "work",
+            "iteration": 1,
+            "createdAt": "2026-10-24T11:29:47.196Z",
+            "lastEventSeq": 1
+          }
+        }
+      },
+      "result": {
+        "id": "01M5PTS35WD13DQDK24JM7KCYC",
+        "ownerId": "local",
+        "loopId": "01M5PTS2YH27E7B9FWK973KEAD",
+        "versionId": "01M5PTS2YH27E7B9FWK973KEAE",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 24 inference claude",
+          "label": "QA205 24 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-fable-5-1",
+                  "effort": "high"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PTS35WD13DQDK24JM7KCYD",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "message": "The default reasoning effort is not supported by its model",
+          "nodeId": "work",
+          "resumable": false,
+          "details": [
+            {
+              "level": "owner",
+              "harness": "claude",
+              "resolution": {
+                "status": "invalid",
+                "code": "EFFORT_UNSUPPORTED",
+                "path": "effort",
+                "message": "The default reasoning effort is not supported by its model"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:29:47.196Z",
+        "startedAt": "2026-10-24T11:29:47.208Z",
+        "finishedAt": "2026-10-24T11:29:47.234Z",
+        "lastEventSeq": 4
+      },
+      "requests": [],
+      "deciderRequests": [],
+      "probes": {
+        "codex": 0,
+        "claude": 0
+      }
+    }
+  },
+  {
+    "name": "UI Start run refuses unsupported capability before recording",
+    "status": "pass",
+    "seconds": 0.775,
+    "details": {
+      "id": "01M5PTS3CJN237VTH2JE0CYSWS",
+      "status": 422,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "EFFORT_UNSUPPORTED",
+            "severity": "error",
+            "loopId": "01M5PTS3CJN237VTH2JE0CYSWS",
+            "versionId": "01M5PTS3CJN237VTH2JE0CYSWT",
+            "nodeId": "work",
+            "path": "config.effort",
+            "message": "The selected reasoning effort is not supported by this model"
+          }
+        ]
+      },
+      "runs": [],
+      "requests": []
+    }
+  }
+]

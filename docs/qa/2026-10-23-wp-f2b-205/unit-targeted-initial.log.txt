@@ -1,0 +1,266 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/web
+
+ ❯ src/editor/model-effort.test.tsx (8 tests | 2 failed) 4737ms
+   × inference resolves loop defaults and stores one explicit or inherited effort 5ms
+   × llm resolves loop defaults and stores one explicit or inherited effort 1ms
+ ❯ src/forms/advanced.test.tsx (33 tests | 1 failed) 32231ms
+   ❯ basic fields first, advanced ones behind a disclosure (26)
+     × flags problems inside a collapsed Advanced: issues and unparsed text 5284ms
+ ❯ src/forms/fields/model.test.tsx (37 tests | 2 failed) 64336ms
+   ❯ catalog field controls (28)
+     × uses Codex entries and sibling effort within the decision Codex group 1624ms
+     × shows an empty catalog with only the inherited choice and a Settings link 1045ms
+pnpm.cmd : 
+At line:2 char:183
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web exec vitest run src/ed ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/model-effort.test.tsx > inference resolves loop defaults and stores one explicit or inherited effort
+ FAIL  src/editor/model-effort.test.tsx > llm resolves loop defaults and stores one explicit or inherited effort
+TypeError: Cannot set properties of undefined (setting 'defaults')
+ ❯ src/editor/model-effort.test.tsx:35:47
+     33|     api.override('GET /system/model-defaults', () => Response.json(lev…
+     34|     const definition = minimalLoop();
+     35|     if (level === 'loop') definition.settings.defaults = defaults;
+       |                                               ^
+     36|     const change = vi.fn();
+     37|     const value = kind === 'inference' ? { prompt: { template: 'q' } }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > flags problems inside a 
+collapsed Advanced: issues and unparsed text
+Error: expect(element).toHaveAccessibleName()
+
+Expected element to have accessible name:
+  Advanced 2 set 3 errors
+Received:
+  Advanced 1 set 2 errors
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"form"[39m
+        [33mclass[39m=[32m"grid gap-field"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Node configuration"[39m
+            [33mclass[39m=[32m"flex min-w-0 gap-2 border-b border-default"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_1af_-panel-main"[39m
+              [33maria-selected[39m=[32m"true"[39m
+              [33mclass[39m=[32m"flex min-w-0 cursor-pointer flex-wrap items-center gap-2 rounded-t-md border-b-2 
+px-3 py-2 text-sm font-semibold pointer-coarse:min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus border-accent-strong text-default"[39m
+              [33mid[39m=[32m"_r_1af_-tab-main"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSettings [0m
+              [36m<span[39m
+                [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border 
+border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-5 gap-1 px-[7px] 
+text-[11px] [&_svg]:size-[11px]"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0"[39m
+                  [33mdata-icon[39m=[32m"alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 
+0Z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 10v4M12 17.2h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0m4 errors[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_1af_-panel-context"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"flex min-w-0 cursor-pointer flex-wrap items-center gap-2 rounded-t-md border-b-2 
+px-3 py-2 text-sm font-semibold pointer-coarse:min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus border-transparent text-muted hover:bg-surface-hover"[39m
+              [33mid[39m=[32m"_r_1af_-tab-context"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mContext [0m
+              [0m [0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-labelledby[39m=[32m"_r_1af_-tab-main"[39m
+            [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+            [33mdata-tab-panel[39m=[32m"main"[39m
+            [33mid[39m=[32m"_r_1af_-panel-main"[39m
+            [33mrole[39m=[32m"tabpanel"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+              [33mdata-field[39m=[32m"harness"[39m
+            [36m>[39m
+              [36m<fieldset[39m
+                [33maria-describedby[39m=[32m"_r_1ah_-help"[39m
+                [33maria-labelledby[39m=[32m"_r_1ai_-legend"[39m
+                [33mclass[39m=[32m"group/choices grid min-w-0 gap-1.5"[39m
+                [33mrole[39m=[32m"radiogroup"[39m
+              [36m>[39m
+                [36m<legend[39m
+                  [33mclass[39m=[32m"mb-1.5 text-sm leading-[1.3] font-medium text-default flex items-baseline 
+gap-1"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mid[39m=[32m"_r_1ai_-legend"[39m
+                  [36m>[39m
+                    [0mHarness[0m
+                  [36m</span>[39m
+                [36m</legend>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"inline-flex w-fit max-w-full min-w-0 flex-wrap gap-0.5 rounded-md border 
+border-strong bg-surface-sunken p-[3px] group-aria-invalid/choices:border-status-bad-border"[39m
+                [36m>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 pointer-coarse:min-h-11 
+pointer-coarse:min-w-11"[39m
+                  [36m>[39m
+                    [36m<input[39m
+                      [33mchecked[39m=[32m""[39m
+                      [33mclass[39m=[32m"peer sr-only"[39m
+                      [33mname[39m=[32m"_r_1ai_"[39m
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  5 failed | 88 passed (93)
+   Start at  18:47:57
+   Duration  131.39s (transform 34%, tests 33%, environment 19%, import 7%, setup 6%)
+
+  Transform  transforming modules took 106.44s · 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+                      [33mtype[39m=[32m"radio"[39m
+                      [33mvalue[39m=[32m"codex"[39m
+                    [36m/>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"inline-flex h-7 max-w-full min-w-0 items-center justify-center px-3 
+text-sm font-medium whitespace-nowrap pointer-coarse:min-h-11 pointer-coarse:min-w-11 peer-checked:font-semibold 
+cursor-pointer rounded-[6px] text-muted transition-colors peer-[:not(:checked)]:hover:bg-surface-hover 
+peer-[:not(:checked)]:hover:text-default peer-checked:bg-accent-subtle peer-checked:text-accent-on-subtle 
+peer-checked:ring-1 peer-checked:ring-accent-strong peer-checked:ring-inset peer-focus-visible:outline-2 
+peer-focus-visible:outline-offset-1 peer-focus-visible:outline-focus forced-colors:peer-checked:outline 
+peer-disabled:cursor-not-allowed peer-disabled:opacity-45"[39m
+                      [33mtitle[39m=[32m"codex"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                      [36m>[39m
+                        [0mcodex[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                  [36m</label>[39m
+                  [36m<label[39m
+                    [3...
+ ❯ src/forms/advanced.test.tsx:378:42
+    376|       />,
+    377|     );
+    378|     await waitFor(() => expect(toggle()).toHaveAccessibleName('Advance…
+       |                                          ^
+    379|     const badge = within(toggle()!).getByText('3 errors');
+    380|     expect(badge.closest('[class*="bg-status-bad-bg"]')).not.toBeNull(…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/forms/fields/model.test.tsx > catalog field controls > uses Codex entries and sibling effort within the 
+decision Codex group
+AssertionError: expected last "vi.fn()" call to have been called with [ ObjectContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+@@ -22,9 +22,10 @@
+          "label": "No",
+        },
+      ],
+    },
+    {
++     "id": 5,
+      "kind": "commit",
+-     "path": "effort.value",
++     "path": "effort",
+    },
+  ]
+
+ ❯ src/forms/fields/model.test.tsx:533:20
+    531|     expect(effort).toHaveAccessibleDescription(/not supported/);
+    532|     await userEvent.setup().selectOptions(effort, 'low');
+    533|     expect(change).toHaveBeenLastCalledWith(
+       |                    ^
+    534|       expect.objectContaining({
+    535|         model: { mode: 'explicit', value: 'alpha' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/forms/fields/model.test.tsx > catalog field controls > shows an empty catalog with only the inherited 
+choice and a Settings link
+AssertionError: expected [ '(loop default) (gpt-6-luna)' ] to deeply equal [ '(loop default)' ]
+
+- Expected
++ Received
+
+  [
+-   "(loop default)",
++   "(loop default) (gpt-6-luna)",
+  ]
+
+ ❯ src/forms/fields/model.test.tsx:548:7
+    546|         .getAllByRole('option')
+    547|         .map((o) => o.textContent),
+    548|     ).toEqual(['(loop default)']);
+       |       ^
+    549|     expect(model()).toHaveAccessibleDescription(/No enabled models/);
+    550|     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\web
+

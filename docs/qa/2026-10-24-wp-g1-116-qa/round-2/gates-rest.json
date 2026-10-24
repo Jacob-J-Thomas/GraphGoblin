@@ -1,0 +1,26 @@
+[
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/checkpoint-state.test.ts src/sqlite/catalog.test.ts src/sqlite/delivery-runs.test.ts src/sqlite/history-summaries.test.ts src/sqlite/json-values.test.ts src/sqlite/loop-deletion.test.ts src/sqlite/storage.test.ts src/sqlite/webhook-receipt-upgrade.test.ts --maxWorkers=1",
+        "name":  "sqlite-focused",
+        "seconds":  127.3115696,
+        "exit":  0
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/mcp test:coverage --maxWorkers=1",
+        "name":  "mcp-coverage",
+        "seconds":  101.8876475,
+        "exit":  0
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2",
+        "name":  "web-coverage",
+        "seconds":  1672.762959,
+        "exit":  0
+    },
+    {
+        "command":  "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2",
+        "name":  "api-coverage",
+        "seconds":  742.1615188,
+        "exit":  0
+    }
+]

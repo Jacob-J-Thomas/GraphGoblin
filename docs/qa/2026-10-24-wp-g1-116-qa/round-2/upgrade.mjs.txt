@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile} from 'node:fs/promises';
+import {join,dirname} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {fork} from 'node:child_process';
+import {createRequire} from 'node:module';
+const root=process.env.AUDIT_ROOT,out=dirname(fileURLToPath(import.meta.url)),port=5874;
+const data=await mkdtemp(join(out,'gg-qa-g1-116-2-store-'));
+const requireMcp=createRequire(join(root,'apps/mcp/package.json')),requireWeb=createRequire(join(root,'apps/web/package.json'));
+const loadMcp=p=>import(pathToFileURL(requireMcp.resolve(p)).href);
+const {Client}=await loadMcp('@modelcontextprotocol/sdk/client/index.js');
+const {InMemoryTransport}=await loadMcp('@modelcontextprotocol/sdk/inMemory.js');
+const {createMcpServer}=await import(pathToFileURL(join(root,'apps/mcp/dist/index.js')).href);
+const {chromium}=requireWeb('@playwright/test');
+const results={head:'a553d429ad50cf9b528d660b8d39948fc554dda9',data,port,processes:[],checks:[]};
+let proc,serial=0,browser,client,mcp,tabs=[];
+const pending=new Map();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const save=(name,value)=>writeFile(join(out,name),JSON.stringify(value,null,2));
+const ctrl=(op,args)=>new Promise((resolve,reject)=>{const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(Error('IPC deadline '+op));},60000);pending.set(id,{resolve:v=>{clearTimeout(timer);resolve(v);},reject:e=>{clearTimeout(timer);reject(e);}});proc.send({id,op,args});});
+async function startServer(){
+ proc=fork(join(out,'audit-server.mjs'),[],{env:{...process.env,AUDIT_ROOT:root,AUDIT_PORT:String(port),AUDIT_DATA:data},silent:true,windowsHide:true});
+ let log='';proc.stdout.on('data',d=>log+=d);proc.stderr.on('data',d=>log+=d);
+ const ready=await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('startup deadline '+log)),60000);proc.on('message',m=>{if(m.ready){clearTimeout(t);resolve(m);}else if(m.id){const p=pending.get(m.id);if(p){pending.delete(m.id);m.error?p.reject(Error(m.error)):p.resolve(m.value);}}});proc.once('exit',c=>{clearTimeout(t);reject(Error('server exit '+c+' '+log));});});
+ results.processes.push(ready);proc.on('exit',()=>void writeFile(join(out,'server-'+ready.pid+'.log.txt'),log||'No product log output.\n'));return ready;
+}
+async function stopServer(){const child=proc;await ctrl('close');if(child.exitCode===null)await new Promise(r=>child.once('exit',r));}
+async function api(path,method='GET',body){const r=await fetch('http://127.0.0.1:'+port+path,{method,headers:body===undefined?{}:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const v=await r.json();assert.ok(r.ok,method+' '+path+' '+JSON.stringify(v));return v;}
+async function publish(def){const v=await api('/loops','POST',{definition:def});await api('/loops/'+v.loop.id+'/publish','POST');return v.loop.id;}
+const start=id=>api('/loops/'+id+'/runs','POST',{}).then(v=>v.run);
+async function poll(f,label,ms=60000){const until=Date.now()+ms;let last;do{try{const v=await f();if(v)return v;}catch(e){last=e.message;}await sleep(100);}while(Date.now()<until);throw Error(label+' deadline; '+last);}
+const status=(id,s)=>poll(async()=>{const r=await api('/runs/'+id);return r.status===s?r:false;},s);
+async function mcpConnect(){mcp=createMcpServer({apiUrl:'http://127.0.0.1:'+port});client=new Client({name:'audit-116',version:'1'});const [a,b]=InMemoryTransport.createLinkedPair();await mcp.connect(b);await client.connect(a);}
+async function mcpThread(id){const r=await client.callTool({name:'get_run_thread',arguments:{runId:id}});assert.ok(!r.isError,JSON.stringify(r));return JSON.parse(r.content.find(v=>v.type==='text').text);}
+async function check(name,fn){console.log('CHECK '+name);try{const detail=await fn();results.checks.push({name,pass:true,detail});console.log('PASS '+name);}catch(e){results.checks.push({name,pass:false,error:e.stack});console.log('FAIL '+name+': '+e.message);}await save('upgrade-results.json',results);if(results.checks.some(c=>!c.pass)||results.fatal)process.exitCode=1;}
+async function readCheck(id){
+ const before=await ctrl('state',id);await ctrl('metrics');
+ const rest=await api('/runs/'+id+'/thread'),tool=await mcpThread(id);
+ const reads=await ctrl('metrics'),after=await ctrl('state',id);
+ assert.deepEqual(rest,before.oracle);assert.deepEqual(tool,rest);assert.equal(before.rowHash,after.rowHash);assert.equal(before.eventHash,after.eventHash);
+ return {seq:before.run.lastEventSeq,vars:rest.vars,visits:rest.counters.nodeVisits,reads};
+}
+async function observe(label,id,expectedStatus){
+ const before=await ctrl('state',id),rest=await api('/runs/'+id+'/thread'),tool=await mcpThread(id);
+ assert.deepEqual(rest,before.oracle);assert.deepEqual(tool,rest);assert.equal(before.run.status,expectedStatus);
+ const views=[];
+ for(const {page,width} of tabs){
+  await poll(async()=>{const thread=JSON.parse(await page.getByTestId('thread-json').innerText()),text=await page.locator('body').innerText();try{assert.deepEqual(thread,rest);assert.ok(text.split('Timeline')[0].includes('\n'+expectedStatus+'\n'));assert.ok(text.includes('Thread at event '+before.run.lastEventSeq));return true;}catch{return false;}},label+' browser '+width);
+  await page.screenshot({path:join(out,label+'-'+width+'.png'),fullPage:true});
+  views.push({width,thread:JSON.parse(await page.getByTestId('thread-json').innerText()),body:await page.locator('body').innerText()});
+ }
+ const after=await ctrl('state',id);assert.equal(before.rowHash,after.rowHash);assert.equal(before.eventHash,after.eventHash);
+ await save(label+'.json',{before,rest,tool,views,afterHash:{row:after.rowHash,events:after.eventHash}});
+ return {status:expectedStatus,seq:before.run.lastEventSeq,vars:rest.vars,visits:rest.counters.nodeVisits};
+}
+const nodeStart=(id)=>({type:'node.started',nodeId:id,kind:'mutate',attempt:1,configHash:'0'.repeat(64)});
+const finish=(id,value)=>({type:'node.finished',nodeId:id,durationMs:1,patch:[{op:'add',path:'/vars/items/-',value}]});
+const load=p=>import(pathToFileURL(join(root,p)).href);
+const {openDatabase,SqliteEventStore}=await load('packages/infrastructure/dist/sqlite/index.js');
+const {LoopDefinitionSchema}=await load('packages/contracts/dist/index.js');
+const {sampleThread,samplePin,minimalLoop,fakeUlid,FIXTURE_TS}=await load('packages/contracts/dist/testing/index.js');
+const {FakeClock}=await load('packages/engine/dist/testing/index.js');
+const {replayThread}=await load('packages/domain/dist/index.js');
+const {mkdir,copyFile,readFile}=await import('node:fs/promises');
+const folder=join(data,'migrations');await mkdir(join(folder,'meta'),{recursive:true});const shipped=join(root,'packages/infrastructure/drizzle'),journal=JSON.parse(await readFile(join(shipped,'meta/_journal.json'),'utf8'));journal.entries=journal.entries.filter(e=>e.idx<18);await writeFile(join(folder,'meta/_journal.json'),JSON.stringify(journal));for(const e of journal.entries)await copyFile(join(shipped,e.tag+'.sql'),join(folder,e.tag+'.sql'));
+const old=openDatabase({url:'file:'+join(data,'graphgoblin.db').replaceAll('\\','/'),migrationsFolder:folder});await old.migrate();
+const oldStore=new SqliteEventStore(old.db,new FakeClock()),ids=[];
+for(const lag of [0,1]){
+ const seed=sampleThread({vars:{},messages:[],counters:{nodeVisits:{},usage:{inputTokens:0,outputTokens:0,cachedInputTokens:0,reasoningOutputTokens:0}}});seed.run.id=fakeUlid('upgrade-run-'+lag);seed.run.loopId=fakeUlid('upgrade-loop-'+lag);seed.run.versionId=fakeUlid('upgrade-version-'+lag);const id=seed.run.id;ids.push(id);
+ await old.client.execute({sql:'INSERT INTO loops(id,owner_id,name,current_version_id,created_at,updated_at) VALUES (?,\'local\',?,?,?,?)',args:[seed.run.loopId,'QA upgrade '+lag,seed.run.versionId,FIXTURE_TS,FIXTURE_TS]});
+ await old.client.execute({sql:'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES(?,?,1,\'published\',?,?)',args:[seed.run.versionId,seed.run.loopId,JSON.stringify(LoopDefinitionSchema.parse(minimalLoop())),FIXTURE_TS]});
+ await old.client.execute({sql:'INSERT INTO runs(id,owner_id,loop_id,version_id,invocation_id,status,iteration,created_at,finished_at,finalized_at,initial_thread,pinned) VALUES (?,\'local\',?,?,?,\'succeeded\',1,?,?,?,?,?)',args:[id,seed.run.loopId,seed.run.versionId,seed.invocation.id,FIXTURE_TS,FIXTURE_TS,FIXTURE_TS,JSON.stringify(seed),JSON.stringify(samplePin())]});
+ await oldStore.append(id,[nodeStart('a'),{type:'node.finished',nodeId:'a',durationMs:1,patch:[{op:'add',path:'/vars/items',value:['a']}]},nodeStart('b'),finish('a','duplicate'),finish('b','b')]);
+ const events=await oldStore.read(id),seq=events.at(-1).seq-lag;await old.client.execute({sql:'UPDATE runs SET thread_snapshot=?,thread_snapshot_seq=? WHERE id=?',args:[JSON.stringify(replayThread(seed,events,seq)),seq,id]});
+}
+const before={runs:(await old.client.execute('SELECT * FROM runs ORDER BY id')).rows,events:(await old.client.execute('SELECT * FROM run_events ORDER BY run_id,seq')).rows,ledger:(await old.client.execute('SELECT * FROM __drizzle_migrations ORDER BY created_at')).rows};old.close();
+try {
+ await startServer();await mcpConnect();await ctrl('stop');const afterUpgrade=await ctrl('raw');const clean=rows=>rows.map(({thread_snapshot_replay_state,...row})=>row);assert.deepEqual(clean(afterUpgrade.runs),before.runs);assert.deepEqual(afterUpgrade.events,before.events);assert.ok(afterUpgrade.runs.every(r=>r.thread_snapshot_replay_state===null));
+ await check('0017 snapshots migrate unchanged with NULL replay state',async()=>({ids,oldMigrationCount:before.ledger.length,state:afterUpgrade.runs.map(r=>({id:r.id,seq:r.thread_snapshot_seq,replayState:r.thread_snapshot_replay_state})),unchangedOldColumns:true,unchangedEvents:true}));
+ await check('upgraded NULL state reads full history then next write restores bounded reads',async()=>{const frames=[];for(const id of ids){await ctrl('metrics');const beforeReads=await ctrl('raw'),initialRead=await readCheck(id),afterReads=await ctrl('raw');assert.deepEqual(beforeReads,afterReads);assert.deepEqual(initialRead.vars.items,['a','b']);assert.deepEqual(initialRead.reads.map(r=>r.rows),[5,5]);const s=await ctrl('state',id);await ctrl('checkpoint',{id,seq:s.checkpoint.seq});const nextRead=await readCheck(id);assert.deepEqual(nextRead.reads.map(r=>r.rows),[6-s.checkpoint.seq,6-s.checkpoint.seq]);frames.push({id,initialRead,nextRead,checkpoint:(await ctrl('state',id)).checkpoint});}await save('upgrade.json',{before,afterUpgrade,frames});return frames;});
+ await stopServer();await startServer();await ctrl('stop');await check('writer state survives physical store reopen',async()=>{const frames=[];for(const id of ids){const s=await ctrl('state',id);assert.ok(s.checkpoint.replayState);frames.push({id,checkpoint:s.checkpoint,...await readCheck(id)});}return frames;});
+} catch(e){results.fatal=e.stack;console.log('FATAL '+e.stack);process.exitCode=1;}
+finally {await client?.close().catch(()=>{});await mcp?.close().catch(()=>{});if(proc?.connected)await stopServer().catch(e=>{results.closeError=e.stack;console.log(e.stack);});await save('upgrade-results.json',results);if(results.checks.some(c=>!c.pass)||results.fatal)process.exitCode=1;}

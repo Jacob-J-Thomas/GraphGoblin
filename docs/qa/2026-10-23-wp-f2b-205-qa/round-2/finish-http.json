@@ -1,0 +1,2590 @@
+[
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV1SPDBSHK3SY9ZRMZN2RJ",
+        "ownerId": "local",
+        "name": "QA205 1 inference claude",
+        "draftVersionId": "01M5PV1SPDBSHK3SY9ZRMZN2RK",
+        "createdAt": "2026-10-24T11:34:32.397Z",
+        "updatedAt": "2026-10-24T11:34:32.397Z"
+      },
+      "draft": {
+        "id": "01M5PV1SPDBSHK3SY9ZRMZN2RK",
+        "loopId": "01M5PV1SPDBSHK3SY9ZRMZN2RJ",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 1 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:34:32.397Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV1SPDBSHK3SY9ZRMZN2RJ/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV1SPDBSHK3SY9ZRMZN2RK",
+        "loopId": "01M5PV1SPDBSHK3SY9ZRMZN2RJ",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 1 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:34:32.397Z",
+        "publishedAt": "2026-10-24T11:34:32.421Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "high"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV2A9YE6NEB3623E798E64",
+        "ownerId": "local",
+        "name": "QA205 2 inference claude",
+        "draftVersionId": "01M5PV2A9YE6NEB3623E798E65",
+        "createdAt": "2026-10-24T11:34:49.406Z",
+        "updatedAt": "2026-10-24T11:34:49.406Z"
+      },
+      "draft": {
+        "id": "01M5PV2A9YE6NEB3623E798E65",
+        "loopId": "01M5PV2A9YE6NEB3623E798E64",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 2 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "effort": "high",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:34:49.406Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2A9YE6NEB3623E798E64/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV2A9YE6NEB3623E798E65",
+        "loopId": "01M5PV2A9YE6NEB3623E798E64",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 2 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "effort": "high",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:34:49.406Z",
+        "publishedAt": "2026-10-24T11:34:49.424Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {}
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "ownerId": "local",
+        "name": "QA205 3 llm codex",
+        "draftVersionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "createdAt": "2026-10-24T11:35:05.351Z",
+        "updatedAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draft": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:05.351Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/loops/01M5PV2SW7E9BCDABZHENQTZ4B",
+    "status": 200,
+    "body": {
+      "loop": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "ownerId": "local",
+        "name": "QA205 3 llm codex",
+        "draftVersionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "createdAt": "2026-10-24T11:35:05.351Z",
+        "updatedAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draft": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draftToken": "d14c48d303077463"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/loops/01M5PV2SW7E9BCDABZHENQTZ4B",
+    "status": 200,
+    "body": {
+      "loop": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "ownerId": "local",
+        "name": "QA205 3 llm codex",
+        "draftVersionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "createdAt": "2026-10-24T11:35:05.351Z",
+        "updatedAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draft": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draftToken": "d14c48d303077463"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/loops/01M5PV2SW7E9BCDABZHENQTZ4B",
+    "status": 200,
+    "body": {
+      "loop": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "ownerId": "local",
+        "name": "QA205 3 llm codex",
+        "draftVersionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "createdAt": "2026-10-24T11:35:05.351Z",
+        "updatedAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draft": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draftToken": "d14c48d303077463"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/loops/01M5PV2SW7E9BCDABZHENQTZ4B",
+    "status": 200,
+    "body": {
+      "loop": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "ownerId": "local",
+        "name": "QA205 3 llm codex",
+        "draftVersionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "createdAt": "2026-10-24T11:35:05.351Z",
+        "updatedAt": "2026-10-24T11:35:06.479Z"
+      },
+      "draft": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "explicit",
+                  "value": "gpt-6.1-sol"
+                },
+                "effort": {
+                  "mode": "explicit",
+                  "value": "high"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:05.351Z"
+      },
+      "draftToken": "f8055fad249c37c5"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2SW7E9BCDABZHENQTZ4B/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 3 llm codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "QA choose",
+                "harness": "codex",
+                "model": {
+                  "mode": "explicit",
+                  "value": "gpt-6.1-sol"
+                },
+                "effort": {
+                  "mode": "explicit",
+                  "value": "high"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:05.351Z",
+        "publishedAt": "2026-10-24T11:35:06.520Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2SW7E9BCDABZHENQTZ4B/runs",
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5PV2V1AY36A6M89N2371HEW",
+        "ownerId": "local",
+        "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+        "versionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 3 llm codex",
+          "label": "QA205 3 llm codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PV2V1AY36A6M89N2371HEX",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:35:06.538Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V1AY36A6M89N2371HEW",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V1AY36A6M89N2371HEW",
+      "ownerId": "local",
+      "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+      "versionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 3 llm codex",
+        "label": "QA205 3 llm codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V1AY36A6M89N2371HEX",
+      "status": "queued",
+      "iteration": 1,
+      "createdAt": "2026-10-24T11:35:06.538Z",
+      "lastEventSeq": 1
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V1AY36A6M89N2371HEW",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V1AY36A6M89N2371HEW",
+      "ownerId": "local",
+      "loopId": "01M5PV2SW7E9BCDABZHENQTZ4B",
+      "versionId": "01M5PV2SW7E9BCDABZHENQTZ4C",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 3 llm codex",
+        "label": "QA205 3 llm codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V1AY36A6M89N2371HEX",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "createdAt": "2026-10-24T11:35:06.538Z",
+      "startedAt": "2026-10-24T11:35:06.571Z",
+      "finishedAt": "2026-10-24T11:35:06.651Z",
+      "lastEventSeq": 11
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "low"
+          }
+        }
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+        "ownerId": "local",
+        "name": "QA205 4 inference claude",
+        "draftVersionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+        "createdAt": "2026-10-24T11:35:06.755Z",
+        "updatedAt": "2026-10-24T11:35:06.755Z"
+      },
+      "draft": {
+        "id": "01M5PV2V83AR4DNG6DXX4YAC6R",
+        "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 4 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:06.755Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2V83AR4DNG6DXX4YAC6Q/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV2V83AR4DNG6DXX4YAC6R",
+        "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 4 inference claude",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "claude",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:06.755Z",
+        "publishedAt": "2026-10-24T11:35:06.769Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2V83AR4DNG6DXX4YAC6Q/runs",
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5PV2V8YNV2K5D34973511ET",
+        "ownerId": "local",
+        "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+        "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 4 inference claude",
+          "label": "QA205 4 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PV2V8ZEXDQRJKGSC9G7MH7",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:35:06.782Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2V83AR4DNG6DXX4YAC6Q/runs",
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5PV2V9NA0JKD2Y1Z3EGTKWK",
+        "ownerId": "local",
+        "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+        "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 4 inference claude",
+          "label": "QA205 4 inference claude v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PV2V9NA0JKD2Y1Z3EGTKWM",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:35:06.805Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V8YNV2K5D34973511ET",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V8YNV2K5D34973511ET",
+      "ownerId": "local",
+      "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+      "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 4 inference claude",
+        "label": "QA205 4 inference claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V8ZEXDQRJKGSC9G7MH7",
+      "status": "running",
+      "currentNodeId": "start",
+      "iteration": 1,
+      "createdAt": "2026-10-24T11:35:06.782Z",
+      "startedAt": "2026-10-24T11:35:06.794Z",
+      "lastEventSeq": 4
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V9NA0JKD2Y1Z3EGTKWK",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V9NA0JKD2Y1Z3EGTKWK",
+      "ownerId": "local",
+      "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+      "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 4 inference claude",
+        "label": "QA205 4 inference claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V9NA0JKD2Y1Z3EGTKWM",
+      "status": "running",
+      "iteration": 1,
+      "createdAt": "2026-10-24T11:35:06.805Z",
+      "startedAt": "2026-10-24T11:35:06.827Z",
+      "lastEventSeq": 2
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V8YNV2K5D34973511ET",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V8YNV2K5D34973511ET",
+      "ownerId": "local",
+      "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+      "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 4 inference claude",
+        "label": "QA205 4 inference claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V8ZEXDQRJKGSC9G7MH7",
+      "status": "running",
+      "currentNodeId": "done",
+      "iteration": 1,
+      "createdAt": "2026-10-24T11:35:06.782Z",
+      "startedAt": "2026-10-24T11:35:06.794Z",
+      "lastEventSeq": 12
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V9NA0JKD2Y1Z3EGTKWK",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V9NA0JKD2Y1Z3EGTKWK",
+      "ownerId": "local",
+      "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+      "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 4 inference claude",
+        "label": "QA205 4 inference claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V9NA0JKD2Y1Z3EGTKWM",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "createdAt": "2026-10-24T11:35:06.805Z",
+      "startedAt": "2026-10-24T11:35:06.827Z",
+      "finishedAt": "2026-10-24T11:35:06.981Z",
+      "lastEventSeq": 15
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2V8YNV2K5D34973511ET",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2V8YNV2K5D34973511ET",
+      "ownerId": "local",
+      "loopId": "01M5PV2V83AR4DNG6DXX4YAC6Q",
+      "versionId": "01M5PV2V83AR4DNG6DXX4YAC6R",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 4 inference claude",
+        "label": "QA205 4 inference claude v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2V8ZEXDQRJKGSC9G7MH7",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "createdAt": "2026-10-24T11:35:06.782Z",
+      "startedAt": "2026-10-24T11:35:06.794Z",
+      "finishedAt": "2026-10-24T11:35:07.018Z",
+      "lastEventSeq": 15
+    }
+  },
+  {
+    "method": "PUT",
+    "path": "/settings",
+    "status": 200,
+    "body": {
+      "defaults": {
+        "byHarness": {}
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5PV2VQAZGZQK03KV6YWZ3C9",
+        "ownerId": "local",
+        "name": "QA205 5 inference codex",
+        "draftVersionId": "01M5PV2VQAZGZQK03KV6YWZ3CA",
+        "createdAt": "2026-10-24T11:35:07.242Z",
+        "updatedAt": "2026-10-24T11:35:07.242Z"
+      },
+      "draft": {
+        "id": "01M5PV2VQAZGZQK03KV6YWZ3CA",
+        "loopId": "01M5PV2VQAZGZQK03KV6YWZ3C9",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 5 inference codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "model": "gpt-6.1-sol",
+                "effort": "high",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:07.242Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2VQAZGZQK03KV6YWZ3C9/publish",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5PV2VQAZGZQK03KV6YWZ3CA",
+        "loopId": "01M5PV2VQAZGZQK03KV6YWZ3C9",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA205 5 inference codex",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "model": "gpt-6.1-sol",
+                "effort": "high",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "QA choose"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "in",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T11:35:07.242Z",
+        "publishedAt": "2026-10-24T11:35:07.255Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops/01M5PV2VQAZGZQK03KV6YWZ3C9/runs",
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5PV2VR6RPFDZ0JKA7ARWRYS",
+        "ownerId": "local",
+        "loopId": "01M5PV2VQAZGZQK03KV6YWZ3C9",
+        "versionId": "01M5PV2VQAZGZQK03KV6YWZ3CA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA205 5 inference codex",
+          "label": "QA205 5 inference codex v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PV2VR6RPFDZ0JKA7ARWRYT",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T11:35:07.270Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/runs/01M5PV2VR6RPFDZ0JKA7ARWRYS/cancel",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2VR6RPFDZ0JKA7ARWRYS",
+      "ownerId": "local",
+      "loopId": "01M5PV2VQAZGZQK03KV6YWZ3C9",
+      "versionId": "01M5PV2VQAZGZQK03KV6YWZ3CA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 5 inference codex",
+        "label": "QA205 5 inference codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2VR6RPFDZ0JKA7ARWRYT",
+      "status": "running",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "cancelRequestedAt": "2026-10-24T11:35:07.443Z",
+      "createdAt": "2026-10-24T11:35:07.270Z",
+      "startedAt": "2026-10-24T11:35:07.283Z",
+      "lastEventSeq": 11
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/runs/01M5PV2VR6RPFDZ0JKA7ARWRYS",
+    "status": 200,
+    "body": {
+      "id": "01M5PV2VR6RPFDZ0JKA7ARWRYS",
+      "ownerId": "local",
+      "loopId": "01M5PV2VQAZGZQK03KV6YWZ3C9",
+      "versionId": "01M5PV2VQAZGZQK03KV6YWZ3CA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA205 5 inference codex",
+        "label": "QA205 5 inference codex v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "claude": {
+                "model": "claude-opus-5-5",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PV2VR6RPFDZ0JKA7ARWRYT",
+      "status": "cancelled",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "cancelRequestedAt": "2026-10-24T11:35:07.443Z",
+      "createdAt": "2026-10-24T11:35:07.270Z",
+      "startedAt": "2026-10-24T11:35:07.283Z",
+      "finishedAt": "2026-10-24T11:35:07.460Z",
+      "lastEventSeq": 13
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/loops",
+    "status": 400,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/validation-failed",
+      "title": "validation failed",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "the request did not match the schema",
+      "errors": [
+        {
+          "path": "/definition/nodes/1/config/harness",
+          "message": "Invalid input: expected \"codex\""
+        }
+      ]
+    }
+  }
+]

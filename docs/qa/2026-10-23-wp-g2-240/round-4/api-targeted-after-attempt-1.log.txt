@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-240/apps/api
+
+ ❯ src/routes/event-paging.test.ts (6 tests | 1 failed) 10025ms
+   ❯ inbound event paging over real SQLite (6)
+     × re-reads an inclusive loaded-page anchor despite newer timestamp ties, retaining opaque continuation 5558ms
+pnpm.cmd : 
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/event-p ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/event-paging.test.ts > inbound event paging over real SQLite > re-reads an inclusive loaded-page 
+anchor despite newer timestamp ties, retaining opaque continuation
+AssertionError: expected [ { …(7) }, { …(7) }, { …(7) } ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/routes/event-paging.test.ts:47:24
+     45|     expect(single.nextCursor).toBe(encodeEventCursor({ id: head, recei…
+     46|     const rest = await page(`?type=chosen&cursor=${anchored.nextCursor…
+     47|     expect(rest.items).toHaveLength(2);
+       |                        ^
+     48|     expect(rest.nextCursor).toBeNull();
+     49|     expect(await page(`?anchor=${rest.items[0]!.id}&limit=2`)).toEqual…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  06:10:10
+   Duration  80.11s (transform 72%, import 15%, tests 13%)
+
+  Transform  transforming modules took 56.49s · 72% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\api
+
+EXIT_CODE=1

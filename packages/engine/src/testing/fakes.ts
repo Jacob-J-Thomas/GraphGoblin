@@ -20,7 +20,12 @@ import type {
   WorkingDirectorySpec,
   WebhookAttemptResult,
 } from '@graphgoblin/contracts';
-import { isTerminal, stableStringify } from '@graphgoblin/domain';
+import {
+  isTerminal,
+  stableStringify,
+  type ReplayState,
+  type ThreadCheckpoint,
+} from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -216,7 +221,7 @@ export class InMemoryRunRepository implements RunRepository {
   readonly runs = new Map<string, RunRecord>();
   private readonly initial = new Map<string, ContextThread>();
   private readonly threads = new Map<string, ContextThread>();
-  private readonly checkpoints = new Map<string, number>();
+  private readonly checkpoints = new Map<string, { seq: number; replayState: ReplayState }>();
   private readonly finalized = new Set<string>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
@@ -318,16 +323,20 @@ export class InMemoryRunRepository implements RunRepository {
   getThread(runId: string): Promise<ContextThread | undefined> {
     return Promise.resolve(this.threads.get(runId));
   }
-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
+  saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
     this.threads.set(runId, thread);
-    if (seq === undefined) this.checkpoints.delete(runId);
-    else this.checkpoints.set(runId, seq);
+    this.checkpoints.set(runId, { seq, replayState });
     return Promise.resolve();
   }
-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined> {
+  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined> {
     const thread = this.threads.get(runId);
-    const seq = this.checkpoints.get(runId);
-    return Promise.resolve(thread && seq !== undefined ? { thread, seq } : undefined);
+    const checkpoint = this.checkpoints.get(runId);
+    return Promise.resolve(thread && checkpoint ? { thread, ...checkpoint } : undefined);
   }
   /** Test helper: drop the thread snapshot to force replay. */
   dropThreadSnapshot(runId: string): void {

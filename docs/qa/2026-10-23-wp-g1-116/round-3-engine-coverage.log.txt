@@ -1,0 +1,53 @@
+pnpm.cmd : $ vitest run --coverage
+At line:7 char:3
++   & pnpm.cmd --filter "@graphgoblin/$wp116Package" test:coverage *> $ ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/awaited-children.test.ts (24 tests | 1 failed) 10116ms
+   ❯ identity-bound child wakes (#242) (2)
+     × a stale child wake never answers a later input park of its parent 1311ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > identity-bound child wakes (#242) > a stale child wake never answers a later 
+input park of its parent
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/awaited-children.test.ts:141:85
+    139|   });
+    140|   const parent = await e.start(parentLoopId);
+    141|   await vi.waitFor(async () => expect(nextPark(await get(parent.id), f…
+       |                                                                                     ^
+    142|   release();
+    143|   await e.manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 41 passed (42)
+      Tests  1 failed | 1597 passed (1598)
+   Start at  05:58:04
+   Duration  79.40s (transform 38%, import 31%, tests 30%, worker 1%)
+
+  Transform  transforming modules took 200.72s · 38% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\packages\engine
+

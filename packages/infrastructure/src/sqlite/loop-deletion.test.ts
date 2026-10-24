@@ -68,7 +68,7 @@ async function storedRun(
     ref: 'artifact:text/' + 'a'.repeat(64),
   });
   await repo.create(run, thread);
-  await repo.saveThread(run.id, thread, 1);
+  await repo.saveThread(run.id, thread, 1, { strict: false });
   await handle.db.insert(runEvents).values({
     runId: run.id,
     seq: 1,

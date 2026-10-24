@@ -1,0 +1,42 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/api
+
+ ❯ src/thread-history.test.ts (4 tests | 1 failed | 3 skipped) 20063ms
+   × REST preserves a different open visit at a persisted delayed-duplicate checkpoint 20060ms
+pnpm.cmd : 
+At line:17 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/thread-history ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/thread-history.test.ts > REST preserves a different open visit at a persisted delayed-duplicate checkpoint
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/thread-history.test.ts:109:1
+    107| });
+    108|
+    109| it('REST preserves a different open visit at a persisted delayed-dupli…
+       | ^
+    110|   const t = await createThreadHistoryFixture();
+    111|   t.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  05:38:16
+   Duration  37.67s (tests 55%, transform 27%, import 18%)
+
+  Transform  transforming modules took 9.67s · 27% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\api
+

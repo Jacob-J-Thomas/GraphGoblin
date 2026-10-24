@@ -10,10 +10,12 @@ export function HistoryState<T>({
   query,
   what,
   children,
+  keepDataOnError = false,
 }: {
   query: UseInfiniteQueryResult<InfiniteData<HistoryPage<T>>>;
   what: string;
   children: (items: T[]) => ReactNode;
+  keepDataOnError?: boolean;
 }) {
   const endRef = useRef<HTMLParagraphElement>(null);
   const userAppendRef = useRef(false);
@@ -27,7 +29,11 @@ export function HistoryState<T>({
   }, [isFetchingNextPage, hasNextPage, hasAppended, query.dataUpdatedAt, query.errorUpdatedAt]);
   return (
     <>
-      <QueryState query={query} what={what} keepDataOnError={query.isFetchNextPageError}>
+      <QueryState
+        query={query}
+        what={what}
+        keepDataOnError={keepDataOnError || query.isFetchNextPageError}
+      >
         {(data) => {
           const items = data.pages.flatMap((page) => page.items);
           if (!items.length && (hasNextPage || hasAppended))
@@ -41,7 +47,9 @@ export function HistoryState<T>({
           return children(items);
         }}
       </QueryState>
-      {query.isFetchNextPageError ? <ErrorState error={query.error} what={what} /> : null}
+      {query.isFetchNextPageError || (keepDataOnError && query.isRefetchError) ? (
+        <ErrorState error={query.error} what={what} />
+      ) : null}
       {query.data ? (
         // Retain footer height at exhaustion so the reading position cannot be clamped.
         <div className="min-h-9 pointer-coarse:min-h-11">
