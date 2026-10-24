@@ -1,0 +1,29 @@
+const allCounts=async s=>(await s.sql('SELECT (SELECT count(*) FROM inbound_events) inbound,(SELECT count(*) FROM event_receipts) events,(SELECT count(*) FROM webhook_receipts) webhooks,(SELECT count(*) FROM runs) runs'))[0];
+const matrix=[['high','before\ud800after',false],['low','before\udc00after',false],['reversed','before\udc00\ud800after',false],['astral','before\ud83d\ude00after',true],['replacement','before\ufffdafter',true],['NUL','before\u0000after',false]];
+let s;
+try{
+ s=await instance('unicode-matrix',6015);
+ for(const mode of ['request','event-string','event-array','webhook-string','webhook-array','request-array']){
+  const isHook=mode.startsWith('webhook'), isArray=mode.endsWith('array');
+  const id=await loop(s,definition('Unicode '+mode,isHook?{type:'webhook',dedupeKey:'key'}:mode.startsWith('event')?{type:'event',eventType:'ready',dedupeKey:'key'}:undefined));
+  const path=isHook?(await s.call('GET','/loops/'+id+'/triggers')).body.webhooks[0].path:'/events';
+  for(const [label,key,wellformed] of matrix)await test(mode+'-'+label,'exact key identity or refusal without any stored rows',async()=>{
+   const value=isArray?[key]:key;const valid=mode==='request-array'?false:isArray||wellformed;
+   const payload={key:value,original:true};const body=isHook?payload:mode.startsWith('request')?{loopId:id,type:'ready',dedupeKey:value,payload}:{loopId:id,type:'ready',payload};
+   const before=await allCounts(s);const first=await s.call('POST',path,body);await s.settle();
+   if(!valid){assert.equal(first.status,mode.startsWith('request')?400:422);assert.equal(first.body.code,mode.startsWith('request')?'VALIDATION_FAILED':isHook?'KEY_INVALID':'EVENT_KEY_INVALID');const after=await allCounts(s);assert.deepEqual(after,before);return {first,before,after,storedDelta:0};}
+   assert.equal(first.status,202);if(isHook)assert.deepEqual(first.body,{accepted:true});
+   const ledger=isHook?'webhook_receipts':'event_receipts';
+   const rows=await s.sql('SELECT r.id,r.status,i.dedupe_key,hex(i.dedupe_key) key_hex FROM '+ledger+' r JOIN inbound_events i ON i.id=r.inbound_id WHERE r.loop_id=? AND r.status=\'admitted\'',[id]);
+   const expected=typeof value==='string'?value:JSON.stringify(value);const current=rows.at(-1);assert.ok(rows.some(r=>r.status==='admitted'));
+   const runs=await s.sql('SELECT id,initial_thread FROM runs WHERE loop_id=?',[id]);const envelopes=runs.map(r=>JSON.parse(r.initial_thread).invocation.trigger);
+   assert.ok(envelopes.some(e=>e.dedupeKey===expected),'exact key in run envelope');
+   if(isHook||mode==='request'){assert.ok(rows.some(r=>r.dedupe_key===expected&&r.key_hex===Buffer.from(expected).toString('hex').toUpperCase()));}
+   const retry=await s.call('POST',path,body);assert.equal(retry.status,202);await s.settle();const after=await allCounts(s);assert.equal(after.runs,before.runs+1);
+   if(mode==='request')assert.equal(retry.body.id,first.body.id);if(mode.startsWith('event'))assert.equal(retry.body.delivery.state,'deduplicated');
+   return {first,retry,before,after,storedKeyExpected:expected,rows,envelopes};
+  });
+ }
+ await test('fresh-loop-literal-replacement','literal U+FFFD admits without dependence on earlier failed key',async()=>{const id=await loop(s,definition('Fresh replacement webhook',{type:'webhook',dedupeKey:'key'}));const path=(await s.call('GET','/loops/'+id+'/triggers')).body.webhooks[0].path;const ack=await s.call('POST',path,{key:'before\ufffdafter'});assert.equal(ack.status,202);await s.settle();const rows=await s.sql('SELECT status,attempts,failure_code FROM webhook_receipts WHERE loop_id=?',[id]);assert.equal(rows[0].status,'admitted');assert.equal((await s.runs(id)).length,1);return {ack,rows}});
+}finally{if(s)await s.stop();await save()}
+console.log('UNICODE_DONE');
