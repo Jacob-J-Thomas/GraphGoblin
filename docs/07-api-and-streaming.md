@@ -65,7 +65,7 @@ unavailable. Enabled mismatches log a safe warning while both listings stay read
 refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
-event metadata does not change `POST /events` or publish anything to the bus. Webhook-derived keys containing U+0000 (NUL) return 422 `KEY_INVALID` before any receipt or inbound row is saved.
+event metadata does not change `POST /events` or publish anything to the bus. Webhook-derived keys containing U+0000 (NUL) or ill-formed Unicode return 422 `KEY_INVALID` before any receipt or inbound row is saved.
 
 The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
 

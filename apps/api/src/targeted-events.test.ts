@@ -618,10 +618,11 @@ it.each([' ', 'x'])(
   },
 );
 
-it.each(['', 'before\u0000after', ' ', 'x'])(
+// A lone surrogate would be stored as U+FFFD, so it is refused like NUL; U+FFFD itself is valid.
+it.each(['', 'before\u0000after', 'before\ud800after', ' ', 'x', 'before�after'])(
   'preserves webhook key refusal and literal-key deduplication for %j',
   async (key) => {
-    const invalid = key === '' || key.includes('\u0000');
+    const invalid = key === '' || key.includes('\u0000') || key.includes('\ud800');
     const definition = eventLoop();
     definition.nodes[0]!.config = { type: 'webhook', dedupeKey: 'issue' };
     const loopId = await t.publishLoop(definition);

@@ -130,7 +130,12 @@ function stringKey(value: unknown): string | undefined {
 function webhookKey(value: unknown): string | undefined {
   if (value === undefined || value === null || value === '') return undefined;
   const key = typeof value === 'string' ? value : JSON.stringify(value);
-  return key !== undefined && key.length <= 512 && !key.includes('\u0000') ? key : undefined;
+  return key !== undefined &&
+    key.length <= 512 &&
+    !key.includes('\u0000') &&
+    eventKeyIsWellFormed(key)
+    ? key
+    : undefined;
 }
 
 function lookupOnce<T>(
@@ -463,7 +468,7 @@ export class TriggerService {
           return fail(
             422,
             'KEY_INVALID',
-            'the webhook key must be nonempty and at most 512 characters',
+            'the webhook key must be nonempty valid Unicode without U+0000, at most 512 characters',
           );
       }
     } catch {
