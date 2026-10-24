@@ -166,6 +166,15 @@ export function inheritedClaudeEfforts(
   );
 }
 
+/** Efforts every entry lists: the only safe choices while the effective model is unknown. */
+function sharedEfforts(entries: readonly ModelCatalogEntry[]): readonly string[] {
+  return (
+    entries[0]?.efforts.filter((effort) =>
+      entries.every((entry) => entry.efforts.includes(effort)),
+    ) ?? []
+  );
+}
+
 /** Catalog warnings from the editor validation list, already relative to this form's value. */
 export const CatalogWarningsContext = createContext<
   readonly { path?: string | undefined; code: string; message: string }[]
@@ -308,6 +317,8 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
     modelCapabilities,
     hasClaudeAdmission,
     entry: entries.find((entry) => entry.model === (kind === 'model' ? current : effectiveModel)),
+    // An inherited model is unknown, not absent, until both defaults queries have succeeded.
+    modelKnown: current !== undefined || defaultsKnown,
     inherited,
     defaultsPending: settings.isPending || processDefaults.isPending,
     catalogNoticeId: `${scope.id}-${sibling(name, 'model')}-catalog`,
@@ -334,6 +345,7 @@ function CatalogField({
     modelCapabilities,
     hasClaudeAdmission,
     entry,
+    modelKnown,
     inherited,
     defaultsPending,
     catalogNoticeId,
@@ -351,10 +363,13 @@ function CatalogField({
   const unavailable =
     query.data === undefined || ((kind === 'model' || !entry) && !hasClaudeAdmission);
   // An inherited Claude model must support any offered effort, without choosing a model for it.
+  // So must a Codex one whose identity is unknown because the defaults could not be read.
   const inheritedEfforts =
     harnessId === 'claude'
       ? inheritedClaudeEfforts(availableEntries, modelCapabilities)
-      : EffortSchema.options;
+      : modelKnown
+        ? EffortSchema.options
+        : sharedEfforts(availableEntries);
   const efforts: readonly string[] = entry
     ? entry.efforts.filter(
         (effort) =>
@@ -365,7 +380,10 @@ function CatalogField({
           ),
       )
     : inheritedEfforts;
-  const unsupported = kind === 'effort' && !unavailable && value !== '' && !efforts.includes(value);
+  const outside = kind === 'effort' && !unavailable && value !== '' && !efforts.includes(value);
+  // Without the inherited model, an effort outside the shared choices may still be supported.
+  const supportUnknown = outside && !entry && !modelKnown;
+  const unsupported = outside && !supportUnknown;
   const capability =
     kind === 'model' ? modelCapabilities?.find((item) => item.model === value) : undefined;
   const savedHarness =
@@ -461,6 +479,9 @@ function CatalogField({
               ]
             : []),
           ...(unsupported ? [`This effort is not supported by the selected model. ${kept}`] : []),
+          ...(supportUnknown
+            ? [`Effort support is unknown until the inherited model can be read. ${kept}`]
+            : []),
           ...(noEnabled
             ? [
                 harnessId === 'claude'
@@ -490,7 +511,7 @@ function CatalogField({
       query.data !== undefined &&
       !hasClaudeAdmission &&
       readiness.state !== 'checking') ||
-    (!unavailable && (Boolean(status) || unsupported || noEnabled));
+    (!unavailable && (Boolean(status) || unsupported || supportUnknown || noEnabled));
   const options =
     kind === 'model'
       ? availableEntries.map((entry) => ({
@@ -578,10 +599,10 @@ function CatalogField({
                     {` (${status ?? 'saved'})`}
                   </option>
                 ) : null
-              ) : status || unsupported || modelLookupUnknown ? (
+              ) : status || unsupported || supportUnknown || modelLookupUnknown ? (
                 <option value={value} disabled>
                   {kind === 'model' && entry ? `${entry.displayName} (${value})` : value}
-                  {` (${status ?? (modelLookupUnknown ? (query.isFetching ? 'checking model catalog' : 'model support unknown') : 'not supported by this model')})`}
+                  {` (${status ?? (modelLookupUnknown ? (query.isFetching ? 'checking model catalog' : 'model support unknown') : supportUnknown ? 'effort support unknown' : 'not supported by this model')})`}
                 </option>
               ) : null}
               {!unavailable &&

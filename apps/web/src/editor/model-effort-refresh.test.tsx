@@ -321,3 +321,116 @@ it('describes inherited model identity and unsupported inherited effort on the c
     .soft(screen.getByLabelText('Effort'))
     .toHaveAccessibleDescription(/Default effort: low.*not supported by this model/i);
 });
+
+function nodeForm(kind: 'inference' | 'llm', effort: string | undefined, change = vi.fn()) {
+  if (kind === 'inference')
+    return form(effort === undefined ? inheritedNode : { ...inheritedNode, effort }, change);
+  return (
+    <SchemaForm
+      schema={NodeConfigSchemas.decision}
+      value={{
+        kind: 'llm',
+        harness: 'codex',
+        instructions: 'q',
+        model: { mode: 'inherit' },
+        effort: effort === undefined ? { mode: 'inherit' } : { mode: 'explicit', value: effort },
+        routes: [
+          { id: 'yes', label: 'Yes' },
+          { id: 'no', label: 'No' },
+        ],
+      }}
+      onChange={change}
+      label="Decision"
+      controls={NODE_FIELD_CONTROLS}
+    />
+  );
+}
+function effortOptions() {
+  return within(screen.getByLabelText('Effort', { exact: true }))
+    .getAllByRole('option')
+    .map((option) => [option.textContent, (option as HTMLOptionElement).disabled]);
+}
+
+for (const kind of ['inference', 'llm'] as const)
+  it.each([
+    ['owner', undefined],
+    ['owner', 'max'],
+    ['process', undefined],
+    ['process', 'max'],
+  ] as const)(
+    `${kind} offers no model-specific effort while %s defaults are unknown (saved %s)`,
+    async (level, saved) => {
+      const api = new FakeApi();
+      api.catalog = ['gpt-6-luna', 'gpt-6.1-sol'].map((model) => ({
+        harness: 'codex',
+        model,
+        displayName: model,
+        efforts: ['low', 'high'],
+        defaultEffort: 'low',
+        enabled: true,
+        source: 'harness' as const,
+      }));
+      let state: 'ok' | 'failing' | 'held' = 'ok';
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let process = defaults();
+      const read = (body: () => unknown) => async () => {
+        if (state === 'failing') return problem(503, 'FAILED', 'defaults unavailable');
+        if (state === 'held') await held;
+        return Response.json(body());
+      };
+      const path = level === 'owner' ? '/settings' : '/system/model-defaults';
+      api.override(
+        `GET ${path}`,
+        read(() => (level === 'owner' ? api.settingsValues : process)),
+      );
+      const change = vi.fn();
+      renderWith(nodeForm(kind, saved, change), '/', api);
+      await expectDefault('low');
+      const known = [
+        ['Default (low)', false],
+        ...(saved ? [[`${saved} (not supported by this model)`, true]] : []),
+        ['low', false],
+        ['high', false],
+      ];
+      expect(effortOptions()).toEqual(known);
+      if (level === 'owner') api.settingsValues = { defaults: defaults('gpt-6.1-sol', 'high') };
+      else process = defaults('gpt-6.1-sol', 'high');
+      state = 'failing';
+      act(() => {
+        window.dispatchEvent(new Event('focus'));
+      });
+      await expectDefault('unavailable');
+      // Only efforts every enabled model supports are offered; a saved one outside them is
+      // qualified as unknown, never shown as an ordinary choice or as known unsupported.
+      const unknown = [
+        ['Default (unavailable)', false],
+        ...(saved ? [[`${saved} (effort support unknown)`, true]] : []),
+        ['low', false],
+        ['high', false],
+      ];
+      expect(effortOptions()).toEqual(unknown);
+      if (saved)
+        expect(screen.getByLabelText('Effort', { exact: true })).toHaveAccessibleDescription(
+          /Effort support is unknown until the inherited model can be read/,
+        );
+      const reads = () =>
+        api.calls.filter((call) => call.method === 'GET' && call.path === path).length;
+      const before = reads();
+      state = 'held';
+      act(() => {
+        window.dispatchEvent(new Event('focus'));
+      });
+      await waitFor(() => expect(reads()).toBeGreaterThan(before));
+      expect(effortOptions()).toEqual(unknown);
+      state = 'ok';
+      act(() => {
+        release();
+      });
+      await expectDefault('high');
+      expect(effortOptions()).toEqual([['Default (high)', false], ...known.slice(1)]);
+      expect(change).not.toHaveBeenCalled();
+    },
+  );
