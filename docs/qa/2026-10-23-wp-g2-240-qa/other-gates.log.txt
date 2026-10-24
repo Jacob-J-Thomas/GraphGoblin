@@ -1,0 +1,36 @@
+pnpm.cmd : $ node tooling/scripts/check-layers.mjs
+At line:5 char:5
++ & { pnpm.cmd check:layers; pnpm.cmd check:deps; pnpm.cmd check:tokens ...
++     ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/scripts/check-layers.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Layer rules: OK
+pnpm.cmd : $ depcruise packages apps --config .dependency-cruiser.cjs
+At line:5 char:28
++ & { pnpm.cmd check:layers; pnpm.cmd check:deps; pnpm.cmd check:tokens ...
++                            ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ depcruise pac...ncy-cruiser.cjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+
+x 1 dependency violations (0 errors, 1 warnings). 909 modules, 3714 dependencies cruised.
+
+pnpm.cmd : $ node tooling/scripts/check-design-tokens.mjs
+At line:5 char:49
++ ... .cmd check:layers; pnpm.cmd check:deps; pnpm.cmd check:tokens; pnpm.c ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node tooling/...sign-tokens.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Design tokens: OK (169 files checked)
+pnpm.cmd : $ prettier --check .
+At line:5 char:72
++ ... .cmd check:deps; pnpm.cmd check:tokens; pnpm.cmd format:check } 2>&1  ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ prettier --check .:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Checking formatting...

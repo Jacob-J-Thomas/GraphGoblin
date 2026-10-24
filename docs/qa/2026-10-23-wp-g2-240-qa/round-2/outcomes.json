@@ -1,0 +1,71 @@
+{
+  "primaryBrowser": {
+    "exitCode": 0,
+    "checks": 52
+  },
+  "supplemental": {
+    "exitCode": 0,
+    "checks": 4
+  },
+  "raceInitialAttempt": {
+    "exitCode": 1,
+    "completedProductChecks": 6,
+    "reason": "Loops fault injection also intercepted HTML navigation; QA route corrected"
+  },
+  "raceContinuation": {
+    "exitCode": 0,
+    "combinedChecks": 14
+  },
+  "coverage": {
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1",
+    "exitCode": 1,
+    "finished": "2026-10-24T08:53:41.0715150Z"
+  },
+  "format": {
+    "command": "pnpm.cmd format:check",
+    "exitCode": 0,
+    "durationSeconds": 106.68499539999999
+  },
+  "serverLogs": [
+    {
+      "name": "race-server-1440.log.txt",
+      "starts": 2,
+      "stops": 2
+    },
+    {
+      "name": "race-server-390.log.txt",
+      "starts": 1,
+      "stops": 1
+    },
+    {
+      "name": "server-1440.log.txt",
+      "starts": 3,
+      "stops": 3
+    },
+    {
+      "name": "server-390.log.txt",
+      "starts": 3,
+      "stops": 3
+    },
+    {
+      "name": "startup-server.log.txt",
+      "starts": 1,
+      "stops": 1
+    },
+    {
+      "name": "supplemental-server-1440.log.txt",
+      "starts": 3,
+      "stops": 3
+    },
+    {
+      "name": "supplemental-server-390.log.txt",
+      "starts": 3,
+      "stops": 3
+    }
+  ],
+  "errorBoundaryIsolated": {
+    "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/components/ErrorBoundary.test.tsx --maxWorkers=1",
+    "exitCode": 0,
+    "reason": "The full run failed to start this worker; no test body in this file ran. No whole-suite rerun."
+  }
+}

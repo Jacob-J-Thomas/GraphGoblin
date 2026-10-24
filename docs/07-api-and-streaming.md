@@ -421,12 +421,14 @@ This sequence cursor remains a number; it is not interchangeable with list curso
 
 Runs and Events append older rows through a new outline **Load more** button.
 Filters remain part of the query key and every page request; changing a filter selects
-its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
-filters. The control is busy only during a next-page fetch, so background polling does
+its own history. Runs expose loop/status/parent selects; Events displays active `type` and
+`before` filters from its URL. The control is busy only during a next-page fetch, so background polling does
 not block it. End-of-list text appears after an append and receives keyboard focus
 when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
 show an error with a retry through the same button. Runs retain their five-second polling;
-Events retain pending-delivery polling. No manual Events refresh is added here.
+Events retain pending-delivery polling for existing rows, with loaded membership and cursors
+kept stable. A separate `limit=1` read announces newer arrivals; **Refresh** deliberately
+reloads the newest page within the same filters. See [09](09-frontend-and-pwa.md) for the page behaviour (#240).
 
 ### Pinned definitions (ADR-0041)
 

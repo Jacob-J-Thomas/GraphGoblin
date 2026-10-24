@@ -19,7 +19,14 @@ import type {
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
 import { HarnessPreflightSchema } from '@graphgoblin/contracts';
-import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from './context.js';
 
@@ -270,22 +277,57 @@ export function usePreflight() {
 }
 
 const PENDING_EVENT_REFRESH_MS = 2_000;
+// A single newest row is enough for an availability notice; never count or scan history.
+const NEW_EVENT_CHECK_MS = 2_000;
+type InboundPage = Awaited<ReturnType<typeof events.list>>;
 
 export function useInboundEvents(query: ListEventsQuery = {}) {
   const client = useApi();
-  return useInfiniteQuery({
-    queryKey: [...keys.events, query],
+  const cache = useQueryClient();
+  const queryKey = [...keys.events, query];
+  const manualRefresh = useMutation({
+    mutationKey: [...keys.events, 'refresh', query],
+    mutationFn: () => events.list(client, query),
+    networkMode: 'always',
+    onSuccess: async (page) => {
+      // Commit a complete replacement only after it arrives. Cancel older reads so they
+      // cannot overwrite it; a failed refresh leaves every loaded page and cursor intact.
+      await cache.cancelQueries({ queryKey, exact: true });
+      cache.setQueryData<InfiniteData<InboundPage>>(queryKey, {
+        pages: [page],
+        pageParams: [query.cursor],
+      });
+    },
+  });
+  const history = useInfiniteQuery({
+    queryKey,
+    enabled: !manualRefresh.isPending,
     initialPageParam: query.cursor,
-    queryFn: ({ pageParam, signal }) =>
-      events.list(
+    queryFn: async ({ pageParam, signal }) => {
+      const page = await events.list(
         client,
         {
           ...query,
           ...(pageParam !== undefined ? { cursor: pageParam } : {}),
         },
         { signal },
-      ),
+      );
+      const loaded = cache.getQueryData<InfiniteData<InboundPage>>(queryKey);
+      const index = loaded?.pageParams.indexOf(pageParam) ?? -1;
+      const previous = loaded?.pages[index];
+      if (!previous) return page;
+      // Receipt recovery may update existing rows, but background reads must never replace
+      // membership or paging boundaries. Only a successful manual refresh replaces them.
+      const updates = new Map(page.items.map((event) => [event.id, event]));
+      return {
+        ...previous,
+        items: previous.items.map((event) => updates.get(event.id) ?? event),
+      };
+    },
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
     refetchInterval: (query) =>
       query.state.data?.pages.some((page) =>
         page.items.some((event) => event.delivery?.state === 'pending'),
@@ -293,6 +335,37 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
         ? PENDING_EVENT_REFRESH_MS
         : false,
   });
+  const newest = useQuery({
+    queryKey: ['newest-inbound-event', query],
+    queryFn: ({ signal }) =>
+      events.list(
+        client,
+        {
+          ...(query.type ? { type: query.type } : {}),
+          ...(query.before ? { before: query.before } : {}),
+          limit: 1,
+        },
+        { signal },
+      ),
+    enabled: history.data !== undefined,
+    refetchInterval: NEW_EVENT_CHECK_MS,
+  });
+  const first = history.data?.pages[0]?.items[0];
+  const latest = newest.data?.items[0];
+  const newerAvailable =
+    latest !== undefined &&
+    (first === undefined ||
+      latest.receivedAt > first.receivedAt ||
+      (latest.receivedAt === first.receivedAt && latest.id > first.id));
+  return {
+    ...history,
+    newerAvailable,
+    newerCheckFailed: newest.isError,
+    isRefreshing: manualRefresh.isPending,
+    refreshFailed: manualRefresh.isError,
+    hasRefreshed: manualRefresh.isSuccess,
+    refresh: () => manualRefresh.mutate(),
+  };
 }
 
 /** The control enables this only once its expression and zone have stopped changing. */

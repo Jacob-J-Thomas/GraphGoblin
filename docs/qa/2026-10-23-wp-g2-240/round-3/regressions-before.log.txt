@@ -1,0 +1,943 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-240/apps/web
+
+ ❯ src/events/EventsPage.recovery.test.tsx (4 tests | 4 failed) 13668ms
+   ❯ Events refresh recovery and orientation (#240) (4)
+     × keeps both loaded pages during a Refresh and after failure, then commits a successful newest page 2695ms
+     × clears each filter with the keyboard, preserves other parameters and returns focus to Refresh 310ms
+     × announces that a successful Refresh is showing the newest events in the existing live region 5304ms
+     × reports a failed check alongside an existing arrival notice and clears only the failure on recovery 5355ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web exec vitest run src/ev ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events/EventsPage.recovery.test.tsx > Events refresh recovery and orientation (#240) > keeps both loaded 
+pages during a Refresh and after failure, then commits a successful newest page
+Error: expect(element).toBeInTheDocument()
+
+element could not be found in the document
+ ❯ src/events/EventsPage.recovery.test.tsx:72:22
+     70|       await refresh(user);
+     71|       await waitFor(() => expect(hold).toBe(false));
+     72|       expect(oldRow).toBeInTheDocument();
+       |                      ^
+     73|       expect(screen.getAllByRole('row')).toHaveLength(201);
+     74|       expect(screen.getByTestId('location')).toHaveTextContent(path);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/events/EventsPage.recovery.test.tsx > Events refresh recovery and orientation (#240) > clears each filter 
+with the keyboard, preserves other parameters and returns focus to Refresh
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Clear type filter"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  <header
+    class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 
+text-inverse max-sm:gap-2 max-sm:px-4"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Menu":
+  <button
+    aria-controls="_r_2_"
+    aria-expanded="false"
+    class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse 
+px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus sm:hidden"
+    type="button"
+  />
+
+  Name "Refresh":
+  <button
+    class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong 
+bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md 
+pointer-coarse:h-11"
+    type="button"
+  />
+
+  --------------------------------------------------
+  navigation:
+
+  Name "Main":
+  <nav
+    aria-label="Main"
+    class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute 
+max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+    id="_r_2_"
+  />
+
+  --------------------------------------------------
+  link:
+
+  Name "Loops":
+  <a
+    class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+    data-discover="true"
+    href="/loops"
+  />
+
+  Name "Runs":
+  <a
+    class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+    data-discover="true"
+    href="/runs"
+  />
+
+  Name "Events":
+  <a
+    aria-current="page"
+    class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+    data-discover="true"
+    href="/events"
+  />
+
+  Name "Settings":
+  <a
+    class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+    data-discover="true"
+    href="/settings"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Events":
+  <h1
+    class="text-2xl leading-tight font-bold tracking-tight text-heading"
+  />
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  <span
+    class="text-sm text-muted"
+    role="status"
+  />
+
+  Name "":
+  <output
+    data-testid="location"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p
+    class="text-sm text-muted"
+  />
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  <table
+    class="w-full border-separate border-spacing-0 text-left [&_tbody_tr]:transition-colors 
+[&_tbody_tr:hover]:bg-surface-hover [&_tbody_tr:last-child>td]:border-b-0 table-stack-lg"
+  />
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  <thead />
+
+  Name "":
+  <tbody />
+
+  --------------------------------------------------
+  row:
+
+  Name "Received Type Source Delivery Dedupe key Started runs Payload":
+  <tr />
+
+  Name "10/2/2026, 7:00:00 AM chosen api not tracked - none "chosen-row"":
+  <tr />
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Received":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  Name "Type":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  Name "Source":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  Name "Delivery":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  Name "Dedupe key":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  Name "Started runs":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  Name "Payload":
+  <th
+    class="border-b border-default bg-surface-sunken px-4 py-2.5 text-xs font-semibold tracking-wide 
+whitespace-nowrap text-table-head uppercase"
+  />
+
+  --------------------------------------------------
+  cell:
+
+  Name "10/2/2026, 7:00:00 AM":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle text-sm whitespace-nowrap text-muted"
+    data-label="Received"
+  />
+
+  Name "chosen":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle wrap-anywhere"
+    data-label="Type"
+  />
+
+  Name "api":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle text-sm"
+    data-label="Source"
+  />
+
+  Name "not tracked":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle text-sm"
+    data-label="Delivery"
+  />
+
+  Name "-":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle text-sm wrap-anywhere"
+    data-label="Dedupe key"
+  />
+
+  Name "none":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle text-sm"
+    data-label="Started runs"
+  />
+
+  Name ""chosen-row"":
+  <td
+    class="border-b border-default px-4 py-3.5 align-middle"
+    data-label="Payload"
+  />
+
+  --------------------------------------------------
+  code:
+
+  Name "":
+  <code />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_2_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_2_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"
+            [...
+ ❯ Object.getElementError 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/events/EventsPage.recovery.test.tsx:109:32
+    107|       await screen.findByTestId('payload-chosen-row');
+    108|       const button = screen.getByRole('button', { name: 'Refresh', exa…
+    109|       const typeClear = screen.getByRole('button', { name: 'Clear type…
+       |                                ^
+    110|       button.focus();
+    111|       await user.tab();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/events/EventsPage.recovery.test.tsx > Events refresh recovery and orientation (#240) > announces that a 
+successful Refresh is showing the newest events in the existing live region
+TestingLibraryElementError: Unable to find an element with the text: Showing the newest events.. This could be because 
+the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make 
+your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_4_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_4_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"
+            [...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_4_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_4_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"
+            [...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/events/EventsPage.recovery.test.tsx:138:36
+    136|       await screen.findByTestId('payload-loaded');
+    137|       await refresh(user);
+    138|       const message = await screen.findByText('Showing the newest even…
+       |                                    ^
+    139|       expect(message.closest('[role="status"]')).toBeInTheDocument();
+    140|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/events/EventsPage.recovery.test.tsx > Events refresh recovery and orientation (#240) > reports a failed 
+check alongside an existing arrival notice and clears only the failure on recovery
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Could not check for new events
+Received:
+  New events available
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="flex min-h-screen flex-col bg-surface-app text-default"
+      >
+        <header
+          class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+        >
+          <span
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  01:28:56
+            class="inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-[30px] shrink-0"
+              focusable="false"
+              viewBox="0 0 32 32"
+            >
+              <path
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                d="M10.4 11.1 .3 3 6 17.4Z"
+              />
+              <path
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                d="M21.6 11.1 31.7 3 26 17.4Z"
+              />
+              <path
+                class="fill-mascot-shade"
+                d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+              />
+              <path
+                class="fill-mascot-shade"
+                d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+              />
+              <rect
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                height="17.4"
+                rx="6.2"
+                width="22"
+                x="5"
+                y="8.8"
+              />
+              <circle
+                class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+                cx="5"
+                cy="20.2"
+                r="2.2"
+              />
+              <circle
+                class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+                cx="27"
+                cy="20.2"
+                r="2.2"
+              />
+              <path
+                class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+                d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+              />
+              <path
+                class="fill-mascot-ink"
+                d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+              />
+              <path
+                class="fill-mascot-ink"
+                d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+              />
+              <circle
+                class="fill-mascot-glint"
+                cx="13.3"
+                cy="17.2"
+                r=".7"
+              />
+              <circle
+                class="fill-mascot-glint"
+                cx="18.7"
+                cy="17.2"
+                r=".7"
+              />
+              <path
+                class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+                d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+              />
+              <path
+                class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+                d="M16.6 21.9l1.9-.5-.6 2.3Z"
+              />
+            </svg>
+            <span>
+              Graph
+              <span
+                class="text-accent"
+              >
+                Goblin
+              </span>
+            </span>
+          </span>
+          <button
+            aria-controls="_r_6_"
+            aria-expanded="false"
+            class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-4 shrink-0"
+              data-icon="menu"
+              fill="none"
+              focusable="false"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+              />
+            </svg>
+            Menu
+          </button>
+   Duration  54.47s (transform 41%, tests 26%, import 15%, environment 14%, setup 4%)
+
+  Transform  transforming modules took 22.11s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+          <nav
+            aria-label="Main"
+            class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+            id="_r_6_"
+          >
+            <a
+              class="group relative inline-flex items-center gap-2 px-3.5 font-medium 
+text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold 
+aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 
+max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+              data-discover="true"
+              href="/loops"
+            [3...
+ ❯ timeout src/events/EventsPage.recovery.test.tsx:163:42
+    161|       fail = true;
+    162|       await poll();
+    163|       await waitFor(() => expect(region).toHaveTextContent('Could not …
+       |                                          ^
+    164|       expect(region).toHaveTextContent('New events available');
+    165|       expect(screen.getByTestId('payload-loaded')).toBeInTheDocument();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:97:7
+ ❯ waitFor 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:36:10
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:164:54
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\web
+
+EXIT_CODE=1
