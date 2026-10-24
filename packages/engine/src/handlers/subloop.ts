@@ -230,13 +230,16 @@ async function finishWithChild(
   ctx: NodeContext<'subloop'>,
   child: ChildOutcome,
 ): Promise<NodeResult> {
-  await ctx.services.record({
-    type: 'child_run.finished',
-    nodeId: ctx.node.id,
-    childRunId: child.runId,
-    status: child.status,
-    ...(child.outcome ? { outcome: child.outcome } : {}),
-  });
+  // The completion and this node's `node.finished` are separate writes. A process that died
+  // between them re-runs this visit on recovery, so record the completion only once (#398).
+  if (!completionRecorded(await ctx.services.events(), ctx.node.id, child.runId))
+    await ctx.services.record({
+      type: 'child_run.finished',
+      nodeId: ctx.node.id,
+      childRunId: child.runId,
+      status: child.status,
+      ...(child.outcome ? { outcome: child.outcome } : {}),
+    });
   // Ordinary failure rules (#251): the child's execution error or cancellation is the parent's,
   // exactly as if the failing work had run inline. An authored outcome (Success, Failure or
   // Exhausted exit) is data for the output mapping.
@@ -270,6 +273,30 @@ function failedSinceAwaiting(events: readonly RunEvent[], nodeId: string): boole
       event.nodeId === nodeId
     )
       return false;
+  }
+  return false;
+}
+
+/**
+ * Whether this visit already recorded the child's completion and nothing has happened since that
+ * makes a new record true. A `run.failed` after the record means the run was explicitly resumed
+ * from that failure, so the resumed child's completion is a new fact and is recorded again.
+ */
+function completionRecorded(
+  events: readonly RunEvent[],
+  nodeId: string,
+  childRunId: string,
+): boolean {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i] as RunEvent;
+    if (event.type === 'run.failed') return false;
+    if (event.type === 'node.finished' && event.nodeId === nodeId) return false;
+    if (
+      event.type === 'child_run.finished' &&
+      event.nodeId === nodeId &&
+      event.childRunId === childRunId
+    )
+      return true;
   }
   return false;
 }

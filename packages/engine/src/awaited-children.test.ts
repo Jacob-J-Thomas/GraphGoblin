@@ -664,4 +664,37 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     await recover(e);
     expectOneContinuation(e, parent.id);
   });
+
+  it('a parent that dies after recording its child completion records it once after recovery (#398)', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 3 });
+    const leaf = e.publish(inputLoop('completion-leaf'));
+    const parent = await e.runToIdle(e.publish(withAfter('completion-parent', leaf.loopId)).loopId);
+    const [kid] = await e.ports.runs.listChildren(parent.id);
+    // The child's completion is durable on the parent; the process dies writing the subloop
+    // node's own `node.finished`, a separate append.
+    const append = e.ports.events.append.bind(e.ports.events);
+    let died = false;
+    vi.spyOn(e.ports.events, 'append').mockImplementation(async (runId, drafts, options) => {
+      if (
+        runId === parent.id &&
+        drafts.some((draft) => draft.type === 'node.finished' && draft.nodeId === 'sub')
+      ) {
+        died = true;
+        return hang();
+      }
+      return append(runId, drafts, options);
+    });
+    await e.manager.provideInput(kid!.id, await waitIdOf(e, kid!.id), 'completed');
+    await vi.waitFor(() => expect(died).toBe(true));
+    expect(count(e, parent.id, (event) => event.type === 'child_run.finished')).toBe(1);
+    vi.restoreAllMocks();
+
+    const recovered = await recover(e);
+    expect((await recovered.getRun(parent.id))?.status).toBe('succeeded');
+    expectOneContinuation(e, parent.id);
+    expect((await recovered.getRun(parent.id))?.result).toMatchObject({
+      child: { result: 'completed' },
+      after: true,
+    });
+  });
 });
