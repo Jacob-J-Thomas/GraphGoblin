@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import type { RunAdmission, WebhookFailureCode } from '@graphgoblin/engine';
+import type { RunAdmission, WebhookFailureCode, EventFailureCode } from '@graphgoblin/engine';
 import type {
   ClassifierModelEntry,
   ContextThread,
@@ -335,8 +335,50 @@ export const webhookReceipts = sqliteTable(
   ],
 );
 
+/** Separate from URL webhook receipts: request keys resolve the original targeted delivery. */
+export const eventReceipts = sqliteTable(
+  'event_receipts',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    loopId: text('loop_id').notNull(),
+    versionId: text('version_id').notNull(),
+    triggerNodeId: text('trigger_node_id').notNull(),
+    inboundId: text('inbound_id').notNull(),
+    eventType: text('event_type').notNull(),
+    requestKey: text('request_key'),
+    nodeKey: text('node_key'),
+    status: text('status', { enum: ['deduplicated', 'pending', 'admitted', 'failed'] }).notNull(),
+    intent: text('intent', { mode: 'json' }).$type<RunAdmission>(),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: text('next_attempt_at'),
+    failureCode: text('failure_code').$type<EventFailureCode>(),
+  },
+  (t) => [
+    uniqueIndex('event_receipts_inbound_idx').on(t.inboundId),
+    uniqueIndex('event_receipts_request_idx').on(
+      t.ownerId,
+      t.loopId,
+      t.triggerNodeId,
+      t.eventType,
+      t.requestKey,
+    ),
+    index('event_receipts_due_idx').on(t.status, t.nextAttemptAt),
+    index('event_receipts_node_key_idx').on(t.ownerId, t.loopId, t.triggerNodeId, t.nodeKey),
+    check(
+      'event_receipt_status_check',
+      sql`${t.status} IN ('deduplicated','pending','admitted','failed')`,
+    ),
+    check(
+      'event_receipt_intent_check',
+      sql`(${t.status} = 'deduplicated' AND ${t.intent} IS NULL) OR (${t.status} <> 'deduplicated' AND ${t.intent} IS NOT NULL)`,
+    ),
+  ],
+);
+
 export const schema = {
   webhookReceipts,
+  eventReceipts,
   classifierModels,
   loops,
   loopVersions,

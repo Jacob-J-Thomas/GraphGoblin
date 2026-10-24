@@ -1,0 +1,45 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+ ❯ src/targeted-events.test.ts (17 tests | 1 failed) 4518ms
+   × runs independent requests concurrently within configured capacity 213ms
+pnpm.cmd : 
+At line:165 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/targeted-event ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > runs independent requests concurrently within configured capacity
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation 
+failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the 
+schema","errors":[{"path":"/definition/nodes/1/config/prompt","message":"Invalid input: expected object, received 
+string"}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:96:45
+     94|         headers,
+     95|       });
+     96|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+     97|       const id = created.json<{ loop: { id: string } }>().loop.id;
+     98|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/targeted-events.test.ts:164:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  18:38:48
+   Duration  14.78s (import 38%, tests 32%, transform 30%)
+
+  Transform  transforming modules took 4.30s · 30% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

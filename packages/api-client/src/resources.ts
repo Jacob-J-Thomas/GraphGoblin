@@ -260,7 +260,7 @@ export const classifierModels = {
 };
 
 export const events = {
-  /** Publish an inbound event on the bus. */
+  /** Durably accept an external Event for one published loop and eligible trigger. */
   publish: async (client: GraphGoblinClient, event: RequestBody<'/events', 'post'>) =>
     unwrap(await client.POST('/events', { body: event })),
   list: async (

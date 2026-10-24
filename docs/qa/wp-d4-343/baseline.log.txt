@@ -1,0 +1,111 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+ ❯ src/targeted-events.test.ts (3 tests | 3 failed) 1966ms
+   ❯ targeted Events (#343) (3)
+     × refuses a missing target without broadcasting 1389ms
+     × records one explicit destination and a durable admission identity 332ms
+     × refuses and logs the 997-level payload with a bounded diagnostic 241ms
+pnpm.cmd : 
+At line:50 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/targeted-event ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > targeted Events (#343) > refuses a missing target without broadcasting
+AssertionError: expected 202 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 202
+
+ ❯ src/targeted-events.test.ts:19:33
+     17|     await t.publishLoop(eventLoop());
+     18|     const response = await t.app.inject({ method: 'POST', url: '/event…
+     19|     expect(response.statusCode).toBe(400);
+       |                                 ^
+     20|     expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' …
+     21|     expect((await t.app.inject('/events')).json()).toMatchObject({ ite…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/targeted-events.test.ts > targeted Events (#343) > records one explicit destination and a durable admission 
+identity
+AssertionError: expected { …(8) } to match object { target: { …(2) }, …(2) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "admissionId": Any<String>,
+-   "delivery": {
+-     "state": "pending",
+-   },
+-   "target": {
+-     "loopId": "01M3Y7RKG0B24Q6QDY2YSPNWE5",
+-     "triggerNodeId": "start",
+-   },
++   "duplicate": false,
++   "id": "01M3Y7RKG0B24Q6QDY2YSPNWE9",
++   "ownerId": "local",
++   "payload": null,
++   "receivedAt": "2026-10-02T12:00:00.000Z",
++   "runIds": [
++     "01M3Y7RKG0B24Q6QDY2YSPNWEA",
++     "01M3Y7RKG0B24Q6QDY2YSPNWEC",
++   ],
++   "source": "api",
++   "type": "ready",
+  }
+
+ ❯ src/targeted-events.test.ts:28:29
+     26|     const response = await t.app.inject({ method: 'POST', url: '/event…
+     27|     expect(response.statusCode).toBe(202);
+     28|     expect(response.json()).toMatchObject({ target: { loopId, triggerN…
+       |                             ^
+     29|     await t.container.manager.waitForWebhookRecovery();
+     30|     await t.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/targeted-events.test.ts > targeted Events (#343) > refuses and logs the 997-level payload with a bounded 
+diagnostic
+AssertionError: expected 202 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 202
+
+ ❯ src/targeted-events.test.ts:38:33
+     36|     const payload = '{"loopId":' + JSON.stringify(loopId) + ',"type":"…
+     37|     const response = await t.app.inject({ method: 'POST', url: '/event…
+     38|     expect(response.statusCode).toBe(422);
+       |                                 ^
+     39|     expect(response.json()).toMatchObject({ code: 'EVENT_PAYLOAD_TOO_D…
+     40|     expect(response.body.length).toBeLessThan(512);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  18:32:18
+   Duration  15.04s (transform 48%, import 38%, tests 13%)
+
+  Transform  transforming modules took 7.06s · 48% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

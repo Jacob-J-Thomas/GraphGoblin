@@ -201,7 +201,11 @@ type Invocation = {
   id: string;
   source:
     'manual.ui' | 'manual.api' | 'manual.mcp' | 'cron' | 'webhook' | 'event' | 'poll' | 'subloop';
-  caller?: { kind: 'user' | 'api-key' | 'mcp-client' | 'run'; id: string; label?: string };
+  caller?: {
+    kind: 'user' | 'api-key' | 'mcp-client' | 'system' | 'run';
+    id: string;
+    label?: string;
+  };
   trigger: {
     nodeId: string;
     kind: TriggerKind;
@@ -304,3 +308,5 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 `/gates` is engine-owned; authored mutation patches cannot alter counts. Graph validation reports a noncyclic repeat at its precise `config.*.repeat` path (`REPEAT_ROUTE_NOT_CYCLIC`), and an unconnected Limit reached at `config.maxPasses` (`PORT_UNCONNECTED`). Schema validation identifies missing limits and extra repeat markers directly.
+
+Targeted external Events pin one published loop version and one matching Event trigger before acknowledgement (ADR-0048). Their immutable invocation retains `source: 'event'`, `caller: {kind: 'system', id: 'event:<inboundEventId>'}` and `trigger.eventType`; the inbound record exposes the exact target and a stable admission identity while run creation is pending. A keyed retry refers to that original invocation, rather than creating a caller or repinning the latest version.

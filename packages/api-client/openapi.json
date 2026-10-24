@@ -20803,7 +20803,7 @@
     },
     "/events": {
       "post": {
-        "summary": "Publish an inbound event; fires matching event triggers",
+        "summary": "Accept an external Event for one explicit published loop and event trigger",
         "tags": [
           "events"
         ],
@@ -20814,6 +20814,15 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "loopId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "triggerNodeId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
                   "type": {
                     "type": "string",
                     "minLength": 1,
@@ -20828,8 +20837,10 @@
                   }
                 },
                 "required": [
+                  "loopId",
                   "type"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -21118,6 +21129,29 @@
                         "configurationAvailable",
                         "enabled",
                         "createdAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "admissionId": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "object",
+                      "properties": {
+                        "loopId": {
+                          "type": "string"
+                        },
+                        "versionId": {
+                          "type": "string"
+                        },
+                        "triggerNodeId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "loopId",
+                        "versionId",
+                        "triggerNodeId"
                       ],
                       "additionalProperties": false
                     },
@@ -21508,6 +21542,29 @@
                               "configurationAvailable",
                               "enabled",
                               "createdAt"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "admissionId": {
+                            "type": "string"
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "loopId": {
+                                "type": "string"
+                              },
+                              "versionId": {
+                                "type": "string"
+                              },
+                              "triggerNodeId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "loopId",
+                              "versionId",
+                              "triggerNodeId"
                             ],
                             "additionalProperties": false
                           },

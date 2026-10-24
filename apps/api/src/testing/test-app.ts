@@ -39,6 +39,7 @@ export interface TestApp {
 }
 
 export interface TestAppOptions {
+  tempPrefix?: string;
   clock?: FakeClock;
   harnesses?: Partial<Record<HarnessId, HarnessPort>>;
   requireApiKey?: boolean;
@@ -49,7 +50,7 @@ export interface TestAppOptions {
 
 /** An API over an in-memory database with fake harness, deciders, and structured completion. */
 export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-'));
+  const dataDir = await mkdtemp(join(tmpdir(), options.tempPrefix ?? 'gg-api-'));
   const config = loadConfig({
     GG_DATA_DIR: dataDir,
     GG_DB_URL: ':memory:',

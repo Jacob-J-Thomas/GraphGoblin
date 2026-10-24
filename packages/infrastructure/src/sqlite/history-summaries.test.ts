@@ -31,6 +31,8 @@ describe('SQLite history queries', () => {
       migration.sql.some((sql) => sql.includes('runs_loop_owner_history_idx')),
     );
     if (!historyMigration) throw new Error('Missing shipped history-index migration');
+    // Rewind structure as well as the ledger before replaying newer migrations.
+    await handle.client.execute('DROP TABLE event_receipts');
     const removed = await handle.client.execute({
       sql: 'DELETE FROM __drizzle_migrations WHERE created_at >= ?',
       args: [historyMigration.folderMillis],

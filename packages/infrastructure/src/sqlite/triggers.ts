@@ -24,7 +24,13 @@ import type {
   ScheduleStore,
 } from '../scheduler/schedule-store.js';
 import type { Database } from './db.js';
-import { inboundEvents, schedules, webhookEndpoints, webhookReceipts } from './schema.js';
+import {
+  inboundEvents,
+  eventReceipts,
+  schedules,
+  webhookEndpoints,
+  webhookReceipts,
+} from './schema.js';
 
 // -----------------------------------------------------------------------------
 // Schedules
@@ -315,6 +321,8 @@ export interface InboundEventRecord {
   receivedAt: string;
   /** Runs this event started; empty when it was filtered out or matched nothing. */
   runIds: string[];
+  target?: { loopId: string; versionId: string; triggerNodeId: string };
+  admissionId?: string;
   delivery?: {
     state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
     attempts: number;
@@ -433,19 +441,54 @@ export class SqliteInboundEvents {
   private async withDelivery(records: InboundEventRecord[]): Promise<InboundEventRecord[]> {
     if (!records.length) return records;
     const receipts = await this.db
-      .select()
+      .select({ ...getTableColumns(webhookReceipts), runIds: inboundEvents.runIds })
       .from(webhookReceipts)
+      .innerJoin(inboundEvents, eq(inboundEvents.id, webhookReceipts.inboundId))
       .where(
         inArray(
           webhookReceipts.inboundId,
           records.map((r) => r.id),
         ),
       );
+    const targeted = await this.db
+      .select({
+        runIds: inboundEvents.runIds,
+        id: eventReceipts.id,
+        inboundId: eventReceipts.inboundId,
+        loopId: eventReceipts.loopId,
+        versionId: eventReceipts.versionId,
+        triggerNodeId: eventReceipts.triggerNodeId,
+        status: eventReceipts.status,
+        attempts: eventReceipts.attempts,
+        nextAttemptAt: eventReceipts.nextAttemptAt,
+        failureCode: eventReceipts.failureCode,
+      })
+      .from(eventReceipts)
+      .innerJoin(inboundEvents, eq(inboundEvents.id, eventReceipts.inboundId))
+      .where(
+        inArray(
+          eventReceipts.inboundId,
+          records.map((r) => r.id),
+        ),
+      );
     return records.map((record) => {
-      const receipt = receipts.find((r) => r.inboundId === record.id);
+      const target = targeted.find((r) => r.inboundId === record.id);
+      const receipt = target ?? receipts.find((r) => r.inboundId === record.id);
       return receipt
         ? {
             ...record,
+            // Receipt state and run links come from the same SQLite read snapshot.
+            runIds: receipt.runIds,
+            ...(target
+              ? {
+                  admissionId: target.id,
+                  target: {
+                    loopId: target.loopId,
+                    versionId: target.versionId,
+                    triggerNodeId: target.triggerNodeId,
+                  },
+                }
+              : {}),
             delivery: {
               state: receipt.status,
               attempts: receipt.attempts,

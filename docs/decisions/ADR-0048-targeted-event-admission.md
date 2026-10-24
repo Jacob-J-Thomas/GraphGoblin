@@ -1,0 +1,27 @@
+﻿# ADR-0048 - Durably admit one explicitly targeted external Event
+
+Date: 2026-10-23. Status: Accepted for the owner-approved bounded change #343.
+
+## Context
+
+The former `POST /events` stored an owner/type/key inbox row and iterated every matching published trigger. The stored row could outlive failed starts without a recoverable intent. One request could start unrelated loops, sequential starts delayed one another, and a key for one recipient suppressed another. Webhooks already have durable frozen receipts, and ADR-0044 keeps Events external to loop composition.
+
+## Decision
+
+Require `{loopId, type, payload?, dedupeKey?, triggerNodeId?}`. A new delivery resolves the caller's owned loop, its current published version and exactly one Event trigger whose `eventType` matches. An explicit trigger is required for ambiguity. Schema errors are 400 `VALIDATION_FAILED`; ownership-safe absence is 404 `LOOP_NOT_FOUND`; unpublished targets use 409 `VERSION_NOT_PUBLISHED`; unmatched or ambiguous entries use 422 `EVENT_TRIGGER_NOT_FOUND` or `EVENT_TRIGGER_AMBIGUOUS`. Failed authored key expressions use 422 `EVENT_KEY_EXPRESSION_FAILED`. No compatibility broadcast path remains.
+
+Add a separate `event_receipts` ledger in migration 0018. Under the existing admission/deletion lock, save the inbound Event, recipient, frozen complete run intent, subloop pins and allocated identities atomically before 202. Dispatch and execution follow asynchronously. Share the atomic run/thread/sequence-1 event/receipt/link commit with webhook admission; keep the webhook receipt ledger and public contracts separate. Pending Event receipts protect referenced loops from deletion. Only committed run admission populates `runIds`.
+
+A request key is permanent in owner/loop/trigger/type scope across versions. Concurrent retries return the original delivery and current truthful state. Retry lookup precedes selecting a new published version, after ownership validation, so republishing cannot alter an accepted destination. Multiple saved entry matches require an explicit trigger. An authored node expression retains its separate payload-key suppression and reserves pending keys as well as committed ones. Unkeyed repeats remain independent; no body hash suppresses input. Exactly-once external side effects are not promised.
+
+Recover through the existing nonoverlapping 15-second sweep, at most five due Event identities per sweep separately from webhook receipts. Eight failed admissions end with `EVENT_ADMISSION_EXHAUSTED`. Retry delays are 5 seconds doubling to a 300-second cap; deterministic identity conflicts and removed versions fail immediately as `EVENT_INTENT_CONFLICT` and `EVENT_TARGET_REMOVED`. This engineering budget bounds persistent faults while retaining enough retries for brief local failures. Unconfirmed saving returns 503 `EVENT_ADMISSION_FAILED`; sender retries should carry the same explicit key. A saved intent survives failed retry-metadata writes and is reconsidered at boot.
+
+Reuse the iterative `isJsonValue` and the shared `POLL_ITEM_MAX_NESTING_DEPTH` calculation. Payload container depth is at most `996 - 2 = 994`, with its root counted as zero: a receipt's `queued.initialThread` adds two containers relative to the runs' indexed `initial_thread`. The full saved intent must also remain readable by SQLite JSON1 for pending pin/key queries. Excess depth returns 422 `EVENT_PAYLOAD_TOO_DEEP` or `WEBHOOK_PAYLOAD_TOO_DEEP` before saving, with a bounded payload-free warning. It can never become an endlessly pending intent. Authentication and decoding still precede the webhook nesting check.
+
+## Consequences
+
+The API client and generated schemas require a target; MCP has no publishing tool and the web app does not post Events. Existing Events delivery rendering consumes the new states without a UI source change. GET/POST expose safe target metadata and admission identity, never the internal intent. The caller envelope remains a system Event identity.
+
+Migration 0018 is additive and has a fresh journal timestamp. It does not repair, infer targets for or rewrite old inbound/webhook history. Old broadcast rows retain their existing run links and have no tracked admission state. They do not reserve keys in the new targeted recipient namespace. Invalid stored history stays untouched. URL webhook targeting, raw authentication, Allow, permanent business-key consumption and exact `{accepted:true}` acknowledgement remain intact apart from the explicit depth refusal. Exit-to-Event chaining remains retired.
+
+Targeted Event request keys must contain well-formed Unicode (400 `VALIDATION_FAILED` otherwise); an authored key that cannot be stored as valid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization from changing an accepted identity.

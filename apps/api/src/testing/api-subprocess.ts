@@ -33,10 +33,10 @@ export function listening(port: number): Promise<boolean> {
   });
 }
 
-async function freePort(): Promise<number> {
-  const offset = Math.floor(Math.random() * 100);
-  for (let index = 0; index < 100; index++) {
-    const port = 5600 + ((offset + index) % 100);
+async function freePort(start = 5600, count = 100): Promise<number> {
+  const offset = Math.floor(Math.random() * count);
+  for (let index = 0; index < count; index++) {
+    const port = start + ((offset + index) % count);
     const server = createServer();
     const available = await new Promise<boolean>((resolve, reject) => {
       server.once('error', (error: NodeJS.ErrnoException) =>
@@ -46,7 +46,7 @@ async function freePort(): Promise<number> {
     });
     if (available) return port;
   }
-  throw new Error('No disposable API port is free in 5600-5699');
+  throw new Error(`No disposable API port is free in ${start}-${start + count - 1}`);
 }
 
 function launch(env: NodeJS.ProcessEnv, args: string[]) {
@@ -118,7 +118,9 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
   };
 }
 
-export async function createApiProcessFixture() {
+export async function createApiProcessFixture(
+  options: { prefix?: string; portStart?: number; portCount?: number } = {},
+) {
   try {
     await access(entry);
   } catch (cause) {
@@ -126,10 +128,10 @@ export async function createApiProcessFixture() {
       cause,
     });
   }
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-process-'));
+  const dataDir = await mkdtemp(join(tmpdir(), options.prefix ?? 'gg-api-process-'));
   const databaseFile = join(dataDir, 'graphgoblin.db');
   const lockPath = join(dataDir, 'graphgoblin.lock');
-  const port = await freePort();
+  const port = await freePort(options.portStart, options.portCount);
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(
       ([name]) =>
