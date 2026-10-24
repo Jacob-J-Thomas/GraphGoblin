@@ -1,0 +1,106 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792846241161,"pid":25224,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5760"}
+{"level":30,"time":1792846241162,"pid":25224,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5760,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-c7-224-2gWq9c","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792846241545,"pid":25224,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792846241552,"pid":25224,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.200799999998708,"msg":"request completed"}
+ ❯ src/retired-event-startup.test.ts (2 tests | 1 failed) 114859ms
+   ❯ cold start over a stored retired Event destination (#242) (2)
+     × starts with a published version holding one, refuses that loop per loop and serves the rest 87260ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ❯ src/shutdown-process.test.ts (11 tests | 1 failed | 3 skipped) 292156ms
+   × native drain rechecks a wake during delivery cleanup and completes its required child before closing controls 57396ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use 127.0.0.1:5762
+    at Server.setupListenHandle [as _listen2] (node:net:1937:16)
+    at listenInCluster (node:net:1994:12)
+    at node:net:2203:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 5762
+}
+
+ ❯ src/testing/api-subprocess.ts:109:27
+    107|       await eventually(() => {
+    108|         if (stdout.includes(message)) return true;
+    109|         if (exited) throw new Error(`API child exited before ${message…
+       |                           ^
+    110|         return false;
+    111|       }, timeoutMs);
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:186:7
+ ❯ src/retired-event-startup.test.ts:135:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/retired-event-startup.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/shutdown-process.test.ts > native drain rechecks a wake during delivery cleanup and completes its required child before closing controls
+TypeError: fetch failed
+ ❯ src/shutdown-process.test.ts:179:30
+    177|     held!.end('accepted');
+    178|     await eventually(async () => {
+    179|       const events = (await (await a.call('GET', `/runs/${delivered.id…
+       |                              ^
+    180|         items: { type: string }[];
+    181|       };
+ ❯ eventually src/testing/api-subprocess.ts:18:12
+ ❯ src/shutdown-process.test.ts:178:5
+
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:5762
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4078, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 5762 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 68 passed | 2 skipped (72)
+      Tests  2 failed | 1344 passed | 11 skipped (1357)
+   Start at  07:50:20
+   Duration  340.76s (tests 79%, import 17%, transform 3%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.03% ( 2132/2220 )
+Branches     : 92.31% ( 1381/1496 )
+Functions    : 93.64% ( 427/456 )
+Lines        : 97.47% ( 1932/1982 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure", "exit": 1, "seconds": 344.65}

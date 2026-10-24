@@ -128,6 +128,25 @@ outcome is not a resumable node failure. A run paused while parked (or while par
 to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
 keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
 
+## Thread reads and delayed snapshots (#116, ADR-0053)
+
+The durable event log determines the thread for both execution and observation. Domain
+`reconcileThread` is the shared owner: start from the actual admitted initial thread, or a
+checkpoint whose sequence exists in the observed history, then replay later durable events.
+Writers persist the open-visit replay state with the snapshot and sequence (ADR-0053); a
+completion event alone cannot prove that a different visit is closed. Current-thread reads
+without stored state replay the full prefix; reads never backfill it.
+An unsequenced checkpoint, one beyond that history, or one beyond a requested historical event
+is ignored. A `node.started` contributes its visit counter; a patch is applied only from a
+durable `node.finished`, once for its open visit. A failed or resumed unfinished node therefore
+exposes its start without exposing an uncommitted patch.
+
+`RunManager.getThread` uses this same rule as execution and the inspector, including during
+failure, resume and success. It never saves a repaired snapshot, advances the cursor, finalizes
+a run or changes execution state. Snapshots remain an optimization maintained by execution.
+Reads racing appends describe the event prefix they observed; a later read can observe more
+events. No cross-request transaction or global synchronization is implied.
+
 ## Which definition a run executes (Decided, ADR-0041)
 
 A run executes one immutable definition record for its whole life: the record its `versionId` names. Every executor start (the first, a wake after a wait, a resume, crash recovery) and every replay fork loads that record, never the loop's live draft. A published start pins the published version. A draft start (`allowDraft`, a test run) freezes the draft it read and validated into a `snapshot` record with its own id and the draft's number; the admission port commits the snapshot, the run, its initial thread and its `run.queued` event in one transaction. Editing, saving or publishing the draft afterwards never reaches the run. A snapshot cannot be started directly (`VERSION_NOT_PUBLISHED`), is not part of the version history, and storage triggers refuse its change, or its deletion while a run pins it.
@@ -563,3 +582,57 @@ loop controls, pass limits and any authored watchdogs to permit intentionally in
 execution, ending through authored exits, Cancel or an external/resource failure.
 GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
 Authors may use script/decision nodes for their own usage-aware behavior.
+
+## Deliberate shutdown (#224, ADR-0049)
+
+The container owns shutdown state. Normal stop closes independent admission and stops
+cron/poll sources and webhook retries. Started runs and descendants form the permitted
+family while drain is open; required children created during drain can still start.
+Independent queue entries remain durable and unstarted for the next process. New Events are
+refused with 503 before their inbound record or dedupe key is saved; cron leaves due slots
+untouched and refused poll candidates consume no durable dedupe key. Intake already accepted
+before drain holds a lease through its durable outcome. Its admitted independent runs can
+remain queued for restart; closing admission cannot strand a saved Event key without its work.
+`RunManager.withAdmission` reserves this boundary before a caller allocates receipts and
+provides a scoped `startRun`; the caller awaits all receipt, admission and linkage writes
+inside the callback. Manual, webhook, cron, poll and replay manager commands use the same
+lease accounting. The capability expires when the callback returns.
+
+D-038 defines completion as no active executor, no queued family member and no family wake
+already due. Future timers, input/signal waits, parents waiting on parked children and paused
+runs do not hold drain. Their status, waiting record and resumability survive normal stop
+and force unchanged. Input, signals, cancellation and timers work while drain is open: a
+wake holds drain until its continuation finishes or parks again. Due timer/timeout wakes
+are delivered before quiescence; after restart past wall-clock waits become eligible and
+paused runs remain paused.
+
+Quiescence is rechecked after every asynchronous cleanup observation, including delivery
+cleanup. Input, signal, timer and other mutating run commands acquire a work lease before
+their first await. Drain validates the lease generation, executor/queue state and nearest
+due wake, then seals further commands without an intervening await. A wake therefore either
+holds ownership through runnable completion or is refused with `SHUTTING_DOWN` before any
+write. A future timer stays durable when the seal wins. Required child continuations finish
+before SSE/HTTP close even when their parent woke during a held delivery response.
+
+`GG_SHUTDOWN_GRACE_MS` defaults to 300,000 ms (five minutes), an engineering choice to give
+interactive work time to finish. Expiry exposes `awaiting-choice` and logs wait/force controls;
+it never cancels work. `wait` has no hidden timer. Runnable quiescence is observed every
+50 ms to balance prompt completion and polling cost; ordinary timers retain `GG_TIMER_POLL_MS`.
+
+Explicit force aborts executors and queued family work, including queued children. An
+executor still committing a park when aborted is interrupted, unlike an existing durable
+park. Cleanup completes before release. `run.failed` with `RUN_INTERRUPTED_BY_STOP` retains
+node/attempt evidence, possible effects and a non-resumable outcome for interrupted work.
+Native cleanup errors retain `SCRIPT_TERMINATION_UNCONFIRMED` or
+`HARNESS_TERMINATION_UNCONFIRMED`. The five-second acknowledgement/close bound reports failed
+cleanup after force; it is never a normal-stop deadline. Only failures of this shutdown's
+own interruption block release in `force-failed`. Earlier failures are reported through
+`unconfirmedRunIds` without trapping a later stop. A further force explicitly acknowledges
+failed cleanup and exits code 1, retaining the failure and lock for next-start reclamation.
+A drain observation failure is separately `drain-failed`; incompatible controls return 409.
+
+D-021 still stops retry backoffs without cancelling the bounded in-flight delivery attempt;
+pending deliveries and webhook admissions recover on the next start. After runnable work
+and finalization settle, SSE closes, HTTP closes, timers/manager stop, SQLite closes and
+ownership is released. See [API controls](07-api-and-streaming.md) and
+[signals and Compose](11-security-and-distribution.md). #319 supplies the interactive UI.

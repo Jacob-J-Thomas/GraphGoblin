@@ -1,0 +1,99 @@
+{
+  "name": "08-default-config",
+  "startedAt": "2026-10-24T08:15:35.279Z",
+  "endedAt": "2026-10-24T08:15:48.555Z",
+  "checks": [
+    {
+      "name": "default grace is five minutes",
+      "pass": true,
+      "actual": 300000,
+      "expected": 300000
+    }
+  ],
+  "records": [
+    {
+      "at": "2026-10-24T08:15:41.964Z",
+      "kind": "key-cli",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "stdout": "Created API key \"Independent QA\" (id 01M5PFNPRETDJRNKHVFV6V2QDM, scopes *).\nCopy the token now; it is shown only this once and only its hash is stored:\n\n  [disposable-key]\n\nSend it as \"Authorization: Bearer <token>\", or paste it into the web app when it asks for a key.\n",
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-24T08:15:48.357Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:15:48.357Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-default-wdE2Cw",
+      "port": 5860,
+      "pid": 41264
+    },
+    {
+      "at": "2026-10-24T08:15:48.367Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "running",
+        "graceMs": 300000,
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:48.377Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 300000,
+        "startedAt": "2026-10-24T08:15:48.374Z",
+        "choiceAt": "2026-10-24T08:20:48.374Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:15:48.553Z",
+      "kind": "exit",
+      "action": "drain",
+      "response": {
+        "status": 202,
+        "data": {
+          "phase": "draining",
+          "graceMs": 300000,
+          "startedAt": "2026-10-24T08:15:48.374Z",
+          "choiceAt": "2026-10-24T08:20:48.374Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ]
+        }
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "elapsedMs": 171,
+      "lockExists": false
+    }
+  ]
+}

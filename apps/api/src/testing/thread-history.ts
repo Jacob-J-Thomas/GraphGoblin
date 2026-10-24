@@ -1,0 +1,152 @@
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  CURRENT_DEFINITION_FORMAT,
+  type ContextThread,
+  type LoopDefinitionInput,
+} from '@graphgoblin/contracts';
+import type { ReplayState } from '@graphgoblin/domain';
+import { RunManager, type ScriptPort } from '@graphgoblin/engine';
+import { SqliteRunRepository } from '@graphgoblin/infrastructure/sqlite';
+import { buildApp } from '../app.js';
+import { createContainer } from '../container.js';
+import { loadConfig } from '../config.js';
+
+/** Delayed writes injected at the public repository port. Events still commit to real SQLite. */
+class DelayedSnapshots extends SqliteRunRepository {
+  pending: { runId: string; thread: ContextThread; seq: number; replayState: ReplayState }[] = [];
+  override saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
+    this.pending.push({ runId, thread, seq, replayState });
+    return Promise.resolve();
+  }
+  async flush(): Promise<void> {
+    for (const item of this.pending.splice(0))
+      await super.saveThread(item.runId, item.thread, item.seq, item.replayState);
+  }
+}
+export const threadHistoryLoop: LoopDefinitionInput = {
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
+  name: 'Thread history reconciliation',
+  nodes: [
+    { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+    {
+      id: 'prepare',
+      kind: 'mutate',
+      label: 'Prepare',
+      config: {
+        operations: [
+          { op: 'set', path: '/vars/prepared', value: { kind: 'literal', value: true } },
+        ],
+      },
+    },
+    {
+      id: 'work',
+      kind: 'script',
+      label: 'Work',
+      config: { command: 'controlled-script', stdout: 'patch' },
+    },
+    { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'vars' } },
+  ],
+  edges: [
+    { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'prepare' } },
+    { id: 'b', from: { node: 'prepare', port: 'out' }, to: { node: 'work' } },
+    { id: 'c', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+  ],
+};
+/** Physical disposable store, retained for orchestrator inspection. No provider calls. */
+export async function createThreadHistoryFixture(webDist?: string) {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-'));
+  let calls = 0;
+  let release!: () => void;
+  let entered!: () => void;
+  const working = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const scripts: ScriptPort = {
+    async run() {
+      calls++;
+      if (calls > 1) {
+        entered();
+        await blocked;
+      }
+      const stdout = JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
+      return {
+        exitCode: calls === 1 ? 1 : 0,
+        stdout,
+        stderr: '',
+        stdoutBytes: stdout.length,
+        stderrBytes: 0,
+        stdoutOverflow: false,
+        stderrOverflow: false,
+        timedOut: false,
+      };
+    },
+  };
+  const base = await createContainer(
+    loadConfig({
+      GG_DATA_DIR: dataDir,
+      GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
+      GG_SWAGGER_UI: 'false',
+      ...(webDist ? { GG_WEB_DIST: webDist } : {}),
+    }),
+    { scripts, startTimers: false },
+  );
+  await base.start();
+  base.manager.stop();
+  const snapshots = new DelayedSnapshots(base.handle.db);
+  const manager = new RunManager({ ...base.ports, runs: snapshots }, base.settings);
+  await manager.start();
+  const app = await buildApp({ ...base, manager }, { logger: false });
+  await app.ready();
+  const created = await app.inject({
+    method: 'POST',
+    url: '/loops',
+    payload: { definition: threadHistoryLoop },
+  });
+  if (created.statusCode !== 201) throw new Error(created.body);
+  const loopId = created.json<{ loop: { id: string } }>().loop.id;
+  const published = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/publish' });
+  if (published.statusCode !== 200) throw new Error(published.body);
+  return {
+    app,
+    manager,
+    snapshots,
+    dataDir,
+    loopId,
+    working,
+    release,
+    repos: base.repos,
+    async bytes(runId: string) {
+      return JSON.stringify({
+        run: (
+          await base.handle.client.execute({
+            sql: 'SELECT * FROM runs WHERE id = ?',
+            args: [runId],
+          })
+        ).rows,
+        events: (
+          await base.handle.client.execute({
+            sql: 'SELECT * FROM run_events WHERE run_id = ? ORDER BY seq',
+            args: [runId],
+          })
+        ).rows,
+      });
+    },
+    async close() {
+      release();
+      manager.stop();
+      await manager.waitForIdle();
+      await app.close();
+      await base.stop();
+    },
+  };
+}

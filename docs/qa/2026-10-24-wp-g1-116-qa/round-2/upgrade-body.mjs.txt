@@ -1,0 +1,26 @@
+const load=p=>import(pathToFileURL(join(root,p)).href);
+const {openDatabase,SqliteEventStore}=await load('packages/infrastructure/dist/sqlite/index.js');
+const {LoopDefinitionSchema}=await load('packages/contracts/dist/index.js');
+const {sampleThread,samplePin,minimalLoop,fakeUlid,FIXTURE_TS}=await load('packages/contracts/dist/testing/index.js');
+const {FakeClock}=await load('packages/engine/dist/testing/index.js');
+const {replayThread}=await load('packages/domain/dist/index.js');
+const {mkdir,copyFile,readFile}=await import('node:fs/promises');
+const folder=join(data,'migrations');await mkdir(join(folder,'meta'),{recursive:true});const shipped=join(root,'packages/infrastructure/drizzle'),journal=JSON.parse(await readFile(join(shipped,'meta/_journal.json'),'utf8'));journal.entries=journal.entries.filter(e=>e.idx<18);await writeFile(join(folder,'meta/_journal.json'),JSON.stringify(journal));for(const e of journal.entries)await copyFile(join(shipped,e.tag+'.sql'),join(folder,e.tag+'.sql'));
+const old=openDatabase({url:'file:'+join(data,'graphgoblin.db').replaceAll('\\','/'),migrationsFolder:folder});await old.migrate();
+const oldStore=new SqliteEventStore(old.db,new FakeClock()),ids=[];
+for(const lag of [0,1]){
+ const seed=sampleThread({vars:{},messages:[],counters:{nodeVisits:{},usage:{inputTokens:0,outputTokens:0,cachedInputTokens:0,reasoningOutputTokens:0}}});seed.run.id=fakeUlid('upgrade-run-'+lag);seed.run.loopId=fakeUlid('upgrade-loop-'+lag);seed.run.versionId=fakeUlid('upgrade-version-'+lag);const id=seed.run.id;ids.push(id);
+ await old.client.execute({sql:'INSERT INTO loops(id,owner_id,name,current_version_id,created_at,updated_at) VALUES (?,\'local\',?,?,?,?)',args:[seed.run.loopId,'QA upgrade '+lag,seed.run.versionId,FIXTURE_TS,FIXTURE_TS]});
+ await old.client.execute({sql:'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES(?,?,1,\'published\',?,?)',args:[seed.run.versionId,seed.run.loopId,JSON.stringify(LoopDefinitionSchema.parse(minimalLoop())),FIXTURE_TS]});
+ await old.client.execute({sql:'INSERT INTO runs(id,owner_id,loop_id,version_id,invocation_id,status,iteration,created_at,finished_at,finalized_at,initial_thread,pinned) VALUES (?,\'local\',?,?,?,\'succeeded\',1,?,?,?,?,?)',args:[id,seed.run.loopId,seed.run.versionId,seed.invocation.id,FIXTURE_TS,FIXTURE_TS,FIXTURE_TS,JSON.stringify(seed),JSON.stringify(samplePin())]});
+ await oldStore.append(id,[nodeStart('a'),{type:'node.finished',nodeId:'a',durationMs:1,patch:[{op:'add',path:'/vars/items',value:['a']}]},nodeStart('b'),finish('a','duplicate'),finish('b','b')]);
+ const events=await oldStore.read(id),seq=events.at(-1).seq-lag;await old.client.execute({sql:'UPDATE runs SET thread_snapshot=?,thread_snapshot_seq=? WHERE id=?',args:[JSON.stringify(replayThread(seed,events,seq)),seq,id]});
+}
+const before={runs:(await old.client.execute('SELECT * FROM runs ORDER BY id')).rows,events:(await old.client.execute('SELECT * FROM run_events ORDER BY run_id,seq')).rows,ledger:(await old.client.execute('SELECT * FROM __drizzle_migrations ORDER BY created_at')).rows};old.close();
+try {
+ await startServer();await mcpConnect();await ctrl('stop');const afterUpgrade=await ctrl('raw');const clean=rows=>rows.map(({thread_snapshot_replay_state,...row})=>row);assert.deepEqual(clean(afterUpgrade.runs),before.runs);assert.deepEqual(afterUpgrade.events,before.events);assert.ok(afterUpgrade.runs.every(r=>r.thread_snapshot_replay_state===null));
+ await check('0017 snapshots migrate unchanged with NULL replay state',async()=>({ids,oldMigrationCount:before.ledger.length,state:afterUpgrade.runs.map(r=>({id:r.id,seq:r.thread_snapshot_seq,replayState:r.thread_snapshot_replay_state})),unchangedOldColumns:true,unchangedEvents:true}));
+ await check('upgraded NULL state reads full history then next write restores bounded reads',async()=>{const frames=[];for(const id of ids){await ctrl('metrics');const beforeReads=await ctrl('raw'),initialRead=await readCheck(id),afterReads=await ctrl('raw');assert.deepEqual(beforeReads,afterReads);assert.deepEqual(initialRead.vars.items,['a','b']);assert.deepEqual(initialRead.reads.map(r=>r.rows),[5,5]);const s=await ctrl('state',id);await ctrl('checkpoint',{id,seq:s.checkpoint.seq});const nextRead=await readCheck(id);assert.deepEqual(nextRead.reads.map(r=>r.rows),[6-s.checkpoint.seq,6-s.checkpoint.seq]);frames.push({id,initialRead,nextRead,checkpoint:(await ctrl('state',id)).checkpoint});}await save('upgrade.json',{before,afterUpgrade,frames});return frames;});
+ await stopServer();await startServer();await ctrl('stop');await check('writer state survives physical store reopen',async()=>{const frames=[];for(const id of ids){const s=await ctrl('state',id);assert.ok(s.checkpoint.replayState);frames.push({id,checkpoint:s.checkpoint,...await readCheck(id)});}return frames;});
+} catch(e){results.fatal=e.stack;console.log('FATAL '+e.stack);process.exitCode=1;}
+finally {await client?.close().catch(()=>{});await mcp?.close().catch(()=>{});if(proc?.connected)await stopServer().catch(e=>{results.closeError=e.stack;console.log(e.stack);});await save('upgrade-results.json',results);if(results.checks.some(c=>!c.pass)||results.fatal)process.exitCode=1;}

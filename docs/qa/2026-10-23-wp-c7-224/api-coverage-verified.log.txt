@@ -1,0 +1,76 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792806061058,"pid":18592,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5668"}
+{"level":30,"time":1792806061059,"pid":18592,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5668,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-GmsXy6","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792806061243,"pid":18592,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792806061250,"pid":18592,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.4869999999991705,"msg":"request completed"}
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 188920ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 87482ms
+     × the built API recovers a parent interrupted mid-wake with one continuation per parent 77492ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ expectOneContinuation src/subloop-restart.test.ts:123:65
+    121|   expect(count((event) => event.type === 'child_run.started')).toBe(1);
+    122|   expect(count((event) => event.type === 'run.woken')).toBe(1);
+    123|   expect(count((event) => event.type === 'child_run.finished')).toBe(1…
+       |                                                                 ^
+    124|   expect(count((event) => event.type === 'node.finished' && event.node…
+    125|   expect(count((event) => event.type === 'run.finished')).toBe(1);
+ ❯ src/subloop-restart.test.ts:180:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 67 passed | 2 skipped (70)
+      Tests  2 failed | 1328 passed | 11 skipped (1341)
+   Start at  20:34:37
+   Duration  859.38s (tests 74%, import 20%, transform 5%)
+
+    Isolate  70 workers spawned · ~769ms startup each (spawn + environment, per file)
+             at least ~26.14s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.15% ( 2099/2183 )
+Branches     : 92.68% ( 1344/1450 )
+Functions    : 94.15% ( 419/445 )
+Lines        : 97.79% ( 1906/1949 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure", "exit": 1, "seconds": 879.12}

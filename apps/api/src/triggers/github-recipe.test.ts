@@ -182,6 +182,7 @@ describe('documented GitHub polling recipe with a controlled local CLI', () => {
       await current.stop();
     }
   });
+
   it('refuses a pagination result above 200 before lookup or admission and keeps process diagnostics private', async () => {
     const { first, clock, id, logger, pages } = await fixture();
     try {

@@ -1,0 +1,13 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {join} from 'node:path';import {createHash} from 'node:crypto';import {execFileSync} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa/round-2'),head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',windowsHide:true}).trim();
+const decode=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8');
+const redact=s=>s.replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+for(const n of ['report-format.log.txt']){try{const b=await readFile(join(out,n));await writeFile(join(out,n),redact(decode(b)));}catch{}}
+const md=await readFile(join(out,'README.md'),'utf8'),names=await readdir(out),targets=[...md.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]),missing=targets.filter(n=>!names.includes(n)),unlinked=names.filter(n=>!targets.includes(n));
+const oversized=[],jsonErrors=[];for(const name of names){const b=await readFile(join(out,name));if(b.length>1000000)oversized.push({name,bytes:b.length});if(name.endsWith('.json')){try{JSON.parse(b.toString('utf8'));}catch(e){jsonErrors.push({name,error:e.message});}}}
+const ports=[];for(let port=5870;port<=5877;port++){try{const r=await fetch('http://127.0.0.1:'+port+'/healthz',{signal:AbortSignal.timeout(1500)});ports.push({port,responded:true,status:r.status});}catch(e){ports.push({port,responded:false,error:e.cause?.code??e.name});}}
+const status=execFileSync('git',['status','--short'],{encoding:'utf8',windowsHide:true}).trim(),diff=execFileSync('git',['diff','--name-only'],{encoding:'utf8',windowsHide:true}).trim();
+const report={head,expectedHead:'a553d429ad50cf9b528d660b8d39948fc554dda9',status,trackedDiff:diff,links:targets.length,missing,unlinked,oversized,jsonErrors,ports,pass:head==='a553d429ad50cf9b528d660b8d39948fc554dda9'&&!diff&&!missing.length&&!unlinked.length&&!oversized.length&&!jsonErrors.length&&!ports.some(p=>p.responded)};
+await writeFile(join(out,'final-audit.json'),JSON.stringify(report,null,2));
+const hashes=[];for(const file of (await readdir(out)).sort()){if(file==='artifact-hashes.json')continue;const b=await readFile(join(out,file));hashes.push({file,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});}await writeFile(join(out,'artifact-hashes.json'),JSON.stringify(hashes,null,2));
+console.log(JSON.stringify(report));if(!report.pass)process.exitCode=1;

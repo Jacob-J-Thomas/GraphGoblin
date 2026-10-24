@@ -220,6 +220,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const after = request.query.after ?? (Number.isFinite(lastEventId) ? lastEventId : 0);
       if ((request.headers.accept ?? '').includes('text/event-stream')) {
         await streamRunEvents(request, reply, repos.events, request.params.id, after, {
+          closeSignal: container.shutdown.closing.signal,
           isTerminal: async () => {
             const run = await repos.runs.get(request.params.id);
             return run !== undefined && isTerminal(run.status);

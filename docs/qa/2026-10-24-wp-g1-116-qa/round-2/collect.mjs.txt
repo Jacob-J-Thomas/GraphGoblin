@@ -1,0 +1,15 @@
+import {readFile,writeFile,readdir,copyFile} from 'node:fs/promises';import {join} from 'node:path';import {createHash} from 'node:crypto';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-g1-116-qa/round-2'),p=JSON.parse(await readFile(join(out,'paths.json'),'utf8'));p.work=p.work.replace('%USERPROFILE%',process.env.USERPROFILE);
+const hash=b=>createHash('sha256').update(b).digest('hex'),omitted=[];
+const decode=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8');
+const redact=s=>s.replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll('%USERPROFILE%','%USERPROFILE%');
+for(const e of await readdir(p.work,{withFileTypes:true})){
+ if(!e.isFile()||!(/\.json$|\.png$|\.log\.txt$/.test(e.name)))continue;
+ const src=join(p.work,e.name),buf=await readFile(src);if(buf.length>1000000){omitted.push({file:src,bytes:buf.length,sha256:hash(buf)});continue;}
+ const name=e.name==='broad-results.json'?'damage-fallback-progress.json':e.name;if(name.endsWith('.png'))await copyFile(src,join(out,name));else await writeFile(join(out,name),redact(decode(buf)));
+}
+async function walk(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=join(dir,e.name);if(e.isDirectory())await walk(file);else if(/\.db(?:-wal|-shm)?$|\.zip$|\.webm$/.test(e.name)){const buf=await readFile(file);omitted.push({file,bytes:buf.length,sha256:hash(buf)});}}}await walk(p.work);
+async function largeCoverage(dir){for(const e of await readdir(dir,{withFileTypes:true})){const file=join(dir,e.name);if(e.isDirectory())await largeCoverage(file);else{const meta=await (await import('node:fs/promises')).stat(file);if(meta.size>1000000){const buf=await readFile(file);omitted.push({file,bytes:buf.length,sha256:hash(buf)});}}}}for(const pkg of ['domain','engine','infrastructure','mcp','web','api'])await largeCoverage(join(process.cwd(),['mcp','web','api'].includes(pkg)?'apps':'packages',pkg,'coverage'));
+await writeFile(join(out,'NOT-KEPT.md'),'# Captures outside the report\n\nDisposable stores, browser bundles and generated coverage captures remain in isolated temporary directories for orchestrator cleanup. No directories were deleted. These captures were not copied into the report; oversized captures are included in this inventory. SQLite files are an inventory, not the cited read oracle.\n\n| Temporary path | Bytes | SHA-256 |\n| --- | ---: | --- |\n'+omitted.map(e=>'| `'+redact(e.file)+'` | '+e.bytes+' | `'+e.sha256+'` |').join('\n')+'\n');
+console.log(JSON.stringify({copiedFrom:redact(p.work),omitted:omitted.length}));
+

@@ -42,8 +42,9 @@ import {
   outcomeStatus,
   outgoingEdge,
   renderTemplate,
-  replayStateAt,
+  reconcileThread,
   replayThread,
+  replayStateAt,
   stableHash,
   stableStringify,
   threadView,
@@ -53,6 +54,7 @@ import {
   AppendConflictError,
   ChildCancelledError,
   RunFailureError,
+  ShutdownCleanupError,
   UnreadableRunHistoryError,
   describeError,
   isAbortError,
@@ -85,7 +87,8 @@ export class EngineRequestError extends Error {
       | 'INVALID_STATE'
       | 'INVALID_INPUT'
       | 'WAIT_MISMATCH'
-      | 'REPLAY_NODE_NOT_REACHED',
+      | 'REPLAY_NODE_NOT_REACHED'
+      | 'SHUTTING_DOWN',
     message: string,
     readonly details?: unknown,
   ) {
@@ -126,6 +129,9 @@ export interface RunStartPlan {
   versions: ReadonlyMap<string, LoopVersionRecord>;
   subloopVersions: Readonly<Record<string, string>>;
 }
+
+/** A scoped intake capability. Retain it only inside withAdmission's callback. */
+export type RunAdmissionScope = Pick<RunManager, 'startRun'>;
 
 /** A run start prepared outside the pin lock, admitted inside it. */
 interface PreparedStart {
@@ -308,6 +314,15 @@ export class RunManager {
   private idleWaiters: (() => void)[] = [];
   private unsubscribeTimers: (() => void) | undefined;
   private stopped = false;
+  private draining = false;
+  private forcing = false;
+  private drainSealed = false;
+  private workLeases = 0;
+  private workEpoch = 0;
+  private drainReady: Promise<void> | undefined;
+  private readonly drainRuns = new Set<string>();
+  private readonly cleanupFailures = new Set<string>();
+  private readonly stopCleanupFailures = new Set<string>();
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
   private readonly webhookDispatches = new Set<Promise<void>>();
@@ -323,7 +338,7 @@ export class RunManager {
   /** Arm timers and recover runs left active by a previous process. */
   async start(): Promise<void> {
     this.stopped = false;
-    this.returnDeliveries.resume();
+    if (!this.draining) this.returnDeliveries.resume();
     // Transient wake failures retain the row; unreadable history is diagnosed and acknowledged.
     this.unsubscribeTimers ??= this.ports.timers.onFire((runId, key) =>
       this.onTimer(runId, key).catch((error: unknown) => {
@@ -339,30 +354,254 @@ export class RunManager {
       }),
     );
     await this.recover();
-    await this.retryPendingWebhooks();
-    this.webhookSweep ??= setInterval(() => {
-      void this.retryPendingWebhooks().catch(() => {
-        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook recovery failed');
-      });
-    }, 15_000);
-    this.webhookSweep.unref();
+    if (!this.draining) await this.retryPendingWebhooks();
+    if (!this.draining)
+      this.webhookSweep ??= setInterval(() => {
+        void this.retryPendingWebhooks().catch(() => {
+          this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook recovery failed');
+        });
+      }, 15_000);
+    this.webhookSweep?.unref();
     this.tick();
+  }
+
+  /** No storage access: close admission even while the container is migrating/recovering. */
+  closeIndependentAdmission(): void {
+    this.draining = true;
+    for (const id of this.active.keys()) this.drainRuns.add(id);
+    this.stopDeliveries();
+  }
+
+  /** Close independent admission synchronously; keep timers and required descendants alive. */
+  beginDrain(): Promise<void> {
+    if (this.drainReady) return this.drainReady;
+    this.closeIndependentAdmission();
+    this.drainReady = this.withPinLock(async () => {
+      const records: RunRecord[] = [];
+      for (const candidate of await this.ports.runs.listRecoveryCandidates()) {
+        try {
+          const run = await this.ports.runs.get(candidate.id);
+          if (run && !isTerminal(run.status)) {
+            // Recovery-isolated damaged history is not live work owned by this process.
+            await this.ports.runs.getInitialThread(run.id);
+            await this.ports.runs.getThreadCheckpoint(run.id);
+            await this.ports.events.read(run.id);
+            records.push(run);
+          }
+        } catch (error) {
+          if (!(error instanceof UnreadableRunHistoryError)) throw error;
+          this.ports.logger.error(
+            { runId: candidate.id, code: error.code },
+            'drain skipped unreadable run',
+          );
+        }
+      }
+      for (const run of records)
+        if (run.startedAt || run.status === 'running' || run.status === 'waiting')
+          this.drainRuns.add(run.id);
+      // A queued child belongs to started work; an independent queue entry does not.
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const run of records)
+          if (
+            run.parentRunId &&
+            this.drainRuns.has(run.parentRunId) &&
+            !this.drainRuns.has(run.id)
+          ) {
+            this.drainRuns.add(run.id);
+            changed = true;
+          }
+      }
+      this.tick();
+    });
+    return this.drainReady;
+  }
+
+  drainingRunIds(): string[] {
+    return [
+      ...new Set([...this.active.keys(), ...this.queue.filter((id) => this.drainRuns.has(id))]),
+    ];
+  }
+
+  /** Historical native cleanup warnings remain visible, but only this force owns a release veto. */
+  unconfirmedRunIds(): string[] {
+    return [...this.cleanupFailures];
+  }
+
+  /** D-038: durable parks recover; only runnable work and open command leases hold drain. */
+  async waitForDrain(): Promise<void> {
+    await this.beginDrain();
+    for (;;) {
+      const epoch = this.workEpoch;
+      // Every asynchronous cleanup observation belongs inside the recheck loop: input can
+      // wake an executor (and its required children) while a delivery is returning.
+      await this.waitForWebhookRecovery();
+      await this.returnDeliveries.waitForIdle();
+      let nextWakeAt = Infinity;
+      for (const id of this.drainRuns) {
+        const run = await this.ports.runs.get(id);
+        if ((!run || isTerminal(run.status)) && !this.active.has(id)) {
+          this.drainRuns.delete(id);
+          continue;
+        }
+        if (this.forcing || !run || run.status === 'paused') continue;
+        const now = this.ports.clock.now().getTime();
+        const deadline = runDeadline(run)?.getTime() ?? Infinity;
+        if (deadline <= now) await this.onTimer(id, RUN_DEADLINE_TIMER);
+        else nextWakeAt = Math.min(nextWakeAt, deadline);
+        const wait = run.waiting;
+        if (run.status !== 'waiting' || !wait) continue;
+        const timeout = wait.timeoutAt ? Date.parse(wait.timeoutAt) : Infinity;
+        const timer =
+          wait.until && (wait.kind === 'timer' || wait.kind === 'heartbeat')
+            ? Date.parse(wait.until)
+            : Infinity;
+        if (timeout <= now) await this.onTimer(id, 'timeout@' + wait.waitId);
+        else if (timer <= now) await this.onTimer(id, wait.kind + '@' + wait.waitId);
+        else nextWakeAt = Math.min(nextWakeAt, timeout, timer);
+      }
+      if (
+        this.workLeases ||
+        epoch !== this.workEpoch ||
+        this.active.size ||
+        this.queue.some((id) => this.drainRuns.has(id)) ||
+        nextWakeAt <= this.ports.clock.now().getTime()
+      ) {
+        // 50 ms observes runnable work without spinning or imposing a kill deadline.
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+        continue;
+      }
+      if (this.stopCleanupFailures.size) throw new ShutdownCleanupError();
+      // No await between the final checks and this seal. A wake/intake either already
+      // holds a lease above, or is refused before its first durable write below.
+      this.drainSealed = true;
+      return;
+    }
+  }
+
+  /** Explicit interruption targets executors and queued family work, never existing durable parks. */
+  async forceStop(): Promise<void> {
+    this.forcing = true;
+    await this.beginDrain();
+    const interrupted = new Set(this.active.keys());
+    for (const id of this.queue) if (this.drainRuns.has(id)) interrupted.add(id);
+    for (const [id, controller] of this.active) {
+      this.drainRuns.add(id);
+      controller.abort(
+        new RunFailureError('RUN_INTERRUPTED_BY_STOP', 'Explicit force-stop interrupted this run'),
+      );
+    }
+    for (const id of interrupted) if (!this.active.has(id)) await this.interruptRun(id);
+    // A returning executor may finish committing a park or creating a queued child. Those
+    // were executing at force, unlike the durable parks that existed before interruption.
+    await this.waitForIdle();
+    // Pre-force commands may still be committing a wake or a durable intake. Dispatch is
+    // frozen; wait before the final queued-family interruption and ownership handoff.
+    while (this.workLeases) await new Promise<void>((resolve) => setTimeout(resolve, 50));
+    for (const id of this.queue) if (this.drainRuns.has(id)) interrupted.add(id);
+    for (const id of interrupted) await this.interruptRun(id);
+    await this.waitForDrain();
+  }
+
+  private async interruptRun(runId: string): Promise<void> {
+    const run = await this.mustGet(runId);
+    if (isTerminal(run.status)) return;
+    const history = await this.ports.events.read(runId);
+    const nodeId =
+      run.currentNodeId ??
+      (await this.ports.runs.getInitialThread(runId))?.invocation.trigger.nodeId;
+    const lastNode = [...history]
+      .reverse()
+      .find(
+        (e): e is Extract<RunEvent, { type: 'node.started' | 'node.finished' }> =>
+          e.type === 'node.started' || e.type === 'node.finished',
+      );
+    const started =
+      lastNode?.type === 'node.started' && lastNode.nodeId === nodeId ? lastNode : undefined;
+    await this.failRun(runId, {
+      code: 'RUN_INTERRUPTED_BY_STOP',
+      message: 'Explicit force-stop interrupted this run; external effects may have happened',
+      resumable: false,
+      ...(nodeId ? { nodeId } : {}),
+      details: {
+        attempt: started?.attempt ?? 0,
+        effectMayHaveHappened: run.startedAt !== undefined,
+      },
+    });
+  }
+
+  /** Admission boundary for inbound sources: check before recording receipts or dedupe state. */
+  assertAdmissionOpen(parentRunId?: string): void {
+    if (
+      this.drainSealed ||
+      this.forcing ||
+      (this.draining && (!parentRunId || !this.drainRuns.has(parentRunId)))
+    )
+      throw new EngineRequestError(
+        'SHUTTING_DOWN',
+        'Independent admission is closed while the gateway shuts down',
+      );
+  }
+
+  /**
+   * Reserve independent intake before allocating receipts/dedupe keys. An accepted scope
+   * can finish admission after drain begins; its runs stay queued for restart. The lease
+   * lasts through the caller's durable writes, not merely through the initial check.
+   */
+  async withAdmission<T>(work: (scope: RunAdmissionScope) => Promise<T>): Promise<T> {
+    return this.withIntake(undefined, async () => {
+      let open = true;
+      try {
+        return await work({
+          startRun: async (input, beforeAdmission) => {
+            if (!open) throw new EngineRequestError('INVALID_STATE', 'Admission scope has ended');
+            return this.withWork(() => this.startAdmittedRun(input, beforeAdmission));
+          },
+        });
+      } finally {
+        open = false;
+      }
+    });
+  }
+
+  private async withIntake<T>(parentRunId: string | undefined, work: () => Promise<T>): Promise<T> {
+    this.assertAdmissionOpen(parentRunId);
+    return this.withWork(work);
+  }
+
+  /** Count commands before their first await, and fence them against the readiness seal. */
+  private async withWork<T>(work: () => Promise<T>): Promise<T> {
+    if (this.drainSealed)
+      throw new EngineRequestError('SHUTTING_DOWN', 'The gateway shutdown is ready to close');
+    this.workLeases++;
+    this.workEpoch++;
+    try {
+      return await work();
+    } finally {
+      this.workLeases--;
+      this.workEpoch++;
+    }
+  }
+
+  private stopDeliveries(): void {
+    this.returnDeliveries.stop();
+    if (this.webhookSweep) clearInterval(this.webhookSweep);
+    this.webhookSweep = undefined;
   }
 
   /** Stop picking up new work. Active nodes finish; runs stay recoverable. */
   stop(): void {
     this.stopped = true;
-    this.returnDeliveries.stop();
-    if (this.webhookSweep) clearInterval(this.webhookSweep);
-    this.webhookSweep = undefined;
+    this.stopDeliveries();
     this.unsubscribeTimers?.();
     this.unsubscribeTimers = undefined;
   }
 
-  /** Resolves when nothing is queued or executing. */
+  /** Executor idleness; drain excludes independent queue entries. */
   async waitForIdle(): Promise<void> {
     await this.waitForWebhookRecovery();
-    if (this.queue.length !== 0 || this.active.size !== 0) {
+    if ((!this.draining && this.queue.length !== 0) || this.active.size !== 0) {
       await new Promise<void>((resolve) => this.idleWaiters.push(resolve));
     }
     await this.returnDeliveries.waitForIdle();
@@ -457,6 +696,13 @@ export class RunManager {
     input: StartRunInput,
     beforeAdmission?: (plan: RunStartPlan) => Promise<void>,
   ): Promise<RunRecord> {
+    return this.withIntake(input.parentRunId, () => this.startAdmittedRun(input, beforeAdmission));
+  }
+
+  private async startAdmittedRun(
+    input: StartRunInput,
+    beforeAdmission?: (plan: RunStartPlan) => Promise<void>,
+  ): Promise<RunRecord> {
     const prepared = await this.prepareStart(input);
     if (beforeAdmission) {
       const versions = new Map([[prepared.version.id, prepared.version]]);
@@ -476,22 +722,30 @@ export class RunManager {
         for (const version of versions.values())
           if (version.id !== prepared.version.id)
             await this.assertVersionPresent(version.id, version.loopId);
+
         return this.ports.admission.create(intent);
       });
+      if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
       this.enqueue(admitted.id);
       return admitted;
     }
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
       const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
+
       return this.ports.admission.create(intent);
     });
+    if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
     this.enqueue(admitted.id);
     return admitted;
   }
 
   /** Items-mode polls serialize committed and pending key admission with webhook claim/deletion. */
   async startPollItem(input: StartRunInput): Promise<RunRecord | undefined> {
+    return this.withIntake(undefined, () => this.startAdmittedPollItem(input));
+  }
+
+  private async startAdmittedPollItem(input: StartRunInput): Promise<RunRecord | undefined> {
     const prepared = await this.prepareStart(input);
     const trigger = nodeById(
       prepared.version.definition,
@@ -504,7 +758,8 @@ export class RunManager {
       );
     const run = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
-      return this.ports.admission.createPollItem(await this.prepareAdmission(prepared, {}));
+      const intent = await this.prepareAdmission(prepared, {});
+      return this.ports.admission.createPollItem(intent);
     });
     if (run) this.enqueue(run.id);
     return run;
@@ -539,6 +794,16 @@ export class RunManager {
 
   /** Acknowledge the durable claim; dispatch and execution never delay the caller. */
   async receiveWebhook(
+    claim: WebhookClaim,
+    input: StartRunInput,
+  ): Promise<{
+    state: 'deduplicated' | 'pending';
+    receipt: WebhookReceipt;
+  }> {
+    return this.withIntake(undefined, () => this.receiveAdmittedWebhook(claim, input));
+  }
+
+  private async receiveAdmittedWebhook(
     claim: WebhookClaim,
     input: StartRunInput,
   ): Promise<{
@@ -594,7 +859,7 @@ export class RunManager {
 
   private async dispatchWebhook(receipt: Pick<WebhookReceipt, 'id' | 'attempts'>): Promise<void> {
     const run = await this.withPinLock(async () => {
-      if (this.stopped) return undefined;
+      if (this.stopped || this.draining) return undefined;
       let current = receipt;
       try {
         const saved = await this.ports.admission.get(receipt.id);
@@ -617,7 +882,7 @@ export class RunManager {
         return undefined;
       }
     });
-    if (run && !this.stopped) this.enqueue(run.id);
+    if (run && !this.stopped && !this.draining) this.enqueue(run.id);
   }
 
   private async recordWebhookFailure(
@@ -644,7 +909,7 @@ export class RunManager {
     this.webhookRecovery = (async () => {
       const due = await this.ports.admission.due(this.now(), 5);
       for (const receipt of due) {
-        if (this.stopped) break;
+        if (this.stopped || this.draining) break;
         await this.dispatchWebhook(receipt);
       }
     })().finally(() => {
@@ -695,6 +960,10 @@ export class RunManager {
   }
 
   async cancel(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
+    return this.withWork(() => this.cancelRun(runId, actor));
+  }
+
+  private async cancelRun(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
     const run = await this.mustGet(runId);
     if (isTerminal(run.status)) {
       throw new EngineRequestError('INVALID_STATE', `run ${runId} is already ${run.status}`);
@@ -721,6 +990,10 @@ export class RunManager {
   }
 
   async pause(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
+    return this.withWork(() => this.pauseRun(runId, actor));
+  }
+
+  private async pauseRun(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
     const run = await this.mustGet(runId);
     const updated = await this.ports.runs.transition(runId, ['queued', 'running', 'waiting'], {
       status: 'paused',
@@ -735,6 +1008,12 @@ export class RunManager {
   }
 
   async resume(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
+    return this.withWork(() => this.resumeRun(runId, actor));
+  }
+
+  private async resumeRun(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
+    if (this.draining && !this.drainRuns.has(runId)) this.assertAdmissionOpen();
+    if (this.forcing) this.assertAdmissionOpen();
     const run = await this.mustGet(runId);
     // Paused while parked (or while parking): go back to waiting rather than re-running the node,
     // so a wait keeps its deadline and a subloop keeps its child. Anything that should have woken
@@ -819,6 +1098,16 @@ export class RunManager {
     payload: JsonValue,
     actor: Actor = SYSTEM_ACTOR,
   ): Promise<RunRecord> {
+    return this.withWork(() => this.provideRunInput(runId, waitId, payload, actor));
+  }
+
+  private async provideRunInput(
+    runId: string,
+    waitId: string,
+    payload: JsonValue,
+    actor: Actor = SYSTEM_ACTOR,
+  ): Promise<RunRecord> {
+    if (this.forcing) this.assertAdmissionOpen();
     const run = await this.mustGet(runId);
     if (run.status === 'paused' && run.waiting?.waitId === waitId) {
       throw new EngineRequestError(
@@ -854,8 +1143,18 @@ export class RunManager {
     waitId: string,
     payload: JsonValue = null,
   ): Promise<{ run: RunRecord; woke: boolean }> {
+    return this.withWork(() => this.signalRun(runId, name, waitId, payload));
+  }
+
+  private async signalRun(
+    runId: string,
+    name: string,
+    waitId: string,
+    payload: JsonValue = null,
+  ): Promise<{ run: RunRecord; woke: boolean }> {
     // Match wake's bounded ten conflict retries; a saturated caller must refresh its snapshot.
     for (let attempt = 0; attempt < 10; attempt += 1) {
+      if (this.forcing) this.assertAdmissionOpen();
       const run = await this.mustGet(runId);
       if (run.status === 'paused' && run.waiting?.waitId === waitId) {
         throw new EngineRequestError(
@@ -924,6 +1223,10 @@ export class RunManager {
    * runs are not copied (a subloop node in the fork starts a new child).
    */
   async replay(input: ReplayRunInput): Promise<RunRecord> {
+    return this.withIntake(undefined, () => this.replayAdmitted(input));
+  }
+
+  private async replayAdmitted(input: ReplayRunInput): Promise<RunRecord> {
     const source = await this.mustGet(input.runId);
     const events = await this.ports.events.read(source.id);
     const firstStart = events.find(
@@ -992,6 +1295,7 @@ export class RunManager {
     // version it would run must still exist.
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(source.versionId, source.loopId);
+
       return this.ports.admission.create({
         run,
         initialThread: thread,
@@ -1060,13 +1364,19 @@ export class RunManager {
     return this.ports.runs.get(runId);
   }
 
-  /** Current thread: the snapshot when present, otherwise a replay of the log. */
+  /** Read-only thread through the durable event tail; snapshots are verified caches. */
   async getThread(runId: string): Promise<ContextThread | undefined> {
-    const snapshot = await this.ports.runs.getThread(runId);
-    if (snapshot) return snapshot;
+    const checkpoint = await this.ports.runs.getThreadCheckpoint(runId);
+    if (checkpoint?.replayState) {
+      const tail = await this.ports.events.read(runId, checkpoint.seq - 1);
+      // Only the writer can establish which visit was open at this sequence. A completion
+      // may be a delayed duplicate of another node and cannot prove that the visit closed.
+      if (tail[0]?.seq === checkpoint.seq)
+        return reconcileThread(checkpoint.thread, tail, checkpoint);
+    }
     const initial = await this.ports.runs.getInitialThread(runId);
     if (!initial) return undefined;
-    return replayThread(initial, await this.ports.events.read(runId));
+    return reconcileThread(initial, await this.ports.events.read(runId), checkpoint);
   }
 
   // ---------------------------------------------------------------------------
@@ -1089,12 +1399,15 @@ export class RunManager {
     const index = this.queue.indexOf(runId);
     if (index >= 0) this.queue.splice(index, 1);
     this.requeue.delete(runId);
+    this.notifyIdle();
   }
 
   private tick(): void {
-    if (this.stopped) return;
+    if (this.stopped || this.forcing) return;
     while (this.active.size < this.settings.maxConcurrentRuns && this.queue.length > 0) {
-      const runId = this.queue.shift() as string;
+      const index = this.draining ? this.queue.findIndex((id) => this.drainRuns.has(id)) : 0;
+      if (index < 0) break;
+      const runId = this.queue.splice(index, 1)[0] as string;
       const controller = new AbortController();
       this.active.set(runId, controller);
       void this.execute(runId, controller)
@@ -1139,7 +1452,11 @@ export class RunManager {
   }
 
   private notifyIdle(): void {
-    if (this.queue.length === 0 && this.active.size === 0 && this.idleWaiters.length > 0) {
+    if (
+      (this.draining || this.queue.length === 0) &&
+      this.active.size === 0 &&
+      this.idleWaiters.length > 0
+    ) {
       const waiters = this.idleWaiters;
       this.idleWaiters = [];
       for (const resolve of waiters) resolve();
@@ -1282,6 +1599,13 @@ export class RunManager {
 
   /** False retains an early delivery. Paused runs re-arm their original deadline on resume. */
   private async onTimer(runId: string, key: string): Promise<boolean> {
+    if (this.forcing || this.drainSealed) return false;
+    return this.withWork(() => this.deliverTimer(runId, key));
+  }
+
+  private async deliverTimer(runId: string, key: string): Promise<boolean> {
+    // Explicit force freezes durable parks too; leave their timers for the next process.
+    if (this.forcing) return false;
     if (key === RUN_DEADLINE_TIMER) return this.expireRunDeadline(runId);
     const [name, waitId] = key.split('@');
     if (!waitId || (name !== 'timer' && name !== 'heartbeat' && name !== 'timeout')) return true;
@@ -1332,6 +1656,16 @@ export class RunManager {
    * on that same child run.
    */
   private async wake(
+    runId: string,
+    wake: WakeInfo,
+    waitId?: string,
+    preceding: EventDraft[] = [],
+    childRunId?: string,
+  ): Promise<RunRecord> {
+    return this.withWork(() => this.wakeRun(runId, wake, waitId, preceding, childRunId));
+  }
+
+  private async wakeRun(
     runId: string,
     wake: WakeInfo,
     waitId?: string,
@@ -1520,7 +1854,17 @@ export class RunManager {
           ...(threadView(thread) as unknown as Record<string, unknown>),
           ...extras,
         }),
-      record: append,
+      record: async (draft) => {
+        await append(draft);
+        if (
+          draft.type === 'heartbeat.beat' &&
+          draft.result &&
+          typeof draft.result === 'object' &&
+          !Array.isArray(draft.result) &&
+          draft.result.terminationUnconfirmed === true
+        )
+          this.cleanupFailures.add(runId);
+      },
       resolveModel: async (harness, model, effort) => {
         const catalog = await this.ports.modelCatalog.list();
         const issues = validateHarnessDefaults({
@@ -1582,6 +1926,10 @@ export class RunManager {
           (runDeadline(run)?.getTime() ?? Infinity) <= this.ports.clock.now().getTime())
       ) {
         await this.failRun(runId, deadlineFailure().toFailure());
+        return;
+      }
+      if (this.forcing) {
+        await this.interruptRun(runId);
         return;
       }
       if (controller.signal.aborted || current.cancelRequestedAt) {
@@ -1663,7 +2011,25 @@ export class RunManager {
           return;
         }
         const terminationUnconfirmed =
-          error instanceof RunFailureError && error.code === 'HARNESS_TERMINATION_UNCONFIRMED';
+          error instanceof RunFailureError &&
+          (error.code === 'HARNESS_TERMINATION_UNCONFIRMED' ||
+            error.code === 'SCRIPT_TERMINATION_UNCONFIRMED');
+        if (terminationUnconfirmed) {
+          this.cleanupFailures.add(runId);
+          // Only an abort actually requested by this shutdown can veto its store release.
+          // An earlier timeout/cancel remains diagnostic evidence, not a permanent trap.
+          if (
+            error.options.details &&
+            typeof error.options.details === 'object' &&
+            'interruptedByStop' in error.options.details &&
+            error.options.details.interruptedByStop === true
+          )
+            this.stopCleanupFailures.add(runId);
+        }
+        if (this.forcing && !terminationUnconfirmed) {
+          await this.interruptRun(runId);
+          return;
+        }
         if (
           !terminationUnconfirmed &&
           isDeadlineAbort(controller.signal) &&
@@ -1711,7 +2077,15 @@ export class RunManager {
         return;
       }
       // A late result cannot replace a deadline/cancel outcome, even if a port ignored abort.
+      if (this.forcing) {
+        await this.interruptRun(runId);
+        return;
+      }
       const afterNode = await this.mustGet(runId);
+      if (this.forcing) {
+        await this.interruptRun(runId);
+        return;
+      }
       if (afterNode.cancelRequestedAt) {
         await this.finalizeCancel(runId);
         return;
@@ -1730,7 +2104,7 @@ export class RunManager {
         // relying on in-memory allocation. Each heartbeat park gets a fresh token.
         const wait: WaitSpec = { ...result.wait, startedSeq, waitId: runId + ':' + startedSeq };
         const seq = await appendAll([{ type: 'run.waiting', nodeId, wait }]);
-        await this.ports.runs.saveThread(runId, thread, seq);
+        await this.ports.runs.saveThread(runId, thread, seq, { strict: true, openNodeId: nodeId });
         const parked = await this.ports.runs.transition(runId, ['running'], {
           status: 'waiting',
           waiting: wait,
@@ -1789,7 +2163,7 @@ export class RunManager {
           },
           ...queuedWebhooks(result, thread, this.ports.ids),
         ]);
-        await this.ports.runs.saveThread(runId, thread, seq);
+        await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
         await this.finish(run, def, thread, result);
         return;
       }
@@ -1808,7 +2182,7 @@ export class RunManager {
         ...(result.kind === 'done' ? (result.records ?? []) : []),
         finishedDraft,
       ]);
-      await this.ports.runs.saveThread(runId, thread, seq);
+      await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
       const edge = outgoingEdge(def, nodeId, result.route);
       if (!edge) {
         await this.failRun(runId, {
@@ -1845,7 +2219,8 @@ export class RunManager {
     if (isTerminal(run.status)) return true;
     // The snapshot may predate the terminal append: bring it up to the end of the log.
     const thread = await this.loadThread(run, events);
-    await this.ports.runs.saveThread(run.id, thread, (events.at(-1) as RunEvent).seq);
+    const seq = (events.at(-1) as RunEvent).seq;
+    await this.ports.runs.saveThread(run.id, thread, seq, replayStateAt(events, seq));
     const changes: RunRecordChanges =
       terminal.type === 'run.cancelled'
         ? { status: 'cancelled', waiting: undefined }
@@ -2100,7 +2475,7 @@ export class RunManager {
     status: RunStatus,
     outcome: Outcome | undefined,
   ): Promise<void> {
-    if (!run.parentRunId) return;
+    if (this.forcing || !run.parentRunId) return;
     const parent = await this.ports.runs.get(run.parentRunId);
     const awaited = parent?.waiting;
     if (
@@ -2110,6 +2485,8 @@ export class RunManager {
       awaited.childRunId !== run.id
     )
       return;
+    // A force can start while reading the parent. Recover its child result at next start.
+    if (this.forcing) return;
     try {
       await this.wake(
         parent.id,
@@ -2301,29 +2678,12 @@ export class RunManager {
     return dir;
   }
 
-  /**
-   * The executor always starts from the log, never the snapshot: a crash (or a failure) can leave
-   * the snapshot behind the last `node.started` or `node.finished`, and the log is the source of
-   * truth (docs/05). The snapshot only serves reads.
-   */
+  /** Execution and public reads share the same verified-checkpoint reconstruction. */
   private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
-    // A verified checkpoint: the snapshot names the seq it reflects, and that event is in the log,
-    // so only the events after it are replayed. A checkpoint is always written after its event,
-    // so one the log does not reach (or a snapshot without a seq) is ignored.
     const checkpoint = await this.ports.runs.getThreadCheckpoint(run.id);
-    if (checkpoint && events.some((e) => e.seq === checkpoint.seq)) {
-      // The visit open at the checkpoint carries over, so a duplicate completion straddling it
-      // is applied once, exactly as a full replay would.
-      return replayThread(
-        checkpoint.thread,
-        events.filter((e) => e.seq > checkpoint.seq),
-        undefined,
-        replayStateAt(events, checkpoint.seq),
-      );
-    }
     const initial = await this.ports.runs.getInitialThread(run.id);
     if (!initial) throw new Error(`run ${run.id} has no initial thread`);
-    return replayThread(initial, events);
+    return reconcileThread(initial, events, checkpoint);
   }
 
   private async resolveVersion(input: StartRunInput): Promise<LoopVersionRecord> {

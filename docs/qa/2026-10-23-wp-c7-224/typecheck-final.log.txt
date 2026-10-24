@@ -1,0 +1,55 @@
+COMMAND: pnpm.cmd typecheck --concurrency=2 --cache=local:r
+$ turbo run typecheck --concurrency=2 --cache=local:r
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 7f3b62587780c618
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 62d21ff1ec48cd31
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 85804a5558648b5e
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 1b30373e7e8c83b5
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing 353bcb4bfe87083e
+@graphgoblin/engine:build: cache miss, executing a5f332e9da115f22
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 36275abd0462401b
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: cache miss, executing c8e1e9b186d629f8
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing b4d31d66b6b4db9e
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: cache miss, executing f2f6302f0c3b9bf5
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache miss, executing d63db5df1dde082f
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache miss, executing 4702be7b5c14d14b
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing 333983beb0719d4c
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: cache miss, executing 8b6439abfc23bdfb
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: cache miss, executing 4c896d3636ed9d36
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: cache miss, executing 368f60eb23c74aa2
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:typecheck: cache miss, executing 0094f3a47309ea2c
+@graphgoblin/web:typecheck: cache miss, executing ab08d6a5eb65cc20
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:build: cache miss, executing 2c9b3a2d01665406
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 6327088e1713ce8f
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    5m12.389s 
+
+
+RESULT: {"command": "pnpm.cmd typecheck --concurrency=2 --cache=local:r", "exit": 0, "seconds": 321.28}

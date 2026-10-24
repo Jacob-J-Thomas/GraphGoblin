@@ -1,0 +1,43 @@
+COMMAND: pnpm.cmd lint --concurrency=2 --cache=local:r
+$ turbo run lint --concurrency=2 --cache=local:r
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:lint: cache miss, executing e95068042acb00aa
+@graphgoblin/domain:lint: cache miss, executing 3063dac4af94302d
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: cache miss, executing 7680bd2d752f9d06
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/infrastructure:lint: cache miss, executing 75dad220ce7440cd
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: cache miss, executing 8b3413f00a9a176c
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: cache miss, executing f18ea2d399061c62
+@graphgoblin/api:lint: cache miss, executing ed0cb89d6d0e4cf0
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/api:lint: $ eslint .
+@graphgoblin/api-client:lint: cache miss, executing 480f963d27b784c8
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\apps\api\src\main.ts
+@graphgoblin/api:lint:   55:41  error  Async arrow function has no 'await' expression  @typescript-eslint/require-await
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: ✖ 1 problem (1 error, 0 warnings)
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/web:lint: cache miss, executing 35d94a4e706a5883
+@graphgoblin/api#lint:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\apps\api) C:\nvm4w\nodejs\pnpm.cmd run lint exited (1)
+
+ Tasks:    6 successful, 9 total
+Cached:    0 cached, 9 total
+  Time:    1m43.168s 
+Failed:    @graphgoblin/api#lint
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
+
+RESULT: {"command": "pnpm.cmd lint --concurrency=2 --cache=local:r", "exit": 1, "seconds": 103.65}

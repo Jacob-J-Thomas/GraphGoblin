@@ -1,0 +1,39 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/shutdown-admission.test.ts (2 tests | 1 failed) 1864ms
+   × refuses manual and webhook HTTP admission and preserves due cron slots and poll dedupe 466ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-admission.test.ts > refuses manual and webhook HTTP admission and preserves due cron slots and poll dedupe
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/0/config/auth","message":"Unrecognized key \"auth\""}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:96:45
+     94|         headers,
+     95|       });
+     96|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+     97|       const id = created.json<{ loop: { id: string } }>().loop.id;
+     98|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/shutdown-admission.test.ts:27:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 12 passed (13)
+   Start at  00:34:29
+   Duration  16.62s (import 44%, transform 39%, tests 16%)
+
+  Transform  transforming modules took 14.12s · 39% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown.test.ts src/shutdown-controller.test.ts src/shutdown-signals.test.ts src/shutdown-admission.test.ts", "exit": 1, "seconds": 18.48}

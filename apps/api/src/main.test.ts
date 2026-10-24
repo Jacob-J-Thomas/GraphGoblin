@@ -25,8 +25,10 @@ const nativeSignals = describe.skipIf(process.platform !== 'linux');
 describe('built API entry and startup failures', () => {
   it('holds ownership while listening and releases it on supported HTTP close', async () => {
     const f = await fixture();
+    // Test fixture fences are not product configuration; preserve them even if this case fails.
     for (const name of Object.keys(process.env))
-      if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, undefined);
+      if (name.toUpperCase().startsWith('GG_') && !name.toUpperCase().startsWith('GG_TEST_'))
+        vi.stubEnv(name, undefined);
     for (const [name, value] of Object.entries(f.env))
       if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, value);
     let running: Awaited<ReturnType<typeof main>> | undefined;

@@ -11,6 +11,7 @@ import { markApiReachable, markApiUnreachable, subscribeApiRecovery } from '../l
 import { useApiKeyStore } from '../api/api-key.js';
 import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
+import { followRunAttempts } from './follow-run-attempts.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
 
 export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
@@ -71,6 +72,36 @@ export function useRunEvents(
     let inTransportBackoff = false;
     let reportedOutage = false;
     let lastSeq = known?.lastSeq ?? 0;
+    let stopHistory: (() => void) | undefined;
+    const followAttempts = () => {
+      stopHistory?.();
+      stopHistory = followRunAttempts(client, runId, {
+        cursor: () => useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
+        events: () => useRunEventStore.getState().runs[runId]?.events ?? [],
+        changed: () => {
+          if (active) onEvents?.();
+        },
+        append: (events) => {
+          buffer.push(...events);
+          flush();
+        },
+        running: () => {
+          if (active) connect();
+        },
+        finished: () => {
+          if (active) {
+            setError(undefined);
+            setStatus('finished');
+          }
+        },
+        error: (err) => {
+          if (active) {
+            setError(errorMessage(err));
+            setStatus('error');
+          }
+        },
+      });
+    };
     const connect = () => {
       const currentConnection = ++connection;
       const current = () => active && connection === currentConnection;
@@ -147,6 +178,7 @@ export function useRunEvents(
           if (!current()) return;
           flush();
           setStatus('finished');
+          followAttempts();
         },
         (err: unknown) => {
           if (!current()) return;
@@ -163,6 +195,7 @@ export function useRunEvents(
     return () => {
       active = false;
       unsubscribe();
+      stopHistory?.();
       flush();
       subscription?.close();
     };

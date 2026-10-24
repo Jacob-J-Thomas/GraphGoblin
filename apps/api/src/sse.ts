@@ -1,4 +1,4 @@
-﻿import { setImmediate as yieldToLoop } from 'node:timers/promises';
+import { setImmediate as yieldToLoop } from 'node:timers/promises';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { UnreadableRunHistoryError, type EventStorePort } from '@graphgoblin/engine';
@@ -18,6 +18,8 @@ const DRAIN_TIMEOUT_MS = 5_000;
 const FAILURE_CLOSE_MS = 2_000;
 
 export interface SseOptions {
+  /** Gateway shutdown: end the response without stream.complete, so clients resume later. */
+  closeSignal?: AbortSignal;
   heartbeatMs?: number;
   /** Whether the run is already in a terminal status. Checked once, after the first page. */
   isTerminal?: () => Promise<boolean>;
@@ -83,6 +85,7 @@ export async function streamRunEvents(
     held.length = 0;
     heldBytes = 0;
     releaseDrain?.();
+    options.closeSignal?.removeEventListener('abort', abort);
   };
   const end = (problem?: StreamProblem): void => {
     if (closed) return;
@@ -108,6 +111,7 @@ export async function streamRunEvents(
     heldBytes = 0;
     if (started) end(failure);
   };
+  const abort = (): void => end();
   res.once('close', () => {
     closed = true;
     cleanup();
@@ -306,6 +310,11 @@ export async function streamRunEvents(
     started = true;
     if (failure) {
       end(failure);
+      return;
+    }
+    options.closeSignal?.addEventListener('abort', abort, { once: true });
+    if (options.closeSignal?.aborted) {
+      end();
       return;
     }
     await writeText(': connected\n\n');

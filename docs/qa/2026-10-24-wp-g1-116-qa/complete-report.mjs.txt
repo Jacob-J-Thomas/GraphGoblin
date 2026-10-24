@@ -1,0 +1,48 @@
+// Finalize the QA report around fully observed convergence, retaining earlier false assumptions.
+import assert from 'node:assert/strict';
+import {readFile,writeFile,copyFile,readdir} from 'node:fs/promises';
+import {join,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {fileURLToPath} from 'node:url';
+import {spawn} from 'node:child_process';
+import {createConnection} from 'node:net';
+const root=process.env.QA_ROOT,out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa');
+const strict=JSON.parse(await readFile(join(out,'strict-results.json'),'utf8'));
+assert.ok(!strict.fatal&&!strict.shutdownError);assert.equal(strict.checks.length,5);assert.ok(strict.checks.every(c=>c.pass));
+const processes=JSON.parse(await readFile(join(out,'strict-native-processes.json'),'utf8'));
+assert.equal(processes.length,2);assert.notEqual(processes[0].pid,processes[1].pid);
+const correction='The final report audit exposed a weakness in the original observer: it waited for full-thread equality but not lifecycle metadata or the selected event cursor. Of its 20 frames, 17 have an agreeing lifecycle header, one has an explicit Offline header, two have stale lifecycle headers, and 19 have the expected event cursor. All 20 reconstructed threads match REST. These are retained observations, not 20 complete status/cursor passes. Two failed report-audit assertions and their original sources are retained.\n\nA new focused native-process/Edge experiment strengthens the wait to require the expected lifecycle header, selected durable cursor, and full thread together. All five phases passed in four tabs (two at each width), including an API process restart and midway reload. The 20 new captures all agree across status, cursor, thread, REST and MCP, with unchanged stored bytes. The held-resume observation took 6.530 seconds across all four tabs; this includes polling/capture overhead. The 60-second observation bound was chosen to cover ADR-0053\'s maximum 30-second reconnect delay with margin; it is a QA parameter, not an owner-approved product SLA. This establishes observed convergence and excludes a persistent disagreement in this experiment. It does not claim atomic UI/REST updates or erase the initial transient frames.';
+let text=await readFile(join(out,'README.md'),'utf8');
+text=text.replace(/The first final-report audit also rejected[\s\S]*?(?=\n## Systems and checks)/,correction+'\n');
+text=text.replace('Disposable HTTP ports were 5870, 5871, and 5872.','Disposable HTTP ports were 5870, 5871, 5872, and 5873.');
+const row=(label,value)=>{text=text.replace(new RegExp('^\\| '+label+'.*$','m'),value);};
+row('Inspector lifecycle metadata','| Initial inspector metadata observations | Inspect all original headers and cursors | Do not infer status/cursor agreement from thread equality | 17 agreeing headers, 1 explicit Offline header, 2 stale headers; 19 expected cursors; all 20 threads agree | Recorded transients, not complete metadata PASS — `ui-metadata-check.json`, original stage captures |');
+row('Real process restart and reconnect','| Real process restart and reconnect | Keep four tabs open while replacing native API process on same physical store; then resume and succeed | All tabs converge without reopening | Original PID 60876 → 59304; strict experiment PID '+processes[0].pid+' → '+processes[1].pid+' on port '+processes[0].port+'. All strict headers/cursors/threads agree after restart and through later resume/success | PASS — `strict-native-processes.json`, five strict stage captures and screenshots; initial restart capture retains transient offline/error state |');
+row('Failure: engine','| Failure: engine, SQLite, REST, MCP, inspector | Run trigger → mutate → failing script → exit with delayed snapshots; observe four Edge tabs | Failure excludes returned script patch; one work visit; all surfaces converge | Event 9, failed, vars `{prepared:true}`, work visits 1; strict headers, cursors and complete threads agree | PASS — `strict-failed.json`, strict failure screenshots; original `failed.json` also retained |');
+row('Resume with unfinished work','| Resume with unfinished work | Resume into held fake script; wait for lifecycle, cursor and thread together | Only work visit increases; no completion patch | Event 11, running, vars `{prepared:true}`, work visits 2; REST/MCP/four strict views agree after observation; 6.530 s for four-tab check | PASS — `strict-resumed-unfinished.json`, strict screenshots; original transient stale header retained separately |');
+row('Reload midway','| Reload midway | Reload one tab at each width during held resumed script | Full thread, running status and event cursor agree with existing tabs | Event 11 and entire thread/status agree in all four strict tabs and REST/MCP; bytes unchanged | PASS — `strict-midway-reload.json`, screenshots |');
+row('Success after failure','| Success after failure/resume/restart | Release held script and wait for all three inspector values | Completion patch once; full terminal state follows earlier failure | Event 18, succeeded, vars `{prepared:true,completed:true}`, work visits 2; REST/MCP/all strict tabs agree | PASS — `strict-succeeded.json`, screenshots; initial lagging narrow-view frame retained separately |');
+text=text.replace('| Operator contract/docs', '| Strict complete browser observation | Five phases, four tabs at 1440 and 390 px; require lifecycle badge, event cursor and full thread together | All 20 stabilized captures agree, reads do not write | Five phase checks passed; native restart check 10.645 s including process replacement and intentional 2.5 s outage; failure/resume/reload/success checks 0.722 / 6.530 / 0.672 / 0.930 s | PASS — `strict-results.json`, `strict-browser.log.txt`, `strict-browser.mjs.txt`, strict captures |\n| Operator contract/docs');
+text=text.replace('Evidence: five stage JSON captures, screenshots, and cancellation/tail cases.','Evidence: five strict stage JSON captures and 20 strict screenshots after status/cursor/thread convergence, plus cancellation/tail cases. The original transient frames are separately recorded.');
+text=text.replace('Evidence: the same captures, native process IDs, and held-resume/cancelled variants.','Evidence: the strict captures, two independent native process replacements, and held-resume/cancelled variants.');
+text=text.replace('the explicit offline/reconnect observation','the original transient metadata/cursor observations and the strict convergence evidence');
+text=text.replace('captures, screenshots, and cancellation/tail cases','strict captures, screenshots, and cancellation/tail cases');
+for(const [source,target]of [['qa-format-check.log.txt','qa-format-check-before-strict.log.txt'],['qa-final-format.log.txt','qa-format-before-strict.log.txt']])await copyFile(join(out,source),join(out,target));
+const state=JSON.parse(await readFile(join(out,'final-state.json'),'utf8'));
+state.ports=[];
+for(const port of [5870,5871,5872,5873])state.ports.push(await new Promise(resolve=>{const s=createConnection({host:'127.0.0.1',port});s.once('connect',()=>{s.destroy();resolve({port,open:true});});s.once('error',e=>resolve({port,open:false,error:e.code}));}));
+assert.ok(state.ports.every(p=>!p.open),'All disposable ports closed');
+state.temporaryDirectories=(await readdir(tmpdir(),{withFileTypes:true})).filter(x=>x.isDirectory()&&x.name.startsWith('gg-qa-g1-116-')).map(x=>join(tmpdir(),x.name).replace(process.env.USERPROFILE,'%USERPROFILE%'));
+state.strictProcesses=processes;state.reportCorrection='Original frames: 17 agreeing status headers, 1 unavailable, 2 stale, 19 expected cursors. New strict experiment: 20 agreeing status/cursor/thread observations.';
+await writeFile(join(out,'final-state.json'),JSON.stringify(state,null,2));
+const names=(await readdir(out)).filter(n=>n!=='README.md').sort();
+text=text.replace(/<!-- ARTIFACT_INDEX -->[\s\S]*?(?=\n## Observations outside scope)/,'<!-- ARTIFACT_INDEX -->\n\n'+names.map(n=>'- ['+n+']('+n+')').join('\n')+'\n');
+await writeFile(join(out,'README.md'),text);
+async function command(cmd){return new Promise((resolve,reject)=>{const p=spawn(cmd,{shell:true,cwd:root,env:process.env,windowsHide:true});let log='';p.stdout.on('data',d=>log+=d);p.stderr.on('data',d=>log+=d);p.once('error',reject);p.once('exit',code=>resolve({code,log}));});}
+const paths='docs/qa/2026-10-24-wp-g1-116-qa/README.md docs/qa/2026-10-24-wp-g1-116-qa/NOT-KEPT.md';
+for(const [flag,name]of [['--write','qa-final-format.log.txt'],['--check','qa-format-check.log.txt']]){
+  const cmd='pnpm.cmd exec prettier '+flag+' '+paths;let r=await command(cmd),log='COMMAND: '+cmd+'\n'+r.log+'\nEXIT: '+r.code+'\n';
+  if(r.code&&r.log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')){const fallback='node_modules\\.bin\\prettier.cmd '+flag+' '+paths;r=await command(fallback);log+='FALLBACK: '+fallback+'\n'+r.log+'\nEXIT: '+r.code+'\n';}await writeFile(join(out,name),log);assert.equal(r.code,0,log);
+}
+const auditPath=join(dirname(fileURLToPath(import.meta.url)),'audit.mjs');await copyFile(join(out,'audit.mjs.txt'),auditPath);
+const p=spawn(process.execPath,[auditPath],{env:process.env,windowsHide:true,stdio:'inherit'});assert.equal(await new Promise(r=>p.once('exit',r)),0,'Final audit');

@@ -1,0 +1,32 @@
+pnpm.cmd : $ vitest run --coverage
+At line:6 char:3
++   & pnpm.cmd --filter "@graphgoblin/$packageName" test:coverage *> "d ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792812138349,"pid":46004,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5625"}
+{"level":30,"time":1792812138350,"pid":46004,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5625,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-Xv7e0X","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792812138760,"pid":46004,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792812138767,"pid":46004,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.847900000000664,"msg":"request completed"}
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 52601ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20115ms
+ ❯ src/routes/loop-summaries.test.ts (10 tests | 1 failed) 19720ms
+   ❯ loop-specific run summaries over real SQLite (10)
+     × does not publish a stale running badge when the latest event log is unreadable 2383ms
+ ❯ src/templates/catalog-package.test.ts (4 tests | 1 failed) 33614ms
+   × ships only declared starting-point assets and removes stale files on rebuild 20011ms
+ ❯ src/main.test.ts (9 tests | 3 failed | 4 skipped) 225539ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 61102ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60098ms
+     × releases ownership on a real corrupt-database startup fault before HTTP setup 60320ms
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 410264ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180344ms
+     × the built API recovers a child finished while down with one continuation per parent 160593ms

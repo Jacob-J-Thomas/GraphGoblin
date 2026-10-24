@@ -1,3 +1,4 @@
+import type { ReplayState, ThreadCheckpoint } from '@graphgoblin/domain';
 import type { TriggerAdmissionPort } from './admission.js';
 import type {
   PromptSubmission,
@@ -120,13 +121,15 @@ export interface RunRepository {
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
   getThread(runId: string): Promise<ContextThread | undefined>;
-  /**
-   * Save the thread snapshot. `seq` is the last event it reflects: the thread equals the initial
-   * thread with every event up to `seq` replayed. Without `seq` it is a plain snapshot for reads.
-   */
-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void>;
-  /** The snapshot with the `seq` it reflects, when it was saved with one. */
-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined>;
+  /** Save the thread and replay state after `seq` together, after that event is durable. */
+  saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void>;
+  /** A snapshot and sequence; absent replay state means its prefix must still be read. */
+  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined>;
 }
 
 export interface LoopRepository {
@@ -375,6 +378,8 @@ export interface ScriptRunRequest {
 }
 
 export interface ScriptRunResult {
+  /** Tree termination failed or close was not observed by the native cleanup deadline. */
+  terminationUnconfirmed?: true;
   exitCode: number | null;
   stdout: string;
   stderr: string;
