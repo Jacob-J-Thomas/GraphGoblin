@@ -1,0 +1,23 @@
+﻿import{readFile,writeFile}from'node:fs/promises';import{resolve}from'node:path';import{createRequire}from'node:module';import assert from'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f3-270-qa'),base='http://127.0.0.1:5880',before=JSON.parse(await readFile(resolve(out,'restart-before.json'),'utf8'));
+async function api(path,data,method=data===undefined?'GET':'POST',headers={}){const res=await fetch(base+path,{method,headers:{'content-type':'application/json',...headers},...(data===undefined?{}:{body:JSON.stringify(data)})});const body=await res.json();return{status:res.status,body};}
+async function ok(...args){const r=await api(...args);assert(r.status<300,JSON.stringify(r));return r.body;}
+async function poll(fn,pred){for(let i=0;i<150;i++){const x=await fn();if(pred(x))return x;await new Promise(r=>setTimeout(r,100));}throw Error('poll timeout')}
+const metadata=JSON.parse(await readFile(resolve(out,'instance.json'),'utf8'));assert.notEqual(metadata.pid,before.original.pid);
+const after={run:await ok('/runs/'+before.run.id),events:await ok('/runs/'+before.run.id+'/events?limit=1000'),thread:await ok('/runs/'+before.run.id+'/thread')};assert.deepEqual(after.run.failure,before.run.failure);assert.deepEqual(after.events,before.events);assert.deepEqual(after.thread,before.thread);assert.equal(after.run.pinned.limits.structuredTimeoutMs,500);
+await ok('/qa/config',{mode:'fast',delayMs:20});await ok('/runs/'+before.run.id+'/resume',{});const resumed=await poll(()=>ok('/runs/'+before.run.id),r=>r.status==='succeeded');assert.equal(resumed.pinned.limits.structuredTimeoutMs,500);
+const legacy=await ok('/loops/'+before.legacy.loop.id);assert.equal(legacy.draft.definition.settings.structuredTimeoutMs,null);
+const {chromium}=createRequire(resolve('apps/web/package.json'))('@playwright/test');const browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:390,height:1000}}),p1=await context.newPage();let ui={};
+try{
+ const url=base+'/app/loops/'+legacy.loop.id+'/edit';
+ async function open(p){await p.bringToFront();await p.goto(url);const show=p.getByRole('button',{name:'Show loop settings'});if(await show.isVisible())await show.click();await p.getByRole('combobox',{name:'Structured completion milliseconds mode'}).waitFor();}
+ await open(p1);const mode=p1.getByRole('combobox',{name:'Structured completion milliseconds mode'});assert.equal(await mode.inputValue(),'unlimited');await mode.scrollIntoViewIfNeeded();await p1.screenshot({path:resolve(out,'legacy-reopened-390.png')});
+ await mode.selectOption('limited');const field=p1.getByRole('spinbutton',{name:'Structured completion milliseconds',exact:true});await field.fill('500');await p1.keyboard.press('Tab');const saved=await poll(()=>ok('/loops/'+legacy.loop.id),l=>l.draft.definition.settings.structuredTimeoutMs===500);
+ await field.fill('0');await p1.keyboard.press('Tab');await new Promise(r=>setTimeout(r,1200));const invalidStored=await ok('/loops/'+legacy.loop.id);assert.equal(invalidStored.draft.definition.settings.structuredTimeoutMs,500);
+ const p2=await context.newPage();await open(p2);assert.equal(await p2.getByRole('spinbutton',{name:'Structured completion milliseconds',exact:true}).inputValue(),'500');
+ const fresh=structuredClone(saved.draft.definition);fresh.settings.structuredTimeoutMs=750;const write=await ok('/loops/'+legacy.loop.id+'/draft',{definition:fresh},'PUT',{'if-match':'"'+saved.draftToken+'"'});
+ const stale=await api('/loops/'+legacy.loop.id+'/draft',{definition:saved.draft.definition},'PUT',{'if-match':'"'+saved.draftToken+'"'});assert.equal(stale.status,409);
+ await p2.reload();if(await p2.getByRole('button',{name:'Show loop settings'}).isVisible())await p2.getByRole('button',{name:'Show loop settings'}).click();assert.equal(await p2.getByRole('spinbutton',{name:'Structured completion milliseconds',exact:true}).inputValue(),'750');
+ ui={invalidStored,saved,write,stale,tabTwoValue:'750'};
+}finally{await browser.close()}
+const result={status:'PASS',originalPid:before.original.pid,newPid:metadata.pid,after,resumed,legacy,ui};await writeFile(resolve(out,'restart-after.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({status:'PASS',originalPid:before.original.pid,newPid:metadata.pid,resumedStatus:resumed.status,legacyDefault:legacy.draft.definition.settings.structuredTimeoutMs}));
