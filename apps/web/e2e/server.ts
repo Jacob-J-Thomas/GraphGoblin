@@ -181,7 +181,10 @@ async function startApp(
     harnesses,
   });
   apps.push(app);
-  const url = await app.app.listen({ host: '127.0.0.1', port: 0 });
+  const url = await app.app.listen({
+    host: '127.0.0.1',
+    port: id === 'main' ? Number(process.env['GG_E2E_MAIN_PORT'] ?? 0) : 0,
+  });
   const instance: E2eInstance = { id, app, url, harnesses };
   instances.set(id, instance);
   return instance;
@@ -510,7 +513,9 @@ const controlServer = createServer((request, response) => {
     },
   );
 });
-await new Promise<void>((done) => controlServer.listen(0, '127.0.0.1', done));
+await new Promise<void>((done) =>
+  controlServer.listen(Number(process.env['GG_E2E_CONTROL_PORT'] ?? 0), '127.0.0.1', done),
+);
 const controlAddress = controlServer.address();
 const controlPort = typeof controlAddress === 'object' && controlAddress ? controlAddress.port : 0;
 

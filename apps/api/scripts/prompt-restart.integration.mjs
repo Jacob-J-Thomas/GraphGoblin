@@ -17,8 +17,12 @@ import { singleNodeLoop } from '@graphgoblin/engine/testing';
 const { fetch } = globalThis;
 
 const fixture = fileURLToPath(new URL('./prompt-restart.fixture.mjs', import.meta.url));
+const portBase = Number(process.env.GG_PROMPT_RESTART_PORT_BASE ?? 5660);
+assert.ok(Number.isInteger(portBase) && portBase > 0 && portBase <= 65526);
+const dataPrefix = process.env.GG_PROMPT_RESTART_DATA_PREFIX ?? 'gg-wp-f4-restart-';
+assert.match(dataPrefix, /^gg-[a-z0-9-]+-$/);
 async function freePort() {
-  for (let port = 5660; port <= 5669; port++) {
+  for (let port = portBase; port < portBase + 10; port++) {
     const probe = createServer();
     try {
       await new Promise((resolve, reject) => {
@@ -31,7 +35,7 @@ async function freePort() {
       if (error.code !== 'EADDRINUSE') throw error;
     }
   }
-  throw new Error('No disposable port in 5660-5669');
+  throw new Error(`No disposable port in ${portBase}-${portBase + 9}`);
 }
 async function eventually(check) {
   const until = Date.now() + 60000;
@@ -67,7 +71,7 @@ function message(child, type) {
 }
 
 async function withApiFixture(task) {
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f4-restart-'));
+  const dataDir = await mkdtemp(join(tmpdir(), dataPrefix));
   const children = new Map();
   const kill = async (child) => {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
@@ -138,8 +142,10 @@ async function withApiFixture(task) {
       // Only this exclusively created disposable store may be removed. Never follow an arbitrary path.
       const target = resolve(dataDir);
       assert.equal(dirname(target), resolve(tmpdir()));
-      assert.ok(basename(target).startsWith('gg-wp-f4-restart-'));
-      await rm(target, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+      assert.ok(basename(target).startsWith(dataPrefix));
+      if (process.env.GG_PROMPT_RESTART_KEEP_DATA === '1')
+        log(JSON.stringify({ retainedStore: basename(target) }));
+      else await rm(target, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     }
   }
 }
@@ -368,3 +374,108 @@ for (const policy of ['resume-previous', 'resume-named']) {
       }),
   );
 }
+
+test(
+  'a real restart preserves separate own handles across completed visits',
+  { timeout: 180000 },
+  () =>
+    withApiFixture(async ({ start, kill, api, inspect }) => {
+      let child = start('0');
+      await message(child, 'ready');
+      const definition = singleNodeLoop('own-session restart', {
+        id: 'worker',
+        kind: 'inference',
+        label: 'Worker',
+        config: {
+          session: { policy: 'resume-own', resetAfterVisits: 2 },
+          prompt: {
+            template:
+              'Worker feedback {{ messages | where: "nodeId", "reviewer" | map: "content" | join: " " }}',
+          },
+        },
+      });
+      definition.nodes.push(
+        {
+          id: 'reviewer',
+          kind: 'inference',
+          label: 'Reviewer',
+          config: { session: { policy: 'resume-own' }, prompt: { template: 'Reviewer' } },
+        },
+        { id: 'park', kind: 'wait', label: 'Park', config: { mode: 'input', prompt: 'Continue' } },
+        {
+          id: 'again',
+          kind: 'decision',
+          label: 'Again',
+          config: {
+            kind: 'expression',
+            jsonata: '"repeat"',
+            routes: [
+              { id: 'repeat', label: 'Repeat', repeat: true },
+              { id: 'finish', label: 'Finish' },
+            ],
+            maxPasses: 2,
+          },
+        },
+      );
+      definition.edges = definition.edges.filter((x) => x.from.node !== 'worker');
+      definition.edges.push(
+        { id: 'review', from: { node: 'worker', port: 'out' }, to: { node: 'reviewer' } },
+        { id: 'park', from: { node: 'reviewer', port: 'out' }, to: { node: 'park' } },
+        { id: 'gate', from: { node: 'park', port: 'out' }, to: { node: 'again' } },
+        { id: 'repeat', from: { node: 'again', port: 'repeat' }, to: { node: 'worker' } },
+        { id: 'finish', from: { node: 'again', port: 'finish' }, to: { node: 'done' } },
+        { id: 'limit', from: { node: 'again', port: 'limit-reached' }, to: { node: 'done' } },
+      );
+      const created = await api('/loops', { definition });
+      await api(`/loops/${created.loop.id}/publish`, {});
+      const { run } = await api(`/loops/${created.loop.id}/runs`, {});
+      await eventually(async () => (await api(`/runs/${run.id}`)).status === 'waiting');
+      const firstWait = (await api(`/runs/${run.id}`)).waiting.waitId;
+      const first = (await api(`/runs/${run.id}/events`)).items.filter(
+        (x) => x.type === 'harness.session',
+      );
+      assert.deepEqual(
+        first.map((x) => [x.nodeId, x.sessionId, x.mode]),
+        [
+          ['worker', 'fake-session-1', 'fresh'],
+          ['reviewer', 'fake-session-2', 'fresh'],
+        ],
+      );
+      await kill(child);
+      child = start('0');
+      await message(child, 'ready');
+      await api(`/runs/${run.id}/input`, { waitId: firstWait, input: null });
+      await eventually(async () => {
+        const state = await api(`/runs/${run.id}`);
+        return state.status === 'waiting' && state.waiting.waitId !== firstWait;
+      });
+      const calls = await inspect(child);
+      assert.equal(calls.started.length, 0);
+      assert.deepEqual(
+        calls.resumed.map((x) => x.sessionId),
+        ['fake-session-1', 'fake-session-2'],
+      );
+      assert.match(calls.resumed[0].request.turn.prompt, /^Worker feedback OK$/);
+      const secondWait = (await api(`/runs/${run.id}`)).waiting.waitId;
+      await api(`/runs/${run.id}/input`, { waitId: secondWait, input: null });
+      await eventually(async () => (await api(`/runs/${run.id}`)).status === 'succeeded');
+      const sessions = (await api(`/runs/${run.id}/events`)).items.filter(
+        (x) => x.type === 'harness.session',
+      );
+      assert.deepEqual(
+        sessions.map((x) => [x.nodeId, x.sessionId, x.mode]),
+        [
+          ['worker', 'fake-session-1', 'fresh'],
+          ['reviewer', 'fake-session-2', 'fresh'],
+          ['worker', 'fake-session-1', 'resumed'],
+          ['reviewer', 'fake-session-2', 'resumed'],
+        ],
+      );
+      log(
+        JSON.stringify({
+          runId: run.id,
+          recovered: 'own worker/reviewer handles, new process, authored feedback preserved',
+        }),
+      );
+    }),
+);
