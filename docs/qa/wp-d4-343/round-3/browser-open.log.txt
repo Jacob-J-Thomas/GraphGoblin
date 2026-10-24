@@ -1,0 +1,25 @@
+npx.cmd : node:internal/fs/promises:857
+At line:2 char:112
++ ... npm-cache"; npx.cmd --yes --package @playwright/cli playwright-cli -s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/fs/promises:857:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  return await PromisePrototypeThen(
+         ^
+
+Error: EPERM: operation not permitted, mkdir '%USERPROFILE%\AppData\Local\ms-playwright\daemon\4f7f5a2f07cd2fcf'
+    at async Object.mkdir (node:internal/fs/promises:857:10)
+    at async Session.startDaemon (%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-npm-cache\_npx\31e32ef8478fbf80\node_m
+odules\playwright-core\lib\tools\cli-client\session.js:122:5)
+    at async startSession (%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-npm-cache\_npx\31e32ef8478fbf80\node_modules\
+playwright-core\lib\tools\cli-client\program.js:263:10)
+    at async program (%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-npm-cache\_npx\31e32ef8478fbf80\node_modules\playw
+right-core\lib\tools\cli-client\program.js:130:23) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'mkdir',
+  path: '%USERPROFILE%\\AppData\\Local\\ms-playwright\\daemon\\4f7f5a2f07cd2fcf'
+}
+
+Node.js v22.14.0

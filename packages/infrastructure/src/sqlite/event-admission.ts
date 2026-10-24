@@ -94,22 +94,23 @@ export class SqliteEventAdmission implements EventAdmissionPort {
     assertEventClaim(input, intent);
     const result = await this.db.transaction(async (tx) => {
       const key = input.inbound.dedupeKey;
-      const [prior] = key
-        ? await tx
-            .select({ receipt: columns, inbound: getTableColumns(inboundEvents) })
-            .from(eventReceipts)
-            .leftJoin(inboundEvents, eq(eventReceipts.inboundId, inboundEvents.id))
-            .where(
-              and(
-                eq(eventReceipts.ownerId, input.ownerId),
-                eq(eventReceipts.loopId, input.loopId),
-                eq(eventReceipts.triggerNodeId, input.triggerNodeId),
-                eq(eventReceipts.eventType, input.inbound.type),
-                eq(eventReceipts.requestKey, key),
-              ),
-            )
-            .limit(1)
-        : [];
+      const [prior] =
+        key !== undefined
+          ? await tx
+              .select({ receipt: columns, inbound: getTableColumns(inboundEvents) })
+              .from(eventReceipts)
+              .leftJoin(inboundEvents, eq(eventReceipts.inboundId, inboundEvents.id))
+              .where(
+                and(
+                  eq(eventReceipts.ownerId, input.ownerId),
+                  eq(eventReceipts.loopId, input.loopId),
+                  eq(eventReceipts.triggerNodeId, input.triggerNodeId),
+                  eq(eventReceipts.eventType, input.inbound.type),
+                  eq(eventReceipts.requestKey, key),
+                ),
+              )
+              .limit(1)
+          : [];
       if (prior) return { receipt: this.decode(prior.receipt, prior.inbound), duplicate: true };
       const nodeKey = intent.initialThread.invocation.trigger.dedupeKey;
       const [reserved] = input.nodeDedupeKey

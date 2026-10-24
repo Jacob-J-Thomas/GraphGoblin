@@ -261,7 +261,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     assertWebhookClaim(input, frozen);
     return this.db.transaction(async (tx) => {
       let keySeen = false;
-      if (input.inbound.dedupeKey) {
+      if (input.inbound.dedupeKey !== undefined) {
         const [receiptKey] = await tx
           .select({ id: webhookReceipts.id })
           .from(webhookReceipts)

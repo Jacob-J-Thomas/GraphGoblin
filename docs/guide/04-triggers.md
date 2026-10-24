@@ -318,6 +318,8 @@ event.json
 }
 ```
 
+Omit `dedupeKey` for independent deliveries. If supplied, it must contain 1 to 512 characters of well-formed Unicode. An empty string returns 400 `VALIDATION_FAILED` naming `/dedupeKey` before saving anything; whitespace is a literal key.
+
 ```bash
 curl -sS -X POST 'http://127.0.0.1:4747/events' \
   -H 'Content-Type: application/json' --data-binary @event.json

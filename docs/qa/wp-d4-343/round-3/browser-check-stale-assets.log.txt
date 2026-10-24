@@ -1,0 +1,54 @@
+node : node:internal/modules/run_main:122
+At line:6 char:125
++ ... -registry"; node docs/qa/wp-d4-343/round-3/browser-runner.mjs *> docs ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/run_main:122:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('heading', { name: 'Events', exact: true }) to be visible[22m
+
+    at default (data:text/javascript,export%20default%20async%20(page)%20%3D%3E%20%7B%0A%20%20const%20events%20%3D%20aw
+ait%20(await%20page.request.get('http%3A%2F%2F127.0.0.1%3A5750%2Fevents')).json()%3B%0A%20%20const%20results%20%3D%20%5
+B%5D%3B%0A%20%20for%20(const%20width%20of%20%5B1440%2C%20390%5D)%20%7B%0A%20%20%20%20await%20page.setViewportSize(%7B%2
+0width%2C%20height%3A%201000%20%7D)%3B%0A%20%20%20%20await%20page.goto('http%3A%2F%2F127.0.0.1%3A5750%2Fapp%2Fevents')%
+3B%0A%20%20%20%20await%20page.getByRole('heading'%2C%20%7B%20name%3A%20'Events'%2C%20exact%3A%20true%20%7D).waitFor()%3
+B%0A%20%20%20%20const%20rows%20%3D%20page.locator('tbody%20tr')%3B%0A%20%20%20%20await%20rows.first().waitFor()%3B%0A%2
+0%20%20%20if%20(await%20rows.count()%20!%3D%3D%202)%20throw%20Error('Expected%20two%20saved%20recipients')%3B%0A%20%20%
+20%20const%20recipients%20%3D%20%5B%5D%3B%0A%20%20%20%20for%20(let%20i%20%3D%200%3B%20i%20%3C%20events.items.length%3B%
+20i%2B%2B)%20%7B%0A%20%20%20%20%20%20const%20event%20%3D%20events.items%5Bi%5D%3B%0A%20%20%20%20%20%20const%20row%20%3D
+%20rows.nth(i)%3B%0A%20%20%20%20%20%20const%20link%20%3D%20row.getByRole('link'%2C%20%7B%20name%3A%20event.target.loopI
+d%2C%20exact%3A%20true%20%7D)%3B%0A%20%20%20%20%20%20const%20href%20%3D%20await%20link.getAttribute('href')%3B%0A%20%20
+%20%20%20%20if%20(href%20!%3D%3D%20'%2Fapp%2Floops%2F'%20%2B%20event.target.loopId%20%2B%20'%2Fedit')%20throw%20Error('
+Wrong%20loop%20destination%3A%20'%20%2B%20href)%3B%0A%20%20%20%20%20%20if%20(!await%20link.isVisible()%20%7C%7C%20!awai
+t%20row.getByText(event.target.triggerNodeId%2C%20%7B%20exact%3A%20true%20%7D).isVisible()%20%7C%7C%20!await%20row.getB
+yText(event.admissionId%2C%20%7B%20exact%3A%20true%20%7D).isVisible())%20throw%20Error('Recipient%20metadata%20missing'
+)%3B%0A%20%20%20%20%20%20if%20(event.runIds.length%20!%3D%3D%200%20%7C%7C%20!await%20row.getByText('none'%2C%20%7B%20ex
+act%3A%20true%20%7D).isVisible())%20throw%20Error('Expected%20a%20recipient%20without%20a%20run')%3B%0A%20%20%20%20%20%
+20const%20box%20%3D%20await%20row.locator('td%5Bdata-label%3DTarget%5D').evaluate(el%20%3D%3E%20(%7B%20width%3A%20el.cl
+ientWidth%2C%20scrollWidth%3A%20el.scrollWidth%20%7D))%3B%0A%20%20%20%20%20%20if%20(box.scrollWidth%20%3E%20box.width%2
+0%2B%201)%20throw%20Error('Target%20cell%20overflows%3A%20'%20%2B%20JSON.stringify(box))%3B%0A%20%20%20%20%20%20recipie
+nts.push(%7B%20state%3A%20event.delivery.state%2C%20loopId%3A%20event.target.loopId%2C%20triggerNodeId%3A%20event.targe
+t.triggerNodeId%2C%20admissionId%3A%20event.admissionId%2C%20href%2C%20box%20%7D)%3B%0A%20%20%20%20%7D%0A%20%20%20%20co
+nst%20layout%20%3D%20await%20page.evaluate(()%20%3D%3E%20(%7B%20viewport%3A%20innerWidth%2C%20documentWidth%3A%20docume
+nt.documentElement.scrollWidth%20%7D))%3B%0A%20%20%20%20if%20(layout.documentWidth%20%3E%20width)%20throw%20Error('Page
+%20overflows%3A%20'%20%2B%20JSON.stringify(layout))%3B%0A%20%20%20%20await%20page.screenshot(%7B%20path%3A%20'docs%2Fqa
+%2Fwp-d4-343%2Fround-3%2Fedge-'%20%2B%20width%20%2B%20'.png'%2C%20fullPage%3A%20true%20%7D)%3B%0A%20%20%20%20results.pu
+sh(%7B%20width%2C%20layout%2C%20recipients%20%7D)%3B%0A%20%20%7D%0A%20%20await%20page.setViewportSize(%7B%20width%3A%20
+1440%2C%20height%3A%201000%20%7D)%3B%0A%20%20await%20page.getByRole('link'%2C%20%7B%20name%3A%20events.items%5B0%5D.tar
+get.loopId%2C%20exact%3A%20true%20%7D).first().click()%3B%0A%20%20await%20page.getByRole('heading'%2C%20%7B%20name%3A%2
+0'Targeted%20Event%20recipient%20QA'%2C%20exact%3A%20true%20%7D).waitFor()%3B%0A%20%20results.push(%7B%20loopLinkNaviga
+tion%3A%20page.url()%20%7D)%3B%0A%20%20return%20results%3B%0A%7D%0A:7:70)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/docs/qa/wp-d4-343/round-
+3/browser-runner.mjs:18:19 {
+  log: [
+    "  - waiting for getByRole('heading', { name: 'Events', exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.14.0

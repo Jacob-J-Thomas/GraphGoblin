@@ -1,4 +1,4 @@
-﻿# ADR-0048 - Durably admit one explicitly targeted external Event
+# ADR-0048 - Durably admit one explicitly targeted external Event
 
 Date: 2026-10-23. Status: Accepted for the owner-approved bounded change #343.
 
@@ -20,8 +20,8 @@ Reuse the iterative `isJsonValue` and the shared `POLL_ITEM_MAX_NESTING_DEPTH` c
 
 ## Consequences
 
-The API client and generated schemas require a target; MCP has no publishing tool and the web app does not post Events. Existing Events delivery rendering consumes the new states without a UI source change. GET/POST expose safe target metadata and admission identity, never the internal intent. The caller envelope remains a system Event identity.
+The API client and generated schemas require a target; MCP has no publishing tool and the web app does not post Events. The Events page shows the target loop link, entry trigger and admission identity alongside delivery state, including pending and failed deliveries with no run. GET/POST expose safe target metadata and admission identity, never the internal intent. The caller envelope remains a system Event identity.
 
 Migration 0018 is additive and has a fresh journal timestamp. It does not repair, infer targets for or rewrite old inbound/webhook history. Old broadcast rows retain their existing run links and have no tracked admission state. They do not reserve keys in the new targeted recipient namespace. Invalid stored history stays untouched. URL webhook targeting, raw authentication, Allow, permanent business-key consumption and exact `{accepted:true}` acknowledgement remain intact apart from the explicit depth refusal. Exit-to-Event chaining remains retired.
 
-Targeted Event request keys must contain well-formed Unicode (400 `VALIDATION_FAILED` otherwise); an authored key that cannot be stored as valid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization from changing an accepted identity.
+Targeted Event request keys must contain 1 to 512 characters of well-formed Unicode (400 `VALIDATION_FAILED` naming `/dedupeKey` otherwise); an authored key that cannot be stored as valid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization from changing an accepted identity.

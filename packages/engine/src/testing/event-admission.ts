@@ -34,16 +34,17 @@ export class InMemoryEventAdmission implements EventAdmissionPort {
   claim(input: EventClaim, authored: RunAdmission) {
     const intent = parseRunAdmission(authored);
     assertEventClaim(input, intent);
-    const prior = input.inbound.dedupeKey
-      ? [...this.receipts.values()].find(
-          (r) =>
-            r.ownerId === input.ownerId &&
-            r.loopId === input.loopId &&
-            r.triggerNodeId === input.triggerNodeId &&
-            r.inbound.type === input.inbound.type &&
-            r.inbound.dedupeKey === input.inbound.dedupeKey,
-        )
-      : undefined;
+    const prior =
+      input.inbound.dedupeKey !== undefined
+        ? [...this.receipts.values()].find(
+            (r) =>
+              r.ownerId === input.ownerId &&
+              r.loopId === input.loopId &&
+              r.triggerNodeId === input.triggerNodeId &&
+              r.inbound.type === input.inbound.type &&
+              r.inbound.dedupeKey === input.inbound.dedupeKey,
+          )
+        : undefined;
     if (prior) return Promise.resolve({ receipt: structuredClone(prior), duplicate: true });
     const key = intent.initialThread.invocation.trigger.dedupeKey;
     const seen =

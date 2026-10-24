@@ -421,7 +421,7 @@ export class RunManager {
           payload,
           receivedAt: now,
           ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),
-          ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+          ...(input.dedupeKey !== undefined ? { dedupeKey: input.dedupeKey } : {}),
         },
         ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),
       },

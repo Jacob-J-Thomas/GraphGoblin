@@ -216,6 +216,8 @@ export class FakeApi {
     dedupeKey?: string;
     source: string;
     runIds: string[];
+    target?: { loopId: string; versionId: string; triggerNodeId: string };
+    admissionId?: string;
     delivery?: {
       state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
       attempts: number;

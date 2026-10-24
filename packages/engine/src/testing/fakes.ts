@@ -1058,7 +1058,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     const frozen = parseRunAdmission(intent);
     assertWebhookClaim(input, frozen);
     const keySeen =
-      !!input.inbound.dedupeKey &&
+      input.inbound.dedupeKey !== undefined &&
       ([...this.events.receipts.values()].some(
         (r) =>
           r.ownerId === input.ownerId &&

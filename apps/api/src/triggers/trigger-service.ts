@@ -476,7 +476,7 @@ export class TriggerService {
       ownerId: endpoint.ownerId,
       type: 'webhook',
       payload,
-      ...(dedupeKey ? { dedupeKey } : {}),
+      ...(dedupeKey !== undefined ? { dedupeKey } : {}),
       source,
       receivedAt: now.toISOString(),
       runIds: [],
@@ -491,7 +491,7 @@ export class TriggerService {
       eventType: extracted.eventType,
       caller: { kind: 'system' as const, id: source },
       payload,
-      ...(dedupeKey ? { dedupeKey } : {}),
+      ...(dedupeKey !== undefined ? { dedupeKey } : {}),
     };
     try {
       const outcome = await this.deps.manager.receiveWebhook(
@@ -558,7 +558,7 @@ export class TriggerService {
     const loop = await this.deps.loops.getLoop(input.loopId);
     if (!loop || loop.ownerId !== input.ownerId)
       throw new EngineRequestError('LOOP_NOT_FOUND', 'target loop not found');
-    if (input.dedupeKey) {
+    if (input.dedupeKey !== undefined) {
       try {
         const saved = await this.deps.eventAdmission.find(
           input.ownerId,
@@ -628,7 +628,7 @@ export class TriggerService {
       ownerId: input.ownerId,
       type: input.type,
       payload: input.payload,
-      ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+      ...(input.dedupeKey !== undefined ? { dedupeKey: input.dedupeKey } : {}),
       source: input.source,
       receivedAt: this.deps.clock.now().toISOString(),
       runIds: [],
@@ -654,7 +654,9 @@ export class TriggerService {
           eventType: input.type,
           caller: { kind: 'system', id: `event:${record.id}` },
           payload: input.payload,
-          ...((nodeKey ?? input.dedupeKey) ? { dedupeKey: nodeKey ?? input.dedupeKey } : {}),
+          ...((nodeKey ?? input.dedupeKey) !== undefined
+            ? { dedupeKey: nodeKey ?? input.dedupeKey }
+            : {}),
         },
       );
       return this.eventResult(result.receipt, result.duplicate);

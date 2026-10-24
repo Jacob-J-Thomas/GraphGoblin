@@ -193,6 +193,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
           payload: JsonValueSchema.default(null),
           dedupeKey: z
             .string()
+            .min(1)
             .max(512)
             .refine(eventKeyIsWellFormed, 'dedupeKey must contain valid Unicode')
             .optional(),
@@ -209,7 +210,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
           ownerId: request.auth.ownerId,
           type: request.body.type,
           payload: request.body.payload,
-          ...(request.body.dedupeKey ? { dedupeKey: request.body.dedupeKey } : {}),
+          ...(request.body.dedupeKey !== undefined ? { dedupeKey: request.body.dedupeKey } : {}),
           source: 'api',
         });
       } catch (error) {

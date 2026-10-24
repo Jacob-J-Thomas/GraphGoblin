@@ -571,3 +571,79 @@ it('returns a typed stored-history error for a corrupt keyed retry without rewri
   ).toHaveLength(1);
   expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
 });
+
+it('refuses an empty request key before saving any delivery', async () => {
+  const loopId = await t.publishLoop(eventLoop());
+  const responses = await Promise.all([
+    post(loopId, { dedupeKey: '' }),
+    post(loopId, { dedupeKey: '' }),
+  ]);
+  await settle();
+  expect(responses.map((r) => r.statusCode)).toEqual([400, 400]);
+  for (const response of responses) {
+    expect(response.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      errors: [expect.objectContaining({ path: '/dedupeKey' })],
+    });
+  }
+  expect(await listed()).toEqual([]);
+  expect((await t.container.handle.client.execute('SELECT id FROM event_receipts')).rows).toEqual(
+    [],
+  );
+  expect(await t.container.repos.runs.list({ loopId })).toEqual([]);
+});
+
+it.each([' ', 'x'])(
+  'preserves the literal request key %j across retries and run admission',
+  async (dedupeKey) => {
+    const loopId = await t.publishLoop(eventLoop());
+    const first = await post(loopId, { dedupeKey });
+    expect(first.statusCode).toBe(202);
+    expect(first.json()).toMatchObject({ dedupeKey, duplicate: false });
+    await settle();
+    const retry = await post(loopId, { dedupeKey });
+    expect(retry.statusCode).toBe(202);
+    expect(retry.json()).toMatchObject({
+      id: first.json<{ id: string }>().id,
+      admissionId: first.json<{ admissionId: string }>().admissionId,
+      dedupeKey,
+      duplicate: true,
+      delivery: { state: 'admitted' },
+    });
+    const [run] = await t.container.repos.runs.list({ loopId });
+    expect(await t.container.repos.runs.list({ loopId })).toHaveLength(1);
+    expect((await t.app.inject(`/runs/${run!.id}/thread`)).json()).toMatchObject({
+      invocation: { trigger: { dedupeKey } },
+    });
+  },
+);
+
+it.each(['', ' ', 'x'])(
+  'preserves webhook key refusal and literal-key deduplication for %j',
+  async (key) => {
+    const definition = eventLoop();
+    definition.nodes[0]!.config = { type: 'webhook', dedupeKey: 'issue' };
+    const loopId = await t.publishLoop(definition);
+    const { webhooks } = (await t.app.inject(`/loops/${loopId}/triggers`)).json<{
+      webhooks: { path: string }[];
+    }>();
+    for (let i = 0; i < 2; i++) {
+      const response = await t.app.inject({
+        method: 'POST',
+        url: webhooks[0]!.path,
+        payload: { issue: key },
+      });
+      expect(response.statusCode).toBe(key === '' ? 422 : 202);
+      expect(response.json()).toEqual(
+        key === '' ? expect.objectContaining({ code: 'KEY_INVALID' }) : { accepted: true },
+      );
+    }
+    await settle();
+    expect(await t.container.repos.runs.list({ loopId })).toHaveLength(key === '' ? 0 : 1);
+    expect(await listed()).toHaveLength(key === '' ? 0 : 2);
+    if (key === '')
+      expect(
+        (await t.container.handle.client.execute('SELECT id FROM webhook_receipts')).rows,
+      ).toEqual([]);
+  },
+);
