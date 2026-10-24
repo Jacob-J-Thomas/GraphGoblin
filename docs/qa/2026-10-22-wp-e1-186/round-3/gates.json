@@ -1,0 +1,128 @@
+[
+  {
+    "name": "typecheck",
+    "command": "pnpm.cmd typecheck",
+    "exitCode": 0,
+    "log": ".tmp/r3-typecheck.log.txt"
+  },
+  {
+    "name": "lint",
+    "command": "pnpm.cmd lint",
+    "exitCode": 0,
+    "log": ".tmp/r3-lint.log.txt"
+  },
+  {
+    "name": "format",
+    "command": "pnpm.cmd format --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .r3-prettierignore",
+    "exitCode": 0,
+    "log": ".tmp/r3-format.log.txt"
+  },
+  {
+    "name": "format-check",
+    "command": "pnpm.cmd format:check --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .r3-prettierignore",
+    "exitCode": 0,
+    "log": ".tmp/r3-format-check.log.txt"
+  },
+  {
+    "name": "layers",
+    "command": "pnpm.cmd check:layers",
+    "exitCode": 0,
+    "log": ".tmp/r3-layers.log.txt"
+  },
+  {
+    "name": "deps",
+    "command": "pnpm.cmd check:deps",
+    "exitCode": 0,
+    "log": ".tmp/r3-deps.log.txt"
+  },
+  {
+    "name": "docs",
+    "command": "pnpm.cmd check:docs",
+    "exitCode": 0,
+    "log": ".tmp/r3-docs.log.txt"
+  },
+  {
+    "name": "pretest-build",
+    "command": "pnpm.cmd build",
+    "exitCode": 0,
+    "log": ".tmp/r3-pretest-build.log.txt"
+  },
+  {
+    "name": "coverage-api",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure=true",
+    "exitCode": 1,
+    "log": ".tmp/r3-coverage-api.log.txt"
+  },
+  {
+    "name": "alone-api-src-subloop-restart.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r3-alone-api-src-subloop-restart.test.ts.log.txt"
+  },
+  {
+    "name": "alone-api-src-templates-catalog-package.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/templates/catalog-package.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r3-alone-api-src-templates-catalog-package.test.ts.log.txt"
+  },
+  {
+    "name": "coverage-api-client",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage --coverage.reportOnFailure=true",
+    "exitCode": 1,
+    "log": ".tmp/r3-coverage-api-client.log.txt"
+  },
+  {
+    "name": "alone-api-client-src-templates.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client exec vitest run src/templates.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r3-alone-api-client-src-templates.test.ts.log.txt"
+  },
+  {
+    "name": "coverage-infrastructure",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --coverage.reportOnFailure=true",
+    "exitCode": 1,
+    "log": ".tmp/r3-coverage-infrastructure.log.txt"
+  },
+  {
+    "name": "alone-infrastructure-src-adversarial.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 1,
+    "log": ".tmp/r3-alone-infrastructure-src-adversarial.test.ts.log.txt"
+  },
+  {
+    "name": "alone-infrastructure-src-sqlite-upgrade.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 1,
+    "log": ".tmp/r3-alone-infrastructure-src-sqlite-upgrade.test.ts.log.txt"
+  },
+  {
+    "name": "alone-infrastructure-src-claude-process.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 1,
+    "log": ".tmp/r3-alone-infrastructure-src-claude-process.test.ts.log.txt"
+  },
+  {
+    "name": "alone-infrastructure-src-claude-readiness.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/readiness.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 1,
+    "log": ".tmp/r3-alone-infrastructure-src-claude-readiness.test.ts.log.txt"
+  },
+  {
+    "name": "alone-infrastructure-src-process-scripts.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers=1 --reporter=verbose",
+    "exitCode": 1,
+    "log": ".tmp/r3-alone-infrastructure-src-process-scripts.test.ts.log.txt"
+  },
+  {
+    "name": "build",
+    "command": "pnpm.cmd build",
+    "exitCode": 0,
+    "log": ".tmp/r3-build.log.txt"
+  },
+  {
+    "name": "terminal-after",
+    "command": "node --experimental-import-meta-resolve .tmp/gg-wp-e1-186-r3-terminal-probe.mjs after",
+    "exitCode": 0,
+    "log": ".tmp/r3-terminal-after.log.txt"
+  }
+]

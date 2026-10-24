@@ -21,6 +21,8 @@ export interface SseOptions {
   heartbeatMs?: number;
   /** Whether the run is already in a terminal status. Checked once, after the first page. */
   isTerminal?: () => Promise<boolean>;
+  /** Bounded lookup of the latest terminal/started/resumed marker; absent marker uses grace. */
+  lastLifecycleEvent?: () => Promise<RunEvent | undefined>;
   /** Defensive close for a terminal status with no terminal event. Default 2 s. */
   terminalGraceMs?: number;
   /** Maximum time without drain before explicit slow-consumer failure. Default 5 s. */
@@ -241,16 +243,13 @@ export async function streamRunEvents(
   // The first page (and an empty terminal-cursor recheck) can still fail as HTTP Problem Details.
   // Later read failures must use an explicit control frame because headers are already sent.
   const hasConsumedTerminal = async (): Promise<boolean> => {
-    let cursor = 0;
-    let found = false;
-    for (;;) {
-      const page = await store.read(runId, cursor, REPLAY_PAGE_SIZE);
-      if (closed) return false;
-      found ||= page.some((event) => event.seq <= last && TERMINAL_EVENTS.has(event.type));
-      if (page.length < REPLAY_PAGE_SIZE) return found;
-      cursor = page.at(-1)!.seq;
-      await yieldToLoop();
-    }
+    // Terminal events precede their status write, including lost-write recovery, but need not
+    // be last: finalization appends delivery audits. A started/resumed marker invalidates an
+    // older outcome (RunManager.terminalEvent). The route supplies an indexed lifecycle-tail
+    // lookup, so both confirmation sites are bounded without scanning or guessing a tail window.
+    // No current terminal marker means the existing defensive grace still applies.
+    const event = await options.lastLifecycleEvent?.();
+    return !closed && event !== undefined && TERMINAL_EVENTS.has(event.type) && event.seq <= last;
   };
   try {
     const pending = { page: await store.read(runId, after, REPLAY_PAGE_SIZE) };

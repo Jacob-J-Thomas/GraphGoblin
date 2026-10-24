@@ -1,0 +1,56 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+pnpm.cmd : stderr | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete 
+while every replay page appends more events
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-catchup.te ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | src/ss...nds more events:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+{"probe":"memory","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 1356ms
+stderr | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every 
+replay page appends more events
+{"probe":"sqlite","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 4417ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id 432ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id 205ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 287ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 0 past the end 37ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 100 past the end 19ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 0 past the end 39ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 100 past the end 33ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds confirmation after catching up through post-terminal delivery audit events 77ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling on a paused real high-water-mark transport 70ms
+ ✓ src/edges.test.ts > scopes > rejects every write route for a key without the matching scope 1970ms
+ ✓ src/edges.test.ts > loop and run route branches > shows the published version without a draft and reports a missing published export 222ms
+ ✓ src/edges.test.ts > loop and run route branches > starts runs with every optional body field, signals without a payload, and delivers caller return defaults 552ms
+ ✓ src/edges.test.ts > loop and run route branches > reports missing artifact content 596ms
+ ✓ src/edges.test.ts > loop and run route branches > skips unset harnesses and reports non-Error preflight failures 135ms
+ ✓ src/edges.test.ts > error handler > maps every error family to problem details 145ms
+ ✓ src/edges.test.ts > error handler > serves Swagger UI when enabled 392ms
+ ✓ src/edges.test.ts > SSE framing > merges events appended during replay in order, sends heartbeats, and ignores events after the end 326ms
+ ✓ src/edges.test.ts > SSE terminal runs > waits out the grace when the status is terminal but the log has no terminal event 263ms
+ ✓ src/edges.test.ts > SSE terminal runs > ends on the terminal event that arrives during the grace 464ms
+ ✓ src/edges.test.ts > SSE terminal runs > keeps tailing a run that is not terminal 498ms
+ ✓ src/edges.test.ts > test helper > surfaces create and publish failures 278ms
+ ✓ src/edges.test.ts > composition defaults > opens a file database, generates a master key, and runs with default ports 504ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 2070ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 741ms
+ ✓ src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1549ms
+ ✓ src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 1737ms
+ ✓ src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 550ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 399ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 282ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 321ms
+ ✓ src/sse.test.ts > SSE event stream > stops writing when the client disconnects 4724ms
+
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+   Start at  06:35:24
+   Duration  61.18s (tests 44%, import 32%, transform 23%)
+

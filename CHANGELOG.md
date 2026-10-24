@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Page SSE replay and bound transport buffering, honour backpressure, and report slow readers explicitly with cursor recovery. Replay and live notification overflow catch up from durable history on the same connection; transient replay failures retry. The inspector shows the retry reason and bounds held batches using the client's received JSON size. History browsing follows in #186 round 2. **Upgrade:** rebuild the API, API client and web together for typed stream failures and the `onEvent(event, jsonBytes)` callback; no store migration is required. (#186)
+- Page SSE replay and bound transport buffering, honour backpressure, and report slow readers explicitly with cursor recovery. Replay and live notification overflow catch up from durable history on the same connection; transient replay failures retry. Empty terminal cursors confirm completion through bounded indexed lifecycle reads. The inspector shows the retry reason and bounds held batches using the client's received JSON size. History browsing follows in #186 round 2. **Upgrade:** rebuild the API, API client and web together for typed stream failures and the `onEvent(event, jsonBytes)` callback; no store migration is required. (#186)
 
 - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
 

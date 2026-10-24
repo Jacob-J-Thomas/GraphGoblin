@@ -3,6 +3,7 @@
 Date: 2026-10-23. Status: Accepted implementation decision for #186 round 1.
 
 Revised 2026-10-24 after review: durable catch-up replaces overflow/gap failures.
+Round 3 bounds terminal confirmation with indexed lifecycle-tail reads.
 
 ## Context
 
@@ -18,6 +19,19 @@ Stored history and the loop's intended context must remain complete.
   `setImmediate`. The measured average frame is about 470 bytes; roughly 60 KiB per
   ordinary page balances short reads against query overhead. One named constant owns
   page size. Count paging cannot bound the intrinsic size of arbitrary stored values.
+- Confirm a consumed terminal cursor with the newest lifecycle marker, before headers for an
+  empty first page and after catch-up otherwise. The engine persists the terminal event before
+  its status, including recovery that completes a lost status write. That event is **not always
+  the last row**: finalization and recovered return deliveries append audit events afterward.
+  A resumable failure also ceases to be current once `run.resumed` is durable; `run.started`
+  invalidates an earlier outcome too, matching the engine's `terminalEvent` rule.
+  SQLite therefore uses one statement with five indexed `MAX(seq)` seeks (the three terminal
+  types plus started/resumed), followed by one primary-key row read. The existing
+  `run_events_delivery_idx (run_id, type, seq)` supports these seeks; no migration is needed.
+  Confirm only a terminal marker at or before the written cursor. This work does not grow
+  with history length or post-terminal audit volume and does not assume a fixed tail window.
+  If no current terminal marker exists, preserve the 2-second defensive grace close and live
+  subscription. Missing bounded metadata in a standalone stream composition also uses grace.
 - Subscribe before reading, but retain no live copies during replay/catch-up:
   notifications follow commit, so subsequent pages return those events. After a short
   page, enable live notifications first, then read again from the cursor. Keep paging

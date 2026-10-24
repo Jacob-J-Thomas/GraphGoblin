@@ -148,36 +148,143 @@ describe('durable SSE catch-up', () => {
     },
   );
 
-  it('scans multiple terminal pages before closing an already consumed cursor', async () => {
+  it.each([
+    { count: 3_000, past: 0 },
+    { count: 3_000, past: 100 },
+    { count: 6_000, past: 0 },
+    { count: 6_000, past: 100 },
+  ])(
+    'bounds terminal confirmation for $count events, $past past the end',
+    async ({ count, past }) => {
+      const events = new InMemoryEventStore(new FakeClock());
+      const log = await events.append(runId, [
+        ...Array.from({ length: count - 1 }, () => draft),
+        { type: 'run.cancelled' },
+      ]);
+      const reads: { after: number; limit: number | undefined; rows: number }[] = [];
+      const store: EventStorePort = {
+        append: (...args) => events.append(...args),
+        subscribe: (...args) => events.subscribe(...args),
+        read: async (id, after, limit) => {
+          const page = await events.read(id, after, limit);
+          reads.push({ after: after ?? 0, limit, rows: page.length });
+          return page;
+        },
+      };
+      const app = Fastify();
+      const options = {
+        isTerminal: () => Promise.resolve(true),
+        lastLifecycleEvent: () => Promise.resolve(log.at(-1)),
+      };
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, store, runId, count + past, options),
+      );
+      try {
+        const response = await app.inject('/');
+        expect(ids(response.body)).toEqual([]);
+        expect(response.body).toContain(': connected');
+        expect(reads.length).toBeLessThanOrEqual(2);
+        expect(reads.every((read) => read.after === count + past && read.limit === 128)).toBe(true);
+        expect(reads.reduce((sum, read) => sum + read.rows, 0)).toBe(0);
+      } finally {
+        await app.close();
+      }
+    },
+  );
+
+  it('bounds confirmation after catching up through post-terminal delivery audit events', async () => {
     const events = new InMemoryEventStore(new FakeClock());
-    await events.append(runId, [
-      ...Array.from({ length: 300 }, () => draft),
-      { type: 'run.cancelled' },
+    await events.append(
+      runId,
+      Array.from({ length: 3_000 }, () => draft),
+    );
+    const [terminal] = await events.append(runId, [
+      {
+        type: 'run.finished',
+        status: 'succeeded',
+        outcome: 'success',
+        result: 'done',
+      },
     ]);
-    const reads: number[] = [];
+    const audit = await events.append(
+      runId,
+      Array.from({ length: 300 }, () => ({
+        type: 'return.delivered' as const,
+        channel: { kind: 'caller' as const },
+        target: 'run.result',
+      })),
+    );
+    let reads = 0;
+    let rows = 0;
     const store: EventStorePort = {
       append: (...args) => events.append(...args),
       subscribe: (...args) => events.subscribe(...args),
-      read: async (id, after, limit) => {
-        reads.push(after ?? 0);
-        return events.read(id, after, limit);
+      read: async (...args) => {
+        reads++;
+        const page = await events.read(...args);
+        rows += page.length;
+        return page;
       },
     };
     const app = Fastify();
+    const options = {
+      isTerminal: () => Promise.resolve(true),
+      lastLifecycleEvent: () => Promise.resolve(terminal),
+    };
     app.get('/', (request, reply) =>
-      streamRunEvents(request, reply, store, runId, 400, {
-        isTerminal: () => Promise.resolve(true),
-      }),
+      streamRunEvents(request, reply, store, runId, terminal!.seq, options),
     );
     try {
       const response = await app.inject('/');
-      expect(ids(response.body)).toEqual([]);
-      expect(response.body).toContain(': connected');
-      expect(reads).toEqual([400, 0, 128, 256, 400]);
+      expect(ids(response.body)).toEqual(audit.map((event) => event.seq));
+      expect(response.body).not.toContain('stream.error');
+      expect(reads).toBeLessThanOrEqual(4);
+      expect(rows).toBe(300);
     } finally {
       await app.close();
     }
   });
+
+  it.each(['missing', 'resumed'] as const)(
+    'keeps defensive grace for a %s current terminal marker',
+    async (kind) => {
+      const events = new InMemoryEventStore(new FakeClock());
+      const log = await events.append(
+        runId,
+        kind === 'missing'
+          ? [draft]
+          : [
+              {
+                type: 'run.failed',
+                failure: { code: 'HARNESS_TURN_FAILED', message: 'retry', resumable: true },
+              },
+              { type: 'run.resumed', actor: { kind: 'user', id: 'local' } },
+            ],
+      );
+      let confirmations = 0;
+      const options = {
+        isTerminal: () => Promise.resolve(true),
+        lastLifecycleEvent: () => {
+          confirmations++;
+          return Promise.resolve(kind === 'missing' ? undefined : log.at(-1));
+        },
+        terminalGraceMs: 1,
+      };
+      const app = Fastify();
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, events, runId, log.at(-1)!.seq, options),
+      );
+      try {
+        const response = await app.inject('/');
+        expect(ids(response.body)).toEqual([]);
+        expect(response.body).not.toContain('stream.error');
+        // Both confirmation sites ran: no old/missing outcome incorrectly short-circuited grace.
+        expect(confirmations).toBe(2);
+      } finally {
+        await app.close();
+      }
+    },
+  );
 
   it('reports the writable ceiling on a paused real high-water-mark transport', async () => {
     const events = new InMemoryEventStore(new FakeClock());

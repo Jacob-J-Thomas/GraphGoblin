@@ -95,7 +95,7 @@ describe('SSE event stream', () => {
           run.id,
           seq,
           FIXTURE_TS,
-          'decision.made',
+          'run.finished',
           'choose',
           JSON.stringify({ strategy: 'expression', route: 'yes' }),
         ],
@@ -114,7 +114,7 @@ describe('SSE event stream', () => {
       expect(page.statusCode).toBe(500);
       expect(page.json()).toMatchObject({
         code: 'STORED_EVENT_INVALID',
-        detail: `Stored run event does not conform: run ${run.id}, seq ${seq}, type decision.made`,
+        detail: `Stored run event does not conform: run ${run.id}, seq ${seq}, type run.finished`,
       });
       const response = await fetch(
         `${base}/runs/${run.id}/events?after=${phase === 'replay' ? 0 : seq}`,

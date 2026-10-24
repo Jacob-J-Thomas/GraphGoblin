@@ -115,6 +115,9 @@ reviewer's [interleaved same-host A/B](qa/2026-10-22-wp-e1-186/round-2/review-ab
 (41,001 events, three rounds): base 3,525.67 ms total / 2,569.01 ms stall / 2,561.28 ms first event;
 round-1 head 3,315.19 ms / 180.75 ms / 17.83 ms. The benchmark and reader source are retained
 with that evidence; this comparison is separate from the original non-interleaved runs.
+The [round-3 terminal-cursor evidence](qa/2026-10-22-wp-e1-186/README.md#round-3-bounded-terminal-confirmation)
+compares empty replies on 42,102-event histories and verifies constant read work at/past the end,
+including post-terminal delivery audits and resume invalidation. It does not repeat the full replay benchmark.
 Shared-host observations are not a quiet-host performance guarantee. History browsing follows
 in #186 round 2.
 
