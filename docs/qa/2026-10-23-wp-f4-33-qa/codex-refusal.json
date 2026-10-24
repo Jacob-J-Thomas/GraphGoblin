@@ -1,0 +1,1894 @@
+{
+  "before": [
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 1,
+      "ts": "2026-10-24T08:59:58.139Z",
+      "type": "run.queued",
+      "versionId": "01M5PJ6RRZG4CD63K6PR2FA8MK",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent QA 16",
+        "label": "Independent QA 16 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": null,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+          "loopId": "01M5PJ6RRZG4CD63K6PR2FA8MJ",
+          "versionId": "01M5PJ6RRZG4CD63K6PR2FA8MK",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PJ6RSV94TFYNMVDCGR1GGM",
+          "source": "manual.api",
+          "caller": {
+            "kind": "api-key",
+            "id": "01M5PJ6PTDB0JDMKTW7DRC4FSD"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:59:58.139Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {
+          "gate": {
+            "passes": 1
+          }
+        },
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 2,
+      "ts": "2026-10-24T08:59:58.158Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 3,
+      "ts": "2026-10-24T08:59:58.175Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 4,
+      "ts": "2026-10-24T08:59:58.181Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:59:58.180Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:59:58.180Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 5,
+      "ts": "2026-10-24T08:59:58.206Z",
+      "type": "node.started",
+      "nodeId": "seed",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "ad95c3d8ae936a3e"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 6,
+      "ts": "2026-10-24T08:59:58.212Z",
+      "type": "node.finished",
+      "nodeId": "seed",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/sentinel",
+          "value": "never erase"
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6RW22ZGZDDZT5TQ9PCQP",
+            "role": "note",
+            "content": "shared seed",
+            "nodeId": "seed",
+            "ts": "2026-10-24T08:59:58.210Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 7,
+      "ts": "2026-10-24T08:59:58.224Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "f66994708d9c9bf3"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 8,
+      "ts": "2026-10-24T08:59:58.230Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:7",
+      "turnId": "01M5PJ6RWPK3MECM3ZA5V5WNWR",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / shared seed"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 9,
+      "ts": "2026-10-24T08:59:58.235Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "fake-session-3",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 10,
+      "ts": "2026-10-24T08:59:58.237Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:7",
+      "turnId": "01M5PJ6RWPK3MECM3ZA5V5WNWR",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 11,
+      "ts": "2026-10-24T08:59:58.238Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 12,
+      "ts": "2026-10-24T08:59:58.241Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 13,
+      "ts": "2026-10-24T08:59:58.248Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6RX4RQMKZZRCSSQXRN33",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "worker",
+            "bytes": 45,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6RX4RQMKZZRCSSQXRN34",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "worker",
+            "ts": "2026-10-24T08:59:58.244Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.244Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.244Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 20
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 14,
+      "ts": "2026-10-24T08:59:58.269Z",
+      "type": "node.started",
+      "nodeId": "reviewer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "4a31cfd9e380c476"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 15,
+      "ts": "2026-10-24T08:59:58.274Z",
+      "type": "harness.turn",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:14",
+      "turnId": "01M5PJ6RY242XX1GTPN0AP71JK",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Review OK / never erase"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 16,
+      "ts": "2026-10-24T08:59:58.279Z",
+      "type": "harness.session",
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "sessionId": "fake-session-4",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 17,
+      "ts": "2026-10-24T08:59:58.282Z",
+      "type": "harness.submission",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:14",
+      "turnId": "01M5PJ6RY242XX1GTPN0AP71JK",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 18,
+      "ts": "2026-10-24T08:59:58.284Z",
+      "type": "node.progress",
+      "nodeId": "reviewer",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 19,
+      "ts": "2026-10-24T08:59:58.287Z",
+      "type": "harness.usage",
+      "nodeId": "reviewer",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 20,
+      "ts": "2026-10-24T08:59:58.294Z",
+      "type": "node.finished",
+      "nodeId": "reviewer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6RYKWXHMC3KHBJN3Z46Q",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "reviewer",
+            "bytes": 45,
+            "label": "transcript reviewer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6RYKWXHMC3KHBJN3Z46R",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "reviewer",
+            "ts": "2026-10-24T08:59:58.291Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/reviewer",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.291Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.291Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 21
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 21,
+      "ts": "2026-10-24T08:59:58.306Z",
+      "type": "node.started",
+      "nodeId": "gate",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "33297829cc7be916"
+    },
+    {
+      "provenance": {
+        "kind": "expression",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "repeat",
+        "confidence": null,
+        "reasoning": null
+      },
+      "portId": "repeat",
+      "gate": {
+        "previousPasses": 1,
+        "passes": 2,
+        "repeatRouteId": "repeat",
+        "maxPasses": 2,
+        "elapsedSeconds": 0.155,
+        "limit": null
+      },
+      "diagnostics": [],
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 22,
+      "ts": "2026-10-24T08:59:58.312Z",
+      "type": "decision.made",
+      "nodeId": "gate"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 23,
+      "ts": "2026-10-24T08:59:58.312Z",
+      "type": "node.finished",
+      "nodeId": "gate",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/gate",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 1,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.155,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:58.310Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 1,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.155,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:58.310Z"
+          }
+        }
+      ],
+      "route": "repeat",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 24,
+      "ts": "2026-10-24T08:59:58.332Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "f66994708d9c9bf3"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 25,
+      "ts": "2026-10-24T08:59:58.337Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / OK"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 26,
+      "ts": "2026-10-24T08:59:58.340Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 27,
+      "ts": "2026-10-24T08:59:58.342Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 28,
+      "ts": "2026-10-24T08:59:58.345Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 29,
+      "ts": "2026-10-24T08:59:58.356Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: QA refusal before submission",
+        "nodeId": "worker",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+          "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  ],
+  "run": {
+    "id": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+    "ownerId": "local",
+    "loopId": "01M5PJ6RRZG4CD63K6PR2FA8MJ",
+    "versionId": "01M5PJ6RRZG4CD63K6PR2FA8MK",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Independent QA 16",
+      "label": "Independent QA 16 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": null,
+        "runDeadlineSeconds": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PJ6RSV94TFYNMVDCGR1GGM",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-24T08:59:58.139Z",
+    "startedAt": "2026-10-24T08:59:58.155Z",
+    "finishedAt": "2026-10-24T08:59:58.592Z",
+    "lastEventSeq": 51
+  },
+  "events": [
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 1,
+      "ts": "2026-10-24T08:59:58.139Z",
+      "type": "run.queued",
+      "versionId": "01M5PJ6RRZG4CD63K6PR2FA8MK",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent QA 16",
+        "label": "Independent QA 16 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": null,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+          "loopId": "01M5PJ6RRZG4CD63K6PR2FA8MJ",
+          "versionId": "01M5PJ6RRZG4CD63K6PR2FA8MK",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PJ6RSV94TFYNMVDCGR1GGM",
+          "source": "manual.api",
+          "caller": {
+            "kind": "api-key",
+            "id": "01M5PJ6PTDB0JDMKTW7DRC4FSD"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:59:58.139Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {
+          "gate": {
+            "passes": 1
+          }
+        },
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 2,
+      "ts": "2026-10-24T08:59:58.158Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 3,
+      "ts": "2026-10-24T08:59:58.175Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 4,
+      "ts": "2026-10-24T08:59:58.181Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:59:58.180Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:59:58.180Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 5,
+      "ts": "2026-10-24T08:59:58.206Z",
+      "type": "node.started",
+      "nodeId": "seed",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "ad95c3d8ae936a3e"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 6,
+      "ts": "2026-10-24T08:59:58.212Z",
+      "type": "node.finished",
+      "nodeId": "seed",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/sentinel",
+          "value": "never erase"
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6RW22ZGZDDZT5TQ9PCQP",
+            "role": "note",
+            "content": "shared seed",
+            "nodeId": "seed",
+            "ts": "2026-10-24T08:59:58.210Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 7,
+      "ts": "2026-10-24T08:59:58.224Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "f66994708d9c9bf3"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 8,
+      "ts": "2026-10-24T08:59:58.230Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:7",
+      "turnId": "01M5PJ6RWPK3MECM3ZA5V5WNWR",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / shared seed"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 9,
+      "ts": "2026-10-24T08:59:58.235Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "fake-session-3",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 10,
+      "ts": "2026-10-24T08:59:58.237Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:7",
+      "turnId": "01M5PJ6RWPK3MECM3ZA5V5WNWR",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 11,
+      "ts": "2026-10-24T08:59:58.238Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 12,
+      "ts": "2026-10-24T08:59:58.241Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 13,
+      "ts": "2026-10-24T08:59:58.248Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6RX4RQMKZZRCSSQXRN33",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "worker",
+            "bytes": 45,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6RX4RQMKZZRCSSQXRN34",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "worker",
+            "ts": "2026-10-24T08:59:58.244Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.244Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.244Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 20
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 14,
+      "ts": "2026-10-24T08:59:58.269Z",
+      "type": "node.started",
+      "nodeId": "reviewer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "4a31cfd9e380c476"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 15,
+      "ts": "2026-10-24T08:59:58.274Z",
+      "type": "harness.turn",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:14",
+      "turnId": "01M5PJ6RY242XX1GTPN0AP71JK",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Review OK / never erase"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 16,
+      "ts": "2026-10-24T08:59:58.279Z",
+      "type": "harness.session",
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "sessionId": "fake-session-4",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 17,
+      "ts": "2026-10-24T08:59:58.282Z",
+      "type": "harness.submission",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:14",
+      "turnId": "01M5PJ6RY242XX1GTPN0AP71JK",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 18,
+      "ts": "2026-10-24T08:59:58.284Z",
+      "type": "node.progress",
+      "nodeId": "reviewer",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 19,
+      "ts": "2026-10-24T08:59:58.287Z",
+      "type": "harness.usage",
+      "nodeId": "reviewer",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 20,
+      "ts": "2026-10-24T08:59:58.294Z",
+      "type": "node.finished",
+      "nodeId": "reviewer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6RYKWXHMC3KHBJN3Z46Q",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "reviewer",
+            "bytes": 45,
+            "label": "transcript reviewer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6RYKWXHMC3KHBJN3Z46R",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "reviewer",
+            "ts": "2026-10-24T08:59:58.291Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/reviewer",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.291Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.291Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 21
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 21,
+      "ts": "2026-10-24T08:59:58.306Z",
+      "type": "node.started",
+      "nodeId": "gate",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "33297829cc7be916"
+    },
+    {
+      "provenance": {
+        "kind": "expression",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "repeat",
+        "confidence": null,
+        "reasoning": null
+      },
+      "portId": "repeat",
+      "gate": {
+        "previousPasses": 1,
+        "passes": 2,
+        "repeatRouteId": "repeat",
+        "maxPasses": 2,
+        "elapsedSeconds": 0.155,
+        "limit": null
+      },
+      "diagnostics": [],
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 22,
+      "ts": "2026-10-24T08:59:58.312Z",
+      "type": "decision.made",
+      "nodeId": "gate"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 23,
+      "ts": "2026-10-24T08:59:58.312Z",
+      "type": "node.finished",
+      "nodeId": "gate",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/gate",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 1,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.155,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:58.310Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "repeat",
+              "gate": {
+                "previousPasses": 1,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.155,
+                "limit": null
+              }
+            },
+            "at": "2026-10-24T08:59:58.310Z"
+          }
+        }
+      ],
+      "route": "repeat",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 24,
+      "ts": "2026-10-24T08:59:58.332Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "f66994708d9c9bf3"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 25,
+      "ts": "2026-10-24T08:59:58.337Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / OK"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 26,
+      "ts": "2026-10-24T08:59:58.340Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 27,
+      "ts": "2026-10-24T08:59:58.342Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 28,
+      "ts": "2026-10-24T08:59:58.345Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "submission": "definitely-not-submitted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 29,
+      "ts": "2026-10-24T08:59:58.356Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: QA refusal before submission",
+        "nodeId": "worker",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+          "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 30,
+      "ts": "2026-10-24T08:59:58.424Z",
+      "type": "run.resumed",
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5PJ6PTDB0JDMKTW7DRC4FSD"
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 31,
+      "ts": "2026-10-24T08:59:58.446Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 2,
+      "configHash": "f66994708d9c9bf3"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 32,
+      "ts": "2026-10-24T08:59:58.451Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Exact task Ω: preserve spaces  / never erase / OK"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 33,
+      "ts": "2026-10-24T08:59:58.455Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "fake-session-6",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 34,
+      "ts": "2026-10-24T08:59:58.457Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:24",
+      "turnId": "01M5PJ6S013MWQ6E9DPMXKF9V8",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 35,
+      "ts": "2026-10-24T08:59:58.459Z",
+      "type": "node.progress",
+      "nodeId": "worker",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 36,
+      "ts": "2026-10-24T08:59:58.460Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 37,
+      "ts": "2026-10-24T08:59:58.467Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6S3ZTGMEV0EQ73JGG86C",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "worker",
+            "bytes": 45,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6S3ZTGMEV0EQ73JGG86D",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "worker",
+            "ts": "2026-10-24T08:59:58.463Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.463Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.463Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 17
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 38,
+      "ts": "2026-10-24T08:59:58.488Z",
+      "type": "node.started",
+      "nodeId": "reviewer",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "4a31cfd9e380c476"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 39,
+      "ts": "2026-10-24T08:59:58.524Z",
+      "type": "harness.turn",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:38",
+      "turnId": "01M5PJ6S5WFF1T96BA13KYNKB9",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Review OK / never erase",
+      "resumeSessionId": "fake-session-4"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 40,
+      "ts": "2026-10-24T08:59:58.529Z",
+      "type": "harness.session",
+      "nodeId": "reviewer",
+      "harness": "codex",
+      "sessionId": "fake-session-4",
+      "mode": "resumed",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 41,
+      "ts": "2026-10-24T08:59:58.531Z",
+      "type": "harness.submission",
+      "nodeId": "reviewer",
+      "visitId": "01M5PJ6RSV94TFYNMVDCGR1GGK:38",
+      "turnId": "01M5PJ6S5WFF1T96BA13KYNKB9",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 42,
+      "ts": "2026-10-24T08:59:58.532Z",
+      "type": "node.progress",
+      "nodeId": "reviewer",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "OK",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 43,
+      "ts": "2026-10-24T08:59:58.534Z",
+      "type": "harness.usage",
+      "nodeId": "reviewer",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 44,
+      "ts": "2026-10-24T08:59:58.542Z",
+      "type": "node.finished",
+      "nodeId": "reviewer",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5PJ6S6APNFBZ00Z9AJSMZDA",
+            "kind": "transcript",
+            "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+            "nodeId": "reviewer",
+            "bytes": 45,
+            "label": "transcript reviewer"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PJ6S6APNFBZ00Z9AJSMZDB",
+            "role": "assistant",
+            "content": "OK",
+            "nodeId": "reviewer",
+            "ts": "2026-10-24T08:59:58.538Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/outputs/reviewer",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.538Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "reviewer",
+            "value": "OK",
+            "at": "2026-10-24T08:59:58.538Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 32
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 45,
+      "ts": "2026-10-24T08:59:58.565Z",
+      "type": "node.started",
+      "nodeId": "gate",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "33297829cc7be916"
+    },
+    {
+      "provenance": {
+        "kind": "expression",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "route",
+        "routeId": "repeat",
+        "confidence": null,
+        "reasoning": null
+      },
+      "portId": "limit-reached",
+      "gate": {
+        "previousPasses": 2,
+        "passes": 2,
+        "repeatRouteId": "repeat",
+        "maxPasses": 2,
+        "elapsedSeconds": 0.414,
+        "limit": "max-passes"
+      },
+      "diagnostics": [],
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 46,
+      "ts": "2026-10-24T08:59:58.570Z",
+      "type": "decision.made",
+      "nodeId": "gate"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 47,
+      "ts": "2026-10-24T08:59:58.570Z",
+      "type": "node.finished",
+      "nodeId": "gate",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/outputs/gate",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "limit-reached",
+              "gate": {
+                "previousPasses": 2,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.414,
+                "limit": "max-passes"
+              }
+            },
+            "at": "2026-10-24T08:59:58.569Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "gate",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "limit-reached",
+              "gate": {
+                "previousPasses": 2,
+                "passes": 2,
+                "repeatRouteId": "repeat",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.414,
+                "limit": "max-passes"
+              }
+            },
+            "at": "2026-10-24T08:59:58.569Z"
+          }
+        }
+      ],
+      "route": "limit-reached",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 48,
+      "ts": "2026-10-24T08:59:58.583Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "caacd31f1376b30f"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 49,
+      "ts": "2026-10-24T08:59:58.589Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 50,
+      "ts": "2026-10-24T08:59:58.589Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "seq": 51,
+      "ts": "2026-10-24T08:59:58.589Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success"
+    }
+  ],
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5PJ6RSV94TFYNMVDCGR1GGK",
+      "loopId": "01M5PJ6RRZG4CD63K6PR2FA8MJ",
+      "versionId": "01M5PJ6RRZG4CD63K6PR2FA8MK",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5PJ6RSV94TFYNMVDCGR1GGM",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5PJ6PTDB0JDMKTW7DRC4FSD"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-24T08:59:58.139Z"
+      }
+    },
+    "messages": [
+      {
+        "id": "01M5PJ6RW22ZGZDDZT5TQ9PCQP",
+        "role": "note",
+        "content": "shared seed",
+        "nodeId": "seed",
+        "ts": "2026-10-24T08:59:58.210Z"
+      },
+      {
+        "id": "01M5PJ6RX4RQMKZZRCSSQXRN34",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "worker",
+        "ts": "2026-10-24T08:59:58.244Z"
+      },
+      {
+        "id": "01M5PJ6RYKWXHMC3KHBJN3Z46R",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "reviewer",
+        "ts": "2026-10-24T08:59:58.291Z"
+      },
+      {
+        "id": "01M5PJ6S3ZTGMEV0EQ73JGG86D",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "worker",
+        "ts": "2026-10-24T08:59:58.463Z"
+      },
+      {
+        "id": "01M5PJ6S6APNFBZ00Z9AJSMZDB",
+        "role": "assistant",
+        "content": "OK",
+        "nodeId": "reviewer",
+        "ts": "2026-10-24T08:59:58.538Z"
+      }
+    ],
+    "vars": {
+      "sentinel": "never erase"
+    },
+    "artifacts": [
+      {
+        "id": "01M5PJ6RX4RQMKZZRCSSQXRN33",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "worker",
+        "label": "transcript worker",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6RYKWXHMC3KHBJN3Z46Q",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "reviewer",
+        "label": "transcript reviewer",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6S3ZTGMEV0EQ73JGG86C",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "worker",
+        "label": "transcript worker",
+        "bytes": 45
+      },
+      {
+        "id": "01M5PJ6S6APNFBZ00Z9AJSMZDA",
+        "kind": "transcript",
+        "ref": "artifact:transcript/9d0d7fe60d44e79c506da7285e1f5dde2939bfbcd83ce11bc1443e4a42d337ac",
+        "nodeId": "reviewer",
+        "label": "transcript reviewer",
+        "bytes": 45
+      }
+    ],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-24T08:59:58.180Z"
+      },
+      "worker": {
+        "nodeId": "worker",
+        "value": "OK",
+        "at": "2026-10-24T08:59:58.463Z"
+      },
+      "reviewer": {
+        "nodeId": "reviewer",
+        "value": "OK",
+        "at": "2026-10-24T08:59:58.538Z"
+      },
+      "gate": {
+        "nodeId": "gate",
+        "value": {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "repeat",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 2,
+            "repeatRouteId": "repeat",
+            "maxPasses": 2,
+            "elapsedSeconds": 0.414,
+            "limit": "max-passes"
+          }
+        },
+        "at": "2026-10-24T08:59:58.569Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "gate",
+      "value": {
+        "provenance": {
+          "kind": "expression",
+          "provider": null,
+          "classifierId": null,
+          "model": null,
+          "effort": null
+        },
+        "observation": {
+          "kind": "route",
+          "routeId": "repeat",
+          "confidence": null,
+          "reasoning": null
+        },
+        "portId": "limit-reached",
+        "gate": {
+          "previousPasses": 2,
+          "passes": 2,
+          "repeatRouteId": "repeat",
+          "maxPasses": 2,
+          "elapsedSeconds": 0.414,
+          "limit": "max-passes"
+        }
+      },
+      "at": "2026-10-24T08:59:58.569Z"
+    },
+    "gates": {
+      "gate": {
+        "passes": 2
+      }
+    },
+    "counters": {
+      "nodeVisits": {
+        "start": 1,
+        "seed": 1,
+        "worker": 3,
+        "reviewer": 2,
+        "gate": 2,
+        "done": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

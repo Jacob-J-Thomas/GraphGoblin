@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile, readdir, stat, access } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { resolve, relative, join } from 'node:path';
+const dir = resolve('docs/qa/2026-10-23-wp-f4-33-qa');
+async function walk(p) { const files = []; for (const e of await readdir(p, { withFileTypes: true })) { const q = join(p, e.name); if (e.isDirectory()) files.push(...await walk(q)); else files.push(q); } return files.sort(); }
+async function read(p) { const b = await readFile(p); return b[0] === 255 && b[1] === 254 ? b.subarray(2).toString('utf16le') : b.toString('utf8').replace(/^\uFEFF/, ''); }
+let md = await read(join(dir, 'README.md'));
+if (process.argv[2] === 'prepare') {
+  md = md.replaceAll('\u00c2\u00b7', '\u00b7').replaceAll('\u00e2\u20ac\u201c', '\u2013');
+  md = md.replace('### One isolated rerun per affected infrastructure file', '### One isolated rerun per affected file');
+  md = md.replace('Unchanged files were each run once, sequentially, after broad suites stopped, with', 'The five unchanged infrastructure files were each run once, sequentially, after broad suites stopped, with');
+  const insert = '\nThe web routing file used `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/routing-review.test.ts --maxWorkers=1 --no-file-parallelism --reporter=verbose`. Alone means one test file at a time in this QA thread; other activity on the shared host was not controlled.\n';
+  md = md.replace('### One isolated rerun per affected file\n', '### One isolated rerun per affected file\n' + insert);
+  const files = (await walk(dir)).map(p => relative(dir, p).replaceAll('\\', '/')).filter(p => !['README.md', 'evidence-manifest.json', 'NOT-KEPT.md'].includes(p));
+  const inventory = '[Evidence hashes and byte sizes](evidence-manifest.json) - [Omitted captures](NOT-KEPT.md)\n\n| Artifact |\n| --- |\n' + files.map(p => `| [${p}](${p}) |`).join('\n') + '\n';
+  const start = md.indexOf('[Evidence hashes and byte sizes]'); const end = md.indexOf('## QA-COMMON report', start); assert.ok(start >= 0 && end > start); md = md.slice(0, start) + inventory + '\n' + md.slice(end);
+  await writeFile(join(dir, 'README.md'), md); console.log('Prepared report and complete artifact links');
+} else {
+  for (const p of await walk(dir)) if (/\.(txt|json)$/.test(p)) { const text = (await read(p)).replaceAll(process.env.USERPROFILE.replaceAll('\\', '\\\\'), '%USERPROFILE%').replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%'); await writeFile(p, text); }
+  const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); assert.equal(head, '7d76abd0e1330273e6efe3f0f82907e59061111d');
+  const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }); assert.equal(dirty.trim(), '?? docs/qa/2026-10-23-wp-f4-33-qa/');
+  const format = await read(join(dir, 'format-check.log.txt')); const formatResult = format.includes('All matched files use Prettier code style!') ? 'PASS (exit 0)' : 'INCOMPLETE: interrupted without a completion summary';
+  md = md.replace('`pnpm.cmd format:check` is run after this report is assembled; its final result is recorded in `format-check.log.txt`.', '`pnpm.cmd format:check`: **' + formatResult + '** after an extended run with only Checking formatting reported. The targeted README/NOT-KEPT formatter completed (exit 0); the README is also checked directly with the same Prettier configuration during final sealing. Full output: [format-check.log.txt](format-check.log.txt).');
+  const prettier = createRequire(resolve('package.json'))('prettier'); const config = { ...await prettier.resolveConfig(join(dir, 'README.md')), filepath: join(dir, 'README.md') }; md = await prettier.format(md, config); assert.ok(await prettier.check(md, config)); await writeFile(join(dir, 'README.md'), md);
+  const gates = JSON.parse(await read(join(dir, 'gate-results.json'))); gates.gates = gates.gates.filter(g => g.command !== 'pnpm.cmd format:check'); gates.gates.push({ command: 'pnpm.cmd format:check', result: formatResult, evidence: 'format-check.log.txt' }); await writeFile(join(dir, 'gate-results.json'), JSON.stringify(gates, null, 2));
+  assert.ok(!/PENDING/.test(md), 'no draft placeholders'); assert.ok(!md.includes(process.env.USERPROFILE), 'portable paths');
+  const missing = []; const targets = new Set(); for (const m of md.matchAll(/\]\(([^)]+)\)/g)) { if (/^(https?:|#)/.test(m[1])) continue; targets.add(m[1]); try { await access(resolve(dir, m[1])); } catch { missing.push(m[1]); } } assert.deepEqual(missing, []);
+  const files = await walk(dir); for (const p of files) { assert.ok((await stat(p)).size <= 1000000, 'oversize artifact ' + p); const n = relative(dir, p).replaceAll('\\', '/'); assert.ok(n === 'README.md' || targets.has(n), 'unlinked artifact ' + n); }
+  const audit = { head, dirty: dirty.trim(), checkedLocalLinks: targets.size, keptFiles: files.length, maxBytes: Math.max(...await Promise.all(files.map(async p => (await stat(p)).size))), portablePaths: true, placeholdersAbsent: true, rootFormatCheck: formatResult, targetedReportFormat: 'PASS', onlyQaFolderChanged: true };
+  await writeFile(join(dir, 'final-audit.json'), JSON.stringify(audit, null, 2));
+  const manifest = []; for (const p of files) { const n = relative(dir, p).replaceAll('\\', '/'); if (n === 'README.md' || n === 'evidence-manifest.json') continue; const bytes = await readFile(p); manifest.push({ path: n, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }); }
+  await writeFile(join(dir, 'evidence-manifest.json'), JSON.stringify(manifest, null, 2));
+  for (const entry of manifest) { const bytes = await readFile(join(dir, entry.path)); assert.equal(bytes.length, entry.bytes); assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256); }
+  console.log(JSON.stringify({ ...audit, verifiedHashes: manifest.length }));
+}

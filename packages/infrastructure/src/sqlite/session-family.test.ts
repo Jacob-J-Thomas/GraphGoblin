@@ -53,3 +53,36 @@ describe.each(['sqlite', 'memory'] as const)('%s session family selection', (bac
     }
   });
 });
+
+describe.each(['sqlite', 'memory'] as const)('%s completed-visit session identity', (backend) => {
+  it('selects the exact run, node, attempt and harness without timestamp or status guesses', async () => {
+    const handle = backend === 'sqlite' ? await openMemoryDatabase() : undefined;
+    const repo: HarnessSessionRepository = handle
+      ? new SqliteSessionRepository(handle.db)
+      : new InMemorySessionRepository();
+    try {
+      const base = {
+        runId: 'run',
+        nodeId: 'worker',
+        attempt: 1,
+        harness: 'codex' as const,
+        status: 'finished' as const,
+        updatedAt: '2026-10-23T00:00:00.000Z',
+      };
+      await repo.upsert({ ...base, sessionId: 'latest-visit' });
+      await repo.upsert({ ...base, attempt: 2, sessionId: 'old-retry' });
+      await repo.upsert({ ...base, nodeId: 'reviewer', sessionId: 'reviewer' });
+      await repo.upsert({ ...base, runId: 'other', sessionId: 'other-run' });
+      expect((await repo.forNodeAttempt('run', 'worker', 1, 'codex'))?.sessionId).toBe(
+        'latest-visit',
+      );
+      expect((await repo.forNodeAttempt('run', 'worker', 2, 'codex'))?.sessionId).toBe('old-retry');
+      expect(await repo.forNodeAttempt('run', 'worker', 1, 'claude')).toBeUndefined();
+      expect(await repo.forNodeAttempt('run', 'absent', 1, 'codex')).toBeUndefined();
+      expect(await repo.forNodeAttempt('absent', 'worker', 1, 'codex')).toBeUndefined();
+      expect(await repo.forNodeAttempt('run', 'worker', 3, 'codex')).toBeUndefined();
+    } finally {
+      handle?.close();
+    }
+  });
+});

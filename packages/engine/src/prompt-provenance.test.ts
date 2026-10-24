@@ -321,6 +321,8 @@ describe('prompt provenance through RunManager and the fake harness', () => {
             return sessions.upsert(row);
           },
           forNode: (runId, nodeId) => sessions.forNode(runId, nodeId),
+          forNodeAttempt: (runId, nodeId, attempt, harness) =>
+            sessions.forNodeAttempt(runId, nodeId, attempt, harness),
           latestWithSession: (runId, harness) => sessions.latestWithSession(runId, harness),
           byScopeKey: (key, harness) => sessions.byScopeKey(key, harness),
         },

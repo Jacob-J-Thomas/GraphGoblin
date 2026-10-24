@@ -314,6 +314,28 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             config.harness,
           )
         )?.sessionId;
+      } else if (config.session.policy === 'resume-own' && visit.completedVisits > 0) {
+        const reset = config.session.resetAfterVisits;
+        // Pending turns above retain #244's exact retry/continuation and inherited-ID rules,
+        // including at a reset boundary. Forks/children have separate run IDs and logs.
+        if (reset === undefined || visit.completedVisits % reset !== 0) {
+          const previous =
+            visit.completedAttempt === undefined
+              ? undefined
+              : await ctx.ports.sessions.forNodeAttempt(
+                  ctx.run.id,
+                  ctx.node.id,
+                  visit.completedAttempt,
+                  config.harness,
+                );
+          if (!previous?.sessionId)
+            throw new RunFailureError(
+              'HARNESS_SESSION_MISSING',
+              'The completed node visit has no recorded provider session. An explicit fresh-session choice is required.',
+              { nodeId: ctx.node.id, resumable: false },
+            );
+          resumeId = previous.sessionId;
+        }
       }
     }
     const beginTurn = (
