@@ -1,0 +1,55 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts src/drain.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain.test.ts (6 tests | 1 failed) 521ms
+   × forces the entire parent and child tree with node/attempt evidence and keeps cancel distinct 133ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain.test.ts > forces the entire parent and child tree with node/attempt evidence and keeps cancel distinct
+AssertionError: expected { …(13) } to match object { status: 'failed', failure: { …(3) } }
+(24 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "failure": {
+-     "code": "RUN_INTERRUPTED_BY_STOP",
+-     "details": {
+-       "attempt": 1,
+-     },
+-     "resumable": false,
+-   },
+-   "status": "failed",
++   "status": "waiting",
+  }
+
+ ❯ src/drain.test.ts:91:40
+     89|   expect(children).toHaveLength(1);
+     90|   for (const id of [run.id, children[0]!.id]) {
+     91|     expect(await e.ports.runs.get(id)).toMatchObject({
+       |                                        ^
+     92|       status: 'failed',
+     93|       failure: { code: 'RUN_INTERRUPTED_BY_STOP', resumable: false, de…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 8 passed (9)
+   Start at  00:26:58
+   Duration  12.10s (transform 72%, import 24%, tests 3%)
+
+  Transform  transforming modules took 16.10s · 72% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts src/drain.test.ts", "exit": 1, "seconds": 18.54}

@@ -526,3 +526,46 @@ JSON event pages, SSE, generated clients and MCP use the same `exhausted` status
 ### Process model defaults (#205)
 
 `GET /system/model-defaults` returns the configured process `HarnessDefaults` (`byHarness`), before loop and owner overrides. The editor uses these values to display effective inherited model and effort, including custom `GG_DEFAULTS`. It requires `system:read`, is read-only and contains no credentials.
+
+## Gateway shutdown (#224)
+
+`GET /system/shutdown` requires `system:read` and returns `phase`, `graceMs`,
+`activeRunIds` (executors and queued family work), `unconfirmedRunIds` (native cleanup warnings),
+`choices`, and optional `startedAt`, `choiceAt`, `error`. `POST /system/shutdown` requires
+`system:write` and a strict body `{ "action": "drain" | "wait" | "force" }`.
+The 202 snapshot awaits initial family capture so active identities are accurate. It
+acknowledges the control, not completed cleanup. Invalid transitions return 409 with current
+state: wait requires an open drain, and force cannot restart a failed drain observation.
+
+Phases are running, draining, awaiting-choice, forcing, drain-failed, force-failed, exiting,
+ready and stopped. The default grace is five minutes (`GG_SHUTDOWN_GRACE_MS`); expiry offers
+`["wait", "force"]` without interruption. Wait has no hidden kill timer. Force is available
+before expiry. A force cleanup failure offers `["force"]`: a further explicit force exits
+code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
+terminations remain warnings without preventing normal completion. A drain observation
+failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
+#319 will build the browser interaction on these phases and controls.
+
+Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
+503 before saving any inbound record or dedupe key, so the same Event can be retried after
+restart. Webhooks return 503 `WEBHOOK_ADMISSION_FAILED`. Independent queued runs remain
+unstarted and durable. Drain waits for active executors, queued family continuations and
+already-due family wakes. Durable input/signal waits, future timers, parents waiting on
+parked children and pauses do not hold drain and survive force unchanged. While other work
+holds drain open, input, signals, cancellation, timers and required children remain usable;
+woken work holds drain until it finishes or parks again. After restart, past wall-clock waits
+become eligible and paused runs remain paused.
+
+Interrupted executing/queued work records `RUN_INTERRUPTED_BY_STOP` with node, attempt and
+external-effect evidence; it is distinct from user cancellation or successful completion.
+Only this shutdown's own unconfirmed native interruption blocks release in force-failed.
+After applicable execution/delivery cleanup, SSE inspectors (including queued runs) close,
+HTTP closes, SQLite closes and the lock is released. The explicit failed-stop exit instead
+preserves ownership for dead-PID reclamation. See ADR-0049 and docs/11.
+
+An intake accepted before drain can finish recording its durable run/receipt while shutdown
+waits; independent runs admitted then remain queued for restart. A new closed intake returns
+503 before recording anything. At the final quiescent handoff, mutating run commands are
+sealed atomically with wake admission: a late command returns 503 `SHUTTING_DOWN` before
+writing, while an earlier accepted wake keeps controls and SSE open until its runnable family
+settles. Durable future parks and pauses still recover on the next start.

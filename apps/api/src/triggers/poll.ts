@@ -37,7 +37,7 @@ interface Armed extends PollTarget {
 export interface PollTriggersDeps {
   probes: HttpProbePort;
   scripts: ScriptPort;
-  manager: Pick<RunManager, 'startRun' | 'startPollItem'>;
+  manager: Pick<RunManager, 'startRun' | 'startPollItem' | 'assertAdmissionOpen'>;
   /** Whether this trigger node already started a run with this dedupe key. */
   hasDedupe(loopId: string, triggerNodeId: string, dedupeKey: string): Promise<boolean>;
   findSeen(
@@ -142,6 +142,7 @@ export class PollTriggers {
   private async check(target: Armed, now: Date): Promise<RunRecord[]> {
     const context = { loopId: target.loopId, nodeId: target.triggerNodeId };
     try {
+      this.deps.manager.assertAdmissionOpen();
       const base = { now: now.toISOString() };
       const probe = await this.probe(target.config.probe, base, target.config.items !== undefined);
       const view = { ...base, probe };
