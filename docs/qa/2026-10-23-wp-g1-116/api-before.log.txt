@@ -1,0 +1,16 @@
+Baseline: fbd48d3da5f162539964516a34d5de7e387d63c6, before corrective production changes.
+Command: pnpm.cmd --filter @graphgoblin/api exec vitest run src/thread-history.test.ts
+Exit: 1 (Vitest started and the persisted regression ran).
+Retained excerpt of tool output; the full separate stdout file was not kept:
+
+FAIL src/thread-history.test.ts
+reconciles persisted failure, unfinished resume and success without writing on reads
+AssertionError: expected {} to deeply equal { prepared: true }
+Expected: { "prepared": true }
+Received: {}
+at check src/thread-history.test.ts:15:27
+
+Test Files 1 failed (1)
+Tests 1 failed (1)
+The test stopped at the failure-stage thread comparison. Full three-stage API/browser
+baseline observations are retained separately in 2026-10-23-wp-g1-116-before.json.

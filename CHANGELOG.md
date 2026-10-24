@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Reconcile current-thread reads from verified checkpoints and durable event tails; keep open and reloaded inspectors following resumed failed runs without applying unfinished patches or writing execution state. Persist each checkpoint's open-visit replay state so a delayed duplicate completion cannot hide another node's durable patch. **Upgrade:** SQL 0018 adds nullable `thread_snapshot_replay_state`; existing snapshots use full replay until the next checkpoint write. Implementations of `RunRepository.saveThread` must supply `(runId, thread, seq, replayState)`. (#116)
+
 - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
 
 - Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.

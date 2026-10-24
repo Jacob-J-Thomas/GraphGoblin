@@ -17,7 +17,12 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { readinessMessage } from '@graphgoblin/domain';
-import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
+import {
+  createTestApp,
+  createThreadHistoryFixture,
+  startFakeClassifierEndpoint,
+  type TestApp,
+} from '@graphgoblin/api/testing';
 import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
 import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
 import {
@@ -48,6 +53,7 @@ class E2eControlError extends Error {
 
 const apps: TestApp[] = [];
 const instances = new Map<string, E2eInstance>();
+const threadHistories = new Map<string, Awaited<ReturnType<typeof createThreadHistoryFixture>>>();
 const closers: (() => Promise<void>)[] = [];
 let nextInstanceId = 1;
 /** Loopback primitive endpoints started for classifier specs, by their API root. */
@@ -481,7 +487,47 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       });
       return { configured: true };
     }
+    case '/thread-history': {
+      const id = z.string().parse(body['instanceId']);
+      const history = threadHistories.get(id);
+      if (!history) throw new E2eControlError('unknown thread-history instance');
+      switch (body['action']) {
+        case 'start':
+          await history.manager.start();
+          await history.manager.waitForIdle();
+          break;
+        case 'working':
+          await history.working;
+          break;
+        case 'release':
+          history.release();
+          await history.manager.waitForIdle();
+          break;
+        case 'flush':
+          await history.snapshots.flush();
+          break;
+        case 'snapshot': {
+          const runId = z.string().parse(body['runId']);
+          return {
+            snapshot: await history.repos.runs.getThread(runId),
+            bytes: await history.bytes(runId),
+          };
+        }
+        default:
+          throw new E2eControlError('unknown thread-history action');
+      }
+      return { ok: true };
+    }
     case '/apps': {
+      if (body['threadHistory'] === true) {
+        const history = await createThreadHistoryFixture(dist);
+        history.manager.stop();
+        const instanceId = 'thread-history-' + nextInstanceId++;
+        const url = await history.app.listen({ host: '127.0.0.1', port: 0 });
+        threadHistories.set(instanceId, history);
+        closers.push(() => history.close());
+        return { instanceId, url, loopId: history.loopId };
+      }
       const extra = await startApp(
         (body['env'] as Record<string, string> | undefined) ?? {},
         body['requireApiKey'] === true,

@@ -1,0 +1,59 @@
+
+Running 1 test using 1 worker
+
+pnpm.cmd : (node:36648) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:111 char:1
++ pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/thread-hi ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:36648) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36648) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33556) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\thread-history.spec.ts:7:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots (60.0s)
+
+
+  1) [chromium] › e2e\thread-history.spec.ts:7:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots 
+
+    Error: failed
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 1
+
+    - Object {
+    -   "prepared": true,
+    - }
+    + Object {}
+
+      65 |     for (const item of observations) {
+      66 |       const expected = { prepared: true, ...(item.step === 'succeeded' ? { completed: true } : {}) };
+    > 67 |       expect(item.api.vars, item.step).toEqual(expected);
+         |                                        ^
+      68 |       expect(item.existing, item.step).toEqual(item.api);
+      69 |       expect(item.reload, item.step).toEqual(item.api);
+      70 |       expect(item.readsUnchanged, item.step).toBe(true);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-116\apps\web\e2e\thread-history.spec.ts:67:40
+
+    Error Context: test-results\thread-history-open-and-re-f624b-cess-with-delayed-snapshots-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\thread-history-open-and-re-f624b-cess-with-delayed-snapshots-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\thread-history-open-and-re-f624b-cess-with-delayed-snapshots-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\thread-history.spec.ts:7:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\web
+

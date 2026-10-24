@@ -1,0 +1,73 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/packages/engine
+
+ ❯ src/checkpoint-state.test.ts (2 tests | 2 failed) 98ms
+   × preserves a different open visit across a delayed duplicate completion checkpoint 72ms
+   × recovery checkpoints retain the open failed visit through a delayed earlier completion 23ms
+pnpm.cmd : 
+At line:15 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/checkpoint- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/checkpoint-state.test.ts > preserves a different open visit across a delayed duplicate completion checkpoint
+AssertionError: expected [ 'a' ] to deeply equal [ 'a', 'b' ]
+
+- Expected
++ Received
+
+  [
+    "a",
+-   "b",
+  ]
+
+ ❯ src/checkpoint-state.test.ts:28:30
+     26|   const before = await e.ports.runs.getThreadCheckpoint(run.id);
+     27|   const result = await e.manager.getThread(run.id);
+     28|   expect(result?.vars.items).toEqual(['a', 'b']);
+       |                              ^
+     29|   expect(result).toEqual(reconcileThread(initial, e.events(run.id)));
+     30|   expect(await e.ports.runs.getThreadCheckpoint(run.id)).toEqual(befor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/checkpoint-state.test.ts > recovery checkpoints retain the open failed visit through a delayed earlier 
+completion
+AssertionError: expected [ 'a' ] to deeply equal [ 'a', 'b' ]
+
+- Expected
++ Received
+
+  [
+    "a",
+-   "b",
+  ]
+
+ ❯ src/checkpoint-state.test.ts:49:32
+     47|     await e.ports.events.append(run.id, [finish('b')]);
+     48|     const result = await recovery.getThread(run.id);
+     49|     expect(result?.vars.items).toEqual(['a', 'b']);
+       |                                ^
+     50|     expect(result).toEqual(reconcileThread((await e.ports.runs.getInit…
+     51|     expect(checkpoint.replayState).toEqual({ openNodeId: 'b', strict: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  05:37:36
+   Duration  32.13s (transform 88%, import 12%)
+
+  Transform  transforming modules took 25.80s · 88% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\packages\engine
+
