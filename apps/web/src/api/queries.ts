@@ -285,8 +285,23 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
   const client = useApi();
   const cache = useQueryClient();
   const queryKey = [...keys.events, query];
+  const manualRefresh = useMutation({
+    mutationKey: [...keys.events, 'refresh', query],
+    mutationFn: () => events.list(client, query),
+    networkMode: 'always',
+    onSuccess: async (page) => {
+      // Commit a complete replacement only after it arrives. Cancel older reads so they
+      // cannot overwrite it; a failed refresh leaves every loaded page and cursor intact.
+      await cache.cancelQueries({ queryKey, exact: true });
+      cache.setQueryData<InfiniteData<InboundPage>>(queryKey, {
+        pages: [page],
+        pageParams: [query.cursor],
+      });
+    },
+  });
   const history = useInfiniteQuery({
     queryKey,
+    enabled: !manualRefresh.isPending,
     initialPageParam: query.cursor,
     queryFn: async ({ pageParam, signal }) => {
       const page = await events.list(
@@ -302,7 +317,7 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
       const previous = loaded?.pages[index];
       if (!previous) return page;
       // Receipt recovery may update existing rows, but background reads must never replace
-      // membership or paging boundaries. Only an explicit reset admits newer rows.
+      // membership or paging boundaries. Only a successful manual refresh replaces them.
       const updates = new Map(page.items.map((event) => [event.id, event]));
       return {
         ...previous,
@@ -346,7 +361,10 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
     ...history,
     newerAvailable,
     newerCheckFailed: newest.isError,
-    refresh: () => cache.resetQueries({ queryKey, exact: true }),
+    isRefreshing: manualRefresh.isPending,
+    refreshFailed: manualRefresh.isError,
+    hasRefreshed: manualRefresh.isSuccess,
+    refresh: () => manualRefresh.mutate(),
   };
 }
 

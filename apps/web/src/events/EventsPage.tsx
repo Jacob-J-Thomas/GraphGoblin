@@ -1,5 +1,6 @@
 import { HistoryState } from '../components/HistoryState.js';
 import { Link, useSearchParams } from 'react-router';
+import { useRef } from 'react';
 import { useInboundEvents } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import {
@@ -114,41 +115,85 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
  * of other runs, with the runs each one started.
  */
 export function EventsPage() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
+  const refreshRef = useRef<HTMLButtonElement>(null);
   const type = params.get('type');
   const before = params.get('before');
   const filters = { ...(type ? { type } : {}), ...(before ? { before } : {}) };
   const query = useInboundEvents(filters);
+  const busy = query.isFetching || query.isRefreshing;
+  const status = [
+    query.isRefreshing
+      ? 'Refreshing events…'
+      : query.refreshFailed
+        ? 'Refresh failed. Your current events are still shown. Refresh to try again.'
+        : query.hasRefreshed && !query.newerAvailable
+          ? 'Showing the newest events.'
+          : null,
+    query.newerAvailable ? 'New events available' : null,
+    query.newerCheckFailed ? 'Could not check for new events. Refresh to try again.' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  function clearFilter(name: 'type' | 'before') {
+    const next = new URLSearchParams(params);
+    next.delete(name);
+    refreshRef.current?.focus({ preventScroll: true });
+    setParams(next);
+  }
   return (
     <Page>
       <PageHeader
         title="Events"
         actions={
           <Button
+            ref={refreshRef}
             variant="outline"
-            disabled={query.isFetching}
-            onClick={() => void query.refresh()}
+            aria-disabled={busy}
+            aria-busy={busy}
+            onClick={() => {
+              if (!busy) query.refresh();
+            }}
           >
             Refresh
           </Button>
         }
       >
         <span role="status" className="text-sm text-muted">
-          {query.newerAvailable
-            ? 'New events available'
-            : query.newerCheckFailed
-              ? 'Could not check for new events. Refresh to try again.'
-              : null}
+          {status}
         </span>
       </PageHeader>
       {type || before ? (
-        <p className="text-sm text-muted">
-          {type ? `Type: ${type}` : null}
-          {type && before ? ' · ' : null}
-          {before ? `Before: ${before}` : null}
-        </p>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted">
+          {type ? (
+            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
+              <span className="min-w-0 wrap-anywhere">Type: {type}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Clear type filter"
+                onClick={() => clearFilter('type')}
+              >
+                Clear
+              </Button>
+            </span>
+          ) : null}
+          {before ? (
+            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
+              <span className="min-w-0 wrap-anywhere">Before: {before}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Clear before filter"
+                onClick={() => clearFilter('before')}
+              >
+                Clear
+              </Button>
+            </span>
+          ) : null}
+        </div>
       ) : null}
-      <HistoryState query={query} what="Events">
+      <HistoryState query={query} what="Events" keepDataOnError>
         {(items) =>
           items.length === 0 ? (
             <p className="text-sm text-muted">

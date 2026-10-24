@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Events keeps loaded history stable when new events arrive, announces availability, and offers deliberate Refresh with type/time filters and opaque paging preserved. (#240)
+- Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. (#240)
 
 - Show execution defaults in the editor and Settings, pin them on runs, and support explicit Unlimited node visits and repeat passes plus optional authored run deadlines. Runs default to 10 visits and no deadline; remove Claude's hidden provider-turn and ten-minute inference ceilings, preserve typed transport/output failures and retry positively unsubmitted transient transport failures once. **Upgrade:** no existing loop or run gains a deadline. Omitted deadlines and `runDeadlineSeconds: null` mean no deadline; `null` explicitly selects Unlimited visits or passes. SQL 0017 pins existing runs and saved admission intents from their immutable definitions, preserving authored deadlines and pinning null when omitted. Export/API clients must accept nullable limits, the new run pin limits and typed deadline/transport/output failures. Programmatic Claude harness callers must remove `maxTurns` and `turnTimeoutMs`; use authored node/run deadlines. The 16 KiB per-item detail excerpt remains a storage bound; full final results are preserved. No owner-store changes were performed. (#243)
 

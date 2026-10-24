@@ -18,7 +18,10 @@ function event(id: string, type = 'chosen') {
 
 async function refreshEvents(user: ReturnType<typeof userEvent.setup>) {
   const button = screen.getByRole('button', { name: 'Refresh' });
-  await waitFor(() => expect(button).toBeEnabled());
+  await waitFor(() => {
+    expect(button).toBeEnabled();
+    expect(button).not.toHaveAttribute('aria-disabled', 'true');
+  });
   await user.click(button);
 }
 
