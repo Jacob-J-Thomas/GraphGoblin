@@ -257,7 +257,7 @@ export function registerTools(
     {
       title: 'Get a run thread',
       description:
-        "Get a run's context thread: the messages, variables, artifacts, per-node outputs, last output, and usage counters the loop has accumulated. Use it to explain what a run did or to find an intermediate value. It can be large; prefer get_run when you only need the status or result.",
+        "Get a run's context thread reconciled through its durable event log: the messages, variables, artifacts, per-node outputs, last output, and usage counters the loop has accumulated. Use it to explain what a run did or to find an intermediate value. It can be large; prefer get_run when you only need the status or result.",
       inputSchema: { runId },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

@@ -1,0 +1,230 @@
+{
+  "main": {
+    "schemaVersion": 4,
+    "name": "Independent snapshot QA",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "prepare",
+        "kind": "mutate",
+        "label": "Prepare",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/prepared",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "work",
+        "kind": "script",
+        "label": "Work",
+        "config": {
+          "command": "qa-fake-script",
+          "stdout": "patch"
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "returns": "vars"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-prepare",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "prepare"
+        }
+      },
+      {
+        "id": "prepare-work",
+        "from": {
+          "node": "prepare",
+          "port": "out"
+        },
+        "to": {
+          "node": "work"
+        }
+      },
+      {
+        "id": "work-done",
+        "from": {
+          "node": "work",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  },
+  "minimal": {
+    "schemaVersion": 4,
+    "name": "Independent minimal QA",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "returns": "vars"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-done",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  },
+  "wait": {
+    "schemaVersion": 4,
+    "name": "Independent wait QA",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "park",
+        "kind": "wait",
+        "label": "Park",
+        "config": {
+          "mode": "input",
+          "prompt": "QA value"
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "returns": "vars"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-park",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "park"
+        }
+      },
+      {
+        "id": "park-done",
+        "from": {
+          "node": "park",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  },
+  "child": {
+    "schemaVersion": 4,
+    "name": "Independent child QA",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "child-value",
+        "kind": "mutate",
+        "label": "Child value",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/childOnly",
+              "value": {
+                "kind": "literal",
+                "value": 73
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "returns": "vars"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-child-value",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "child-value"
+        }
+      },
+      {
+        "id": "child-value-done",
+        "from": {
+          "node": "child-value",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  }
+}

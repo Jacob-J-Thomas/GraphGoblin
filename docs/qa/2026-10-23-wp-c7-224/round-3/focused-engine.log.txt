@@ -1,0 +1,157 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-admission.test.ts src/drain.test.ts src/drain-regressions.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (11 tests | 5 failed) 18488ms
+   × B1 normal drain completes with future timer and paused input unchanged 130ms
+   × B1 force leaves future timer and paused input unchanged 5100ms
+   × B3 an earlier unconfirmed script timeout does not block normal drain 5010ms
+   × a due timer wakes during an open drain and holds it until the continuation parks again 5071ms
+   × force interrupts queued family children but preserves an independent queued run 1025ms
+ ❯ src/drain.test.ts (6 tests | 1 failed) 353ms
+   × refuses every independent admission source after drain, including a slow in-flight admission 101ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > B1 normal drain completes with future timer and paused input unchanged
+EngineRequestError: The gateway shutdown is ready to close
+ ❯ RunManager.withWork src/run-manager.ts:567:13
+    565|   private async withWork<T>(work: () => Promise<T>): Promise<T> {
+    566|     if (this.drainSealed)
+    567|       throw new EngineRequestError('SHUTTING_DOWN', 'The gateway shutd…
+       |             ^
+    568|     this.workLeases++;
+    569|     this.workEpoch++;
+ ❯ RunManager.cancel src/run-manager.ts:956:17
+ ❯ src/drain-regressions.test.ts:101:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/drain-regressions.test.ts > B1 force leaves future timer and paused input unchanged
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/drain-regressions.test.ts:110:1
+    108| });
+    109|
+    110| it('B1 force leaves future timer and paused input unchanged', async ()…
+       | ^
+    111|   const e = await createTestEngine();
+    112|   const timer = e.publish(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/drain-regressions.test.ts > B3 an earlier unconfirmed script timeout does not block normal drain
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/drain-regressions.test.ts:141:1
+    139| });
+    140|
+    141| it('B3 an earlier unconfirmed script timeout does not block normal dra…
+       | ^
+    142|   const e = await createTestEngine();
+    143|   e.ports.scripts.respondWith(() => ({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/drain-regressions.test.ts > a due timer wakes during an open drain and holds it until the continuation parks again
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/drain-regressions.test.ts:172:1
+    170| });
+    171|
+    172| it('a due timer wakes during an open drain and holds it until the cont…
+       | ^
+    173|   const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    174|   const work = singleNodeLoop('due continuation', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/drain-regressions.test.ts > force interrupts queued family children but preserves an independent queued run
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/drain-regressions.test.ts:232:58
+    230|   );
+    231|   const parent = await e.start(v.loopId);
+    232|   await vi.waitFor(() => expect(e.ports.harness.started).toHaveLength(…
+       |                                                          ^
+    233|   const independent = await e.start(v.loopId);
+    234|   await e.manager.beginDrain();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/drain.test.ts > refuses every independent admission source after drain, including a slow in-flight admission
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "id": "00000000000000000000000001",
++   "invocationId": "00000000000000000000000002",
++   "iteration": 1,
++   "lastEventSeq": 1,
++   "loopId": "6TQ25R7F2JQZNNEFJ0FPDDD8QM",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {
++           "codex": {
++             "effort": "low",
++             "model": "gpt-6-luna",
++           },
++         },
++       },
++     },
++     "label": "minimal v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++     },
++     "name": "minimal",
++     "source": "published",
++     "version": 1,
++   },
++   "status": "queued",
++   "versionId": "QFH9MS85A3R404PED2M9BMJDS1",
+  }
+
+ ❯ src/drain.test.ts:27:24
+     25|   await e.manager.beginDrain();
+     26|   release();
+     27|   await expect(pending).rejects.toMatchObject({ code: 'SHUTTING_DOWN' …
+       |                        ^
+     28|   for (const source of [
+     29|     'manual.api',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  6 failed | 14 passed (20)
+   Start at  07:20:29
+   Duration  37.59s (tests 56%, transform 23%, import 20%, worker 1%)
+
+    Isolate  3 workers spawned · ~1.18s startup each (spawn + environment, per file)
+             at least ~2.37s faster with isolate: false — reuses workers across files instead of one per file
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-admission.test.ts src/drain.test.ts src/drain-regressions.test.ts --maxWorkers=1", "exit": 1, "seconds": 40.57}

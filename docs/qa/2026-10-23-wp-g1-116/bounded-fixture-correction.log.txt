@@ -1,0 +1,147 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/packages/engine
+
+ ❯ src/thread-read.test.ts (5 tests | 4 failed) 135ms
+   × reads only the checkpoint event for a current terminal snapshot 92ms
+   × catches up a completed checkpoint without replaying a duplicate completion patch 18ms
+   × derives the open visit at a parked checkpoint without reading its prefix 5ms
+   × falls back to the full seed/history when the checkpoint event is missing or its state is ambiguous 12ms
+pnpm.cmd : 
+At line:79 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/thread-read ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/thread-read.test.ts > reads only the checkpoint event for a current terminal snapshot
+AssertionError: expected [ { after: +0, …(1) } ] to deeply equal [ { after: 7, seqs: [ 8 ] } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "after": 7,
++     "after": 0,
+      "seqs": [
++       1,
++       2,
++       3,
++       4,
++       5,
++       6,
++       7,
+        8,
+      ],
+    },
+  ]
+
+ ❯ src/thread-read.test.ts:35:19
+     33|   if (!checkpoint) throw new Error('No checkpoint');
+     34|   expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t…
+     35|   expect(t.reads).toEqual([{ after: checkpoint.seq - 1, seqs: [checkpo…
+       |                   ^
+     36|   expect(await t.engine.ports.runs.getThreadCheckpoint(t.run.id)).toEq…
+     37| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/thread-read.test.ts > catches up a completed checkpoint without replaying a duplicate completion patch
+AssertionError: expected [ { after: +0, …(1) } ] to deeply equal [ { after: 6, seqs: [ 7, 8, 9 ] } ]
+
+- Expected
++ Received
+
+@@ -1,9 +1,15 @@
+  [
+    {
+-     "after": 6,
++     "after": 0,
+      "seqs": [
++       1,
++       2,
++       3,
++       4,
++       5,
++       6,
+        7,
+        8,
+        9,
+      ],
+    },
+
+ ❯ src/thread-read.test.ts:45:19
+     43|   await t.engine.ports.events.append(t.run.id, [{ type: 'node.finished…
+     44|   expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t…
+     45|   expect(t.reads).toEqual([{ after: finished.seq - 1, seqs: t.engine.e…
+       |                   ^
+     46| });
+     47| it('derives the open visit at a parked checkpoint without reading its …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/thread-read.test.ts > derives the open visit at a parked checkpoint without reading its prefix
+ZodError: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "nodes",
+      1,
+      "config",
+      "prompt"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ setup src/thread-read.test.ts:10:26
+ ❯ src/thread-read.test.ts:48:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/thread-read.test.ts > falls back to the full seed/history when the checkpoint event is missing or its state 
+is ambiguous
+AssertionError: expected [ +0 ] to deeply equal [ 998, +0 ]
+
+- Expected
++ Received
+
+  [
+-   998,
+    0,
+  ]
+
+ ❯ src/thread-read.test.ts:63:39
+     61|     await t.engine.ports.runs.saveThread(t.run.id, reconcileThread(t.i…
+     62|     expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread…
+     63|     expect(t.reads.map(r => r.after)).toEqual([seq - 1, 0]);
+       |                                       ^
+     64|   }
+     65| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  00:39:15
+   Duration  5.10s (import 50%, transform 46%, tests 3%)
+
+  Transform  transforming modules took 2.22s · 46% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\packages\engine
+

@@ -19,7 +19,7 @@ is 120,000 ms, chosen to match the former declared value, not an owner-approved 
 The upper bound is 31,536,000,000 ms (one year), matching the run deadline's range.
 This additive default introduces no deadline for existing records.
 
-Choose a one-off data migration (`0020_completion_deadline_defaults`) rather than
+Choose a one-off data migration (`0019_completion_deadline_defaults`) rather than
 schema decoding on every repository read. The read path currently returns stored JSON;
 Zod defaults are not applied by Drizzle or by response serialization. Missing
 `structuredTimeoutMs` therefore produced `500 RESPONSE_INVALID` despite parsing as null.
@@ -40,7 +40,7 @@ lifts and restores the exact snapshot-update trigger inside that same transactio
 Exports, API version/detail reads and new run pins then use definitions with materialized
 defaults; existing run/event/admission decoders continue using their current schemas.
 The migration is idempotent and startup records it once. No authored limit is changed.
-Numbers 0018 and 0019 remain reserved for WP-D4 and WP-C7, so the migration uses 0020.
+It follows #116's `0018` as `0019`, with a journal timestamp after every shipped migration so upgraded stores apply it.
 
 The unused engine constructor setting is removed, with an embedding upgrade note.
 

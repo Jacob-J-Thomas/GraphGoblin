@@ -21,6 +21,8 @@ const EnvSchema = z.object({
     .default('info'),
   GG_MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(64).default(4),
   GG_DEFAULTS: z.string().optional(),
+  // Five minutes lets interactive work finish before offering a choice; expiry never kills.
+  GG_SHUTDOWN_GRACE_MS: z.coerce.number().int().min(1).max(2_147_483_647).default(300_000),
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),
   GG_HOOK_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),
   GG_SWAGGER_UI: bool.default(true),
@@ -46,6 +48,7 @@ export interface ApiConfig {
   maxConcurrentRuns: number;
   defaults: HarnessDefaults;
   timerPollMs: number;
+  shutdownGraceMs: number;
   /** Webhook deliveries accepted per endpoint per minute. */
   hookRateLimitPerMinute: number;
   swaggerUi: boolean;
@@ -123,6 +126,7 @@ export function loadConfig(
     maxConcurrentRuns: e.GG_MAX_CONCURRENT_RUNS,
     defaults,
     timerPollMs: e.GG_TIMER_POLL_MS,
+    shutdownGraceMs: e.GG_SHUTDOWN_GRACE_MS,
     hookRateLimitPerMinute: e.GG_HOOK_RATE_LIMIT,
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),

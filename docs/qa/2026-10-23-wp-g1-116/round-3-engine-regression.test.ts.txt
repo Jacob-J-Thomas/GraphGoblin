@@ -1,0 +1,87 @@
+import { expect, it } from 'vitest';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { reconcileThread, replayStateAt } from '@graphgoblin/domain';
+import { RunManager } from './run-manager.js';
+import type { EventDraft } from './ports.js';
+import { createTestEngine } from './testing/scenario.js';
+
+const start = (nodeId: string): EventDraft => ({
+  type: 'node.started',
+  nodeId,
+  kind: 'mutate',
+  attempt: 1,
+  configHash: '0'.repeat(64),
+});
+const finish = (nodeId: string, duplicate = false): EventDraft => ({
+  type: 'node.finished',
+  nodeId,
+  durationMs: 1,
+  patch: [
+    {
+      op: 'add',
+      path: duplicate || nodeId === 'b' ? '/vars/items/-' : '/vars/items',
+      value: duplicate ? 'duplicate' : nodeId === 'b' ? 'b' : ['a'],
+    },
+  ],
+});
+
+it('preserves a different open visit across a delayed duplicate completion checkpoint', async () => {
+  const e = await createTestEngine();
+  e.manager.stop();
+  const run = await e.start(e.publish(minimalLoop()).loopId);
+  await e.ports.events.append(run.id, [start('a'), finish('a'), start('b'), finish('a', true)]);
+  const initial = (await e.ports.runs.getInitialThread(run.id))!;
+  const events = e.events(run.id);
+  const seq = events.at(-1)!.seq;
+  await e.ports.runs.saveThread(
+    run.id,
+    reconcileThread(initial, events),
+    seq,
+    replayStateAt(events, seq),
+  );
+  await e.ports.events.append(run.id, [finish('b')]);
+  const before = await e.ports.runs.getThreadCheckpoint(run.id);
+  const result = await e.manager.getThread(run.id);
+  expect(result?.vars.items).toEqual(['a', 'b']);
+  expect(result).toEqual(reconcileThread(initial, e.events(run.id)));
+  expect(await e.ports.runs.getThreadCheckpoint(run.id)).toEqual(before);
+});
+
+it('recovery checkpoints retain the open failed visit through a delayed earlier completion', async () => {
+  const e = await createTestEngine();
+  e.manager.stop();
+  const run = await e.start(e.publish(minimalLoop()).loopId);
+  await e.ports.events.append(run.id, [
+    start('a'),
+    finish('a'),
+    start('b'),
+    {
+      type: 'run.failed',
+      failure: {
+        code: 'SCRIPT_EXIT_CODE',
+        message: 'durable failure before status',
+        nodeId: 'b',
+        resumable: true,
+      },
+    },
+    finish('a', true),
+  ]);
+  const recovery = new RunManager(e.ports, e.settings);
+  try {
+    await recovery.start();
+    await recovery.waitForIdle();
+    expect((await recovery.getRun(run.id))?.status).toBe('failed');
+    const checkpoint = (await e.ports.runs.getThreadCheckpoint(run.id))!;
+    expect(checkpoint.seq).toBe(e.events(run.id).at(-1)!.seq);
+    await e.ports.events.append(run.id, [finish('b')]);
+    const result = await recovery.getThread(run.id);
+    expect(result?.vars.items).toEqual(['a', 'b']);
+    expect(result).toEqual(
+      reconcileThread((await e.ports.runs.getInitialThread(run.id))!, e.events(run.id)),
+    );
+    expect(checkpoint.replayState).toEqual({ openNodeId: 'b', strict: true });
+    expect(await e.ports.runs.getThreadCheckpoint(run.id)).toEqual(checkpoint);
+  } finally {
+    recovery.stop();
+  }
+});

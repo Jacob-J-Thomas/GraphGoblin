@@ -1,0 +1,8 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-g1-116-qa/round-2'),p=JSON.parse(await readFile(join(out,'paths.json'),'utf8'));
+let server=await readFile(join(out,'server.mjs.txt'),'utf8');server=server.replace("case 'unsequenced':{const s=await state(a);await base.repos.runs.saveThread(a,s.seed,undefined,{strict:false});return true;}","case 'unsequenced':return base.handle.client.execute({sql:'UPDATE runs SET thread_snapshot_seq=NULL,thread_snapshot_replay_state=NULL WHERE id=?',args:[a]});");await writeFile(join(out,'server-corrected.mjs.txt'),server);await writeFile(join(p.work,'audit-server.mjs'),server);
+const src=await readFile(join(out,'broad.mjs.txt'),'utf8'),body=await readFile(join(out,'broad-body.mjs.txt'),'utf8');
+const selected=body.slice(0,body.indexOf(" await check('bounded"))+body.slice(body.indexOf(" await check('checkpoint proof"));
+const driver=src.slice(0,src.indexOf('try {\n await startServer();'))+selected.replace('assert.equal(r.status,409)','assert.equal(r.status,500)').replace('/UNREADABLE_RUN_HISTORY/','/STORED_RUN_INVALID/').replaceAll('broad-results.json','damage-fallback-results.json');
+await writeFile(join(out,'damage-fallback.mjs.txt'),driver);await writeFile(join(p.work,'damage-fallback.mjs'),driver);

@@ -1,0 +1,523 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 27186ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 711ms
+ ❯ src/wait-identity.test.ts (34 tests | 7 failed) 26990ms
+   ❯ durable wait boundaries (18)
+     × keeps the observed identity when SQLite is closed and reopened 1966ms
+     × recovers an event-first park and its passed deadline at 50 ms polling 1072ms
+     × recovers an event-first park and its passed deadline at 1000 ms polling 739ms
+     × acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 1202ms
+     × retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 586ms
+   ❯ wait rejection and acknowledgement boundaries (4)
+     × recovers a paused event-first park before its snapshot/status commit without advancing it 809ms
+     × closes and reopens SQLite after the wake but before timer acknowledgement 822ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ❯ src/durable-events.test.ts (6 tests | 1 failed) 12843ms
+   ❯ damaged history diagnostics (4)
+     × identifies event and row damage without changing it and scopes results to the owner 432ms
+ ❯ src/definition-pins.test.ts (3 tests | 2 failed) 407831ms
+   ❯ runs pin their definition across edits, Settings changes and a restart (1)
+     × keeps published and draft runs on their start definition and defaults 200048ms
+   ❯ classifier bindings are pinned at start (2)
+     × calls the provider model a waiting run pinned, after a catalog edit and a restart 200055ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 34978ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20067ms
+{"level":30,"time":1792803527520,"pid":48012,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5610"}
+{"level":30,"time":1792803527521,"pid":48012,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5610,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-xdMquu","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792803527597,"pid":48012,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792803527606,"pid":48012,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.879899999999907,"msg":"request completed"}
+ ❯ src/version-migration.test.ts (3 tests | 1 failed) 24600ms
+   ❯ migrated SQLite versions through the API (3)
+     × recovers a current-format pinned run across restart mid-run without migration 16253ms
+ ❯ src/prompt-failure-boundaries.test.ts (10 tests | 6 failed) 18465ms
+   × keeps later authoritative codex evidence at termination over an earlier event 992ms
+   × keeps later authoritative codex evidence at cancel over an earlier event 986ms
+   × keeps later authoritative codex evidence at cleanup over an earlier event 1333ms
+   × keeps later authoritative claude evidence at termination over an earlier event 2181ms
+   × keeps later authoritative claude evidence at cancel over an earlier event 932ms
+   × keeps later authoritative claude evidence at cleanup over an earlier event 935ms
+ ❯ src/prompt-evidence-matrix.test.ts (148 tests | 12 failed) 219279ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok 3422ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before 974ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after 1185ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok 826ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before 1276ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after 1288ms
+   × keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok 913ms
+   × keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before 532ms
+   × keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after 696ms
+   × keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok 1445ms
+   × keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before 674ms
+   × keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after 1124ms
+ ❯ src/prompt-sdk-storage-matrix.test.ts (360 tests | 30 failed) 443183ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=ok 3741ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=before 1333ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=after 753ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=ok 868ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=before 703ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=after 682ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=ok 441ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=before 589ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=after 473ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=ok 2100ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=before 595ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=after 648ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=ok 760ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=before 885ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=after 859ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=ok 1379ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=before 720ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=after 1234ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=ok 842ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=before 1097ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=after 614ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=ok 1558ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=before 1060ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=after 1105ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=ok 3006ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=before 787ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=after 614ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=ok 1827ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=before 841ms
+   × keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=after 1113ms
+ ❯ src/shutdown-controller.test.ts (2 tests | 1 failed) 192ms
+   × does not publish ready while force cleanup is still pending after normal drain 18ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 62 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+AssertionError: expected [ 'DELETE /api-keys/{id}', …(52) ] to deeply equal [ 'DELETE /api-keys/{id}', …(50) ]
+
+- Expected
++ Received
+
+@@ -24,10 +24,11 @@
+    "GET /runs/{id}/sessions",
+    "GET /runs/{id}/thread",
+    "GET /secrets",
+    "GET /settings",
+    "GET /system/preflight",
++   "GET /system/shutdown",
+    "GET /templates",
+    "GET /templates/{id}",
+    "PATCH /classifier-models/{id}",
+    "PATCH /model-catalog/{harness}/{model}",
+    "POST /api-keys",
+@@ -41,10 +42,11 @@
+    "POST /runs/{id}/input",
+    "POST /runs/{id}/pause",
+    "POST /runs/{id}/replay",
+    "POST /runs/{id}/resume",
+    "POST /runs/{id}/signals/{name}",
++   "POST /system/shutdown",
+    "POST /templates/{id}/draft",
+    "POST /triggers/cron/preview",
+    "PUT /classifier-models/{id}",
+    "PUT /loops/{id}/draft",
+    "PUT /model-catalog/{harness}/{model}",
+
+ ❯ src/adversarial.test.ts:194:31
+    194|       }
+    195|     }
+    196|     expect(advertised.sort()).toEqual(Object.keys(ROUTE_SCOPES).sort()…
+       |                 ^
+    197|     for (const route of advertised) {
+    198|       const required = ROUTE_SCOPES[route]!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/64]⎯
+
+ FAIL  src/definition-pins.test.ts > runs pin their definition across edits, Settings changes and a restart > keeps published and draft runs on their start definition and defaults
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/definition-pins.test.ts:155:3
+    153|   (await call<{ items: RunEvent[] }>('GET', `/runs/${id}/events`)).ite…
+    154|
+    155| describe('runs pin their definition across edits, Settings changes and…
+       |   ^
+    156|   it(
+    157|     'keeps published and draft runs on their start definition and defa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/64]⎯
+
+ FAIL  src/definition-pins.test.ts > runs pin their definition across edits, Settings changes and a restart > keeps published and draft runs on their start definition and defaults
+ FAIL  src/definition-pins.test.ts > classifier bindings are pinned at start > calls the provider model a waiting run pinned, after a catalog edit and a restart
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/definition-pins.test.ts:81:1
+     79| });
+     80|
+     81| afterEach(async () => {
+       | ^
+     82|   await close();
+     83|   await rm(dataDir, { recursive: true, force: true }).catch(() => unde…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/64]⎯
+
+ FAIL  src/definition-pins.test.ts > classifier bindings are pinned at start > calls the provider model a waiting run pinned, after a catalog edit and a restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/definition-pins.test.ts:329:3
+    328|   };
+    329|
+    330|   it(
+       |  ^
+    331|     'calls the provider model a waiting run pinned, after a catalog ed…
+    332|     { timeout: 180_000 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/64]⎯
+
+ FAIL  src/durable-events.test.ts > damaged history diagnostics > identifies event and row damage without changing it and scopes results to the owner
+Error: Failed query: select "payload", "run_id", "seq", "ts", "type" from "run_events" INDEXED BY run_events_delivery_idx where ("run_events"."run_id" in (?) and "run_events"."type" in (?, ?, ?, ?)) order by "run_events"."seq" asc
+params: 01M3Y7RKG08VS61G839KQ2SYQV,delivery.queued,delivery.attempted,delivery.attempt_finished,delivery.finished
+ ❯ LibSQLPreparedQuery.queryWithCache ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/sqlite-core/session.ts:80:11
+ ❯ LibSQLPreparedQuery.values ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:286:10
+ ❯ LibSQLPreparedQuery.all ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:214:16
+ ❯ SqliteDeliveryRunRepository.project ../../packages/infrastructure/src/sqlite/delivery-runs.ts:17:18
+     15|   private async project(records: RunRecord[], skipUnreadable = false):…
+     16|     if (!records.length) return [];
+     17|     const rows = await this.deliveryDb
+       |                  ^
+     18|       .select({
+     19|         payload: sql<string>`${runEvents.payload}`,
+ ❯ SqliteDeliveryRunRepository.get ../../packages/infrastructure/src/sqlite/delivery-runs.ts:93:19
+ ❯ ../../packages/engine/src/run-manager.ts:374:23
+
+Caused by: LibsqlError: SQLITE_ERROR: no such table: run_events
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', extendedCode: 'SQLITE_ERROR', rawCode: 1 }
+Caused by: SqliteError: no such table: run_events
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/64]⎯
+
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=ok
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=after
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=before
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cancel over an earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cleanup over an earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at termination over an earlier event
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=true storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=false storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=before
+Error: Native process termination unconfirmed; ownership retained
+ ❯ RunManager.waitForDrain ../../packages/engine/src/run-manager.ts:431:13
+    429|     await this.returnDeliveries.waitForIdle();
+    430|     if (this.cleanupFailures.size)
+    431|       throw new Error('Native process termination unconfirmed; ownersh…
+       |             ^
+    432|   }
+    433|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/64]⎯
+
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=ok
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP claude HARNESS_TERMINATION_UNCONFIRMED retry=true storage=after
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at termination over an earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cancel over an earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cleanup over an earlier event
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at launch retry=true storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=false storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at promise retry=true storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at iterator retry=false storage=after
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at failed retry=true storage=before
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=false storage=ok
+ FAIL  src/prompt-sdk-storage-matrix.test.ts > keeps SDK/SQLite HARNESS_TERMINATION_UNCONFIRMED at error retry=true storage=after
+Error: Native process termination unconfirmed; ownership retained
+ ❯ RunManager.waitForDrain ../../packages/engine/src/run-manager.ts:431:13
+    429|     await this.returnDeliveries.waitForIdle();
+    430|     if (this.cleanupFailures.size)
+    431|       throw new Error('Native process termination unconfirmed; ownersh…
+       |             ^
+    432|   }
+    433|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/64]⎯
+
+ FAIL  src/shutdown-controller.test.ts > does not publish ready while force cleanup is still pending after normal drain
+AssertionError: expected 'ready' to be 'forcing' // Object.is equality
+
+Expected: "forcing"
+Received: "ready"
+
+ ❯ src/shutdown-controller.test.ts:65:38
+     63|     drained();
+     64|     await vi.advanceTimersByTimeAsync(0);
+     65|     expect(controller.state().phase).toBe('forcing');
+       |                                      ^
+     66|     expect(controller.closing.signal.aborted).toBe(false);
+     67|     cleaned();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/64]⎯
+
+ FAIL  src/version-migration.test.ts > migrated SQLite versions through the API > recovers a current-format pinned run across restart mid-run without migration
+Error: Command failed: %USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node.exe --import file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/loader.mjs --conditions=development --input-type=module -e 
+      import assert from 'node:assert/strict';
+      import { join } from 'node:path';
+      import { createContainer } from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api/src/container.ts";
+      import { buildApp } from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api/src/app.ts";
+      import { loadConfig } from "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api/src/config.ts";
+      import { FakeHarness } from '@graphgoblin/engine/testing';
+      const definition = {"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"infer","label":"Infer","ui":{"x":0,"y":0},"kind":"inference","config":{"harness":"codex","session":{"policy":"fresh"},"prompt":{"template":"Hello"},"input":[],"harnessOptions":{"sandbox":"workspace-write","approval":"never"},"output":{"captureTranscript":"artifact","toMessages":"final","transforms":[]}}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"infer","port":"in"}},{"id":"e2","from":{"node":"infer","port":"out"},"to":{"node":"done","port":"in"}}]};
+      definition.nodes.splice(1, 0, { id: 'hold', kind: 'wait', label: 'Hold', config: { mode: 'input', prompt: 'Continue?' } });
+      definition.edges[0].to.node = 'hold';
+      definition.edges.push({ id: 'w2', from: { node: 'hold', port: 'out' }, to: { node: 'infer' } });
+      const config = loadConfig({
+        GG_DATA_DIR: process.env.GG_RECOVERY_TEST_DIR,
+        GG_DB_URL: 'file:' + join(process.env.GG_RECOVERY_TEST_DIR, 'restart.db').replaceAll(String.fromCharCode(92), '/'),
+        GG_SWAGGER_UI: 'false', GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
+      });
+      const harness = new FakeHarness();
+      const overrides = { harnesses: { codex: harness }, startTimers: false };
+      const loopId = 'K2MPZDJRA4Y61G972Z723C2E9T';
+      const versionId = 'TWR5TWE0ZRPM7ZMA3JVBB0V4SE';
+      const first = await createContainer(config, overrides);
+      await first.start();
+      let app = await buildApp(first, { logger: false });
+      let runId;
+      try {
+        await first.handle.client.batch([
+          { sql: 'INSERT INTO loops (id, owner_id, name, current_version_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', args: [loopId, 'local', 'legacy', versionId, '2026-10-02T12:00:00.000Z', '2026-10-02T12:00:00.000Z'] },
+          { sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, ?, ?, ?, ?)', args: [versionId, loopId, 'published', JSON.stringify(definition), '2026-10-02T12:00:00.000Z', '2026-10-02T12:00:00.000Z'] },
+        ], 'write');
+        const started = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/runs', payload: {} });
+        assert.equal(started.statusCode, 202, started.body);
+        runId = started.json().run.id;
+        await first.manager.waitForIdle();
+        assert.equal((await first.repos.runs.get(runId)).status, 'waiting');
+      } finally { await app.close(); await first.stop(); }
+      const second = await createContainer(config, overrides);
+      try {
+        await second.start();
+        app = await buildApp(second, { logger: false });
+        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { waitId: (await second.repos.runs.get(runId)).waiting.waitId, input: true } });
+        assert.equal(answered.statusCode, 200, answered.body);
+        await second.manager.waitForIdle();
+        const finished = await second.repos.runs.get(runId);
+        assert.equal(finished.status, 'succeeded');
+        assert.equal(finished.versionId, versionId);
+        assert.equal(harness.started.length, 1);
+        const version = await second.repos.loops.getVersion(versionId);
+        assert.equal(version.id, versionId);
+        assert.equal(version.version, 1);
+        assert.equal(version.publishedAt, '2026-10-02T12:00:00.000Z');
+        assert.equal(Object.hasOwn(version.definition.settings.defaults, 'harness'), false);
+        const replay = await app.inject({ method: 'POST', url: '/runs/' + runId + '/replay', payload: { nodeId: 'infer' } });
+        assert.equal(replay.statusCode, 202, replay.body);
+        await second.manager.waitForIdle();
+        assert.equal((await second.repos.runs.get(replay.json().run.id)).status, 'succeeded');
+        assert.equal(harness.started.length, 2);
+      } finally { await app.close(); await second.stop(); }
+      process.stdout.write('migration recovery succeeded');
+    
+%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\apps\api\src\container.ts:356
+      dispose,
+      ^
+
+
+ReferenceError: Cannot access 'dispose' before initialization
+    at createContainer (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-224\apps\api\src\container.ts:356:7)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api/[eval1]:21:21
+
+Node.js v22.14.0
+
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       prepareShutdown,
+       |       ^
+    357|       logger,
+    358|     );
+ ❯ [eval1]:21:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/64]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > keeps the observed identity when SQLite is closed and reopened
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ src/wait-identity.test.ts:229:7
+    227|         })
+    228|       ).statusCode,
+    229|     ).toBe(200);
+       |       ^
+    230|     await next.idle();
+    231|     expect((await next.container.manager.getRun(r.id))?.result).toBe('…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/64]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 50 ms polling
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 1000 ms polling
+Error: No observed wait
+ ❯ observed src/wait-identity.test.ts:80:35
+     78|     waiting?: { waitId?: string; startedSeq?: number };
+     79|   }>();
+     80|   if (!run.waiting?.waitId) throw new Error('No observed wait');
+       |                                   ^
+     81|   return run.waiting.waitId;
+     82| }
+ ❯ src/wait-identity.test.ts:256:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/64]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > acknowledges a due timer while paused and re-arms its original deadline after reopen and resume
+AssertionError: expected 'failed' to be 'paused' // Object.is equality
+
+Expected: "paused"
+Received: "failed"
+
+ ❯ src/wait-identity.test.ts:287:65
+    285|     const next = await setup({ env, clock });
+    286|     await next.container.timers.poll();
+    287|     expect((await next.container.manager.getRun(r.id))?.status).toBe('…
+       |                                                                 ^
+    288|     expect(await observed(next, r.id)).toBe(waitId);
+    289|     await next.container.manager.resume(r.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/64]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > retains heartbeat observations through beats and real SQLite reopen, then rejects old signals
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ src/wait-identity.test.ts:367:7
+    365|         })
+    366|       ).statusCode,
+    367|     ).toBe(200);
+       |       ^
+    368|     next.clock.advance(2000);
+    369|     await next.container.timers.poll();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/64]⎯
+
+ FAIL  src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > recovers a paused event-first park before its snapshot/status commit without advancing it
+AssertionError: expected 'failed' to be 'paused' // Object.is equality
+
+Expected: "paused"
+Received: "failed"
+
+ ❯ src/wait-identity.test.ts:449:65
+    447|     clock.advance(5000);
+    448|     const next = await setup({ env, clock });
+    449|     expect((await next.container.manager.getRun(r.id))?.status).toBe('…
+       |                                                                 ^
+    450|     expect(await observed(next, r.id)).toBe(waitId);
+    451|     await next.container.timers.poll();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/64]⎯
+
+ FAIL  src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > closes and reopens SQLite after the wake but before timer acknowledgement
+AssertionError: expected 'failed' to be 'paused' // Object.is equality
+
+Expected: "paused"
+Received: "failed"
+
+ ❯ src/wait-identity.test.ts:480:65
+    478|     clock.advance(1000);
+    479|     const next = await setup({ env, clock });
+    480|     expect((await next.container.manager.getRun(r.id))?.status).toBe('…
+       |                                                                 ^
+    481|     await next.container.manager.resume(r.id);
+    482|     await next.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/64]⎯
+
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/triggers/github-recipe.test.ts:144:3
+    142| }
+    143| describe('documented GitHub polling recipe with a controlled local CLI…
+    144|   it('curates all pages, drains five then the tail, and retains seen k…
+       |   ^
+    145|     const fixtureData = await fixture();
+    146|     const { first, clock, id } = fixtureData;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/64]⎯
+
+
+ Test Files  10 failed | 58 passed | 2 skipped (70)
+      Tests  62 failed | 1267 passed | 11 skipped (1340)
+   Start at  19:47:28
+   Duration  1524.50s (tests 79%, import 17%, transform 3%)
+
+    Isolate  70 workers spawned · ~1.25s startup each (spawn + environment, per file)
+             at least ~42.51s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.18% ( 2090/2173 )
+Branches     : 92.66% ( 1340/1446 )
+Functions    : 94.33% ( 416/441 )
+Lines        : 97.78% ( 1899/1942 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure", "exit": 1, "seconds": 1535.24}

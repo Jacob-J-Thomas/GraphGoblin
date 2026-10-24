@@ -1,0 +1,33 @@
+Worktree: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-116
+Branch: codex-wp-g1-116
+Base: fbd48d3da5f162539964516a34d5de7e387d63c6
+Initial git status --short: empty
+
+PowerShell Node selection:
+$env:PATH="$env:APPDATA\nvm\v22.14.0;$env:PATH"
+node --version -> v22.14.0
+pnpm.cmd --version -> 12.8.1
+
+Initial command:
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/thread-history.test.ts
+Exit: 1, before Vitest started
+Error: ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK
+Failed to open %USERPROFILE%\AppData\Local\pnpm-store-operation-locks\all-stores.lock:
+Access is denied. (os error 5)
+
+Initial filesystem checks found no root or API Vitest .cmd launcher and no built API/web.
+The directory contents changed during inspection: two entries, then package entries and
+both root/API Vitest launchers appeared. No explicit install or dependency linking was done
+by this worker. The prerequisite recovered while this worker inspected it; work resumed.
+A later supported command succeeded:
+pnpm.cmd --filter @graphgoblin/api exec vitest --version
+vitest/5.0.3 win32-x64 node-v22.14.0
+
+An initial browser fixture imported the API into the Playwright worker and stalled before
+the test body. Only that worker (PID 12688) was stopped. The fixture was moved into its own
+tsx process, matching the existing browser harness pattern; the subsequent baseline run
+captured all three steps and failed the regression assertion. The aborted worker's separate
+log was not kept; the retained browser-before log is the completed baseline reproduction.
+
+Gate logs normalize local user paths to %USERPROFILE%. No changes to the owner's instance,
+store, ports, runtime installation, Git index, branch or commits.

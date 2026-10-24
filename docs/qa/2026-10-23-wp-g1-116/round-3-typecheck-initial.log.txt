@@ -1,0 +1,77 @@
+pnpm.cmd : $ turbo run typecheck
+At line:3 char:1
++ pnpm.cmd typecheck *> docs\qa\2026-10-23-wp-g1-116\round-3-typecheck- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 15b21fc16c2286b0
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 51bea7c6237eb76e
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache miss, executing 3aad60c9b4d8ca04
+@graphgoblin/domain:build: cache miss, executing dc25c0581ac9d750
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing e35bce204baa5a06
+@graphgoblin/engine:typecheck: cache miss, executing 23df0898d48dc176
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 6aed697f9a7afede
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 4ca42f354b2b6b19
+@graphgoblin/adapter-codex:build: cache miss, executing 4dd9ab2c24eaeab8
+@graphgoblin/infrastructure:typecheck: cache miss, executing 2686b66a234d416a
+@graphgoblin/adapter-jev:build: cache miss, executing dfc292e50fbeaff0
+@graphgoblin/infrastructure:build: cache miss, executing fd94880e3ad1b35e
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:typecheck: src/sqlite/admission.ts(172,40): error TS2345: Argument of type '{ initialThread: string; id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; ... 10 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ initialThread: string; id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; ... 10 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/loops.ts(197,61): error TS2345: Argument of type '{ initialThread: string; threadSnapshot: string | null; eventCount: number; id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; ... 13 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ initialThread: string; threadSnapshot: string | null; eventCount: number; id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; ... 13 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(110,34): error TS2345: Argument of type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(117,39): error TS2345: Argument of type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(128,30): error TS2345: Argument of type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(141,39): error TS2345: Argument of type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(158,40): error TS2345: Argument of type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(175,34): error TS2345: Argument of type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to parameter of type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:   Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(223,21): error TS2345: Argument of type '(row: RawRun) => { id: string; ownerId: string; loopId: string; versionId: string; pinned: { source: "draft" | "published"; version: number; name: string; label: string; defaults: { owner: { ...; }; process: { ...; }; }; limits: { ...; }; classifiers: Record<...>; }; ... 15 more ...; finishedAt?: string | undefined; }' is not assignable to parameter of type '(value: { id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }, index: number, array: { ...; }[]) => { ...; }'.
+@graphgoblin/infrastructure:typecheck:   Types of parameters 'row' and 'value' are incompatible.
+@graphgoblin/infrastructure:typecheck:     Type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:       Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: src/sqlite/runs.ts(292,5): error TS2322: Type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }[]' is not assignable to type 'RawRun[]'.
+@graphgoblin/infrastructure:typecheck:   Type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' is not assignable to type 'RawRun'.
+@graphgoblin/infrastructure:typecheck:     Property 'threadSnapshotReplayState' is missing in type '{ id: string; ownerId: string; loopId: string; versionId: string; parentRunId: string | null; invocationId: string; status: string; currentNodeId: string | null; iteration: number; waiting: string | null; ... 9 more ...; pinned: string | null; }' but required in type 'Omit<RunRecordRow, "failure" | "waiting" | "result" | "pinned">'.
+@graphgoblin/infrastructure:typecheck: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/infrastructure#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-116\packages\infrastructure) 
+C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (1)
+
+ Tasks:    7 successful, 12 total
+Cached:    2 cached, 12 total
+  Time:    36.346s 
+Failed:    @graphgoblin/infrastructure#typecheck
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
