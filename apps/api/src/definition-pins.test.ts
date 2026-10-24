@@ -115,7 +115,7 @@ async function open(
 async function close(): Promise<void> {
   await app?.close();
   // Physical store handoff; managed normal stop deliberately waits for these parked runs.
-  await container?.dispose();
+  await container?.stop();
   app = undefined;
   container = undefined;
 }

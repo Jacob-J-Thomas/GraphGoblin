@@ -1,3 +1,4 @@
+import { ShutdownSignals } from './shutdown-signals.js';
 import { pino } from 'pino';
 import { buildApp } from './app.js';
 import { bundledWebDist, loadConfig } from './config.js';
@@ -28,19 +29,25 @@ export async function main(): Promise<{
 
   let shuttingDown = false;
   let forceRequested = false;
-  const shutdown = async (signal: string): Promise<void> => {
-    if (shuttingDown) forceRequested = true;
-    else {
+  const signals = new ShutdownSignals(
+    (action) => {
       shuttingDown = true;
-      logger.info({ signal }, 'shutting down');
-    }
-    container?.prepareShutdown();
-    // Startup keeps ownership until recovery settles, including repeated signals.
-    await startup.catch(() => undefined);
-    container?.requestShutdown(forceRequested ? 'force' : 'drain');
-  };
-  const onSigint = (): void => void shutdown('SIGINT');
-  const onSigterm = (): void => void shutdown('SIGTERM');
+      forceRequested ||= action === 'force';
+      logger.info({ action }, 'shutting down');
+      container?.prepareShutdown();
+      // Startup retains ownership until recovery settles, including deliberate later signals.
+      void startup
+        .catch(() => undefined)
+        .then(async () => {
+          await container?.requestShutdown(forceRequested ? 'force' : 'drain');
+        })
+        .catch((error) => logger.error({ error }, 'shutdown control rejected'));
+    },
+    () =>
+      shuttingDown || (container !== undefined && container.shutdown.state().phase !== 'running'),
+  );
+  const onSigint = (): void => signals.receive();
+  const onSigterm = (): void => signals.receive();
   process.on('SIGINT', onSigint);
   process.on('SIGTERM', onSigterm);
 
@@ -73,6 +80,11 @@ export async function main(): Promise<{
         process.exit(0);
       })
       .catch((error) => logger.error({ error }, 'shutdown failed'));
+    void owner.shutdown.abandoned.then(() => {
+      // Allow the control response to flush. This is a nonzero emergency exit, not cleanup:
+      // leave the durable failure and lock for inspection and next-start stale-lock recovery.
+      setTimeout(() => process.exit(1), 100);
+    });
     logger.info(
       {
         host: config.host,

@@ -103,8 +103,9 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     async close() {
       // Teardown is a storage/component boundary, not an operator stop. C2 reopens this store.
       // If a test did request managed shutdown, settle that sequence before closing resources.
-      if (!['running', 'stopped'].includes(container.shutdown.state().phase)) {
-        container.requestShutdown('force');
+      if (['draining', 'awaiting-choice', 'forcing'].includes(container.shutdown.state().phase)) {
+        if (['draining', 'awaiting-choice'].includes(container.shutdown.state().phase))
+          await container.requestShutdown('force');
         await container.shutdown.drain();
       }
       await app.close();

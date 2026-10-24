@@ -21,7 +21,6 @@ const EnvSchema = z.object({
     .default('info'),
   GG_MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(64).default(4),
   GG_DEFAULTS: z.string().optional(),
-  // Five minutes gives interactive work time to settle; expiry is a notification, never a kill.
   // Five minutes lets interactive work finish before offering a choice; expiry never kills.
   GG_SHUTDOWN_GRACE_MS: z.coerce.number().int().min(1).max(2_147_483_647).default(300_000),
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),

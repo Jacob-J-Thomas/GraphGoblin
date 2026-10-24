@@ -125,8 +125,8 @@ The accepted end state is recorded in [ADR-0034](decisions/ADR-0034-retire-templ
 
 ## Managed stop controls (#224)
 
-The first SIGINT or SIGTERM requests normal drain. A second SIGINT or SIGTERM explicitly
-forces interruption through the same container controller as
+The first SIGINT or SIGTERM requests normal drain. Signals within 1,000 ms of the preceding accepted signal are ignored to coalesce foreground-group and pnpm
+forwarding of one Ctrl+C. A later SIGINT or SIGTERM explicitly forces interruption through the same container controller as
 `POST /system/shutdown` with `{ "action": "force" }`. Signal handlers remain installed
 through drain; repeated signals during startup are remembered until recovery settles.
 `{ "action": "drain" }` starts normal stop and `{ "action": "wait" }` acknowledges the
@@ -134,11 +134,17 @@ choice without a new deadline. `GET /system/shutdown` exposes phase and active i
 Controls require `system:write` (`system:read` for status) in API-key mode.
 
 The engineering default `GG_SHUTDOWN_GRACE_MS=300000` gives five minutes before an operator
-warning offers wait or force; expiry has no kill action. Drain polls logical completion at
+warning offers wait or force; expiry has no kill action. Durable parks and paused runs recover on restart and do not hold drain. Drain checks
+active executors, queued family work and due wakes at
 50 ms; script termination has a five-second acknowledgement/close reporting deadline only
 after explicit interruption. Native kill failure, including a nonzero `taskkill /T /F`,
-retains listener, SQLite and lock rather than claiming process release. Inspect the recorded
-failure and native processes before stopping the owner externally. Force interruption is
+during this stop's explicit interruption retains listener, SQLite and lock in `force-failed`.
+Earlier unconfirmed terminations are visible in `unconfirmedRunIds` but do not block normal
+stop. Inspect the recorded failure and native processes; a further force request or later
+signal explicitly exits with code 1, preserving that failure and leaving the lock for the
+next process to reclaim. A 100 ms response-flush delay precedes this emergency exit; it
+performs no cleanup. Drain observation failures use `drain-failed`; invalid controls return
+409 with current phase. Force interruption is
 recorded as a non-resumable failed run with node/attempt evidence and possible external effects.
 
 The supplied Compose example allows one hour (an engineering allowance for deliberation

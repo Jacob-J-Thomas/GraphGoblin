@@ -35,11 +35,12 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "force-failed" | "ready" | "stopped";
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
                             graceMs: number;
                             startedAt?: string | undefined;
                             choiceAt?: string | undefined;
                             activeRunIds: string[];
+                            unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
                         };
@@ -73,11 +74,31 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @enum {string} */
-                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "force-failed" | "ready" | "stopped";
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
                             graceMs: number;
                             startedAt?: string | undefined;
                             choiceAt?: string | undefined;
                             activeRunIds: string[];
+                            unconfirmedRunIds: string[];
+                            choices: ("wait" | "force")[];
+                            error?: string | undefined;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            phase: "running" | "draining" | "awaiting-choice" | "forcing" | "drain-failed" | "force-failed" | "exiting" | "ready" | "stopped";
+                            graceMs: number;
+                            startedAt?: string | undefined;
+                            choiceAt?: string | undefined;
+                            activeRunIds: string[];
+                            unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
                         };

@@ -9,7 +9,11 @@ afterEach(async () => {
   for (const f of fixtures.splice(0)) await f.dispose();
 }, 60_000);
 async function boot(env: NodeJS.ProcessEnv = {}) {
-  const f = await createApiProcessFixture({ prefix: 'gg-wp-c7-', portStart: 5760, portCount: 10 });
+  const f = await createApiProcessFixture({
+    prefix: 'gg-wp-c7-224-',
+    portStart: 5760,
+    portCount: 10,
+  });
   fixtures.push(f);
   const token = await f.createKey();
   const child = f.run([], {
@@ -74,7 +78,7 @@ const input = {
 } as const;
 
 it('native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work', async () => {
-  const a = await boot();
+  const a = await boot({ GG_MAX_CONCURRENT_RUNS: '2' });
   const leaf = await a.publish(
     loop('Timer child', [
       { id: 'timer', kind: 'wait', label: 'Timer', config: { mode: 'duration', seconds: 1 } },
@@ -94,13 +98,32 @@ it('native HTTP drain keeps SSE and input open, creates a child, fires its timer
           command: process.execPath,
           args: [
             '-e',
-            `const fs=require('node:fs');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(t);process.exit(0)}},25)`,
+            `const fs=require('node:fs');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(t);process.exit(0)}},25);setTimeout(()=>process.exit(0),30000)`,
           ],
         },
       },
       { id: 'sub', kind: 'subloop', label: 'Child', config: { loopRef: { loopId: leaf } } },
     ]),
   );
+  const keeperRelease = join(a.f.dataDir, 'keeper-release');
+  const keeperLoop = await a.publish(
+    loop('Drain keeper', [
+      {
+        id: 'hold',
+        kind: 'script',
+        label: 'Hold',
+        config: {
+          command: process.execPath,
+          args: [
+            '-e',
+            `const fs=require('node:fs');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(keeperRelease)})){clearInterval(t);process.exit(0)}},25);setTimeout(()=>process.exit(0),30000)`,
+          ],
+        },
+      },
+    ]),
+  );
+  const keeper = await a.start(keeperLoop);
+  await eventually(async () => (await a.run(keeper.id)).currentNodeId === 'hold');
   const parent = await a.start(parentLoop);
   await eventually(async () => (await a.run(parent.id)).currentNodeId === 'script');
   const queued = await a.start(parentLoop);
@@ -132,6 +155,8 @@ it('native HTTP drain keeps SSE and input open, creates a child, fires its timer
     ).status,
   ).toBe(200);
   await writeFile(release, 'finish');
+  await eventually(async () => (await a.run(parent.id)).status === 'succeeded');
+  await writeFile(keeperRelease, 'finish');
   expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
   expect(await activeText).toContain('event: run.finished');
   expect(await queuedText).not.toContain('event: run.started');
@@ -190,6 +215,8 @@ it.skipIf(process.platform !== 'linux').each(['SIGINT', 'SIGTERM'] as const)(
         'awaiting-choice',
     );
     expect((await a.run(run.id)).status).toBe('running');
+    // Deliberate second keypress is outside the one-second pnpm signal coalescing window.
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     expect(a.child.child.kill(signal)).toBe(true);
     expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
     for (const pid of pids)
@@ -276,36 +303,205 @@ it.skipIf(process.platform !== 'linux')(
   120_000,
 );
 
-it('native API force of parked parent/child work closes streams, releases ownership and persists interruption across restart', async () => {
+it.each(['drain', 'force'] as const)(
+  'native %s preserves durable timer, paused input, and parked parent/child across restart',
+  async (action) => {
+    const a = await boot();
+    const leaf = await a.publish(loop('Preserved leaf', [input]));
+    const id = await a.publish(
+      loop('Preserved parent', [
+        { id: 'sub', kind: 'subloop', label: 'Child', config: { loopRef: { loopId: leaf } } },
+      ]),
+    );
+    const parent = await a.start(id);
+    await eventually(async () => (await a.run(parent.id)).waiting?.kind === 'child');
+    const childId = (await a.run(parent.id)).waiting!.childRunId!;
+    await eventually(async () => (await a.run(childId)).status === 'waiting');
+    const paused = await a.start(leaf);
+    await eventually(async () => (await a.run(paused.id)).status === 'waiting');
+    expect((await a.call('POST', `/runs/${paused.id}/pause`, {})).status).toBe(200);
+    const timerLoop = await a.publish(
+      loop('Preserved future timer', [
+        { id: 'timer', kind: 'wait', label: 'Timer', config: { mode: 'duration', seconds: 5 } },
+      ]),
+    );
+    const timer = await a.start(timerLoop);
+    await eventually(async () => (await a.run(timer.id)).status === 'waiting');
+    const parked = await Promise.all([parent.id, childId, paused.id].map((id) => a.run(id)));
+    const stream = await fetch(`${a.origin}/runs/${parent.id}/events`, {
+      headers: { ...a.headers, accept: 'text/event-stream' },
+    });
+    const text = stream.text();
+    expect((await a.call('POST', '/system/shutdown', { action })).status).toBe(202);
+    expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
+    expect(await text).not.toContain('event: run.failed');
+    await expect(access(a.f.lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
+    const restarted = a.f.run([], { GG_TIMER_POLL_MS: '50' });
+    await a.f.ready(restarted, a.token);
+    expect(await Promise.all([parent.id, childId, paused.id].map((id) => a.run(id)))).toEqual(
+      parked,
+    );
+    for (const run of [parked[1]!, parked[2]!]) {
+      if (run.status === 'paused')
+        expect((await a.call('POST', `/runs/${run.id}/resume`, {})).status).toBe(200);
+      expect(
+        (
+          await a.call('POST', `/runs/${run.id}/input`, {
+            waitId: run.waiting!.waitId,
+            input: 'resume after restart',
+          })
+        ).status,
+      ).toBe(200);
+    }
+    await eventually(
+      async () =>
+        (await a.run(timer.id)).status === 'succeeded' &&
+        (await a.run(parent.id)).status === 'succeeded' &&
+        (await a.run(paused.id)).status === 'succeeded',
+    );
+    await a.call('POST', '/system/shutdown', { action: 'drain' });
+    expect(await restarted.waitForExit()).toEqual({ code: 0, signal: null });
+  },
+  120_000,
+);
+
+it('native Event refusal leaves its dedupe key available after restart', async () => {
   const a = await boot();
-  const leaf = await a.publish(loop('Force leaf', [input]));
-  const id = await a.publish(
-    loop('Force parent', [
-      { id: 'sub', kind: 'subloop', label: 'Child', config: { loopRef: { loopId: leaf } } },
+  const release = join(a.f.dataDir, 'release-event-holder');
+  const hold = await a.publish(
+    loop('Event drain holder', [
+      {
+        id: 'hold',
+        kind: 'script',
+        label: 'Hold',
+        config: {
+          command: process.execPath,
+          args: [
+            '-e',
+            `const fs=require('node:fs');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(t);process.exit(0)}},25);setTimeout(()=>process.exit(0),30000)`,
+          ],
+        },
+      },
     ]),
   );
-  const parent = await a.start(id);
-  await eventually(async () => (await a.run(parent.id)).waiting?.kind === 'child');
-  const childId = (await a.run(parent.id)).waiting!.childRunId!;
-  await eventually(async () => (await a.run(childId)).status === 'waiting');
-  const stream = await fetch(`${a.origin}/runs/${parent.id}/events`, {
-    headers: { ...a.headers, accept: 'text/event-stream' },
-  });
-  const text = stream.text();
-  await a.call('POST', '/system/shutdown', { action: 'drain' });
-  await a.call('POST', '/system/shutdown', { action: 'wait' });
-  expect((await a.run(parent.id)).status).toBe('waiting');
-  expect((await a.call('POST', '/system/shutdown', { action: 'force' })).status).toBe(202);
+  const work = await a.start(hold);
+  await eventually(async () => (await a.run(work.id)).currentNodeId === 'hold');
+  const definition = loop('Event target', []);
+  definition.nodes[0] = {
+    id: 'start',
+    kind: 'trigger',
+    label: 'Event',
+    config: { type: 'event', eventType: 'resume-event' },
+  };
+  await a.publish(definition);
+  const event = { type: 'resume-event', payload: { value: 1 }, dedupeKey: 'same-after-restart' };
+  try {
+    await a.call('POST', '/system/shutdown', { action: 'drain' });
+    const refused = await a.call('POST', '/events', event);
+    expect(refused.status).toBe(503);
+    expect(await refused.json()).toMatchObject({ code: 'SHUTTING_DOWN' });
+  } finally {
+    await writeFile(release, 'finish');
+  }
   expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
-  expect(await text).toContain('event: run.failed');
-  await expect(access(a.f.lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
   const restarted = a.f.run();
   await a.f.ready(restarted, a.token);
-  for (const runId of [parent.id, childId])
-    expect(await a.run(runId)).toMatchObject({
-      status: 'failed',
-      failure: { code: 'RUN_INTERRUPTED_BY_STOP', resumable: false, details: { attempt: 1 } },
-    });
+  const accepted = await a.call('POST', '/events', event);
+  expect(accepted.status).toBe(202);
+  expect(await accepted.json()).toMatchObject({ duplicate: false, runIds: [expect.any(String)] });
   await a.call('POST', '/system/shutdown', { action: 'drain' });
   expect(await restarted.waitForExit()).toEqual({ code: 0, signal: null });
 }, 120_000);
+
+it.skipIf(process.platform !== 'win32')(
+  'native earlier unconfirmed script timeout does not trap a later normal stop',
+  async (context) => {
+    const a = await boot();
+    const id = await a.publish(
+      loop('Earlier timeout', [
+        {
+          id: 'native',
+          kind: 'script',
+          label: 'Timeout',
+          config: {
+            command: process.execPath,
+            args: ['-e', 'setTimeout(()=>process.exit(0),5000)'],
+            timeoutSeconds: 1,
+          },
+        },
+      ]),
+    );
+    const run = await a.start(id);
+    await eventually(async () => (await a.run(run.id)).status === 'failed');
+    const failed = await a.run(run.id);
+    if (failed.failure?.code !== 'SCRIPT_TERMINATION_UNCONFIRMED')
+      context.skip(
+        'D-015 unconfirmed termination requires sandbox taskkill denial; this host confirmed termination',
+      );
+    const stopped = await a.call('POST', '/system/shutdown', { action: 'drain' });
+    expect(stopped.status).toBe(202);
+    expect(await stopped.json()).toMatchObject({ unconfirmedRunIds: [run.id] });
+    expect(await a.child.waitForExit()).toEqual({ code: 0, signal: null });
+    const restarted = a.f.run();
+    await a.f.ready(restarted, a.token);
+    expect((await a.run(run.id)).failure).toEqual(failed.failure);
+    await a.call('POST', '/system/shutdown', { action: 'drain' });
+    expect(await restarted.waitForExit()).toEqual({ code: 0, signal: null });
+  },
+  120_000,
+);
+
+it.skipIf(process.platform !== 'win32')(
+  'native further force exits nonzero after failed stop cleanup, leaves lock, and restart reclaims it',
+  async (context) => {
+    const a = await boot();
+    const marker = join(a.f.dataDir, 'finite-native-pid');
+    const id = await a.publish(
+      loop('Unconfirmed force', [
+        {
+          id: 'native',
+          kind: 'script',
+          label: 'Force',
+          config: {
+            command: process.execPath,
+            args: [
+              '-e',
+              `require('node:fs').writeFileSync(${JSON.stringify(marker)},String(process.pid));setTimeout(()=>process.exit(0),10000)`,
+            ],
+          },
+        },
+      ]),
+    );
+    const run = await a.start(id);
+    await eventually(async () => {
+      try {
+        await access(marker);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    await a.call('POST', '/system/shutdown', { action: 'force' });
+    await eventually(
+      async () =>
+        a.child.exited ||
+        ((await (await a.call('GET', '/system/shutdown')).json()) as { phase: string }).phase ===
+          'force-failed',
+    );
+    if (a.child.exited)
+      context.skip(
+        'D-015 unconfirmed termination requires sandbox taskkill denial; this host confirmed termination',
+      );
+    const failure = (await a.run(run.id)).failure;
+    expect(failure?.code).toBe('SCRIPT_TERMINATION_UNCONFIRMED');
+    expect((await a.call('POST', '/system/shutdown', { action: 'force' })).status).toBe(202);
+    expect(await a.child.waitForExit()).toEqual({ code: 1, signal: null });
+    await expect(access(a.f.lockPath)).resolves.toBeUndefined();
+    const restarted = a.f.run();
+    await a.f.ready(restarted, a.token);
+    expect((await a.run(run.id)).failure).toEqual(failure);
+    await a.call('POST', '/system/shutdown', { action: 'drain' });
+    expect(await restarted.waitForExit()).toEqual({ code: 0, signal: null });
+  },
+  120_000,
+);

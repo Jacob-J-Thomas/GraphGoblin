@@ -151,3 +151,11 @@ export class UnreadableRunHistoryError extends Error {
     this.name = 'UnreadableRunHistoryError';
   }
 }
+
+/** Only native cleanup caused by this shutdown's own interruption can veto store release. */
+export class ShutdownCleanupError extends Error {
+  constructor() {
+    super('Native process termination unconfirmed during explicit stop; ownership retained');
+    this.name = 'ShutdownCleanupError';
+  }
+}

@@ -27,6 +27,8 @@ export interface CronSchedulerOptions {
   /** Max catch-up fires per `run-each` schedule at boot. Default `RUN_EACH_CAP`. */
   maxCatchUp?: number;
   logger?: Logger;
+  /** Composition-root admission gate: stopped gateways leave due slots durable. */
+  admissionOpen?: () => boolean;
 }
 
 function describe(error: unknown): string {
@@ -46,6 +48,7 @@ export class CronScheduler {
   private readonly batchSize: number;
   private readonly maxCatchUp: number;
   private readonly logger: Logger | undefined;
+  private readonly admissionOpen: () => boolean;
 
   constructor(
     private readonly store: ScheduleStore,
@@ -56,6 +59,7 @@ export class CronScheduler {
     this.batchSize = options.batchSize ?? 100;
     this.maxCatchUp = options.maxCatchUp ?? RUN_EACH_CAP;
     this.logger = options.logger;
+    this.admissionOpen = options.admissionOpen ?? (() => true);
   }
 
   /** The first slot strictly after `after` in `timezone`, or undefined when there is none. Throws on a bad expression or timezone. */
@@ -113,12 +117,13 @@ export class CronScheduler {
    * A schedule without a next slot gets one. Returns the number of fires.
    */
   async recover(): Promise<number> {
-    if (this.busy) return 0;
+    if (this.busy || !this.admissionOpen()) return 0;
     this.busy = true;
     let fired = 0;
     try {
       const now = this.clock.now();
       for (const schedule of await this.store.listEnabled()) {
+        if (!this.admissionOpen()) break;
         fired += await this.recoverOne(schedule, now);
       }
     } catch (error) {
@@ -131,13 +136,14 @@ export class CronScheduler {
 
   /** Fire every due schedule once and advance it. Safe to call directly; overlapping calls are skipped. */
   async poll(): Promise<number> {
-    if (this.busy) return 0;
+    if (this.busy || !this.admissionOpen()) return 0;
     this.busy = true;
     let fired = 0;
     try {
       const now = this.clock.now();
       const due = await this.store.listDue(now, this.batchSize);
       for (const schedule of due) {
+        if (!this.admissionOpen()) break;
         const scheduledFor = schedule.nextFireAt ?? now.toISOString();
         await this.store.markFired(schedule.id, {
           lastFiredAt: scheduledFor,

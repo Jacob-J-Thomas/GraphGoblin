@@ -30,8 +30,6 @@ it('reports taskkill nonzero exit truthfully instead of assuming tree terminatio
     result = value;
   });
   f.killer.emit('close', 1);
-  await Promise.resolve();
-  await Promise.resolve();
   // A controlled root-close only allows the old implementation to settle; nonzero taskkill
   // never confirms descendants, even when the root independently exits successfully.
   f.root.emit('close', 0);
@@ -45,7 +43,6 @@ it('waits for both tree acknowledgement and the root close before reporting clea
     done = true;
   });
   f.root.emit('close', null);
-  await Promise.resolve();
   expect(done).toBe(false);
   f.killer.emit('close', 0);
   expect(await f.pending).not.toHaveProperty('terminationUnconfirmed');
@@ -65,11 +62,7 @@ it('completes cleanup when tree acknowledgement precedes root close', async () =
     done = true;
   });
   f.killer.emit('close', 0);
-  await Promise.resolve();
-  await Promise.resolve();
   f.root.emit('close', null);
-  await Promise.resolve();
-  await Promise.resolve();
-  expect(done).toBe(true);
+  await vi.waitFor(() => expect(done).toBe(true));
   expect(await f.pending).not.toHaveProperty('terminationUnconfirmed');
 });

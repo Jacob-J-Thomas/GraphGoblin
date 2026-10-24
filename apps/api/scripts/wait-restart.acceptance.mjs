@@ -14,13 +14,16 @@ const { fetch, AbortSignal } = globalThis;
 // Bootstrap varied enough to exhaust 30 s during parallel gates; a separate public-main
 // measurement took 16.8 s. Give startup bounded headroom without relaxing wait assertions.
 const STARTUP_TIMEOUT_MS = 90_000;
+const STORE_PREFIX = process.env.GG_TEST_STORE_PREFIX ?? 'gg-c2-native-';
 // Use only this fixture's GraphGoblin configuration in the disposable process.
 const inheritedEnv = { ...process.env };
 for (const key of Object.keys(inheritedEnv)) if (key.startsWith('GG_')) delete inheritedEnv[key];
 import { setTimeout as delay } from 'node:timers/promises';
 const root = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
 async function freePort() {
-  for (let port = 5600; port < 5700; port++) {
+  const start = Number(process.env.GG_TEST_PORT_START ?? 5600);
+  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 100);
+  for (let port = start; port < start + count; port++) {
     const server = createServer();
     try {
       await new Promise((ok, no) => {
@@ -61,11 +64,11 @@ function definition(name, kind, config) {
 }
 async function removeFixtureDir(dataDir) {
   assert.equal(dirname(dataDir), resolve(tmpdir()));
-  assert.ok(basename(dataDir).startsWith('gg-c2-native-'));
+  assert.ok(basename(dataDir).startsWith(STORE_PREFIX));
   await rm(dataDir, { recursive: true, force: true });
 }
 for (const poll of [50, 1000]) {
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-c2-native-'));
+  const dataDir = await mkdtemp(join(tmpdir(), STORE_PREFIX));
   const port = await freePort().catch(async (error) => {
     await removeFixtureDir(dataDir);
     throw error;

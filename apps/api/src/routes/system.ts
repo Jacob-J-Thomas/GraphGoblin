@@ -1,4 +1,4 @@
-import { ShutdownActionSchema, ShutdownStateSchema } from '../shutdown.js';
+import { ShutdownActionSchema, ShutdownStateSchema, ShutdownTransitionError } from '../shutdown.js';
 import { readinessOperation } from '../readiness-operation.js';
 import { z } from 'zod';
 import { HarnessPreflightSchema, HarnessIdSchema } from '@graphgoblin/contracts';
@@ -27,13 +27,19 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
         tags: ['system'],
         summary: 'Drain, keep waiting, or explicitly force-stop the gateway',
         body: z.strictObject({ action: ShutdownActionSchema }),
-        response: { 202: ShutdownStateSchema },
+        response: { 202: ShutdownStateSchema, 409: ShutdownStateSchema },
       },
     },
-    (request, reply) => {
-      const state = container.requestShutdown(request.body.action);
-      reply.status(202);
-      return state;
+    async (request, reply) => {
+      try {
+        const state = await container.requestShutdown(request.body.action);
+        reply.status(202);
+        return state;
+      } catch (error) {
+        if (!(error instanceof ShutdownTransitionError)) throw error;
+        reply.status(409);
+        return error.state;
+      }
     },
   );
   app.get(

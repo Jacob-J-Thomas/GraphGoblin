@@ -17599,7 +17599,9 @@
                         "draining",
                         "awaiting-choice",
                         "forcing",
+                        "drain-failed",
                         "force-failed",
+                        "exiting",
                         "ready",
                         "stopped"
                       ]
@@ -17614,6 +17616,12 @@
                       "type": "string"
                     },
                     "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -17637,6 +17645,7 @@
                     "phase",
                     "graceMs",
                     "activeRunIds",
+                    "unconfirmedRunIds",
                     "choices"
                   ],
                   "additionalProperties": false
@@ -17690,7 +17699,9 @@
                         "draining",
                         "awaiting-choice",
                         "forcing",
+                        "drain-failed",
                         "force-failed",
+                        "exiting",
                         "ready",
                         "stopped"
                       ]
@@ -17705,6 +17716,12 @@
                       "type": "string"
                     },
                     "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -17728,6 +17745,75 @@
                     "phase",
                     "graceMs",
                     "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
                     "choices"
                   ],
                   "additionalProperties": false

@@ -66,7 +66,15 @@ export const scriptHandler: NodeHandler<'script'> = {
       throw new RunFailureError(
         'SCRIPT_TERMINATION_UNCONFIRMED',
         'Script process tree termination was not confirmed; stop the process before restarting',
-        { nodeId: ctx.node.id, resumable: false },
+        {
+          nodeId: ctx.node.id,
+          resumable: false,
+          details: {
+            interruptedByStop:
+              timeout.signal.reason instanceof RunFailureError &&
+              timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+          },
+        },
       );
     }
     if (ctx.signal.aborted) throw new RunCancelledError();

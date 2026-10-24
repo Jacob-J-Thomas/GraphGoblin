@@ -128,10 +128,15 @@ export async function createApiProcessFixture(
       cause,
     });
   }
-  const dataDir = await mkdtemp(join(tmpdir(), options.prefix ?? 'gg-api-process-'));
+  const dataDir = await mkdtemp(
+    join(tmpdir(), options.prefix ?? process.env.GG_TEST_STORE_PREFIX ?? 'gg-api-process-'),
+  );
   const databaseFile = join(dataDir, 'graphgoblin.db');
   const lockPath = join(dataDir, 'graphgoblin.lock');
-  const port = await freePort(options.portStart, options.portCount);
+  const port = await freePort(
+    options.portStart ?? Number(process.env.GG_TEST_PORT_START ?? 5600),
+    options.portCount ?? Number(process.env.GG_TEST_PORT_COUNT ?? 100),
+  );
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(
       ([name]) =>

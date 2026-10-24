@@ -267,20 +267,29 @@ Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-a
 ## Gateway is draining (#224)
 
 A first Ctrl+C (SIGINT) or SIGTERM stops independent starts. Active work can still finish,
-including input waits, children created during drain and parked timers. The API and inspector
+including children created during drain and timer/input/signal continuations that wake while
+other work still holds the drain. A future timer, input/signal wait, parent waiting on a parked
+child or paused run does not hold shutdown: its durable state recovers unchanged at restart.
+Past wall-clock waits become eligible after restart; paused runs stay paused. The API and inspector
 remain available. After five minutes by default, the log says to keep waiting or explicitly
 force. Read `GET /system/shutdown` for phase and active run IDs; configure the notification
 with `GG_SHUTDOWN_GRACE_MS`. With an API key, use `system:read` / `system:write` scopes.
 
 Send `POST /system/shutdown` with JSON `{ "action": "wait" }` to acknowledge waiting,
-or `{ "action": "force" }` to interrupt. A second Ctrl+C or SIGTERM also explicitly forces.
+or `{ "action": "force" }` to interrupt. A second Ctrl+C or SIGTERM at least one second after the first also explicitly forces.
+Signals inside the second after each accepted signal are coalesced because pnpm may forward a duplicate of one
+keypress.
 Wait has no hidden kill timer. Cancelling a particular run remains a separate command.
 The browser shutdown-choice UI is follow-on #319; closing the tab only stops observation.
 
 Forced runs show `RUN_INTERRUPTED_BY_STOP`, the node and attempt, and possible external
 effects. They do not automatically resume. Inspect what happened before explicitly replaying.
-A termination-unconfirmed failure leaves the listener, store and lock held; inspect logs and
-native processes before stopping externally or restarting. An orderly stop releases the lock
+An unconfirmed termination caused by this force leaves the listener, store and lock held in
+`force-failed`. Inspect logs and native processes. A further force request or deliberate later
+signal exits with code 1 after a 100 ms response-flush allowance, retains the failure and leaves
+the lock for next-start reclamation. Earlier unconfirmed failures appear in `unconfirmedRunIds`
+but do not trap a later normal stop. A drain observation failure uses `drain-failed`; invalid
+controls (including wait before drain and force after a drain failure) return 409 with current phase. An orderly stop releases the lock
 only after executor cleanup, stream/listener closure and SQLite closure.
 
 Docker Compose still imposes its own one-hour hard deadline. To wait indefinitely, initiate

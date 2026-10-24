@@ -64,7 +64,7 @@ it('runs due parked timers while independent queue entries are preserved', async
   e.manager.stop();
 });
 
-it('forces the entire parent and child tree with node/attempt evidence and keeps cancel distinct', async () => {
+it('force preserves a parent and child parked on durable input', async () => {
   const e = await createTestEngine({ maxConcurrentRuns: 1 });
   const leaf = e.publish(
     singleNodeLoop('leaf', {
@@ -84,17 +84,13 @@ it('forces the entire parent and child tree with node/attempt evidence and keeps
   );
   const run = await e.start(parent.loopId);
   await e.manager.waitForIdle();
-  await e.manager.forceStop();
   const children = await e.ports.runs.listChildren(run.id);
   expect(children).toHaveLength(1);
-  for (const id of [run.id, children[0]!.id]) {
-    expect(await e.ports.runs.get(id)).toMatchObject({
-      status: 'failed',
-      failure: { code: 'RUN_INTERRUPTED_BY_STOP', resumable: false, details: { attempt: 1 } },
-    });
-    expect(e.eventTypes(id)).not.toContain('run.cancelled');
-    expect(e.eventTypes(id)).not.toContain('run.finished');
-  }
+  const ids = [run.id, children[0]!.id];
+  const before = await Promise.all(ids.map((id) => e.ports.runs.get(id)));
+  await e.manager.forceStop();
+  expect(await Promise.all(ids.map((id) => e.ports.runs.get(id)))).toEqual(before);
+  for (const id of ids) expect(e.eventTypes(id)).not.toContain('run.failed');
   e.manager.stop();
 });
 

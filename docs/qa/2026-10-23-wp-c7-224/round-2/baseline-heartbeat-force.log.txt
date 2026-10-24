@@ -1,0 +1,49 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --testNamePattern force retains ownership when its heartbeat --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (10 tests | 1 failed | 9 skipped) 29ms
+   × force retains ownership when its heartbeat probe termination is unconfirmed 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > force retains ownership when its heartbeat probe termination is unconfirmed
+ZodError: [
+  {
+    "code": "custom",
+    "path": [
+      "nodes",
+      1,
+      "config"
+    ],
+    "message": "heartbeat needs at least one of until, maxBeats, or deadline"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/drain-regressions.test.ts:29:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  01:26:46
+   Duration  36.49s (transform 88%, import 12%)
+
+  Transform  transforming modules took 29.13s · 88% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --testNamePattern force retains ownership when its heartbeat --maxWorkers=1", "exit": 1, "seconds": 51.22}

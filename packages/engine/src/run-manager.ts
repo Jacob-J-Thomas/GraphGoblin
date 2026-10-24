@@ -53,6 +53,7 @@ import {
   AppendConflictError,
   ChildCancelledError,
   RunFailureError,
+  ShutdownCleanupError,
   UnreadableRunHistoryError,
   describeError,
   isAbortError,
@@ -314,6 +315,7 @@ export class RunManager {
   private drainReady: Promise<void> | undefined;
   private readonly drainRuns = new Set<string>();
   private readonly cleanupFailures = new Set<string>();
+  private readonly stopCleanupFailures = new Set<string>();
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
   private readonly webhookDispatches = new Set<Promise<void>>();
@@ -410,42 +412,70 @@ export class RunManager {
   }
 
   drainingRunIds(): string[] {
-    return [...this.drainRuns];
+    return [
+      ...new Set([...this.active.keys(), ...this.queue.filter((id) => this.drainRuns.has(id))]),
+    ];
   }
 
-  /** Logical lifetimes include input/child/timer parks, unlike executor idleness. No kill timer. */
+  /** Historical native cleanup warnings remain visible, but only this force owns a release veto. */
+  unconfirmedRunIds(): string[] {
+    return [...this.cleanupFailures];
+  }
+
+  /** D-038: durable parks and pauses recover on restart; only runnable family work holds drain. */
   async waitForDrain(): Promise<void> {
     await this.beginDrain();
     for (;;) {
       for (const id of this.drainRuns) {
         const run = await this.ports.runs.get(id);
-        if ((!run || isTerminal(run.status)) && !this.active.has(id)) this.drainRuns.delete(id);
+        if ((!run || isTerminal(run.status)) && !this.active.has(id)) {
+          this.drainRuns.delete(id);
+          continue;
+        }
+        if (this.forcing || !run || run.status === 'paused') continue;
+        // Deliver already-due durable wakes before declaring quiescence. A future park does
+        // not keep ownership, and a paused run retains its original wait unchanged.
+        const now = this.ports.clock.now().getTime();
+        if ((runDeadline(run)?.getTime() ?? Infinity) <= now)
+          await this.onTimer(id, RUN_DEADLINE_TIMER);
+        const wait = run.waiting;
+        if (run.status !== 'waiting' || !wait) continue;
+        if (wait.timeoutAt && Date.parse(wait.timeoutAt) <= now)
+          await this.onTimer(id, 'timeout@' + wait.waitId);
+        else if (
+          wait.until &&
+          Date.parse(wait.until) <= now &&
+          (wait.kind === 'timer' || wait.kind === 'heartbeat')
+        )
+          await this.onTimer(id, wait.kind + '@' + wait.waitId);
       }
-      if (!this.drainRuns.size && !this.active.size) break;
-      // 50 ms bounds shutdown observation latency without busy-spinning on parked work.
+      if (!this.active.size && !this.queue.some((id) => this.drainRuns.has(id))) break;
+      // 50 ms observes runnable work without a kill deadline or spinning on durable parks.
       await new Promise<void>((resolve) => setTimeout(resolve, 50));
     }
     await this.waitForWebhookRecovery();
     await this.returnDeliveries.waitForIdle();
-    if (this.cleanupFailures.size)
-      throw new Error('Native process termination unconfirmed; ownership retained');
+    if (this.stopCleanupFailures.size) throw new ShutdownCleanupError();
   }
 
-  /** Explicit interruption, never cancellation or successful completion. Await all executor cleanup. */
+  /** Explicit interruption targets executors and queued family work, never existing durable parks. */
   async forceStop(): Promise<void> {
     this.forcing = true;
     await this.beginDrain();
+    const interrupted = new Set(this.active.keys());
+    for (const id of this.queue) if (this.drainRuns.has(id)) interrupted.add(id);
     for (const [id, controller] of this.active) {
       this.drainRuns.add(id);
       controller.abort(
         new RunFailureError('RUN_INTERRUPTED_BY_STOP', 'Explicit force-stop interrupted this run'),
       );
     }
-    for (const id of this.drainRuns) if (!this.active.has(id)) await this.interruptRun(id);
-    // Force freezes dispatch. Once executor cleanup is idle, the set cannot grow active again.
-    // Revisit parks committed while those executors were returning; the first scan can miss them.
+    for (const id of interrupted) if (!this.active.has(id)) await this.interruptRun(id);
+    // A returning executor may finish committing a park or creating a queued child. Those
+    // were executing at force, unlike the durable parks that existed before interruption.
     await this.waitForIdle();
-    for (const id of this.drainRuns) await this.interruptRun(id);
+    for (const id of this.queue) if (this.drainRuns.has(id)) interrupted.add(id);
+    for (const id of interrupted) await this.interruptRun(id);
     await this.waitForDrain();
   }
 
@@ -469,11 +499,15 @@ export class RunManager {
       message: 'Explicit force-stop interrupted this run; external effects may have happened',
       resumable: false,
       ...(nodeId ? { nodeId } : {}),
-      details: { attempt: started?.attempt ?? 0, effectMayHaveHappened: true },
+      details: {
+        attempt: started?.attempt ?? 0,
+        effectMayHaveHappened: run.startedAt !== undefined,
+      },
     });
   }
 
-  private assertAdmission(parentRunId?: string): void {
+  /** Admission boundary for inbound sources: check before recording receipts or dedupe state. */
+  assertAdmissionOpen(parentRunId?: string): void {
     if (this.forcing || (this.draining && (!parentRunId || !this.drainRuns.has(parentRunId))))
       throw new EngineRequestError(
         'SHUTTING_DOWN',
@@ -495,7 +529,7 @@ export class RunManager {
     this.unsubscribeTimers = undefined;
   }
 
-  /** Executor idleness; drain excludes independent queue entries. Parks use waitForDrain(). */
+  /** Executor idleness; drain excludes independent queue entries. */
   async waitForIdle(): Promise<void> {
     await this.waitForWebhookRecovery();
     if ((!this.draining && this.queue.length !== 0) || this.active.size !== 0) {
@@ -509,7 +543,7 @@ export class RunManager {
   // ---------------------------------------------------------------------------
 
   private async prepareStart(input: StartRunInput): Promise<PreparedStart> {
-    this.assertAdmission(input.parentRunId);
+    this.assertAdmissionOpen(input.parentRunId);
     const source = await this.resolveVersion(input);
     const def = source.definition;
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
@@ -613,7 +647,7 @@ export class RunManager {
         for (const version of versions.values())
           if (version.id !== prepared.version.id)
             await this.assertVersionPresent(version.id, version.loopId);
-        this.assertAdmission(input.parentRunId);
+        this.assertAdmissionOpen(input.parentRunId);
         return this.ports.admission.create(intent);
       });
       if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
@@ -623,7 +657,7 @@ export class RunManager {
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
       const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
-      this.assertAdmission(input.parentRunId);
+      this.assertAdmissionOpen(input.parentRunId);
       return this.ports.admission.create(intent);
     });
     if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
@@ -646,7 +680,7 @@ export class RunManager {
     const run = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
       const intent = await this.prepareAdmission(prepared, {});
-      this.assertAdmission();
+      this.assertAdmissionOpen();
       return this.ports.admission.createPollItem(intent);
     });
     if (run) this.enqueue(run.id);
@@ -700,7 +734,7 @@ export class RunManager {
       const intent = await this.prepareAdmission(prepared, {});
       let claimed;
       try {
-        this.assertAdmission();
+        this.assertAdmissionOpen();
         claimed = await this.ports.admission.claim(claim, intent);
       } catch (error) {
         // Confirm a lost claim acknowledgement by its allocated identity. Never acknowledge an
@@ -879,8 +913,8 @@ export class RunManager {
   }
 
   async resume(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
-    if (this.draining && !this.drainRuns.has(runId)) this.assertAdmission();
-    if (this.forcing) this.assertAdmission();
+    if (this.draining && !this.drainRuns.has(runId)) this.assertAdmissionOpen();
+    if (this.forcing) this.assertAdmissionOpen();
     const run = await this.mustGet(runId);
     // Paused while parked (or while parking): go back to waiting rather than re-running the node,
     // so a wait keeps its deadline and a subloop keeps its child. Anything that should have woken
@@ -965,6 +999,7 @@ export class RunManager {
     payload: JsonValue,
     actor: Actor = SYSTEM_ACTOR,
   ): Promise<RunRecord> {
+    if (this.forcing) this.assertAdmissionOpen();
     const run = await this.mustGet(runId);
     if (run.status === 'paused' && run.waiting?.waitId === waitId) {
       throw new EngineRequestError(
@@ -1002,6 +1037,7 @@ export class RunManager {
   ): Promise<{ run: RunRecord; woke: boolean }> {
     // Match wake's bounded ten conflict retries; a saturated caller must refresh its snapshot.
     for (let attempt = 0; attempt < 10; attempt += 1) {
+      if (this.forcing) this.assertAdmissionOpen();
       const run = await this.mustGet(runId);
       if (run.status === 'paused' && run.waiting?.waitId === waitId) {
         throw new EngineRequestError(
@@ -1070,7 +1106,7 @@ export class RunManager {
    * runs are not copied (a subloop node in the fork starts a new child).
    */
   async replay(input: ReplayRunInput): Promise<RunRecord> {
-    this.assertAdmission();
+    this.assertAdmissionOpen();
     const source = await this.mustGet(input.runId);
     const events = await this.ports.events.read(source.id);
     const firstStart = events.find(
@@ -1139,7 +1175,7 @@ export class RunManager {
     // version it would run must still exist.
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(source.versionId, source.loopId);
-      this.assertAdmission();
+      this.assertAdmissionOpen();
       return this.ports.admission.create({
         run,
         initialThread: thread,
@@ -1435,6 +1471,8 @@ export class RunManager {
 
   /** False retains an early delivery. Paused runs re-arm their original deadline on resume. */
   private async onTimer(runId: string, key: string): Promise<boolean> {
+    // Explicit force freezes durable parks too; leave their timers for the next process.
+    if (this.forcing) return false;
     if (key === RUN_DEADLINE_TIMER) return this.expireRunDeadline(runId);
     const [name, waitId] = key.split('@');
     if (!waitId || (name !== 'timer' && name !== 'heartbeat' && name !== 'timeout')) return true;
@@ -1673,7 +1711,17 @@ export class RunManager {
           ...(threadView(thread) as unknown as Record<string, unknown>),
           ...extras,
         }),
-      record: append,
+      record: async (draft) => {
+        await append(draft);
+        if (
+          draft.type === 'heartbeat.beat' &&
+          draft.result &&
+          typeof draft.result === 'object' &&
+          !Array.isArray(draft.result) &&
+          draft.result.terminationUnconfirmed === true
+        )
+          this.cleanupFailures.add(runId);
+      },
       resolveModel: async (harness, model, effort) => {
         const catalog = await this.ports.modelCatalog.list();
         const issues = validateHarnessDefaults({
@@ -1823,7 +1871,18 @@ export class RunManager {
           error instanceof RunFailureError &&
           (error.code === 'HARNESS_TERMINATION_UNCONFIRMED' ||
             error.code === 'SCRIPT_TERMINATION_UNCONFIRMED');
-        if (terminationUnconfirmed) this.cleanupFailures.add(runId);
+        if (terminationUnconfirmed) {
+          this.cleanupFailures.add(runId);
+          // Only an abort actually requested by this shutdown can veto its store release.
+          // An earlier timeout/cancel remains diagnostic evidence, not a permanent trap.
+          if (
+            error.options.details &&
+            typeof error.options.details === 'object' &&
+            'interruptedByStop' in error.options.details &&
+            error.options.details.interruptedByStop === true
+          )
+            this.stopCleanupFailures.add(runId);
+        }
         if (this.forcing && !terminationUnconfirmed) {
           await this.interruptRun(runId);
           return;
@@ -2258,7 +2317,7 @@ export class RunManager {
     status: RunStatus,
     outcome: Outcome | undefined,
   ): Promise<void> {
-    if (!run.parentRunId) return;
+    if (this.forcing || !run.parentRunId) return;
     const parent = await this.ports.runs.get(run.parentRunId);
     const awaited = parent?.waiting;
     if (
@@ -2268,6 +2327,8 @@ export class RunManager {
       awaited.childRunId !== run.id
     )
       return;
+    // A force can start while reading the parent. Recover its child result at next start.
+    if (this.forcing) return;
     try {
       await this.wake(
         parent.id,

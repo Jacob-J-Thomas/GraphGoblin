@@ -1,0 +1,48 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (7 tests | 2 failed) 10429ms
+   × a timeout initiated before force remains a warning instead of this stop cleanup veto 5016ms
+   × heartbeat unconfirmed timeout evidence still reaches the authored condition 5013ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > a timeout initiated before force remains a warning instead of this stop cleanup veto
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/drain-regressions.test.ts:89:1
+     87| });
+     88|
+     89| it('a timeout initiated before force remains a warning instead of this…
+       | ^
+     90|   const e = await createTestEngine(); e.manager.stop();
+     91|   let started!: () => void, timedOut!: () => void, release!: () => voi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/drain-regressions.test.ts > heartbeat unconfirmed timeout evidence still reaches the authored condition
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/drain-regressions.test.ts:116:1
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  00:38:10
+   Duration  17.99s (tests 60%, transform 25%, import 15%)
+
+  Transform  transforming modules took 4.45s · 25% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts", "exit": 1, "seconds": 21.06}

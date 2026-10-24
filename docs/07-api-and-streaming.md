@@ -526,20 +526,35 @@ JSON event pages, SSE, generated clients and MCP use the same `exhausted` status
 ## Gateway shutdown (#224)
 
 `GET /system/shutdown` requires `system:read` and returns `phase`, `graceMs`,
-`activeRunIds`, `choices`, and optional `startedAt`, `choiceAt`, `error`.
-`POST /system/shutdown` requires `system:write` and a strict body
-`{ "action": "drain" | "wait" | "force" }`, returning 202 and that snapshot.
-Phases are running, draining, awaiting-choice, forcing, force-failed, ready and stopped.
-The default grace is five minutes (`GG_SHUTDOWN_GRACE_MS`). At expiry, choices are
-`["wait", "force"]`; wait acknowledges the notice without adding a timeout. Force is
-available before expiry too. Repeated controls are idempotent. The response acknowledges
-the command, not completed cleanup. The process exits after successful cleanup, so ready
-and stopped may not be observable through HTTP. #319 will build the browser interaction.
+`activeRunIds` (executors and queued family work), `unconfirmedRunIds` (native cleanup warnings),
+`choices`, and optional `startedAt`, `choiceAt`, `error`. `POST /system/shutdown` requires
+`system:write` and a strict body `{ "action": "drain" | "wait" | "force" }`.
+The 202 snapshot awaits initial family capture so active identities are accurate. It
+acknowledges the control, not completed cleanup. Invalid transitions return 409 with current
+state: wait requires an open drain, and force cannot restart a failed drain observation.
 
-Independent start/replay and unrelated resume admission returns 503 `SHUTTING_DOWN`
-while draining. Status, input, cancellation, required timers and child continuations remain
-available. `RUN_INTERRUPTED_BY_STOP` is a failed, non-resumable execution with `nodeId`
-and `details.attempt`; possible external effects are explicit. Cleanup failure uses the
-specific termination-unconfirmed code and retains the process/store lock for investigation.
-Execution SSE still closes at a run's terminal event. At final gateway shutdown, inspectors
-of queued work also close without a fabricated terminal event; that work resumes next start.
+Phases are running, draining, awaiting-choice, forcing, drain-failed, force-failed, exiting,
+ready and stopped. The default grace is five minutes (`GG_SHUTDOWN_GRACE_MS`); expiry offers
+`["wait", "force"]` without interruption. Wait has no hidden kill timer. Force is available
+before expiry. A force cleanup failure offers `["force"]`: a further explicit force exits
+code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
+terminations remain warnings without preventing normal completion. A drain observation
+failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
+#319 will build the browser interaction on these phases and controls.
+
+Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
+503 before saving any inbound record or dedupe key, so the same Event can be retried after
+restart. Webhooks return 503 `WEBHOOK_ADMISSION_FAILED`. Independent queued runs remain
+unstarted and durable. Drain waits for active executors, queued family continuations and
+already-due family wakes. Durable input/signal waits, future timers, parents waiting on
+parked children and pauses do not hold drain and survive force unchanged. While other work
+holds drain open, input, signals, cancellation, timers and required children remain usable;
+woken work holds drain until it finishes or parks again. After restart, past wall-clock waits
+become eligible and paused runs remain paused.
+
+Interrupted executing/queued work records `RUN_INTERRUPTED_BY_STOP` with node, attempt and
+external-effect evidence; it is distinct from user cancellation or successful completion.
+Only this shutdown's own unconfirmed native interruption blocks release in force-failed.
+After applicable execution/delivery cleanup, SSE inspectors (including queued runs) close,
+HTTP closes, SQLite closes and the lock is released. The explicit failed-stop exit instead
+preserves ownership for dead-PID reclamation. See ADR-0049 and docs/11.

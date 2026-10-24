@@ -1,0 +1,47 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --testNamePattern force retains ownership when its heartbeat --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/drain-regressions.test.ts (10 tests | 1 failed | 9 skipped) 170ms
+   × force retains ownership when its heartbeat probe termination is unconfirmed 168ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/drain-regressions.test.ts > force retains ownership when its heartbeat probe termination is unconfirmed
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/drain-regressions.test.ts:36:38
+     34|   await vi.waitFor(() => expect(entered).toBe(true));
+     35|   try {
+     36|     await expect(manager.forceStop()).rejects.toBeInstanceOf(ShutdownC…
+       |                                      ^
+     37|     expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+     38|       code: 'SCRIPT_TERMINATION_UNCONFIRMED', nodeId: 'work',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  01:29:40
+   Duration  18.55s (transform 85%, import 13%, tests 1%)
+
+  Transform  transforming modules took 14.89s · 85% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/drain-regressions.test.ts --testNamePattern force retains ownership when its heartbeat --maxWorkers=1", "exit": 1, "seconds": 25.94}

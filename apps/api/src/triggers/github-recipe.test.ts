@@ -181,7 +181,7 @@ describe('documented GitHub polling recipe with a controlled local CLI', () => {
     } finally {
       await current.stop();
     }
-  }, 180_000); // Multiple cold wrapper/CLI launches; retain their own 55-second process bound.
+  });
 
   it('refuses a pagination result above 200 before lookup or admission and keeps process diagnostics private', async () => {
     const { first, clock, id, logger, pages } = await fixture();

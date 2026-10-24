@@ -537,29 +537,40 @@ Authors may use script/decision nodes for their own usage-aware behavior.
 
 ## Deliberate shutdown (#224, ADR-0049)
 
-The container owns shutdown state. Normal stop first closes independent admission, then
-stops cron/poll/Event sources and webhook retry admission. Started logical runs and their
-children retain execution slots as needed, input, cancellation, resume of paused active
-work and durable timers. A child created after drain starts is required work and can run;
-unstarted independent queue entries remain durable for the next process. A paused or
-input-waiting active run can hold drain indefinitely.
+The container owns shutdown state. Normal stop closes independent admission and stops
+cron/poll sources and webhook retries. Started runs and descendants form the permitted
+family while drain is open; required children created during drain can still start.
+Independent queue entries remain durable and unstarted for the next process. Events are
+refused with 503 before their inbound record or dedupe key is saved; cron leaves due slots
+untouched and refused poll candidates consume no durable dedupe key.
+
+D-038 defines completion as no active executor, no queued family member and no family wake
+already due. Future timers, input/signal waits, parents waiting on parked children and paused
+runs do not hold drain. Their status, waiting record and resumability survive normal stop
+and force unchanged. Input, signals, cancellation and timers work while drain is open: a
+wake holds drain until its continuation finishes or parks again. Due timer/timeout wakes
+are delivered before quiescence; after restart past wall-clock waits become eligible and
+paused runs remain paused.
 
 `GG_SHUTDOWN_GRACE_MS` defaults to 300,000 ms (five minutes), an engineering choice to give
-interactive work time to finish. Expiry exposes `awaiting-choice` and logs the wait/force
-controls; it never cancels work. `wait` has no timer. Logical drain completion is checked
-every 50 ms, an engineering tradeoff between prompt observation and polling cost. Actual
-timer execution retains `GG_TIMER_POLL_MS`.
+interactive work time to finish. Expiry exposes `awaiting-choice` and logs wait/force controls;
+it never cancels work. `wait` has no hidden timer. Runnable quiescence is observed every
+50 ms to balance prompt completion and polling cost; ordinary timers retain `GG_TIMER_POLL_MS`.
 
-Explicit force aborts the active family, including parked/queued children, and awaits
-executor cleanup. `run.failed` with `RUN_INTERRUPTED_BY_STOP` retains node and attempt
-(`details.attempt`), marks possible external effects and forbids automatic resume.
-Native tree cleanup errors retain `SCRIPT_TERMINATION_UNCONFIRMED` or
-`HARNESS_TERMINATION_UNCONFIRMED`. Script cleanup allows five seconds for acknowledgement
-and close, an engineering reporting bound after force, not a normal-stop kill deadline.
-Failed cleanup retains HTTP, store and lock in `force-failed` for inspection.
+Explicit force aborts executors and queued family work, including queued children. An
+executor still committing a park when aborted is interrupted, unlike an existing durable
+park. Cleanup completes before release. `run.failed` with `RUN_INTERRUPTED_BY_STOP` retains
+node/attempt evidence, possible effects and a non-resumable outcome for interrupted work.
+Native cleanup errors retain `SCRIPT_TERMINATION_UNCONFIRMED` or
+`HARNESS_TERMINATION_UNCONFIRMED`. The five-second acknowledgement/close bound reports failed
+cleanup after force; it is never a normal-stop deadline. Only failures of this shutdown's
+own interruption block release in `force-failed`. Earlier failures are reported through
+`unconfirmedRunIds` without trapping a later stop. A further force explicitly acknowledges
+failed cleanup and exits code 1, retaining the failure and lock for next-start reclamation.
+A drain observation failure is separately `drain-failed`; incompatible controls return 409.
 
 D-021 still stops retry backoffs without cancelling the bounded in-flight delivery attempt;
-pending deliveries and webhook admissions recover on the next start. After applicable
-work and finalization settle, SSE inspectors close, HTTP closes, timers and the manager
-stop, SQLite closes, and only then is ownership released. See [API controls](07-api-and-streaming.md)
-and [signals and Compose](11-security-and-distribution.md). #319 supplies the interactive UI.
+pending deliveries and webhook admissions recover on the next start. After runnable work
+and finalization settle, SSE closes, HTTP closes, timers/manager stop, SQLite closes and
+ownership is released. See [API controls](07-api-and-streaming.md) and
+[signals and Compose](11-security-and-distribution.md). #319 supplies the interactive UI.

@@ -127,7 +127,7 @@ export interface Container {
   /** Close independent admission before awaiting startup completion. */
   prepareShutdown(): void;
   shutdown: ShutdownController;
-  requestShutdown(action: ShutdownAction): ReturnType<ShutdownController['state']>;
+  requestShutdown(action: ShutdownAction): ReturnType<ShutdownController['request']>;
   waitForShutdown(): Promise<void>;
   /** Resource finalizer for the composition root, after drain and HTTP close. Also owns failed-start teardown. */
   dispose(): Promise<void>;
@@ -240,7 +240,9 @@ export async function createContainer(
     const schedules = new SqliteScheduleStore(db, clock, ids);
     const endpoints = new SqliteWebhookEndpoints(db, clock, ids);
     const inbound = new SqliteInboundEvents(db);
+    let admissionClosed = false;
     const cron = new CronScheduler(schedules, clock, {
+      admissionOpen: () => !admissionClosed,
       pollIntervalMs: config.timerPollMs,
       logger,
     });
@@ -342,7 +344,6 @@ export async function createContainer(
       polls,
     });
 
-    let admissionClosed = false;
     const prepareShutdown = (): void => {
       admissionClosed = true;
       manager.closeIndependentAdmission();
