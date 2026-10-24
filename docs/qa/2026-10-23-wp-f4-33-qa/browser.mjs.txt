@@ -1,0 +1,60 @@
+// Independent Edge checks against the same built API used for runtime tests.
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+const connection = JSON.parse(await readFile(process.argv[2], 'utf8'));
+const { origin, token } = connection;
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-23-wp-f4-33-qa');
+const require = createRequire(resolve('apps/web/package.json'));
+const { chromium, expect } = require('@playwright/test');
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const results = [];
+async function keep(name, data) { await writeFile(join(out, name + '.json'), JSON.stringify(data, null, 2)); }
+async function api(path, body) { const r = await fetch(origin + path, { method: body ? 'POST' : 'GET', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) }); const data = await r.json(); assert.ok(r.ok, JSON.stringify(data)); return data; }
+try {
+  for (const width of [1440, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    await context.addInitScript(t => localStorage.setItem('graphgoblin-api-key', t), token);
+    const page = await context.newPage();
+    page.setDefaultTimeout(30000);
+    const node = { id: 'worker', kind: 'inference', label: 'Worker', config: { model: 'gpt-6-luna', effort: 'low', prompt: { template: 'Authored selected input {{ messages.last.content }}' } }, ui: { x: 260, y: 80 } };
+    const definition = { schemaVersion: 4, name: 'QA Edge ' + width, nodes: [{ id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' }, ui: { x: 0, y: 80 } }, node, { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 520, y: 80 } }], edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'worker' } }, { id: 'b', from: { node: 'worker', port: 'out' }, to: { node: 'done' } }] };
+    let stage = 'create';
+    try {
+      const { loop } = await api('/loops', { definition });
+      const getWorker = async () => (await api('/loops/' + loop.id)).draft.definition.nodes.find(n => n.id === 'worker').config;
+      async function open() { await page.getByTestId('node-worker').click({ position: { x: 60, y: 12 } }); const dialog = page.getByRole('dialog'); await expect(dialog).toBeVisible(); return dialog; }
+      async function loaded() { await expect(page.getByRole('heading', { name: definition.name, exact: true })).toBeVisible(); await expect(page.getByText('The editor is available. Checking the server and this device before saving changes.', { exact: true })).toBeHidden(); }
+      stage = 'open editor'; await page.goto(origin + '/app/loops/' + loop.id + '/edit'); await loaded();
+      let dialog = await open();
+      stage = 'initial snapshot'; await keep('edge-' + width + '-initial', { snapshot: await dialog.ariaSnapshot(), worker: await getWorker(), browser: browser.version(), viewport: { width, height: 900 } });
+      const session = dialog.getByRole('group', { name: 'Session' }); const policy = session.getByLabel('Policy');
+      await expect(policy).toHaveValue('0'); await expect(session.getByText(/Supply current main-loop context deliberately/)).toBeVisible();
+      stage = 'keyboard policy'; await policy.focus(); await page.keyboard.press('End'); await page.keyboard.press('Tab'); await expect(policy).toHaveValue('3'); let reset = session.getByLabel('Reset after visits'); await expect(reset).toBeFocused(); await expect(session.getByText(/Blank means no automatic reset/)).toBeVisible();
+      await reset.fill('2'); await reset.press('Tab'); await page.screenshot({ path: join(out, 'edge-' + width + '-policy.png') });
+      stage = 'save 2'; await dialog.getByRole('button', { name: 'Done', exact: true }).click(); await expect.poll(async () => (await getWorker()).session).toEqual({ policy: 'resume-own', resetAfterVisits: 2 }); await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+      stage = 'reload 2'; await page.reload(); await loaded(); dialog = await open(); reset = dialog.getByLabel('Reset after visits'); await expect(reset).toHaveValue('2');
+      const invalidResults = [];
+      for (const value of ['0', '-1', '1.5', '9007199254740992']) {
+        stage = 'invalid ' + value;
+        await reset.fill(value); await reset.press('Tab'); await expect(reset).toHaveAttribute('aria-invalid', 'true');
+        const snapshot = await dialog.ariaSnapshot(); const describedBy = await reset.getAttribute('aria-describedby');
+        const description = describedBy ? await page.locator('[id]').evaluateAll((elements, ids) => elements.filter(e => ids.includes(e.id)).map(e => ({ id: e.id, text: e.textContent, visible: e.getClientRects().length > 0 })), describedBy.split(' ')) : [];
+        assert.ok(description.some(d => d.visible && /[1-9]|integer|greater|less|number|invalid/i.test(d.text)), 'visible numeric validation message');
+        await page.screenshot({ path: join(out, 'edge-' + width + '-invalid-' + value.replace('.', '-') + '.png') });
+        await expect.poll(async () => (await getWorker()).session).toEqual({ policy: 'resume-own', resetAfterVisits: 2 });
+        invalidResults.push({ value, ariaInvalid: await reset.getAttribute('aria-invalid'), description, snapshot });
+        await reset.fill('2'); await reset.press('Tab'); await expect(reset).not.toHaveAttribute('aria-invalid', 'true');
+      }
+      stage = 'maximum'; await reset.fill('9007199254740991'); await reset.press('Tab'); await expect(reset).not.toHaveAttribute('aria-invalid', 'true'); await dialog.getByRole('button', { name: 'Done', exact: true }).click(); await expect.poll(async () => (await getWorker()).session.resetAfterVisits).toBe(9007199254740991);
+      await page.reload(); await loaded(); dialog = await open(); reset = dialog.getByLabel('Reset after visits'); await expect(reset).toHaveValue('9007199254740991');
+      stage = 'clear'; await reset.fill(''); await dialog.getByRole('button', { name: 'Done', exact: true }).click(); await expect.poll(async () => (await getWorker()).session).toEqual({ policy: 'resume-own' }); await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+      await page.reload(); await loaded(); dialog = await open(); await expect(dialog.getByLabel('Reset after visits')).toHaveValue(''); const final = await getWorker(); assert.equal(final.model, 'gpt-6-luna'); assert.equal(final.effort, 'low');
+      await keep('edge-' + width + '-final', { invalidResults, final, snapshot: await dialog.ariaSnapshot(), scrollWidth: await page.locator('body').evaluate(e => e.scrollWidth), viewport: width });
+      await page.screenshot({ path: join(out, 'edge-' + width + '-cleared.png') }); results.push({ width, result: 'PASS', loopId: loop.id, invalidValues: invalidResults.map(v => v.value), final }); console.log('PASS Edge ' + width);
+    } catch (e) { results.push({ width, result: 'FAIL', stage, error: e.stack }); await keep('edge-' + width + '-failure', { stage, error: e.stack, snapshot: await page.locator('body').ariaSnapshot() }); await page.screenshot({ path: join(out, 'edge-' + width + '-failure.png') }); console.log('FAIL Edge ' + width + ' at ' + stage + ': ' + e.stack); }
+    await context.close(); await keep('browser-results', results);
+  }
+} finally { await browser.close(); }

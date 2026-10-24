@@ -54,6 +54,23 @@ export class SqliteSessionRepository implements HarnessSessionRepository {
     return row ? toRecord(row) : undefined;
   }
 
+  async forNodeAttempt(
+    runId: string,
+    nodeId: string,
+    attempt: number,
+    harness: HarnessId,
+  ): Promise<HarnessSessionRecord | undefined> {
+    const row = await this.db.query.harnessSessions.findFirst({
+      where: and(
+        eq(harnessSessions.runId, runId),
+        eq(harnessSessions.nodeId, nodeId),
+        eq(harnessSessions.attempt, attempt),
+        eq(harnessSessions.harness, harness),
+      ),
+    });
+    return row ? toRecord(row) : undefined;
+  }
+
   async latestWithSession(
     runId: string,
     harness: HarnessId,

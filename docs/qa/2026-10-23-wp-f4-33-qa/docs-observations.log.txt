@@ -1,0 +1,200 @@
+SOURCE: docs/03-domain-model.md
+94:   input transforms and context files to deliberately supply current main-loop context.
+95: - `session: { policy: "resume-own", resetAfterVisits?: number }` opts into this node's
+96:   independent conversation within this execution and harness. Other nodes, runs,
+97:   replay forks and subloop children do not inherit its handle. Outputs enter the
+98:   shared thread only through the existing output configuration.
+99: - `resume-previous` still selects the latest session for the run and harness;
+100:   `resume-named` still selects the loop/key and harness, including across runs.
+101:   These existing shared policies are unchanged.
+102: 
+103: `resetAfterVisits` is optional, with no default: positive safe integers from 1 to
+104: 9,007,199,254,740,991. Visits 1 through N share a provider conversation; visit N+1
+105: starts fresh. Only durably completed logical visits advance this count; retries,
+106: repairs and interrupted recovery stay inside their visit. A reset changes only
+107: this node's provider conversation, preserving main-loop context and other nodes.
+108: There is no hidden ten-visit reset, provider-turn ceiling or token cap.
+109: 
+SOURCE: docs/04-node-catalog.md
+76:     | { policy: 'resume-named'; key: string }
+77:     | { policy: 'resume-own'; resetAfterVisits?: number };
+78:   prompt: { template: string }; // Liquid, rendered against the thread
+79:   input: InputTransform[]; // applied to the thread view the template sees
+80:   contextFiles?: { path: string; template: string }[]; // written under the working directory before the session starts
+81:   harnessOptions: {
+82:     sandbox: 'read-only' | 'workspace-write' | 'danger-full-access'; // Claude supports only explicit read-only or danger-full-access
+83:     approval: 'never' | 'on-request';
+108: `fresh` remains the default. Supply main-loop context deliberately through the prompt,
+109: input transforms or context files. Opt-in `resume-own` preserves only this node's provider
+110: conversation within this run and harness, including after restart; forks and children
+111: start fresh. Its optional `resetAfterVisits` accepts positive safe integers, without a
+112: default. N completed visits share a conversation; visit N+1 starts fresh. Retries and
+113: repairs stay in their visit. Reset never clears shared context or another node's session.
+114: Previous/named selection remains unchanged. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+115: 
+110: conversation within this run and harness, including after restart; forks and children
+111: start fresh. Its optional `resetAfterVisits` accepts positive safe integers, without a
+112: default. N completed visits share a conversation; visit N+1 starts fresh. Retries and
+113: repairs stay in their visit. Reset never clears shared context or another node's session.
+114: Previous/named selection remains unchanged. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+115: 
+116: Before invoking the harness, the engine durably records `harness.turn`: the exact rendered
+117: prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
+SOURCE: docs/05-execution-engine.md
+284: 
+285: `resume-own` starts fresh on the first visit and then resumes only this node's last
+286: completed conversation in the same run and harness. The handler derives completed
+287: visits and the last completed visit's final attempt from this run's event log, then
+288: queries the existing session row by run/node/attempt/harness. Attempt numbers restart
+289: on a new visit; selecting the largest historical attempt would resume stale work.
+290: A locally finished row without durable `node.finished` remains unfinished work under
+291: the submission/recovery rules below.
+292: 
+293: The optional authored `resetAfterVisits` accepts positive safe integers (1 through
+294: 9,007,199,254,740,991), without a default. N completed visits share one conversation;
+295: the next visit starts fresh. Retries and schema repairs do not consume visits.
+296: Reset selection runs only for a new visit: a pending definitely-unsubmitted task
+297: retains its original fresh/resume selection and exact prompt, and uncertain accepted
+298: work uses its usable session. The shared thread, feedback and other node sessions
+299: are never cleared. Existing loop guardrails still apply independently.
+322: submission mapping. A synchronous missing-session refusal is durably `session-missing` with
+323: `HARNESS_SESSION_MISSING`, regardless of retryability; Resume returns 409 without another
+324: harness call. An explicit delivery-uncertain transport failure or unconfirmed termination is
+325: never downgraded to safe non-submission because no handle was returned. Pinned policy,
+326: configuration and argument refusals remain non-resumable. Every provider boundary uses one pure evidence fold, shared by the engine and Codex adapter:
+327: 
+328: | Rank (highest first) | Evidence                                                                         |
+329: | -------------------- | -------------------------------------------------------------------------------- |
+362: | `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | When eligible under the harness rule below, continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
+363: | `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                                                                                                             |
+364: 
+365: `failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
+366: known. `harness.submission` records `submitted` on positive acceptance, with its marker, or
+367: one of the three failure classifications when a turn fails. Acceptance does not prove that
+368: the result was durably recorded; recovery of an accepted unfinished turn remains uncertain.
+369: The crash window between durable intent and adapter invocation is conservatively uncertain:
+483: - **Reconstruction continues from the seed**, including inherited messages, variables, outputs, counters, gate passes and iteration. Each fork `node.started` adds one visit to the inherited counter; decision events set absolute gate passes, and historical `iteration.incremented` events set iteration. The fresh-entry guardrail (`maxNodeVisits`) counts only this fork's own attempt-1 starts, independently of its inherited display counters. The inspector uses the same `replayThread` rule and never resets the recorded seed's counters.
+484: - **Harness sessions are not carried over.** A node using `resume-previous` or `resume-own` finds no conversation in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
+485: 
+486: ## Implementation notes from M2 (Decided by implementation, 2026-10-02)
+487: 
+488: - **Status changes are compare-and-set.** `RunRepository.transition(runId, fromStatuses, changes)` applies a change only when the current status is one of the expected ones. Start, park, wake, pause, resume, finish, fail, and cancel all go through it, so a pause that lands while the executor is starting a run is never clobbered.
+489: - **Pause is allowed on queued runs** as well as running and waiting ones. A paused queued run has no `startedAt`; its first execution after resume records `run.started`.
+490: - **Wake payloads live in the log.** The executor finds the pending wake by scanning back from the end of the log to the last `run.woken`, stopping at `node.finished` or `run.waiting` (a recovery `run.started` does not consume it; see "The log is written first"). Nothing about a wake is held in memory, which is what makes crash recovery trivial.
+SOURCE: docs/06-harness-integration.md
+202: | `workingDirectory`                             | thread options `workingDirectory` (`--cd`) and `skipGitRepoCheck: true`                                                                                                                                                                                              |
+203: | `session.policy`                               | `fresh` starts; `resume-previous` shares the latest in this run; `resume-named` shares a key; `resume-own` keeps this node/run/harness conversation, with an optional authored reset (below).                                                                        |
+204: | `prompt.template`                              | Rendered with Liquid, passed as the turn prompt                                                                                                                                                                                                                      |
+205: | `output.schema` with `native: true`            | `outputSchema` on the turn; the final message is parsed as JSON into `structured`, and the engine validates it                                                                                                                                                       |
+206: | cancellation                                   | abort the SDK call's signal; see "Cancellation" below                                                                                                                                                                                                                |
+207: 
+208: `HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous`, `resume-named` and `resume-own` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
+209: 
+207: 
+208: `HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous`, `resume-named` and `resume-own` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
+209: 
+210: Composition: `apps/api` builds the Codex adapters from the Codex entry of the harness-keyed process defaults (`GG_DEFAULTS`) and `GG_CODEX_BINARY`, and registers the harness, structured port, Codex structured evaluator and primitive-aware classifier registry. It also registers the Claude harness on supported native Windows hosts using `GG_CLAUDE_BINARY` or the owner-installed CLI path described below. `GG_CODEX_BINARY` remains an optional executable or JavaScript launcher; otherwise the SDK bundled CLI is used. Constructing adapters starts no model session. Old process-default variables are rejected with migration guidance.
+211: 
+212: ### Event normalisation (Decided)
+213: 
+214: | Codex event                                                       | `HarnessEvent`                                                                                                                                                                                                                                                                                          |
+263: 
+264: `resume-own` is opt-in; the default stays `fresh`. It uses the same adapter resume
+265: path and complete per-turn settings as previous/named selection. Its handle is scoped
+266: to one node/run/harness. The durable log identifies the latest completed visit's exact
+267: attempt row; no adapter-local memory or new storage schema is required. A new adapter
+268: instance after restart can resume that persisted native ID. Replay forks and child
+269: runs have independent IDs/logs and start fresh.
+270: 
+270: 
+271: An optional `resetAfterVisits` (positive safe integer, 1 to 9,007,199,254,740,991;
+272: omitted means never automatically reset) starts a new provider conversation after N
+273: completed logical visits. Retries and repairs do not count as extra visits. It never
+274: clears the main-loop thread. Existing prompt templates, input transforms and context
+275: files deliberately supply the current loop context to either fresh or resumed turns.
+276: Fresh conversation isolation does not change the authored working-directory/tool policy.
+277: 
+277: 
+278: Missing sessions remain `HARNESS_SESSION_MISSING`, non-resumable, without a silent
+279: fresh fallback. A prior visit's own handle, like previous/named handles, is not proof
+280: that a new authored task was submitted. #244/ADR-0045's acceptance and exact-task retry
+281: rules apply unchanged; #265 owns the future explicit recovery choice.
+282: 
+283: ### Structured output and repair (Decided)
+284: 
+560: missing-session stderr refusal. Before init/acceptance this native refusal result is deferred
+561: until process outcome: the fixed stderr refusal yields `HARNESS_SESSION_MISSING`, ahead of
+562: the otherwise missing-init protocol error. Termination-unconfirmed, abort, timeout and overflow
+563: still take precedence. Without a recognized refusal, a nonzero exit is a generic uncertain
+564: `HARNESS_TURN_FAILED`; an otherwise successful process with an incomplete stream remains a
+565: protocol fault. An init/result mismatch also remains a protocol fault. Once assistant acceptance was
+566: observed, later refusal text cannot make the turn definitely unsubmitted.
+567: 
+SOURCE: docs/09-frontend-and-pwa.md
+405: **Inference own-session control (#33).** Session on Settings includes opt-in
+406: `resume-own`; the default remains `fresh`. Own policy reveals **Reset after visits**
+407: as a basic optional number field. Blank means no automatic reset; positive safe
+408: integers reset only that node's provider conversation after N completed visits.
+409: Help explains authored tasks, deliberate loop-context input, node/run/harness
+410: isolation, and keeping main-loop context. Existing schema-driven select/number
+411: controls provide validation and keyboard operation; model/effort layout is unchanged
+412: by this bolt. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+SOURCE: docs/reference/nodes.md
+110: | `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      | yes               | Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.                                                                                                                                                                                                                                                                                       |
+111: | `session`        | one of `"fresh"` \| `"resume-previous"` \| `"resume-named"` \| `"resume-own"` by `policy`                                                                  | no       | `{"policy":"fresh"}` |                   | Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior. |
+112: | `prompt`         | { template }                                                                                                                                               | yes      |                      |                   | Liquid template rendered against the thread.                                                                                                                                                                                                                                                                                                                                          |
+113: | `input`          | array of (one of `"set"` \| `"delete"` \| `"append-message"` \| `"inject"` \| `"truncate"` \| `"drop"` \| `"replace"` \| `"redact"` \| `"coerce"` by `op`) | no       | `[]`                 |                   | Mutations applied to the thread view the template sees.                                                                                                                                                                                                                                                                                                                               |
+114: | `contextFiles`   | object[]                                                                                                                                                   | no       |                      | yes               | Files written under the working directory before the session starts.                                                                                                                                                                                                                                                                                                                  |
+115: | `harnessOptions` | object                                                                                                                                                     | no       | `{}`                 | all but `sandbox` | Sandbox, approval, network, web search, and raw config overrides.                                                                                                                                                                                                                                                                                                                     |
+116: | `capabilities`   | { mcpServers?, plugins?, skills? }                                                                                                                         | no       |                      | yes               | MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.                                                                                                                                                                                                                                                           |
+117: | `output`         | { captureTranscript?, toMessages?, transforms?, schema? }                                                                                                  | no       | `{}`                 | yes               | Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair.                                                                                                                                                                                                                                                                          |
+SOURCE: docs/decisions/ADR-0052-node-own-session-continuity.md
+18: ```ts
+19: { policy: 'resume-own'; resetAfterVisits?: number }
+20: ```
+21: 
+22: No separate context-mode field is needed. Fresh starts an isolated provider
+23: conversation with the authored task and selected inputs; current main-loop context
+24: is supplied deliberately through existing prompt templates, input transforms and
+25: context files. Own mode adds this node's private provider history. Normal configured
+36: 
+37: `resetAfterVisits` has no default. Its engineering bound is the positive safe-integer
+38: range 1 through 9,007,199,254,740,991: exact integer/modulo arithmetic without an
+39: arbitrary product-imposed reset ceiling. N durably completed visits share one
+40: conversation; visit N+1 starts fresh. Retries, repair turns and recovery do not
+41: advance the count. A pending refused task retains its exact prompt and original
+42: selection even at a reset boundary. Reset changes only that provider conversation;
+43: it never resets the shared thread, another node or loop guardrails.
+58: with only an inherited handle stops non-resumably. Missing provider sessions remain
+59: `HARNESS_SESSION_MISSING`, with no automatic fresh fallback. The explicit recovery
+60: choice belongs to #265 and is not implemented here.
+61: 
+62: ## Consequences and verification
+63: 
+64: The schema-driven editor gains the new option, contextual help and visible optional
+65: reset without a new custom form or changes to model/effort fields. Clients must accept
+SOURCE: CHANGELOG.md
+6: 
+7: - Add opt-in inference `session.policy: resume-own`, isolated per node, run and harness across repeated visits and restart. Optional `resetAfterVisits` resets only that provider conversation after the authored number of completed visits; omission introduces no reset. Existing fresh/previous/named selection and prompt-delivery provenance remain unchanged. The editor exposes the policy and optional reset with context guidance. **Upgrade:** no store rewrite, reset or SQL migration is required; API/export consumers must accept the new session-policy variant and optional positive safe-integer reset field; custom HarnessSessionRepository ports must implement forNodeAttempt. (#33)
+8: 
+9: - Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.
+10: 
+11: - Show execution defaults in the editor and Settings, pin them on runs, and support explicit Unlimited node visits and repeat passes plus optional authored run deadlines. Runs default to 10 visits and no deadline; remove Claude's hidden provider-turn and ten-minute inference ceilings, preserve typed transport/output failures and retry positively unsubmitted transient transport failures once. **Upgrade:** no existing loop or run gains a deadline. Omitted deadlines and `runDeadlineSeconds: null` mean no deadline; `null` explicitly selects Unlimited visits or passes. SQL 0017 pins existing runs and saved admission intents from their immutable definitions, preserving authored deadlines and pinning null when omitted. Export/API clients must accept nullable limits, the new run pin limits and typed deadline/transport/output failures. Programmatic Claude harness callers must remove `maxTurns` and `turnTimeoutMs`; use authored node/run deadlines. The 16 KiB per-item detail excerpt remains a storage bound; full final results are preserved. No owner-store changes were performed. (#243)
+12: 
+13: - Preserve the exact authored or repair prompt after a proven pre-submission refusal. Record submission classification and acceptance markers per logical visit; uncertain work continues only a usable session, and missing sessions fail explicitly. An inherited previous/named session without acceptance of the authored task cannot authorize continuation (ADR-0045). Non-pinned generic Codex exits and lost streams retain Resume when session evidence permits it; generic Claude failures require adapter retryability evidence. Pinned policy, configuration and argument refusals remain non-resumable for both. Synchronous repair-start refusals retain the exact repair prompt and use the same typed failure and pinned-refusal rules as initial launch. The inspector lists selectable turn/submission rows with the node ID; provenance values remain REST-only, with the detail view coordinated with #379. Claude result-only acceptance is now recorded as soon as the successful record validates, before process exit; usage and completed results still wait for verified exit. **Upgrade:** on the old build, let every run inside an inference node finish or cancel it before upgrading: startup recovery automatically resumes `running` runs. After upgrading, never resume a failed run whose failure is on an inference node and whose log has no `harness.turn`; use Replay from the node, delete its loop, or reset the store. Ignoring this rule resends the authored prompt blindly: fresh policy starts a new conversation, while previous/named can repeat it in the inherited conversation. Regenerate API clients for `failure.inference`, `HARNESS_DELIVERY_UNCERTAIN`, `HARNESS_SESSION_MISSING`, `harness.turn` and `harness.submission` (now `submitted` for positive acceptance). No compatibility recovery or silent fresh-session fallback is provided. (#244)
+12: 
+13: - Preserve the exact authored or repair prompt after a proven pre-submission refusal. Record submission classification and acceptance markers per logical visit; uncertain work continues only a usable session, and missing sessions fail explicitly. An inherited previous/named session without acceptance of the authored task cannot authorize continuation (ADR-0045). Non-pinned generic Codex exits and lost streams retain Resume when session evidence permits it; generic Claude failures require adapter retryability evidence. Pinned policy, configuration and argument refusals remain non-resumable for both. Synchronous repair-start refusals retain the exact repair prompt and use the same typed failure and pinned-refusal rules as initial launch. The inspector lists selectable turn/submission rows with the node ID; provenance values remain REST-only, with the detail view coordinated with #379. Claude result-only acceptance is now recorded as soon as the successful record validates, before process exit; usage and completed results still wait for verified exit. **Upgrade:** on the old build, let every run inside an inference node finish or cancel it before upgrading: startup recovery automatically resumes `running` runs. After upgrading, never resume a failed run whose failure is on an inference node and whose log has no `harness.turn`; use Replay from the node, delete its loop, or reset the store. Ignoring this rule resends the authored prompt blindly: fresh policy starts a new conversation, while previous/named can repeat it in the inherited conversation. Regenerate API clients for `failure.inference`, `HARNESS_DELIVERY_UNCERTAIN`, `HARNESS_SESSION_MISSING`, `harness.turn` and `harness.submission` (now `submitted` for positive acceptance). No compatibility recovery or silent fresh-session fallback is provided. (#244)
+14: 
+15: - Dependencies: body-parser 2.4.0 (pulled by the MCP SDK through Express; lockfile only, with `qs` moving one patch to 6.16.1) resolves the high advisory GHSA-27r3-jxmh-p828 (denial of service via trailing bytes after a compressed request body) that the CI dependency audit reported from 2026-10-23. No behaviour change.
+16: 
+17: - Dependencies: zod 4.6.7 (every workspace range raised to `^4.6.6`, the lockfile deduplicated so the ESLint plugins resolve it too) resolves the high advisory GHSA-mrhx-c7xc-m3w5 (memory exhaustion while validating oversized constrained collections) that the CI dependency audit reported from 2026-10-23. No behaviour change.
+18: 
+19: - The Claude harness now offers **Claude Sonnet 5.5** (`claude-sonnet-5-5`) and **Claude Haiku 5.5** (`claude-haiku-5-5`), each with `low`, `medium`, `high`, `xhigh` and `max`, beside Opus 5.5 and Fable 5.1. Both ids were verified on 2026-10-18 with bounded real turns through installed Claude Code 2.1.292 and a Claude.ai login, which reported exactly the requested model. They use the same exact-model, effort, readiness and catalog checks; aliases and the older `claude-haiku-4-5-20251001` (no effort control in the CLI) are not admitted. `LIVE_CLAUDE=1` runs a separate one-turn live smoke per new model. **Upgrade:** none; the next start adds both catalog rows enabled and keeps every existing enable switch. Claude Code's documentation names 2.1.293 as the minimum for Haiku 5.5; update the CLI if a Haiku run fails. (#206)
+22: 
+23: - Preserve the exact authored or repair prompt after a proven pre-submission refusal. Record submission classification and acceptance markers per logical visit; uncertain work continues only a usable session, and missing sessions fail explicitly. An inherited previous/named session without acceptance of the authored task cannot authorize continuation (ADR-0045). Non-pinned generic Codex exits and lost streams retain Resume when session evidence permits it; generic Claude failures require adapter retryability evidence. Pinned policy, configuration and argument refusals remain non-resumable for both. Launch exceptions, streamed errors and rejected results share failure and submission mapping: synchronous missing-session refusals remain `HARNESS_SESSION_MISSING` and `session-missing`, with Resume refused regardless of retryability, while restorable repair refusals retain the exact repair prompt. Explicit delivery uncertainty and unconfirmed termination are preserved before a handle is returned. One shared ranked evidence fold covers launch, streamed/top-level errors, turn failures, rejected results/promises, iterator throws, cleanup and cancellation: unconfirmed termination, missing sessions, pinned refusals, explicit submission metadata, ordinary typed causes, then generic wrappers; later evidence wins within each class. Classification-write faults add `details.recording` without changing the primary failure, provenance or Resume eligibility. Codex preserves typed causes and explicit submission metadata at every SDK boundary, with the acceptance guard intact. Every turn intent precedes its fallible append; guarded reconciliation retains the exact retry in `failure.inference.retry` when the intent's persistence is unresolved. The inspector lists selectable turn/submission rows with the node ID; provenance values remain REST-only, with the detail view coordinated with #379. Claude result-only acceptance is now recorded as soon as the successful record validates, before process exit; usage and completed results still wait for verified exit. **Upgrade:** on the old build, let every run inside an inference node finish or cancel it before upgrading: startup recovery automatically resumes `running` runs. After upgrading, never resume a failed run whose failure is on an inference node and whose log has no `harness.turn`; use Replay from the node, delete its loop, or reset the store. Ignoring this rule resends the authored prompt blindly: fresh policy starts a new conversation, while previous/named can repeat it in the inherited conversation. Regenerate API clients for `failure.inference` (including the exact unresolved `retry` intent), `HARNESS_DELIVERY_UNCERTAIN`, `HARNESS_SESSION_MISSING`, `harness.turn` and `harness.submission` (now `submitted` for positive acceptance). No compatibility recovery or silent fresh-session fallback is provided. (#244)
+24: 
+25: - Explicit inference harness changes preserve unset model/effort inheritance, choose compatible enabled loop, Settings, then ecosystem defaults for explicit models, and wait for initial checks without pinning or remounting. Failed lookups retain authored values; catalog failures hold publication even with cached choices. Blocked incompatible drafts must be corrected before saving. Saved selections agree with adapter requests. A concurrent field edit cancels a pending switch and clears its waiting notice. **Upgrade:** rebuild the API and web app together with the regenerated client for the required `ecosystemDefault` catalog response field. No store migration or reset is needed. (#204)
+26: 
+27: - Completion evidence that loop-back exits used to give is kept under decision gates and terminal exits. **Exit evaluation** at the top of a run shows the last gate decision: route, pass, and the limit that stopped a repeat. When the exit's Returns is None, it says nothing was returned by configuration, not by failure, and names the exit and start-request destinations that received nothing, or identifies a quiet exit. Result shows a `null` return. When the pinned exit's Returns is an expression, or the pinned definition is not available, it says that the history alone cannot show whether nothing or an unrecorded null was returned (a format-4 run recorded by an older build omitted a null result) instead of asserting a None configuration. Decision details name the chosen route's authored label and, for classifiers, its criterion. The exit editor says destinations receive nothing while Returns is None and names a quiet exit. Route, Choice option, Noul side and Score band help states the count and uniqueness rules and describes IDs as output ports. Behaviour and stored data are unchanged. The inventory is in `docs/qa/2026-10-18-exit-evidence-inventory.md`. The QA recipe and its four loops are in `docs/qa/2026-10-19-wp-g4-exit-evidence/`. (#129)
+28: 
+29: - Mark a loop's latest run unavailable when its event history cannot be read, retaining the exact count and diagnostics guidance instead of a stale status badge. (#236)
