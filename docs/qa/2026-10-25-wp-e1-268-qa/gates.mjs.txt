@@ -1,0 +1,37 @@
+import { spawn } from 'node:child_process';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+const root = process.cwd();
+const out = join(root, 'docs/qa/2026-10-25-wp-e1-268-qa');
+const commands = [
+  ['typecheck', 'pnpm.cmd typecheck', 'node_modules\\.bin\\turbo.cmd run typecheck'],
+  ['lint', 'pnpm.cmd lint', 'node_modules\\.bin\\turbo.cmd run lint'],
+  ['format', 'pnpm.cmd format:check', 'node_modules\\.bin\\prettier.cmd --check .'],
+  ['layers', 'pnpm.cmd check:layers', 'node tooling/scripts/check-layers.mjs'],
+  ['deps', 'pnpm.cmd check:deps', 'node_modules\\.bin\\depcruise.cmd packages apps --config .dependency-cruiser.cjs'],
+  ['engine-coverage', 'pnpm.cmd --filter @graphgoblin/engine test:coverage', 'node_modules\\.bin\\vitest.cmd run --coverage --root packages/engine'],
+  ['tooling-coverage', 'pnpm.cmd --filter @graphgoblin/tooling test:coverage', 'node --test tooling/scripts/*.test.mjs tooling/perf/*.test.mjs'],
+  ['api-coverage', 'pnpm.cmd --filter @graphgoblin/api test:coverage', 'node_modules\\.bin\\vitest.cmd run --coverage --root apps/api'],
+  ['tooling-lint', 'node_modules\\.bin\\eslint.cmd tooling/perf/*.mjs', null],
+];
+const results = [];
+async function run(name, command) {
+  const began = Date.now();
+  console.log('START', name, command);
+  const child = spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', command], { cwd: root, windowsHide: true });
+  let output = '';
+  child.stdout.on('data', x => output += x);
+  child.stderr.on('data', x => output += x);
+  const code = await new Promise((resolve, reject) => { child.on('error', reject); child.on('close', resolve); });
+  output = output.replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+  await writeFile(join(out, name + '.log.txt'), command + '\n' + output + '\nEXIT=' + code + '\n');
+  const result = { name, command, code, wallMs: Date.now() - began };
+  console.log('END', JSON.stringify(result));
+  return { result, output };
+}
+for (const [name, command, fallback] of commands) {
+  const first = await run(name, command);
+  results.push(first.result);
+  if (first.output.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK') && fallback) results.push((await run(name + '-fallback', fallback)).result);
+  await writeFile(join(out, 'gates.json'), JSON.stringify(results, null, 2) + '\n');
+}

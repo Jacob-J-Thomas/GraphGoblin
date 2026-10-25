@@ -1,0 +1,55 @@
+import { spawn } from 'node:child_process';
+import { mkdtemp, mkdir, writeFile, readFile, readdir, stat, copyFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+const root=process.cwd(), kept=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const temp=await mkdtemp(join(tmpdir(),'gg-qa-e1-268-runs-'));
+const loader=pathToFileURL(join(tmpdir(),'gg-qa-e1-268-loader.mjs')).href;
+const sanitize=x=>x.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const records=[];
+async function run(name,args,variant='after') {
+ console.log('START',name,new Date().toISOString());
+ const env={...process.env,QA_ROOT:root,QA_VARIANT:variant};
+ if(variant!=='after')env.NODE_OPTIONS='--loader='+loader;
+ else delete env.NODE_OPTIONS;
+ const started=Date.now();
+ const child=spawn(process.execPath,args,{cwd:root,env,windowsHide:true});
+ let log='';child.stdout.on('data',x=>{log+=x;});child.stderr.on('data',x=>{log+=x;const t=String(x);if(t.includes('PERF_CASE')||t.includes('GUARD_CASE'))process.stdout.write(name+' '+t);});
+ const code=await new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',resolve);});
+ await writeFile(join(kept,name+'.log.txt'),sanitize(JSON.stringify({args,variant})+'\n'+log+'\nEXIT='+code+'\n'));
+ records.push({name,variant,args,code,wallMs:Date.now()-started});
+ await writeFile(join(kept,'performance-runs.json'),sanitize(JSON.stringify({temp,records},null,2)+'\n'));
+ console.log('END',name,code,Date.now()-started);
+ if(code!==0)throw Error(name+' failed; stopping finite performance protocol');
+}
+const folders={};
+for(const [name,variant]of [['long-before-1','baseline'],['long-after-1','after'],['long-after-2','after'],['long-before-2','baseline']]){
+ const output=join(temp,name);folders[name]=output;
+ await run(name,['--experimental-import-meta-resolve','tooling/perf/measure.mjs','long','--passes=100,1000,10000','--profile=inspector','--port=6190','--store-prefix=gg-qa-e1-268-','--load-conditions=Shared loaded host; QA gates and other QA execution stopped during this serial interleaved protocol','--out='+output],variant);
+ await writeFile(join(kept,name+'-summary.json'),sanitize(await readFile(join(output,'raw-summary.json'),'utf8')));
+}
+for(const [before,after,label]of [['long-before-1','long-after-1','long-pair-1'],['long-before-2','long-after-2','long-pair-2']])await run(label,['--experimental-import-meta-resolve','tooling/perf/compare.mjs',join(folders[before],'raw-summary.json'),join(folders[after],'raw-summary.json'),join(kept,label+'-equivalence.json')]);
+for(const [name,variant]of [['guard-before-1','rank1'],['guard-after-1','after'],['guard-after-2','after'],['guard-before-2','rank1']]){
+ const output=join(temp,name);folders[name]=output;
+ await run(name,['--experimental-import-meta-resolve','--expose-gc',join(tmpdir(),'gg-qa-e1-268-guard-control.mjs'),output],variant);
+ await writeFile(join(kept,name+'-summary.json'),sanitize(await readFile(join(output,'raw-summary.json'),'utf8')));
+}
+const guard=[];
+for(const [a,b]of [['guard-before-1','guard-after-1'],['guard-before-2','guard-after-2']]){
+ const [x,y]=await Promise.all([a,b].map(async n=>JSON.parse(await readFile(join(folders[n],'raw-summary.json'),'utf8'))));
+ guard.push({before:a,after:b,cases:x.cases.map((c,i)=>({passes:c.specification.passes,equal:JSON.stringify(c.equivalence)===JSON.stringify(y.cases[i].equivalence),before:c.equivalence,after:y.cases[i].equivalence}))});
+}
+await writeFile(join(kept,'guard-equivalence.json'),JSON.stringify(guard,null,2)+'\n');
+for(const workload of ['replay','append'])for(const [side,variant]of [['before','baseline'],['after','after']]){
+ const name=workload+'-'+side,output=join(temp,name);folders[name]=output;
+ await run(name,['--experimental-import-meta-resolve','tooling/perf/measure.mjs',workload,'--passes='+ (workload==='append'?'10':'100'),'--items='+ (workload==='append'?'100':'2'),'--profile=inspector','--port=6190','--store-prefix=gg-qa-e1-268-','--out='+output],variant);
+ await writeFile(join(kept,name+'-summary.json'),sanitize(await readFile(join(output,'raw-summary.json'),'utf8')));
+}
+for(const workload of ['replay','append'])await run(workload+'-pair',['--experimental-import-meta-resolve','tooling/perf/compare.mjs',join(folders[workload+'-before'],'raw-summary.json'),join(folders[workload+'-after'],'raw-summary.json'),join(kept,workload+'-equivalence.json')]);
+const omitted=[];
+async function inventory(dir){for(const e of await readdir(dir,{withFileTypes:true})){const p=join(dir,e.name);if(e.isDirectory())await inventory(p);else {const s=await stat(p);const hash=createHash('sha256').update(await readFile(p)).digest('hex');if(s.size<=1000000&&e.name.endsWith('.cpuprofile'))await copyFile(p,join(kept,p.slice(temp.length+1).replaceAll('\\','-').replaceAll('/','-')+'.json'));else omitted.push({path:sanitize(p),bytes:s.size,sha256:hash});}}}
+await inventory(temp);
+await writeFile(join(kept,'not-kept.json'),JSON.stringify(omitted,null,2)+'\n');
+console.log('PERFORMANCE_COMPLETE',temp);

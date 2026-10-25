@@ -1,0 +1,32 @@
+[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:363
++ ... TEXITCODE"; pnpm.cmd --filter @graphgoblin/engine test:coverage *> do ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-268/packages/engine
+      Coverage enabled with v8
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+ Test Files  53 passed (53)
+      Tests  1687 passed (1687)
+   Start at  04:31:29
+   Duration  52.47s (tests 46%, import 40%, transform 12%, worker 2%)
+
+    Isolate  53 workers spawned · ~691ms startup each (spawn + environment, per file)
+             at least ~2.64s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.27% ( 3156/3278 )
+Branches     : 91.79% ( 2483/2705 )
+Functions    : 97.69% ( 593/607 )
+Lines        : 97.65% ( 2874/2943 )
+================================================================================

@@ -1,0 +1,13 @@
+import { readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+const target=pathToFileURL(join(process.env.QA_ROOT,'packages/engine/dist/run-manager.js')).href;
+const common=pathToFileURL(join(process.env.QA_ROOT,'tooling/perf/common.mjs')).href;
+export async function load(url,context,nextLoad) {
+ if(url===target && process.env.QA_VARIANT!=='after') return {format:'module',shortCircuit:true,source:await readFile(join(process.env.QA_ROOT,'docs/qa/2026-10-25-wp-e1-268-qa',process.env.QA_VARIANT+'-run-manager.mjs.txt'),'utf8')};
+ if(url===common) {
+  const source=(await readFile(new URL(url),'utf8')).replace("new URL('../../apps/' + app + '/package.json', import.meta.url)","new URL('../../apps/' + app + '/package.json', import.meta.url).href");
+  return {format:'module',shortCircuit:true,source};
+ }
+ return nextLoad(url,context);
+}

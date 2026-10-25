@@ -128,6 +128,11 @@ outcome is not a resumable node failure. A run paused while parked (or while par
 to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
 keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
 
+Finalization reads history in 256-event pages and yields between full pages (#268). It gathers
+the complete log before interpreting terminal and return-delivery evidence, preserving the
+same validation and recovery rules. This bounds each read's event count, not individual event
+bytes or total retained history. Other recovery, resume and cancellation reads remain separate.
+
 ## Observing finalization (#185, ADR-0057)
 
 RunRecord.finalizedAt exposes the existing durable finalization acknowledgement.
@@ -183,6 +188,13 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 `exit.evaluated` records `{nodeId,outcome}` atomically with `node.finished` and `run.finished`. Return mapping failures follow normal node-failure handling. Fresh runs retain `run.iteration: 1`; factual old `iteration.incremented` events remain replayable but new gates do not emit them.
 
 `settings.maxNodeVisits` (default 10, maximum 10,000, `null` explicitly unlimited) independently caps fresh entries per node. A `node.started` with attempt 1 counts; a wake, recovery or resumable retry of the same visit does not. Exceeding the cap fails before starting the node with `MAX_NODE_VISITS`, `resumable: false`, its node ID and `details.maxNodeVisits`. This catches unmarked cycles; it does not turn them into gate exhaustion. Configure enough visits for intentional work and gates.
+
+The executor rebuilds fresh-entry counts once from the history it loaded, then updates them
+after committed starts (#268). A rejected append does not advance the in-memory count; a later
+resume/recovery rebuilds from what actually persisted, including an append whose acknowledgement
+was lost. This cache is local to one executor and separate from display counters, which also
+include wake/retry attempts and inherited replay-fork counters. `attemptFor` retains its reverse
+scan for the current visit; Unlimited does not impose a hidden cap.
 
 Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds a finite visit cap (including unlimited passes). The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
 

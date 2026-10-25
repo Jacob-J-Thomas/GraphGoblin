@@ -1,0 +1,304 @@
+{
+  "schema": 2,
+  "columns": {
+    "specification": [
+      "passes",
+      "items",
+      "itemBytes",
+      "contextBytes",
+      "inference",
+      "grow",
+      "artifacts",
+      "delayMs"
+    ],
+    "correctness": [
+      "ok",
+      "succeeded",
+      "nodeCountsOk",
+      "unexpectedAttempts",
+      "storedEvents",
+      "progress",
+      "expectedProgress",
+      "gates",
+      "passes",
+      "history",
+      "historyValuesOk",
+      "terminal",
+      "replayOk",
+      "browserOk"
+    ],
+    "portTimings": [
+      "portIndex",
+      "count",
+      "totalMs",
+      "meanMs",
+      "p95UpperMs",
+      "maxMs"
+    ],
+    "checkpoints": [
+      "pass",
+      "elapsedMs",
+      "snapshotBytes",
+      "getThreadMs",
+      "snapshotSerializeMs",
+      "heapUsed"
+    ],
+    "browserSamples": [
+      "elapsedMs",
+      "nodes",
+      "sessionStorageBytes",
+      "heapUsed",
+      "longTasks",
+      "longTaskMs"
+    ],
+    "flightSamples": [
+      "replayElapsedMs",
+      "socketBytesWritten",
+      "wireBytesConsumed",
+      "bytesInFlight"
+    ],
+    "topCpuFrames": [
+      "cpuLocationIndex",
+      "samples"
+    ]
+  },
+  "ports": [
+    "runs.get",
+    "events.read",
+    "runs.transition",
+    "events.append",
+    "runs.update",
+    "runs.saveThread",
+    "sessions.upsert"
+  ],
+  "cpuLocations": [
+    ":0 libsql_js::statement::Rows::js_next",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+    "node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is"
+  ],
+  "measurements": [
+    {
+      "workload": "append",
+      "aged": 0,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 6125,
+      "environment": {
+        "timestamp": "2026-10-25T10:02:57.914Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4585ff5702d91e141645d34dffdc5d71b1524524",
+        "hostBusyFraction": 0.704,
+        "freeRamBefore": 24448811008,
+        "freeRamAfter": 27504177152
+      },
+      "failed": false,
+      "cases": [
+        0
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "specification": [
+        10,
+        100,
+        256,
+        128,
+        true,
+        false,
+        false,
+        0
+      ],
+      "wallMs": 8463.512,
+      "msPerPass": 846.351,
+      "cpu": {
+        "user": 1516000,
+        "system": 1328000
+      },
+      "durableAdmissionToStartMs": 32,
+      "awaitedPortMs": 8383.749,
+      "observationMs": 9.741,
+      "residualMs": 70.022,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 23.967,
+        "max": 176.816,
+        "p99": 52.986
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1545,
+        "wallMs": 41.867
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [
+          0,
+          70,
+          109.875,
+          1.57,
+          3.299,
+          5.119
+        ],
+        [
+          1,
+          9,
+          38.064,
+          4.229,
+          9.412,
+          8.882
+        ],
+        [
+          2,
+          2,
+          14.997,
+          7.499,
+          8.557,
+          7.903
+        ],
+        [
+          3,
+          1087,
+          7598.114,
+          6.99,
+          20.176,
+          176.726
+        ],
+        [
+          4,
+          43,
+          155.68,
+          3.62,
+          15.159,
+          16.654
+        ],
+        [
+          5,
+          22,
+          189.666,
+          8.621,
+          18.342,
+          19.003
+        ],
+        [
+          6,
+          30,
+          190.061,
+          6.335,
+          20.176,
+          19.161
+        ]
+      ],
+      "otherPorts": {
+        "calls": 26,
+        "totalMs": 87.29
+      },
+      "checkpoints": [
+        [
+          1,
+          784.239,
+          800,
+          1.248,
+          0.076,
+          47415496
+        ],
+        [
+          3,
+          2329.363,
+          1189,
+          1.184,
+          0.137,
+          53453408
+        ],
+        [
+          5,
+          3772.428,
+          1189,
+          0.655,
+          0.028,
+          44173512
+        ],
+        [
+          6,
+          4558.994,
+          1189,
+          0.76,
+          0.028,
+          46004096
+        ],
+        [
+          8,
+          6720.05,
+          1189,
+          0.741,
+          0.027,
+          49497776
+        ],
+        [
+          10,
+          8309.609,
+          1192,
+          0.809,
+          0.025,
+          53423672
+        ]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        1100,
+        1000,
+        1000,
+        10,
+        10,
+        0,
+        true,
+        1,
+        true,
+        null
+      ],
+      "eventSerialization": {
+        "totalMs": 2.556,
+        "bytes": 484512,
+        "sha256": "e954e249a4f68c17457ddbb31fcb295b69824d5d945016072a33f1c649732cf8",
+        "lateAfter": 990,
+        "lateSha256": "2d4856c10878270ca2a6dec0ac3827e33f23f2851a45f608d083302d36636737"
+      },
+      "cpuSamples": 5322,
+      "topCpuFrames": [
+        [
+          0,
+          4468
+        ],
+        [
+          1,
+          81
+        ],
+        [
+          2,
+          51
+        ]
+      ],
+      "storeGrowthBytes": 4572400,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "work": 10,
+        "gate": 10,
+        "done": 1
+      }
+    }
+  ],
+  "browserPages": [],
+  "replays": []
+}

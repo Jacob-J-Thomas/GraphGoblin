@@ -1,0 +1,217 @@
+{
+  "status": "pass",
+  "diagnosis": "Tooling recovery control compares the whole RunRecord byte-for-byte, including finalizedAt. clearFinalized deliberately removes the acknowledgement and recovery records a new timestamp. Durable events, reconstructed thread, and all other RunRecord fields remain equal.",
+  "changedKeys": [
+    "finalizedAt"
+  ],
+  "beforeRun": {
+    "id": "01M5SE44W9H8N0E1WMCQ4WAF3W",
+    "ownerId": "local",
+    "loopId": "01M5SE44TC5M6TKY452R57EJZJ",
+    "versionId": "01M5SE44TC5M6TKY452R57EJZK",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "measurement-10-128-false",
+      "label": "measurement-10-128-false v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10000,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5SE44W9H8N0E1WMCQ4WAF3X",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": {
+      "passes": 10,
+      "output": "OK"
+    },
+    "createdAt": "2026-10-25T11:46:21.193Z",
+    "startedAt": "2026-10-25T11:46:21.223Z",
+    "finishedAt": "2026-10-25T11:46:23.517Z",
+    "finalizedAt": "2026-10-25T11:46:23.962Z",
+    "lastEventSeq": 1100
+  },
+  "afterRun": {
+    "id": "01M5SE44W9H8N0E1WMCQ4WAF3W",
+    "ownerId": "local",
+    "loopId": "01M5SE44TC5M6TKY452R57EJZJ",
+    "versionId": "01M5SE44TC5M6TKY452R57EJZK",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "measurement-10-128-false",
+      "label": "measurement-10-128-false v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10000,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5SE44W9H8N0E1WMCQ4WAF3X",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": {
+      "passes": 10,
+      "output": "OK"
+    },
+    "createdAt": "2026-10-25T11:46:21.193Z",
+    "startedAt": "2026-10-25T11:46:21.223Z",
+    "finishedAt": "2026-10-25T11:46:23.517Z",
+    "finalizedAt": "2026-10-25T11:48:53.507Z",
+    "lastEventSeq": 1100
+  },
+  "eventCount": 1100,
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5SE44W9H8N0E1WMCQ4WAF3W",
+      "loopId": "01M5SE44TC5M6TKY452R57EJZJ",
+      "versionId": "01M5SE44TC5M6TKY452R57EJZK",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5SE44W9H8N0E1WMCQ4WAF3X",
+      "source": "manual.api",
+      "caller": {
+        "kind": "user",
+        "id": "local"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-25T11:46:21.193Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-25T11:46:21.255Z"
+      },
+      "work": {
+        "nodeId": "work",
+        "value": "OK",
+        "at": "2026-10-25T11:46:23.476Z"
+      },
+      "gate": {
+        "nodeId": "gate",
+        "value": {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 10,
+            "passes": 10,
+            "repeatRouteId": "again",
+            "maxPasses": 10,
+            "elapsedSeconds": 2.269,
+            "limit": "max-passes"
+          }
+        },
+        "at": "2026-10-25T11:46:23.492Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "gate",
+      "value": {
+        "provenance": {
+          "kind": "expression",
+          "provider": null,
+          "classifierId": null,
+          "model": null,
+          "effort": null
+        },
+        "observation": {
+          "kind": "route",
+          "routeId": "again",
+          "confidence": null,
+          "reasoning": null
+        },
+        "portId": "limit-reached",
+        "gate": {
+          "previousPasses": 10,
+          "passes": 10,
+          "repeatRouteId": "again",
+          "maxPasses": 10,
+          "elapsedSeconds": 2.269,
+          "limit": "max-passes"
+        }
+      },
+      "at": "2026-10-25T11:46:23.492Z"
+    },
+    "gates": {
+      "gate": {
+        "passes": 10
+      }
+    },
+    "counters": {
+      "nodeVisits": {
+        "start": 1,
+        "work": 10,
+        "gate": 10,
+        "done": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  },
+  "pending": [],
+  "workerClaim": {
+    "beforeHash": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+    "afterHash": "c317550f354ef813fbb24ad73529db98b914fc448e7447346fed638b27a0be8a",
+    "events": 1100,
+    "ok": false,
+    "mechanism": "Public clearFinalized port; container close and file-backed reopen; no process crash claim"
+  }
+}
