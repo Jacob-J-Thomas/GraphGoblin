@@ -26,8 +26,13 @@ import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
 import { SqliteLoopRepository } from './loops.js';
 import { SqliteRunRepository } from './runs.js';
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  openStoreBefore,
+  shippedSqlMigrationsFrom,
+} from './testing/shipped-migrations.js';
 
+const DEFAULTS_MIGRATION = '0019_completion_deadline_defaults';
 const NO_DEFAULTS = { owner: { byHarness: {} }, process: { byHarness: {} } };
 const named = (name: string): LoopDefinition =>
   LoopDefinitionSchema.parse({ ...minimalLoop(), name });
@@ -89,7 +94,21 @@ describe('draft snapshots', () => {
       new SqliteEventStore(handle.db, new FakeClock()),
     );
   });
-  afterEach(() => handle.close());
+  const dirs: string[] = [];
+  afterEach(async () => {
+    handle.close();
+    for (const dir of dirs.splice(0))
+      await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  });
+
+  /** A genuine store through 0018 for seeding; reopening its URL applies 0019 and later. */
+  async function storeBeforeDefaults() {
+    const dir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-defaults-'));
+    dirs.push(dir);
+    const url = 'file:' + join(dir, 'store.db').replaceAll('\\', '/');
+    const old = await openStoreBefore(url, DEFAULTS_MIGRATION);
+    return { url, old, loops: new SqliteLoopRepository(old.db, new FakeClock(), new FakeIds()) };
+  }
 
   async function draftRun(seed: string) {
     const { loop, draft } = await loops.create('local', named('Snap'));
@@ -105,11 +124,13 @@ describe('draft snapshots', () => {
   it.each([null, 250])(
     'materializes omitted deadline fields in every stored copy, preserving authored %s',
     async (authored) => {
+      const store = await storeBeforeDefaults();
+      const old = store.old;
       const definition = named('Additive defaults');
       definition.settings.structuredTimeoutMs = authored;
       definition.settings.runDeadlineSeconds = authored === null ? null : 5;
-      const { loop, draft } = await loops.create('local', definition);
-      await loops.publish(loop.id);
+      const { loop, draft } = await store.loops.create('local', definition);
+      await store.loops.publish(loop.id);
       const snapshot: LoopVersionRecord = {
         ...draft,
         id: fakeUlid('default-snapshot'),
@@ -124,19 +145,18 @@ describe('draft snapshots', () => {
         authored === null
           ? "json_remove(?, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds')"
           : '?';
-      await handle.client.execute({
+      await old.client.execute({
         sql: `INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at) VALUES (?, ?, 1, 'snapshot', ${remove}, ?)`,
         args: [snapshot.id, loop.id, oldDefinition, FIXTURE_TS],
       });
       if (authored === null)
-        await handle.client.execute({
+        await old.client.execute({
           sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
           args: [draft.id],
         });
-      await runs.create(intent.run, intent.initialThread);
-      const events = new SqliteEventStore(handle.db, new FakeClock());
-      await events.append(intent.run.id, [intent.queued]);
-      await handle.client.execute({
+      await new SqliteRunRepository(old.db).create(intent.run, intent.initialThread);
+      await new SqliteEventStore(old.db, new FakeClock()).append(intent.run.id, [intent.queued]);
+      await old.client.execute({
         sql: "INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts) VALUES (?, 'local', ?, 'start', ?, ?, 'pending', ?, 0)",
         args: [
           fakeUlid('default-receipt'),
@@ -147,26 +167,34 @@ describe('draft snapshots', () => {
         ],
       });
       if (authored === null) {
-        await handle.client.execute(
+        await old.client.execute(
           "UPDATE runs SET pinned = json_remove(pinned, '$.limits.structuredTimeoutMs', '$.limits.runDeadlineSeconds')",
         );
-        await handle.client.execute(
+        await old.client.execute(
           "UPDATE run_events SET payload = json_remove(payload, '$.pinned.limits.structuredTimeoutMs', '$.pinned.limits.runDeadlineSeconds')",
         );
-        await handle.client.execute(
+        await old.client.execute(
           "UPDATE webhook_receipts SET intent = json_remove(intent, '$.run.pinned.limits.structuredTimeoutMs', '$.run.pinned.limits.runDeadlineSeconds', '$.queued.pinned.limits.structuredTimeoutMs', '$.queued.pinned.limits.runDeadlineSeconds', '$.snapshot.definition.settings.structuredTimeoutMs', '$.snapshot.definition.settings.runDeadlineSeconds')",
         );
       }
       const beforeTrigger = (
-        await handle.client.execute(
+        await old.client.execute(
           "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
         )
       ).rows;
-      await handle.client.execute(
-        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
+      old.close();
+      // The store upgrades through the whole shipped suffix, as an installed gateway would.
+      handle.close();
+      handle = openDatabase({ url: store.url });
+      expect(await handle.pendingMigrations()).toBe(
+        await shippedSqlMigrationsFrom(DEFAULTS_MIGRATION),
       );
       await handle.migrate();
       expect(await handle.pendingMigrations()).toBe(0);
+      const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+      const runs = new SqliteRunRepository(handle.db);
+      const events = new SqliteEventStore(handle.db, new FakeClock());
+      const admission = new SqliteTriggerAdmission(handle.db, events);
       const expected = {
         structuredTimeoutMs: authored,
         runDeadlineSeconds: authored === null ? null : 5,
@@ -223,7 +251,6 @@ describe('draft snapshots', () => {
   );
 
   it('leaves malformed and invalid values untouched during the additive-default migration', async () => {
-    const { draft } = await loops.create('local', named('Damaged defaults'));
     for (const stored of [
       '{broken',
       JSON.stringify({
@@ -231,22 +258,33 @@ describe('draft snapshots', () => {
         settings: { ...named('Invalid').settings, structuredTimeoutMs: -1 },
       }),
     ]) {
-      await handle.client.execute({
-        sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
-        args: [stored, draft.id],
-      });
-      await handle.client.execute(
-        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
-      );
-      await applyShippedSqlToHistoricalTestFixture(handle);
-      expect(
-        (
-          await handle.client.execute({
-            sql: 'SELECT definition FROM loop_versions WHERE id = ?',
-            args: [draft.id],
-          })
-        ).rows[0]?.['definition'],
-      ).toBe(stored);
+      const { old, loops: historical } = await storeBeforeDefaults();
+      try {
+        const { draft } = await historical.create('local', named('Damaged defaults'));
+        await old.client.execute({
+          sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
+          args: [stored, draft.id],
+        });
+        // Every shipped migration from 0019 on, as raw SQL: such rows would not pass the upgrade guard.
+        await applyShippedSqlToHistoricalTestFixture(old);
+        expect(
+          (
+            await old.client.execute(
+              'SELECT COUNT(*) AS applied FROM __drizzle_migrations WHERE created_at = 1792818000000',
+            )
+          ).rows[0]?.['applied'],
+        ).toBe(1);
+        expect(
+          (
+            await old.client.execute({
+              sql: 'SELECT definition FROM loop_versions WHERE id = ?',
+              args: [draft.id],
+            })
+          ).rows[0]?.['definition'],
+        ).toBe(stored);
+      } finally {
+        old.close();
+      }
     }
   });
 

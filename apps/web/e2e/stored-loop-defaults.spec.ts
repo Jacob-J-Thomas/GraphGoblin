@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { createTestApp } from '@graphgoblin/api/testing';
+import { createTestApp, storeLoopBefore } from '@graphgoblin/api/testing';
 import { approvalLoop, expect, showLoopPanel, test } from './fixtures.js';
 
 for (const status of ['draft', 'published'] as const) {
@@ -9,28 +9,21 @@ for (const status of ['draft', 'published'] as const) {
     page,
   }) => {
     const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-editor-'));
-    const t = await createTestApp({ env: { GG_DATA_DIR: dataDir, GG_WEB_DIST: resolve('dist') } });
+    // A genuine store from before 0019; the gateway's startup applies 0019 and every later one.
+    const stored = await storeLoopBefore({
+      dataDir,
+      tag: '0019_completion_deadline_defaults',
+      definition: approvalLoop(`Stored ${status}`),
+      publish: status === 'published',
+      remove: ['$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds'],
+    });
+    const t = await createTestApp({
+      env: { GG_DATA_DIR: dataDir, GG_DB_URL: stored.url, GG_WEB_DIST: resolve('dist') },
+    });
     try {
+      expect(await t.container.handle.pendingMigrations()).toBe(0);
       const url = await t.app.listen({ host: '127.0.0.1', port: 0 });
-      const response = await t.app.inject({
-        method: 'POST',
-        url: '/loops',
-        payload: { definition: approvalLoop(`Stored ${status}`) },
-      });
-      const { loop, draft } = response.json<{ loop: { id: string }; draft: { id: string } }>();
-      expect(response.statusCode).toBe(201);
-      if (status === 'published')
-        expect(
-          (await t.app.inject({ method: 'POST', url: `/loops/${loop.id}/publish` })).statusCode,
-        ).toBe(200);
-      await t.container.handle.client.execute({
-        sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
-        args: [draft.id],
-      });
-      await t.container.handle.client.execute(
-        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
-      );
-      await t.container.handle.migrate();
+      const loop = { id: stored.loopId };
       await page.goto(`${url}/app/loops/${loop.id}/edit`);
       await expect(
         page.getByRole('heading', { name: `Stored ${status}`, exact: true }),
@@ -53,7 +46,7 @@ for (const status of ['draft', 'published'] as const) {
       );
     } finally {
       await t.close();
-      await rm(dataDir, { recursive: true, force: true });
+      await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }).catch(() => undefined);
     }
   });
 }

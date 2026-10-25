@@ -3,18 +3,26 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import { afterEach, beforeEach, expect, it } from 'vitest';
-import { createTestApp, type TestApp } from './testing/test-app.js';
+import {
+  createTestApp,
+  shippedSqlMigrationsFrom,
+  storeLoopBefore,
+  type TestApp,
+} from './testing/test-app.js';
 
-let t: TestApp;
+const DEFAULTS_MIGRATION = '0019_completion_deadline_defaults';
+let t: TestApp | undefined;
 let dataDir: string;
 beforeEach(async () => {
   dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-stored-'));
-  t = await createTestApp({ env: { GG_DATA_DIR: dataDir } });
 });
 afterEach(async () => {
-  await t.close();
-  await rm(dataDir, { recursive: true, force: true });
+  await t?.close();
+  t = undefined;
+  // Windows can hold the closed store briefly, as test-app.ts tolerates for its own directory.
+  await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }).catch(() => undefined);
 });
 
 it.each([
@@ -23,35 +31,34 @@ it.each([
   ['draft', 'runDeadlineSeconds'],
   ['published', 'runDeadlineSeconds'],
 ] as const)('reopens and exports a stored %s missing %s', async (status, field) => {
-  const response = await t.app.inject({
-    method: 'POST',
-    url: '/loops',
-    payload: { definition: minimalLoop() },
+  // A genuine store from before 0019, with the shape saved before #243 too; the gateway's own
+  // startup then applies 0019 and every later shipped migration.
+  const { url, loopId, draftId } = await storeLoopBefore({
+    dataDir,
+    tag: DEFAULTS_MIGRATION,
+    definition: minimalLoop(),
+    publish: status === 'published',
+    remove: [`$.settings.${field}`],
   });
-  const { loop, draft } = response.json<{ loop: { id: string }; draft: { id: string } }>();
-  if (status === 'published')
-    expect(
-      (await t.app.inject({ method: 'POST', url: `/loops/${loop.id}/publish` })).statusCode,
-    ).toBe(200);
-  // Physical persisted current-format JSON, bypassing request parsing on purpose.
-  // Repeat with the shape saved before #243 too, without changing any frozen input fixture.
-  await t.container.handle.client.execute({
-    sql: 'UPDATE loop_versions SET definition = json_remove(definition, ?) WHERE id = ?',
-    args: [`$.settings.${field}`, draft.id],
-  });
-  const stored = (
-    await t.container.handle.client.execute({
-      sql: 'SELECT definition FROM loop_versions WHERE id = ?',
-      args: [draft.id],
-    })
-  ).rows[0]?.['definition'];
-  if (typeof stored !== 'string') throw new Error('expected stored definition');
-  expect(LoopDefinitionSchema.parse(JSON.parse(stored)).settings[field]).toBeNull();
-  await t.container.handle.client.execute(
-    'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
-  );
-  await t.container.handle.migrate();
-  const opened = await t.app.inject({ method: 'GET', url: `/loops/${loop.id}` });
+  const old = openDatabase({ url });
+  try {
+    const stored = (
+      await old.client.execute({
+        sql: 'SELECT definition FROM loop_versions WHERE id = ?',
+        args: [draftId],
+      })
+    ).rows[0]?.['definition'];
+    if (typeof stored !== 'string') throw new Error('expected stored definition');
+    expect(LoopDefinitionSchema.parse(JSON.parse(stored)).settings[field]).toBeNull();
+    expect(await old.pendingMigrations()).toBe(await shippedSqlMigrationsFrom(DEFAULTS_MIGRATION));
+  } finally {
+    old.close();
+  }
+  const gateway = (t = await createTestApp({ env: { GG_DATA_DIR: dataDir, GG_DB_URL: url } }));
+  expect(await gateway.container.handle.pendingMigrations()).toBe(0);
+  const loop = { id: loopId };
+  const draft = { id: draftId };
+  const opened = await gateway.app.inject({ method: 'GET', url: `/loops/${loop.id}` });
   process.stdout.write(
     JSON.stringify({ status, removed: field, http: opened.statusCode, body: opened.json() }) + '\n',
   );
@@ -61,7 +68,7 @@ it.each([
       definition: { settings: { structuredTimeoutMs: null, runDeadlineSeconds: null } },
     },
   });
-  const version = await t.app.inject({
+  const version = await gateway.app.inject({
     method: 'GET',
     url: `/loops/${loop.id}/versions/${draft.id}`,
   });
@@ -69,7 +76,7 @@ it.each([
   expect(version.json()).toMatchObject({
     definition: { settings: { structuredTimeoutMs: null, runDeadlineSeconds: null } },
   });
-  const exported = await t.app.inject({
+  const exported = await gateway.app.inject({
     method: 'GET',
     url: `/loops/${loop.id}/export${status === 'draft' ? '?draft=true' : ''}`,
   });
@@ -77,7 +84,7 @@ it.each([
   expect(exported.json()).toMatchObject({
     loop: { settings: { structuredTimeoutMs: null, runDeadlineSeconds: null } },
   });
-  const started = await t.app.inject({
+  const started = await gateway.app.inject({
     method: 'POST',
     url: `/loops/${loop.id}/runs`,
     payload: status === 'draft' ? { allowDraft: true, versionId: draft.id } : {},
@@ -86,5 +93,5 @@ it.each([
   expect(started.json()).toMatchObject({
     run: { pinned: { limits: { structuredTimeoutMs: null, runDeadlineSeconds: null } } },
   });
-  await t.idle();
+  await gateway.idle();
 });
