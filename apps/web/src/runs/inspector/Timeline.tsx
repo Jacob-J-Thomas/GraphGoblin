@@ -1,6 +1,6 @@
 import type { LoopDefinition } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Alert, Button, Card } from '../../components/ui/index.js';
+import { Alert, Button, Card, Input } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
 import { describeEvent } from '../projections.js';
 import type { TimelineEvent } from '../event-store.js';
@@ -88,7 +88,18 @@ export function Timeline({
     focusRef.current = row.seq;
   }
   return (
-    <Card flush title={`Timeline (${total} events, ${STREAM_LABEL[status]})`}>
+    <Card
+      flush
+      title={`Timeline (${total} events, ${STREAM_LABEL[status]})`}
+      actions={
+        status === 'live' ? (
+          <span
+            aria-hidden="true"
+            className="glow-live size-[7px] animate-pulse-soft rounded-full bg-status-info-border"
+          />
+        ) : undefined
+      }
+    >
       {error ? (
         <div className="px-5 pt-4">
           <Alert>{error}</Alert>
@@ -155,8 +166,8 @@ export function Timeline({
       >
         <label>
           Event sequence{' '}
-          <input
-            className="w-24 rounded-sm border border-default bg-surface-control px-2 py-1"
+          <Input
+            className="w-24"
             type="number"
             min="1"
             step="1"

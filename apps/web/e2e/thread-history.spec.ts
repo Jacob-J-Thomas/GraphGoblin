@@ -42,13 +42,14 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
     await action('start');
     async function browserThread(page: Page) {
       await page.bringToFront();
-      return ContextThreadSchema.parse(
-        JSON.parse(await page.getByTestId('thread-json').innerText()),
-      );
+      const text = await page.getByTestId('thread-json').innerText();
+      // A refreshed thread briefly shows the bounded value's preparing note; read again later.
+      if (text.startsWith('Preparing the preview')) return undefined;
+      return ContextThreadSchema.parse(JSON.parse(text));
     }
     /**
-     * The browser thread once it equals `expected`, keeping the value that matched: a live refresh
-     * can re-render the bounded JSON (briefly showing its preparing note) before a second read.
+     * The browser thread once it equals `expected`, keeping the value that matched rather than
+     * reading again, which could catch the next refresh's preparing note.
      */
     async function matchedThread(page: Page, expected: ContextThread) {
       let last: unknown;
