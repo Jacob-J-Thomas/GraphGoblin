@@ -117,16 +117,20 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   const completeTimeline = `Timeline (${eventCount} events, complete)`;
   await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
   const timeline = page.getByRole('list', { name: 'Timeline' });
-  await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
-    1200,
-  );
-  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.session ask$/ })).toHaveCount(
-    1,
-  );
-  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
-  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.turn ask$/ })).toHaveCount(1);
   await expect(
-    timeline.getByRole('button', { name: /^#\d+ harness\.submission ask$/ }),
+    timeline.getByRole('button', { name: /^#\d+ node\.progress Ask \(ask\)$/ }),
+  ).toHaveCount(1200);
+  await expect(
+    timeline.getByRole('button', { name: /^#\d+ harness\.session Ask \(ask\)$/ }),
+  ).toHaveCount(1);
+  await expect(
+    timeline.getByRole('button', { name: /^#\d+ harness\.usage Ask \(ask\)$/ }),
+  ).toHaveCount(1);
+  await expect(
+    timeline.getByRole('button', { name: /^#\d+ harness\.turn Ask \(ask\)$/ }),
+  ).toHaveCount(1);
+  await expect(
+    timeline.getByRole('button', { name: /^#\d+ harness\.submission Ask \(ask\)$/ }),
   ).toHaveCount(1);
   await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
   const seqs = await timelineSeqs(page);
