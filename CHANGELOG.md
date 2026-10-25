@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Show gateway drain state and active run inspectors on every page, with explicit keep-waiting and confirmed force controls, current-state conflict handling, and connection-closure feedback. Closing or reloading a tab never requests shutdown. Choices reject stale phase/gateway tokens before dispatch. **Upgrade:** update the gateway and web app together; browser choices require the shutdown control token. (#319)
+- Show gateway drain state and active run inspectors on every page, with explicit keep-waiting and confirmed force controls, current-state conflict handling, and connection-closure feedback. Closing or reloading a tab never requests shutdown. Choices reject stale tokens before dispatch: a token names one gateway, one entry into a phase and the choices accepted since. **Upgrade:** update the gateway and web app together; browser choices require the shutdown control token. (#319)
 
 - Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. Obsolete Refresh responses cannot overwrite a newer snapshot across revisits; inclusive anchored receipt reads keep displaced pending rows up to date. (#240)
 

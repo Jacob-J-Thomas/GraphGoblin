@@ -801,8 +801,9 @@ reports an unknown outcome. A 409 replaces the displayed snapshot with the retur
 current state, including when another tab acted first. Each tab observes the gateway;
 navigation, reload and tab closure send no shutdown action. Each response includes an opaque `controlToken`. Choices send it as
 `x-graphgoblin-shutdown-token`; the gateway compares it synchronously before dispatch.
-A phase change or another gateway incarnation makes a stale choice return 409 instead
-of turning it into a different force operation. Changing the token unmounts any open
+A phase change, another control's accepted choice or another gateway incarnation makes a
+stale choice return 409 instead of turning it into a different force operation; a phase
+that recurs gets a new token, so a confirmation opened before it stays stale. Changing the token unmounts any open
 confirmation, requiring a fresh deliberate choice. A missing token is an invalid
 snapshot and never permits an unguarded browser choice. These choices preserve engine
 drain, seal, force and recovery semantics (ADR-0049).

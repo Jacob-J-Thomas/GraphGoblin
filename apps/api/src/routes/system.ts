@@ -19,7 +19,7 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
   const incarnation = randomUUID();
   const snapshot = (state: ReturnType<Container['shutdown']['state']>) => ({
     ...state,
-    controlToken: `${incarnation}:${state.phase}`,
+    controlToken: `${incarnation}:${container.shutdown.controlRevision()}:${state.phase}`,
   });
   app.get(
     '/system/model-defaults',

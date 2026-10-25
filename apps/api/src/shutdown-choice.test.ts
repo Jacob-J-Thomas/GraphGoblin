@@ -58,6 +58,67 @@ it('rejects a stale tab force instead of acknowledging a newly failed cleanup', 
   }
 });
 
+it.each(['after the phase recurs', 'after a wait within draining'] as const)(
+  'rejects a force prepared before another control chose to keep waiting (%s)',
+  async (path) => {
+    const fixture = await createTestApp();
+    let finishDrain!: () => void;
+    const drain = new Promise<void>((resolve) => {
+      finishDrain = resolve;
+    });
+    const forceStop = vi.fn(() => Promise.resolve());
+    const shutdown = new ShutdownController(
+      {
+        beginDrain: () => Promise.resolve(),
+        waitForDrain: () => drain,
+        forceStop,
+        drainingRunIds: () => ['controlled-run'],
+        unconfirmedRunIds: () => [],
+      },
+      path === 'after the phase recurs' ? 20 : 300000,
+      () => undefined,
+      fixture.logger,
+    );
+    const app = await buildApp(
+      { ...fixture.container, shutdown, requestShutdown: (action) => shutdown.request(action) },
+      { logger: false },
+    );
+    const read = async () =>
+      (await app.inject('/system/shutdown')).json<{ phase: string; controlToken: string }>();
+    const post = (action: string, token: string) =>
+      app.inject({
+        method: 'POST',
+        url: '/system/shutdown',
+        payload: { action },
+        headers: { 'x-graphgoblin-shutdown-token': token },
+      });
+    try {
+      expect((await post('drain', (await read()).controlToken)).statusCode).toBe(202);
+      // This tab opens its force confirmation while the gateway drains.
+      const prepared = await read();
+      expect(prepared.phase).toBe('draining');
+      let other = prepared;
+      if (path === 'after the phase recurs') {
+        await vi.waitFor(async () => expect((other = await read()).phase).toBe('awaiting-choice'));
+      }
+      const waited = await post('wait', other.controlToken);
+      expect(waited.statusCode).toBe(202);
+      expect(waited.json()).toMatchObject({ phase: 'draining' });
+      const stale = await post('force', prepared.controlToken);
+      expect(stale.statusCode).toBe(409);
+      expect(stale.json()).toMatchObject({
+        phase: 'draining',
+        controlToken: (await read()).controlToken,
+      });
+      expect(forceStop).not.toHaveBeenCalled();
+    } finally {
+      finishDrain();
+      await app.close();
+      await fixture.close();
+    }
+  },
+);
+
 it('keeps tokens stable per phase and rejects another route incarnation without starting drain', async () => {
   const fixture = await createTestApp();
   const app = await buildApp(fixture.container, { logger: false });
