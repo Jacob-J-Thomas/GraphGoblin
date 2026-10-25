@@ -1,0 +1,39 @@
+[
+  {
+    "name": "append-after",
+    "args": [
+      "--experimental-import-meta-resolve",
+      "tooling/perf/measure.mjs",
+      "append",
+      "--passes=10",
+      "--items=100",
+      "--profile=inspector",
+      "--port=6190",
+      "--store-prefix=gg-qa-e1-268-",
+      "--out=%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\append-after"
+    ],
+    "code": 1
+  },
+  {
+    "name": "replay-pair",
+    "args": [
+      "--experimental-import-meta-resolve",
+      "tooling/perf/compare.mjs",
+      "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\replay-before\\raw-summary.json",
+      "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\replay-after\\raw-summary.json",
+      "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-268\\docs\\qa\\2026-10-25-wp-e1-268-qa\\replay-equivalence.json"
+    ],
+    "code": 0
+  },
+  {
+    "name": "append-pair",
+    "args": [
+      "--experimental-import-meta-resolve",
+      "tooling/perf/compare.mjs",
+      "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\append-before\\raw-summary.json",
+      "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\append-after\\raw-summary.json",
+      "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-268\\docs\\qa\\2026-10-25-wp-e1-268-qa\\append-equivalence.json"
+    ],
+    "code": 0
+  }
+]

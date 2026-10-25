@@ -1,0 +1,13 @@
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const {equivalence}=await import(pathToFileURL(join(root,'tooling/perf/equivalence.mjs')));
+function digest(payload,seq=1){const e=equivalence();e.event({runId:'01AAAAAAAAAAAAAAAAAAAAAAAA',seq,type:'node.progress',nodeId:'work',ts:'2026-10-25T00:00:00.000Z',progress:{item:{id:'controlled',type:'message',summary:payload}}});return e.finish({vars:{payload}}, {status:'succeeded'});}
+const positive=JSON.stringify(digest('same'))===JSON.stringify(digest('same'));
+const negative=JSON.stringify(digest('one'))!==JSON.stringify(digest('two'));
+const order=JSON.stringify(digest('same',1))!==JSON.stringify(digest('same',2));
+function applicationClockKey(value){const e=equivalence();return e.finish({vars:{at:value}}, {status:'succeeded'});}
+const keyLimitation=JSON.stringify(applicationClockKey(7))===JSON.stringify(applicationClockKey(8));
+await writeFile(join(out,'comparator-controls.json'),JSON.stringify({positiveSamePayload:positive,negativeDifferentPayload:negative,negativeDifferentSequence:order,controlledFixtureLimitation:{applicationAt7and8CompareEqual:keyLimitation,implication:'Clock normalization is key-name based at every depth. It must only be used on the stated controlled fixtures, not arbitrary user values. Independent expected-value assertions and exact within-run hashes are separate evidence.'}},null,2)+'\n');
+if(!positive||!negative||!order)process.exitCode=1;

@@ -1,0 +1,39 @@
+import { readFile, writeFile, readdir, stat, mkdtemp, rename } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join, resolve, sep } from 'node:path';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const profile=process.env.USERPROFILE;
+const redact=s=>s.replaceAll('file%3A///'+profile.replaceAll('\\','/').replace(':','%3A'),'%USERPROFILE%').replaceAll(profile.replaceAll('\\','/').replace(':','%3A'),'%USERPROFILE%').replaceAll('file:///'+profile.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(profile,'%USERPROFILE%').replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(JSON.stringify(profile).slice(1,-1),'%USERPROFILE%');
+const hash=async p=>{const h=createHash('sha256');for await(const chunk of createReadStream(p))h.update(chunk);return h.digest('hex');};
+const omitted=[];
+const dirs=(await readdir(tmpdir(),{withFileTypes:true})).filter(d=>d.isDirectory()&&['gg-qa-e1-268-runs-','gg-qa-e1-268-supplemental-','gg-qa-e1-268-native-'].some(p=>d.name.startsWith(p))).map(d=>join(tmpdir(),d.name));
+async function inventory(dir){for(const e of await readdir(dir,{withFileTypes:true})){const p=join(dir,e.name);if(e.isDirectory())await inventory(p);else{const s=await stat(p);omitted.push({path:redact(p),bytes:s.size,sha256:await hash(p),kept:false});}}}
+for(const d of dirs)await inventory(d);
+const moved=await mkdtemp(join(tmpdir(),'gg-qa-e1-268-omitted-'));
+function compress(value,key=''){
+ if(Array.isArray(value)&&['samples','observations'].includes(key)&&value.length>30){const selected=Array.from({length:30},(_,i)=>value[Math.round(i*(value.length-1)/29)]);const numericPeaks={};for(const sample of value)if(sample&&typeof sample==='object')for(const [k,v]of Object.entries(sample))if(typeof v==='number')numericPeaks[k]=Math.max(numericPeaks[k]??-Infinity,v);return {retainedSummary:true,count:value.length,numericPeaks,selected};}
+ if(Array.isArray(value))return value.map(v=>compress(v));
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,compress(v,k)]));
+ return value;
+}
+for(const name of await readdir(out)){
+ const p=join(out,name),s=await stat(p);if(!s.isFile())continue;
+ if(s.size>1000000){
+  const raw=await readFile(p,'utf8'),rawSha=await hash(p),target=resolve(moved,name);
+  if(!target.startsWith(resolve(moved)+sep))throw Error('Capture target escaped owned temp directory');
+  await rename(p,target);
+  omitted.push({path:redact(target),originalEvidenceName:name,bytes:s.size,sha256:rawSha,kept:false});
+  if(name.endsWith('.json')){const data=compress(JSON.parse(raw));data.qaRetention={originalBytes:s.size,originalSha256:rawSha,method:'Oversize raw capture moved to owned temp directory without deletion; samples/observations reduced to 30 evenly spaced observations plus full numeric maxima. Other fields retained.'};await writeFile(p,redact(JSON.stringify(data,null,2)+'\n'));}
+  else await writeFile(p,redact('OVERSIZE RAW CAPTURE NOT KEPT: '+s.size+' bytes; SHA-256 '+rawSha+'\nFirst 4000 characters:\n'+raw.slice(0,4000)+'\n[... see NOT-KEPT.md ...]\nLast 50000 characters:\n'+raw.slice(-50000)));
+ }else if(/\.(json|md)$|\.log\.txt$/.test(name))await writeFile(p,redact(await readFile(p,'utf8')));
+}
+await writeFile(join(out,'not-kept.json'),JSON.stringify({directoriesLeftForOrchestrator:[...dirs,moved].map(redact),captures:omitted},null,2)+'\n');
+let md='# Raw captures not kept in the QA folder\n\nNo QA evidence directory was deleted. These raw files remain in owned disposable temp directories for orchestrator cleanup. Profiles/stores over 1,000,000 bytes are not retained in this report; smaller raw side files may also be omitted. Kept summaries contain the cited observations. Hashes below refer to original raw bytes, before path redaction or summary reduction.\n\n| Capture | Bytes | SHA-256 |\n| --- | --- | --- |\n';
+for(const e of omitted)md+='| `'+e.path+'` | '+e.bytes+' | `'+e.sha256+'` |\n';
+md+='\nDirectories left for the orchestrator:\n\n'+[...dirs,moved].map(d=>'- `'+redact(d)+'`').join('\n')+'\n';
+await writeFile(join(out,'NOT-KEPT.md'),md);
+for(const name of ['artifact-index.json','evidence-audit.json'])try{await stat(join(out,name));}catch{await writeFile(join(out,name),'{}\n');}
+try{await stat(join(out,'report-format.log.txt'));}catch{await writeFile(join(out,'report-format.log.txt'),'Pending targeted Markdown formatting.\n');}
+console.log('RETENTION_COMPLETE',omitted.length);

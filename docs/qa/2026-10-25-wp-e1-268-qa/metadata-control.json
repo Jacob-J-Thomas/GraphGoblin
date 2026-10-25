@@ -1,0 +1,20 @@
+{
+  "status": "pass",
+  "evidence": "Real read-only SQLite client injected into public repository; explicit thread reads preserved",
+  "metadataSql": [
+    "select \"id\", \"owner_id\", \"loop_id\", \"version_id\", \"parent_run_id\", \"invocation_id\", \"status\", \"current_node_id\", \"iteration\", \"waiting\", \"failure\", \"result\", \"cancel_requested_at\", \"paused_at\", \"outcome\", \"created_at\", \"started_at\", \"finished_at\", \"finalized_at\", \"last_event_seq\", \"pinned\" from \"runs\" where \"runs\".\"id\" = ? limit ?"
+  ],
+  "initialSql": [
+    "select \"initial_thread\" from \"runs\" where \"runs\".\"id\" = ? limit ?"
+  ],
+  "checkpointSql": [
+    "select \"thread_snapshot\", \"thread_snapshot_seq\", \"thread_snapshot_replay_state\" from \"runs\" where \"runs\".\"id\" = ? limit ?"
+  ],
+  "result": {
+    "status": "succeeded",
+    "result": {
+      "answer": 7
+    }
+  },
+  "causeReproduced": false
+}
