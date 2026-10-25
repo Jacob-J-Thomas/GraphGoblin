@@ -1,0 +1,2451 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/apps/web
+
+ ❯ src/runs/RunInspectorPage.test.tsx (24 tests | 8 failed) 35949ms
+   ❯ RunInspectorPage (19)
+     × loads the pinned definition for fallback gate counts before any decision event 1001ms
+     × shows Claude requested effort and states that effective effort is not reported 5102ms
+     × streams the timeline, replays the thread at any event, and shows the patch diff 6281ms
+     × shows a failed command in progress while the run is still running 5176ms
+     × shows a failed tool call without its provider diagnostics 5050ms
+     × replays a child run from its seeded first event and reports logs that do not replay 5170ms
+     × shows failures, results, parent links, and stream errors 144ms
+     × bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259) 609ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web exec vitest run src/ru ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > loads the pinned definition for fallback gate counts 
+before any decision event
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/runs/RunInspectorPage.test.tsx:109:87
+    107|       }),
+    108|     );
+    109|     expect(api.callsTo('GET', `/loops/${loop.id}/versions/${loop.curre…
+       |                                                                                       ^
+    110|       1,
+    111|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows Claude requested effort and states that effective 
+effort is not reported
+TestingLibraryElementError: Found multiple elements with the text: /Node progress/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-xs text-muted"[39m
+[36m>[39m
+  [0mNode progress below covers the retained history window. Earlier activity is available through Load older.[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"font-semibold"[39m
+[36m>[39m
+  [0mNode progress ([0m
+  [0m1[0m
+  [0m nodes)[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or 
+`findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_d_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            [...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_d_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            [...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/runs/RunInspectorPage.test.tsx:222:35
+    220|     renderApp(`/runs/${run.id}`, api);
+    221|
+    222|     await user.click(await screen.findByText(/Node progress/));
+       |                                   ^
+    223|     expect(
+    224|       await screen.findByText(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > streams the timeline, replays the thread at any event, 
+and shows the patch diff
+AssertionError: expected [ <button …(3)>…(3)</button>, …(5) ] to have a length of 7 but got 6
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 32 32"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33mheight[39m=[32m"17.4"[39m
+                [33mrx[39m=[32m"6.2"[39m
+                [33mwidth[39m=[32m"22"[39m
+                [33mx[39m=[32m"5"[39m
+                [33my[39m=[32m"8.8"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"5"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"27"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"13.3"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"18.7"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mGraph[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-accent"[39m
+              [36m>[39m
+                [0mGoblin[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_j_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"menu"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMenu[0m
+          [36m</button>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"Main"[39m
+            [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+            [33mid[39m=[32m"_r_j_"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium 
+text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold 
+aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 
+max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/loops"[39m
+            [3...
+
+- Expected
++ Received
+
+- 7
++ 6
+
+ ❯ src/runs/RunInspectorPage.test.tsx:286:73
+    284|       ),
+    285|     );
+    286|     await waitFor(() => expect(within(timeline).getAllByRole('button')…
+       |                                                                         ^
+    287|
+    288|     // Progress drawer groups node activity.
+ ❯ runWithExpensiveErrorDiagnosticsDisabled 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed command in progress while the run is 
+still running
+TestingLibraryElementError: Found multiple elements with the text: /Node progress/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-xs text-muted"[39m
+[36m>[39m
+  [0mNode progress below covers the retained history window. Earlier activity is available through Load older.[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"font-semibold"[39m
+[36m>[39m
+  [0mNode progress ([0m
+  [0m1[0m
+  [0m nodes)[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or 
+`findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_u_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_u_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            [...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_u_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_u_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            [...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/runs/RunInspectorPage.test.tsx:316:35
+    314|     renderApp(`/runs/${run.id}`, api);
+    315|
+    316|     await user.click(await screen.findByText(/Node progress/));
+       |                                   ^
+    317|     expect(await screen.findByText('Command failed: npm test (exit -1)…
+    318|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed tool call without its provider 
+diagnostics
+TestingLibraryElementError: Found multiple elements with the text: /Node progress/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-xs text-muted"[39m
+[36m>[39m
+  [0mNode progress below covers the retained history window. Earlier activity is available through Load older.[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"font-semibold"[39m
+[36m>[39m
+  [0mNode progress ([0m
+  [0m1[0m
+  [0m nodes)[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or 
+`findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_14_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_14_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_14_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_14_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            ...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/runs/RunInspectorPage.test.tsx:340:35
+    338|     renderApp(`/runs/${run.id}`, api);
+    339|
+    340|     await user.click(await screen.findByText(/Node progress/));
+       |                                   ^
+    341|     expect(await screen.findByText('Tool call failed: browser.search')…
+    342|     expect(screen.queryByText(/private provider detail/)).not.toBeInTh…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and 
+reports logs that do not replay
+TestingLibraryElementError: Unable to find an element with the text: The thread cannot be reconstructed at event 2. 
+This could be because the text is broken up by multiple elements. In this case, you can provide a function for your 
+text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_1g_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_1g_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accen...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_1g_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_1g_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accen...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/runs/RunInspectorPage.test.tsx:380:20
+    378|     renderApp(`/runs/${broken.id}`, api);
+    379|     expect(
+    380|       await screen.findByText('The thread cannot be reconstructed at e…
+       |                    ^
+    381|     ).toBeInTheDocument();
+    382|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows failures, results, parent links, and stream errors
+TestingLibraryElementError: Unable to find an element with the text: The thread is not available yet.. This could be 
+because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to 
+make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_3t_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_3t_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            ...
+ ❯ Object.getElementError 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/runs/RunInspectorPage.test.tsx:596:19
+    594|     );
+    595|     expect(await screen.findByText(/stream error/)).toBeInTheDocument(…
+    596|     expect(screen.getByText('The thread is not available yet.')).toBeI…
+       |                   ^
+    597|     expect(screen.queryByRole('link', { name: 'failed child run' })).t…
+    598|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > bounds large values, builds the full thread JSON only 
+when opened, and keeps exact access (#259)
+TestingLibraryElementError: Unable to find an accessible element with the role "list" and name "Patch diff"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 
+text-inverse max-sm:gap-2 max-sm:px-4"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] 
+border-b border-default bg-surface-head px-5 py-3"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] 
+border-b border-default bg-surface-head px-5 py-3"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] 
+border-b border-default bg-surface-head px-5 py-3"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] 
+border-b border-default bg-surface-head px-5 py-3"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Menu":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_54_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse 
+px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus sm:hidden"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Pause":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong 
+bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md 
+pointer-coarse:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Cancel run":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-danger-hover bg-danger text-on-danger shadow-ledge-danger hover:bg-danger-hover active:translate-y-px h-9 
+gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Show all of Result":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Show all of Result"[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Download Result as JSON":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Download Result as JSON"[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Load older":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Previous rows":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Next rows":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Load newer":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Follow live":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Go to event":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mtype[39m=[32m"submit"[39m
+  [36m/>[39m
+
+  Name "#1run.queued":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"1"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#2run.startedattempt 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#3node.startedprep (mutate) attempt 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"3"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#4node.finishedprep, 2 changes, 5 ms":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"4"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#5node.progressinfer":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"5"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#6harness.usageinfer":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"6"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#7node.startedgrow (mutate) attempt 1":
+  [36m<button[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"7"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "#8node.finishedgrow, 1 change, 2 ms":
+  [36m<button[39m
+    [33maria-current[39m=[32m"true"[39m
+    [33mclass[39m=[32m"grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2 rounded-sm 
+px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 
+aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row 
+forced-colors:aria-[current=true]:outline"[39m
+    [33mdata-seq[39m=[32m"8"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Show all of Variables":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Show all of Variables"[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Download Variables as JSON":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Download Variables as JSON"[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center 
+whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 
+active:bg-accent-active h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Full thread JSON":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_5a_-panel"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"group/disclosure flex min-w-0 cursor-pointer items-center gap-2 text-left text-default 
+rounded-md transition-colors hover:bg-surface-hover pointer-coarse:min-h-11 focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus flex-1 px-1.5 py-1 text-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Node progress (1 nodes)":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_56_-panel"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"group/disclosure flex min-w-0 cursor-pointer items-center gap-2 text-left text-default 
+rounded-md transition-colors hover:bg-surface-hover pointer-coarse:min-h-11 focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus flex-1 px-1.5 py-1 text-sm"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  navigation:
+
+  Name "Main":
+  [36m<nav[39m
+    [33maria-label[39m=[32m"Main"[39m
+    [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute 
+max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+    [33mid[39m=[32m"_r_54_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  link:
+
+  Name "Loops":
+  [36m<a[39m
+    [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+    [33mdata-discover[39m=[32m"true"[39m
+    [33mhref[39m=[32m"/loops"[39m
+  [36m/>[39m
+
+  Name "Runs":
+  [36m<a[39m
+    [33maria-current[39m=[32m"page"[39m
+    [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+    [33mdata-discover[39m=[32m"true"[39m
+    [33mhref[39m=[32m"/runs"[39m
+  [36m/>[39m
+
+  Name "Events":
+  [36m<a[39m
+    [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+    [33mdata-discover[39m=[32m"true"[39m
+    [33mhref[39m=[32m"/events"[39m
+  [36m/>[39m
+
+  Name "Settings":
+  [36m<a[39m
+    [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+    [33mdata-discover[39m=[32m"true"[39m
+    [33mhref[39m=[32m"/settings"[39m
+  [36m/>[39m
+
+  Name "loop":
+  [36m<a[39m
+    [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+    [33mdata-discover[39m=[32m"true"[39m
+    [33mhref[39m=[32m"/loops/SRNGYPZDDH9341H9TB0SWDJ9G7/edit"[39m
+  [36m/>[39m
+
+  Name "child runs":
+  [36m<a[39m
+    [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+    [33mdata-discover[39m=[32m"true"[39m
+    [33mhref[39m=[32m"/runs?parent=1VY3JJTE850D7HCKYDHPHYG9MM"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Run 1VY3JJTE850D7HCKYDHPHYG9MM":
+  [36m<h1[39m
+    [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] 
+text-heading"[39m
+  [36m/>[39m
+
+  Name "Result":
+  [36m<h2[39m
+    [33mclass[39m=[32m"flex items-center gap-2 text-md font-semibold text-heading"[39m
+    [33mid[39m=[32m"_r_57_"[39m
+  [36m/>[39m
+
+  Name "Execution limits":
+  [36m<h2[39m
+    [33mclass[39m=[32m"flex items-center gap-2 text-md font-semibold text-heading"[39m
+    [33mid[39m=[32m"_r_58_"[39m
+  [36m/>[39m
+
+  Name "Timeline (8 events, live)":
+  [36m<h2[39m
+    [33mclass[39m=[32m"flex items-center gap-2 text-md font-semibold text-heading"[39m
+    [33mid[39m=[32m"_r_55_"[39m
+  [36m/>[39m
+
+  Name "Current thread":
+  [36m<h2[39m
+    [33mclass[39m=[32m"flex items-center gap-2 text-md font-semibold text-heading"[39m
+    [33mid[39m=[32m"_r_59_"[39m
+  [36m/>[39m
+
+  Name "Messages (1)":
+  [36m<h3[39m
+    [33mclass[39m=[32m"text-sm font-semibold"[39m
+  [36m/>[39m
+
+  Name "Variables":
+  [36m<h3[39m
+    [33mclass[39m=[32m"text-sm font-semibold"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Result":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"_r_57_"[39m
+    [33mclass[39m=[32m"min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"[39m
+  [36m/>[39m
+
+  Name "Execution limits":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"_r_58_"[39m
+    [33mclass[39m=[32m"min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"[39m
+  [36m/>[39m
+
+  Name "Timeline (8 events, live)":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"_r_55_"[39m
+    [33mclass[39m=[32m"min-w-0 rounded-lg border border-default bg-surface-raised shadow-1 overflow-hidden"[39m
+  [36m/>[39m
+
+  Name "Current thread":
+  [36m<section[39m
+    [33maria-labelledby[39m=[32m"_r_59_"[39m
+    [33mclass[39m=[32m"min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"flex flex-wrap items-center gap-2 text-xs text-muted"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"flex flex-wrap items-center gap-2 text-xs text-muted"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-xs text-muted"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "Event sequence":
+  [36m<input[39m
+    [33mclass[39m=[32m"w-24 rounded-sm border border-default bg-surface-control px-2 py-1"[39m
+    [33mmin[39m=[32m"1"[39m
+    [33mstep[39m=[32m"1"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "Timeline":
+  [36m<ol[39m
+    [33maria-label[39m=[32m"Timeline"[39m
+    [33mclass[39m=[32m"max-h-[60vh] overflow-auto p-2"[39m
+  [36m/>[39m
+
+  Name "Messages":
+  [36m<ol[39m
+    [33maria-label[39m=[32m"Messages"[39m
+    [33mclass[39m=[32m"grid gap-2 text-md"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"grid min-w-0 gap-1 rounded-md border border-default p-3"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  code:
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-[12.5px] font-medium"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<code[39m
+    [33mclass[39m=[32m"text-xs text-muted"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<output[39m
+    [33mdata-testid[39m=[32m"location"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_54_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_54_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent 
+group-aria-[current=page]:after:glow-accent"[39m
+            ...
+ ❯ Object.getElementError 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/runs/RunInspectorPage.test.tsx:689:25
+    687|
+    688|     // The patch diff bounds each side at the cell bound.
+    689|     const diff = screen.getByRole('list', { name: 'Patch diff' });
+       |                         ^
+    690|     expect(within(diff).getByLabelText('Value before /vars/blob')).toH…
+    691|     expect(within(diff).getByLabelText('Value after /vars/blob').textC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  8 failed | 139 passed (147)
+   Start at  20:36:36
+
+   Duration  393.41s (environment 39%, tests 18%, setup 17%, import 15%, transform 11%)
+
+Environment  jsdom was created 13 times · 278.64s total, 39% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\apps\web
+

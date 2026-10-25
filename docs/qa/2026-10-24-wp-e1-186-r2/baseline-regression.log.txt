@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/apps/web
+
+ ❯ src/runs/event-retention.test.ts (1 test | 1 failed) 77ms
+   × bounds one long run in memory and the persisted cache while retaining its resume cursor 75ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web exec vitest run src/ru ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/event-retention.test.ts > bounds one long run in memory and the persisted cache while retaining its 
+resume cursor
+AssertionError: expected 5000 to be less than or equal to 512
+ ❯ src/runs/event-retention.test.ts:13:29
+     11|   }
+     12|   const log = useRunEventStore.getState().runs['long']!;
+     13|   expect(log.events.length).toBeLessThanOrEqual(512);
+       |                             ^
+     14|   expect(log.lastSeq).toBe(5_000);
+     15|   expect(JSON.stringify(log).length * 2).toBeLessThan(1_100_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  20:23:06
+   Duration  12.83s (environment 40%, transform 28%, import 19%, setup 12%, tests 1%)
+
+  Transform  transforming modules took 3.47s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\apps\web
+

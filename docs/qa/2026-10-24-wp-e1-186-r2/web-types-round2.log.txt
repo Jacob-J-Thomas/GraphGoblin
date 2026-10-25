@@ -1,0 +1,15 @@
+pnpm.cmd : $ tsc -p tsconfig.json --noEmit
+At line:17 char:1
++ pnpm.cmd --filter @graphgoblin/web typecheck *> docs/qa/2026-10-24-wp ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ tsc -p tsconfig.json --noEmit:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+src/runs/history-browsing.test.tsx(32,7): error TS2741: Property 'elapsedSeconds' is missing in type '{ previousPasses: number; passes: number; maxPasses: number; repeatRouteId: string; limit: "max-passes"; }' but required in type '{ previousPasses: number; passes: number; repeatRouteId: string; maxPasses: number | null; elapsedSeconds: number; limit: "max-passes" | "max-run-time" | null; maxRunTimeSeconds?: number | undefined; }'.
+[ELIFECYCLE] Command failed with exit code 2.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\apps\web
+
