@@ -1,0 +1,778 @@
+[
+  {
+    "at": "2026-10-24T22:55:30.285Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Independent drain active",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "hold",
+            "kind": "script",
+            "label": "Held script",
+            "config": {
+              "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+              "args": [
+                "-e",
+                "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-normal-dentuB\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-normal-dentuB\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "hold"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "hold",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R20NYPBAHSKJNSRGGGY2VM",
+        "ownerId": "local",
+        "name": "Independent drain active",
+        "draftVersionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+        "createdAt": "2026-10-24T22:55:30.262Z",
+        "updatedAt": "2026-10-24T22:55:30.262Z"
+      },
+      "draft": {
+        "id": "01M5R20NYPBAHSKJNSRGGGY2VN",
+        "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Independent drain active",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-normal-dentuB\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-normal-dentuB\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T22:55:30.262Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:30.321Z",
+    "path": "/loops/01M5R20NYPBAHSKJNSRGGGY2VM/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R20NYPBAHSKJNSRGGGY2VN",
+        "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Independent drain active",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-normal-dentuB\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-normal-dentuB\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T22:55:30.262Z",
+        "publishedAt": "2026-10-24T22:55:30.298Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:30.357Z",
+    "path": "/loops/01M5R20NYPBAHSKJNSRGGGY2VM/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R20P0VMEAAMQ99FDY7J65Q",
+        "ownerId": "local",
+        "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+        "versionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Independent drain active",
+          "label": "Independent drain active v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R20P0WKH4R91SMBZJWMAH6",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T22:55:30.331Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:30.953Z",
+    "path": "/loops/01M5R20NYPBAHSKJNSRGGGY2VM/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R20PKZKPRJ8PRSRVQYEN77",
+        "ownerId": "local",
+        "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+        "versionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Independent drain active",
+          "label": "Independent drain active v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R20PKZKPRJ8PRSRVQYEN78",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T22:55:30.943Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:44.958Z",
+    "path": "/runs/01M5R20PKZKPRJ8PRSRVQYEN77",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R20PKZKPRJ8PRSRVQYEN77",
+      "ownerId": "local",
+      "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+      "versionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent drain active",
+        "label": "Independent drain active v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R20PKZKPRJ8PRSRVQYEN78",
+      "status": "queued",
+      "iteration": 1,
+      "createdAt": "2026-10-24T22:55:30.943Z",
+      "lastEventSeq": 1
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:44.981Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:44.985Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.095Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.367Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.472Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.780Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.863Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.871Z",
+    "path": "/runs/01M5R20P0VMEAAMQ99FDY7J65Q",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R20P0VMEAAMQ99FDY7J65Q",
+      "ownerId": "local",
+      "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+      "versionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent drain active",
+        "label": "Independent drain active v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R20P0WKH4R91SMBZJWMAH6",
+      "status": "running",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "createdAt": "2026-10-24T22:55:30.331Z",
+      "startedAt": "2026-10-24T22:55:30.361Z",
+      "lastEventSeq": 5
+    }
+  },
+  {
+    "at": "2026-10-24T22:55:45.881Z",
+    "path": "/loops/01M5R20NYPBAHSKJNSRGGGY2VM/runs",
+    "method": "POST",
+    "request": {},
+    "status": 503,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/shutting-down",
+      "title": "shutting down",
+      "status": 503,
+      "code": "SHUTTING_DOWN",
+      "detail": "Independent admission is closed while the gateway shuts down"
+    }
+  },
+  {
+    "at": "2026-10-24T22:56:33.599Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T22:56:33.908Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "force"
+    },
+    "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:awaiting-choice",
+    "status": 409,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:56:37.618Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T22:55:44.971Z",
+      "choiceAt": "2026-10-24T22:55:45.771Z",
+      "activeRunIds": [
+        "01M5R20P0VMEAAMQ99FDY7J65Q"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "85555a76-d602-47f1-ad44-dabcecdd8b6a:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T22:56:37.623Z",
+    "path": "/runs/01M5R20P0VMEAAMQ99FDY7J65Q",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R20P0VMEAAMQ99FDY7J65Q",
+      "ownerId": "local",
+      "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+      "versionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent drain active",
+        "label": "Independent drain active v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R20P0WKH4R91SMBZJWMAH6",
+      "status": "running",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "createdAt": "2026-10-24T22:55:30.331Z",
+      "startedAt": "2026-10-24T22:55:30.361Z",
+      "lastEventSeq": 5
+    }
+  },
+  {
+    "at": "2026-10-24T22:56:37.630Z",
+    "path": "/runs/01M5R20PKZKPRJ8PRSRVQYEN77",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R20PKZKPRJ8PRSRVQYEN77",
+      "ownerId": "local",
+      "loopId": "01M5R20NYPBAHSKJNSRGGGY2VM",
+      "versionId": "01M5R20NYPBAHSKJNSRGGGY2VN",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent drain active",
+        "label": "Independent drain active v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R20PKZKPRJ8PRSRVQYEN78",
+      "status": "queued",
+      "iteration": 1,
+      "createdAt": "2026-10-24T22:55:30.943Z",
+      "lastEventSeq": 1
+    }
+  }
+]

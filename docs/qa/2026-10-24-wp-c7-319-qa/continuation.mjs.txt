@@ -1,0 +1,21 @@
+process.env.QA_RESULTS='continuation-results.json';
+const H=await import('data:text/javascript;base64,'+Buffer.from(await (await import('node:fs/promises')).readFile('docs/qa/2026-10-24-wp-c7-319-qa/helpers.mjs.txt','utf8')).toString('base64'));
+const {boot,hold,publish,definition,start,run,edge,context,check,ok,until,sleep,save,writeFile,readFile,join,access,keyboardTo,screenshot,gateways}=H;
+const browser=await edge();await save('browser.json',{version:browser.version(),node:process.version,channel:'msedge',headless:true});
+try{
+ // A dropped POST response after the real gateway accepted a wait is an unknown outcome.
+ const lost=await boot('lost-response');await hold(lost);await lost.call('/system/shutdown','POST',{action:'drain'});await until(async()=>(await lost.call('/system/shutdown')).body.phase==='awaiting-choice');
+ const lc=await context(browser,lost),lp=await lc.newPage();await lp.goto(lost.origin+'/app/runs');await lp.getByRole('button',{name:'Keep waiting'}).waitFor();let posts=0;
+ await lp.route('**/system/shutdown',async route=>{if(route.request().method()==='POST'){posts++;await route.fetch();await route.abort('connectionreset');}else await route.continue();});
+ await check('lost response says unknown and never retries the action',async()=>{await keyboardTo(lp,lp.getByRole('button',{name:'Keep waiting'}));await lp.keyboard.press('Enter');await lp.getByText(/The action outcome is unknown/).waitFor();await sleep(5000);ok(posts===1,'POST attempts '+posts);ok((await lost.call('/system/shutdown')).body.phase==='draining');await screenshot(lp,'lost-response.png');return{postAttempts:posts,actualGatewayPhase:'draining',text:await lp.getByRole('region',{name:'Gateway shutdown'}).innerText()};});await lc.close();await lost.close();
+ // Restricted keys are minted through the public API and used in isolated Edge contexts.
+ const auth=await boot('permissions');const ah=await hold(auth);
+ const noRead=(await auth.call('/api-keys','POST',{label:'no system read',scopes:['loops:read','runs:read']})).body.token;
+ const readOnly=(await auth.call('/api-keys','POST',{label:'shutdown reader',scopes:['system:read','loops:read','runs:read']})).body.token;
+ const nc=await context(browser,auth,{key:noRead}),np=await nc.newPage();await np.goto(auth.origin+'/app/loops');
+ await check('no system:read while running shows no shutdown notice',async()=>{await np.getByRole('heading',{name:'Loops',exact:true}).waitFor();await sleep(800);ok(await np.getByRole('region',{name:'Gateway shutdown'}).count()===0);const response=await auth.call('/system/shutdown','GET',undefined,undefined,noRead);ok(response.status===403);await screenshot(np,'restricted-running.png');return response;});await nc.close();
+ await auth.call('/system/shutdown','POST',{action:'drain'});
+ const rc=await context(browser,auth,{key:readOnly}),rp=await rc.newPage();await rp.goto(auth.origin+'/app/loops');await rp.getByRole('button',{name:'Keep waiting'}).waitFor();
+ await check('no system:write refuses action and keeps observation available',async()=>{await keyboardTo(rp,rp.getByRole('button',{name:'Keep waiting'}));await rp.keyboard.press('Enter');await rp.getByText(/The shutdown action was refused/).waitFor();const response=await auth.call('/system/shutdown','POST',{action:'wait'},undefined,readOnly);ok(response.status===403);const s=(await auth.call('/system/shutdown')).body;ok(['draining','awaiting-choice'].includes(s.phase));await screenshot(rp,'restricted-drain.png');return{response,state:s};});await rc.close();await auth.close();
+
+}finally{for(const g of gateways)try{await g.close();}catch(e){await save(g.name+'-cleanup-error.log.txt',e.stack);}await browser.close();}

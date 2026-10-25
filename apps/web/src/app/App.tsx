@@ -12,6 +12,7 @@ import { NewRunPage } from '../runs/new/NewRunPage.js';
 import { RunInspectorPage } from '../runs/RunInspectorPage.js';
 import { RunsPage } from '../runs/RunsPage.js';
 import { SettingsPage } from '../settings/SettingsPage.js';
+import { ShutdownNotice } from './ShutdownNotice.js';
 
 const NAV: readonly NavItem[] = [
   { to: '/loops', label: 'Loops' },
@@ -30,6 +31,7 @@ function Layout() {
       apiUnreachable={connection === 'api-unreachable'}
     >
       <ApiKeyPanel />
+      <ShutdownNotice />
       <ErrorBoundary key={location.pathname}>
         <Outlet />
       </ErrorBoundary>

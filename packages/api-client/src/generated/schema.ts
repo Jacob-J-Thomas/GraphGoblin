@@ -88,6 +88,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -98,7 +99,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "x-graphgoblin-shutdown-token"?: string;
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -127,6 +130,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -146,6 +150,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };

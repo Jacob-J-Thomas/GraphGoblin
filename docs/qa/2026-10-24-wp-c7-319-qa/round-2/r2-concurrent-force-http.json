@@ -1,0 +1,849 @@
+[
+  {
+    "at": "2026-10-25T00:41:54.134Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Held QA work",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "hold",
+            "kind": "script",
+            "label": "Held script",
+            "config": {
+              "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+              "args": [
+                "-e",
+                "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-concurrent-force-mk9hyl\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-concurrent-force-mk9hyl\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "hold"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "hold",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R83G65JB3B27QCJ2BM65AE",
+        "ownerId": "local",
+        "name": "Held QA work",
+        "draftVersionId": "01M5R83G65JB3B27QCJ2BM65AF",
+        "createdAt": "2026-10-25T00:41:54.117Z",
+        "updatedAt": "2026-10-25T00:41:54.117Z"
+      },
+      "draft": {
+        "id": "01M5R83G65JB3B27QCJ2BM65AF",
+        "loopId": "01M5R83G65JB3B27QCJ2BM65AE",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held QA work",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-concurrent-force-mk9hyl\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-concurrent-force-mk9hyl\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-25T00:41:54.117Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.158Z",
+    "path": "/loops/01M5R83G65JB3B27QCJ2BM65AE/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R83G65JB3B27QCJ2BM65AF",
+        "loopId": "01M5R83G65JB3B27QCJ2BM65AE",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held QA work",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-concurrent-force-mk9hyl\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-r2-concurrent-force-mk9hyl\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-25T00:41:54.117Z",
+        "publishedAt": "2026-10-25T00:41:54.147Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.193Z",
+    "path": "/loops/01M5R83G65JB3B27QCJ2BM65AE/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R83G7PRMJHNEV2Y1NG98TS",
+        "ownerId": "local",
+        "loopId": "01M5R83G65JB3B27QCJ2BM65AE",
+        "versionId": "01M5R83G65JB3B27QCJ2BM65AF",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held QA work",
+          "label": "Held QA work v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R83G7QDXMY98V7M476SWYD",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-25T00:41:54.166Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.469Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.475Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.480Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.564Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.667Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.751Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.849Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:54.936Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.031Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.121Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.238Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.324Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.327Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.332Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "force"
+    },
+    "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:1:draining",
+    "status": 409,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.337Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-25T00:41:55.342Z",
+    "path": "/runs/01M5R83G7PRMJHNEV2Y1NG98TS",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R83G7PRMJHNEV2Y1NG98TS",
+      "ownerId": "local",
+      "loopId": "01M5R83G65JB3B27QCJ2BM65AE",
+      "versionId": "01M5R83G65JB3B27QCJ2BM65AF",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Held QA work",
+        "label": "Held QA work v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R83G7QDXMY98V7M476SWYD",
+      "status": "running",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "createdAt": "2026-10-25T00:41:54.166Z",
+      "startedAt": "2026-10-25T00:41:54.200Z",
+      "lastEventSeq": 5
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.675Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "forcing",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:3:forcing"
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.824Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "forcing",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "unconfirmedRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "choices": [],
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:3:forcing"
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.932Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "force-failed",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "choices": [
+        "force"
+      ],
+      "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:4:force-failed"
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.936Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "force-failed",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "choices": [
+        "force"
+      ],
+      "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:4:force-failed"
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.941Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "force"
+    },
+    "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:2:awaiting-choice",
+    "status": 409,
+    "body": {
+      "phase": "force-failed",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "choices": [
+        "force"
+      ],
+      "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:4:force-failed"
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.944Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "force-failed",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "choices": [
+        "force"
+      ],
+      "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:4:force-failed"
+    }
+  },
+  {
+    "at": "2026-10-25T00:42:18.956Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "force"
+    },
+    "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:4:force-failed",
+    "status": 202,
+    "body": {
+      "phase": "exiting",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:41:54.458Z",
+      "choiceAt": "2026-10-25T00:41:55.258Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [
+        "01M5R83G7PRMJHNEV2Y1NG98TS"
+      ],
+      "choices": [],
+      "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+      "controlToken": "c3858a82-4678-4adf-99fc-2eb51b8d4cbe:5:exiting"
+    }
+  }
+]

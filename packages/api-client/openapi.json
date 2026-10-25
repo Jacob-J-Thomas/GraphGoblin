@@ -18071,6 +18071,9 @@
                     },
                     "error": {
                       "type": "string"
+                    },
+                    "controlToken": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -18078,7 +18081,8 @@
                     "graceMs",
                     "activeRunIds",
                     "unconfirmedRunIds",
-                    "choices"
+                    "choices",
+                    "controlToken"
                   ],
                   "additionalProperties": false
                 }
@@ -18116,6 +18120,17 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "header",
+            "name": "x-graphgoblin-shutdown-token",
+            "required": false
+          }
+        ],
         "responses": {
           "202": {
             "description": "Default Response",
@@ -18171,6 +18186,9 @@
                     },
                     "error": {
                       "type": "string"
+                    },
+                    "controlToken": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -18178,7 +18196,8 @@
                     "graceMs",
                     "activeRunIds",
                     "unconfirmedRunIds",
-                    "choices"
+                    "choices",
+                    "controlToken"
                   ],
                   "additionalProperties": false
                 }
@@ -18239,6 +18258,9 @@
                     },
                     "error": {
                       "type": "string"
+                    },
+                    "controlToken": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -18246,7 +18268,8 @@
                     "graceMs",
                     "activeRunIds",
                     "unconfirmedRunIds",
-                    "choices"
+                    "choices",
+                    "controlToken"
                   ],
                   "additionalProperties": false
                 }

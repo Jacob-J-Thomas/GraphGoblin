@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {spawn,execFileSync} from 'node:child_process';
+const q=path.resolve('docs/qa/2026-10-24-wp-c7-319-qa');
+const files=JSON.parse(fs.readFileSync(path.join(q,'worker-start-extract.json'),'utf8')).files;
+const previous=JSON.parse(fs.readFileSync(path.join(q,'isolated-results.json'),'utf8'));
+const results=[];
+for(const file of files){
+ if(previous.some(r=>r.file===file)){results.push({file,alreadyCovered:'isolated-results.json'});continue;}
+ const current=fs.readFileSync('apps/web/'+file);let old;try{old=execFileSync('git',['show','c63db24590d23263a3f7253eda13249f9252ec16:apps/web/'+file]);}catch{}
+ const log='worker-isolated-'+file.replace(/^src\//,'').replaceAll('/','-').replace(/\.test\.tsx?$/,'')+'.log.txt';
+ const command=`pnpm.cmd --filter @graphgoblin/web exec vitest run ${file} --maxWorkers=1`;
+ const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ const output=fs.createWriteStream(path.join(q,log));child.stdout.pipe(output,{end:false});child.stderr.pipe(output,{end:false});
+ const start=Date.now(),exit=await new Promise((r,j)=>{child.once('error',j);child.once('exit',r);});await new Promise(r=>output.end(r));
+ results.push({file,unchanged:old?current.equals(old):false,sha256:crypto.createHash('sha256').update(current).digest('hex'),command,exit,seconds:(Date.now()-start)/1000,log});
+ fs.writeFileSync(path.join(q,'worker-isolated-results.json'),JSON.stringify(results,null,2));console.log(file+': '+exit);
+}

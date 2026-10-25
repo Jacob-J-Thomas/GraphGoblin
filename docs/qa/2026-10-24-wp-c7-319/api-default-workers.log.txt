@@ -1,0 +1,55 @@
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:157
++ ... p-c7-319-'; pnpm.cmd --filter @graphgoblin/api test:coverage *> docs/ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-319/apps/api
+      Coverage enabled with v8
+
+ ❯ src/container.test.ts (27 tests | 2 failed) 83575ms
+   ❯ configuration admission before startup writes (3)
+     × reads existing manual catalog entries without changing database bytes or rows on invalid effort 24992ms
+   × refuses malformed current definitions before master-key creation or database writes 25273ms
+ ❯ src/nested-readiness.test.ts (19 tests | 2 failed) 108251ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the claude executable fixture through public nested admission 20702ms
+     × uses the codex executable fixture through public nested admission 20985ms
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 154805ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20750ms
+{"level":30,"time":1792867339762,"pid":31000,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5989"}
+{"level":30,"time":1792867339763,"pid":31000,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5989,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-c7-319-FNnvn2","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792867340043,"pid":31000,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792867340056,"pid":31000,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":10.054800000001705,"msg":"request completed"}
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 2 failed) 63074ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20188ms
+     × observes only current state and cannot reconstruct a label transition between snapshots 20005ms
+ ❯ src/shutdown.test.ts (4 tests | 1 failed) 40989ms
+   × keeps input, status and cancellation reachable while refusing independent starts during drain 32457ms
+ ❯ src/version-migration.test.ts (3 tests | 1 failed) 87748ms
+   ❯ migrated SQLite versions through the API (3)
+     × recovers a current-format pinned run across restart mid-run without migration 62388ms
+ ❯ src/retired-event-startup.test.ts (2 tests | 2 failed) 163349ms
+   ❯ cold start over a stored retired Event destination (#242) (2)
+     × starts with a published version holding one, refuses that loop per loop and serves the rest 101918ms
+     × starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 61429ms
+ ❯ src/subloop-restart.test.ts (3 tests | 3 failed) 306241ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 183082ms
+     × the built API recovers a child finished while down with one continuation per parent 61609ms
+     × the built API recovers a parent interrupted mid-wake with one continuation per parent 61547ms
+ ❯ src/main.test.ts (9 tests | 4 failed | 4 skipped) 309106ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 62838ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 61875ms
+     × releases ownership on a real corrupt-database startup fault before HTTP setup 61329ms
+     × releases ownership after a real occupied-port listen failure 61609ms
+ ❯ src/subloop-failure.test.ts (2 tests | 1 failed) 49880ms
+   ❯ subloop child failures over the API (#251) (2)
+     × a provider failure in a child fails the parent visibly, and resuming the parent resumes the child 41527ms
+ ❯ src/artifact-integrity.test.ts (1 test | 1 failed) 21364ms
+   × serves exact verified transcript bytes, reports corruption explicitly, repairs on put and distinguishes missing content 21361ms

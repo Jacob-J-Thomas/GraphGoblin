@@ -1,0 +1,38 @@
+import {readdir,readFile,writeFile,stat,access} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const out=resolve('docs/qa/2026-10-24-wp-c7-319-qa/round-2');
+const profile=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+if(process.argv.includes('--stores')){
+ const stores=[];
+ for(const name of (await readdir(tmpdir(),{withFileTypes:true})).filter(d=>d.isDirectory()&&d.name.startsWith('gg-qa-c7-319-r2-')).map(d=>d.name)){
+  const directory=join(tmpdir(),name),item={directory:profile(directory)};
+  for(const file of ['graphgoblin.lock','started','release']){
+   try{const b=await readFile(join(directory,file),'utf8');item[file]=file==='release'?'present':b;}catch(e){if(e.code!=='ENOENT')item[file]={error:e.code};}
+  }
+  if(item.started&&/^\d+$/.test(item.started)){try{process.kill(Number(item.started),0);item.scriptPidPresent=true;}catch(e){item.scriptPidPresent=e.code==='ESRCH'?false:e.code;}}
+  stores.push(item);
+ }
+ await writeFile(join(out,'stores.json'),JSON.stringify({note:'Read-only PID existence check, not a process-identity guarantee. No signals or directory deletions.',stores},null,2));
+ console.log('Inventoried '+stores.length+' round-2 manual stores');
+}else{
+ const files=(await readdir(out)).sort();const payloads=[];const errors=[];
+ const readme=await readFile(join(out,'README.md'),'utf8');
+ for(const name of files){
+  const path=join(out,name),b=await readFile(path);if(b.length>1000000)errors.push('oversize '+name+' '+b.length);
+  if(name!=='README.md'&&!readme.includes(']('+name+')'))errors.push('unlinked artifact '+name);
+  const user=process.env.USERPROFILE.split(/[\\/]/).at(-1);
+  if(/\.(json|txt|md)$/.test(name)&&b.toString('utf8').toLowerCase().includes(user.toLowerCase()))errors.push('literal user path '+name);
+  if(!['README.md','HASHES.json','final-audit.json'].includes(name))payloads.push({file:name,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});
+ }
+ const links=[...readme.matchAll(/\]\(([^)]+)\)/g)].map(m=>m[1]);
+ for(const link of links)if(!/^[a-z]+:/i.test(link)){const target=resolve(out,link.split('#')[0]);try{await access(target);}catch{errors.push('broken link '+link);}}
+ const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();if(head!=='ebaaab0fdb683509386a5ded0692470cc75dcb75')errors.push('HEAD changed: '+head);
+ const trackedDiff=execFileSync('git',['diff','--name-only','HEAD'],{encoding:'utf8'}).trim();if(trackedDiff)errors.push('tracked changes '+trackedDiff);
+ const status=execFileSync('git',['status','--short'],{encoding:'utf8'}).trim();if(status&&!status.split('\n').every(l=>l.startsWith('?? docs/qa/2026-10-24-wp-c7-319-qa/round-2/')))errors.push('unexpected git status '+status);
+ await writeFile(join(out,'HASHES.json'),JSON.stringify({algorithm:'SHA-256',excluded:['README.md','HASHES.json','final-audit.json'],files:payloads},null,2));
+ await writeFile(join(out,'final-audit.json'),JSON.stringify({at:new Date().toISOString(),head,status,trackedDiff,artifactCount:files.length,linkedArtifactCount:files.length-1,maximumBytes:Math.max(...payloads.map(p=>p.bytes)),errors,pass:errors.length===0},null,2));
+ console.log(JSON.stringify({head,artifactCount:files.length,errors,pass:errors.length===0}));if(errors.length)process.exitCode=1;
+}

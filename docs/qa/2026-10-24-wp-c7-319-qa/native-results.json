@@ -1,0 +1,993 @@
+[
+  {
+    "name": "native script force records interruption or explicit unconfirmed cleanup",
+    "status": "PASS",
+    "ms": 2825,
+    "evidence": {
+      "phase": "force-failed",
+      "failure": {
+        "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+        "message": "Script process tree termination was not confirmed; stop the process before restarting",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "interruptedByStop": true
+        }
+      },
+      "lockHeld": true,
+      "sandbox": "D-015"
+    }
+  },
+  {
+    "name": "stale force does not acknowledge a new force-failed phase",
+    "status": "PASS",
+    "ms": 64,
+    "evidence": {
+      "at": "2026-10-24T23:05:14.584Z",
+      "path": "/system/shutdown",
+      "method": "POST",
+      "request": {
+        "action": "force"
+      },
+      "controlToken": "dc3144b3-f0ce-46c3-9e59-fc6547fffe52:awaiting-choice",
+      "status": 409,
+      "body": {
+        "phase": "force-failed",
+        "graceMs": 800,
+        "startedAt": "2026-10-24T23:05:10.330Z",
+        "choiceAt": "2026-10-24T23:05:11.130Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [
+          "01M5R2JBJDFZFQMY6R77WSCJSQ"
+        ],
+        "choices": [
+          "force"
+        ],
+        "error": "Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.",
+        "controlToken": "dc3144b3-f0ce-46c3-9e59-fc6547fffe52:force-failed"
+      }
+    }
+  },
+  {
+    "name": "further force has separate confirmation; cancel sends nothing; exit is 1 and lock stays",
+    "status": "PASS",
+    "ms": 589,
+    "evidence": {
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "lockHeld": true,
+      "posts": 1,
+      "text": "Force exit after failed cleanup?\n\nExit without confirmed cleanup. The lock stays for next-start reclamation; native processes may still need inspection.\n\nNo active run identities reported. Cleanup may still be finishing.\n\nExternal effects may be uncertain. Interrupted work does not automatically resume; inspect the run evidence before an explicit replay. Work may finish or a required child may start while you decide.\n\nGo back\nConfirm force exit"
+    }
+  },
+  {
+    "name": "restart reclaims failed-stop lock and preserves failure without replay",
+    "status": "PASS",
+    "ms": 55,
+    "evidence": {
+      "state": {
+        "id": "01M5R2JBJDFZFQMY6R77WSCJSQ",
+        "ownerId": "local",
+        "loopId": "01M5R2JBGK8WYV4BZJ83PNFEY0",
+        "versionId": "01M5R2JBGK8WYV4BZJ83PNFEY1",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Unconfirmed native cleanup",
+          "label": "Unconfirmed native cleanup v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2JBJDFZFQMY6R77WSCJSR",
+        "status": "failed",
+        "currentNodeId": "hold",
+        "iteration": 1,
+        "failure": {
+          "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+          "message": "Script process tree termination was not confirmed; stop the process before restarting",
+          "nodeId": "hold",
+          "resumable": false,
+          "details": {
+            "interruptedByStop": true
+          }
+        },
+        "createdAt": "2026-10-24T23:05:09.453Z",
+        "startedAt": "2026-10-24T23:05:09.483Z",
+        "finishedAt": "2026-10-24T23:05:12.902Z",
+        "lastEventSeq": 6
+      },
+      "starts": 1
+    }
+  },
+  {
+    "name": "controlled CLI starts real subprocess",
+    "status": "PASS",
+    "ms": 377,
+    "evidence": {
+      "pid": 35020,
+      "state": {
+        "id": "01M5R2M7334KVCKBTJYQZ3AQ8B",
+        "ownerId": "local",
+        "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+        "versionId": "01M5R2M3WD23RVWF511JGNYJMZ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Synthetic CLI, no provider",
+          "label": "Synthetic CLI, no provider v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2M7334KVCKBTJYQZ3AQ8C",
+        "status": "running",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "createdAt": "2026-10-24T23:06:10.403Z",
+        "startedAt": "2026-10-24T23:06:16.596Z",
+        "lastEventSeq": 8
+      }
+    }
+  },
+  {
+    "name": "explicit controlled CLI force releases process/store and restart is truthful",
+    "status": "PASS",
+    "ms": 16225,
+    "evidence": {
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "rootProcessAbsent": true,
+      "state": {
+        "id": "01M5R2M7334KVCKBTJYQZ3AQ8B",
+        "ownerId": "local",
+        "loopId": "01M5R2M3WD23RVWF511JGNYJMY",
+        "versionId": "01M5R2M3WD23RVWF511JGNYJMZ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Synthetic CLI, no provider",
+          "label": "Synthetic CLI, no provider v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2M7334KVCKBTJYQZ3AQ8C",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "RUN_INTERRUPTED_BY_STOP",
+          "message": "Explicit force-stop interrupted this run; external effects may have happened",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "attempt": 1,
+            "effectMayHaveHappened": true
+          }
+        },
+        "createdAt": "2026-10-24T23:06:10.403Z",
+        "startedAt": "2026-10-24T23:06:16.596Z",
+        "finishedAt": "2026-10-24T23:06:17.086Z",
+        "lastEventSeq": 10
+      }
+    }
+  },
+  {
+    "name": "D038 drain exits with only parks and preserves their identities",
+    "status": "PASS",
+    "ms": 12467,
+    "evidence": {
+      "ids": [
+        "01M5R2NF1CD3VSH6MBC8BA25HG",
+        "01M5R2NF4GXT959PJJ3N3AWCBY",
+        "01M5R2NF9ZBENBJNPY17Z5431H",
+        "01M5R2NFG9DWQCJG4M96TAABMB"
+      ],
+      "before": [
+        {
+          "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+          "ownerId": "local",
+          "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+          "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved parent",
+            "label": "Saved parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+          "status": "waiting",
+          "currentNodeId": "child",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NF1CD3VSH6MBC8BA25HG:5",
+            "nodeId": "child",
+            "kind": "child",
+            "childRunId": "01M5R2NF4GXT959PJJ3N3AWCBY",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:06:51.308Z",
+          "startedAt": "2026-10-24T23:06:51.352Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2NF4GXT959PJJ3N3AWCBY",
+          "ownerId": "local",
+          "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+          "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5R2NF1CD3VSH6MBC8BA25HG",
+          "invocationId": "01M5R2NF4GXT959PJJ3N3AWCBZ",
+          "status": "waiting",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NF4GXT959PJJ3N3AWCBY:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:06:51.408Z",
+          "startedAt": "2026-10-24T23:06:51.451Z",
+          "lastEventSeq": 6
+        },
+        {
+          "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+          "ownerId": "local",
+          "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+          "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+          "status": "paused",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NF9ZBENBJNPY17Z5431H:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-24T23:06:51.735Z",
+          "createdAt": "2026-10-24T23:06:51.583Z",
+          "startedAt": "2026-10-24T23:06:51.605Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2NFG9DWQCJG4M96TAABMB",
+          "ownerId": "local",
+          "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+          "versionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved future timer",
+            "label": "Saved future timer v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2NFG9DWQCJG4M96TAABMC",
+          "status": "waiting",
+          "currentNodeId": "timer",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NFG9DWQCJG4M96TAABMB:5",
+            "nodeId": "timer",
+            "kind": "timer",
+            "until": "2026-10-24T23:07:51.841Z",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:06:51.785Z",
+          "startedAt": "2026-10-24T23:06:51.799Z",
+          "lastEventSeq": 6
+        }
+      ],
+      "after": [
+        {
+          "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+          "ownerId": "local",
+          "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+          "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved parent",
+            "label": "Saved parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+          "status": "waiting",
+          "currentNodeId": "child",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NF1CD3VSH6MBC8BA25HG:5",
+            "nodeId": "child",
+            "kind": "child",
+            "childRunId": "01M5R2NF4GXT959PJJ3N3AWCBY",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:06:51.308Z",
+          "startedAt": "2026-10-24T23:06:51.352Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2NF4GXT959PJJ3N3AWCBY",
+          "ownerId": "local",
+          "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+          "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5R2NF1CD3VSH6MBC8BA25HG",
+          "invocationId": "01M5R2NF4GXT959PJJ3N3AWCBZ",
+          "status": "waiting",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NF4GXT959PJJ3N3AWCBY:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:06:51.408Z",
+          "startedAt": "2026-10-24T23:06:51.451Z",
+          "lastEventSeq": 6
+        },
+        {
+          "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+          "ownerId": "local",
+          "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+          "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+          "status": "paused",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NF9ZBENBJNPY17Z5431H:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-24T23:06:51.735Z",
+          "createdAt": "2026-10-24T23:06:51.583Z",
+          "startedAt": "2026-10-24T23:06:51.605Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2NFG9DWQCJG4M96TAABMB",
+          "ownerId": "local",
+          "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+          "versionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved future timer",
+            "label": "Saved future timer v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2NFG9DWQCJG4M96TAABMC",
+          "status": "waiting",
+          "currentNodeId": "timer",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2NFG9DWQCJG4M96TAABMB:5",
+            "nodeId": "timer",
+            "kind": "timer",
+            "until": "2026-10-24T23:07:51.841Z",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:06:51.785Z",
+          "startedAt": "2026-10-24T23:06:51.799Z",
+          "lastEventSeq": 6
+        }
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "parentAndPausedCompleted": true
+    }
+  },
+  {
+    "name": "D038 force exits with only parks and preserves their identities",
+    "status": "PASS",
+    "ms": 19288,
+    "evidence": {
+      "ids": [
+        "01M5R2PM51QJ6BHRK6AEXPM0GZ",
+        "01M5R2PM89RDW17E13GDYJ55X9",
+        "01M5R2PME5HXWMJHPAW6BSW5QD",
+        "01M5R2PMNYGCV9NKFTZWPK4N0X"
+      ],
+      "before": [
+        {
+          "id": "01M5R2PM51QJ6BHRK6AEXPM0GZ",
+          "ownerId": "local",
+          "loopId": "01M5R2PM3V0NBFC53VNN21PM77",
+          "versionId": "01M5R2PM3V0NBFC53VNN21PM78",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved parent",
+            "label": "Saved parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2PM51QJ6BHRK6AEXPM0H0",
+          "status": "waiting",
+          "currentNodeId": "child",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PM51QJ6BHRK6AEXPM0GZ:5",
+            "nodeId": "child",
+            "kind": "child",
+            "childRunId": "01M5R2PM89RDW17E13GDYJ55X9",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:07:29.313Z",
+          "startedAt": "2026-10-24T23:07:29.357Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2PM89RDW17E13GDYJ55X9",
+          "ownerId": "local",
+          "loopId": "01M5R2PM26YQZAQWVPTSCHMBY4",
+          "versionId": "01M5R2PM26YQZAQWVPTSCHMBY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5R2PM51QJ6BHRK6AEXPM0GZ",
+          "invocationId": "01M5R2PM89RDW17E13GDYJ55XA",
+          "status": "waiting",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PM89RDW17E13GDYJ55X9:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:07:29.417Z",
+          "startedAt": "2026-10-24T23:07:29.446Z",
+          "lastEventSeq": 6
+        },
+        {
+          "id": "01M5R2PME5HXWMJHPAW6BSW5QD",
+          "ownerId": "local",
+          "loopId": "01M5R2PM26YQZAQWVPTSCHMBY4",
+          "versionId": "01M5R2PM26YQZAQWVPTSCHMBY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2PME5HXWMJHPAW6BSW5QE",
+          "status": "paused",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PME5HXWMJHPAW6BSW5QD:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-24T23:07:29.810Z",
+          "createdAt": "2026-10-24T23:07:29.605Z",
+          "startedAt": "2026-10-24T23:07:29.619Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2PMNYGCV9NKFTZWPK4N0X",
+          "ownerId": "local",
+          "loopId": "01M5R2PMN2QM8HK87VVPKRVQ99",
+          "versionId": "01M5R2PMN2QM8HK87VVPKRVQ9A",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved future timer",
+            "label": "Saved future timer v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2PMNYGCV9NKFTZWPK4N0Y",
+          "status": "waiting",
+          "currentNodeId": "timer",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PMNYGCV9NKFTZWPK4N0X:5",
+            "nodeId": "timer",
+            "kind": "timer",
+            "until": "2026-10-24T23:08:29.915Z",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:07:29.854Z",
+          "startedAt": "2026-10-24T23:07:29.865Z",
+          "lastEventSeq": 6
+        }
+      ],
+      "after": [
+        {
+          "id": "01M5R2PM51QJ6BHRK6AEXPM0GZ",
+          "ownerId": "local",
+          "loopId": "01M5R2PM3V0NBFC53VNN21PM77",
+          "versionId": "01M5R2PM3V0NBFC53VNN21PM78",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved parent",
+            "label": "Saved parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2PM51QJ6BHRK6AEXPM0H0",
+          "status": "waiting",
+          "currentNodeId": "child",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PM51QJ6BHRK6AEXPM0GZ:5",
+            "nodeId": "child",
+            "kind": "child",
+            "childRunId": "01M5R2PM89RDW17E13GDYJ55X9",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:07:29.313Z",
+          "startedAt": "2026-10-24T23:07:29.357Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2PM89RDW17E13GDYJ55X9",
+          "ownerId": "local",
+          "loopId": "01M5R2PM26YQZAQWVPTSCHMBY4",
+          "versionId": "01M5R2PM26YQZAQWVPTSCHMBY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "parentRunId": "01M5R2PM51QJ6BHRK6AEXPM0GZ",
+          "invocationId": "01M5R2PM89RDW17E13GDYJ55XA",
+          "status": "waiting",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PM89RDW17E13GDYJ55X9:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:07:29.417Z",
+          "startedAt": "2026-10-24T23:07:29.446Z",
+          "lastEventSeq": 6
+        },
+        {
+          "id": "01M5R2PME5HXWMJHPAW6BSW5QD",
+          "ownerId": "local",
+          "loopId": "01M5R2PM26YQZAQWVPTSCHMBY4",
+          "versionId": "01M5R2PM26YQZAQWVPTSCHMBY5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved input",
+            "label": "Saved input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2PME5HXWMJHPAW6BSW5QE",
+          "status": "paused",
+          "currentNodeId": "ask",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PME5HXWMJHPAW6BSW5QD:5",
+            "nodeId": "ask",
+            "kind": "input",
+            "prompt": "Answer",
+            "startedSeq": 5
+          },
+          "pausedAt": "2026-10-24T23:07:29.810Z",
+          "createdAt": "2026-10-24T23:07:29.605Z",
+          "startedAt": "2026-10-24T23:07:29.619Z",
+          "lastEventSeq": 7
+        },
+        {
+          "id": "01M5R2PMNYGCV9NKFTZWPK4N0X",
+          "ownerId": "local",
+          "loopId": "01M5R2PMN2QM8HK87VVPKRVQ99",
+          "versionId": "01M5R2PMN2QM8HK87VVPKRVQ9A",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Saved future timer",
+            "label": "Saved future timer v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5R2PMNYGCV9NKFTZWPK4N0Y",
+          "status": "waiting",
+          "currentNodeId": "timer",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5R2PMNYGCV9NKFTZWPK4N0X:5",
+            "nodeId": "timer",
+            "kind": "timer",
+            "until": "2026-10-24T23:08:29.915Z",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T23:07:29.854Z",
+          "startedAt": "2026-10-24T23:07:29.865Z",
+          "lastEventSeq": 6
+        }
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "parentAndPausedCompleted": true
+    }
+  },
+  {
+    "name": "disconnect outside shutdown is labelled uncertain; restart is noticed",
+    "status": "PASS",
+    "ms": 63899,
+    "evidence": {
+      "crashExit": {
+        "code": 23,
+        "signal": null
+      },
+      "reconnected": true
+    }
+  }
+]
