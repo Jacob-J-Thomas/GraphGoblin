@@ -1,0 +1,71 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd typecheck *> docs/qa/wp-d4-343/round-3/typecheck ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 15b21fc16c2286b0
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 51bea7c6237eb76e
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs aadd58cf0dee88b8
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 88a1aaaebb28e885
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 9795b539895240c5
+@graphgoblin/engine:typecheck: cache miss, executing 97da988a46727267
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:build: cache miss, executing 72f618ddf166d1fc
+@graphgoblin/adapter-codex:typecheck: cache miss, executing e50d7cfdc0644e9c
+@graphgoblin/adapter-codex:build: cache miss, executing 8914225d4b9ef96b
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 604ff846de9c89ef
+@graphgoblin/infrastructure:build: cache miss, executing 0fe027e83c9b2962
+@graphgoblin/infrastructure:typecheck: cache miss, executing 7056d2bb54db5ae6
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:typecheck: cache miss, executing 7c3f96899ca028bb
+@graphgoblin/api:build: cache miss, executing 4ca2294d9d725796
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 43b03c6bac23f9f2
+@graphgoblin/api-client:typecheck: cache miss, executing f391ebfc31c664a3
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: cache miss, executing de19bd245060730f
+@graphgoblin/mcp:build: cache miss, executing 2a21d746d7074f06
+@graphgoblin/mcp:typecheck: cache miss, executing 4a97ac10fb27a033
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 21c0bc3f7fcd6219
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: src/events/EventsPage.test.tsx(346,9): error TS2353: Object literal may only specify known properties, and 'target' does not exist in type '{ id: string; ownerId: string; type: string; payload: unknown; receivedAt: string; dedupeKey?: string; source: string; runIds: string[]; delivery?: { state: "failed" | "filtered" | "deduplicated" | "pending" | "admitted"; attempts: number; nextAttemptAt?: string; failureCode?: string; }; }'.
+@graphgoblin/web:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/web#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-343\apps\web) C:\nvm4w\nodejs\pnpm.cmd run 
+typecheck exited (2)
+
+ Tasks:    19 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    4m12.808s 
+Failed:    @graphgoblin/web#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

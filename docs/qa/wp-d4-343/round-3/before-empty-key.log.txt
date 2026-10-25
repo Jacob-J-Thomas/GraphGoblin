@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+stdout | src/targeted-events.test.ts > refuses an empty request key before saving any delivery
+empty-key reproduction {"statuses":[202,202],"duplicates":[false,false],"deliveries":2,"runs":2}
+
+ ❯ src/targeted-events.test.ts (27 tests | 1 failed | 26 skipped) 1430ms
+   × refuses an empty request key before saving any delivery 1426ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/ta ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > refuses an empty request key before saving any delivery
+AssertionError: expected [ 202, 202 ] to deeply equal [ 400, 400 ]
+
+- Expected
++ Received
+
+  [
+-   400,
+-   400,
++   202,
++   202,
+  ]
+
+ ❯ src/targeted-events.test.ts:580:44
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 skipped (27)
+   Start at  03:15:17
+   Duration  32.58s (transform 72%, import 23%, tests 5%)
+
+  Transform  transforming modules took 21.07s · 72% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

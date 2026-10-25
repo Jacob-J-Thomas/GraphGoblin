@@ -1,0 +1,23 @@
+node : node:internal/fs/promises:638
+At line:68 char:176
++ ... ator.mjs'); node (Join-Path $env:TEMP 'gg-qa-d4-343-report-generator. ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/fs/promises:638:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: EBUSY: resource busy or locked, open '%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d4-3
+43\docs\qa\2026-10-24-wp-d4-343-qa\isolated-upgrade.log.txt'
+    at async open (node:internal/fs/promises:638:25)
+    at async writeFile (node:internal/fs/promises:1212:14)
+    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-report-generator.mjs:16:2 {
+  errno: -4082,
+  code: 'EBUSY',
+  syscall: 'open',
+  path: '%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-d4-343\\docs\\qa\\2026-10-24-wp-
+d4-343-qa\\isolated-upgrade.log.txt'
+}
+
+Node.js v22.14.0

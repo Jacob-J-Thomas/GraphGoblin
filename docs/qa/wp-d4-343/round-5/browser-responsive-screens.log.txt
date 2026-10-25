@@ -1,0 +1,19 @@
+pnpm.cmd : $ playwright test responsive.spec.ts --grep transient --retries=0 --workers=1 
+--output=../../docs/qa/wp-d4-343/round-5/responsive-screens-test-results
+At line:10 char:1
++ & pnpm.cmd @PnpmArguments *> (Join-Path $recordRoot "$Name.log.txt")
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ playwright te...ns-test-results:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Running 2 tests using 1 worker
+
+(node:38812) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38812) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\responsive.spec.ts:304:5 › responsive dark › screens and transient states fit at 360, 768, 1024, and 1440 px (34.4s)
+  ok 2 [chromium] › e2e\responsive.spec.ts:304:5 › responsive light › screens and transient states fit at 360, 768, 1024, and 1440 px (41.3s)
+
+  2 passed (1.9m)

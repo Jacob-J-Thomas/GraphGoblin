@@ -460,7 +460,31 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await modelCatalog.list(client)).map((m) => m.model)).toContain('test-model');
     await modelCatalog.remove(client, 'codex', 'test-model');
 
-    const published = await events.publish(client, { type: 'demo', payload: { a: 1 } });
+    const definition = minimalLoop();
+    definition.name = 'client Events';
+    definition.nodes[0]!.config = { type: 'event', eventType: 'demo' };
+    const loopId = await t.publishLoop(definition);
+    const published = await events.publish(client, {
+      loopId,
+      type: 'demo',
+      payload: { a: 1 },
+      dedupeKey: 'client-key',
+    });
+    expect(published).toMatchObject({
+      target: { loopId, triggerNodeId: 'start' },
+      admissionId: expect.any(String),
+      delivery: { state: 'pending' },
+    });
+    const duplicate = await events.publish(client, {
+      loopId,
+      type: 'demo',
+      dedupeKey: 'client-key',
+    });
+    expect(duplicate).toMatchObject({
+      id: published.id,
+      admissionId: published.admissionId,
+      duplicate: true,
+    });
     expect((await events.list(client)).items.map((e) => e.id)).toContain(published.id);
   });
 });

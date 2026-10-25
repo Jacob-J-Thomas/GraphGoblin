@@ -8,6 +8,8 @@ import {
 import {
   AdmissionConflictError,
   type RunAdmission,
+  type EventClaim,
+  type EventReceipt,
   type WebhookClaim,
   type WebhookReceipt,
 } from './admission.js';
@@ -326,6 +328,8 @@ export class RunManager {
   private readonly stopCleanupFailures = new Set<string>();
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
+  /** The Event recovery round in progress: its due cutoff and where its next page starts. */
+  private eventRecoveryRound: { cutoff: string; after?: string } | undefined;
   private readonly webhookDispatches = new Set<Promise<void>>();
 
   constructor(
@@ -659,7 +663,7 @@ export class RunManager {
           payload,
           receivedAt: now,
           ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),
-          ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+          ...(input.dedupeKey !== undefined ? { dedupeKey: input.dedupeKey } : {}),
         },
         ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),
       },
@@ -794,6 +798,105 @@ export class RunManager {
     };
   }
 
+  /** Targeted Events persist the complete admission before returning; execution is asynchronous. */
+  async receiveEvent(claim: EventClaim, input: StartRunInput) {
+    // Independent intake (#224): the lease lasts through the durable receipt and run admission.
+    return this.withIntake(undefined, () => this.receiveAdmittedEvent(claim, input));
+  }
+
+  private async receiveAdmittedEvent(claim: EventClaim, input: StartRunInput) {
+    const result = await this.withPinLock(async () => {
+      if (
+        claim.ownerId !== input.ownerId ||
+        claim.loopId !== input.loopId ||
+        claim.versionId !== input.versionId ||
+        claim.triggerNodeId !== input.triggerNodeId
+      )
+        throw new AdmissionConflictError();
+      const prepared = await this.prepareStart(input);
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, {});
+      try {
+        return await this.ports.admission.events.claim(claim, intent);
+      } catch (error) {
+        const saved = await this.ports.admission.events.get(claim.id);
+        if (
+          !saved ||
+          saved.inbound.id !== claim.inbound.id ||
+          saved.ownerId !== claim.ownerId ||
+          saved.loopId !== claim.loopId ||
+          saved.versionId !== claim.versionId ||
+          saved.triggerNodeId !== claim.triggerNodeId ||
+          stableStringify(saved.inbound.payload) !== stableStringify(claim.inbound.payload) ||
+          (saved.status !== 'deduplicated' &&
+            stableStringify(saved.intent) !== stableStringify(intent))
+        )
+          throw error;
+        return { receipt: saved, duplicate: false };
+      }
+    });
+    if (result.receipt.status === 'pending') {
+      const dispatch = this.dispatchEvent(result.receipt).catch(() => {
+        this.ports.logger.error({ code: 'EVENT_RECOVERY_FAILED' }, 'event dispatch failed');
+      });
+      this.webhookDispatches.add(dispatch);
+      void dispatch.finally(() => this.webhookDispatches.delete(dispatch));
+    }
+    return result;
+  }
+
+  private async dispatchEvent(receipt: Pick<EventReceipt, 'id' | 'attempts'>): Promise<void> {
+    const store = this.ports.admission.events;
+    const run = await this.withPinLock(async () => {
+      if (this.stopped) return undefined;
+      let current = receipt;
+      try {
+        const saved = await store.get(receipt.id);
+        if (saved) current = saved;
+        if (
+          !saved ||
+          saved.status !== 'pending' ||
+          (saved.nextAttemptAt && saved.nextAttemptAt > this.now())
+        )
+          return undefined;
+        if (!saved.intent) throw new AdmissionConflictError();
+        await this.assertVersionPresent(saved.intent.run.versionId, saved.loopId);
+        try {
+          return await store.create(saved.intent, saved.id);
+        } catch (error) {
+          const confirmed = await store.get(saved.id);
+          if (confirmed?.status === 'admitted') return await store.create(saved.intent, saved.id);
+          throw error;
+        }
+      } catch (error) {
+        const permanent =
+          error instanceof AdmissionConflictError
+            ? 'EVENT_INTENT_CONFLICT'
+            : error instanceof EngineRequestError && error.code === 'LOOP_NOT_FOUND'
+              ? 'EVENT_TARGET_REMOVED'
+              : current.attempts >= 7
+                ? 'EVENT_ADMISSION_EXHAUSTED'
+                : undefined;
+        // Eight failed admissions total, with 5s doubling to a 5min cap. A deterministic
+        // failure never retries; persistent storage faults become visible rather than looping forever.
+        const delay = Math.min(300, 5 * 2 ** Math.min(current.attempts, 6));
+        await store.failed(
+          current.id,
+          permanent ?? 'EVENT_ADMISSION_RETRY',
+          permanent
+            ? undefined
+            : new Date(this.ports.clock.now().getTime() + delay * 1000).toISOString(),
+        );
+        this.ports.logger.warn(
+          { admissionId: current.id, code: permanent ?? 'EVENT_ADMISSION_RETRY' },
+          'event admission failed',
+        );
+        return undefined;
+      }
+    });
+    if (run && !this.stopped) this.enqueue(run.id);
+  }
+
   /** Acknowledge the durable claim; dispatch and execution never delay the caller. */
   async receiveWebhook(
     claim: WebhookClaim,
@@ -909,10 +1012,44 @@ export class RunManager {
   retryPendingWebhooks(): Promise<void> {
     if (this.webhookRecovery) return this.webhookRecovery;
     this.webhookRecovery = (async () => {
-      const due = await this.ports.admission.due(this.now(), 5);
-      for (const receipt of due) {
-        if (this.stopped || this.draining) break;
-        await this.dispatchWebhook(receipt);
+      // A failed ledger read or retry-metadata write must not block the other intake path or boot.
+      // A drain stops starting recovered work (#224); the receipts stay due for the next start.
+      try {
+        // Round robin over a finite round: every page of a round uses the round's start as its
+        // due cutoff, so receipts that arrive later cannot extend it while the clock advances (a
+        // clock set back behind the cutoff lets them join until time passes it). A full page
+        // continues the round in the next sweep; a short page ends it, and the next round starts
+        // from the beginning. Receipts whose failure metadata cannot be written are revisited
+        // once per round without filling every batch, and older due receipts always come round
+        // again.
+        const round = this.eventRecoveryRound ?? { cutoff: this.now() };
+        const eventDue = await this.ports.admission.events.due(round.cutoff, 5, round.after);
+        const last = eventDue.at(-1);
+        this.eventRecoveryRound =
+          eventDue.length === 5 && last ? { cutoff: round.cutoff, after: last.id } : undefined;
+        for (const receipt of eventDue) {
+          if (this.stopped || this.draining) break;
+          try {
+            await this.dispatchEvent(receipt);
+          } catch {
+            // A failed metadata write leaves this receipt due; unrelated recipients still recover.
+            this.ports.logger.error(
+              { code: 'EVENT_RECOVERY_FAILED', admissionId: receipt.id },
+              'event receipt recovery failed',
+            );
+          }
+        }
+      } catch {
+        this.ports.logger.error({ code: 'EVENT_RECOVERY_FAILED' }, 'event recovery failed');
+      }
+      try {
+        const due = await this.ports.admission.due(this.now(), 5);
+        for (const receipt of due) {
+          if (this.stopped || this.draining) break;
+          await this.dispatchWebhook(receipt);
+        }
+      } catch {
+        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook recovery failed');
       }
     })().finally(() => {
       this.webhookRecovery = undefined;
@@ -1333,6 +1470,7 @@ export class RunManager {
    * subloop references. Deleting the loop would make such a run fail, so the API refuses it.
    */
   async loopInUse(loopId: string): Promise<boolean> {
+    if (await this.ports.admission.events.hasPendingPin(loopId)) return true;
     if (await this.ports.admission.hasPendingPin(loopId)) return true;
     for (const run of await this.ports.runs.listRunReferences(ACTIVE_STATUSES)) {
       if (run.loopId === loopId) return true;

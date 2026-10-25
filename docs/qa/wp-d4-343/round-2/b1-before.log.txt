@@ -1,0 +1,56 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+ ❯ src/targeted-events.test.ts (23 tests | 2 failed | 21 skipped) 2747ms
+   × releases the authored node key after EVENT_ADMISSION_EXHAUSTED for a new request key 2447ms
+   × releases the authored node key after EVENT_INTENT_CONFLICT for a new request key 297ms
+pnpm.cmd : 
+At line:53 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/targeted-event ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > releases the authored node key after EVENT_ADMISSION_EXHAUSTED for a new request 
+key
+ FAIL  src/targeted-events.test.ts > releases the authored node key after EVENT_INTENT_CONFLICT for a new request key
+AssertionError: expected { …(12) } to match object { delivery: { state: 'pending' } }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "delivery": {
+-     "state": "pending",
++     "state": "deduplicated",
+    },
+  }
+
+ ❯ src/targeted-events.test.ts:514:25
+    512|     const next = await post(loopId, { payload: { issue: 7 }, dedupeKey…
+    513|     expect(next.statusCode).toBe(202);
+    514|     expect(next.json()).toMatchObject({ delivery: { state: 'pending' }…
+       |                         ^
+    515|     expect(next.json<{ id: string }>().id).not.toBe(failed.id);
+    516|     await settle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 skipped (23)
+   Start at  00:40:29
+   Duration  25.76s (transform 54%, import 35%, tests 11%)
+
+  Transform  transforming modules took 13.67s · 54% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

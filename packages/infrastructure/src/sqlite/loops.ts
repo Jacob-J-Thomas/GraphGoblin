@@ -18,6 +18,7 @@ import {
   schedules,
   webhookEndpoints,
   webhookReceipts,
+  eventReceipts,
 } from './schema.js';
 
 type LoopRow = typeof loops.$inferSelect;
@@ -358,6 +359,7 @@ export class SqliteLoopRepository implements LoopRepository {
       await tx.delete(schedules).where(eq(schedules.loopId, loopId));
       await tx.delete(webhookEndpoints).where(eq(webhookEndpoints.loopId, loopId));
       await tx.delete(webhookReceipts).where(eq(webhookReceipts.loopId, loopId));
+      await tx.delete(eventReceipts).where(eq(eventReceipts.loopId, loopId));
       await tx.delete(loopVersions).where(eq(loopVersions.loopId, loopId));
       return tx.delete(loops).where(eq(loops.id, loopId)).returning({ id: loops.id });
     });

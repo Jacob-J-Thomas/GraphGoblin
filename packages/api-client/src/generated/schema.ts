@@ -2338,6 +2338,12 @@ export interface paths {
                                     enabled: boolean;
                                     createdAt: string;
                                 } | undefined;
+                                admissionId?: string | undefined;
+                                target?: {
+                                    loopId: string;
+                                    versionId: string;
+                                    triggerNodeId: string;
+                                } | undefined;
                                 delivery?: {
                                     /** @enum {string} */
                                     state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
@@ -2353,7 +2359,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Publish an inbound event; fires matching event triggers */
+        /** Accept an external Event for one explicit published loop and event trigger */
         post: {
             parameters: {
                 query?: never;
@@ -2364,8 +2370,11 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        loopId: string;
+                        triggerNodeId?: string | undefined;
                         type: string;
                         payload?: components["schemas"]["JsonValueInput"] | undefined;
+                        /** @description Optional literal request key: 1 to 512 characters of well-formed Unicode, excluding U+0000 (NUL). Whitespace is significant. */
                         dedupeKey?: string | undefined;
                     };
                 };
@@ -2450,6 +2459,12 @@ export interface paths {
                                 dedupeKey?: string | undefined;
                                 enabled: boolean;
                                 createdAt: string;
+                            } | undefined;
+                            admissionId?: string | undefined;
+                            target?: {
+                                loopId: string;
+                                versionId: string;
+                                triggerNodeId: string;
                             } | undefined;
                             delivery?: {
                                 /** @enum {string} */

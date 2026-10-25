@@ -1,0 +1,269 @@
+diff --git a/apps/web/e2e/events-refresh.spec.ts b/apps/web/e2e/events-refresh.spec.ts
+index f1e19310..536e81a4 100644
+--- a/apps/web/e2e/events-refresh.spec.ts
++++ b/apps/web/e2e/events-refresh.spec.ts
+@@ -1,2 +1 @@
+-import { control, expect, test } from './fixtures.js';
+-import type { APIRequestContext } from '@playwright/test';
++import { control, expect, publishEventLoop, test } from './fixtures.js';
+@@ -4,3 +3,2 @@ import type { APIRequestContext } from '@playwright/test';
+-async function postEvent(
+-  request: APIRequestContext,
+-  url: string,
++async function seedEvents(
++  send: Awaited<ReturnType<typeof publishEventLoop>>,
+@@ -8 +6 @@ async function postEvent(
+-  index: number | string,
++  count: number,
+@@ -10,6 +7,0 @@ async function postEvent(
+-  expect(
+-    (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+-  ).toBe(202);
+-}
+-
+-async function seedEvents(request: APIRequestContext, url: string, type: string, count: number) {
+@@ -19 +11 @@ async function seedEvents(request: APIRequestContext, url: string, type: string,
+-        postEvent(request, url, type, start + offset),
++        send(type, { index: start + offset }),
+@@ -29,6 +21,2 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again
+-  const send = async (type: string, index: number | string) => {
+-    expect(
+-      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+-    ).toBe(202);
+-  };
+-  for (let i = 0; i < 101; i++) await send('refresh-events', i);
++  const send = await publishEventLoop(request, ['refresh-events', 'other-type'], url);
++  for (let i = 0; i < 101; i++) await send('refresh-events', { index: i });
+@@ -38,2 +26,4 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again
+-  const first = await page.locator('tbody tr').first().innerText();
+-  await send('refresh-events', 'first-arrival');
++  // Delivery state and run links may change while the loaded Event membership stays fixed.
++  const payloadRows = page.locator('[data-testid^="payload-"]');
++  const first = await payloadRows.first().textContent();
++  await send('refresh-events', { index: 'first-arrival' });
+@@ -41 +31 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again
+-  expect(await page.locator('tbody tr').first().innerText()).toBe(first);
++  expect(await payloadRows.first().textContent()).toBe(first);
+@@ -49,3 +39,3 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again
+-  const olderRows = await page.locator('tbody').innerText();
+-  await send('other-type', 'excluded');
+-  await send('refresh-events', 'older-arrival');
++  const olderRows = await payloadRows.allTextContents();
++  await send('other-type', { index: 'excluded' });
++  await send('refresh-events', { index: 'older-arrival' });
+@@ -57 +47 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again
+-  expect(await page.locator('tbody').innerText()).toBe(olderRows);
++  expect(await payloadRows.allTextContents()).toEqual(olderRows);
+@@ -85,5 +75 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-  const send = async (type: string, index: number | string) => {
+-    expect(
+-      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+-    ).toBe(202);
+-  };
++  const send = await publishEventLoop(request, ['refresh-outage', 'other-type'], url);
+@@ -94 +80 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-        send('refresh-outage', start + offset),
++        send('refresh-outage', { index: start + offset }),
+@@ -98 +84 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-  await send('other-type', 'excluded');
++  await send('other-type', { index: 'excluded' });
+@@ -106 +92 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-  await send('refresh-outage', 'notice-before-outage');
++  await send('refresh-outage', { index: 'notice-before-outage' });
+@@ -108 +94,2 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-  const oldRows = await page.locator('tbody').innerText();
++  const payloadRows = page.locator('[data-testid^="payload-"]');
++  const oldRows = await payloadRows.allTextContents();
+@@ -124 +111 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-    expect(await page.locator('tbody').innerText()).toBe(oldRows);
++    expect(await payloadRows.allTextContents()).toEqual(oldRows);
+@@ -132 +119 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-  await send('refresh-outage', 'after-outage');
++  await send('refresh-outage', { index: 'after-outage' });
+@@ -135 +122 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
+-  expect(await page.locator('tbody').innerText()).toBe(oldRows);
++  expect(await payloadRows.allTextContents()).toEqual(oldRows);
+@@ -180 +167,2 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer
+-  await seedEvents(request, url, 'refresh-race', 201);
++  const send = await publishEventLoop(request, ['refresh-race'], url);
++  await seedEvents(send, 'refresh-race', 201);
+@@ -231 +219 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer
+-    await postEvent(request, url, 'refresh-race', 'winning-refresh');
++    await send('refresh-race', { index: 'winning-refresh' });
+@@ -236 +224,2 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer
+-    const snapshot = await page.locator('tbody').innerText();
++    const payloadRows = page.locator('[data-testid^="payload-"]');
++    const snapshot = await payloadRows.allTextContents();
+@@ -257 +246 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer
+-    expect(await page.locator('tbody').innerText()).toBe(snapshot);
++    expect(await payloadRows.allTextContents()).toEqual(snapshot);
+@@ -271 +260,2 @@ test('Events updates the hundredth pending receipt after a head arrival without
+-  await seedEvents(request, url, 'receipt-boundary', 101);
++  const send = await publishEventLoop(request, ['receipt-boundary'], url);
++  await seedEvents(send, 'receipt-boundary', 101);
+@@ -286 +276 @@ test('Events updates the hundredth pending receipt after a head arrival without
+-      items: { id: string; delivery?: { state: string; attempts: number } }[];
++      items: { id: string; runIds: string[]; delivery?: { state: string; attempts: number } }[];
+@@ -291 +281,5 @@ test('Events updates the hundredth pending receipt after a head arrival without
+-        ? { ...item, delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 } }
++        ? {
++            ...item, // Retain the real admissionId, frozen target and other Event fields.
++            runIds: admitted ? item.runIds : [],
++            delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 },
++          }
+@@ -297 +291,2 @@ test('Events updates the hundredth pending receipt after a head arrival without
+-  await expect(page.getByText('Pending admission', { exact: true })).toBeVisible();
++  const receipt = page.getByRole('row').filter({ has: page.getByTestId(`payload-${receiptId}`) });
++  await expect(receipt.getByText('Pending admission', { exact: true })).toBeVisible();
+@@ -303 +298 @@ test('Events updates the hundredth pending receipt after a head arrival without
+-  await postEvent(request, url, 'receipt-boundary', 'new-arrival');
++  await send('receipt-boundary', { index: 'new-arrival' });
+@@ -305 +300 @@ test('Events updates the hundredth pending receipt after a head arrival without
+-  await expect(page.getByText('Admitted', { exact: true })).toBeVisible();
++  await expect(receipt.getByText('Admitted', { exact: true })).toBeVisible();
+diff --git a/apps/web/e2e/fixtures.ts b/apps/web/e2e/fixtures.ts
+index 02df8488..686e3c54 100644
+--- a/apps/web/e2e/fixtures.ts
++++ b/apps/web/e2e/fixtures.ts
+@@ -131,0 +132 @@ export async function publishLoop(
++  baseURL = '',
+@@ -133 +134 @@ export async function publishLoop(
+-  const created = await request.post('/loops', { data: { definition } });
++  const created = await request.post(`${baseURL}/loops`, { data: { definition } });
+@@ -136 +137 @@ export async function publishLoop(
+-  const published = await request.post(`/loops/${loop.id}/publish`);
++  const published = await request.post(`${baseURL}/loops/${loop.id}/publish`);
+@@ -139,0 +141,38 @@ export async function publishLoop(
++
++/** Publish one Event entry per type and return a sender targeting that loop. */
++export async function publishEventLoop(
++  request: APIRequestContext,
++  types: readonly string[],
++  baseURL = '',
++) {
++  const loopId = await publishLoop(
++    request,
++    {
++      schemaVersion: CURRENT_DEFINITION_FORMAT,
++      name: 'Browser Events',
++      nodes: [
++        ...types.map((eventType, index) => ({
++          id: `event-${index}`,
++          kind: 'trigger',
++          label: eventType,
++          config: { type: 'event', eventType },
++          ui: { x: 0, y: index * 100 },
++        })),
++        { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 260, y: 0 } },
++      ],
++      edges: types.map((_, index) => ({
++        id: `edge-${index}`,
++        from: { node: `event-${index}`, port: 'out' },
++        to: { node: 'done' },
++      })),
++    },
++    baseURL,
++  );
++  return async (type: string, payload: unknown, dedupeKey?: string) => {
++    const response = await request.post(`${baseURL}/events`, {
++      data: { loopId, type, payload, dedupeKey },
++    });
++    expect(response.status()).toBe(202);
++    return response;
++  };
++}
+diff --git a/apps/web/e2e/github-triggers.spec.ts b/apps/web/e2e/github-triggers.spec.ts
+index bdc90ce7..9753687e 100644
+--- a/apps/web/e2e/github-triggers.spec.ts
++++ b/apps/web/e2e/github-triggers.spec.ts
+@@ -317,9 +317,11 @@ test('Events exposes safe labels for all five webhook delivery dispositions', as
+-  await page.route('**/events', async (route) => {
+-    if (route.request().method() !== 'GET' || new URL(route.request().url()).pathname !== '/events')
+-      return route.continue();
+-    await route.fulfill({
+-      status: 200,
+-      contentType: 'application/json',
+-      body: JSON.stringify({ items: fixtures }),
+-    });
+-  });
++  await page.route(
++    (url) => url.pathname === '/events',
++    async (route) => {
++      if (route.request().method() !== 'GET') return route.continue();
++      await route.fulfill({
++        status: 200,
++        contentType: 'application/json',
++        body: JSON.stringify({ items: fixtures, nextCursor: null }),
++      });
++    },
++  );
+diff --git a/apps/web/e2e/history.spec.ts b/apps/web/e2e/history.spec.ts
+index 0c950180..8b089d0f 100644
+--- a/apps/web/e2e/history.spec.ts
++++ b/apps/web/e2e/history.spec.ts
+@@ -2 +2 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
+-import { control, expect, publishLoop, test } from './fixtures.js';
++import { control, expect, publishEventLoop, publishLoop, test } from './fixtures.js';
+@@ -55,0 +56 @@ test('Events appends beyond the first page with reading position and keyboard fo
++  const send = await publishEventLoop(request, ['paging-events'], url);
+@@ -57,7 +58 @@ test('Events appends beyond the first page with reading position and keyboard fo
+-    expect(
+-      (
+-        await request.post(url + '/events', {
+-          data: { type: 'paging-events', payload: { index: i } },
+-        })
+-      ).status(),
+-    ).toBe(202);
++    await send('paging-events', { index: i });
+@@ -67 +62,2 @@ test('Events appends beyond the first page with reading position and keyboard fo
+-  const firstText = await page.locator('tbody tr').first().innerText();
++  const firstPayload = page.locator('[data-testid^="payload-"]').first();
++  const firstText = await firstPayload.textContent();
+@@ -78 +74 @@ test('Events appends beyond the first page with reading position and keyboard fo
+-  expect(await page.locator('tbody tr').first().innerText()).toBe(firstText);
++  expect(await firstPayload.textContent()).toBe(firstText);
+diff --git a/apps/web/e2e/responsive.spec.ts b/apps/web/e2e/responsive.spec.ts
+index 1984867c..d21a8b17 100644
+--- a/apps/web/e2e/responsive.spec.ts
++++ b/apps/web/e2e/responsive.spec.ts
+@@ -19,0 +20 @@ import {
++  publishEventLoop,
+@@ -247 +248,2 @@ for (const theme of ['dark', 'light'] as const) {
+-      await request.post('/events', { data: { type: 'issue.opened', payload: { number: 41 } } });
++      const send = await publishEventLoop(request, ['issue-opened']);
++      await send('issue-opened', { number: 41 });
+@@ -321 +323 @@ for (const theme of ['dark', 'light'] as const) {
+-        ['Events', '/app/events', 'issue.opened'],
++        ['Events', '/app/events', 'issue-opened'],
+@@ -753 +755 @@ for (const theme of ['dark', 'light'] as const) {
+-          ['/app/events', 'issue.opened'],
++          ['/app/events', 'issue-opened'],
+diff --git a/apps/web/e2e/screens.capture.ts b/apps/web/e2e/screens.capture.ts
+index 898b1044..3c7337dc 100644
+--- a/apps/web/e2e/screens.capture.ts
++++ b/apps/web/e2e/screens.capture.ts
+@@ -30 +30 @@ import { request as requestFactory } from '@playwright/test';
+-import { control, test } from './fixtures.js';
++import { control, publishEventLoop, test } from './fixtures.js';
+@@ -342,11 +342,5 @@ async function seed(api: APIRequestContext): Promise<Seeded> {
+-  await json(
+-    await api.post('/events', {
+-      data: {
+-        type: 'issue.opened',
+-        payload: { repo: 'graphgoblin', number: 482, title: 'Editor crashes on paste' },
+-        dedupeKey: 'issue-482',
+-      },
+-    }),
+-  );
+-  await json(
+-    await api.post('/events', { data: { type: 'build.finished', payload: { ok: true } } }),
++  const send = await publishEventLoop(api, ['issue-opened', 'build-finished']);
++  await send(
++    'issue-opened',
++    { repo: 'graphgoblin', number: 482, title: 'Editor crashes on paste' },
++    'issue-482',
+@@ -353,0 +348 @@ async function seed(api: APIRequestContext): Promise<Seeded> {
++  await send('build-finished', { ok: true });
+@@ -508 +503 @@ const SCREENS: Screen[] = [
+-  { name: 'events', path: () => '/app/events', ready: 'issue.opened' },
++  { name: 'events', path: () => '/app/events', ready: 'issue-opened' },

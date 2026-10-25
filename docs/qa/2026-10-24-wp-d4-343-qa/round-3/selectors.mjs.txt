@@ -1,0 +1,70 @@
+// Independent acceptance checks. No production source modification or private access.
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+const root = process.cwd();
+const evidence = join(root, 'docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+const runtime = await mkdtemp(join(tmpdir(), 'gg-qa-d4-343-3-'));
+await copyFile(join(evidence,'server.mjs.txt'),join(runtime,'server.mjs'));
+const clean = v => JSON.stringify(v, (_k,x) => typeof x === 'bigint' ? String(x) : x).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]');
+const results = { revision:'94523682d084f7a566242602762a3b04d87a8e55', node:process.version, runtime, checks:[], http:[], processes:[] };
+const save = () => writeFile(join(evidence,'selector-results.json'), clean(results));
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function test(id, expected, job) {
+  const entry={id,expected,started:new Date().toISOString()};
+  try { entry.actual=await job(); entry.status='PASS'; }
+  catch(e) { entry.status='FAIL'; entry.error=e.stack; }
+  results.checks.push(entry); await save(); console.log(id+' '+entry.status+(entry.error?' '+entry.error.split('\n')[0]:''));
+}
+async function eventually(fn,ms=20000) { const end=Date.now()+ms; while(true) { const v=await fn(); if(v) return v; if(Date.now()>end) throw Error('Timed out waiting for observable state'); await sleep(50); } }
+const inherited=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_') && k!=='JEV_API_KEY'));
+function launch(file,args,env,label) {
+  const child=spawn(process.execPath,[file,...args],{cwd:root,env:{...inherited,...env},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  let stdout='',stderr=''; child.stdout.on('data',d=>stdout+=d); child.stderr.on('data',d=>stderr+=d);
+  const done=new Promise(r=>{child.once('error',e=>r({error:String(e)}));child.once('exit',(code,signal)=>r({code,signal}));});
+  const record={label,pid:child.pid}; results.processes.push(record);
+  return {child,done,record,get stdout(){return stdout},get stderr(){return stderr},async log(){await writeFile(join(evidence,label+'.log.txt'),(stdout+'\nSTDERR\n'+stderr).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]'));}};
+}
+async function instance(name,port) {
+  const data=join(runtime,name); await mkdir(data);
+  const env={QA_ROOT:root,GG_DATA_DIR:data,GG_PORT:String(port),GG_HOST:'127.0.0.1',GG_REQUIRE_API_KEY:'true',GG_MASTER_KEY:Buffer.alloc(32,11).toString('base64'),GG_SWAGGER_UI:'false',GG_WEB_DIST:join(root,'apps/web/dist'),GG_MAX_CONCURRENT_RUNS:'2',GG_JEV_API_KEY:'',GG_LOG_LEVEL:'warn'};
+  const cli=launch(join(root,'apps/api/dist/main.js'),['--create-api-key','Independent QA'],env,name+'-key-cli');
+  const exit=await cli.done; await cli.log(); assert.equal(exit.code,0,cli.stderr);
+  const key=/\bgg_[A-Za-z0-9_-]+/.exec(cli.stdout)?.[0]; assert.ok(key,'CLI key missing');
+  let proc;
+  const s={name,port,data,env,key,url:'http://127.0.0.1:'+port};
+  s.start=async()=>{ proc=launch(join(runtime,'server.mjs'),[],env,name+'-server-'+results.processes.length); s.proc=proc; await eventually(()=>{if(proc.stderr.includes('Error'))throw Error(proc.stderr);return proc.stdout.includes('QA_READY');},60000); };
+  s.call=async(method,path,body,token=key)=>{
+    const t=performance.now(); const r=await fetch(s.url+path,{method,headers:{authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(30000)});
+    const raw=await r.text(); let value;try{value=JSON.parse(raw)}catch{value=raw}
+    const result={status:r.status,body:value,ms:Math.round(performance.now()-t)};
+    if(path!='/__qa') results.http.push({instance:name,method,path,...result}); return result;
+  };
+  s.qa=async(body)=>{const r=await s.call('POST','/__qa',body);assert.equal(r.status,200,JSON.stringify(r));return r.body};
+  s.sql=(sql,args=[])=>s.qa({op:'sql',sql,args});
+  s.settle=()=>s.qa({op:'settle'});
+  s.sweep=async(ms=300001)=>{await s.qa({op:'sweep',ms});await s.settle()};
+  s.stop=async()=>{await s.qa({op:'stop'});const exit=await proc.done;await proc.log();return exit};
+  s.events=async()=>{const r=await s.call('GET','/events?limit=100');assert.equal(r.status,200,JSON.stringify(r));return r.body.items};
+  s.item=async(id)=>(await s.events()).find(x=>x.id===id);
+  s.runs=async(loopId)=>(await s.call('GET','/runs'+(loopId?'?loopId='+loopId:''))).body.items;
+  await s.start(); return s;
+}
+function definition(name,config={type:'event',eventType:'ready'},extra=false,work=false) {
+  const nodes=[{id:'start',kind:'trigger',label:'Start',config},{id:'done',kind:'exit',label:'Done',config:{returns:'trigger.payload'}}];
+  const edges=[{id:'a',from:{node:'start',port:'out'},to:{node:work?'work':'done'}}];
+  if(extra){nodes.push({id:'second',kind:'trigger',label:'Second',config:{type:'event',eventType:'ready'}});edges.push({id:'c',from:{node:'second',port:'out'},to:{node:'done'}})}
+  if(work){nodes.splice(1,0,{id:'work',kind:'inference',label:'Work',config:{harness:'codex',prompt:{template:'QA delayed work'}}});edges.push({id:'b',from:{node:'work',port:'out'},to:{node:'done'}})}
+  return {schemaVersion:4,name,nodes,edges};
+}
+async function loop(s,d,publish=true,token=s.key){const c=await s.call('POST','/loops',{definition:d},token);assert.equal(c.status,201,JSON.stringify(c));const id=c.body.loop.id;if(publish){const p=await s.call('POST','/loops/'+id+'/publish',undefined,token);assert.equal(p.status,200,JSON.stringify(p));}return id;}
+const ev=(s,id,extra={})=>s.call('POST','/events',{loopId:id,type:'ready',...extra});
+const counts=async s=>(await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM event_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs'))[0];
+const fault=async(s,name,on,when='')=>s.sql(`CREATE TRIGGER ${name} BEFORE ${on} ${when} BEGIN SELECT RAISE(ABORT,'QA storage fault'); END`);
+const drop=(s,name)=>s.sql('DROP TRIGGER '+name);
+const depth=n=>'['.repeat(n+1)+'0'+']'.repeat(n+1); // deepest container depth n, root zero
+let s;try{s=await instance('saved-selectors',5858);const id=await loop(s,definition('Saved selector identities'));const first=await ev(s,id,{dedupeKey:'existing'});await s.settle();results.selectorFacts=[];
+for(const [label,more] of [['type-NUL-suffix',{type:'ready\u0000tail'}],['type-NUL-end',{type:'ready\u0000'}],['entry-NUL-suffix',{triggerNodeId:'start\u0000tail'}],['entry-NUL-end',{triggerNodeId:'start\u0000'}],['type-surrogate',{type:'ready\ud800'}],['entry-surrogate',{triggerNodeId:'start\ud800'}],['type-case',{type:'Ready'}],['entry-case',{triggerNodeId:'Start'}]])await test('saved-retry-'+label,'422 before writes; malformed/different selector cannot alias saved receipt',async()=>{const before=await counts(s),r=await ev(s,id,{dedupeKey:'existing',...more}),after=await counts(s);const fact={label,before,r,after};results.selectorFacts.push(fact);assert.equal(r.status,422);assert.deepEqual(after,before);return fact});
+await test('type-namespace-across-publish','same loop/node/key with different Event type gets a distinct receipt; old type retry keeps original',async()=>{const detail=await s.call('GET','/loops/'+id),d=definition('Saved selector identities',{type:'event',eventType:'Ready'});const put=await fetch(s.url+'/loops/'+id+'/draft',{method:'PUT',headers:{authorization:'Bearer '+s.key,'content-type':'application/json','if-match':detail.body.draftToken},body:JSON.stringify({definition:d})});assert.equal(put.status,200);assert.equal((await s.call('POST','/loops/'+id+'/publish')).status,200);const second=await ev(s,id,{type:'Ready',dedupeKey:'existing'});assert.equal(second.status,202);assert.notEqual(second.body.id,first.body.id);await s.settle();const old=await ev(s,id,{type:'ready',dedupeKey:'existing'});assert.equal(old.body.id,first.body.id);const runs=await s.runs(id);assert.equal(runs.length,2);return {first,second,old,runs}});await s.stop();await save();}catch(e){results.fatal=e.stack;await save();if(s)await s.stop().catch(()=>{});throw e}

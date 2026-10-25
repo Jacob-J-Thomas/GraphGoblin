@@ -1,3 +1,4 @@
+import { exceedsStoredJsonDepth, isJsonValue } from '@graphgoblin/domain';
 import { openApiRegistry } from '../openapi-registry.js';
 import { decodeEventCursor, encodeEventCursor } from '../event-cursor.js';
 import {
@@ -16,7 +17,12 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
-import { WEBHOOK_BODY_LIMIT } from '../triggers/trigger-service.js';
+import {
+  EventIntakeError,
+  eventKeyIsWellFormed,
+  EVENT_PAYLOAD_MAX_DEPTH,
+  WEBHOOK_BODY_LIMIT,
+} from '../triggers/trigger-service.js';
 import type { ApiInstance } from '../types.js';
 
 const ScheduleSchema = z.object({
@@ -61,6 +67,10 @@ export const InboundEventSchema = z.object({
   receivedAt: z.string(),
   runIds: z.array(z.string()),
   webhook: WebhookEndpointSchema.optional(),
+  admissionId: z.string().optional(),
+  target: z
+    .object({ loopId: z.string(), versionId: z.string(), triggerNodeId: z.string() })
+    .optional(),
   delivery: z
     .object({
       state: z.enum(['filtered', 'deduplicated', 'pending', 'admitted', 'failed']),
@@ -157,25 +167,62 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
   app.post(
     '/events',
     {
+      preValidation: async (request, reply) => {
+        const body: unknown = request.body;
+        const payload: unknown =
+          body && typeof body === 'object' && 'payload' in body ? body.payload : null;
+        if (!isJsonValue(payload))
+          return problem(reply, 400, 'VALIDATION_FAILED', 'payload must be a finite JSON value');
+        if (exceedsStoredJsonDepth(payload, EVENT_PAYLOAD_MAX_DEPTH)) {
+          container.ports.logger.warn({ code: 'EVENT_PAYLOAD_TOO_DEEP' }, 'event payload refused');
+          return problem(
+            reply,
+            422,
+            'EVENT_PAYLOAD_TOO_DEEP',
+            'payload exceeds the stored JSON nesting bound (994)',
+          );
+        }
+      },
       schema: {
         tags: ['events'],
-        summary: 'Publish an inbound event; fires matching event triggers',
-        body: z.object({
+        summary: 'Accept an external Event for one explicit published loop and event trigger',
+        body: z.strictObject({
+          loopId: UlidSchema,
+          triggerNodeId: z.string().min(1).max(128).optional(),
           type: z.string().min(1).max(128),
           payload: JsonValueSchema.default(null),
-          dedupeKey: z.string().max(512).optional(),
+          dedupeKey: z
+            .string()
+            .min(1)
+            .max(512)
+            .refine(eventKeyIsWellFormed, 'dedupeKey must contain valid Unicode')
+            .refine((key) => !key.includes('\u0000'), 'dedupeKey must not contain U+0000')
+            .register(openApiRegistry, {
+              description:
+                'Optional literal request key: 1 to 512 characters of well-formed Unicode, excluding U+0000 (NUL). Whitespace is significant.',
+            })
+            .optional(),
         }),
         response: { 202: InboundEventSchema.extend({ duplicate: z.boolean() }) },
       },
     },
     async (request, reply) => {
-      const result = await triggers.ingestEvent({
-        ownerId: request.auth.ownerId,
-        type: request.body.type,
-        payload: request.body.payload,
-        ...(request.body.dedupeKey ? { dedupeKey: request.body.dedupeKey } : {}),
-        source: 'api',
-      });
+      let result;
+      try {
+        result = await triggers.ingestEvent({
+          loopId: request.body.loopId,
+          ...(request.body.triggerNodeId ? { triggerNodeId: request.body.triggerNodeId } : {}),
+          ownerId: request.auth.ownerId,
+          type: request.body.type,
+          payload: request.body.payload,
+          ...(request.body.dedupeKey !== undefined ? { dedupeKey: request.body.dedupeKey } : {}),
+          source: 'api',
+        });
+      } catch (error) {
+        if (error instanceof EventIntakeError)
+          return problem(reply, error.status, error.code, error.message);
+        throw error;
+      }
       reply.status(202);
       return { ...result.event, duplicate: result.duplicate };
     },

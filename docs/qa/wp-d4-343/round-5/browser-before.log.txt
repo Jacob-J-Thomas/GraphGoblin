@@ -1,0 +1,53 @@
+pnpm.cmd : $ playwright test events-refresh.spec.ts --grep admits --retries=0 --workers=1 
+--output=../../docs/qa/wp-d4-343/round-5/before-test-results
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/web test:e2e events-refresh.spec.ts -- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ playwright te...re-test-results:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Running 1 test using 1 worker
+
+(node:59468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\events-refresh.spec.ts:24:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) (1.9s)
+
+
+  1) [chromium] › e2e\events-refresh.spec.ts:24:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 202
+    Received: 400
+
+      30 |     expect(
+      31 |       (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
+    > 32 |     ).toBe(202);
+         |       ^
+      33 |   };
+      34 |   for (let i = 0; i < 101; i++) await send('refresh-events', i);
+      35 |   const path = '/app/events?type=refresh-events&before=2099-01-01T00%3A00%3A00.000Z';
+        at send (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-343\apps\web\e2e\events-refresh.spec.ts:32:7)
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-343\apps\web\e2e\events-refresh.spec.ts:34:33
+
+    Error Context: ..\..\docs\qa\wp-d4-343\round-5\before-test-results\events-refresh-Events-admi-13694-ilters-and-pages-again-240--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\docs\qa\wp-d4-343\round-5\before-test-results\events-refresh-Events-admi-13694-ilters-and-pages-again-240--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\docs\qa\wp-d4-343\round-5\before-test-results\events-refresh-Events-admi-13694-ilters-and-pages-again-240--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\events-refresh.spec.ts:24:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) 
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\web
+

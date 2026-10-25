@@ -1,0 +1,25 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+
+// Use the installed browser library in one owned process; CLI daemon sockets closed here.
+const packageRequire = createRequire(realpathSync(resolve('apps/web/node_modules/@playwright/test/package.json')));
+const { chromium } = packageRequire('playwright');
+const browser = await chromium.launch({ channel: 'msedge', headless: true, timeout: 60_000 });
+try {
+  const page = await browser.newPage();
+  page.setDefaultTimeout(30_000);
+  page.setDefaultNavigationTimeout(60_000);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const source = await readFile('docs/qa/wp-d4-343/round-3/browser-check.js.txt', 'utf8');
+  const { default: check } = await import('data:text/javascript,' + encodeURIComponent('export default ' + source));
+  const results = await check(page);
+  if (errors.length) throw Error(JSON.stringify(errors));
+  const result = { browser: browser.version(), provider: 'FakeHarness', results, pageErrors: errors };
+  await writeFile('docs/qa/wp-d4-343/round-3/browser-results.json', JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result, null, 2));
+} finally {
+  await browser.close();
+}

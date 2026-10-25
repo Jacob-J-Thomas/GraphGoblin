@@ -15,12 +15,15 @@ export interface PollItemRejection {
   reason: 'NESTING_DEPTH_EXCEEDED';
 }
 
-function exceedsStoredDepth(item: JsonValue): boolean {
+export function exceedsStoredJsonDepth(
+  item: JsonValue,
+  maximum = POLL_ITEM_MAX_NESTING_DEPTH,
+): boolean {
   const stack = [{ value: item, depth: 0 }];
   while (stack.length) {
     const { value, depth } = stack.pop()!;
     if (value === null || typeof value !== 'object') continue;
-    if (depth > POLL_ITEM_MAX_NESTING_DEPTH) return true;
+    if (depth > maximum) return true;
     for (const child of Array.isArray(value) ? value : Object.values(value))
       stack.push({ value: child, depth: depth + 1 });
   }
@@ -75,7 +78,7 @@ export async function preparePollItems(
   const seen = new Set<string>();
   for (const [index, candidate] of selected.entries()) {
     if (!isJsonValue(candidate)) throw new PollItemsError('ITEM_INVALID', 'items.select', index);
-    const tooDeep = exceedsStoredDepth(candidate);
+    const tooDeep = exceedsStoredJsonDepth(candidate);
     let key: unknown;
     try {
       key = await evaluateExpression(config.dedupeKey, { ...view, item: candidate, index });

@@ -1,0 +1,364 @@
+{
+  "first": {
+    "method": "POST",
+    "path": "/hooks/aHnkbKwfTtl7fZW8W0uETtsY4o1f9yFsQcfar68b6Tw",
+    "status": 202,
+    "body": {
+      "accepted": true
+    }
+  },
+  "receipts": {
+    "method": "POST",
+    "path": "/__qa",
+    "status": 200,
+    "body": [
+      {
+        "status": "admitted",
+        "attempts": 0,
+        "failure_code": null
+      }
+    ]
+  },
+  "runs": {
+    "method": "GET",
+    "path": "/runs?loopId=01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JZ6",
+          "ownerId": "local",
+          "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+          "versionId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ2",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Webhook replacement-char fresh control",
+            "label": "Webhook replacement-char fresh control v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ7",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-24T15:27:01.738Z",
+          "startedAt": "2026-10-24T15:27:01.738Z",
+          "finishedAt": "2026-10-24T15:27:01.738Z",
+          "lastEventSeq": 8
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "log": [
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "loop": {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+          "ownerId": "local",
+          "name": "Webhook replacement-char fresh control",
+          "draftVersionId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ2",
+          "createdAt": "2026-10-24T15:27:01.738Z",
+          "updatedAt": "2026-10-24T15:27:01.738Z"
+        },
+        "draft": {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JZ2",
+          "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Webhook replacement-char fresh control",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "none"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  },
+                  "dedupeKey": "key"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T15:27:01.738Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M5Q8BG3A9SMMQ1PXHS7B8JZ1/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JZ2",
+          "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Webhook replacement-char fresh control",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "none"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  },
+                  "dedupeKey": "key"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T15:27:01.738Z",
+          "publishedAt": "2026-10-24T15:27:01.738Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M5Q8BG3A9SMMQ1PXHS7B8JZ1/triggers",
+      "status": 200,
+      "body": {
+        "schedules": [],
+        "webhooks": [
+          {
+            "id": "01M5Q8BG3A9SMMQ1PXHS7B8JZ3",
+            "ownerId": "local",
+            "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+            "versionId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ2",
+            "triggerNodeId": "start",
+            "path": "/hooks/aHnkbKwfTtl7fZW8W0uETtsY4o1f9yFsQcfar68b6Tw",
+            "authentication": {
+              "type": "none"
+            },
+            "configurationAvailable": true,
+            "body": {
+              "type": "json"
+            },
+            "eventType": {
+              "source": "constant",
+              "value": "webhook"
+            },
+            "dedupeKey": "key",
+            "enabled": true,
+            "createdAt": "2026-10-24T15:27:01.738Z"
+          }
+        ],
+        "polls": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/aHnkbKwfTtl7fZW8W0uETtsY4o1f9yFsQcfar68b6Tw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": [
+        {
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/runs?loopId=01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "01M5Q8BG3A9SMMQ1PXHS7B8JZ6",
+            "ownerId": "local",
+            "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ1",
+            "versionId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ2",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Webhook replacement-char fresh control",
+              "label": "Webhook replacement-char fresh control v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Q8BG3A9SMMQ1PXHS7B8JZ7",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-24T15:27:01.738Z",
+            "startedAt": "2026-10-24T15:27:01.738Z",
+            "finishedAt": "2026-10-24T15:27:01.738Z",
+            "lastEventSeq": 8
+          }
+        ],
+        "nextCursor": null
+      }
+    }
+  ]
+}

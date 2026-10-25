@@ -1,0 +1,69 @@
+pnpm.cmd : $ turbo run build
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd build *> docs/qa/wp-d4-343/round-4/build.log.txt ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run build:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing cd73701f0236c528
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing b59d154848ca793f
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 8c92ab76edc9c56d
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache miss, executing eb87368d50b13513
+@graphgoblin/adapter-jev:build: cache miss, executing 8ab5df0d55938f32
+@graphgoblin/infrastructure:build: cache miss, executing ad39a511822a4aa3
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 5dcca3230e670a48
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 4f81be84d0b1fba8
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:build: cache miss, executing ce81c1426423dba1
+@graphgoblin/web:build: cache miss, executing b4aa3111433e904a
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: $ vite build
+@graphgoblin/plugin-codex:build: cache miss, executing df599ee374b8b93b
+@graphgoblin/plugin-codex:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/web:build: ✓ 736 modules transformed.
+@graphgoblin/plugin-codex:build: Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+@graphgoblin/plugin-codex:build: Install: codex plugin marketplace add "%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-343\apps\plugin-codex\dist\marketplace"
+@graphgoblin/plugin-codex:build:          codex plugin add graphgoblin@graphgoblin-local
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest                    0.47 kB
+@graphgoblin/web:build: dist/index.html                              2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-DnHF7jLv.css              88.31 kB │ gzip:  16.79 kB
+@graphgoblin/web:build: dist/assets/upgrade-current-9UVcWrCX.js    187.88 kB │ gzip:  35.94 kB │ map:   704.31 kB
+@graphgoblin/web:build: dist/assets/index-DHvMw54Z.js            1,841.90 kB │ gzip: 577.47 kB │ map: 8,425.54 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 11.46s
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (2538.67 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   dist/sw.js.map
+@graphgoblin/web:build:   dist/sw.js
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+
+ Tasks:    11 successful, 11 total
+Cached:    0 cached, 11 total
+  Time:    2m33.193s 
+

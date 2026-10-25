@@ -1,0 +1,136 @@
+{
+  "failures": [
+    {
+      "pkg": "infrastructure",
+      "file": "src/adversarial.test.ts",
+      "changed": false,
+      "timing": true,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild\nError: Test timed out in 30000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n ❯ src/adversarial.test.ts:225:3\n    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…\n    224|   });\n    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …\n       |   ^\n    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));\n    227|     const pidFile = join(dir, 'grandchild.pid');\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "changed": false,
+      "timing": true,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/claude/process.test.ts > owned native Claude process transport > streams stdout, sends stdin and never retains stderr content\nAssertionError: expected { exitCode: +0, …(4) } to match object { exitCode: +0, …(4) }\n\n- Expected\n+ Received\n\n  {\n    \"aborted\": false,\n    \"exitCode\": 0,\n    \"overflow\": false,\n    \"stdout\": \"synthetic input\",\n-   \"timedOut\": false,\n+   \"timedOut\": true,\n  }\n\n ❯ src/claude/process.test.ts:50:20\n     48|     );\n     49|     expect(Buffer.concat(chunks).toString()).toBe('synthetic input');\n     50|     expect(result).toMatchObject({\n       |                    ^\n     51|       exitCode: 0,\n     52|       stdout: 'synthetic input',\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯\n\n ",
+      "automaticTimingMatch": false,
+      "classificationNote": "Observed timedOut flag mismatch is a timing observation; separately diagnosed once."
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "changed": false,
+      "timing": false,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow\nError: EBUSY: resource busy or locked, rmdir '%USERPROFILE%/AppData/Local/Temp/gg-claude-process-a5HKHr'\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "changed": false,
+      "timing": false,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process\nError: EBUSY: resource busy or locked, rmdir '%USERPROFILE%/AppData/Local/Temp/gg-claude-process-5eF8Fo'\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "changed": false,
+      "timing": false,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started\nAssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality\n\nExpected: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\nReceived: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\n ❯ src/claude/process.test.ts:146:46\n    144|       const stopped = await readFile(marker, 'utf8');\n    145|       await new Promise((resolve) => setTimeout(resolve, 100));\n    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);\n       |                                              ^\n    147|     } finally {\n    148|       controller.abort();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "changed": false,
+      "timing": false,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started\nError: EBUSY: resource busy or locked, rmdir '%USERPROFILE%/AppData/Local/Temp/gg-claude-process-oyZpJw'\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/claude/readiness.test.ts",
+      "changed": false,
+      "timing": false,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies\nAssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]\n\n- Expected\n+ Received\n\n  [\n    \"Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.\",\n+   \"Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.\",\n  ]\n\n ❯ src/claude/readiness.test.ts:62:31\n     60|         hang: ['Claude CLI did not answer before the check deadline.' …\n     61|       };\n     62|       expect(result.problems).toEqual(problems[scenario]);\n       |                               ^\n     63|     },\n     64|     60000,\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "changed": false,
+      "timing": false,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams\nAssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality\n\n- Expected\n+ Received\n\n- false\n+ true\n\n ❯ src/process/scripts.test.ts:194:7\n    192|       cleanupRequired,\n    193|       'native process-tree cancellation must finish before fixture cle…\n    194|     ).toBe(false);\n       |       ^\n    195|     expect(streamsReady).toBe(2);\n    196|     expect(result).toMatchObject({ stdout: 'A/ufffd', stderr: 'B/ufffd…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "changed": false,
+      "timing": true,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout\nError: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n ❯ src/process/scripts.test.ts:237:3\n    235|   });\n    236|\n    237|   it('kills the process tree on timeout', async () => {\n       |   ^\n    238|     const scripts = new ProcessScripts();\n    239|     const started = Date.now();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "changed": false,
+      "timing": true,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted\nError: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n ❯ src/process/scripts.test.ts:248:3\n    246|   }, 15_000);\n    247|\n    248|   it('kills the process when the signal aborts, including when already…\n       |   ^\n    249|     const scripts = new ProcessScripts();\n    250|     const controller = new AbortController();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯\n\n "
+    },
+    {
+      "pkg": "infrastructure",
+      "file": "src/sqlite/upgrade.test.ts",
+      "changed": false,
+      "timing": true,
+      "permissionHint": false,
+      "excerpt": "FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions\nError: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n ❯ src/sqlite/upgrade.test.ts:302:3\n    300|     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');\n    301|   });\n    302|   it('refuses changed source, damaged SQL/ledger, malformed template i…\n       |   ^\n    303|     const handle = await fixture();\n    304|     const selected = await request(handle);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯\n\n\n Test Files  5 failed | 47 passed (52)\n      Tests  10 failed | 769 passed (779)\n   Start at  07:14:56\n   Duration  800.67s (tests 71%, import 25%, transform 2%, worker 1%)\n\n     Import  216 modules were evaluated 404 times · 180.04s total, 25% of tracked time\n             ~83.78s faster with isolate: false — shared modules are evaluated once per worker instead of once per file\n             learn more: https://vitest.dev/guide/improving-performance#test-isolation\n\n % Coverage report from v8\n\n=============================== Coverage summary ===============================\nStatements   : 97.73% ( 2507/2565 )\nBranches     : 94.85% ( 1863/1964 )\nFunctions    : 97.99% ( 537/548 )\nLines        : 98.63% ( 2233/2264 )\n================================================================================\n[ELIFECYCLE] Command failed with exit code 1.\nError: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL\n\n  × \"pnpm recursive run\" failed "
+    }
+  ],
+  "isolatedJobs": [
+    {
+      "pkg": "infrastructure",
+      "dir": "packages/infrastructure",
+      "file": "src/adversarial.test.ts"
+    },
+    {
+      "pkg": "infrastructure",
+      "dir": "packages/infrastructure",
+      "file": "src/process/scripts.test.ts"
+    },
+    {
+      "pkg": "infrastructure",
+      "dir": "packages/infrastructure",
+      "file": "src/sqlite/upgrade.test.ts"
+    },
+    {
+      "pkg": "infrastructure",
+      "dir": "packages/infrastructure",
+      "file": "src/claude/process.test.ts",
+      "reason": "Untouched stream test returned timedOut:true where false was expected; this is a timing failure even without the phrase Test timed out."
+    },
+    {
+      "pkg": "api",
+      "dir": "apps/api",
+      "file": "src/create-api-key.test.ts",
+      "reason": "One bounded diagnosis of original unhandled worker exit 3221225477, not a replacement for the failed coverage run."
+    }
+  ],
+  "unhandledErrors": [
+    {
+      "pkg": "api",
+      "file": "src/create-api-key.test.ts",
+      "changed": false,
+      "exitCode": 3221225477,
+      "stage": "started",
+      "sourceLog": "coverage-api.log.txt",
+      "isolatedEvidence": "isolated-api-src-create-api-key.test.log.txt",
+      "isolatedTestsPassed": 12,
+      "cause": "unconfirmed"
+    }
+  ]
+}

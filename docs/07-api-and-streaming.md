@@ -34,9 +34,9 @@ Runs
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
-  POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
+  POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; 422 WEBHOOK_PAYLOAD_TOO_DEEP above nesting depth 994; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
-  POST   /events                        inbound Event intake; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  POST   /events                        targeted Event intake; body: { loopId, triggerNodeId?, type, payload?, dedupeKey? }; durably accepts one entry, returns admissionId, target, delivery, runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, webhooks), newest first
 
 Settings and catalog
@@ -65,7 +65,7 @@ unavailable. Enabled mismatches log a safe warning while both listings stay read
 refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
-event metadata does not change `POST /events` or publish anything to the bus.
+event metadata does not change `POST /events` or publish anything to the bus. Webhook-derived keys containing U+0000 (NUL) or ill-formed Unicode return 422 `KEY_INVALID` before any receipt or inbound row is saved.
 
 The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
 
@@ -649,6 +649,14 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
+
+### Targeted Event intake (#343)
+
+`POST /events` requires `{loopId, type, payload?, dedupeKey?, triggerNodeId?}` and `events:write`, plus ownership of the loop. A new request selects one matching Event trigger of the current published version; ambiguous matches require `triggerNodeId`. There is no broadcast form. `events.publish(client, body)` uses this same generated request contract. MCP currently has no tool that publishes an Event, and the web app only lists inbound Events.
+
+The 202 response is the saved Event with `duplicate`, durable `admissionId`, pinned `target: {loopId, versionId, triggerNodeId}` and current `delivery`. `runIds` is empty until atomic run admission. `GET /events` exposes the same target and delivery state. The Events page shows the linked target loop, entry trigger and admission identity even when no run has been admitted. Keyed retries return the original delivery, even across later publication, in owner/loop/trigger/type scope. Missing/invalid body fields are 400 `VALIDATION_FAILED`; foreign/missing loop 404 `LOOP_NOT_FOUND`; no published version 409 `VERSION_NOT_PUBLISHED`; unmatched/ambiguous entry 422 `EVENT_TRIGGER_NOT_FOUND`/`EVENT_TRIGGER_AMBIGUOUS`; failed key expression 422 `EVENT_KEY_EXPRESSION_FAILED`; excessive payload depth 422 `EVENT_PAYLOAD_TOO_DEEP`; unconfirmed persistence 503 `EVENT_ADMISSION_FAILED`; unreadable stored delivery on a keyed retry 500 `STORED_EVENT_INVALID`. See [08](08-triggers-and-integrations.md#inbound-events-decided-targeted-durable-admission-adr-0048) for retry, nesting and permanent key semantics. URL webhook acknowledgements remain exactly `{accepted:true}`.
+
+Targeted Event request keys must contain 1 to 512 characters of well-formed Unicode without U+0000 (NUL) (400 `VALIDATION_FAILED` naming `/dedupeKey` otherwise); an authored key containing NUL or invalid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization or NUL truncation from changing an accepted identity.
 
 ### Process model defaults (#205)
 
