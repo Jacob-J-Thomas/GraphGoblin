@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const protocol=JSON.parse(await readFile(join(out,'performance-runs.json'),'utf8'));
+const temp=protocol.temp.replace('%USERPROFILE%',process.env.USERPROFILE);
+const results=[];
+async function run(name,args){console.log('START',name);const env={...process.env};delete env.NODE_OPTIONS;const c=spawn(process.execPath,args,{cwd:root,env,windowsHide:true});let log='';c.stdout.on('data',x=>log+=x);c.stderr.on('data',x=>log+=x);const code=await new Promise((resolve,reject)=>{c.on('error',reject);c.on('close',resolve);});await writeFile(join(out,name+'.log.txt'),JSON.stringify(args)+'\n'+log+'\nEXIT='+code+'\n');results.push({name,args,code});await writeFile(join(out,'performance-continuation.json'),JSON.stringify(results,null,2)+'\n');console.log('END',name,code);return code;}
+const output=join(temp,'append-after');const code=await run('append-after',['--experimental-import-meta-resolve','tooling/perf/measure.mjs','append','--passes=10','--items=100','--profile=inspector','--port=6190','--store-prefix=gg-qa-e1-268-','--out='+output]);
+const raw=JSON.parse(await readFile(join(output,'raw-summary.json'),'utf8'));await writeFile(join(out,'append-after-summary.json'),JSON.stringify(raw,null,2)+'\n');
+assert.equal(code,1);assert.equal(raw.cases[0].correctness.ok,true);assert.equal(raw.cases[0].correctness.replayOk,true);assert.equal(raw.cases[0].recovery.ok,false);assert.equal(raw.cases[0].recovery.beforeHash,raw.cases[0].recovery.afterHash);
+for(const name of ['replay','append'])assert.equal(await run(name+'-pair',['--experimental-import-meta-resolve','tooling/perf/compare.mjs',join(temp,name+'-before/raw-summary.json'),join(temp,name+'-after/raw-summary.json'),join(out,name+'-equivalence.json')]),0);
+console.log('CONTINUATION_COMPLETE_WITH_RECORDED_TOOLING_DEFECT');

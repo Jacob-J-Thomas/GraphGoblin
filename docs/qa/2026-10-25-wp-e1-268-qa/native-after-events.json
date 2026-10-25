@@ -1,0 +1,8683 @@
+[
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 1,
+    "ts": "2026-10-25T10:57:56.245Z",
+    "type": "run.queued",
+    "versionId": "01M5SBBFYWBFSSG0RJECZRPHJ8",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "native crash between finalization pages",
+      "label": "native crash between finalization pages v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "initialThread": {
+      "schemaVersion": 1,
+      "run": {
+        "id": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+        "loopId": "01M5SBBFYV9V5XB0FRH78J8PCP",
+        "versionId": "01M5SBBFYWBFSSG0RJECZRPHJ8",
+        "iteration": 1
+      },
+      "invocation": {
+        "id": "01M5SBBG0NRHW1F17ZKEPMZFF5",
+        "source": "manual.api",
+        "caller": {
+          "kind": "api-key",
+          "id": "01M5SBBBG9122V6ABY0MHXR3CP"
+        },
+        "trigger": {
+          "nodeId": "start",
+          "kind": "manual",
+          "payload": null,
+          "receivedAt": "2026-10-25T10:57:56.245Z"
+        }
+      },
+      "messages": [],
+      "vars": {},
+      "artifacts": [],
+      "outputs": {},
+      "gates": {},
+      "counters": {
+        "nodeVisits": {},
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 2,
+    "ts": "2026-10-25T10:57:56.294Z",
+    "type": "run.started",
+    "attempt": 1
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 3,
+    "ts": "2026-10-25T10:57:56.300Z",
+    "type": "node.started",
+    "nodeId": "start",
+    "kind": "trigger",
+    "attempt": 1,
+    "configHash": "527dee9c4254fe4e"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 4,
+    "ts": "2026-10-25T10:57:56.313Z",
+    "type": "node.finished",
+    "nodeId": "start",
+    "patch": [
+      {
+        "op": "add",
+        "path": "/outputs/start",
+        "value": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-25T10:57:56.307Z"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/lastOutput",
+        "value": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-25T10:57:56.307Z"
+        }
+      }
+    ],
+    "route": "out",
+    "durationMs": 4
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 5,
+    "ts": "2026-10-25T10:57:56.361Z",
+    "type": "node.started",
+    "nodeId": "work",
+    "kind": "inference",
+    "attempt": 1,
+    "configHash": "9c1a2fa7b4d954c0"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 6,
+    "ts": "2026-10-25T10:57:56.369Z",
+    "type": "harness.turn",
+    "nodeId": "work",
+    "visitId": "01M5SBBG0NRHW1F17ZKEPMZFF4:5",
+    "turnId": "01M5SBBG4H9KX39VFN9CM45YHB",
+    "harness": "codex",
+    "promptKind": "authored",
+    "prompt": "native fake qa"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 7,
+    "ts": "2026-10-25T10:57:56.398Z",
+    "type": "harness.session",
+    "nodeId": "work",
+    "harness": "codex",
+    "sessionId": "fake-session-1",
+    "mode": "fresh",
+    "model": "gpt-6-luna",
+    "effort": "low"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 8,
+    "ts": "2026-10-25T10:57:56.430Z",
+    "type": "harness.submission",
+    "nodeId": "work",
+    "visitId": "01M5SBBG0NRHW1F17ZKEPMZFF4:5",
+    "turnId": "01M5SBBG4H9KX39VFN9CM45YHB",
+    "submission": "submitted",
+    "marker": "fake.accepted"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 9,
+    "ts": "2026-10-25T10:57:56.433Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "0",
+        "summary": "native qa 0",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 10,
+    "ts": "2026-10-25T10:57:56.464Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "1",
+        "summary": "native qa 1",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 11,
+    "ts": "2026-10-25T10:57:56.466Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "2",
+        "summary": "native qa 2",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 12,
+    "ts": "2026-10-25T10:57:56.467Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "3",
+        "summary": "native qa 3",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 13,
+    "ts": "2026-10-25T10:57:56.469Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "4",
+        "summary": "native qa 4",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 14,
+    "ts": "2026-10-25T10:57:56.500Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "5",
+        "summary": "native qa 5",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 15,
+    "ts": "2026-10-25T10:57:56.502Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "6",
+        "summary": "native qa 6",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 16,
+    "ts": "2026-10-25T10:57:56.504Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "7",
+        "summary": "native qa 7",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 17,
+    "ts": "2026-10-25T10:57:56.505Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "8",
+        "summary": "native qa 8",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 18,
+    "ts": "2026-10-25T10:57:56.536Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "9",
+        "summary": "native qa 9",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 19,
+    "ts": "2026-10-25T10:57:56.538Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "10",
+        "summary": "native qa 10",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 20,
+    "ts": "2026-10-25T10:57:56.540Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "11",
+        "summary": "native qa 11",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 21,
+    "ts": "2026-10-25T10:57:56.541Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "12",
+        "summary": "native qa 12",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 22,
+    "ts": "2026-10-25T10:57:56.574Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "13",
+        "summary": "native qa 13",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 23,
+    "ts": "2026-10-25T10:57:56.576Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "14",
+        "summary": "native qa 14",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 24,
+    "ts": "2026-10-25T10:57:56.577Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "15",
+        "summary": "native qa 15",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 25,
+    "ts": "2026-10-25T10:57:56.579Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "16",
+        "summary": "native qa 16",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 26,
+    "ts": "2026-10-25T10:57:56.610Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "17",
+        "summary": "native qa 17",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 27,
+    "ts": "2026-10-25T10:57:56.612Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "18",
+        "summary": "native qa 18",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 28,
+    "ts": "2026-10-25T10:57:56.645Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "19",
+        "summary": "native qa 19",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 29,
+    "ts": "2026-10-25T10:57:56.647Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "20",
+        "summary": "native qa 20",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 30,
+    "ts": "2026-10-25T10:57:56.679Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "21",
+        "summary": "native qa 21",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 31,
+    "ts": "2026-10-25T10:57:56.681Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "22",
+        "summary": "native qa 22",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 32,
+    "ts": "2026-10-25T10:57:56.683Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "23",
+        "summary": "native qa 23",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 33,
+    "ts": "2026-10-25T10:57:56.685Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "24",
+        "summary": "native qa 24",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 34,
+    "ts": "2026-10-25T10:57:56.717Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "25",
+        "summary": "native qa 25",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 35,
+    "ts": "2026-10-25T10:57:56.723Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "26",
+        "summary": "native qa 26",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 36,
+    "ts": "2026-10-25T10:57:56.726Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "27",
+        "summary": "native qa 27",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 37,
+    "ts": "2026-10-25T10:57:56.728Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "28",
+        "summary": "native qa 28",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 38,
+    "ts": "2026-10-25T10:57:56.759Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "29",
+        "summary": "native qa 29",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 39,
+    "ts": "2026-10-25T10:57:56.762Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "30",
+        "summary": "native qa 30",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 40,
+    "ts": "2026-10-25T10:57:56.764Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "31",
+        "summary": "native qa 31",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 41,
+    "ts": "2026-10-25T10:57:56.799Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "32",
+        "summary": "native qa 32",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 42,
+    "ts": "2026-10-25T10:57:56.801Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "33",
+        "summary": "native qa 33",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 43,
+    "ts": "2026-10-25T10:57:56.803Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "34",
+        "summary": "native qa 34",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 44,
+    "ts": "2026-10-25T10:57:56.805Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "35",
+        "summary": "native qa 35",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 45,
+    "ts": "2026-10-25T10:57:56.836Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "36",
+        "summary": "native qa 36",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 46,
+    "ts": "2026-10-25T10:57:56.839Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "37",
+        "summary": "native qa 37",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 47,
+    "ts": "2026-10-25T10:57:56.840Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "38",
+        "summary": "native qa 38",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 48,
+    "ts": "2026-10-25T10:57:56.842Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "39",
+        "summary": "native qa 39",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 49,
+    "ts": "2026-10-25T10:57:56.873Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "40",
+        "summary": "native qa 40",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 50,
+    "ts": "2026-10-25T10:57:56.875Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "41",
+        "summary": "native qa 41",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 51,
+    "ts": "2026-10-25T10:57:56.877Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "42",
+        "summary": "native qa 42",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 52,
+    "ts": "2026-10-25T10:57:56.878Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "43",
+        "summary": "native qa 43",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 53,
+    "ts": "2026-10-25T10:57:56.910Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "44",
+        "summary": "native qa 44",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 54,
+    "ts": "2026-10-25T10:57:56.911Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "45",
+        "summary": "native qa 45",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 55,
+    "ts": "2026-10-25T10:57:56.913Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "46",
+        "summary": "native qa 46",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 56,
+    "ts": "2026-10-25T10:57:56.915Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "47",
+        "summary": "native qa 47",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 57,
+    "ts": "2026-10-25T10:57:56.947Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "48",
+        "summary": "native qa 48",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 58,
+    "ts": "2026-10-25T10:57:56.950Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "49",
+        "summary": "native qa 49",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 59,
+    "ts": "2026-10-25T10:57:56.952Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "50",
+        "summary": "native qa 50",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 60,
+    "ts": "2026-10-25T10:57:56.954Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "51",
+        "summary": "native qa 51",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 61,
+    "ts": "2026-10-25T10:57:56.987Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "52",
+        "summary": "native qa 52",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 62,
+    "ts": "2026-10-25T10:57:56.989Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "53",
+        "summary": "native qa 53",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 63,
+    "ts": "2026-10-25T10:57:56.990Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "54",
+        "summary": "native qa 54",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 64,
+    "ts": "2026-10-25T10:57:56.992Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "55",
+        "summary": "native qa 55",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 65,
+    "ts": "2026-10-25T10:57:57.027Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "56",
+        "summary": "native qa 56",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 66,
+    "ts": "2026-10-25T10:57:57.029Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "57",
+        "summary": "native qa 57",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 67,
+    "ts": "2026-10-25T10:57:57.030Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "58",
+        "summary": "native qa 58",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 68,
+    "ts": "2026-10-25T10:57:57.032Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "59",
+        "summary": "native qa 59",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 69,
+    "ts": "2026-10-25T10:57:57.063Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "60",
+        "summary": "native qa 60",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 70,
+    "ts": "2026-10-25T10:57:57.065Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "61",
+        "summary": "native qa 61",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 71,
+    "ts": "2026-10-25T10:57:57.067Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "62",
+        "summary": "native qa 62",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 72,
+    "ts": "2026-10-25T10:57:57.069Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "63",
+        "summary": "native qa 63",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 73,
+    "ts": "2026-10-25T10:57:57.100Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "64",
+        "summary": "native qa 64",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 74,
+    "ts": "2026-10-25T10:57:57.102Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "65",
+        "summary": "native qa 65",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 75,
+    "ts": "2026-10-25T10:57:57.103Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "66",
+        "summary": "native qa 66",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 76,
+    "ts": "2026-10-25T10:57:57.105Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "67",
+        "summary": "native qa 67",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 77,
+    "ts": "2026-10-25T10:57:57.135Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "68",
+        "summary": "native qa 68",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 78,
+    "ts": "2026-10-25T10:57:57.137Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "69",
+        "summary": "native qa 69",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 79,
+    "ts": "2026-10-25T10:57:57.139Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "70",
+        "summary": "native qa 70",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 80,
+    "ts": "2026-10-25T10:57:57.141Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "71",
+        "summary": "native qa 71",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 81,
+    "ts": "2026-10-25T10:57:57.172Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "72",
+        "summary": "native qa 72",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 82,
+    "ts": "2026-10-25T10:57:57.174Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "73",
+        "summary": "native qa 73",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 83,
+    "ts": "2026-10-25T10:57:57.176Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "74",
+        "summary": "native qa 74",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 84,
+    "ts": "2026-10-25T10:57:57.209Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "75",
+        "summary": "native qa 75",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 85,
+    "ts": "2026-10-25T10:57:57.212Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "76",
+        "summary": "native qa 76",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 86,
+    "ts": "2026-10-25T10:57:57.214Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "77",
+        "summary": "native qa 77",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 87,
+    "ts": "2026-10-25T10:57:57.216Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "78",
+        "summary": "native qa 78",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 88,
+    "ts": "2026-10-25T10:57:57.253Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "79",
+        "summary": "native qa 79",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 89,
+    "ts": "2026-10-25T10:57:57.255Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "80",
+        "summary": "native qa 80",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 90,
+    "ts": "2026-10-25T10:57:57.257Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "81",
+        "summary": "native qa 81",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 91,
+    "ts": "2026-10-25T10:57:57.259Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "82",
+        "summary": "native qa 82",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 92,
+    "ts": "2026-10-25T10:57:57.290Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "83",
+        "summary": "native qa 83",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 93,
+    "ts": "2026-10-25T10:57:57.295Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "84",
+        "summary": "native qa 84",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 94,
+    "ts": "2026-10-25T10:57:57.297Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "85",
+        "summary": "native qa 85",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 95,
+    "ts": "2026-10-25T10:57:57.300Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "86",
+        "summary": "native qa 86",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 96,
+    "ts": "2026-10-25T10:57:57.330Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "87",
+        "summary": "native qa 87",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 97,
+    "ts": "2026-10-25T10:57:57.333Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "88",
+        "summary": "native qa 88",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 98,
+    "ts": "2026-10-25T10:57:57.334Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "89",
+        "summary": "native qa 89",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 99,
+    "ts": "2026-10-25T10:57:57.341Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "90",
+        "summary": "native qa 90",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 100,
+    "ts": "2026-10-25T10:57:57.371Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "91",
+        "summary": "native qa 91",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 101,
+    "ts": "2026-10-25T10:57:57.373Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "92",
+        "summary": "native qa 92",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 102,
+    "ts": "2026-10-25T10:57:57.374Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "93",
+        "summary": "native qa 93",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 103,
+    "ts": "2026-10-25T10:57:57.376Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "94",
+        "summary": "native qa 94",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 104,
+    "ts": "2026-10-25T10:57:57.407Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "95",
+        "summary": "native qa 95",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 105,
+    "ts": "2026-10-25T10:57:57.408Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "96",
+        "summary": "native qa 96",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 106,
+    "ts": "2026-10-25T10:57:57.410Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "97",
+        "summary": "native qa 97",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 107,
+    "ts": "2026-10-25T10:57:57.411Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "98",
+        "summary": "native qa 98",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 108,
+    "ts": "2026-10-25T10:57:57.442Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "99",
+        "summary": "native qa 99",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 109,
+    "ts": "2026-10-25T10:57:57.444Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "100",
+        "summary": "native qa 100",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 110,
+    "ts": "2026-10-25T10:57:57.447Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "101",
+        "summary": "native qa 101",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 111,
+    "ts": "2026-10-25T10:57:57.449Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "102",
+        "summary": "native qa 102",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 112,
+    "ts": "2026-10-25T10:57:57.482Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "103",
+        "summary": "native qa 103",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 113,
+    "ts": "2026-10-25T10:57:57.484Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "104",
+        "summary": "native qa 104",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 114,
+    "ts": "2026-10-25T10:57:57.486Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "105",
+        "summary": "native qa 105",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 115,
+    "ts": "2026-10-25T10:57:57.488Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "106",
+        "summary": "native qa 106",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 116,
+    "ts": "2026-10-25T10:57:57.519Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "107",
+        "summary": "native qa 107",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 117,
+    "ts": "2026-10-25T10:57:57.520Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "108",
+        "summary": "native qa 108",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 118,
+    "ts": "2026-10-25T10:57:57.522Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "109",
+        "summary": "native qa 109",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 119,
+    "ts": "2026-10-25T10:57:57.523Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "110",
+        "summary": "native qa 110",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 120,
+    "ts": "2026-10-25T10:57:57.554Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "111",
+        "summary": "native qa 111",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 121,
+    "ts": "2026-10-25T10:57:57.556Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "112",
+        "summary": "native qa 112",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 122,
+    "ts": "2026-10-25T10:57:57.558Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "113",
+        "summary": "native qa 113",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 123,
+    "ts": "2026-10-25T10:57:57.559Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "114",
+        "summary": "native qa 114",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 124,
+    "ts": "2026-10-25T10:57:57.590Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "115",
+        "summary": "native qa 115",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 125,
+    "ts": "2026-10-25T10:57:57.592Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "116",
+        "summary": "native qa 116",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 126,
+    "ts": "2026-10-25T10:57:57.593Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "117",
+        "summary": "native qa 117",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 127,
+    "ts": "2026-10-25T10:57:57.624Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "118",
+        "summary": "native qa 118",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 128,
+    "ts": "2026-10-25T10:57:57.626Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "119",
+        "summary": "native qa 119",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 129,
+    "ts": "2026-10-25T10:57:57.628Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "120",
+        "summary": "native qa 120",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 130,
+    "ts": "2026-10-25T10:57:57.629Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "121",
+        "summary": "native qa 121",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 131,
+    "ts": "2026-10-25T10:57:57.660Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "122",
+        "summary": "native qa 122",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 132,
+    "ts": "2026-10-25T10:57:57.661Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "123",
+        "summary": "native qa 123",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 133,
+    "ts": "2026-10-25T10:57:57.663Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "124",
+        "summary": "native qa 124",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 134,
+    "ts": "2026-10-25T10:57:57.665Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "125",
+        "summary": "native qa 125",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 135,
+    "ts": "2026-10-25T10:57:57.699Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "126",
+        "summary": "native qa 126",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 136,
+    "ts": "2026-10-25T10:57:57.701Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "127",
+        "summary": "native qa 127",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 137,
+    "ts": "2026-10-25T10:57:57.702Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "128",
+        "summary": "native qa 128",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 138,
+    "ts": "2026-10-25T10:57:57.704Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "129",
+        "summary": "native qa 129",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 139,
+    "ts": "2026-10-25T10:57:57.735Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "130",
+        "summary": "native qa 130",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 140,
+    "ts": "2026-10-25T10:57:57.737Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "131",
+        "summary": "native qa 131",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 141,
+    "ts": "2026-10-25T10:57:57.739Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "132",
+        "summary": "native qa 132",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 142,
+    "ts": "2026-10-25T10:57:57.741Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "133",
+        "summary": "native qa 133",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 143,
+    "ts": "2026-10-25T10:57:57.771Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "134",
+        "summary": "native qa 134",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 144,
+    "ts": "2026-10-25T10:57:57.773Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "135",
+        "summary": "native qa 135",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 145,
+    "ts": "2026-10-25T10:57:57.775Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "136",
+        "summary": "native qa 136",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 146,
+    "ts": "2026-10-25T10:57:57.777Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "137",
+        "summary": "native qa 137",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 147,
+    "ts": "2026-10-25T10:57:57.839Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "138",
+        "summary": "native qa 138",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 148,
+    "ts": "2026-10-25T10:57:57.849Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "139",
+        "summary": "native qa 139",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 149,
+    "ts": "2026-10-25T10:57:57.880Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "140",
+        "summary": "native qa 140",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 150,
+    "ts": "2026-10-25T10:57:57.882Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "141",
+        "summary": "native qa 141",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 151,
+    "ts": "2026-10-25T10:57:57.884Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "142",
+        "summary": "native qa 142",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 152,
+    "ts": "2026-10-25T10:57:57.918Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "143",
+        "summary": "native qa 143",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 153,
+    "ts": "2026-10-25T10:57:57.920Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "144",
+        "summary": "native qa 144",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 154,
+    "ts": "2026-10-25T10:57:57.921Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "145",
+        "summary": "native qa 145",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 155,
+    "ts": "2026-10-25T10:57:57.923Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "146",
+        "summary": "native qa 146",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 156,
+    "ts": "2026-10-25T10:57:57.954Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "147",
+        "summary": "native qa 147",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 157,
+    "ts": "2026-10-25T10:57:57.956Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "148",
+        "summary": "native qa 148",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 158,
+    "ts": "2026-10-25T10:57:57.958Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "149",
+        "summary": "native qa 149",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 159,
+    "ts": "2026-10-25T10:57:57.960Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "150",
+        "summary": "native qa 150",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 160,
+    "ts": "2026-10-25T10:57:57.991Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "151",
+        "summary": "native qa 151",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 161,
+    "ts": "2026-10-25T10:57:57.993Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "152",
+        "summary": "native qa 152",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 162,
+    "ts": "2026-10-25T10:57:57.995Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "153",
+        "summary": "native qa 153",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 163,
+    "ts": "2026-10-25T10:57:57.997Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "154",
+        "summary": "native qa 154",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 164,
+    "ts": "2026-10-25T10:57:58.028Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "155",
+        "summary": "native qa 155",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 165,
+    "ts": "2026-10-25T10:57:58.030Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "156",
+        "summary": "native qa 156",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 166,
+    "ts": "2026-10-25T10:57:58.031Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "157",
+        "summary": "native qa 157",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 167,
+    "ts": "2026-10-25T10:57:58.032Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "158",
+        "summary": "native qa 158",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 168,
+    "ts": "2026-10-25T10:57:58.064Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "159",
+        "summary": "native qa 159",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 169,
+    "ts": "2026-10-25T10:57:58.066Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "160",
+        "summary": "native qa 160",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 170,
+    "ts": "2026-10-25T10:57:58.068Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "161",
+        "summary": "native qa 161",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 171,
+    "ts": "2026-10-25T10:57:58.070Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "162",
+        "summary": "native qa 162",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 172,
+    "ts": "2026-10-25T10:57:58.101Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "163",
+        "summary": "native qa 163",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 173,
+    "ts": "2026-10-25T10:57:58.103Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "164",
+        "summary": "native qa 164",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 174,
+    "ts": "2026-10-25T10:57:58.104Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "165",
+        "summary": "native qa 165",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 175,
+    "ts": "2026-10-25T10:57:58.106Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "166",
+        "summary": "native qa 166",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 176,
+    "ts": "2026-10-25T10:57:58.139Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "167",
+        "summary": "native qa 167",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 177,
+    "ts": "2026-10-25T10:57:58.141Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "168",
+        "summary": "native qa 168",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 178,
+    "ts": "2026-10-25T10:57:58.143Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "169",
+        "summary": "native qa 169",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 179,
+    "ts": "2026-10-25T10:57:58.144Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "170",
+        "summary": "native qa 170",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 180,
+    "ts": "2026-10-25T10:57:58.175Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "171",
+        "summary": "native qa 171",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 181,
+    "ts": "2026-10-25T10:57:58.177Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "172",
+        "summary": "native qa 172",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 182,
+    "ts": "2026-10-25T10:57:58.179Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "173",
+        "summary": "native qa 173",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 183,
+    "ts": "2026-10-25T10:57:58.180Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "174",
+        "summary": "native qa 174",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 184,
+    "ts": "2026-10-25T10:57:58.212Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "175",
+        "summary": "native qa 175",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 185,
+    "ts": "2026-10-25T10:57:58.214Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "176",
+        "summary": "native qa 176",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 186,
+    "ts": "2026-10-25T10:57:58.216Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "177",
+        "summary": "native qa 177",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 187,
+    "ts": "2026-10-25T10:57:58.217Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "178",
+        "summary": "native qa 178",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 188,
+    "ts": "2026-10-25T10:57:58.249Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "179",
+        "summary": "native qa 179",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 189,
+    "ts": "2026-10-25T10:57:58.251Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "180",
+        "summary": "native qa 180",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 190,
+    "ts": "2026-10-25T10:57:58.253Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "181",
+        "summary": "native qa 181",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 191,
+    "ts": "2026-10-25T10:57:58.285Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "182",
+        "summary": "native qa 182",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 192,
+    "ts": "2026-10-25T10:57:58.287Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "183",
+        "summary": "native qa 183",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 193,
+    "ts": "2026-10-25T10:57:58.289Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "184",
+        "summary": "native qa 184",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 194,
+    "ts": "2026-10-25T10:57:58.291Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "185",
+        "summary": "native qa 185",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 195,
+    "ts": "2026-10-25T10:57:58.322Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "186",
+        "summary": "native qa 186",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 196,
+    "ts": "2026-10-25T10:57:58.325Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "187",
+        "summary": "native qa 187",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 197,
+    "ts": "2026-10-25T10:57:58.327Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "188",
+        "summary": "native qa 188",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 198,
+    "ts": "2026-10-25T10:57:58.328Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "189",
+        "summary": "native qa 189",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 199,
+    "ts": "2026-10-25T10:57:58.361Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "190",
+        "summary": "native qa 190",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 200,
+    "ts": "2026-10-25T10:57:58.363Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "191",
+        "summary": "native qa 191",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 201,
+    "ts": "2026-10-25T10:57:58.364Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "192",
+        "summary": "native qa 192",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 202,
+    "ts": "2026-10-25T10:57:58.366Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "193",
+        "summary": "native qa 193",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 203,
+    "ts": "2026-10-25T10:57:58.395Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "194",
+        "summary": "native qa 194",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 204,
+    "ts": "2026-10-25T10:57:58.397Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "195",
+        "summary": "native qa 195",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 205,
+    "ts": "2026-10-25T10:57:58.399Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "196",
+        "summary": "native qa 196",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 206,
+    "ts": "2026-10-25T10:57:58.400Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "197",
+        "summary": "native qa 197",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 207,
+    "ts": "2026-10-25T10:57:58.430Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "198",
+        "summary": "native qa 198",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 208,
+    "ts": "2026-10-25T10:57:58.433Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "199",
+        "summary": "native qa 199",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 209,
+    "ts": "2026-10-25T10:57:58.496Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "200",
+        "summary": "native qa 200",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 210,
+    "ts": "2026-10-25T10:57:58.500Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "201",
+        "summary": "native qa 201",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 211,
+    "ts": "2026-10-25T10:57:58.502Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "202",
+        "summary": "native qa 202",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 212,
+    "ts": "2026-10-25T10:57:58.531Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "203",
+        "summary": "native qa 203",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 213,
+    "ts": "2026-10-25T10:57:58.533Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "204",
+        "summary": "native qa 204",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 214,
+    "ts": "2026-10-25T10:57:58.535Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "205",
+        "summary": "native qa 205",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 215,
+    "ts": "2026-10-25T10:57:58.536Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "206",
+        "summary": "native qa 206",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 216,
+    "ts": "2026-10-25T10:57:58.569Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "207",
+        "summary": "native qa 207",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 217,
+    "ts": "2026-10-25T10:57:58.574Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "208",
+        "summary": "native qa 208",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 218,
+    "ts": "2026-10-25T10:57:58.576Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "209",
+        "summary": "native qa 209",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 219,
+    "ts": "2026-10-25T10:57:58.578Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "210",
+        "summary": "native qa 210",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 220,
+    "ts": "2026-10-25T10:57:58.610Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "211",
+        "summary": "native qa 211",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 221,
+    "ts": "2026-10-25T10:57:58.611Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "212",
+        "summary": "native qa 212",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 222,
+    "ts": "2026-10-25T10:57:58.613Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "213",
+        "summary": "native qa 213",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 223,
+    "ts": "2026-10-25T10:57:58.615Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "214",
+        "summary": "native qa 214",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 224,
+    "ts": "2026-10-25T10:57:58.647Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "215",
+        "summary": "native qa 215",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 225,
+    "ts": "2026-10-25T10:57:58.649Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "216",
+        "summary": "native qa 216",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 226,
+    "ts": "2026-10-25T10:57:58.650Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "217",
+        "summary": "native qa 217",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 227,
+    "ts": "2026-10-25T10:57:58.682Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "218",
+        "summary": "native qa 218",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 228,
+    "ts": "2026-10-25T10:57:58.684Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "219",
+        "summary": "native qa 219",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 229,
+    "ts": "2026-10-25T10:57:58.685Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "220",
+        "summary": "native qa 220",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 230,
+    "ts": "2026-10-25T10:57:58.687Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "221",
+        "summary": "native qa 221",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 231,
+    "ts": "2026-10-25T10:57:58.719Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "222",
+        "summary": "native qa 222",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 232,
+    "ts": "2026-10-25T10:57:58.720Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "223",
+        "summary": "native qa 223",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 233,
+    "ts": "2026-10-25T10:57:58.722Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "224",
+        "summary": "native qa 224",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 234,
+    "ts": "2026-10-25T10:57:58.724Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "225",
+        "summary": "native qa 225",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 235,
+    "ts": "2026-10-25T10:57:58.755Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "226",
+        "summary": "native qa 226",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 236,
+    "ts": "2026-10-25T10:57:58.757Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "227",
+        "summary": "native qa 227",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 237,
+    "ts": "2026-10-25T10:57:58.758Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "228",
+        "summary": "native qa 228",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 238,
+    "ts": "2026-10-25T10:57:58.760Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "229",
+        "summary": "native qa 229",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 239,
+    "ts": "2026-10-25T10:57:58.794Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "230",
+        "summary": "native qa 230",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 240,
+    "ts": "2026-10-25T10:57:58.795Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "231",
+        "summary": "native qa 231",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 241,
+    "ts": "2026-10-25T10:57:58.797Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "232",
+        "summary": "native qa 232",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 242,
+    "ts": "2026-10-25T10:57:58.798Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "233",
+        "summary": "native qa 233",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 243,
+    "ts": "2026-10-25T10:57:58.829Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "234",
+        "summary": "native qa 234",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 244,
+    "ts": "2026-10-25T10:57:58.831Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "235",
+        "summary": "native qa 235",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 245,
+    "ts": "2026-10-25T10:57:58.832Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "236",
+        "summary": "native qa 236",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 246,
+    "ts": "2026-10-25T10:57:58.833Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "237",
+        "summary": "native qa 237",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 247,
+    "ts": "2026-10-25T10:57:58.865Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "238",
+        "summary": "native qa 238",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 248,
+    "ts": "2026-10-25T10:57:58.869Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "239",
+        "summary": "native qa 239",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 249,
+    "ts": "2026-10-25T10:57:58.871Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "240",
+        "summary": "native qa 240",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 250,
+    "ts": "2026-10-25T10:57:58.874Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "241",
+        "summary": "native qa 241",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 251,
+    "ts": "2026-10-25T10:57:58.905Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "242",
+        "summary": "native qa 242",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 252,
+    "ts": "2026-10-25T10:57:58.907Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "243",
+        "summary": "native qa 243",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 253,
+    "ts": "2026-10-25T10:57:58.909Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "244",
+        "summary": "native qa 244",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 254,
+    "ts": "2026-10-25T10:57:58.910Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "245",
+        "summary": "native qa 245",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 255,
+    "ts": "2026-10-25T10:57:58.941Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "246",
+        "summary": "native qa 246",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 256,
+    "ts": "2026-10-25T10:57:58.943Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "247",
+        "summary": "native qa 247",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 257,
+    "ts": "2026-10-25T10:57:58.945Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "248",
+        "summary": "native qa 248",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 258,
+    "ts": "2026-10-25T10:57:58.946Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "249",
+        "summary": "native qa 249",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 259,
+    "ts": "2026-10-25T10:57:58.977Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "250",
+        "summary": "native qa 250",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 260,
+    "ts": "2026-10-25T10:57:58.979Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "251",
+        "summary": "native qa 251",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 261,
+    "ts": "2026-10-25T10:57:58.980Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "252",
+        "summary": "native qa 252",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 262,
+    "ts": "2026-10-25T10:57:58.982Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "253",
+        "summary": "native qa 253",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 263,
+    "ts": "2026-10-25T10:57:59.019Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "254",
+        "summary": "native qa 254",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 264,
+    "ts": "2026-10-25T10:57:59.021Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "255",
+        "summary": "native qa 255",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 265,
+    "ts": "2026-10-25T10:57:59.023Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "256",
+        "summary": "native qa 256",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 266,
+    "ts": "2026-10-25T10:57:59.025Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "257",
+        "summary": "native qa 257",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 267,
+    "ts": "2026-10-25T10:57:59.061Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "258",
+        "summary": "native qa 258",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 268,
+    "ts": "2026-10-25T10:57:59.063Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "259",
+        "summary": "native qa 259",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 269,
+    "ts": "2026-10-25T10:57:59.064Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "260",
+        "summary": "native qa 260",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 270,
+    "ts": "2026-10-25T10:57:59.066Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "261",
+        "summary": "native qa 261",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 271,
+    "ts": "2026-10-25T10:57:59.102Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "262",
+        "summary": "native qa 262",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 272,
+    "ts": "2026-10-25T10:57:59.104Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "263",
+        "summary": "native qa 263",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 273,
+    "ts": "2026-10-25T10:57:59.105Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "264",
+        "summary": "native qa 264",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 274,
+    "ts": "2026-10-25T10:57:59.106Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "265",
+        "summary": "native qa 265",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 275,
+    "ts": "2026-10-25T10:57:59.142Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "266",
+        "summary": "native qa 266",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 276,
+    "ts": "2026-10-25T10:57:59.144Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "267",
+        "summary": "native qa 267",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 277,
+    "ts": "2026-10-25T10:57:59.146Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "268",
+        "summary": "native qa 268",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 278,
+    "ts": "2026-10-25T10:57:59.148Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "269",
+        "summary": "native qa 269",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 279,
+    "ts": "2026-10-25T10:57:59.184Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "270",
+        "summary": "native qa 270",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 280,
+    "ts": "2026-10-25T10:57:59.260Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "271",
+        "summary": "native qa 271",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 281,
+    "ts": "2026-10-25T10:57:59.262Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "272",
+        "summary": "native qa 272",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 282,
+    "ts": "2026-10-25T10:57:59.263Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "273",
+        "summary": "native qa 273",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 283,
+    "ts": "2026-10-25T10:57:59.264Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "274",
+        "summary": "native qa 274",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 284,
+    "ts": "2026-10-25T10:57:59.300Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "275",
+        "summary": "native qa 275",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 285,
+    "ts": "2026-10-25T10:57:59.301Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "276",
+        "summary": "native qa 276",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 286,
+    "ts": "2026-10-25T10:57:59.303Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "277",
+        "summary": "native qa 277",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 287,
+    "ts": "2026-10-25T10:57:59.304Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "278",
+        "summary": "native qa 278",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 288,
+    "ts": "2026-10-25T10:57:59.339Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "279",
+        "summary": "native qa 279",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 289,
+    "ts": "2026-10-25T10:57:59.341Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "280",
+        "summary": "native qa 280",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 290,
+    "ts": "2026-10-25T10:57:59.343Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "281",
+        "summary": "native qa 281",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 291,
+    "ts": "2026-10-25T10:57:59.345Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "282",
+        "summary": "native qa 282",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 292,
+    "ts": "2026-10-25T10:57:59.380Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "283",
+        "summary": "native qa 283",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 293,
+    "ts": "2026-10-25T10:57:59.382Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "284",
+        "summary": "native qa 284",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 294,
+    "ts": "2026-10-25T10:57:59.384Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "285",
+        "summary": "native qa 285",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 295,
+    "ts": "2026-10-25T10:57:59.419Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "286",
+        "summary": "native qa 286",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 296,
+    "ts": "2026-10-25T10:57:59.421Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "287",
+        "summary": "native qa 287",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 297,
+    "ts": "2026-10-25T10:57:59.423Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "288",
+        "summary": "native qa 288",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 298,
+    "ts": "2026-10-25T10:57:59.425Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "289",
+        "summary": "native qa 289",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 299,
+    "ts": "2026-10-25T10:57:59.461Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "290",
+        "summary": "native qa 290",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 300,
+    "ts": "2026-10-25T10:57:59.463Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "291",
+        "summary": "native qa 291",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 301,
+    "ts": "2026-10-25T10:57:59.464Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "292",
+        "summary": "native qa 292",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 302,
+    "ts": "2026-10-25T10:57:59.465Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "293",
+        "summary": "native qa 293",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 303,
+    "ts": "2026-10-25T10:57:59.507Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "294",
+        "summary": "native qa 294",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 304,
+    "ts": "2026-10-25T10:57:59.509Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "295",
+        "summary": "native qa 295",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 305,
+    "ts": "2026-10-25T10:57:59.510Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "296",
+        "summary": "native qa 296",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 306,
+    "ts": "2026-10-25T10:57:59.511Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "297",
+        "summary": "native qa 297",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 307,
+    "ts": "2026-10-25T10:57:59.552Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "298",
+        "summary": "native qa 298",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 308,
+    "ts": "2026-10-25T10:57:59.553Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "299",
+        "summary": "native qa 299",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 309,
+    "ts": "2026-10-25T10:57:59.555Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "300",
+        "summary": "native qa 300",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 310,
+    "ts": "2026-10-25T10:57:59.556Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "301",
+        "summary": "native qa 301",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 311,
+    "ts": "2026-10-25T10:57:59.596Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "302",
+        "summary": "native qa 302",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 312,
+    "ts": "2026-10-25T10:57:59.598Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "303",
+        "summary": "native qa 303",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 313,
+    "ts": "2026-10-25T10:57:59.599Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "304",
+        "summary": "native qa 304",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 314,
+    "ts": "2026-10-25T10:57:59.601Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "305",
+        "summary": "native qa 305",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 315,
+    "ts": "2026-10-25T10:57:59.641Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "306",
+        "summary": "native qa 306",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 316,
+    "ts": "2026-10-25T10:57:59.643Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "307",
+        "summary": "native qa 307",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 317,
+    "ts": "2026-10-25T10:57:59.645Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "308",
+        "summary": "native qa 308",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 318,
+    "ts": "2026-10-25T10:57:59.647Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "309",
+        "summary": "native qa 309",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 319,
+    "ts": "2026-10-25T10:57:59.688Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "310",
+        "summary": "native qa 310",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 320,
+    "ts": "2026-10-25T10:57:59.689Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "311",
+        "summary": "native qa 311",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 321,
+    "ts": "2026-10-25T10:57:59.691Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "312",
+        "summary": "native qa 312",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 322,
+    "ts": "2026-10-25T10:57:59.692Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "313",
+        "summary": "native qa 313",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 323,
+    "ts": "2026-10-25T10:57:59.733Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "314",
+        "summary": "native qa 314",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 324,
+    "ts": "2026-10-25T10:57:59.734Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "315",
+        "summary": "native qa 315",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 325,
+    "ts": "2026-10-25T10:57:59.736Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "316",
+        "summary": "native qa 316",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 326,
+    "ts": "2026-10-25T10:57:59.738Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "317",
+        "summary": "native qa 317",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 327,
+    "ts": "2026-10-25T10:57:59.782Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "318",
+        "summary": "native qa 318",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 328,
+    "ts": "2026-10-25T10:57:59.784Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "319",
+        "summary": "native qa 319",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 329,
+    "ts": "2026-10-25T10:57:59.786Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "320",
+        "summary": "native qa 320",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 330,
+    "ts": "2026-10-25T10:57:59.788Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "321",
+        "summary": "native qa 321",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 331,
+    "ts": "2026-10-25T10:57:59.829Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "322",
+        "summary": "native qa 322",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 332,
+    "ts": "2026-10-25T10:57:59.830Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "323",
+        "summary": "native qa 323",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 333,
+    "ts": "2026-10-25T10:57:59.832Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "324",
+        "summary": "native qa 324",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 334,
+    "ts": "2026-10-25T10:57:59.833Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "325",
+        "summary": "native qa 325",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 335,
+    "ts": "2026-10-25T10:57:59.873Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "326",
+        "summary": "native qa 326",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 336,
+    "ts": "2026-10-25T10:57:59.875Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "327",
+        "summary": "native qa 327",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 337,
+    "ts": "2026-10-25T10:57:59.876Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "328",
+        "summary": "native qa 328",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 338,
+    "ts": "2026-10-25T10:57:59.878Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "329",
+        "summary": "native qa 329",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 339,
+    "ts": "2026-10-25T10:57:59.918Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "330",
+        "summary": "native qa 330",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 340,
+    "ts": "2026-10-25T10:57:59.920Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "331",
+        "summary": "native qa 331",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 341,
+    "ts": "2026-10-25T10:57:59.922Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "332",
+        "summary": "native qa 332",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 342,
+    "ts": "2026-10-25T10:57:59.923Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "333",
+        "summary": "native qa 333",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 343,
+    "ts": "2026-10-25T10:57:59.964Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "334",
+        "summary": "native qa 334",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 344,
+    "ts": "2026-10-25T10:57:59.966Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "335",
+        "summary": "native qa 335",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 345,
+    "ts": "2026-10-25T10:57:59.968Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "336",
+        "summary": "native qa 336",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 346,
+    "ts": "2026-10-25T10:57:59.970Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "337",
+        "summary": "native qa 337",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 347,
+    "ts": "2026-10-25T10:58:00.011Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "338",
+        "summary": "native qa 338",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 348,
+    "ts": "2026-10-25T10:58:00.016Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "339",
+        "summary": "native qa 339",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 349,
+    "ts": "2026-10-25T10:58:00.017Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "340",
+        "summary": "native qa 340",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 350,
+    "ts": "2026-10-25T10:58:00.019Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "341",
+        "summary": "native qa 341",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 351,
+    "ts": "2026-10-25T10:58:00.065Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "342",
+        "summary": "native qa 342",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 352,
+    "ts": "2026-10-25T10:58:00.066Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "343",
+        "summary": "native qa 343",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 353,
+    "ts": "2026-10-25T10:58:00.068Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "344",
+        "summary": "native qa 344",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 354,
+    "ts": "2026-10-25T10:58:00.069Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "345",
+        "summary": "native qa 345",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 355,
+    "ts": "2026-10-25T10:58:00.110Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "346",
+        "summary": "native qa 346",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 356,
+    "ts": "2026-10-25T10:58:00.112Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "347",
+        "summary": "native qa 347",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 357,
+    "ts": "2026-10-25T10:58:00.113Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "348",
+        "summary": "native qa 348",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 358,
+    "ts": "2026-10-25T10:58:00.114Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "349",
+        "summary": "native qa 349",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 359,
+    "ts": "2026-10-25T10:58:00.156Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "350",
+        "summary": "native qa 350",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 360,
+    "ts": "2026-10-25T10:58:00.157Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "351",
+        "summary": "native qa 351",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 361,
+    "ts": "2026-10-25T10:58:00.159Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "352",
+        "summary": "native qa 352",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 362,
+    "ts": "2026-10-25T10:58:00.160Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "353",
+        "summary": "native qa 353",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 363,
+    "ts": "2026-10-25T10:58:00.207Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "354",
+        "summary": "native qa 354",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 364,
+    "ts": "2026-10-25T10:58:00.209Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "355",
+        "summary": "native qa 355",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 365,
+    "ts": "2026-10-25T10:58:00.210Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "356",
+        "summary": "native qa 356",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 366,
+    "ts": "2026-10-25T10:58:00.212Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "357",
+        "summary": "native qa 357",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 367,
+    "ts": "2026-10-25T10:58:00.263Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "358",
+        "summary": "native qa 358",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 368,
+    "ts": "2026-10-25T10:58:00.265Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "359",
+        "summary": "native qa 359",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 369,
+    "ts": "2026-10-25T10:58:00.266Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "360",
+        "summary": "native qa 360",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 370,
+    "ts": "2026-10-25T10:58:00.267Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "361",
+        "summary": "native qa 361",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 371,
+    "ts": "2026-10-25T10:58:00.317Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "362",
+        "summary": "native qa 362",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 372,
+    "ts": "2026-10-25T10:58:00.319Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "363",
+        "summary": "native qa 363",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 373,
+    "ts": "2026-10-25T10:58:00.320Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "364",
+        "summary": "native qa 364",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 374,
+    "ts": "2026-10-25T10:58:00.321Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "365",
+        "summary": "native qa 365",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 375,
+    "ts": "2026-10-25T10:58:00.375Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "366",
+        "summary": "native qa 366",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 376,
+    "ts": "2026-10-25T10:58:00.377Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "367",
+        "summary": "native qa 367",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 377,
+    "ts": "2026-10-25T10:58:00.378Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "368",
+        "summary": "native qa 368",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 378,
+    "ts": "2026-10-25T10:58:00.422Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "369",
+        "summary": "native qa 369",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 379,
+    "ts": "2026-10-25T10:58:00.424Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "370",
+        "summary": "native qa 370",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 380,
+    "ts": "2026-10-25T10:58:00.426Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "371",
+        "summary": "native qa 371",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 381,
+    "ts": "2026-10-25T10:58:00.427Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "372",
+        "summary": "native qa 372",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 382,
+    "ts": "2026-10-25T10:58:00.469Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "373",
+        "summary": "native qa 373",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 383,
+    "ts": "2026-10-25T10:58:00.471Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "374",
+        "summary": "native qa 374",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 384,
+    "ts": "2026-10-25T10:58:00.472Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "375",
+        "summary": "native qa 375",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 385,
+    "ts": "2026-10-25T10:58:00.474Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "376",
+        "summary": "native qa 376",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 386,
+    "ts": "2026-10-25T10:58:00.517Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "377",
+        "summary": "native qa 377",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 387,
+    "ts": "2026-10-25T10:58:00.622Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "378",
+        "summary": "native qa 378",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 388,
+    "ts": "2026-10-25T10:58:00.624Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "379",
+        "summary": "native qa 379",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 389,
+    "ts": "2026-10-25T10:58:00.626Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "380",
+        "summary": "native qa 380",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 390,
+    "ts": "2026-10-25T10:58:00.627Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "381",
+        "summary": "native qa 381",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 391,
+    "ts": "2026-10-25T10:58:00.680Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "382",
+        "summary": "native qa 382",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 392,
+    "ts": "2026-10-25T10:58:00.682Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "383",
+        "summary": "native qa 383",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 393,
+    "ts": "2026-10-25T10:58:00.684Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "384",
+        "summary": "native qa 384",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 394,
+    "ts": "2026-10-25T10:58:00.686Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "385",
+        "summary": "native qa 385",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 395,
+    "ts": "2026-10-25T10:58:00.735Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "386",
+        "summary": "native qa 386",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 396,
+    "ts": "2026-10-25T10:58:00.737Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "387",
+        "summary": "native qa 387",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 397,
+    "ts": "2026-10-25T10:58:00.739Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "388",
+        "summary": "native qa 388",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 398,
+    "ts": "2026-10-25T10:58:00.740Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "389",
+        "summary": "native qa 389",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 399,
+    "ts": "2026-10-25T10:58:00.787Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "390",
+        "summary": "native qa 390",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 400,
+    "ts": "2026-10-25T10:58:00.788Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "391",
+        "summary": "native qa 391",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 401,
+    "ts": "2026-10-25T10:58:00.789Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "392",
+        "summary": "native qa 392",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 402,
+    "ts": "2026-10-25T10:58:00.791Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "393",
+        "summary": "native qa 393",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 403,
+    "ts": "2026-10-25T10:58:00.839Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "394",
+        "summary": "native qa 394",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 404,
+    "ts": "2026-10-25T10:58:00.841Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "395",
+        "summary": "native qa 395",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 405,
+    "ts": "2026-10-25T10:58:00.842Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "396",
+        "summary": "native qa 396",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 406,
+    "ts": "2026-10-25T10:58:00.844Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "397",
+        "summary": "native qa 397",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 407,
+    "ts": "2026-10-25T10:58:00.891Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "398",
+        "summary": "native qa 398",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 408,
+    "ts": "2026-10-25T10:58:00.893Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "399",
+        "summary": "native qa 399",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 409,
+    "ts": "2026-10-25T10:58:00.894Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "400",
+        "summary": "native qa 400",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 410,
+    "ts": "2026-10-25T10:58:00.941Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "401",
+        "summary": "native qa 401",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 411,
+    "ts": "2026-10-25T10:58:00.942Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "402",
+        "summary": "native qa 402",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 412,
+    "ts": "2026-10-25T10:58:00.945Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "403",
+        "summary": "native qa 403",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 413,
+    "ts": "2026-10-25T10:58:00.946Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "404",
+        "summary": "native qa 404",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 414,
+    "ts": "2026-10-25T10:58:01.186Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "405",
+        "summary": "native qa 405",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 415,
+    "ts": "2026-10-25T10:58:01.187Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "406",
+        "summary": "native qa 406",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 416,
+    "ts": "2026-10-25T10:58:01.188Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "407",
+        "summary": "native qa 407",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 417,
+    "ts": "2026-10-25T10:58:01.190Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "408",
+        "summary": "native qa 408",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 418,
+    "ts": "2026-10-25T10:58:01.230Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "409",
+        "summary": "native qa 409",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 419,
+    "ts": "2026-10-25T10:58:01.231Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "410",
+        "summary": "native qa 410",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 420,
+    "ts": "2026-10-25T10:58:01.232Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "411",
+        "summary": "native qa 411",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 421,
+    "ts": "2026-10-25T10:58:01.234Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "412",
+        "summary": "native qa 412",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 422,
+    "ts": "2026-10-25T10:58:01.272Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "413",
+        "summary": "native qa 413",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 423,
+    "ts": "2026-10-25T10:58:01.274Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "414",
+        "summary": "native qa 414",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 424,
+    "ts": "2026-10-25T10:58:01.276Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "415",
+        "summary": "native qa 415",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 425,
+    "ts": "2026-10-25T10:58:01.278Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "416",
+        "summary": "native qa 416",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 426,
+    "ts": "2026-10-25T10:58:01.316Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "417",
+        "summary": "native qa 417",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 427,
+    "ts": "2026-10-25T10:58:01.318Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "418",
+        "summary": "native qa 418",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 428,
+    "ts": "2026-10-25T10:58:01.319Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "419",
+        "summary": "native qa 419",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 429,
+    "ts": "2026-10-25T10:58:01.321Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "420",
+        "summary": "native qa 420",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 430,
+    "ts": "2026-10-25T10:58:01.361Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "421",
+        "summary": "native qa 421",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 431,
+    "ts": "2026-10-25T10:58:01.363Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "422",
+        "summary": "native qa 422",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 432,
+    "ts": "2026-10-25T10:58:01.406Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "423",
+        "summary": "native qa 423",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 433,
+    "ts": "2026-10-25T10:58:01.408Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "424",
+        "summary": "native qa 424",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 434,
+    "ts": "2026-10-25T10:58:01.449Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "425",
+        "summary": "native qa 425",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 435,
+    "ts": "2026-10-25T10:58:01.451Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "426",
+        "summary": "native qa 426",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 436,
+    "ts": "2026-10-25T10:58:01.452Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "427",
+        "summary": "native qa 427",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 437,
+    "ts": "2026-10-25T10:58:01.453Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "428",
+        "summary": "native qa 428",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 438,
+    "ts": "2026-10-25T10:58:01.492Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "429",
+        "summary": "native qa 429",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 439,
+    "ts": "2026-10-25T10:58:01.494Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "430",
+        "summary": "native qa 430",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 440,
+    "ts": "2026-10-25T10:58:01.495Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "431",
+        "summary": "native qa 431",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 441,
+    "ts": "2026-10-25T10:58:01.496Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "432",
+        "summary": "native qa 432",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 442,
+    "ts": "2026-10-25T10:58:01.537Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "433",
+        "summary": "native qa 433",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 443,
+    "ts": "2026-10-25T10:58:01.539Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "434",
+        "summary": "native qa 434",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 444,
+    "ts": "2026-10-25T10:58:01.540Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "435",
+        "summary": "native qa 435",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 445,
+    "ts": "2026-10-25T10:58:01.541Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "436",
+        "summary": "native qa 436",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 446,
+    "ts": "2026-10-25T10:58:01.581Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "437",
+        "summary": "native qa 437",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 447,
+    "ts": "2026-10-25T10:58:01.582Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "438",
+        "summary": "native qa 438",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 448,
+    "ts": "2026-10-25T10:58:01.584Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "439",
+        "summary": "native qa 439",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 449,
+    "ts": "2026-10-25T10:58:01.585Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "440",
+        "summary": "native qa 440",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 450,
+    "ts": "2026-10-25T10:58:01.626Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "441",
+        "summary": "native qa 441",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 451,
+    "ts": "2026-10-25T10:58:01.627Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "442",
+        "summary": "native qa 442",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 452,
+    "ts": "2026-10-25T10:58:01.667Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "443",
+        "summary": "native qa 443",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 453,
+    "ts": "2026-10-25T10:58:01.668Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "444",
+        "summary": "native qa 444",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 454,
+    "ts": "2026-10-25T10:58:01.670Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "445",
+        "summary": "native qa 445",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 455,
+    "ts": "2026-10-25T10:58:01.672Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "446",
+        "summary": "native qa 446",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 456,
+    "ts": "2026-10-25T10:58:01.711Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "447",
+        "summary": "native qa 447",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 457,
+    "ts": "2026-10-25T10:58:01.713Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "448",
+        "summary": "native qa 448",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 458,
+    "ts": "2026-10-25T10:58:01.714Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "449",
+        "summary": "native qa 449",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 459,
+    "ts": "2026-10-25T10:58:01.716Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "450",
+        "summary": "native qa 450",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 460,
+    "ts": "2026-10-25T10:58:01.748Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "451",
+        "summary": "native qa 451",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 461,
+    "ts": "2026-10-25T10:58:01.750Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "452",
+        "summary": "native qa 452",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 462,
+    "ts": "2026-10-25T10:58:01.752Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "453",
+        "summary": "native qa 453",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 463,
+    "ts": "2026-10-25T10:58:01.754Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "454",
+        "summary": "native qa 454",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 464,
+    "ts": "2026-10-25T10:58:01.796Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "455",
+        "summary": "native qa 455",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 465,
+    "ts": "2026-10-25T10:58:01.798Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "456",
+        "summary": "native qa 456",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 466,
+    "ts": "2026-10-25T10:58:01.799Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "457",
+        "summary": "native qa 457",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 467,
+    "ts": "2026-10-25T10:58:01.801Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "458",
+        "summary": "native qa 458",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 468,
+    "ts": "2026-10-25T10:58:01.837Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "459",
+        "summary": "native qa 459",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 469,
+    "ts": "2026-10-25T10:58:01.838Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "460",
+        "summary": "native qa 460",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 470,
+    "ts": "2026-10-25T10:58:01.840Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "461",
+        "summary": "native qa 461",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 471,
+    "ts": "2026-10-25T10:58:01.841Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "462",
+        "summary": "native qa 462",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 472,
+    "ts": "2026-10-25T10:58:01.914Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "463",
+        "summary": "native qa 463",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 473,
+    "ts": "2026-10-25T10:58:01.916Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "464",
+        "summary": "native qa 464",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 474,
+    "ts": "2026-10-25T10:58:01.918Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "465",
+        "summary": "native qa 465",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 475,
+    "ts": "2026-10-25T10:58:01.956Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "466",
+        "summary": "native qa 466",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 476,
+    "ts": "2026-10-25T10:58:01.958Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "467",
+        "summary": "native qa 467",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 477,
+    "ts": "2026-10-25T10:58:01.960Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "468",
+        "summary": "native qa 468",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 478,
+    "ts": "2026-10-25T10:58:01.961Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "469",
+        "summary": "native qa 469",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 479,
+    "ts": "2026-10-25T10:58:02.004Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "470",
+        "summary": "native qa 470",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 480,
+    "ts": "2026-10-25T10:58:02.012Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "471",
+        "summary": "native qa 471",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 481,
+    "ts": "2026-10-25T10:58:02.014Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "472",
+        "summary": "native qa 472",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 482,
+    "ts": "2026-10-25T10:58:02.056Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "473",
+        "summary": "native qa 473",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 483,
+    "ts": "2026-10-25T10:58:02.058Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "474",
+        "summary": "native qa 474",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 484,
+    "ts": "2026-10-25T10:58:02.059Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "475",
+        "summary": "native qa 475",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 485,
+    "ts": "2026-10-25T10:58:02.061Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "476",
+        "summary": "native qa 476",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 486,
+    "ts": "2026-10-25T10:58:02.098Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "477",
+        "summary": "native qa 477",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 487,
+    "ts": "2026-10-25T10:58:02.099Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "478",
+        "summary": "native qa 478",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 488,
+    "ts": "2026-10-25T10:58:02.101Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "479",
+        "summary": "native qa 479",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 489,
+    "ts": "2026-10-25T10:58:02.102Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "480",
+        "summary": "native qa 480",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 490,
+    "ts": "2026-10-25T10:58:02.139Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "481",
+        "summary": "native qa 481",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 491,
+    "ts": "2026-10-25T10:58:02.140Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "482",
+        "summary": "native qa 482",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 492,
+    "ts": "2026-10-25T10:58:02.142Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "483",
+        "summary": "native qa 483",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 493,
+    "ts": "2026-10-25T10:58:02.143Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "484",
+        "summary": "native qa 484",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 494,
+    "ts": "2026-10-25T10:58:02.179Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "485",
+        "summary": "native qa 485",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 495,
+    "ts": "2026-10-25T10:58:02.181Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "486",
+        "summary": "native qa 486",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 496,
+    "ts": "2026-10-25T10:58:02.183Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "487",
+        "summary": "native qa 487",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 497,
+    "ts": "2026-10-25T10:58:02.184Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "488",
+        "summary": "native qa 488",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 498,
+    "ts": "2026-10-25T10:58:02.217Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "489",
+        "summary": "native qa 489",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 499,
+    "ts": "2026-10-25T10:58:02.219Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "490",
+        "summary": "native qa 490",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 500,
+    "ts": "2026-10-25T10:58:02.220Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "491",
+        "summary": "native qa 491",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 501,
+    "ts": "2026-10-25T10:58:02.221Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "492",
+        "summary": "native qa 492",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 502,
+    "ts": "2026-10-25T10:58:02.255Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "493",
+        "summary": "native qa 493",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 503,
+    "ts": "2026-10-25T10:58:02.257Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "494",
+        "summary": "native qa 494",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 504,
+    "ts": "2026-10-25T10:58:02.258Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "495",
+        "summary": "native qa 495",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 505,
+    "ts": "2026-10-25T10:58:02.259Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "496",
+        "summary": "native qa 496",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 506,
+    "ts": "2026-10-25T10:58:02.299Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "497",
+        "summary": "native qa 497",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 507,
+    "ts": "2026-10-25T10:58:02.300Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "498",
+        "summary": "native qa 498",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 508,
+    "ts": "2026-10-25T10:58:02.301Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "499",
+        "summary": "native qa 499",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 509,
+    "ts": "2026-10-25T10:58:02.302Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "500",
+        "summary": "native qa 500",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 510,
+    "ts": "2026-10-25T10:58:02.336Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "501",
+        "summary": "native qa 501",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 511,
+    "ts": "2026-10-25T10:58:02.338Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "502",
+        "summary": "native qa 502",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 512,
+    "ts": "2026-10-25T10:58:02.339Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "503",
+        "summary": "native qa 503",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 513,
+    "ts": "2026-10-25T10:58:02.340Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "504",
+        "summary": "native qa 504",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 514,
+    "ts": "2026-10-25T10:58:02.374Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "505",
+        "summary": "native qa 505",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 515,
+    "ts": "2026-10-25T10:58:02.376Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "506",
+        "summary": "native qa 506",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 516,
+    "ts": "2026-10-25T10:58:02.378Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "507",
+        "summary": "native qa 507",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 517,
+    "ts": "2026-10-25T10:58:02.380Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "508",
+        "summary": "native qa 508",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 518,
+    "ts": "2026-10-25T10:58:02.416Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "509",
+        "summary": "native qa 509",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 519,
+    "ts": "2026-10-25T10:58:02.418Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "510",
+        "summary": "native qa 510",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 520,
+    "ts": "2026-10-25T10:58:02.419Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "511",
+        "summary": "native qa 511",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 521,
+    "ts": "2026-10-25T10:58:02.422Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "512",
+        "summary": "native qa 512",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 522,
+    "ts": "2026-10-25T10:58:02.456Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "513",
+        "summary": "native qa 513",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 523,
+    "ts": "2026-10-25T10:58:02.458Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "514",
+        "summary": "native qa 514",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 524,
+    "ts": "2026-10-25T10:58:02.459Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "515",
+        "summary": "native qa 515",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 525,
+    "ts": "2026-10-25T10:58:02.460Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "516",
+        "summary": "native qa 516",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 526,
+    "ts": "2026-10-25T10:58:02.497Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "517",
+        "summary": "native qa 517",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 527,
+    "ts": "2026-10-25T10:58:02.498Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "518",
+        "summary": "native qa 518",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 528,
+    "ts": "2026-10-25T10:58:02.499Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "519",
+        "summary": "native qa 519",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 529,
+    "ts": "2026-10-25T10:58:02.501Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "520",
+        "summary": "native qa 520",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 530,
+    "ts": "2026-10-25T10:58:02.533Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "521",
+        "summary": "native qa 521",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 531,
+    "ts": "2026-10-25T10:58:02.535Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "522",
+        "summary": "native qa 522",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 532,
+    "ts": "2026-10-25T10:58:02.536Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "523",
+        "summary": "native qa 523",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 533,
+    "ts": "2026-10-25T10:58:02.538Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "524",
+        "summary": "native qa 524",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 534,
+    "ts": "2026-10-25T10:58:02.569Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "525",
+        "summary": "native qa 525",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 535,
+    "ts": "2026-10-25T10:58:02.571Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "526",
+        "summary": "native qa 526",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 536,
+    "ts": "2026-10-25T10:58:02.573Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "527",
+        "summary": "native qa 527",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 537,
+    "ts": "2026-10-25T10:58:02.575Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "528",
+        "summary": "native qa 528",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 538,
+    "ts": "2026-10-25T10:58:02.605Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "529",
+        "summary": "native qa 529",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 539,
+    "ts": "2026-10-25T10:58:02.607Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "530",
+        "summary": "native qa 530",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 540,
+    "ts": "2026-10-25T10:58:02.609Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "531",
+        "summary": "native qa 531",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 541,
+    "ts": "2026-10-25T10:58:02.610Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "532",
+        "summary": "native qa 532",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 542,
+    "ts": "2026-10-25T10:58:02.641Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "533",
+        "summary": "native qa 533",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 543,
+    "ts": "2026-10-25T10:58:02.643Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "534",
+        "summary": "native qa 534",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 544,
+    "ts": "2026-10-25T10:58:02.645Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "535",
+        "summary": "native qa 535",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 545,
+    "ts": "2026-10-25T10:58:02.647Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "536",
+        "summary": "native qa 536",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 546,
+    "ts": "2026-10-25T10:58:02.680Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "537",
+        "summary": "native qa 537",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 547,
+    "ts": "2026-10-25T10:58:02.682Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "538",
+        "summary": "native qa 538",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 548,
+    "ts": "2026-10-25T10:58:02.684Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "539",
+        "summary": "native qa 539",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 549,
+    "ts": "2026-10-25T10:58:02.685Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "540",
+        "summary": "native qa 540",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 550,
+    "ts": "2026-10-25T10:58:02.716Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "541",
+        "summary": "native qa 541",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 551,
+    "ts": "2026-10-25T10:58:02.718Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "542",
+        "summary": "native qa 542",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 552,
+    "ts": "2026-10-25T10:58:02.720Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "543",
+        "summary": "native qa 543",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 553,
+    "ts": "2026-10-25T10:58:02.722Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "544",
+        "summary": "native qa 544",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 554,
+    "ts": "2026-10-25T10:58:02.753Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "545",
+        "summary": "native qa 545",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 555,
+    "ts": "2026-10-25T10:58:02.754Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "546",
+        "summary": "native qa 546",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 556,
+    "ts": "2026-10-25T10:58:02.756Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "547",
+        "summary": "native qa 547",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 557,
+    "ts": "2026-10-25T10:58:02.757Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "548",
+        "summary": "native qa 548",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 558,
+    "ts": "2026-10-25T10:58:02.787Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "549",
+        "summary": "native qa 549",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 559,
+    "ts": "2026-10-25T10:58:02.790Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "550",
+        "summary": "native qa 550",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 560,
+    "ts": "2026-10-25T10:58:02.791Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "551",
+        "summary": "native qa 551",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 561,
+    "ts": "2026-10-25T10:58:02.793Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "552",
+        "summary": "native qa 552",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 562,
+    "ts": "2026-10-25T10:58:02.843Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "553",
+        "summary": "native qa 553",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 563,
+    "ts": "2026-10-25T10:58:02.845Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "554",
+        "summary": "native qa 554",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 564,
+    "ts": "2026-10-25T10:58:02.847Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "555",
+        "summary": "native qa 555",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 565,
+    "ts": "2026-10-25T10:58:02.877Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "556",
+        "summary": "native qa 556",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 566,
+    "ts": "2026-10-25T10:58:02.879Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "557",
+        "summary": "native qa 557",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 567,
+    "ts": "2026-10-25T10:58:02.881Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "558",
+        "summary": "native qa 558",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 568,
+    "ts": "2026-10-25T10:58:02.882Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "559",
+        "summary": "native qa 559",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 569,
+    "ts": "2026-10-25T10:58:02.916Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "560",
+        "summary": "native qa 560",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 570,
+    "ts": "2026-10-25T10:58:02.918Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "561",
+        "summary": "native qa 561",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 571,
+    "ts": "2026-10-25T10:58:02.919Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "562",
+        "summary": "native qa 562",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 572,
+    "ts": "2026-10-25T10:58:02.952Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "563",
+        "summary": "native qa 563",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 573,
+    "ts": "2026-10-25T10:58:02.954Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "564",
+        "summary": "native qa 564",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 574,
+    "ts": "2026-10-25T10:58:02.956Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "565",
+        "summary": "native qa 565",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 575,
+    "ts": "2026-10-25T10:58:02.958Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "566",
+        "summary": "native qa 566",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 576,
+    "ts": "2026-10-25T10:58:02.992Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "567",
+        "summary": "native qa 567",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 577,
+    "ts": "2026-10-25T10:58:02.994Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "568",
+        "summary": "native qa 568",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 578,
+    "ts": "2026-10-25T10:58:02.996Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "569",
+        "summary": "native qa 569",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 579,
+    "ts": "2026-10-25T10:58:02.998Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "570",
+        "summary": "native qa 570",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 580,
+    "ts": "2026-10-25T10:58:03.029Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "571",
+        "summary": "native qa 571",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 581,
+    "ts": "2026-10-25T10:58:03.031Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "572",
+        "summary": "native qa 572",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 582,
+    "ts": "2026-10-25T10:58:03.033Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "573",
+        "summary": "native qa 573",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 583,
+    "ts": "2026-10-25T10:58:03.035Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "574",
+        "summary": "native qa 574",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 584,
+    "ts": "2026-10-25T10:58:03.066Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "575",
+        "summary": "native qa 575",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 585,
+    "ts": "2026-10-25T10:58:03.068Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "576",
+        "summary": "native qa 576",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 586,
+    "ts": "2026-10-25T10:58:03.070Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "577",
+        "summary": "native qa 577",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 587,
+    "ts": "2026-10-25T10:58:03.071Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "578",
+        "summary": "native qa 578",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 588,
+    "ts": "2026-10-25T10:58:03.103Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "579",
+        "summary": "native qa 579",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 589,
+    "ts": "2026-10-25T10:58:03.105Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "580",
+        "summary": "native qa 580",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 590,
+    "ts": "2026-10-25T10:58:03.106Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "581",
+        "summary": "native qa 581",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 591,
+    "ts": "2026-10-25T10:58:03.107Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "582",
+        "summary": "native qa 582",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 592,
+    "ts": "2026-10-25T10:58:03.140Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "583",
+        "summary": "native qa 583",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 593,
+    "ts": "2026-10-25T10:58:03.142Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "584",
+        "summary": "native qa 584",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 594,
+    "ts": "2026-10-25T10:58:03.143Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "585",
+        "summary": "native qa 585",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 595,
+    "ts": "2026-10-25T10:58:03.144Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "586",
+        "summary": "native qa 586",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 596,
+    "ts": "2026-10-25T10:58:03.173Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "587",
+        "summary": "native qa 587",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 597,
+    "ts": "2026-10-25T10:58:03.174Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "588",
+        "summary": "native qa 588",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 598,
+    "ts": "2026-10-25T10:58:03.175Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "589",
+        "summary": "native qa 589",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 599,
+    "ts": "2026-10-25T10:58:03.177Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "590",
+        "summary": "native qa 590",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 600,
+    "ts": "2026-10-25T10:58:03.205Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "591",
+        "summary": "native qa 591",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 601,
+    "ts": "2026-10-25T10:58:03.207Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "592",
+        "summary": "native qa 592",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 602,
+    "ts": "2026-10-25T10:58:03.208Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "593",
+        "summary": "native qa 593",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 603,
+    "ts": "2026-10-25T10:58:03.209Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "594",
+        "summary": "native qa 594",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 604,
+    "ts": "2026-10-25T10:58:03.240Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "595",
+        "summary": "native qa 595",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 605,
+    "ts": "2026-10-25T10:58:03.271Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "596",
+        "summary": "native qa 596",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 606,
+    "ts": "2026-10-25T10:58:03.273Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "597",
+        "summary": "native qa 597",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 607,
+    "ts": "2026-10-25T10:58:03.275Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "598",
+        "summary": "native qa 598",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 608,
+    "ts": "2026-10-25T10:58:03.304Z",
+    "type": "node.progress",
+    "nodeId": "work",
+    "progress": {
+      "item": {
+        "id": "599",
+        "summary": "native qa 599",
+        "type": "message"
+      }
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 609,
+    "ts": "2026-10-25T10:58:03.306Z",
+    "type": "harness.usage",
+    "nodeId": "work",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cachedInputTokens": 0,
+      "reasoningOutputTokens": 0
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 610,
+    "ts": "2026-10-25T10:58:03.350Z",
+    "type": "node.finished",
+    "nodeId": "work",
+    "patch": [
+      {
+        "op": "add",
+        "path": "/artifacts/-",
+        "value": {
+          "id": "01M5SBBPXPFGTB4JD32PVSBKCQ",
+          "kind": "transcript",
+          "ref": "artifact:transcript/421b85621db3d95d6dab520ce88e7aeef1068f49647d40ef875420dc619aaf3e",
+          "nodeId": "work",
+          "bytes": 33381,
+          "label": "transcript work"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/outputs/work",
+        "value": {
+          "nodeId": "work",
+          "value": "OK",
+          "at": "2026-10-25T10:58:03.318Z"
+        }
+      },
+      {
+        "op": "replace",
+        "path": "/lastOutput",
+        "value": {
+          "nodeId": "work",
+          "value": "OK",
+          "at": "2026-10-25T10:58:03.318Z"
+        }
+      },
+      {
+        "op": "replace",
+        "path": "/counters/usage",
+        "value": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    ],
+    "route": "out",
+    "durationMs": 6984
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 611,
+    "ts": "2026-10-25T10:58:03.370Z",
+    "type": "node.started",
+    "nodeId": "done",
+    "kind": "exit",
+    "attempt": 1,
+    "configHash": "3e33a8cd4d6948ce"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 612,
+    "ts": "2026-10-25T10:58:03.391Z",
+    "type": "exit.evaluated",
+    "nodeId": "done",
+    "outcome": "success"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 613,
+    "ts": "2026-10-25T10:58:03.391Z",
+    "type": "node.finished",
+    "nodeId": "done",
+    "patch": [],
+    "durationMs": 3
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 614,
+    "ts": "2026-10-25T10:58:03.391Z",
+    "type": "run.finished",
+    "status": "succeeded",
+    "outcome": "success",
+    "result": {
+      "answer": 7
+    }
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 615,
+    "ts": "2026-10-25T10:58:06.418Z",
+    "type": "return.delivered",
+    "channel": {
+      "kind": "caller"
+    },
+    "target": "run.result"
+  },
+  {
+    "runId": "01M5SBBG0NRHW1F17ZKEPMZFF4",
+    "seq": 616,
+    "ts": "2026-10-25T10:58:06.420Z",
+    "type": "return.delivered",
+    "channel": {
+      "kind": "log"
+    }
+  }
+]

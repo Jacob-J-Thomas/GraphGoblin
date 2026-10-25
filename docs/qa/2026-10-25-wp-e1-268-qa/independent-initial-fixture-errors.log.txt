@@ -1,0 +1,58 @@
+PASS calibrate event count through RunManager
+FAIL finalization history 255 Expected values to be strictly equal:
+
+254 !== 255
+
+FAIL finalization history 256 Expected values to be strictly equal:
+
+255 !== 256
+
+FAIL finalization history 257 Expected values to be strictly equal:
+
+256 !== 257
+
+FAIL finalization history 512 Expected values to be strictly equal:
+
+511 !== 512
+
+FAIL finalization history 513 Expected values to be strictly equal:
+
+512 !== 513
+
+PASS between pages late-progress
+PASS between pages late-delivery
+FAIL webhook success and recovered delivery journal The expression evaluated to a falsy value:
+
+  assert(before.some(e=>e.type==='return.delivery.succeeded'))
+
+FAIL webhook nonretryable failure remains exact across recovery The expression evaluated to a falsy value:
+
+  assert(es.some(e=>e.type==='return.delivery.failed'))
+
+PASS visit cap 2 for three gate passes
+PASS visit cap 3 for three gate passes
+PASS visit cap null for three gate passes
+PASS wake retry restart cap 2
+PASS wake retry restart cap null
+PASS append refusal before commit
+PASS append refusal after commit
+PASS resumable script attempt 2 at cap 1
+PASS failed finalization racing failed-run resume
+PASS replay inherits display counters but fresh allowance is run-local
+FAIL subloop visit allowance and returns isolated from parent [
+  {
+    "origin": "array",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "nodes",
+      1,
+      "config",
+      "operations"
+    ],
+    "message": "Too small: expected array to have >=1 items"
+  }
+]
+{"variant":"after","total":21,"failed":8}
+EXIT=1

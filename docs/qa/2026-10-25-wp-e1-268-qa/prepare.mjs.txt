@@ -1,0 +1,19 @@
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { execFileSync, spawn } from 'node:child_process';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root = process.cwd();
+const out = join(root, 'docs/qa/2026-10-25-wp-e1-268-qa');
+const ts = await import(pathToFileURL(join(root,'node_modules/typescript/lib/typescript.js')));
+const baseline = execFileSync('git', ['show','c923b7d3:packages/engine/src/run-manager.ts'], { encoding:'utf8' });
+await writeFile(join(out,'baseline-run-manager.ts.txt'),baseline);
+let rank1 = baseline.replace("import { childSessionRecovered } from './session-recovery.js';", "import { childSessionRecovered } from './session-recovery.js';\nimport { finalizationHistory } from './finalization-history.js';");
+const start = rank1.indexOf('private async finalizeTerminalLocked(');
+if (start < 0) throw Error('baseline method missing');
+rank1 = rank1.slice(0,start) + rank1.slice(start).replace('const events = await this.ports.events.read(runId);','const events = await finalizationHistory(this.ports.events, runId);');
+await writeFile(join(out,'rank1-run-manager.ts.txt'),rank1);
+for (const [name, source] of [['baseline',baseline],['rank1',rank1]]) {
+  const result = ts.default.transpileModule(source, { compilerOptions: { target: ts.default.ScriptTarget.ES2022, module:ts.default.ModuleKind.ES2022 } });
+  await writeFile(join(out,name+'-run-manager.mjs.txt'),result.outputText);
+}
+console.log('Prepared immutable baseline and rank-1-only loader sources.');

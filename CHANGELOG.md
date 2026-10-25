@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Reduce measured engine hot-path work with yielding finalization history pages and durable fresh-entry counts, preserving full history, visit limits, return delivery and recovery. (#268)
+
 - Run provider-free functional browser checks in CI on Edge with zero retries and one worker, publish live exclusions, and upload available failure or cancellation evidence and the HTML report. Update stale #244 delivery/event assertions (#400) and #204/#205 model assertions, synchronize draft/PWA lifecycles and zoomed editor targets, verify durable webhook defaults and authored fallback persistence, and retain a regression for missing post-terminal history. Drive native routing gestures on absolute deadlines without Playwright drag-interception overhead. Use bounded isolated web unit threads and calibrate the unchanged 300-graph correctness corpus's execution watchdog; retain conflict assertions, native performance limits and coverage thresholds. (#241)
 
 - Separate execution outcome from durable finalization across run reads, SSE, client waits, MCP and the inspector. Pending returns keep subscriptions live; final delivery failures remain distinct from execution success. **Upgrade:** update API, api-client and MCP callers together: run snapshots expose optional finalizedAt; waitForRun/wait_for_run finished now requires terminal execution and that acknowledgement, and SSE completes only after finalization. Inspect deliveries and return.failed for delivery outcome. No migration or store reset. (#185)

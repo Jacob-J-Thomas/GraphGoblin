@@ -5,11 +5,14 @@ import { stat, appendFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { dependency, definition, Timings, bytes, disk } from './common.mjs';
+import { equivalence } from './equivalence.mjs';
+import { observeAppendClient } from './append-observer.mjs';
 process.stderr.write('PERF_WORKER importing API ' + process.pid + '\n');
 const { createContainer, loadConfig, buildApp } = await dependency('@graphgoblin/api');
 const { RunManager } = await dependency('@graphgoblin/engine');
 const { FakeHarness } = await dependency('@graphgoblin/engine/testing');
 const { CURRENT_DEFINITION_FORMAT } = await dependency('@graphgoblin/contracts');
+const { databaseView, SqliteEventStore } = await dependency('@graphgoblin/infrastructure/sqlite');
 process.stderr.write('PERF_WORKER imports ready\n');
 const options = JSON.parse(process.env.GG_PERF_OPTIONS);
 if (
@@ -29,6 +32,8 @@ let stats = {},
 let appends = 0,
   activeCalls = 0,
   maxConcurrentCalls = 0;
+const terminalRuns = new Set();
+let appendObserver;
 const lag = monitorEventLoopDelay({ resolution: 10 });
 // One turn at a time avoids preallocating an N*M fake script queue.
 class Producer extends FakeHarness {
@@ -48,7 +53,20 @@ class Producer extends FakeHarness {
         delayMs,
       },
     ]);
-    return super.start(request, signal);
+    const session = super.start(request, signal);
+    if (!this.specification.itemPauseMs) return session;
+    const pause = this.specification.itemPauseMs;
+    return {
+      ...session,
+      events: {
+        async *[Symbol.asyncIterator]() {
+          for await (const event of session.events) {
+            if (event.type === 'item') await new Promise((resolve) => setTimeout(resolve, pause));
+            yield event;
+          }
+        },
+      },
+    };
   }
 }
 const harness = new Producer();
@@ -64,6 +82,7 @@ function timedPort(port, name) {
       if (key === 'subscribe') return value.bind(target);
       return async (...args) => {
         const started = performance.now();
+        const finalizationRead = name === 'events' && key === 'read' && terminalRuns.has(args[0]);
         activeCalls++;
         maxConcurrentCalls = Math.max(maxConcurrentCalls, activeCalls);
         let result;
@@ -72,6 +91,12 @@ function timedPort(port, name) {
         } finally {
           activeCalls--;
           record(`${name}.${String(key)}`, performance.now() - started);
+          if (finalizationRead) record('events.finalizationRead', performance.now() - started);
+        }
+        if (name === 'runs' && result?.status) {
+          if (['succeeded', 'failed', 'cancelled', 'exhausted'].includes(result.status))
+            terminalRuns.add(result.id);
+          else terminalRuns.delete(result.id);
         }
         if (name === 'events' && key === 'append') appends += result.length;
         if (name === 'runs' && key === 'saveThread' && caseStarted) {
@@ -127,6 +152,10 @@ async function boot() {
   container.manager.stop();
   await container.manager.waitForIdle();
   const ports = { ...container.ports };
+  if (options.traceAppend) {
+    appendObserver = observeAppendClient(container.handle.client);
+    ports.events = new SqliteEventStore(databaseView(appendObserver.client), ports.clock);
+  }
   for (const name of [
     'events',
     'runs',
@@ -248,6 +277,7 @@ async function begin(spec) {
   observationMs = 0;
   maxConcurrentCalls = 0;
   appends = 0;
+  appendObserver?.reset();
   maxWritableBytes = 0;
   maxHeap = 0;
   maxRss = 0;
@@ -312,6 +342,7 @@ async function finish() {
   const serialization = new Timings();
   const eventHash = createHash('sha256'),
     lateHash = createHash('sha256');
+  const equivalent = equivalence();
   const lateAfter = Math.floor(run.lastEventSeq * 0.9);
   for (;;) {
     const events = await container.repos.events.read(runId, cursor, 1000);
@@ -325,6 +356,7 @@ async function finish() {
       if (events[index].seq > lateAfter) lateHash.update(value + '\n');
     });
     for (const event of events) {
+      equivalent.event(event);
       if (event.seq !== ++cursor) throw new Error('stored sequence gap');
       types[event.type] = (types[event.type] ?? 0) + 1;
       if (event.type === 'node.started') {
@@ -376,6 +408,12 @@ async function finish() {
       !(specification.grow || !specification.inference) ||
       thread.vars.history.every((value) => value === 'x'.repeat(specification.contextBytes)),
     terminal,
+    returnsOk:
+      !specification.returnControl ||
+      (JSON.stringify(run.result) ===
+        JSON.stringify({ passes: specification.passes, output: 'OK' }) &&
+        types['return.delivered'] === 2 &&
+        !types['return.failed']),
   };
   correctness.ok =
     correctness.succeeded &&
@@ -392,6 +430,7 @@ async function finish() {
     gates === specification.passes &&
     correctness.passes === specification.passes &&
     correctness.historyValuesOk &&
+    correctness.returnsOk &&
     terminal === 1 &&
     thread.counters.nodeVisits.work === specification.passes &&
     ((specification.inference && !specification.grow) ||
@@ -428,6 +467,8 @@ async function finish() {
     storageAfter: await disk(dataDir),
     artifacts: await disk(join(dataDir, 'artifacts')),
     correctness,
+    equivalence: equivalent.finish(thread, run),
+    ...(appendObserver ? { appendSql: appendObserver.summary() } : {}),
   };
   caseStarted = undefined;
   return result;
@@ -443,6 +484,48 @@ async function probe() {
     }),
   );
   return { wallMs: performance.now() - began, latency: timing.json() };
+}
+async function recoverControl() {
+  const id = runId;
+  async function capture() {
+    const hash = createHash('sha256');
+    let after = 0;
+    for (;;) {
+      const page = await container.repos.events.read(id, after, 256);
+      if (!page.length) break;
+      for (const event of page) hash.update(JSON.stringify(event) + '\n');
+      after = page.at(-1).seq;
+    }
+    return {
+      eventsSha256: hash.digest('hex'),
+      events: after,
+      thread: await manager.getThread(id),
+      run: await container.repos.runs.get(id),
+    };
+  }
+  const before = await capture();
+  // Controlled lost-finalization-marker fixture through the repository port, then real close/reopen.
+  await container.repos.runs.clearFinalized(id);
+  await close();
+  await boot();
+  await manager.waitForIdle();
+  const after = await capture();
+  const pending = await container.repos.runs.listRecoveryCandidates();
+  // Recovery writes a fresh finalization acknowledgement; every other run field must match.
+  const withoutMarker = (run) => JSON.stringify({ ...run, finalizedAt: undefined });
+  return {
+    beforeHash: before.eventsSha256,
+    afterHash: after.eventsSha256,
+    events: after.events,
+    ok:
+      before.eventsSha256 === after.eventsSha256 &&
+      JSON.stringify(before.thread) === JSON.stringify(after.thread) &&
+      typeof after.run?.finalizedAt === 'string' &&
+      withoutMarker(before.run) === withoutMarker(after.run) &&
+      !pending.some((entry) => entry.id === id),
+    mechanism:
+      'Public clearFinalized port; container close and file-backed reopen; no process crash claim',
+  };
 }
 async function close() {
   if (isClosed) return;
@@ -471,6 +554,7 @@ const commands = {
   begin,
   finish,
   probe,
+  recoverControl,
   memory: async ({ gc = false } = {}) => {
     if (gc) global.gc();
     return {

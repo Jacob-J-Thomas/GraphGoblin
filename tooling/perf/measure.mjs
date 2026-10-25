@@ -23,7 +23,7 @@ if (!process.execArgv.includes('--experimental-import-meta-resolve')) {
   process.exit(task.status ?? 1);
 }
 const workload = process.argv[2];
-const allowed = ['long', 'context', 'replay', 'artifacts', 'readiness', 'browser'];
+const allowed = ['long', 'context', 'replay', 'artifacts', 'readiness', 'browser', 'append'];
 if (!allowed.includes(workload))
   throw new Error(
     'Usage: node tooling/perf/measure.mjs ' +
@@ -53,6 +53,7 @@ for (const name of Object.keys(flags))
       'out',
       'port',
       'store-prefix',
+      'item-pause-ms',
     ].includes(name)
   )
     throw new Error('Unknown flag: ' + name);
@@ -97,6 +98,7 @@ const options = {
   profileMode,
   port: integer('port', 0, 0, 65535),
   webDist: join(root, 'apps/web/dist'),
+  traceAppend: workload === 'append',
 };
 const hostBefore = cpus().map((cpu) => cpu.times);
 const summary = {
@@ -406,6 +408,8 @@ try {
       inference: workload !== 'context',
       grow: workload === 'browser',
       artifacts: workload === 'artifacts',
+      itemPauseMs: integer('item-pause-ms', 0, 0, 1000),
+      returnControl: workload === 'append',
       // Small browser smoke runs still span all three page observations.
       delayMs:
         workload === 'browser'
@@ -432,6 +436,18 @@ try {
       });
     } else {
       const started = await call('begin', spec);
+      const liveHash = createHash('sha256');
+      const liveReplay =
+        workload === 'append'
+          ? readReplay(started.base, started.runId, {
+              after: 0,
+              pauseMs: 0,
+              stopAfter: Infinity,
+              progress: () => {},
+              hasher: liveHash,
+            })
+          : undefined;
+      liveReplay?.catch(() => {}); // Awaited below; retain a rejected reader until execution drains.
       let browser;
       if (workload === 'browser') {
         const { measureBrowser } = await import('./browser.mjs');
@@ -446,6 +462,27 @@ try {
       }
       const queueDuring = await call('probe');
       const result = await call('finish');
+      if (liveReplay) {
+        result.liveReplay = await liveReplay;
+        result.liveReplayComplete = result.liveReplay.events === result.correctness.storedEvents;
+        // #185/#404 owns finalization observation. Observe its current behavior and recover the
+        // durable suffix explicitly; never hide a live stream that closed before return audits.
+        result.deliveryTailReplay = await readReplay(started.base, started.runId, {
+          after: result.liveReplay.lastSeq,
+          pauseMs: 0,
+          stopAfter: Infinity,
+          progress: () => {},
+          hasher: liveHash,
+        });
+        result.correctness.replayOk =
+          result.liveReplay.events + result.deliveryTailReplay.events ===
+            result.correctness.storedEvents &&
+          result.liveReplay.gaps === 0 &&
+          result.deliveryTailReplay.gaps === 0 &&
+          result.deliveryTailReplay.sha256 === result.eventSerialization.sha256;
+        result.recovery = await call('recoverControl');
+        result.correctness.recoveryOk = result.recovery.ok;
+      }
       const threadAt = performance.now();
       const threadResponse = await fetch(started.base + '/runs/' + started.runId + '/thread', {
         signal: AbortSignal.timeout(120_000),
@@ -509,7 +546,8 @@ try {
       if (
         !result.correctness.ok ||
         result.correctness.replayOk === false ||
-        result.correctness.browserOk === false
+        result.correctness.browserOk === false ||
+        result.correctness.recoveryOk === false
       )
         summary.correctnessFailure = true;
     }

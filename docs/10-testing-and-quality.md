@@ -146,6 +146,29 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the 
 
 ## Performance baseline (Decided by measurement, 2026-10-03)
 
+The [#268 hot-path report](qa/2026-10-25-wp-e1-268/README.md) separates each admitted change.
+On its shared Windows host, the rank-1-only build reduced the 10,000-pass long workload's
+maximum finalization read from 3,440.123 ms to 30.730 ms and maximum event-loop delay from
+3,443.524 ms to 200.933 ms (100 passes: 45.583 to 8.333 ms/read; 1,000: 714.875 to 17.848).
+History remains complete and resident; reads page 256 events with yields. Normalised event/state
+hashes match at all three sizes, and full replay matches each stored checkpoint. Rank 2's unused
+thread decoding did not reproduce: the current metadata projection already excludes thread
+columns, so it is unchanged. The separate burst/paced append controls measure commit at
+45–50% of inclusive append time and sequence lookup at 7–8%, without changing append behavior.
+Their complete live-plus-reconnect payload hashes and file-backed lost-finalization-marker
+recovery checks pass. These observations do not define an SLA or a quiet-host speed guarantee.
+
+The #268 fresh-entry cache also removes repeated history scans. Two interleaved public-engine
+controls with fake persistence reduce 10,000-pass CPU from 117.500 to 85.297 seconds and from
+101.984 to 87.422 seconds, with identical normalized events/state. Scanner samples fall from
+6,713/5,659 to 14/3 samples across the new count/record methods. This is component attribution:
+the file-backed long workload's CPU is 406.078 seconds before the cache and 415.016 after, so
+no overall API CPU speedup is claimed. Host busy fractions differ and complete pass curves
+remain in the report. The after context/1,000 case also has an unattributed 11,406 ms metadata
+update and 11,425 ms loop maximum while finalization reads peak at 10.502 ms; that separate
+stall is reported without a speculative fix. Coverage/equivalence evidence and the unresolved
+sandbox native-process gate are recorded separately.
+
 The #186 server/transport change has a current-baseline [before report](qa/2026-10-22-wp-e1-186-before.md)
 and the same-workload [after report](qa/2026-10-22-wp-e1-186-after.md), including full/late/slow/
 interrupted/reconnected exact payload hashes, event-loop delay, raw paused-socket wire bytes,

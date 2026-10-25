@@ -1,0 +1,1206 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 93af63b6..e50c1eff 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Reduce measured engine hot-path work with yielding finalization history pages and durable fresh-entry counts, preserving full history, visit limits, return delivery and recovery. (#268)
++
+ - Separate execution outcome from durable finalization across run reads, SSE, client waits, MCP and the inspector. Pending returns keep subscriptions live; final delivery failures remain distinct from execution success. **Upgrade:** update API, api-client and MCP callers together: run snapshots expose optional finalizedAt; waitForRun/wait_for_run finished now requires terminal execution and that acknowledgement, and SSE completes only after finalization. Inspect deliveries and return.failed for delivery outcome. No migration or store reset. (#185)
+ 
+ - Missing provider sessions identify their handle and origin and offer an explicit API/inspector choice to restart that node with a fresh conversation. The choice survives restart, retains context mode/model/effort, and records actor, time and lost provider context; plain Resume never silently starts fresh. Codex announces reuse only after native identity confirmation and turn success. **Upgrade:** update gateway, web and generated clients together for the added failure/resume-event fields and `/runs/{id}/recover-session`; historical failures without typed provenance require a deliberate new run/replay. No SQL migration or store reset is needed. (#265)
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index ed1aa416..153dc20f 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -128,6 +128,11 @@ outcome is not a resumable node failure. A run paused while parked (or while par
+ to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
+ keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
+ 
++Finalization reads history in 256-event pages and yields between full pages (#268). It gathers
++the complete log before interpreting terminal and return-delivery evidence, preserving the
++same validation and recovery rules. This bounds each read's event count, not individual event
++bytes or total retained history. Other recovery, resume and cancellation reads remain separate.
++
+ ## Observing finalization (#185, ADR-0057)
+ 
+ RunRecord.finalizedAt exposes the existing durable finalization acknowledgement.
+@@ -184,6 +189,13 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes
+ 
+ `settings.maxNodeVisits` (default 10, maximum 10,000, `null` explicitly unlimited) independently caps fresh entries per node. A `node.started` with attempt 1 counts; a wake, recovery or resumable retry of the same visit does not. Exceeding the cap fails before starting the node with `MAX_NODE_VISITS`, `resumable: false`, its node ID and `details.maxNodeVisits`. This catches unmarked cycles; it does not turn them into gate exhaustion. Configure enough visits for intentional work and gates.
+ 
++The executor rebuilds fresh-entry counts once from the history it loaded, then updates them
++after committed starts (#268). A rejected append does not advance the in-memory count; a later
++resume/recovery rebuilds from what actually persisted, including an append whose acknowledgement
++was lost. This cache is local to one executor and separate from display counters, which also
++include wake/retry attempts and inherited replay-fork counters. `attemptFor` retains its reverse
++scan for the current visit; Unlimited does not impose a hidden cap.
++
+ Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds a finite visit cap (including unlimited passes). The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
+ 
+ Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 41a554f3..0f5cf142 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -105,6 +105,29 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the
+ 
+ ## Performance baseline (Decided by measurement, 2026-10-03)
+ 
++The [#268 hot-path report](qa/2026-10-25-wp-e1-268/README.md) separates each admitted change.
++On its shared Windows host, the rank-1-only build reduced the 10,000-pass long workload's
++maximum finalization read from 3,440.123 ms to 30.730 ms and maximum event-loop delay from
++3,443.524 ms to 200.933 ms (100 passes: 45.583 to 8.333 ms/read; 1,000: 714.875 to 17.848).
++History remains complete and resident; reads page 256 events with yields. Normalised event/state
++hashes match at all three sizes, and full replay matches each stored checkpoint. Rank 2's unused
++thread decoding did not reproduce: the current metadata projection already excludes thread
++columns, so it is unchanged. The separate burst/paced append controls measure commit at
++45–50% of inclusive append time and sequence lookup at 7–8%, without changing append behavior.
++Their complete live-plus-reconnect payload hashes and file-backed lost-finalization-marker
++recovery checks pass. These observations do not define an SLA or a quiet-host speed guarantee.
++
++The #268 fresh-entry cache also removes repeated history scans. Two interleaved public-engine
++controls with fake persistence reduce 10,000-pass CPU from 117.500 to 85.297 seconds and from
++101.984 to 87.422 seconds, with identical normalized events/state. Scanner samples fall from
++6,713/5,659 to 14/3 samples across the new count/record methods. This is component attribution:
++the file-backed long workload's CPU is 406.078 seconds before the cache and 415.016 after, so
++no overall API CPU speedup is claimed. Host busy fractions differ and complete pass curves
++remain in the report. The after context/1,000 case also has an unattributed 11,406 ms metadata
++update and 11,425 ms loop maximum while finalization reads peak at 10.502 ms; that separate
++stall is reported without a speculative fix. Coverage/equivalence evidence and the unresolved
++sandbox native-process gate are recorded separately.
++
+ The #186 server/transport change has a current-baseline [before report](qa/2026-10-22-wp-e1-186-before.md)
+ and the same-workload [after report](qa/2026-10-22-wp-e1-186-after.md), including full/late/slow/
+ interrupted/reconnected exact payload hashes, event-loop delay, raw paused-socket wire bytes,
+diff --git a/packages/engine/src/finalization-history.ts b/packages/engine/src/finalization-history.ts
+new file mode 100644
+index 00000000..99897b96
+--- /dev/null
++++ b/packages/engine/src/finalization-history.ts
+@@ -0,0 +1,23 @@
++import type { RunEvent } from '@graphgoblin/contracts';
++import type { EventStorePort } from './ports.js';
++
++/** Keep finalization's complete evidence, but bound each synchronous SQLite decode span. */
++export async function finalizationHistory(
++  store: EventStorePort,
++  runId: string,
++): Promise<RunEvent[]> {
++  // Engineering quantum, not a byte bound or latency SLA. 256 keeps the measured small-event
++  // workload's decode spans short without changing event validation or return/recovery evidence.
++  const pageSize = 256;
++  const history: RunEvent[] = [];
++  let after = 0;
++  for (;;) {
++    const page = await store.read(runId, after, pageSize);
++    history.push(...page);
++    if (page.length < pageSize) return history;
++    after = page.at(-1)!.seq;
++    // Promise-only fake/native ports can settle entirely in microtasks; explicitly let timers
++    // and API requests run between pages, just as the executor does between nodes.
++    await new Promise<void>((resolve) => setTimeout(resolve, 0));
++  }
++}
+diff --git a/packages/engine/src/fresh-entries.ts b/packages/engine/src/fresh-entries.ts
+new file mode 100644
+index 00000000..209847b6
+--- /dev/null
++++ b/packages/engine/src/fresh-entries.ts
+@@ -0,0 +1,23 @@
++import type { RunEvent } from '@graphgoblin/contracts';
++
++/** Fresh starts from this run's durable log, independent of replay-seed/display counters. */
++export class FreshEntries {
++  private readonly counts = new Map<string, number>();
++
++  constructor(history: readonly RunEvent[]) {
++    this.record(history);
++  }
++
++  /** Called only after append resolves; a rejected/uncertain append is reconciled next execution. */
++  record(committed: readonly RunEvent[]): void {
++    for (const event of committed) {
++      if (event.type === 'node.started' && event.attempt === 1) {
++        this.counts.set(event.nodeId, this.count(event.nodeId) + 1);
++      }
++    }
++  }
++
++  count(nodeId: string): number {
++    return this.counts.get(nodeId) ?? 0;
++  }
++}
+diff --git a/packages/engine/src/hot-paths.test.ts b/packages/engine/src/hot-paths.test.ts
+new file mode 100644
+index 00000000..0b101666
+--- /dev/null
++++ b/packages/engine/src/hot-paths.test.ts
+@@ -0,0 +1,349 @@
++import { afterEach, expect, it } from 'vitest';
++import {
++  LoopDefinitionSchema,
++  type LoopDefinitionInput,
++  type RunEvent,
++} from '@graphgoblin/contracts';
++import { fakeUlid, FIXTURE_TS } from '@graphgoblin/contracts/testing';
++import { RunManager } from './run-manager.js';
++import { RunFailureError } from './errors.js';
++import type { EventDraft } from './ports.js';
++import {
++  createFakePorts,
++  DEFAULT_TEST_SETTINGS,
++  InMemoryEventStore,
++  InMemoryTriggerAdmission,
++} from './testing/fakes.js';
++import { singleNodeLoop } from './testing/scenario.js';
++
++const managers: RunManager[] = [];
++afterEach(async () => {
++  for (const manager of managers.splice(0)) {
++    manager.stop();
++    await manager.waitForIdle();
++  }
++});
++
++async function fixture(
++  def: LoopDefinitionInput,
++  decorate?: (ports: ReturnType<typeof createFakePorts>) => InMemoryEventStore,
++) {
++  const ports = createFakePorts();
++  if (decorate) ports.events = decorate(ports);
++  ports.admission = new InMemoryTriggerAdmission(ports.runs, ports.events, ports.loops);
++  const loopId = fakeUlid('hot-path-loop');
++  ports.loops.add({
++    id: fakeUlid('hot-path-version'),
++    loopId,
++    version: 1,
++    status: 'published',
++    createdAt: FIXTURE_TS,
++    definition: LoopDefinitionSchema.parse(def),
++  });
++  const restart = async () => {
++    const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
++    managers.push(manager);
++    await manager.start();
++    return manager;
++  };
++  return { ports, loopId, manager: await restart(), restart };
++}
++
++it('finalization reads bounded pages and yields, preserving the entire return-producing log', async () => {
++  const reads: (number | undefined)[] = [];
++  let terminal = false;
++  let timerRan = false;
++  const f = await fixture(
++    singleNodeLoop(
++      'paged finalization',
++      {
++        id: 'work',
++        kind: 'inference',
++        label: 'Work',
++        config: { prompt: { template: 'go' }, output: { toMessages: 'none' } },
++      },
++      { returns: '{"value": 7}', destinations: [{ kind: 'caller' }, { kind: 'log' }] },
++    ),
++    (ports) => {
++      return new (class extends InMemoryEventStore {
++        override async append(
++          id: string,
++          drafts: readonly EventDraft[],
++          options?: { expectedLastSeq?: number; requireRun?: boolean },
++        ): Promise<RunEvent[]> {
++          const stored = await super.append(id, drafts, options);
++          if (stored.some((event) => event.type === 'run.finished')) terminal = true;
++          return stored;
++        }
++        override read(id: string, after?: number, limit?: number): Promise<RunEvent[]> {
++          if (terminal) {
++            if (!reads.length)
++              setTimeout(() => {
++                timerRan = true;
++              }, 0);
++            reads.push(limit);
++          }
++          return super.read(id, after, limit);
++        }
++      })(ports.clock);
++    },
++  );
++  f.ports.harness.script([
++    {
++      items: Array.from({ length: 600 }, (_, i) => ({
++        id: String(i),
++        type: 'message',
++        summary: 'exact',
++      })),
++      finalText: 'OK',
++    },
++  ]);
++  const run = await f.manager.startRun({
++    ownerId: 'local',
++    loopId: f.loopId,
++    source: 'manual.api',
++  });
++  await f.manager.waitForIdle();
++  expect(reads.length).toBeGreaterThan(2);
++  expect(reads.every((limit) => limit !== undefined && limit <= 256)).toBe(true);
++  expect(timerRan).toBe(true);
++  const events = f.ports.events.all(run.id);
++  expect(events.map((event) => event.seq)).toEqual(events.map((_, i) => i + 1));
++  expect(events.filter((event) => event.type === 'node.progress')).toHaveLength(600);
++  expect(events.filter((event) => event.type === 'return.delivered')).toHaveLength(2);
++  expect((await f.ports.runs.get(run.id))?.result).toEqual({ value: 7 });
++  expect(await f.ports.runs.listRecoveryCandidates()).toEqual([]);
++  await f.ports.runs.clearFinalized(run.id);
++  f.manager.stop();
++  const recovered = await f.restart();
++  await recovered.waitForIdle();
++  expect(f.ports.events.all(run.id)).toEqual(events);
++  expect(await f.ports.runs.listRecoveryCandidates()).toEqual([]);
++});
++
++it('a failed finalization page leaves delivery pending and recovery delivers exactly once', async () => {
++  let terminal = false;
++  let refusePage = true;
++  const f = await fixture(
++    singleNodeLoop(
++      'failed finalization page',
++      { id: 'work', kind: 'inference', label: 'Work', config: { prompt: { template: 'go' } } },
++      { returns: '7', destinations: [{ kind: 'caller' }, { kind: 'log' }] },
++    ),
++    (ports) =>
++      new (class extends InMemoryEventStore {
++        override async append(
++          id: string,
++          drafts: readonly EventDraft[],
++          options?: { expectedLastSeq?: number; requireRun?: boolean },
++        ): Promise<RunEvent[]> {
++          const stored = await super.append(id, drafts, options);
++          if (stored.some((event) => event.type === 'run.finished')) terminal = true;
++          return stored;
++        }
++        override read(id: string, after = 0, limit?: number): Promise<RunEvent[]> {
++          if (terminal && after > 0 && refusePage)
++            return Promise.reject(new Error('controlled page read failure'));
++          return super.read(id, after, limit);
++        }
++      })(ports.clock),
++  );
++  f.ports.harness.script([
++    {
++      items: Array.from({ length: 600 }, (_, i) => ({
++        id: String(i),
++        type: 'message',
++        summary: 'exact',
++      })),
++      finalText: 'OK',
++    },
++  ]);
++  const run = await f.manager.startRun({
++    ownerId: 'local',
++    loopId: f.loopId,
++    source: 'manual.api',
++  });
++  await f.manager.waitForIdle();
++  expect((await f.ports.runs.get(run.id))?.status).toBe('succeeded');
++  expect(f.ports.events.all(run.id).filter((event) => event.type === 'return.delivered')).toEqual(
++    [],
++  );
++  expect(await f.ports.runs.listRecoveryCandidates()).toContainEqual({
++    id: run.id,
++    terminal: true,
++  });
++  refusePage = false;
++  f.manager.stop();
++  const recovered = await f.restart();
++  await recovered.waitForIdle();
++  expect(
++    f.ports.events.all(run.id).filter((event) => event.type === 'return.delivered'),
++  ).toHaveLength(2);
++  expect(await f.ports.runs.listRecoveryCandidates()).toEqual([]);
++  const history = f.ports.events.all(run.id);
++  recovered.stop();
++  await (await f.restart()).waitForIdle();
++  expect(f.ports.events.all(run.id)).toEqual(history);
++});
++
++function waitCycle(cap: number | null): LoopDefinitionInput {
++  return {
++    schemaVersion: 4,
++    name: 'fresh visit controls',
++    settings: { maxNodeVisits: cap },
++    nodes: [
++      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++      { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'signal', name: 'next' } },
++      {
++        id: 'gate',
++        kind: 'decision',
++        label: 'Gate',
++        config: {
++          kind: 'expression',
++          jsonata: '"again"',
++          routes: [
++            { id: 'again', label: 'Again' },
++            { id: 'stop', label: 'Stop' },
++          ],
++        },
++      },
++      { id: 'done', kind: 'exit', label: 'Done', config: {} },
++    ],
++    edges: [
++      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },
++      { id: 'b', from: { node: 'wait', port: 'out' }, to: { node: 'gate' } },
++      { id: 'c', from: { node: 'gate', port: 'again' }, to: { node: 'wait' } },
++      { id: 'd', from: { node: 'gate', port: 'stop' }, to: { node: 'done' } },
++    ],
++  };
++}
++
++it.each([2, null])(
++  'rebuilds fresh visits across wakes, paused resume and restart at cap %s',
++  async (cap) => {
++    const f = await fixture(waitCycle(cap));
++    const run = await f.manager.startRun({
++      ownerId: 'local',
++      loopId: f.loopId,
++      source: 'manual.api',
++    });
++    await f.manager.waitForIdle();
++    await f.manager.pause(run.id);
++    await f.manager.resume(run.id);
++    f.manager.stop();
++    const manager = await f.restart();
++    for (let visit = 1; visit <= 2; visit++) {
++      const waiting = await f.ports.runs.get(run.id);
++      if (!waiting?.waiting) throw new Error('fixture did not park');
++      await manager.signal(run.id, 'next', waiting.waiting.waitId, { visit });
++      await manager.waitForIdle();
++    }
++    const record = await f.ports.runs.get(run.id);
++    expect(record?.status).toBe(cap === null ? 'waiting' : 'failed');
++    expect(record?.failure?.code).toBe(cap === null ? undefined : 'MAX_NODE_VISITS');
++    expect(
++      f.ports.events
++        .all(run.id)
++        .flatMap((event) =>
++          event.type === 'node.started' && event.nodeId === 'wait' ? [event.attempt] : [],
++        ),
++    ).toEqual(cap === null ? [1, 2, 1, 2, 1] : [1, 2, 1, 2]);
++    expect((await manager.getThread(run.id))?.counters.nodeVisits.wait).toBe(cap === null ? 5 : 4);
++    if (cap === null) await manager.cancel(run.id);
++  },
++);
++
++it.each(['before', 'after'] as const)(
++  'a fresh-start append rejected %s commit retains the durable visit count',
++  async (when) => {
++    let rejected = false;
++    const f = await fixture(
++      waitCycle(2),
++      (ports) =>
++        new (class extends InMemoryEventStore {
++          override async append(
++            id: string,
++            drafts: readonly EventDraft[],
++            options?: { expectedLastSeq?: number; requireRun?: boolean },
++          ): Promise<RunEvent[]> {
++            if (
++              !rejected &&
++              drafts.some(
++                (event) =>
++                  event.type === 'node.started' && event.nodeId === 'wait' && event.attempt === 1,
++              ) &&
++              this.all(id).some(
++                (event) => event.type === 'node.finished' && event.nodeId === 'wait',
++              )
++            ) {
++              rejected = true;
++              if (when === 'after') await super.append(id, drafts, options);
++              throw new RunFailureError('SECRET_MISSING', 'controlled append refusal', {
++                resumable: true,
++              });
++            }
++            return super.append(id, drafts, options);
++          }
++        })(ports.clock),
++    );
++    const run = await f.manager.startRun({
++      ownerId: 'local',
++      loopId: f.loopId,
++      source: 'manual.api',
++    });
++    await f.manager.waitForIdle();
++    const first = await f.ports.runs.get(run.id);
++    if (!first?.waiting) throw new Error('fixture did not park');
++    await f.manager.signal(run.id, 'next', first.waiting.waitId, {});
++    await f.manager.waitForIdle();
++    expect((await f.ports.runs.get(run.id))?.failure?.code).toBe('SECRET_MISSING');
++    await f.manager.resume(run.id);
++    await f.manager.waitForIdle();
++    expect((await f.ports.runs.get(run.id))?.status).toBe('waiting');
++    const second = await f.ports.runs.get(run.id);
++    if (!second?.waiting) throw new Error('fixture did not park');
++    await f.manager.signal(run.id, 'next', second.waiting.waitId, {});
++    await f.manager.waitForIdle();
++    expect((await f.ports.runs.get(run.id))?.failure?.code).toBe('MAX_NODE_VISITS');
++    expect(
++      f.ports.events
++        .all(run.id)
++        .flatMap((event) =>
++          event.type === 'node.started' && event.nodeId === 'wait' ? [event.attempt] : [],
++        ),
++    ).toEqual(when === 'before' ? [1, 2, 1, 2] : [1, 2, 1, 2, 3]);
++  },
++);
++
++it('counts each committed fresh entry within one executor at the exact finite cap', async () => {
++  const def = waitCycle(3);
++  def.nodes[1] = {
++    id: 'wait',
++    kind: 'mutate',
++    label: 'Work',
++    config: {
++      operations: [{ op: 'set', path: '/vars/value', value: { kind: 'literal', value: 7 } }],
++    },
++  };
++  const f = await fixture(def);
++  const run = await f.manager.startRun({
++    ownerId: 'local',
++    loopId: f.loopId,
++    source: 'manual.api',
++  });
++  await f.manager.waitForIdle();
++  expect((await f.ports.runs.get(run.id))?.failure).toMatchObject({
++    code: 'MAX_NODE_VISITS',
++    nodeId: 'wait',
++    details: { maxNodeVisits: 3 },
++    resumable: false,
++  });
++  expect(
++    f.ports.events
++      .all(run.id)
++      .flatMap((event) =>
++        event.type === 'node.started' && event.nodeId === 'wait' ? [event.attempt] : [],
++      ),
++  ).toEqual([1, 1, 1]);
++  expect((await f.manager.getThread(run.id))?.vars.value).toBe(7);
++});
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index 40156b4e..498310a5 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -77,6 +77,8 @@ import { createInitialThread, type InitialThreadInput } from './thread.js';
+ import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
+ import { boundedFailure } from './event-validation.js';
+ import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
++import { finalizationHistory } from './finalization-history.js';
++import { FreshEntries } from './fresh-entries.js';
+ import { visitTurn } from './handlers/inference-turn.js';
+ import { childSessionRecovered } from './session-recovery.js';
+ 
+@@ -2005,6 +2007,7 @@ export class RunManager {
+     // Read before any recovery marker is appended; a marker does not consume a wake either.
+     const pendingWake = findPendingWake(events);
+     let thread = await this.loadThread(run, events);
++    const freshEntries = new FreshEntries(events);
+     /** Append drafts atomically and return the seq of the last one. */
+     const appendAll = async (drafts: EventDraft[]): Promise<number> => {
+       for (const draft of drafts)
+@@ -2013,6 +2016,7 @@ export class RunManager {
+           DecisionEmissionSchema.parse(evidence);
+         }
+       const stored = await this.ports.events.append(runId, drafts);
++      freshEntries.record(stored);
+       events.push(...stored);
+       return (stored.at(-1) as RunEvent).seq;
+     };
+@@ -2162,7 +2166,7 @@ export class RunManager {
+       if (
+         run.pinned.limits.maxNodeVisits !== null &&
+         attempt === 1 &&
+-        countEntries(events, nodeId) >= run.pinned.limits.maxNodeVisits
++        freshEntries.count(nodeId) >= run.pinned.limits.maxNodeVisits
+       ) {
+         await this.failRun(runId, {
+           code: 'MAX_NODE_VISITS',
+@@ -2519,7 +2523,7 @@ export class RunManager {
+         }
+       }
+     }
+-    const events = await this.ports.events.read(runId);
++    const events = await finalizationHistory(this.ports.events, runId);
+     const terminal = terminalEvent(events);
+     if (terminal?.type === 'run.finished' && terminal.result !== undefined) {
+       const def = knownDef ?? (await this.ports.loops.getVersion(run.versionId))?.definition;
+diff --git a/tooling/perf/README.md b/tooling/perf/README.md
+index a76f63c4..dd5de758 100644
+--- a/tooling/perf/README.md
++++ b/tooling/perf/README.md
+@@ -87,6 +87,42 @@ failed measurement on a stalled host; they do not set product latency targets.
+ 
+ ## Controlled rerun protocol
+ 
++### Hot-path controls (#268)
++
++The additive `append` workload isolates SQL phases without modifying the repository being
++measured. Use the same commands with `--item-pause-ms=0` and `--item-pause-ms=10`:
++
++```powershell
++node tooling/perf/measure.mjs append --passes=10 --items=100 --item-bytes=256 --item-pause-ms=0 --profile=inspector --port=5812 --store-prefix=gg-wp-e1-268- --out=.tmp/append-burst
++node tooling/perf/measure.mjs append --passes=10 --items=100 --item-bytes=256 --item-pause-ms=10 --profile=inspector --port=5812 --store-prefix=gg-wp-e1-268- --out=.tmp/append-paced
++```
++
++Each run observes transaction begin, sequence lookup, insert, run sequence update and commit
++through a client injected into a separate public SQLite event repository. Timings are inclusive
++of the normal serialized-client scheduling. Fake item pacing applies to each streamed item;
++it is separate from the pre-existing fake completion delay. The exit returns a controlled object
++to caller/log. A raw HTTP live reader and an explicit delivery-tail reconnect must together
++match the exact stored payload hash. `liveReplayComplete` records whether the original stream
++included all delivery audits, so the reconnect does not conceal an early close. A public
++`clearFinalized` plus container close/reopen checks idempotent recovery on the real file-backed
++store; it does not simulate a native process kill.
++
++All execution workloads additionally record `events.finalizationRead` spans and equivalence
++digests. `compare.mjs` re-reads completed disposable stores through public repositories opened
++read-only, compares normalized event sequences/state, and checks checkpoint equivalence with
++full replay. Run it with Node's parent-resolution flag:
++
++```powershell
++node --experimental-import-meta-resolve tooling/perf/compare.mjs before/raw-summary.json after/raw-summary.json equivalence.json
++```
++
++The controlled comparison sorts keys, consistently renames generated ULIDs and excludes clock
++observations (`ts`, creation/start/finish/receipt timestamps, duration and elapsed seconds).
++Application values and ordering remain compared. Raw SSE hashes are separate exact-byte
++checks. Use the same workload inputs and record host conditions; these are not universal
++latency guarantees. The retained #268 report distinguishes its rank-1-only measurement from
++the subsequent visit-count change and identifies the unreproduced metadata candidate.
++
+ Use **inspector mode throughout**, a quiet host, and at least two trials per
+ workload. Run each fresh/aged pair back to back, reversing order for trial 2:
+ 
+diff --git a/tooling/perf/append-observer.mjs b/tooling/perf/append-observer.mjs
+new file mode 100644
+index 00000000..edfef4e6
+--- /dev/null
++++ b/tooling/perf/append-observer.mjs
+@@ -0,0 +1,52 @@
++/* global performance */
++import { Timings } from './common.mjs';
++
++/** Supply an observed client to a separate repository, never patch the production repository. */
++export function observeAppendClient(client) {
++  const spans = new Map();
++  const record = (key, ms) => {
++    if (!spans.has(key)) spans.set(key, new Timings());
++    spans.get(key).add(ms);
++  };
++  function decorate(target, transaction = false) {
++    return new Proxy(target, {
++      get(object, key) {
++        const value = Reflect.get(object, key);
++        if (typeof value !== 'function') return value;
++        if (!['transaction', 'execute', 'commit', 'rollback'].includes(key))
++          return value.bind(object);
++        return async (...args) => {
++          const sql = typeof args[0] === 'string' ? args[0] : (args[0]?.sql ?? '');
++          const label =
++            key === 'execute'
++              ? /coalesce\(max\(/i.test(sql)
++                ? 'sequenceLookup'
++                : /^insert/i.test(sql)
++                  ? 'insert'
++                  : /^update/i.test(sql)
++                    ? 'runSequenceUpdate'
++                    : 'otherStatement'
++              : key === 'transaction'
++                ? 'begin'
++                : key;
++          const at = performance.now();
++          try {
++            const result = await value.apply(object, args);
++            return key === 'transaction' ? decorate(result, true) : result;
++          } finally {
++            record((transaction ? 'transaction.' : 'client.') + label, performance.now() - at);
++          }
++        };
++      },
++    });
++  }
++  return {
++    client: decorate(client),
++    reset() {
++      spans.clear();
++    },
++    summary() {
++      return Object.fromEntries([...spans].map(([key, value]) => [key, value.json()]));
++    },
++  };
++}
+diff --git a/tooling/perf/common.mjs b/tooling/perf/common.mjs
+index 6499eca4..a619ba30 100644
+--- a/tooling/perf/common.mjs
++++ b/tooling/perf/common.mjs
+@@ -69,7 +69,14 @@ export async function disk(directory) {
+ }
+ export function definition(
+   format,
+-  { passes, contextBytes = 0, inference = true, artifacts = false, grow = false },
++  {
++    passes,
++    contextBytes = 0,
++    inference = true,
++    artifacts = false,
++    grow = false,
++    returnControl = false,
++  },
+ ) {
+   const growing = !inference || grow;
+   const mutation = {
+@@ -130,7 +137,20 @@ export function definition(
+           ],
+         },
+       },
+-      { id: 'done', kind: 'exit', label: 'Done', config: { outcome: 'success' } },
++      {
++        id: 'done',
++        kind: 'exit',
++        label: 'Done',
++        config: {
++          outcome: 'success',
++          ...(returnControl
++            ? {
++                returns: '{"passes": gates.gate.passes, "output": outputs.work.value}',
++                destinations: [{ kind: 'caller' }, { kind: 'log' }],
++              }
++            : {}),
++        },
++      },
+     ],
+     edges: [
+       edge('a', 'start', 'out', growing ? 'init' : 'work'),
+diff --git a/tooling/perf/compare.mjs b/tooling/perf/compare.mjs
+new file mode 100644
+index 00000000..8e98da33
+--- /dev/null
++++ b/tooling/perf/compare.mjs
+@@ -0,0 +1,92 @@
++/* global process */
++import { readFile, writeFile } from 'node:fs/promises';
++import { join } from 'node:path';
++import { dependency } from './common.mjs';
++import { equivalence } from './equivalence.mjs';
++
++// Use --experimental-import-meta-resolve, like measure.mjs. All store access is read-only.
++const { openReadOnlyDatabaseClient, databaseView, SqliteRunRepository, SqliteEventStore } =
++  await dependency('@graphgoblin/infrastructure/sqlite');
++const { reconcileThread, stableStringify } = await dependency('@graphgoblin/domain');
++const [beforePath, afterPath, output] = process.argv.slice(2);
++if (!output)
++  throw new Error(
++    'Usage: node --experimental-import-meta-resolve tooling/perf/compare.mjs before-raw-summary.json after-raw-summary.json output.json',
++  );
++const records = await Promise.all(
++  [beforePath, afterPath].map(async (path) => JSON.parse(await readFile(path, 'utf8'))),
++);
++async function capture(record, entry) {
++  const client = openReadOnlyDatabaseClient(join(record.dataDir, 'graphgoblin.db'));
++  try {
++    const db = databaseView(client);
++    const runs = new SqliteRunRepository(db);
++    const events = new SqliteEventStore(db, { now: () => new Date(0) });
++    const run = await runs.get(entry.runId);
++    const initial = await runs.getInitialThread(entry.runId);
++    const checkpoint = await runs.getThreadCheckpoint(entry.runId);
++    const observed = equivalence();
++    const history = [],
++      normalized = [];
++    let cursor = 0;
++    for (;;) {
++      const page = await events.read(entry.runId, cursor, 256);
++      if (!page.length) break;
++      for (const event of page) {
++        if (event.seq !== ++cursor) throw new Error('Stored sequence gap');
++        history.push(event);
++        normalized.push(observed.event(event));
++      }
++    }
++    const thread = reconcileThread(initial, history, checkpoint);
++    const replayMatchesCheckpoint =
++      stableStringify(thread) === stableStringify(reconcileThread(initial, history));
++    return {
++      digest: observed.finish(thread, run),
++      normalized,
++      count: cursor,
++      replayMatchesCheckpoint,
++    };
++  } finally {
++    client.close();
++  }
++}
++const cases = [];
++for (let index = 0; index < records[0].cases.length; index++) {
++  const entries = records.map((record) => record.cases[index]);
++  if (
++    entries.some((entry) => !entry) ||
++    entries[0].specification.passes !== entries[1].specification.passes
++  )
++    throw new Error('Workload size mismatch');
++  const captures = [];
++  for (let side = 0; side < 2; side++) captures.push(await capture(records[side], entries[side]));
++  const [before, after] = captures;
++  const mismatch = before.normalized.findIndex(
++    (event, i) => JSON.stringify(event) !== JSON.stringify(after.normalized[i]),
++  );
++  cases.push({
++    passes: entries[0].specification.passes,
++    events: before.count,
++    before: before.digest,
++    after: after.digest,
++    replayMatchesCheckpoint: [before.replayMatchesCheckpoint, after.replayMatchesCheckpoint],
++    equal:
++      before.replayMatchesCheckpoint &&
++      after.replayMatchesCheckpoint &&
++      before.count === after.count &&
++      before.digest.eventsSha256 === after.digest.eventsSha256 &&
++      before.digest.stateSha256 === after.digest.stateSha256,
++    ...(mismatch < 0
++      ? {}
++      : {
++          firstDifference: {
++            seq: mismatch + 1,
++            before: before.normalized[mismatch],
++            after: after.normalized[mismatch],
++          },
++        }),
++  });
++}
++await writeFile(output, JSON.stringify({ cases }, null, 2) + '\n');
++if (cases.some((entry) => !entry.equal)) process.exitCode = 1;
+diff --git a/tooling/perf/equivalence.mjs b/tooling/perf/equivalence.mjs
+new file mode 100644
+index 00000000..3ce57075
+--- /dev/null
++++ b/tooling/perf/equivalence.mjs
+@@ -0,0 +1,57 @@
++import { createHash } from 'node:crypto';
++
++// Compare controlled runs, retaining identity relationships but excluding clock measurements.
++// Raw event hashes separately check the HTTP replay against the exact stored bytes.
++export function equivalence() {
++  const identities = new Map();
++  const hash = createHash('sha256');
++  function normalize(value, key = '') {
++    if (
++      [
++        'ts',
++        'at',
++        'createdAt',
++        'startedAt',
++        'finishedAt',
++        'receivedAt',
++        'durationMs',
++        'elapsedSeconds',
++      ].includes(key)
++    )
++      return '<clock>';
++    if (typeof value === 'string')
++      return value.replace(/[0-9A-HJKMNP-TV-Z]{26}/g, (id) => {
++        if (!identities.has(id)) identities.set(id, `<id:${identities.size}>`);
++        return identities.get(id);
++      });
++    if (Array.isArray(value)) return value.map((item) => normalize(item));
++    if (value && typeof value === 'object')
++      return Object.fromEntries(
++        Object.keys(value)
++          .sort()
++          .map((name) => [name, normalize(value[name], name)]),
++      );
++    return value;
++  }
++  return {
++    event(event) {
++      const normalized = normalize(event);
++      hash.update(JSON.stringify(normalized) + '\n');
++      return normalized;
++    },
++    finish(thread, run) {
++      return {
++        eventsSha256: hash.digest('hex'),
++        stateSha256: createHash('sha256')
++          .update(
++            JSON.stringify(
++              normalize({ thread, status: run.status, outcome: run.outcome, result: run.result }),
++            ),
++          )
++          .digest('hex'),
++        normalization:
++          'Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations.',
++      };
++    },
++  };
++}
+diff --git a/tooling/perf/hot-path-observers.test.mjs b/tooling/perf/hot-path-observers.test.mjs
+new file mode 100644
+index 00000000..a6f49e88
+--- /dev/null
++++ b/tooling/perf/hot-path-observers.test.mjs
+@@ -0,0 +1,70 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { equivalence } from './equivalence.mjs';
++import { observeAppendClient } from './append-observer.mjs';
++
++test('equivalence ignores observed clocks and consistently renames generated identities, preserving payloads', () => {
++  function result(id, time, payload = [1, 2]) {
++    const capture = equivalence();
++    capture.event({
++      runId: id,
++      ts: time,
++      seq: 1,
++      type: 'node.finished',
++      durationMs: time,
++      patch: payload,
++    });
++    return capture.finish(
++      { run: { id }, vars: { payload } },
++      { status: 'succeeded', result: payload },
++    );
++  }
++  const a = result('01K00000000000000000000000', 1);
++  assert.deepEqual(a, result('01K11111111111111111111111', 2));
++  assert.notDeepEqual(a, result('01K11111111111111111111111', 2, [2, 1]));
++});
++
++test('append observer measures the supplied client and transaction without changing arguments or results', async () => {
++  const calls = [];
++  const tx = {
++    async execute(statement) {
++      calls.push(statement);
++      return { rows: [statement] };
++    },
++    async commit() {
++      calls.push('commit');
++    },
++    close() {
++      calls.push('close');
++    },
++  };
++  const client = {
++    async transaction(mode) {
++      calls.push(mode);
++      return tx;
++    },
++    name: 'client',
++  };
++  const observed = observeAppendClient(client);
++  const transaction = await observed.client.transaction('write');
++  assert.deepEqual(await transaction.execute({ sql: 'select coalesce(max(seq), 0)' }), {
++    rows: [{ sql: 'select coalesce(max(seq), 0)' }],
++  });
++  await transaction.execute('insert into events values (1)');
++  await transaction.execute('update runs set seq = 1');
++  await transaction.commit();
++  transaction.close();
++  assert.equal(observed.client.name, 'client');
++  const spans = observed.summary();
++  for (const key of [
++    'client.begin',
++    'transaction.sequenceLookup',
++    'transaction.insert',
++    'transaction.runSequenceUpdate',
++    'transaction.commit',
++  ])
++    assert.equal(spans[key].count, 1);
++  assert.equal(calls.length, 6);
++  observed.reset();
++  assert.deepEqual(observed.summary(), {});
++});
+diff --git a/tooling/perf/measure.mjs b/tooling/perf/measure.mjs
+index 872252af..af5c6e3a 100644
+--- a/tooling/perf/measure.mjs
++++ b/tooling/perf/measure.mjs
+@@ -23,7 +23,7 @@ if (!process.execArgv.includes('--experimental-import-meta-resolve')) {
+   process.exit(task.status ?? 1);
+ }
+ const workload = process.argv[2];
+-const allowed = ['long', 'context', 'replay', 'artifacts', 'readiness', 'browser'];
++const allowed = ['long', 'context', 'replay', 'artifacts', 'readiness', 'browser', 'append'];
+ if (!allowed.includes(workload))
+   throw new Error(
+     'Usage: node tooling/perf/measure.mjs ' +
+@@ -53,6 +53,7 @@ for (const name of Object.keys(flags))
+       'out',
+       'port',
+       'store-prefix',
++      'item-pause-ms',
+     ].includes(name)
+   )
+     throw new Error('Unknown flag: ' + name);
+@@ -97,6 +98,7 @@ const options = {
+   profileMode,
+   port: integer('port', 0, 0, 65535),
+   webDist: join(root, 'apps/web/dist'),
++  traceAppend: workload === 'append',
+ };
+ const hostBefore = cpus().map((cpu) => cpu.times);
+ const summary = {
+@@ -406,6 +408,8 @@ try {
+       inference: workload !== 'context',
+       grow: workload === 'browser',
+       artifacts: workload === 'artifacts',
++      itemPauseMs: integer('item-pause-ms', 0, 0, 1000),
++      returnControl: workload === 'append',
+       // Small browser smoke runs still span all three page observations.
+       delayMs:
+         workload === 'browser'
+@@ -432,6 +436,18 @@ try {
+       });
+     } else {
+       const started = await call('begin', spec);
++      const liveHash = createHash('sha256');
++      const liveReplay =
++        workload === 'append'
++          ? readReplay(started.base, started.runId, {
++              after: 0,
++              pauseMs: 0,
++              stopAfter: Infinity,
++              progress: () => {},
++              hasher: liveHash,
++            })
++          : undefined;
++      liveReplay?.catch(() => {}); // Awaited below; retain a rejected reader until execution drains.
+       let browser;
+       if (workload === 'browser') {
+         const { measureBrowser } = await import('./browser.mjs');
+@@ -446,6 +462,27 @@ try {
+       }
+       const queueDuring = await call('probe');
+       const result = await call('finish');
++      if (liveReplay) {
++        result.liveReplay = await liveReplay;
++        result.liveReplayComplete = result.liveReplay.events === result.correctness.storedEvents;
++        // #185/#404 owns finalization observation. Observe its current behavior and recover the
++        // durable suffix explicitly; never hide a live stream that closed before return audits.
++        result.deliveryTailReplay = await readReplay(started.base, started.runId, {
++          after: result.liveReplay.lastSeq,
++          pauseMs: 0,
++          stopAfter: Infinity,
++          progress: () => {},
++          hasher: liveHash,
++        });
++        result.correctness.replayOk =
++          result.liveReplay.events + result.deliveryTailReplay.events ===
++            result.correctness.storedEvents &&
++          result.liveReplay.gaps === 0 &&
++          result.deliveryTailReplay.gaps === 0 &&
++          result.deliveryTailReplay.sha256 === result.eventSerialization.sha256;
++        result.recovery = await call('recoverControl');
++        result.correctness.recoveryOk = result.recovery.ok;
++      }
+       const threadAt = performance.now();
+       const threadResponse = await fetch(started.base + '/runs/' + started.runId + '/thread', {
+         signal: AbortSignal.timeout(120_000),
+@@ -509,7 +546,8 @@ try {
+       if (
+         !result.correctness.ok ||
+         result.correctness.replayOk === false ||
+-        result.correctness.browserOk === false
++        result.correctness.browserOk === false ||
++        result.correctness.recoveryOk === false
+       )
+         summary.correctnessFailure = true;
+     }
+diff --git a/tooling/perf/worker.mjs b/tooling/perf/worker.mjs
+index 51ba8414..c7ad8c88 100644
+--- a/tooling/perf/worker.mjs
++++ b/tooling/perf/worker.mjs
+@@ -5,11 +5,14 @@ import { stat, appendFile, writeFile } from 'node:fs/promises';
+ import { join } from 'node:path';
+ import { monitorEventLoopDelay } from 'node:perf_hooks';
+ import { dependency, definition, Timings, bytes, disk } from './common.mjs';
++import { equivalence } from './equivalence.mjs';
++import { observeAppendClient } from './append-observer.mjs';
+ process.stderr.write('PERF_WORKER importing API ' + process.pid + '\n');
+ const { createContainer, loadConfig, buildApp } = await dependency('@graphgoblin/api');
+ const { RunManager } = await dependency('@graphgoblin/engine');
+ const { FakeHarness } = await dependency('@graphgoblin/engine/testing');
+ const { CURRENT_DEFINITION_FORMAT } = await dependency('@graphgoblin/contracts');
++const { databaseView, SqliteEventStore } = await dependency('@graphgoblin/infrastructure/sqlite');
+ process.stderr.write('PERF_WORKER imports ready\n');
+ const options = JSON.parse(process.env.GG_PERF_OPTIONS);
+ if (
+@@ -29,6 +32,8 @@ let stats = {},
+ let appends = 0,
+   activeCalls = 0,
+   maxConcurrentCalls = 0;
++const terminalRuns = new Set();
++let appendObserver;
+ const lag = monitorEventLoopDelay({ resolution: 10 });
+ // One turn at a time avoids preallocating an N*M fake script queue.
+ class Producer extends FakeHarness {
+@@ -48,7 +53,20 @@ class Producer extends FakeHarness {
+         delayMs,
+       },
+     ]);
+-    return super.start(request, signal);
++    const session = super.start(request, signal);
++    if (!this.specification.itemPauseMs) return session;
++    const pause = this.specification.itemPauseMs;
++    return {
++      ...session,
++      events: {
++        async *[Symbol.asyncIterator]() {
++          for await (const event of session.events) {
++            if (event.type === 'item') await new Promise((resolve) => setTimeout(resolve, pause));
++            yield event;
++          }
++        },
++      },
++    };
+   }
+ }
+ const harness = new Producer();
+@@ -64,6 +82,7 @@ function timedPort(port, name) {
+       if (key === 'subscribe') return value.bind(target);
+       return async (...args) => {
+         const started = performance.now();
++        const finalizationRead = name === 'events' && key === 'read' && terminalRuns.has(args[0]);
+         activeCalls++;
+         maxConcurrentCalls = Math.max(maxConcurrentCalls, activeCalls);
+         let result;
+@@ -72,6 +91,12 @@ function timedPort(port, name) {
+         } finally {
+           activeCalls--;
+           record(`${name}.${String(key)}`, performance.now() - started);
++          if (finalizationRead) record('events.finalizationRead', performance.now() - started);
++        }
++        if (name === 'runs' && result?.status) {
++          if (['succeeded', 'failed', 'cancelled', 'exhausted'].includes(result.status))
++            terminalRuns.add(result.id);
++          else terminalRuns.delete(result.id);
+         }
+         if (name === 'events' && key === 'append') appends += result.length;
+         if (name === 'runs' && key === 'saveThread' && caseStarted) {
+@@ -127,6 +152,10 @@ async function boot() {
+   container.manager.stop();
+   await container.manager.waitForIdle();
+   const ports = { ...container.ports };
++  if (options.traceAppend) {
++    appendObserver = observeAppendClient(container.handle.client);
++    ports.events = new SqliteEventStore(databaseView(appendObserver.client), ports.clock);
++  }
+   for (const name of [
+     'events',
+     'runs',
+@@ -248,6 +277,7 @@ async function begin(spec) {
+   observationMs = 0;
+   maxConcurrentCalls = 0;
+   appends = 0;
++  appendObserver?.reset();
+   maxWritableBytes = 0;
+   maxHeap = 0;
+   maxRss = 0;
+@@ -312,6 +342,7 @@ async function finish() {
+   const serialization = new Timings();
+   const eventHash = createHash('sha256'),
+     lateHash = createHash('sha256');
++  const equivalent = equivalence();
+   const lateAfter = Math.floor(run.lastEventSeq * 0.9);
+   for (;;) {
+     const events = await container.repos.events.read(runId, cursor, 1000);
+@@ -325,6 +356,7 @@ async function finish() {
+       if (events[index].seq > lateAfter) lateHash.update(value + '\n');
+     });
+     for (const event of events) {
++      equivalent.event(event);
+       if (event.seq !== ++cursor) throw new Error('stored sequence gap');
+       types[event.type] = (types[event.type] ?? 0) + 1;
+       if (event.type === 'node.started') {
+@@ -376,6 +408,12 @@ async function finish() {
+       !(specification.grow || !specification.inference) ||
+       thread.vars.history.every((value) => value === 'x'.repeat(specification.contextBytes)),
+     terminal,
++    returnsOk:
++      !specification.returnControl ||
++      (JSON.stringify(run.result) ===
++        JSON.stringify({ passes: specification.passes, output: 'OK' }) &&
++        types['return.delivered'] === 2 &&
++        !types['return.failed']),
+   };
+   correctness.ok =
+     correctness.succeeded &&
+@@ -392,6 +430,7 @@ async function finish() {
+     gates === specification.passes &&
+     correctness.passes === specification.passes &&
+     correctness.historyValuesOk &&
++    correctness.returnsOk &&
+     terminal === 1 &&
+     thread.counters.nodeVisits.work === specification.passes &&
+     ((specification.inference && !specification.grow) ||
+@@ -428,6 +467,8 @@ async function finish() {
+     storageAfter: await disk(dataDir),
+     artifacts: await disk(join(dataDir, 'artifacts')),
+     correctness,
++    equivalence: equivalent.finish(thread, run),
++    ...(appendObserver ? { appendSql: appendObserver.summary() } : {}),
+   };
+   caseStarted = undefined;
+   return result;
+@@ -444,6 +485,45 @@ async function probe() {
+   );
+   return { wallMs: performance.now() - began, latency: timing.json() };
+ }
++async function recoverControl() {
++  const id = runId;
++  async function capture() {
++    const hash = createHash('sha256');
++    let after = 0;
++    for (;;) {
++      const page = await container.repos.events.read(id, after, 256);
++      if (!page.length) break;
++      for (const event of page) hash.update(JSON.stringify(event) + '\n');
++      after = page.at(-1).seq;
++    }
++    return {
++      eventsSha256: hash.digest('hex'),
++      events: after,
++      thread: await manager.getThread(id),
++      run: await container.repos.runs.get(id),
++    };
++  }
++  const before = await capture();
++  // Controlled lost-finalization-marker fixture through the repository port, then real close/reopen.
++  await container.repos.runs.clearFinalized(id);
++  await close();
++  await boot();
++  await manager.waitForIdle();
++  const after = await capture();
++  const pending = await container.repos.runs.listRecoveryCandidates();
++  return {
++    beforeHash: before.eventsSha256,
++    afterHash: after.eventsSha256,
++    events: after.events,
++    ok:
++      before.eventsSha256 === after.eventsSha256 &&
++      JSON.stringify(before.thread) === JSON.stringify(after.thread) &&
++      JSON.stringify(before.run) === JSON.stringify(after.run) &&
++      !pending.some((entry) => entry.id === id),
++    mechanism:
++      'Public clearFinalized port; container close and file-backed reopen; no process crash claim',
++  };
++}
+ async function close() {
+   if (isClosed) return;
+   isClosed = true;
+@@ -471,6 +551,7 @@ const commands = {
+   begin,
+   finish,
+   probe,
++  recoverControl,
+   memory: async ({ gc = false } = {}) => {
+     if (gc) global.gc();
+     return {
