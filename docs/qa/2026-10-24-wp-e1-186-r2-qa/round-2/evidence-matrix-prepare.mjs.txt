@@ -1,0 +1,4 @@
+import {readFile,writeFile}from'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+let prefix=(await readFile('.tmp/qa186r2/oversized-verified.mjs','utf8')).split('const fixture=')[0].replaceAll('oversized-verified-results.json','evidence-matrix-results.json');
+const body=await readFile('.tmp/qa186r2/evidence-matrix-body.txt','utf8');await writeFile('.tmp/qa186r2/evidence-matrix.mjs',prefix+body);await writeFile(out+'/evidence-matrix-prepare.mjs.txt',await readFile(import.meta.filename,'utf8'));await writeFile(out+'/evidence-matrix-body.txt',body);

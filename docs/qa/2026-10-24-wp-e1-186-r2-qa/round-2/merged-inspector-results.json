@@ -1,0 +1,175 @@
+{
+  "checks": [
+    {
+      "name": "pinned labels in live Timeline, patch, messages and progress; no obsolete initial-thread fallback",
+      "pass": true,
+      "evidence": {
+        "runId": "01M5S2W028NSK8ZWZS655Q6A46",
+        "event": 12,
+        "download": {
+          "seq": 12,
+          "bytes": 1044,
+          "sha256": "539b69139fbccbb488ab9f4d37a8cf8b719d12b6a27612b16e4c8b72a0d8ca2f",
+          "filename": "run-01M5S2W028NSK8ZWZS655Q6A46-event-12.json"
+        },
+        "gate": {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 4,
+            "passes": 4,
+            "repeatRouteId": "again",
+            "maxPasses": 4,
+            "elapsedSeconds": 0.297,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5S2W028NSK8ZWZS655Q6A46",
+          "seq": 47,
+          "ts": "2026-10-25T08:29:40.095Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        }
+      }
+    },
+    {
+      "name": "browsed older pinned rows, server gate/exit/finish after eviction, exact old event download",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(before.events[0].seq>finished.seq)\n",
+      "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(before.events[0].seq>finished.seq)\n\n    at %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:44:47\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at process.callbackTrampoline (node:internal/async_hooks:130:17)\n    at async check (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:13:72)\n    at async %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:43:1"
+    },
+    {
+      "name": "oversized row keeps recorded ID description and exact disclosure/download, inside retained window",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(marker)\n",
+      "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(marker)\n\n    at %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:59:137\n    at async check (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:13:72)\n    at async %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:58:1"
+    },
+    {
+      "name": "oversized event outside retained window remains exactly downloadable",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(before.events[0].seq>huge)\n",
+      "stack": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(before.events[0].seq>huge)\n\n    at %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:63:139\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at process.callbackTrampoline (node:internal/async_hooks:130:17)\n    at async check (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:13:72)\n    at async %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:63:1"
+    },
+    {
+      "name": "readable probabilities and original numeric titles",
+      "pass": true,
+      "evidence": {
+        "runId": "01M5S2W028NSK8ZWZS00000004",
+        "display": [
+          "12.35%",
+          "87.65%"
+        ],
+        "exact": 0.123456
+      }
+    },
+    {
+      "name": "cancellation actor recorded inside retained window",
+      "pass": true,
+      "evidence": {
+        "runId": "01M5S2W5WMQCP5A9PQHVN1RBWR",
+        "events": [
+          {
+            "runId": "01M5S2W5WMQCP5A9PQHVN1RBWR",
+            "seq": 3,
+            "ts": "2026-10-25T08:29:45.771Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "api-key",
+              "id": "01M5S2J90S117X9NYWZS5X22CA"
+            }
+          },
+          {
+            "runId": "01M5S2W5WMQCP5A9PQHVN1RBWR",
+            "seq": 4,
+            "ts": "2026-10-25T08:29:45.780Z",
+            "type": "run.cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cancellation actor remains truthful with cancellation outside retained window",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Execution context\n\nIndependent QA 1792916985718 v1 · version ID 01M5S2W5VXBCHDN4K7AGVRYCPA\n\nCancelled; terminal cancellation event not recorded, so its actor cannot be established. Node position not recorded.\n\nExact run record\nPinned definition JSON",
+      "stack": "AssertionError [ERR_ASSERTION]: Execution context\n\nIndependent QA 1792916985718 v1 · version ID 01M5S2W5VXBCHDN4K7AGVRYCPA\n\nCancelled; terminal cancellation event not recorded, so its actor cannot be established. Node position not recorded.\n\nExact run record\nPinned definition JSON\n    at %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:77:105\n    at async check (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:13:72)\n    at async %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-2/.tmp/qa186r2/merged-inspector.mjs:75:1"
+    },
+    {
+      "name": "unrecorded cancellation actor is labelled honestly",
+      "pass": true,
+      "evidence": {
+        "runId": "01M5S2W5WMQCP5A9PQ00000005",
+        "text": "Execution context\n\nIndependent QA 1792916985718 v1 · version ID 01M5S2W5VXBCHDN4K7AGVRYCPA\n\nCancelled; actor not recorded. Node position not recorded.\n\nExact run record\nPinned definition JSON"
+      }
+    },
+    {
+      "name": "pinned labels unavailable is explicit",
+      "pass": true,
+      "evidence": {
+        "runId": "01M5S2W5WMQCP5A9PQ00000005",
+        "controlled": "pinned version HTTP 404",
+        "text": "Execution context\n\nIndependent QA 1792916985718 v1 · version ID 01M5S2W5VXBCHDN4K7AGVRYCPA\n\nPinned definition unavailable. Authored node and route labels are not recorded in the available history.\n\nCancelled; actor not recorded. Node position not recorded.\n\nExact run record"
+      }
+    },
+    {
+      "name": "merged inspector layout 1440 dark",
+      "pass": true,
+      "evidence": {
+        "geometry": {
+          "width": 1440,
+          "scrollWidth": 1440,
+          "theme": "dark"
+        },
+        "rows": 52
+      }
+    },
+    {
+      "name": "merged inspector layout 1440 light",
+      "pass": true,
+      "evidence": {
+        "geometry": {
+          "width": 1440,
+          "scrollWidth": 1440,
+          "theme": "light"
+        },
+        "rows": 52
+      }
+    },
+    {
+      "name": "merged inspector layout 390 dark",
+      "pass": true,
+      "evidence": {
+        "geometry": {
+          "width": 390,
+          "scrollWidth": 390,
+          "theme": "dark"
+        },
+        "rows": 52
+      }
+    },
+    {
+      "name": "merged inspector layout 390 light",
+      "pass": true,
+      "evidence": {
+        "geometry": {
+          "width": 390,
+          "scrollWidth": 390,
+          "theme": "light"
+        },
+        "rows": 52
+      }
+    }
+  ],
+  "errors": []
+}

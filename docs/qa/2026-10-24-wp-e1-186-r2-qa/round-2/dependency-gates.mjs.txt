@@ -1,0 +1,8 @@
+import {spawn}from'node:child_process';
+import {readFile,writeFile}from'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',results=[];
+for(const name of ['api-client','domain']){
+ const command='pnpm.cmd --filter @graphgoblin/'+name+' test:coverage';let log='';const start=new Date().toISOString();const p=spawn(process.env.ComSpec,['/d','/s','/c',command],{windowsHide:true,env:{...process.env,GG_TEST_PORT_START:'6158',GG_TEST_PORT_COUNT:'2',GG_TEST_STORE_PREFIX:'gg-qa-e1-186r2-2-gate-'}});p.stdout.on('data',b=>log+=b.toString());p.stderr.on('data',b=>log+=b.toString());const code=await new Promise(r=>p.on('close',r));
+ await writeFile(out+'/'+name+'-coverage.log.txt',('Command: '+command+'\nStarted: '+start+'\n'+log+'\nExit: '+code).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));results.push({name,command,code});await writeFile(out+'/dependency-gates.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results.at(-1)));
+}
+await writeFile(out+'/dependency-gates.mjs.txt',await readFile(import.meta.filename,'utf8'));

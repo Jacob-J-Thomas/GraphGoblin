@@ -1,0 +1,13 @@
+import {execFileSync} from 'node:child_process';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:20000000}).trim();
+const base='d33ac0e56be9f559ab88c60ac204e4efdc123501';
+const diff=execFileSync('git',['diff',base,'HEAD','--','.',':!docs/qa'],{encoding:'utf8',maxBuffer:20000000});await writeFile(out+'/source.diff.txt',diff);
+const paths=git('diff','--name-only',base,'HEAD','--','docs',':!docs/qa').split('\n').filter(Boolean);
+const docs=[];for(const path of paths){const raw=await readFile(path,'utf8');const bad=raw.split('\n').flatMap((line,i)=>/[\u00c3\u00c2]|\u00e2[\u0080\u20ac\u2020\u20ac]/.test(line)?[{line:i+1,text:line}]:[]);docs.push({path,bytes:Buffer.byteLength(raw),sha256:createHash('sha256').update(raw).digest('hex'),mojibake:bad,bom:raw.charCodeAt(0)===0xfeff});}
+const c=await(await fetch('http://127.0.0.1:6151/connection',{method:'POST',body:'{}'})).json();
+const env={head:git('rev-parse','HEAD'),branch:git('branch','--show-current'),base,cwd:process.cwd(),node:process.version,platform:process.platform,store:c.dir,gateway:c.url,control:6151,pid:c.pid,receiver:6154,browser:'Microsoft Edge via installed Playwright, headless, serviceWorkers blocked',docs,initialGitStatus:git('status','--short'),d015:'Native process-tree termination denied by task environment. Forced cleanup not established.',nativeProcessInventory:'Get-CimInstance Win32_Process returned Access denied; no broad process inspection used.'};
+await writeFile(out+'/environment.json',JSON.stringify(env,null,2).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+await writeFile(out+'/provenance.mjs.txt',await readFile(import.meta.filename,'utf8'));console.log(JSON.stringify({head:env.head,docs:docs.map(d=>({path:d.path,mojibake:d.mojibake.length})),diffBytes:Buffer.byteLength(diff)}));

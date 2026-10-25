@@ -1,0 +1,121 @@
+{
+  "checks": [
+    {
+      "name": "typed slow-consumer reason is visible and resumes from complete event 600",
+      "pass": true,
+      "evidence": {
+        "fault": "controlled public HTTP stream, real browser parser, real gateway reconnect",
+        "receivedPrefix": 600,
+        "reopen": "http://127.0.0.1:6150/runs/01M5S2M5REX28KNJKFPY38MB69/events?after=600",
+        "count": 512,
+        "first": 1267,
+        "last": 1778
+      }
+    },
+    {
+      "name": "after typed failure older/newer, reload and live suffix remain exact",
+      "pass": true,
+      "evidence": {
+        "reloadedFirst": 1139,
+        "last": 1778,
+        "count": 128,
+        "exactSuffix": true
+      }
+    },
+    {
+      "name": "selected node patch before and after equal full replay boundary",
+      "pass": true,
+      "evidence": {
+        "seq": 49,
+        "boundaryBefore": 48,
+        "results": [
+          {
+            "path": "/outputs/work",
+            "before": {
+              "nodeId": "work",
+              "value": "QA output 2",
+              "at": "2026-10-25T08:25:23.669Z"
+            },
+            "after": {
+              "nodeId": "work",
+              "value": "QA output 3",
+              "at": "2026-10-25T08:25:23.712Z"
+            }
+          },
+          {
+            "path": "/lastOutput",
+            "before": {
+              "nodeId": "gate",
+              "value": {
+                "provenance": {
+                  "kind": "expression",
+                  "provider": null,
+                  "classifierId": null,
+                  "model": null,
+                  "effort": null
+                },
+                "observation": {
+                  "kind": "route",
+                  "routeId": "again",
+                  "confidence": null,
+                  "reasoning": null
+                },
+                "portId": "again",
+                "gate": {
+                  "previousPasses": 3,
+                  "passes": 4,
+                  "repeatRouteId": "again",
+                  "maxPasses": 85,
+                  "elapsedSeconds": 0.193,
+                  "limit": null
+                }
+              },
+              "at": "2026-10-25T08:25:23.685Z"
+            },
+            "after": {
+              "nodeId": "work",
+              "value": "QA output 3",
+              "at": "2026-10-25T08:25:23.712Z"
+            }
+          },
+          {
+            "path": "/counters/usage",
+            "before": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            },
+            "after": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "two independent tabs restore separate history windows",
+      "pass": true,
+      "evidence": {
+        "tab1": {
+          "mode": "history",
+          "first": 1
+        },
+        "tab2": {
+          "mode": "live",
+          "first": 1267,
+          "ack": 1778
+        }
+      }
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:6150/runs/01M5S2M5REX28KNJKFPY38MB69/events?after=0",
+    "http://127.0.0.1:6150/runs/01M5S2M5REX28KNJKFPY38MB69/events?after=600",
+    "http://127.0.0.1:6150/runs/01M5S2M5REX28KNJKFPY38MB69/events?after=1778"
+  ],
+  "errors": []
+}
