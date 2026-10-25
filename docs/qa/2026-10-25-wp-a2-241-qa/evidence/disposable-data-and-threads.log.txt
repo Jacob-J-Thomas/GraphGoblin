@@ -1,0 +1,75 @@
+1:import { mkdtemp, rm } from 'node:fs/promises';
+28:  harness: FakeHarness;
+34:  dataDir: string;
+43:  harnesses?: Partial<Record<HarnessId, HarnessPort>>;
+50:/** An API over an in-memory database with fake harness, deciders, and structured completion. */
+52:  const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-'));
+54:    GG_DATA_DIR: dataDir,
+55:    GG_DB_URL: ':memory:',
+61:  const harness = new FakeHarness();
+68:    harnesses: options.harnesses ?? { codex: harness },
+82:    harness,
+88:    dataDir,
+113:      await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
+    container,
+    harness,
+    jev,
+    codex,
+    structured,
+    logger,
+    clock,
+    dataDir,
+    async publishLoop(definition, headers = {}) {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition },
+        headers,
+      });
+      if (created.statusCode !== 201) throw new Error(`create loop failed: ${created.body}`);
+      const id = created.json<{ loop: { id: string } }>().loop.id;
+      const published = await app.inject({ method: 'POST', url: `/loops/${id}/publish`, headers });
+      if (published.statusCode !== 200) throw new Error(`publish failed: ${published.body}`);
+      return id;
+    },
+    idle: () => container.manager.waitForIdle(),
+    async close() {
+      // Teardown is a storage/component boundary, not an operator stop. C2 reopens this store.
+      // If a test did request managed shutdown, settle that sequence before closing resources.
+      if (['draining', 'awaiting-choice', 'forcing'].includes(container.shutdown.state().phase)) {
+        if (['draining', 'awaiting-choice'].includes(container.shutdown.state().phase))
+          await container.requestShutdown('force');
+        await container.shutdown.drain();
+      }
+      await app.close();
+      await container.dispose();
+      await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
+    },
+  };
+}
+
+export { createThreadHistoryFixture } from './thread-history.js';
+export { storeLoopBefore, type StoredLoopBefore } from './historical-store.js';
+export { shippedSqlMigrationsFrom } from '@graphgoblin/infrastructure/sqlite/testing';
+> import { mkdtemp } from 'node:fs/promises';
+> import { tmpdir } from 'node:os';
+  import { join } from 'node:path';
+  export async function createThreadHistoryFixture(webDist?: string) {
+>   const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-116-'));
+    let calls = 0;
+      loadConfig({
+>       GG_DATA_DIR: dataDir,
+        GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
+      snapshots,
+>     dataDir,
+      loopId,
+apps/web/src\styles\palette.test.ts:1:import { readFileSync } from 'node:fs';
+apps/web/src\styles\palette.test.ts:2:import { dirname, join } from 'node:path';
+apps/web/src\styles\palette.test.ts:3:import { fileURLToPath } from 'node:url';
+apps/web/src\api\prefixes.test.ts:1:import { readFileSync } from 'node:fs';
+apps/web/src\api\prefixes.test.ts:2:import { resolve } from 'node:path';
+apps/web/src\styles\fonts.test.ts:1:import { existsSync, readdirSync, readFileSync } from 'node:fs';
+apps/web/src\styles\fonts.test.ts:2:import { dirname, join } from 'node:path';
+apps/web/src\styles\fonts.test.ts:3:import { fileURLToPath } from 'node:url';
+apps/web/src\editor\TriggerPresets.test.tsx:3:import { Buffer } from 'node:buffer';
+apps/web/src\editor\TriggerPresets.test.tsx:4:import { runInNewContext } from 'node:vm';

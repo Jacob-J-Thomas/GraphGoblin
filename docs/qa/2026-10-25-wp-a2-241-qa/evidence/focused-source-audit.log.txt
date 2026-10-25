@@ -1,0 +1,379 @@
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  82)             optional={optional}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  83)             errorMessage={errorMessage}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  84)             requiredMessage={schema.safeParse('').error?.issues[0]?.message}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  85)             describedBy={control['aria-describedby']}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  86)             invalid={control['aria-invalid']}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  87)           />
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  88)         )}
+e7dad992a (Jacob-J-Thomas 2026-10-04 01:12:10 -0500  89)       </Row>
+e7dad992a (Jacob-J-Thomas 2026-10-04 01:12:10 -0500  90)     );
+e7dad992a (Jacob-J-Thomas 2026-10-04 01:12:10 -0500  91)   }
+e7dad992a (Jacob-J-Thomas 2026-10-04 01:12:10 -0500  92)   const placeholder = typeof defaultValue === 'string' ? defaultValue : undefined;
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500  93)   const multiline =
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500  94)     fieldMeta(schema).multiline ||
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500  95)     /description|content|replacement/i.test(name.split('.').pop() ?? '');
+e7dad992a (Jacob-J-Thomas 2026-10-04 01:12:10 -0500  96)   return (
+0551cb1c3 (Jacob-J-Thomas 2026-10-05 03:05:05 -0500  97)     <Row label={label} caption={caption} htmlFor={id} name={name} required={required} help={help}>
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  98)       {(control) =>
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500  99)         multiline ? (
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 100)           <Textarea
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 101)             {...control}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 102)             value={value}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 103)             placeholder={placeholder}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 104)             onChange={(e) => set(e.target.value)}
+0551cb1c3 (Jacob-J-Thomas 2026-10-05 03:05:05 -0500 105)             onBlur={onBlur}
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 106)           />
+ca96921d1 (Jacob-J-Thomas 2026-10-04 18:20:36 -0500 107)         ) : (
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 108)           <>
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 109)             <Input
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 110)               {...control}
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 111)               value={value}
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 112)               placeholder={placeholder}
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 113)               onChange={(e) => set(e.target.value)}
+9d313de66 (Jacob-J-Thomas 2026-10-10 20:37:11 -0500 114)               onBlur={onBlur}
+e7dad992ae891cbe049b186208bbdbb7926f0137 refactor(web): schema-driven forms on tokens, fields.tsx split per field family
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  1) import type { RunRecord } from '@graphgoblin/contracts';
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  2) import { Card } from '../../components/ui/index.js';
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  3) import { formatDateTime } from '../../lib/utils.js';
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  4) 
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  5) export function DeliveryPanel({ run }: { run: RunRecord }) {
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  6)   if (!run.deliveries?.length) return null;
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  7)   return (
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  8)     <Card title="Webhook delivery">
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500  9)       <p className="text-sm text-muted">Execution: {run.status}. Delivery is tracked separately.</p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 10)       {run.deliveries.map((delivery) => (
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 11)         <div key={delivery.id} className="grid gap-2">
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 12)           <p>{delivery.channel.url}</p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 13)           <p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 14)             {delivery.status === 'failed'
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 15)               ? `Failed after ${delivery.attempts} attempt${delivery.attempts === 1 ? '' : 's'}`
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 16)               : delivery.status === 'delivered'
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 17)                 ? `Delivered after ${delivery.attempts} attempt${delivery.attempts === 1 ? '' : 's'}`
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 18)                 : `Pending (${delivery.attempts}/${delivery.maxAttempts} attempts)`}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 19)           </p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 20)           <p className="text-sm text-muted">Delivery identity: {delivery.id}</p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 21)           {delivery.inFlight ? <p>Awaiting acknowledgement.</p> : null}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 22)           {delivery.nextAttemptAt && !delivery.inFlight ? (
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 23)             <p>Next attempt: {formatDateTime(delivery.nextAttemptAt)}</p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 24)           ) : null}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 25)           {delivery.lastError ? (
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 26)             <p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 27)               {delivery.lastError.code}: {delivery.lastError.message}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 28)             </p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 29)           ) : null}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 30)           {delivery.acknowledgementUncertain ||
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 31)           (delivery.inFlight && delivery.acknowledgement === 'unknown') ? (
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 32)             <p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 33)               An acknowledgement was unknown; the effect may have happened. Receivers must implement
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 34)               their own deduplication if duplicate effects are unacceptable; GraphGoblin does not
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 35)               assume they do.
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 36)             </p>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 37)           ) : null}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 38)         </div>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 39)       ))}
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 40)     </Card>
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 41)   );
+ec2f12929 (Jacob Thomas 2026-10-22 16:51:39 -0500 42) }
+4689ba4e feat(decisions): select explicit evaluators and upgrade stored loops
+6dfa4fb6 feat(contracts): describe every node config field with metadata that marks advanced fields
+  version: '2.1.285 (E2E fake)',
+  authenticated: true,
+  problems: [],
+  authMethod: 'claude.ai',
+  supportedPolicies: [
+    {
+      sandbox: 'read-only',
+      approval: 'never',
+      permissionMode: 'dontAsk',
+      tools: ['Read', 'Glob', 'Grep'],
+      authMethod: 'claude.ai',
+      boundary: 'builtin-tools',
+      network: 'unconfined',
+    },
+    {
+      sandbox: 'danger-full-access',
+      approval: 'never',
+      permissionMode: 'dontAsk',
+      tools: ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
+      authMethod: 'claude.ai',
+      boundary: 'unconfined',
+      network: 'unconfined',
+    },
+  ],
+  models: [
+    {
+      model: 'claude-opus-5-5',
+      efforts: claudeEfforts,
+    },
+    {
+      model: 'claude-fable-5-1',
+      efforts: claudeEfforts,
+    },
+    {
+      model: 'claude-sonnet-5-5',
+      efforts: claudeEfforts,
+    },
+    {
+      model: 'claude-haiku-5-5',
+      efforts: claudeEfforts,
+    },
+  ],
+});
+const notReadyClaudePreflight: HarnessPreflight = {
+  ...readyClaudePreflight,
+  state: 'auth',
+  ok: false,
+  authenticated: false,
+  problems: [readinessMessage('claude', 'auth', 'Claude is not signed in.')],
+  supportedPolicies: [],
+};
+
+class E2eClaudeHarness extends FakeHarness {
+  termination: 'confirmed' | 'unconfirmed' = 'confirmed';
+  private terminationSession = 0;
+
+  constructor() {
+    super([], 'claude');
+    this.preflightResult = readyClaudePreflight;
+  }
+
+  override start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    if (this.termination === 'confirmed') return super.start(request, signal);
+    this.started.push(request);
+    this.terminationSession += 1;
+    const sessionId = 'fake-claude-unconfirmed-' + this.terminationSession;
+    const error = Object.assign(
+      new Error('Termination not confirmed; stop the E2E fake before retrying.'),
+      { code: 'HARNESS_TERMINATION_UNCONFIRMED', retriable: false },
+    );
+    const result: HarnessSession['result'] = new Promise((_, reject) => {
+      if (signal.aborted) reject(error);
+      else signal.addEventListener('abort', () => reject(error), { once: true });
+    });
+    result.catch(() => undefined);
+    const events = async function* (): AsyncGenerator<HarnessEvent> {
+      yield { type: 'session', sessionId, mode: 'fresh' };
+      await result.catch(() => undefined);
+      yield {
+        type: 'error',
+        code: error.code,
+        message: error.message,
+        retriable: false,
+        submission: 'delivery-uncertain',
+      };
+    };
+    return {
+      sessionId: Promise.resolve(sessionId),
+      events: events(),
+      result,
+      cancel: () => Promise.reject(error),
+    };
+  }
+}
+
+async function startApp(
+  env: Record<string, string> = {},
+  requireApiKey = false,
+  realClassifiers = false,
+  options: { claude?: boolean; id?: string } = {},
+) {
+  const id = options.id ?? 'e2e-instance-' + nextInstanceId++;
+  const codex = new FakeHarness([], 'codex');
+  const claude = options.claude ? new E2eClaudeHarness() : undefined;
+  const harnesses = { codex, ...(claude ? { claude } : {}) };
+  const app = await createTestApp({
+    env: { GG_WEB_DIST: dist, ...env },
+    requireApiKey,
+    realClassifiers,
+    harnesses,
+  });
+  apps.push(app);
+  const url = await app.app.listen({
+    host: '127.0.0.1',
+    port: id === 'main' ? Number(process.env['GG_E2E_MAIN_PORT'] ?? 0) : 0,
+  });
+  const instance: E2eInstance = { id, app, url, harnesses };
+  instances.set(id, instance);
+  return instance;
+}
+
+const main = await startApp({}, false, false, { id: 'main' });
+const workerPath = join(dist, 'sw.js');
+const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
+let workerBuild = 0;
+  +): Promise<void> {
+  +  try {
+  +    await submission(ctx, pending, value, marker);
+  +  } catch (error) {
+> +    recordingFault(state, 'harness.submission', error);
+  +    if (marker) state.acceptanceFailure = { error };
+  +  }
+  +}
+  +
+  +        const missing = pending.submission === 'session-missing';
+  +        const code = missing
+  +          ? 'HARNESS_SESSION_MISSING'
+  +          : uncertain && failure.code === 'HARNESS_TURN_FAILED'
+> +            ? 'HARNESS_DELIVERY_UNCERTAIN'
+  +            : failure.code;
+  +        const details = failure.options.details;
+  +        failure = new RunFailureError(
+  +          code,
+  +  const queryClient = useQueryClient();
+  +  return async (
+  +    harness: HarnessId,
+> +    model: unknown,
+  +    effort: unknown,
+  +    loopDefaults: unknown,
+  +    waiting: () => void,
+  +      }
+  +    }
+  +    const catalog = queryClient.getQueryState<
+> +      (ModelCatalogEntry & { ecosystemDefault: boolean })[]
+  +    >(keys.catalog);
+  +    const settings = queryClient.getQueryState<Record<string, unknown>>(keys.settings);
+  +    const observer = new QueryObserver<HarnessPreflightItem[]>(queryClient, {
+  +      );
+  +    const candidates = [
+  +      ...defaults.map((value) => value?.model),
+> +      entries.find((entry) => entry.ecosystemDefault)?.model,
+  +    ];
+  +    const entry = candidates.flatMap((candidate) =>
+  +      entries.filter((item) => item.model === candidate && supportedEfforts(item).length > 0),
+  +        'No compatible default effort is available for the new model. Model and effort are unchanged; choose them explicitly.',
+  +      );
+  +    return {
+> +      ...(model === undefined ? {} : { model: entry.model }),
+  +      effort: nextEffort,
+  +      message: undefined,
+  +    };
+  return dialog;
+}
+
+/**
+ * Expand the node editor's Advanced options (#14) unless they are open already, and return the
+ * toggle. Advanced fields stay collapsed under it until then.
+ */
+export async function openAdvanced(scope: Page | Locator) {
+  const toggle = scope.getByRole('button', { name: /^Advanced\b/ });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
+}
+
+/** Expand a collapsed list item, such as "Operations 1" of a mutate node (#14). */
+export async function openItem(scope: Page | Locator, name: string) {
+  const toggle = scope.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+apps/web/e2e/live.spec.ts:8:test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
+apps/web/e2e/live.spec.ts:15:  const res = await request.post(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps/live`, {
+apps/web/e2e/live.spec.ts:17:    timeout: 60_000,
+apps/web/e2e/live.spec.ts:66:    timeout: 240_000,
+apps/web/playwright.config.ts:12:  process.env['GG_E2E_BROWSER_CHANNEL'] ?? (process.platform === 'win32' ? 'msedge' : undefined);
+apps/web/playwright.config.ts:22:  timeout: 60_000,
+apps/web/playwright.config.ts:23:  expect: { timeout: 10_000 },
+apps/web/playwright.config.ts:24:  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']],
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index e4067ae4..ae17443d 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -94,6 +94,74 @@ jobs:
+             apps/*/coverage/coverage-summary.json
+           if-no-files-found: ignore
+ 
++  browser:
++    name: Browser
++    runs-on: ubuntu-latest
++    timeout-minutes: 75
++    env:
++      # Match Windows development and the existing Linux routing-performance job.
++      GG_E2E_BROWSER_CHANNEL: msedge
++      # Live checks spend subscription quota and require an installed, signed-in CLI.
++      LIVE: '0'
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          # issue-170-qa reads frozen golden definitions from an earlier commit with git ls-tree.
++          fetch-depth: 0
++
++      - uses: pnpm/action-setup@v4
++
++      - uses: actions/setup-node@v4
++        with:
++          node-version-file: .nvmrc
++          cache: pnpm
++
++      - name: Install (frozen lockfile)
++        run: pnpm install --frozen-lockfile
++
++      - name: Install Edge
++        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
++
++      - name: Build
++        run: pnpm build
++
++      - name: Functional browser suite (no retries)
++        timeout-minutes: 60
++        working-directory: apps/web
++        run: pnpm exec playwright test --retries=0 --workers=1
++
++      - name: Browser coverage and exclusions
++        if: always()
++        shell: bash
++        run: |
++          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
++          ## Functional browser gate
++
++          Selected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.
++          The test step and report record the executed result, including any setup failure.
++          The real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.
++
++          Skipped: `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI`.
++          It requires `LIVE=1`, an installed Codex CLI and a provider login, and spends subscription quota. CI sets `LIVE=0`.
++          No other functional spec or test is skipped or gated on a provider login or installed CLI.
++
++          Optional modes are off: `GG_FORMS_QA_PHASE` (historical before/after captures),
++          `GG_ROUTING_SCREENSHOTS` (captures), `GG_ROUTING_PROFILE` (profiling), and
++          `GG_ROUTING_STRICT_PERF` (stricter manual performance bounds). Their ordinary tests still run.
++          `screens.capture.ts` is a manual screenshot utility, outside the `*.spec.ts` suite.
++          Live/paid checks remain separate, manually authorized checks; this job schedules none.
++          SUMMARY
++
++      - name: Upload browser failure evidence
++        if: failure() || cancelled()
++        uses: actions/upload-artifact@v4
++        with:
++          name: browser-failure
++          path: |
++            apps/web/test-results/
++            apps/web/playwright-report/
++          if-no-files-found: warn
++
+   template-image:
+     name: Template image
+     runs-on: ubuntu-latest
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index af10f603..9100c0d7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Run provider-free functional browser checks in CI on Edge with zero retries and one worker, publish live exclusions, and upload available failure or cancellation evidence and the HTML report. Update stale #244 delivery/event assertions (#400) and #204/#205 model assertions, synchronize draft/PWA lifecycles and zoomed editor targets, verify durable webhook defaults and authored fallback persistence, and retain a regression for missing post-terminal history. Drive native routing gestures on absolute deadlines without Playwright drag-interception overhead. Use bounded isolated web unit threads and calibrate the unchanged 300-graph correctness corpus's execution watchdog; retain conflict assertions, native performance limits and coverage thresholds. (#241)
++
+ - Enforce visible, pinned structured-completion deadlines for LLM decision evaluations and output-transform repairs through the structured port, abort overdue Codex work, release run capacity and discard late results while preserving explicit cancellation. No completion deadline applies by default; Unlimited removes that cutoff. **Upgrade:** engine embedders configure `LoopSettings.structuredTimeoutMs` instead of the previously unenforced `EngineSettings.structuredTimeoutMs`; startup migration `0019_completion_deadline_defaults` materializes omitted loop/pin deadline values as null in drafts, versions, run snapshots, queued events and admission intents, preserving authored values. This also fixes reopening pre-#243 loops without `runDeadlineSeconds`. Same-session inference schema repairs follow node/run timeouts. Timeout details retain the completion provider, model and effort. Direct evaluator callers must supply `runId` and `structuredTimeoutMs` (null for Unlimited). Export and API clients must accept the nullable loop-settings field `structuredTimeoutMs`, `pinned.limits.structuredTimeoutMs` and the `STRUCTURED_COMPLETION_TIMEOUT` value of `RunErrorCode`. Regenerate clients for this contract. (#270)
+ 
+ - Page SSE replay and bound transport buffering, honour backpressure, and report slow readers explicitly with cursor recovery. Replay and live notification overflow catch up from durable history on the same connection; transient replay failures retry. Bounded lifecycle and tail reads confirm completion only after historical outcomes and durable delivery audits are delivered; an id-less `stream.complete` control also completes empty terminal cursors. Stored-history corruption is fatal before or after SSE headers. The inspector shows the retry reason and bounds held batches using the client's received JSON size. History browsing follows in #186 round 2. **Upgrade:** rebuild the API, API client and web together for `stream.complete`, typed stream failures and the `onEvent(event, jsonBytes)` callback; SSE consumers must wait for completion rather than stop at historical terminal events. No store migration is required. (#186)
+diff --git a/eslint.config.js b/eslint.config.js
+index 5d1c2a02..bed67045 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -12,6 +12,8 @@ export default tseslint.config(
+       '**/coverage/**',
+       '**/node_modules/**',
+       '**/.turbo/**',
++      // Playwright's generated HTML report includes bundled JavaScript, not source.
++      'apps/web/playwright-report/**',
+       // Playwright's trace staging captures built bundles. Other test-results content is linted.
+       'apps/web/test-results/.playwright-artifacts-*/traces/**',
+       // Generated code (for example the OpenAPI types in packages/api-client) is not linted.

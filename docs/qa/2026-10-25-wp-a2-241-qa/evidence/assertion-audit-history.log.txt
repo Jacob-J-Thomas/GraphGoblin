@@ -1,0 +1,1053 @@
+6da64f55 fix(web,contracts): the decision's Codex fields get their pickers through contract metadata; one select across loading states; warnings deduplicated and styled (#16 review)
+19c3440f feat(web): the inference Model and Effort fields pick from the catalog; loop defaults and decision Codex settings share the pickers (#16)
+ba6dafa5 feat(web): JSON Schema forms, Loops, Settings, the API key panel, and the editor's own fields on the shared controls (#8)
+ca96921d feat(web): schema form fields on the shared controls, with linked help, errors, and required markers (#8)
+e7dad992 refactor(web): schema-driven forms on tokens, fields.tsx split per field family
+744c2d82 feat(web): editor, run inspector, settings, and PWA shell (M5)
+ec2f1292 Bounded, durable webhook return delivery with idempotent retries and the pre-upgrade Event-return finalisation (#246)
+4e36506c feat(contracts): harness is chosen on inference nodes only, as a clean break (#19)
+e1a161cc feat(contracts): choose the harness on inference nodes only, with legacy loop-level input accepted (#19)
+commit ab98d3e093fd352547e57752de669105c4260356
+Author: Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com>
+Date:   Sat Oct 24 13:04:07 2026 -0500
+
+    Show model and effort outside Advanced with one effort control that names the inherited default (#205) (#393)
+    
+    Model and reasoning effort sit on the Settings tab of inference and LLM decision editors, with one effort dropdown that names the inherited default; classifiers keep Question, Model, then Answer. The read-only GET /system/model-defaults exposes process defaults for accurate labels. While defaults have not loaded or their latest read failed, labels say so and Effort offers only efforts every enabled model supports. A manual start refuses a Claude effort outside the ready capabilities before recording it.
+    
+    Part of #205 (owner product acceptance pending). Merged under D-035 after three GPT-6 Astra audit rounds; the last round's finding is fixed in 3d75c8e7.
+
+ CHANGELOG.md                                       |     2 +
+ apps/api/src/adversarial.test.ts                   |     2 +
+ apps/api/src/claude-effort-readiness.test.ts       |   109 +
+ apps/api/src/routes/model-defaults.test.ts         |    19 +
+ apps/api/src/routes/runs.ts                        |     2 +-
+ apps/api/src/routes/system.ts                      |    17 +-
+ apps/api/src/run-readiness.ts                      |   101 +-
+ apps/web/e2e/claude-harness.spec.ts                |     5 +-
+ apps/web/e2e/model-effort.spec.ts                  |   460 +
+ apps/web/e2e/model-picker.spec.ts                  |    14 +-
+ apps/web/e2e/node-placement.spec.ts                |     3 +-
+ apps/web/e2e/server.ts                             |    14 +-
+ apps/web/src/__fixtures__/fake-api.ts              |     4 +
+ apps/web/src/api/queries.ts                        |    26 +-
+ apps/web/src/app/bootstrap.tsx                     |    13 +
+ apps/web/src/editor/NodeEditorDialog.tsx           |     6 +
+ apps/web/src/editor/field-controls.ts              |    10 +-
+ apps/web/src/editor/model-effort-refresh.test.tsx  |   479 +
+ apps/web/src/editor/model-effort.test.tsx          |   261 +
+ apps/web/src/forms/advanced.test.tsx               |    10 +-
+ apps/web/src/forms/fields/model.test.tsx           |    76 +-
+ apps/web/src/forms/fields/model.tsx                |   140 +-
+ apps/web/src/forms/layout.test.ts                  |    14 +-
+ apps/web/src/settings/sections/DefaultsSection.tsx |    10 +-
+ docs/06-harness-integration.md                     |    10 +
+ docs/07-api-and-streaming.md                       |     4 +
+ docs/09-frontend-and-pwa.md                        |    28 +-
+ docs/guide/02-build-a-loop.md                      |     4 +-
+ docs/qa/2026-10-23-wp-f2b-205-qa/NOT-KEPT.md       |     3 +
+ .../ORCHESTRATOR-DISPOSITIONS.md                   |    11 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/README.md         |   381 +
+ .../qa/2026-10-23-wp-f2b-205-qa/SHA256SUMS.log.txt |   145 +
+ .../accessibility-assessment.json                  |     6 +
+ .../2026-10-23-wp-f2b-205-qa/adjacent-checks.json  |   565 +
+ .../qa/2026-10-23-wp-f2b-205-qa/adjacent-http.json | 15943 +++++++++++++++++++
+ .../adjacent-server-environment.json               |    20 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/adjacent.log.txt  |     6 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/adjacent.mjs.txt  |    38 +
+ .../2026-10-23-wp-f2b-205-qa/api-scope-checks.json |    96 +
+ .../2026-10-23-wp-f2b-205-qa/api-scope-http.json   |    93 +
+ .../api-scope-server-environment.json              |    20 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/api-scope.log.txt |     3 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/api-scope.mjs.txt |    37 +
+ .../attempt-1-supplemental-checks.json             |   513 +
+ .../attempt-1-supplemental-http.json               |   476 +
+ .../attempt-1-supplemental.log.txt                 |    13 +
+ .../attempt-1-supplemental.mjs.txt                 |    50 +
+ .../2026-10-23-wp-f2b-205-qa/browser-api.log.txt   |    64 +
+ .../2026-10-23-wp-f2b-205-qa/browser-api.mjs.txt   |    49 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/browser.json      |     9 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/build.log.txt     |    69 +
+ .../capabilities-inference.ax.log.txt              |   168 +
+ .../capabilities-inference.png                     |   Bin 0 -> 94618 bytes
+ .../capability-only-false.ax.log.txt               |   170 +
+ .../capability-only-false.png                      |   Bin 0 -> 99455 bytes
+ .../capability-only-true.ax.log.txt                |   168 +
+ .../capability-only-true.png                       |   Bin 0 -> 94618 bytes
+ .../changed-systems.log.txt                        |    24 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/checks.json       |  2512 +++
+ .../2026-10-23-wp-f2b-205-qa/criteria-results.json |  9140 +++++++++++
+ .../diagnostic-checks.json                         |  1436 ++
+ .../2026-10-23-wp-f2b-205-qa/diagnostic-http.json  |  5460 +++++++
+ .../diagnostic-server-environment.json             |    20 +
+ .../qa/2026-10-23-wp-f2b-205-qa/diagnostic.log.txt |    12 +
+ .../qa/2026-10-23-wp-f2b-205-qa/diagnostic.mjs.txt |    42 +
+ .../2026-10-23-wp-f2b-205-qa/environment.log.txt   |     1 +
+ .../2026-10-23-wp-f2b-205-qa/final-state.log.txt   |     3 +
+ .../2026-10-23-wp-f2b-205-qa/final-validation.json |    12 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/finalize.mjs.txt  |    19 +
+ .../fixture-server.mjs.txt                         |    34 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-01.log.txt   |    57 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-02.log.txt   |    45 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-03.log.txt   |     3 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-04.log.txt   |     2 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-05.log.txt   |     6 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-06.log.txt   |    23 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-07.log.txt   |    23 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-08.log.txt   |    40 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-09.log.txt   |   101 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-10.log.txt   |    23 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-11.log.txt   |     3 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gate-12.log.txt   |     2 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gates.json        |    74 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/gates.mjs.txt     |    16 +
+ .../harness-switch-claude.ax.log.txt               |   171 +
+ .../harness-switch-claude.png                      |   Bin 0 -> 90215 bytes
+ .../harness-switch-codex.ax.log.txt                |   182 +
+ .../harness-switch-codex.png                       |   Bin 0 -> 87285 bytes
+ docs/qa/2026-10-23-wp-f2b-205-qa/http.json         | 14954 +++++++++++++++++
+ ...olated-api-client-src-templates.test.ts.log.txt |    13 +
+ .../isolated-api-src-adversarial.test.ts.log.txt   |     9 +
+ .../isolated-api-src-main.test.ts.log.txt          |    13 +
+ ...olated-api-src-nested-readiness.test.ts.log.txt |     9 +
+ ...solated-api-src-subloop-restart.test.ts.log.txt |    18 +
+ .../keyboard-llm-390.ax.log.txt                    |   206 +
+ .../2026-10-23-wp-f2b-205-qa/keyboard-llm-390.png  |   Bin 0 -> 47169 bytes
+ .../2026-10-23-wp-f2b-205-qa/keyboard.ax.log.txt   |   181 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/keyboard.png      |   Bin 0 -> 92088 bytes
+ .../llm-model-mode.ax.log.txt                      |   201 +
+ .../qa/2026-10-23-wp-f2b-205-qa/llm-model-mode.png |   Bin 0 -> 79480 bytes
+ .../lookup--model-catalog-failed.ax.log.txt        |   169 +
+ .../lookup--model-catalog-failed.png               |   Bin 0 -> 92052 bytes
+ .../lookup--model-catalog-pending.ax.log.txt       |   169 +
+ .../lookup--model-catalog-pending.png              |   Bin 0 -> 90390 bytes
+ .../lookup--settings-failed.ax.log.txt             |   181 +
+ .../lookup--settings-failed.png                    |   Bin 0 -> 87695 bytes
+ .../lookup--settings-pending.ax.log.txt            |   181 +
+ .../lookup--settings-pending.png                   |   Bin 0 -> 87881 bytes
+ ...lookup--system-model-defaults-failed.ax.log.txt |   181 +
+ .../lookup--system-model-defaults-failed.png       |   Bin 0 -> 87838 bytes
+ ...ookup--system-model-defaults-pending.ax.log.txt |   181 +
+ .../lookup--system-model-defaults-pending.png      |   Bin 0 -> 87881 bytes
+ .../loop-defaults.ax.log.txt                       |   129 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/loop-defaults.png |   Bin 0 -> 150084 bytes
+ .../loop-process-fallback.ax.log.txt               |   129 +
+ .../loop-process-fallback.png                      |   Bin 0 -> 149935 bytes
+ .../owner-stale.ax.log.txt                         |   182 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/owner-stale.png   |   Bin 0 -> 88536 bytes
+ .../placement-classifier-1440.ax.log.txt           |   214 +
+ .../placement-classifier-1440.png                  |   Bin 0 -> 99693 bytes
+ .../placement-classifier-390.ax.log.txt            |   214 +
+ .../placement-classifier-390.png                   |   Bin 0 -> 47886 bytes
+ .../placement-classifier-advanced.ax.log.txt       |   222 +
+ .../placement-classifier-advanced.png              |   Bin 0 -> 76157 bytes
+ .../placement-inference-1440.ax.log.txt            |   181 +
+ .../placement-inference-1440.png                   |   Bin 0 -> 88396 bytes
+ .../placement-inference-390.ax.log.txt             |   238 +
+ .../placement-inference-390.png                    |   Bin 0 -> 56517 bytes
+ .../placement-inference-advanced.ax.log.txt        |   246 +
+ .../placement-inference-advanced.png               |   Bin 0 -> 97056 bytes
+ .../placement-llm-1440.ax.log.txt                  |   201 +
+ .../placement-llm-1440.png                         |   Bin 0 -> 96811 bytes
+ .../placement-llm-390.ax.log.txt                   |   193 +
+ .../2026-10-23-wp-f2b-205-qa/placement-llm-390.png |   Bin 0 -> 50965 bytes
+ .../2026-10-23-wp-f2b-205-qa/report-format.log.txt |     7 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/report.mjs.txt    |    75 +
+ .../2026-10-23-wp-f2b-205-qa/round-2/NOT-KEPT.md   |     5 +
+ .../round-2/ORCHESTRATOR-DISPOSITIONS.md           |     9 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/round-2/README.md |   367 +
+ .../round-2/SHA256SUMS.log.txt                     |   157 +
+ .../round-2/accessibility-verification.json        |   110 +
+ .../round-2/additional-cases.mjs.txt               |    31 +
+ .../round-2/additional-checks.json                 |  2829 ++++
+ .../round-2/additional-http.json                   | 14771 +++++++++++++++++
+ .../round-2/additional-server-environment.json     |    20 +
+ .../round-2/additional.log.txt                     |    23 +
+ .../round-2/additional.mjs.txt                     |    66 +
+ .../round-2/adjacent-checks.json                   |  8306 ++++++++++
+ .../round-2/adjacent-server-environment.json       |    20 +
+ .../round-2/browser-api.log.txt                    |    70 +
+ .../round-2/browser-api.mjs.txt                    |    89 +
+ .../2026-10-23-wp-f2b-205-qa/round-2/browser.json  |     9 +
+ .../2026-10-23-wp-f2b-205-qa/round-2/build.log.txt |    69 +
+ .../2026-10-23-wp-f2b-205-qa/round-2/cases.mjs.txt |    50 +
+ .../round-2/continued-gate-01.log.txt              |     2 +
+ .../round-2/continued-gate-02.log.txt              |     6 +
+ .../round-2/continued-gate-03.log.txt              |    23 +
+ .../round-2/continued-gate-04.log.txt              |    23 +
+ .../round-2/continued-gate-05.log.txt              |    22 +
+ .../round-2/continued-gate-06.log.txt              |    39 +
+ .../round-2/continued-gate-07.log.txt              |    80 +
+ .../round-2/continued-gate-08.log.txt              |    23 +
+ .../round-2/continued-gate-09.log.txt              |     3 +
+ .../round-2/continued-gate-10.log.txt              |     2 +
+ .../round-2/continued-gates.json                   |    62 +
+ .../round-2/continued-gates.log.txt                |    10 +
+ .../round-2/continued-gates.mjs.txt                |    16 +
+ .../round-2/f1-claude-inference.ax.log.txt         |   174 +
+ .../round-2/f1-claude-inference.png                |   Bin 0 -> 91688 bytes
+ .../round-2/f1-codex-inference.ax.log.txt          |   184 +
+ .../round-2/f1-codex-inference.png                 |   Bin 0 -> 88715 bytes
+ .../round-2/f1-codex-llm.ax.log.txt                |   211 +
+ .../round-2/f1-codex-llm.png                       |   Bin 0 -> 96811 bytes
+ .../round-2/f4-llm-explicit.ax.log.txt             |   210 +
+ .../round-2/f4-llm-explicit.png                    |   Bin 0 -> 96957 bytes
+ .../round-2/f4-llm-inherit.ax.log.txt              |   211 +
+ .../round-2/f4-llm-inherit.png                     |   Bin 0 -> 96973 bytes
+ .../round-2/f5-claude-inference-false.ax.json      | 11559 ++++++++++++++
+ .../round-2/f5-claude-inference-false.ax.log.txt   |   176 +
+ .../round-2/f5-claude-inference-false.png          |   Bin 0 -> 100144 bytes
+ .../round-2/f5-claude-inference-true.ax.json       | 11311 +++++++++++++
+ .../round-2/f5-claude-inference-true.ax.log.txt    |   174 +
+ .../round-2/f5-claude-inference-true.png           |   Bin 0 -> 99097 bytes
+ .../round-2/f5-codex-inference-false.ax.json       | 12638 +++++++++++++++
+ .../round-2/f5-codex-inference-false.ax.log.txt    |   185 +
+ .../round-2/f5-codex-inference-false.png           |   Bin 0 -> 96806 bytes
+ .../round-2/f5-codex-inference-true.ax.json        | 12390 ++++++++++++++
+ .../round-2/f5-codex-inference-true.ax.log.txt     |   183 +
+ .../round-2/f5-codex-inference-true.png            |   Bin 0 -> 96241 bytes
+ .../round-2/f5-codex-llm-false.ax.json             | 14751 +++++++++++++++++
+ .../round-2/f5-codex-llm-false.ax.log.txt          |   212 +
+ .../round-2/f5-codex-llm-false.png                 |   Bin 0 -> 98597 bytes
+ .../round-2/f5-codex-llm-true.ax.json              | 14503 +++++++++++++++++
+ .../round-2/f5-codex-llm-true.ax.log.txt           |   210 +
+ .../round-2/f5-codex-llm-true.png                  |   Bin 0 -> 98597 bytes
+ .../round-2/final-validation.json                  |    54 +
+ .../round-2/finalize.mjs.txt                       |    41 +
+ .../round-2/finish-cases.mjs.txt                   |     5 +
+ .../round-2/finish-checks.json                     |   244 +
+ .../round-2/finish-http.json                       |  2590 +++
+ .../round-2/finish-server-environment.json         |    20 +
+ .../round-2/finish.log.txt                         |     7 +
+ .../round-2/finish.mjs.txt                         |    40 +
+ .../round-2/fixture-additional.mjs.txt             |    36 +
+ .../round-2/fixture-finish.mjs.txt                 |    36 +
+ .../round-2/fixture-positive.mjs.txt               |    36 +
+ .../round-2/fixture-repair.mjs.txt                 |    36 +
+ .../round-2/fixture-server.mjs.txt                 |    36 +
+ .../round-2/focused-refresh.log.txt                |    25 +
+ .../round-2/gate-01.log.txt                        |    57 +
+ .../round-2/gate-02.log.txt                        |    45 +
+ .../round-2/gate-03.log.txt                        |     2 +
+ .../qa/2026-10-23-wp-f2b-205-qa/round-2/gates.json |    14 +
+ .../2026-10-23-wp-f2b-205-qa/round-2/gates.log.txt |     2 +
+ .../2026-10-23-wp-f2b-205-qa/round-2/gates.mjs.txt |    16 +
+ .../round-2/git-status.log.txt                     |     1 +
+ ...olated-api-client-src-templates.test.ts.log.txt |    15 +
+ .../round-2/isolated-api-src-main.test.ts.log.txt  |    22 +
+ ...i-src-templates-catalog-package.test.ts.log.txt |    17 +
+ .../round-2/keyboard-inference-1440.ax.log.txt     |   183 +
+ .../round-2/keyboard-inference-1440.png            |   Bin 0 -> 91906 bytes
+ .../round-2/keyboard-inference-390.ax.log.txt      |   175 +
+ .../round-2/keyboard-inference-390.png             |   Bin 0 -> 42271 bytes
+ .../round-2/keyboard-llm-1440.ax.log.txt           |   210 +
+ .../round-2/keyboard-llm-1440.png                  |   Bin 0 -> 87788 bytes
+ .../round-2/keyboard-llm-390.ax.log.txt            |   202 +
+ .../round-2/keyboard-llm-390.png                   |   Bin 0 -> 46562 bytes
+ .../lookup--model-catalog-failed.ax.log.txt        |   171 +
+ .../round-2/lookup--model-catalog-failed.png       |   Bin 0 -> 94409 bytes
+ .../lookup--model-catalog-pending.ax.log.txt       |   171 +
+ .../round-2/lookup--model-catalog-pending.png      |   Bin 0 -> 93284 bytes
+ .../round-2/lookup--settings-failed.ax.log.txt     |   183 +
+ .../round-2/lookup--settings-failed.png            |   Bin 0 -> 87901 bytes
+ .../round-2/lookup--settings-pending.ax.log.txt    |   183 +
+ .../round-2/lookup--settings-pending.png           |   Bin 0 -> 88249 bytes
+ ...lookup--system-model-defaults-failed.ax.log.txt |   183 +
+ .../lookup--system-model-defaults-failed.png       |   Bin 0 -> 87901 bytes
+ ...ookup--system-model-defaults-pending.ax.log.txt |   183 +
+ .../lookup--system-model-defaults-pending.png      |   Bin 0 -> 88106 bytes
+ .../round-2/loop-defaults-owner.ax.log.txt         |   131 +
+ .../round-2/loop-defaults-owner.png                |   Bin 0 -> 152212 bytes
+ .../round-2/loop-defaults-process.ax.log.txt       |   131 +
+ .../round-2/loop-defaults-process.png              |   Bin 0 -> 152596 bytes
+ .../round-2/node-version.log.txt                   |     1 +
+ .../round-2/outside-observations.json              |     5 +
+ .../round-2/placement-classifier-1440.ax.log.txt   |   214 +
+ .../round-2/placement-classifier-1440.png          |   Bin 0 -> 99693 bytes
+ .../round-2/placement-classifier-390.ax.log.txt    |   214 +
+ .../round-2/placement-classifier-390.png           |   Bin 0 -> 47887 bytes
+ .../placement-classifier-advanced.ax.log.txt       |   222 +
+ .../round-2/placement-classifier-advanced.png      |   Bin 0 -> 76061 bytes
+ .../round-2/placement-inference-1440.ax.log.txt    |   183 +
+ .../round-2/placement-inference-1440.png           |   Bin 0 -> 88265 bytes
+ .../round-2/placement-inference-390.ax.log.txt     |   240 +
+ .../round-2/placement-inference-390.png            |   Bin 0 -> 55943 bytes
+ .../placement-inference-advanced.ax.log.txt        |   248 +
+ .../round-2/placement-inference-advanced.png       |   Bin 0 -> 97450 bytes
+ .../round-2/placement-llm-1440.ax.log.txt          |   210 +
+ .../round-2/placement-llm-1440.png                 |   Bin 0 -> 96811 bytes
+ .../round-2/placement-llm-390.ax.log.txt           |   202 +
+ .../round-2/placement-llm-390.png                  |   Bin 0 -> 50965 bytes
+ .../round-2/positive-checks.json                   |  1804 +++
+ .../round-2/positive-http.json                     | 11855 ++++++++++++++
+ .../round-2/positive-server-environment.json       |    20 +
+ .../round-2/positive.log.txt                       |    16 +
+ .../round-2/positive.mjs.txt                       |    53 +
+ .../round-2/post-gates.json                        |    14 +
+ .../round-2/post-gates.mjs.txt                     |    12 +
+ .../round-2/prepare.mjs.txt                        |    23 +
+ .../round-2/ready-capability-false.ax.log.txt      |   170 +
+ .../round-2/ready-capability-false.png             |   Bin 0 -> 97489 bytes
+ .../round-2/ready-capability-true.ax.log.txt       |   172 +
+ .../round-2/ready-capability-true.png              |   Bin 0 -> 98588 bytes
+ .../round-2/repair-checks.json                     |   289 +
+ .../round-2/repair-http.json                       |   596 +
+ .../round-2/repair-server-environment.json         |    20 +
+ .../round-2/repair.log.txt                         |     3 +
+ .../round-2/repair.mjs.txt                         |    36 +
+ .../round-2/report-format.log.txt                  |     2 +
+ .../round-2/report.mjs.txt                         |    93 +
+ .../round-2/same-tab-claude.ax.log.txt             |   174 +
+ .../round-2/same-tab-claude.png                    |   Bin 0 -> 91688 bytes
+ .../round-2/saved-claude-inference.ax.log.txt      |   173 +
+ .../round-2/saved-claude-inference.png             |   Bin 0 -> 90417 bytes
+ .../round-2/saved-codex-inference.ax.log.txt       |   183 +
+ .../round-2/saved-codex-inference.png              |   Bin 0 -> 87278 bytes
+ .../round-2/saved-codex-llm.ax.log.txt             |   210 +
+ .../round-2/saved-codex-llm.png                    |   Bin 0 -> 96811 bytes
+ .../round-2/source-diff.log.txt                    |  2710 ++++
+ .../round-2/timing-reruns.json                     |    23 +
+ .../round-2/timing-reruns.log.txt                  |     3 +
+ .../round-2/timing-reruns.mjs.txt                  |    26 +
+ .../round-2/timing-runner-startup-error.log.txt    |     2 +
+ .../round-2/ui-start-refusal.ax.log.txt            |    58 +
+ .../round-2/ui-start-refusal.png                   |   Bin 0 -> 52016 bytes
+ .../saved-claude-inference.ax.log.txt              |   171 +
+ .../saved-claude-inference.png                     |   Bin 0 -> 90362 bytes
+ .../saved-codex-inference.ax.log.txt               |   181 +
+ .../saved-codex-inference.png                      |   Bin 0 -> 87402 bytes
+ .../saved-codex-llm.ax.log.txt                     |   201 +
+ .../2026-10-23-wp-f2b-205-qa/saved-codex-llm.png   |   Bin 0 -> 96811 bytes
+ .../scoped-editor.ax.log.txt                       |   101 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/scoped-editor.png |   Bin 0 -> 135824 bytes
+ .../server-environment.json                        |    20 +
+ .../stale-claude-inference.ax.log.txt              |   172 +
+ .../stale-claude-inference.png                     |   Bin 0 -> 91883 bytes
+ .../stale-codex-llm.ax.log.txt                     |   202 +
+ .../2026-10-23-wp-f2b-205-qa/stale-codex-llm.png   |   Bin 0 -> 79467 bytes
+ .../startup-attempt-1.json                         |     7 +
+ .../startup-attempt-1.log.txt                      |    35 +
+ .../supplemental-checks.json                       |  3555 +++++
+ .../supplemental-http.json                         | 12209 ++++++++++++++
+ .../supplemental-server-environment.json           |    20 +
+ .../2026-10-23-wp-f2b-205-qa/supplemental.log.txt  |    28 +
+ .../2026-10-23-wp-f2b-205-qa/supplemental.mjs.txt  |    50 +
+ .../qa/2026-10-23-wp-f2b-205-qa/switch-checks.json |   160 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/switch-http.json  |  1624 ++
+ .../switch-server-environment.json                 |    20 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/switch.log.txt    |     2 +
+ docs/qa/2026-10-23-wp-f2b-205-qa/switch.mjs.txt    |    36 +
+ .../qa/2026-10-23-wp-f2b-205-qa/timing-reruns.json |    52 +
+ .../2026-10-23-wp-f2b-205-qa/timing-reruns.mjs.txt |    13 +
+ .../unsupported-claude-inference-false.ax.log.txt  |   174 +
+ .../unsupported-claude-inference-false.png         |   Bin 0 -> 100761 bytes
+ .../unsupported-claude-inference-true.ax.log.txt   |   172 +
+ .../unsupported-claude-inference-true.png          |   Bin 0 -> 95985 bytes
+ .../unsupported-codex-inference-false.ax.log.txt   |   183 +
+ .../unsupported-codex-inference-false.png          |   Bin 0 -> 98075 bytes
+ .../unsupported-codex-inference-true.ax.log.txt    |   181 +
+ .../unsupported-codex-inference-true.png           |   Bin 0 -> 93088 bytes
+ .../unsupported-codex-llm-false.ax.log.txt         |   203 +
+ .../unsupported-codex-llm-false.png                |   Bin 0 -> 98597 bytes
+ .../unsupported-codex-llm-true.ax.log.txt          |   201 +
+ .../unsupported-codex-llm-true.png                 |   Bin 0 -> 98597 bytes
+ .../qa/2026-10-23-wp-f2b-205/FILES_CHANGED.log.txt |    80 +
+ docs/qa/2026-10-23-wp-f2b-205/NOT-KEPT.md          |    12 +
+ docs/qa/2026-10-23-wp-f2b-205/SHA256SUMS.log.txt   |    51 +
+ docs/qa/2026-10-23-wp-f2b-205/after-classifier.png |   Bin 0 -> 87653 bytes
+ docs/qa/2026-10-23-wp-f2b-205/after-inference.png  |   Bin 0 -> 77615 bytes
+ docs/qa/2026-10-23-wp-f2b-205/after-llm.png        |   Bin 0 -> 69126 bytes
+ .../api-client-coverage.log.txt                    |    30 +
+ .../api-coverage-final.log.txt                     |    42 +
+ docs/qa/2026-10-23-wp-f2b-205/api-coverage.log.txt |   101 +
+ .../baseline-browser-initial.log.txt               |   356 +
+ .../baseline-build-initial.log.txt                 |    64 +
+ .../baseline-placement-initial.log.txt             |   275 +
+ .../baseline-unit-initial.log.txt                  |   521 +
+ docs/qa/2026-10-23-wp-f2b-205/baseline.spec.ts.txt |    27 +
+ .../qa/2026-10-23-wp-f2b-205/before-classifier.png |   Bin 0 -> 87819 bytes
+ .../before-inference-advanced.png                  |   Bin 0 -> 77693 bytes
+ docs/qa/2026-10-23-wp-f2b-205/before-inference.png |   Bin 0 -> 73875 bytes
+ docs/qa/2026-10-23-wp-f2b-205/before-llm.png       |   Bin 0 -> 84621 bytes
+ .../qa/2026-10-23-wp-f2b-205/browser-build.log.txt |    69 +
+ .../qa/2026-10-23-wp-f2b-205/browser-final.log.txt |    57 +
+ .../browser-fixture-format.log.txt                 |     2 +
+ .../browser-fixture-lint.log.txt                   |     0
+ .../browser-model-effort-fixed.log.txt             |    56 +
+ .../browser-unsupported-final.log.txt              |    16 +
+ docs/qa/2026-10-23-wp-f2b-205/browser.log.txt      |   128 +
+ docs/qa/2026-10-23-wp-f2b-205/build.log.txt        |    70 +
+ .../contracts-coverage.log.txt                     |    30 +
+ .../coverage-final-results.log.txt                 |     2 +
+ docs/qa/2026-10-23-wp-f2b-205/deps.log.txt         |    14 +
+ docs/qa/2026-10-23-wp-f2b-205/docs.log.txt         |    10 +
+ .../2026-10-23-wp-f2b-205/evidence-format.log.txt  |     1 +
+ .../qa/2026-10-23-wp-f2b-205/final-results.log.txt |    33 +
+ .../format-check-final.log.txt                     |     9 +
+ docs/qa/2026-10-23-wp-f2b-205/format-check.log.txt |    10 +
+ .../format-fix-initial.log.txt                     |    24 +
+ docs/qa/2026-10-23-wp-f2b-205/gate-results.log.txt |    12 +
+ .../2026-10-23-wp-f2b-205/generate-initial.log.txt |    10 +
+ docs/qa/2026-10-23-wp-f2b-205/layers.log.txt       |     9 +
+ docs/qa/2026-10-23-wp-f2b-205/lint-final.log.txt   |    51 +
+ docs/qa/2026-10-23-wp-f2b-205/lint.log.txt         |    52 +
+ ...31--refused-before-the-adapter-chromium.log.txt |   146 +
+ ...62-r-visible-and-has-no-effort-chromium.log.txt |   567 +
+ .../round-2/FILES_CHANGED.log.txt                  |    28 +
+ .../round-2/SHA256SUMS.log.txt                     |    20 +
+ .../round-2/after-classifier.png                   |   Bin 0 -> 87653 bytes
+ .../qa/2026-10-23-wp-f2b-205/round-2/after-llm.png |   Bin 0 -> 69125 bytes
+ .../2026-10-23-wp-f2b-205/round-2/browser.log.txt  |    41 +
+ .../qa/2026-10-23-wp-f2b-205/round-2/build.log.txt |    72 +
+ .../round-2/check-deps.log.txt                     |    15 +
+ .../round-2/check-docs.log.txt                     |    12 +
+ .../round-2/check-layers.log.txt                   |    11 +
+ .../round-2/check-tokens.log.txt                   |    11 +
+ .../round-2/domain-coverage-single-worker.log.txt  |    58 +
+ .../round-2/domain-coverage.log.txt                |    91 +
+ .../round-2/domain-timing-diagnostic.log.txt       |    15 +
+ .../round-2/final-results.log.txt                  |    70 +
+ .../2026-10-23-wp-f2b-205/round-2/format.log.txt   |  1329 ++
+ .../round-2/gate-results.log.txt                   |    14 +
+ docs/qa/2026-10-23-wp-f2b-205/round-2/lint.log.txt |    54 +
+ .../round-2/regressions-before.log.txt             |   426 +
+ .../round-2/typecheck.log.txt                      |    66 +
+ .../round-2/web-coverage.log.txt                   |   785 +
+ .../round-2/web-targeted.log.txt                   |    12 +
+ .../round-3/FILES_CHANGED.log.txt                  |    86 +
+ docs/qa/2026-10-23-wp-f2b-205/round-3/NOT-KEPT.md  |     5 +
+ .../round-3/ORCHESTRATOR-REVIEW.md                 |    15 +
+ docs/qa/2026-10-23-wp-f2b-205/round-3/README.md    |    77 +
+ .../round-3/SHA256SUMS.log.txt                     |    60 +
+ .../round-3/after-api-fixture-fixes.log.txt        |    15 +
+ .../round-3/after-classifier.png                   |   Bin 0 -> 87653 bytes
+ .../round-3/after-engine-fixture-fix.log.txt       |    15 +
+ .../round-3/after-focused-api.log.txt              |    48 +
+ .../round-3/after-focused-resolution.log.txt       |    74 +
+ .../round-3/after-focused-web.log.txt              |    50 +
+ .../round-3/after-inference.png                    |   Bin 0 -> 78669 bytes
+ .../qa/2026-10-23-wp-f2b-205/round-3/after-llm.png |   Bin 0 -> 74631 bytes
+ .../round-3/after-web-assertion-fix.log.txt        |    15 +
+ ...ge-isolated-src-subloop-restart.test.ts.log.txt |    53 +
+ .../round-3/api-coverage.log.txt                   |    93 +
+ .../round-3/before-accessibility.log.txt           |    50 +
+ .../round-3/before-api.log.txt                     |   132 +
+ .../before-pending-and-accessibility.log.txt       |   234 +
+ .../round-3/before-web.log.txt                     |  1681 ++
+ .../round-3/browser-claude-harness.log.txt         |    29 +
+ .../round-3/browser-first-failure-context.log.txt  |   202 +
+ .../round-3/browser-first-settings-traffic.log.txt |     9 +
+ .../round-3/browser-focus-diagnostic.log.txt       |    64 +
+ .../round-3/browser-with-focus-event.log.txt       |    42 +
+ .../2026-10-23-wp-f2b-205/round-3/browser.log.txt  |    84 +
+ .../qa/2026-10-23-wp-f2b-205/round-3/build.log.txt |    72 +
+ .../round-3/check-deps-final.log.txt               |    15 +
+ .../round-3/check-deps.log.txt                     |    15 +
+ .../round-3/check-docs-final.log.txt               |    12 +
+ .../round-3/check-docs.log.txt                     |    12 +
+ .../round-3/check-layers-final.log.txt             |    11 +
+ .../round-3/check-layers.log.txt                   |    11 +
+ .../round-3/check-tokens-final.log.txt             |    11 +
+ .../round-3/check-tokens.log.txt                   |    11 +
+ .../round-3/domain-coverage.log.txt                |    32 +
+ .../round-3/engine-coverage.log.txt                |    32 +
+ .../round-3/final-format-check.log.txt             |     5 +
+ .../round-3/focus-inflight-before.log.txt          |   425 +
+ .../round-3/format-browser-fixture.log.txt         |     5 +
+ .../round-3/format-final-touched.log.txt           |     6 +
+ .../round-3/format-lint-test.log.txt               |     4 +
+ .../2026-10-23-wp-f2b-205/round-3/format.log.txt   |  1333 ++
+ .../round-3/gate-status.log.txt                    |    33 +
+ .../round-3/lint-after-browser-fixture.log.txt     |    54 +
+ .../round-3/lint-after-fix.log.txt                 |    66 +
+ .../round-3/lint-complete.log.txt                  |    54 +
+ docs/qa/2026-10-23-wp-f2b-205/round-3/lint.log.txt |    59 +
+ .../nested-readiness-integration-first.log.txt     |   128 +
+ .../round-3/nested-readiness-isolated-once.log.txt |   124 +
+ .../round-3/report-format.log.txt                  |     5 +
+ .../round-3/shared-edits.log.txt                   |   192 +
+ .../typecheck-after-browser-fixture.log.txt        |    66 +
+ .../round-3/typecheck-after-types.log.txt          |    87 +
+ .../round-3/typecheck-complete.log.txt             |    66 +
+ .../round-3/typecheck-final.log.txt                |    66 +
+ .../round-3/typecheck-post-lint-fix.log.txt        |    66 +
+ .../round-3/typecheck.log.txt                      |    50 +
+ .../round-3/web-coverage.log.txt                   |    32 +
+ .../round-3/web-final-focused.log.txt              |    15 +
+ docs/qa/2026-10-23-wp-f2b-205/runtime.log.txt      |     1 +
+ docs/qa/2026-10-23-wp-f2b-205/tokens.log.txt       |     9 +
+ .../2026-10-23-wp-f2b-205/typecheck-final.log.txt  |    63 +
+ .../typecheck-initial.log.txt                      |    80 +
+ docs/qa/2026-10-23-wp-f2b-205/typecheck.log.txt    |    64 +
+ .../unit-targeted-fixed-initial.log.txt            |     9 +
+ .../unit-targeted-initial.log.txt                  |   266 +
+ .../unsupported-admission-expectation.log.txt      |   408 +
+ .../web-coverage-final.log.txt                     |    30 +
+ docs/qa/2026-10-23-wp-f2b-205/web-coverage.log.txt |   140 +
+ docs/reference/api.md                              |    17 +-
+ docs/reference/nodes.md                            |     4 +-
+ packages/api-client/openapi.json                   |    59 +
+ packages/api-client/src/contract.test.ts           |    11 +
+ packages/api-client/src/generated/schema.ts        |    45 +
+ packages/api-client/src/resources.ts               |     2 +
+ packages/contracts/src/evaluation.ts               |     8 +-
+ packages/contracts/src/nodes.ts                    |     4 -
+ .../domain/src/inherited-harness-defaults.test.ts  |    75 +
+ packages/domain/src/model-resolution.test.ts       |    35 +-
+ packages/domain/src/model-resolution.ts            |    44 +-
+ packages/engine/src/claude-effort.test.ts          |    65 +
+ packages/engine/src/run-manager.ts                 |     2 +
+ 480 files changed, 225564 insertions(+), 143 deletions(-)
+commit 50e59c686605d1d58d8e65db2b0236cb14b22648
+Author: Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com>
+Date:   Fri Oct 23 00:49:45 2026 -0500
+
+    Explicit harness switch keeps inheritance, picks compatible defaults and holds publication while a catalog lookup fails (#204) (#378)
+    
+    * Type harness readiness, verify CLI capabilities without turns, reuse probes per operation and show precise readiness in the UI (#179)
+    
+    * Apply the #179 review (classification and operation scope): signed-out Claude is auth, transport before auth keywords, drafts never probe readiness, concurrent harness probes, minimal fixture set, evidence folder
+    
+    * Write readiness problems as one detail sentence and one action (#179)
+    
+    Claude and Codex probe problems no longer repeat the generic state text after a
+    specific detail, name the harness with a capital letter, name the failed version
+    or option for both CLIs, and end with retrying preflight instead of reloading
+    the page. Probe-only messages describe the check; turn messages are unchanged.
+    
+    * Show readiness labels, Retry preflight and rechecking in the web app (#179)
+    
+    Harness preflight badges show labels with the state in data-state, Retry preflight
+    refetches, and a background refetch keeps the last result with a muted
+    Rechecking... instead of flipping badges. Defaults give Codex and Claude one short
+    readiness line and label an unoffered saved model (saved). The model picker keeps a
+    ready Claude field editable during a focus refetch, notes a known Codex failure
+    with Retry Codex preflight, and drops the model availability wording. The policy
+    field and catalog rows use the same vocabulary for both harnesses. Browser specs,
+    docs 06/09, guide 07, the CHANGELOG and the owner QA steps follow.
+    
+    * Open Advanced before checking the focus-refetch model field (#179)
+    
+    * Tighten catalog row notes and warn on a known Claude failure in the picker (#179)
+    
+    Catalog rows of a not-ready harness say the enablement and the readiness label on two
+    short lines, without repeating the pointer on every row. The picker shows a known
+    Claude readiness failure in the warning tone, like the policy field, and its retry
+    buttons take their own width.
+    
+    * Describe the readiness labels and retry controls in the settings guide (#179)
+    
+    * Apply the visual-round review and the confirmation items: transport wording, quota fallback regression, classification order, QA steps (#179)
+    
+    * Create the Codex probe directory with mkdir and align the Claude probe-failure expectations with the readiness wording (#179)
+    
+    * Record the WP-F1 independent QA report and its evidence (#179)
+    
+    * Describe readiness lookup phases, the Defaults asymmetry and the isolated start commands in the docs and owner steps (#179)
+    
+    * Choose a compatible configured or ecosystem default when a node's harness changes explicitly (#204)
+    
+    * Keep inheriting nodes inheriting, resolve switch defaults loop then Settings then ecosystem, and wait for the first readiness check (#204)
+    
+    * Manual run admission probes every harness the pinned definition and its pinned subloop children can execute, once per operation, before any parent effect (#179)
+    
+    * Record the independent QA of #179 round 6 at ee0f4f40 (nested admission, concurrency, pinning, limits, webhook and scheduled behaviour)
+    
+    * WP-F2b recipe and report: the independent QA records the result; no owner acceptance gate (register D-024)
+    
+    * Editor: a failed model or classifier catalog lookup holds publication even when cached choices remain (Validation unavailable, Publish disabled) and recovery keeps the authored values (#204)
+    
+    * Record the independent QA of #204: round 1 at 013be37a (QA-204-01 found) and round 2 at 18890113 (26 served checks, 16 collector cases, 41 component tests and web coverage passed; QA-204-01 closed)
+    
+    * Record the independent QA round 3 of #204: the replayable evidence regenerated on 541fddd4 (26 served checks, 16 collector cases, 41 component tests and web coverage passed)
+    
+    * Carry the WP-F2b round-3 QA logs as .log.txt (#204, D-030)
+    
+    The round-3 record cites six log files that *.log keeps out of git; they are
+    carried under the .log.txt name with local user paths removed and the record's
+    links follow. The artefact manifest's hashes are regenerated by the QA thread
+    on the head to be signed off.
+    
+    * Rank explicit status evidence first in readiness classification; never invent a sign-out (#179)
+    
+    Round 8 after the final audit. The no-turn classifier now orders CLI-syntax
+    errors, then explicit HTTP or API status (401 and 403 as auth, 429 as quota,
+    5xx as transport), then connection wording, then quota and auth keywords, so
+    incidental network advice cannot override a 401 or a 429. The Claude harness
+    consults a recognised stdout failure when stderr is absent or classifies as
+    unknown, and recognised stderr stays primary on conflicting diagnostics; turn
+    output is untouched. An empty or unrecognised login result on exit 0 is
+    unknown without an authenticated fact for both harnesses (Codex requires a
+    positive Logged in line; Claude requires a recognised account method), while
+    explicit sign-out evidence still yields auth. Sixteen regressions failed
+    before the fix; docs/06 and guide 07 describe the precedence and the states;
+    the auditor's five cases pass for both harnesses.
+    
+    * Clear a cancelled harness switch's waiting notice, settle the failed-lookup count before measuring, and note the client rebuild (#204)
+    
+    A concurrent field edit cancels the pending switch; the attempt now clears
+    its own waiting notice when it finishes, and an older attempt leaves a newer
+    attempt's notice alone (two component regressions). The served check for
+    the all-failed case waits for every initial lookup's retry to finish before
+    counting switch-induced requests. The CHANGELOG gains the Upgrade note:
+    rebuild the API and the web app together for the required ecosystemDefault
+    catalog field; no store change. Round-4 evidence under
+    docs/qa/2026-10-22-wp-f2b-round-4/.
+    
+    * Carry the WP-F2b QA round 5 record (#204, D-030)
+    
+    * Carry the WP-F2b QA round 4 record and regenerate the round 3 manifest against the committed tree (#204, D-030)
+    
+    * Record the WP-F2b QA citations that were never kept, repoint the round 4 script name, and regenerate the round 3 manifest from committed bytes (#204, D-030)
+    
+    * Mount the whole editor in the harness-change dialog tests, which depend on its mount-time lookups (#204)
+
+ CHANGELOG.md                                       |     2 +
+ apps/api/src/catalog.test.ts                       |    15 +
+ apps/api/src/harness-switch.test.ts                |   111 +
+ apps/api/src/routes/settings.ts                    |    17 +-
+ apps/web/e2e/claude-harness.spec.ts                |    71 +-
+ apps/web/e2e/harness-switch-native.mjs             |   294 +
+ apps/web/e2e/model-picker.spec.ts                  |   123 +-
+ apps/web/src/__fixtures__/fake-api.ts              |    13 +-
+ apps/web/src/editor/ClaudePolicyField.tsx          |    12 +-
+ apps/web/src/editor/EditorPage.freshness.test.tsx  |     6 +-
+ apps/web/src/editor/EditorPage.tsx                 |    14 +-
+ apps/web/src/editor/EditorToolbar.tsx              |    10 +-
+ apps/web/src/editor/HarnessField.tsx               |   120 +
+ apps/web/src/editor/NodeEditorDialog.test.tsx      |    43 +-
+ apps/web/src/editor/NodeEditorDialog.tsx           |    44 +-
+ apps/web/src/editor/ValidationIndicator.tsx        |     5 +-
+ apps/web/src/editor/harness-switch.test.tsx        |   416 +
+ apps/web/src/forms/fields/harness-switch.test.tsx  |   265 +
+ apps/web/src/forms/fields/model.tsx                |   130 +-
+ docs/06-harness-integration.md                     |    10 +
+ docs/09-frontend-and-pwa.md                        |    51 +-
+ docs/guide/06-settings-and-secrets.md              |    11 +
+ docs/qa/2026-10-20-wp-f2b-harness-switch/README.md |   233 +
+ docs/qa/2026-10-20-wp-f2b-harness-switch/before.md |    32 +
+ .../native-after.json                              |    98 +
+ .../native-before.json                             |    66 +
+ docs/qa/2026-10-20-wp-f2b-harness-switch/report.md |   400 +
+ .../round1-report.md                               |   125 +
+ .../round2-after.json                              |   533 +
+ .../round2-before.json                             |   185 +
+ docs/qa/2026-10-22-wp-f2b-qa/NOT-KEPT.md           |     8 +
+ docs/qa/2026-10-22-wp-f2b-qa/adjacent-results.json |   160 +
+ .../2026-10-22-wp-f2b-qa/api-bounded-coverage.json |    45 +
+ .../2026-10-22-wp-f2b-qa/api-initial-summary.json  |    88 +
+ .../2026-10-22-wp-f2b-qa/api-isolated-triage.json  |   211 +
+ docs/qa/2026-10-22-wp-f2b-qa/cached-alone.json     |   110 +
+ docs/qa/2026-10-22-wp-f2b-qa/checks.json           |   872 ++
+ docs/qa/2026-10-22-wp-f2b-qa/cleanup.json          |   134 +
+ docs/qa/2026-10-22-wp-f2b-qa/collector-checks.json |   644 +
+ .../qa/2026-10-22-wp-f2b-qa/collector-results.json |   532 +
+ docs/qa/2026-10-22-wp-f2b-qa/collector.mjs         |   294 +
+ docs/qa/2026-10-22-wp-f2b-qa/edge-results.json     |   259 +
+ docs/qa/2026-10-22-wp-f2b-qa/edge-server.ts        |   536 +
+ docs/qa/2026-10-22-wp-f2b-qa/edge-setup.ts         |    54 +
+ docs/qa/2026-10-22-wp-f2b-qa/edge.config.ts        |    20 +
+ docs/qa/2026-10-22-wp-f2b-qa/gates.json            |    32 +
+ docs/qa/2026-10-22-wp-f2b-qa/isolated-triage.ps1   |    38 +
+ docs/qa/2026-10-22-wp-f2b-qa/qa-harness-notes.md   |    19 +
+ docs/qa/2026-10-22-wp-f2b-qa/report.md             |   150 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-2/NOT-KEPT.md   |    10 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-2/README.md     |   139 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/README.md     |   194 +
+ .../round-3/artifact-manifest.json                 |   256 +
+ .../round-3/build-command.json                     |    10 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/build.log.txt |    67 +
+ .../round-3/cleanup-preflight.json                 |    72 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/cleanup.json  |    75 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/cleanup.ps1   |    52 +
+ .../round-3/collect-evidence.mjs                   |   168 +
+ .../round-3/collector-checks.json                  |   603 +
+ .../round-3/collector-command.json                 |    10 +
+ .../round-3/collector-lifecycle.json               |     6 +
+ .../round-3/collector-results.json                 |   532 +
+ .../2026-10-22-wp-f2b-qa/round-3/collector.log.txt |    34 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/collector.mjs |   316 +
+ .../round-3/components-command.json                |    10 +
+ .../round-3/components.log.txt                     |    12 +
+ .../round-3/coverage-command.json                  |    10 +
+ .../round-3/coverage-location.json                 |     4 +
+ .../round-3/coverage-results.json                  |    42 +
+ .../2026-10-22-wp-f2b-qa/round-3/coverage.log.txt  |    31 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/coverage.txt  |    31 +
+ .../2026-10-22-wp-f2b-qa/round-3/edge-command.json |    10 +
+ .../round-3/edge-lifecycle.json                    |    17 +
+ .../2026-10-22-wp-f2b-qa/round-3/edge-process.json |     6 +
+ .../2026-10-22-wp-f2b-qa/round-3/edge-results.json |   121 +
+ .../qa/2026-10-22-wp-f2b-qa/round-3/edge-server.ts |   144 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/edge-setup.ts |    68 +
+ .../2026-10-22-wp-f2b-qa/round-3/edge-test-app.mjs |    62 +
+ .../qa/2026-10-22-wp-f2b-qa/round-3/edge.config.ts |    22 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/edge.log.txt  |   479 +
+ .../2026-10-22-wp-f2b-qa/round-3/final-audit.json  |    15 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/gates.json    |    62 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/gates.txt     |   116 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/replay.ps1    |    65 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-3/report.mjs    |   394 +
+ .../round-3/served-checks.json                     |   982 ++
+ .../2026-10-22-wp-f2b-qa/round-3/served-checks.mjs |  1375 ++
+ .../round-3/served-command.json                    |    10 +
+ .../round-3/served-lifecycle.json                  |    18 +
+ .../round-3/served-results.json                    |   975 ++
+ .../qa/2026-10-22-wp-f2b-qa/round-3/served.log.txt |    27 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-4/README.md     |   125 +
+ .../round-4/build-command.json                     |     7 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-4/build.log.txt |    69 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-4/capture.mjs   |    54 +
+ .../qa/2026-10-22-wp-f2b-qa/round-4/check-docs.mjs |    46 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-4/cleanup.json  |    22 +
+ .../round-4/components-command.json                |    12 +
+ .../round-4/components.log.txt                     |    13 +
+ .../round-4/documentation-check.json               |    23 +
+ .../round-4/evidence-repair-before.json            |    60 +
+ .../round-4/failure-analysis.json                  |   465 +
+ .../round-4/failure-analysis.mjs                   |    80 +
+ .../2026-10-22-wp-f2b-qa/round-4/final-audit.json  |    19 +
+ .../qa/2026-10-22-wp-f2b-qa/round-4/format.log.txt |    17 +
+ .../round-4/integrity-verification.json            |    14 +
+ .../round-4/repair-evidence.mjs                    |   249 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-4/replay.ps1    |    32 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-4/report.mjs    |   218 +
+ .../round-4/round-3-integrity.json                 |   302 +
+ .../round-4/served-checks.json                     |  2527 +++
+ .../round-4/served-command.json                    |    12 +
+ .../round-4/served-lifecycle.json                  |    12 +
+ .../round-4/served-results.json                    |  2520 +++
+ .../qa/2026-10-22-wp-f2b-qa/round-4/served.log.txt |   204 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/README.md     |   300 +
+ .../round-5/api-tests-command.json                 |    13 +
+ .../2026-10-22-wp-f2b-qa/round-5/api-tests.log.txt |    18 +
+ .../round-5/audit-evidence.mjs                     |   134 +
+ .../round-5/background-api.log.txt                 |   149 +
+ .../round-5/background-command.json                |    13 +
+ .../round-5/background-failed-retry-1440.png       |   Bin 0 -> 117514 bytes
+ .../round-5/background-failed-retry-390.png        |   Bin 0 -> 68268 bytes
+ .../round-5/background-lifecycle.json              |    12 +
+ .../round-5/background-ready-1440.png              |   Bin 0 -> 89232 bytes
+ .../round-5/background-ready-390.png               |   Bin 0 -> 60870 bytes
+ .../round-5/background-results.json                |   207 +
+ .../round-5/background-setup-correction.json       |    10 +
+ .../round-5/background-timings.json                |   749 +
+ .../2026-10-22-wp-f2b-qa/round-5/background-ui.mjs |   774 +
+ .../round-5/background.log.txt                     |     2 +
+ .../round-5/build-command.json                     |    13 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/build.log.txt |    70 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/check-docs.mjs |    75 +
+ .../round-5/check-merge-source.mjs                 |    56 +
+ .../round-5/cleanup-inventory.ps1                  |    19 +
+ .../round-5/cleanup-manifest.json                  |    91 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/commands.json |   197 +
+ .../round-5/compare-served.mjs                     |    92 +
+ .../2026-10-22-wp-f2b-qa/round-5/deps-command.json |    13 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/deps.log.txt  |    13 +
+ .../round-5/documentation-check.json               |    56 +
+ .../2026-10-22-wp-f2b-qa/round-5/edge-command.json |    13 +
+ ...aved-model-8583b--unknown-import-is-rejected.md |   388 +
+ ...alog-failu-3fc6e-p-defaults-share-the-picker.md |   470 +
+ ...alog-model-e1fa8-nd-reach-the-harness-light-.md |   348 +
+ ...alog-model-e2e89-and-reach-the-harness-dark-.md |   348 +
+ .../round-5/edge-lifecycle.json                    |    17 +
+ .../2026-10-22-wp-f2b-qa/round-5/edge-process.json |     6 +
+ .../2026-10-22-wp-f2b-qa/round-5/edge-results.json |   467 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/edge-server.ts |   144 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/edge-setup.ts |    68 +
+ .../2026-10-22-wp-f2b-qa/round-5/edge-test-app.mjs |    62 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/edge.config.ts |    25 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/edge.log.txt  |   151 +
+ .../round-5/executed-background-ui.mjs.txt         |   355 +
+ .../round-5/executed-merge-ui.mjs.txt              |   355 +
+ .../executed-observed-served-checks.mjs.txt        |  1395 ++
+ .../round-5/execution-source-audit.json            |    26 +
+ .../round-5/extract-round4-baseline.mjs            |    71 +
+ .../round-5/f1-editor-profiles.json                |   147 +
+ .../2026-10-22-wp-f2b-qa/round-5/final-audit.json  |   545 +
+ .../round-5/format-command.json                    |    13 +
+ .../round-5/format-evidence-command.json           |    13 +
+ .../round-5/format-evidence.log.txt                |    66 +
+ .../round-5/format-r5-command.json                 |    13 +
+ .../2026-10-22-wp-f2b-qa/round-5/format-r5.log.txt |     2 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/format.log.txt |    13 +
+ .../round-5/host-before-build.json                 |   248 +
+ .../2026-10-22-wp-f2b-qa/round-5/host-before.json  |   954 ++
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/host-cpu.json |    56 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/host-wait.json |   838 +
+ .../round-5/layers-command.json                    |    13 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/layers.log.txt |     9 +
+ .../2026-10-22-wp-f2b-qa/round-5/lint-command.json |    13 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/lint.log.txt  |    46 +
+ .../round-5/lookup-unavailable-1440.png            |   Bin 0 -> 101356 bytes
+ .../round-5/lookup-unavailable-390.png             |   Bin 0 -> 49963 bytes
+ .../2026-10-22-wp-f2b-qa/round-5/merge-api.log.txt |  3866 +++++
+ .../round-5/merge-command.json                     |    13 +
+ .../round-5/merge-lifecycle.json                   |    12 +
+ .../round-5/merge-results.json                     |  1827 +++
+ .../round-5/merge-source-check.json                |    34 +
+ .../round-5/merge-timings.json                     | 15586 +++++++++++++++++++
+ .../round-5/merge-ui-tail.mjs.txt                  |    54 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/merge-ui.mjs  |   775 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/merge.log.txt |    74 +
+ .../round-5/observed-served-checks.mjs             |  1446 ++
+ .../round-5/prepare-background.mjs                 |    42 +
+ .../round-5/prepare-merge-ui.mjs                   |    12 +
+ .../round-5/prepare-observed-replay.mjs            |    72 +
+ .../round-5/process-before.json                    |   357 +
+ .../round-5/ready-policy-1440.png                  |   Bin 0 -> 88289 bytes
+ .../round-5/ready-policy-390.png                   |   Bin 0 -> 44497 bytes
+ .../round-5/round4-request-baseline.json           |   379 +
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/run-step.ps1  |    43 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/sample-cpu.mjs |    32 +
+ .../2026-10-22-wp-f2b-qa/round-5/sample-host.ps1   |    49 +
+ .../round-5/served-api.log.txt                     |  2673 ++++
+ .../round-5/served-command.json                    |    13 +
+ .../round-5/served-comparison.json                 |   556 +
+ .../round-5/served-fixture-requests.json           |    62 +
+ .../round-5/served-lifecycle.json                  |    18 +
+ .../round-5/served-observation-edits.json          |    43 +
+ .../round-5/served-results.json                    |  1009 ++
+ .../round-5/served-timings.json                    | 14459 +++++++++++++++++
+ .../qa/2026-10-22-wp-f2b-qa/round-5/served.log.txt |    28 +
+ .../round-5/tokens-command.json                    |    13 +
+ .../qa/2026-10-22-wp-f2b-qa/round-5/tokens.log.txt |     9 +
+ .../round-5/typecheck-command.json                 |    13 +
+ .../2026-10-22-wp-f2b-qa/round-5/typecheck.log.txt |    64 +
+ .../round-5/typed-transport-1440.png               |   Bin 0 -> 93868 bytes
+ .../round-5/typed-transport-390.png                |   Bin 0 -> 62561 bytes
+ docs/qa/2026-10-22-wp-f2b-qa/round-5/wait-host.mjs |    50 +
+ .../round-5/web-tests-command.json                 |    13 +
+ .../2026-10-22-wp-f2b-qa/round-5/web-tests.log.txt |    21 +
+ .../2026-10-22-wp-f2b-qa/round-5/write-report.mjs  |   265 +
+ docs/qa/2026-10-22-wp-f2b-qa/served-checks.mjs     |  1103 ++
+ docs/qa/2026-10-22-wp-f2b-qa/served-results.json   |    74 +
+ .../2026-10-22-wp-f2b-qa/web-bounded-coverage.json |    45 +
+ .../2026-10-22-wp-f2b-qa/web-initial-summary.json  |   236 +
+ .../2026-10-22-wp-f2b-qa/web-isolated-triage.json  |   618 +
+ .../2026-10-22-wp-f2b-round-4/build-before.log.txt |    69 +
+ .../2026-10-22-wp-f2b-round-4/build-final.log.txt  |    69 +
+ .../component-after.log.txt                        |     9 +
+ .../component-before.log.txt                       |   202 +
+ .../component-newer-notice.log.txt                 |    13 +
+ .../coverage-summary.json                          |    34 +
+ docs/qa/2026-10-22-wp-f2b-round-4/coverage.log.txt |    29 +
+ docs/qa/2026-10-22-wp-f2b-round-4/deps.log.txt     |    12 +
+ docs/qa/2026-10-22-wp-f2b-round-4/edge.log.txt     |   185 +
+ .../2026-10-22-wp-f2b-round-4/format-final.log.txt |     9 +
+ docs/qa/2026-10-22-wp-f2b-round-4/format.log.txt   |     9 +
+ docs/qa/2026-10-22-wp-f2b-round-4/layers.log.txt   |     8 +
+ .../2026-10-22-wp-f2b-round-4/lint-final.log.txt   |    45 +
+ docs/qa/2026-10-22-wp-f2b-round-4/lint.log.txt     |    59 +
+ docs/qa/2026-10-22-wp-f2b-round-4/report.md        |   210 +
+ .../2026-10-22-wp-f2b-round-4/served-after.log.txt |    28 +
+ .../served-after/served-lifecycle.json             |    18 +
+ .../served-after/served-results.json               |  1009 ++
+ .../served-before.log.txt                          |    14 +
+ .../served-before/served-lifecycle.json            |    12 +
+ .../served-before/served-results.json              |   192 +
+ .../2026-10-22-wp-f2b-round-4/served-final.log.txt |     3 +
+ .../served-final/served-lifecycle.json             |    12 +
+ .../served-final/served-results.json               |   116 +
+ docs/qa/2026-10-22-wp-f2b-round-4/tokens.log.txt   |     8 +
+ .../typecheck-final.log.txt                        |    63 +
+ .../qa/2026-10-22-wp-f2b-round-4/typecheck.log.txt |    63 +
+ .../api-coverage-summary.json                      |    34 +
+ .../2026-10-22-wp-f2b-round-5/api-coverage.log.txt |    38 +
+ docs/qa/2026-10-22-wp-f2b-round-5/build.log.txt    |    69 +
+ .../conflict-markers-final.log.txt                 |     0
+ docs/qa/2026-10-22-wp-f2b-round-5/deps.log.txt     |    12 +
+ .../diff-check-final.log.txt                       |     0
+ docs/qa/2026-10-22-wp-f2b-round-5/docs.log.txt     |     9 +
+ .../evidence-format-final.log.txt                  |    10 +
+ .../evidence-format.log.txt                        |     2 +
+ .../2026-10-22-wp-f2b-round-5/f1-preservation.json |    17 +
+ .../qa/2026-10-22-wp-f2b-round-5/final-checks.json |     7 +
+ docs/qa/2026-10-22-wp-f2b-round-5/final-state.json |    12 +
+ .../format-check-final.log.txt                     |     9 +
+ .../2026-10-22-wp-f2b-round-5/format-check.log.txt |    11 +
+ docs/qa/2026-10-22-wp-f2b-round-5/format.log.txt   |  1820 +++
+ docs/qa/2026-10-22-wp-f2b-round-5/gates.json       |    72 +
+ docs/qa/2026-10-22-wp-f2b-round-5/layers.log.txt   |     8 +
+ docs/qa/2026-10-22-wp-f2b-round-5/lint.log.txt     |    45 +
+ docs/qa/2026-10-22-wp-f2b-round-5/protection.json  |    11 +
+ docs/qa/2026-10-22-wp-f2b-round-5/report.md        |   101 +
+ docs/qa/2026-10-22-wp-f2b-round-5/resolution.json  |    13 +
+ .../served-api-last.log.txt                        |  1517 ++
+ .../served-execution.json                          |     8 +
+ .../served-lifecycle.json                          |    18 +
+ .../2026-10-22-wp-f2b-round-5/served-results.json  |  1009 ++
+ docs/qa/2026-10-22-wp-f2b-round-5/served.log.txt   |    28 +
+ docs/qa/2026-10-22-wp-f2b-round-5/tokens.log.txt   |     8 +
+ .../qa/2026-10-22-wp-f2b-round-5/typecheck.log.txt |    63 +
+ .../web-coverage-summary.json                      |    34 +
+ .../2026-10-22-wp-f2b-round-5/web-coverage.log.txt |    29 +
+ packages/adapter-codex/src/harness.ts              |     2 +-
+ packages/adapter-codex/src/index.ts                |     1 +
+ packages/api-client/openapi.json                   |     6 +-
+ packages/api-client/src/generated/schema.ts        |     1 +
+ tooling/fixtures/model-switch-cli.cs               |    29 +
+ tooling/scripts/model-switch-fake-cli.ps1          |    11 +
+ 286 files changed, 86736 insertions(+), 75 deletions(-)
+commit f31246354b14a59c0757e0124392268f695a35c5
+Author: Jacob-J-Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com>
+Date:   Sat Oct 24 23:43:31 2026 -0500
+
+    Make the Edge browser suite a zero-retry CI gate: current assertions, native input pacing, foreground pages and bounded timeouts; a strict check now requires post-terminal delivery evidence in the inspector (#241)
+
+ .github/workflows/ci.yml                    |   9 +-
+ CHANGELOG.md                                |   2 +-
+ apps/web/e2e/actions.spec.ts                |   8 +-
+ apps/web/e2e/drafts.spec.ts                 |  13 ++-
+ apps/web/e2e/earlier-node-outputs.spec.ts   |   8 ++
+ apps/web/e2e/fixtures.ts                    |   3 +-
+ apps/web/e2e/forms.spec.ts                  |  10 ++-
+ apps/web/e2e/inspector-large-values.spec.ts |  15 ++++
+ apps/web/e2e/issue-170-qa.spec.ts           |  12 +--
+ apps/web/e2e/issue-7-qa.spec.ts             |   2 +-
+ apps/web/e2e/model-effort.spec.ts           |   4 +-
+ apps/web/e2e/pwa.spec.ts                    |  96 ++++++++++++++++----
+ apps/web/e2e/qa.spec.ts                     |  23 +++--
+ apps/web/e2e/routing.spec.ts                | 130 ++++++++++++++++++++++++++--
+ apps/web/e2e/server.ts                      |   5 +-
+ apps/web/e2e/thread-history.spec.ts         |   3 +
+ apps/web/e2e/trigger-types.spec.ts          |  37 +++++---
+ apps/web/e2e/webhook-delivery.spec.ts       |   2 +-
+ apps/web/src/editor/routing-review.test.ts  |   4 +-
+ apps/web/vitest.config.ts                   |   5 ++
+ docs/10-testing-and-quality.md              |  29 ++++++-
+ 21 files changed, 349 insertions(+), 71 deletions(-)
+import { defineConfig, mergeConfig } from 'vitest/config';
+
+/**
+ * Shared Vitest configuration for every package and app.
+ *
+ * Coverage thresholds are the repository policy (docs/10-testing-and-quality.md):
+ * more than 90% of lines and branches in every package. They are not tunable per
+ * package; raise them repo-wide or add an exclusion for generated code only.
+ *
+ * Workspace packages declare a `development` export condition that points at their TypeScript
+ * source. Resolving it here means tests never need another package's `dist/`: a change in a lower
+ * package is visible to a higher package's tests without a rebuild. See ADR-0014.
+ *
+ * @param {import('vitest/config').UserConfig} [overrides]
+ */
+export function createVitestConfig(overrides = {}) {
+  const base = defineConfig({
+    resolve: {
+      conditions: ['development'],
+    },
+    test: {
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      environment: 'node',
+      clearMocks: true,
+      restoreMocks: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text-summary', 'json-summary', 'lcov'],
+        reportsDirectory: './coverage',
+        all: true,
+        include: ['src/**/*.ts', 'src/**/*.tsx'],
+        exclude: [
+          'src/**/*.test.ts',
+          'src/**/*.test.tsx',
+          'src/**/*.d.ts',
+          'src/**/__fixtures__/**',
+          'src/**/generated/**',
+        ],
+        thresholds: {
+          lines: 90,
+          branches: 90,
+          functions: 90,
+          statements: 90,
+        },
+      },
+    },
+  });
+  return mergeConfig(base, overrides);
+}
+apps/web/e2e\claude-harness.spec.ts:72:      { timeout: 30_000, intervals: [250, 500, 1000] },
+apps/web/e2e\claude-harness.spec.ts:376:  await page.waitForTimeout(2100);
+apps/web/e2e\cron.spec.ts:95:    await page.waitForTimeout(800);
+apps/web/e2e\cron.spec.ts:147:  await page.waitForTimeout(800);
+apps/web/e2e\drafts.spec.ts:45:    .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+apps/web/e2e\drafts.spec.ts:47:  await expect(a.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
+apps/web/e2e\drafts.spec.ts:64:    .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+apps/web/e2e\drafts.spec.ts:70:    .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+apps/web/e2e\drafts.spec.ts:72:  await expect(b.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
+apps/web/e2e\edge-routes.spec.ts:4: * (global-setup). GG_ROUTING_SCREENSHOTS=1 writes the owner-review images into docs/qa; normal runs
+apps/web/e2e\edge-routes.spec.ts:161:  const qa = process.env['GG_ROUTING_SCREENSHOTS'] === '1';
+apps/web/e2e\editor-modal.spec.ts:120:  await page.waitForTimeout(600);
+apps/web/e2e\editor-modal.spec.ts:143:  await page.waitForTimeout(600);
+apps/web/e2e\editor-modal.spec.ts:375:  await expect(a.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
+apps/web/e2e\forms.spec.ts:62:  const phase = process.env['GG_FORMS_QA_PHASE'];
+apps/web/e2e\forms.spec.ts:441:    if (process.env['GG_FORMS_QA_PHASE'] === 'before') {
+apps/web/e2e\github-triggers.spec.ts:273:  const runId = '01J9GITHUBDELIVERYRUN0000000000';
+apps/web/e2e\history.spec.ts:88:  test.setTimeout(120_000);
+apps/web/e2e\inspector-large-values.spec.ts:73:        { timeout: 30_000, intervals: [250, 500, 1000] },
+apps/web/e2e\inspector-large-values.spec.ts:139:        { timeout: 30_000, intervals: [250, 500, 1000] },
+apps/web/e2e\inspector-large-values.spec.ts:185:    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+apps/web/e2e\inspector-large-values.spec.ts:237:    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+apps/web/e2e\inspector-large-values.spec.ts:302:    timeout: 20_000,
+apps/web/e2e\issue-7-qa.spec.ts:54: * A turn the fake harness never finishes on its own: the longest delay setTimeout accepts (about
+apps/web/e2e\issue-7-qa.spec.ts:172:  const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_DELIVERY_UNCERTAIN' });
+apps/web/e2e\issue-170-qa.spec.ts:826:    test.setTimeout(180_000);
+apps/web/e2e\issue-170-qa.spec.ts:1000:    test.setTimeout(180_000);
+apps/web/e2e\live.spec.ts:3: * with LIVE=1 (`LIVE=1 pnpm --filter @graphgoblin/web test:e2e -- e2e/live.spec.ts`); otherwise
+apps/web/e2e\live.spec.ts:8:test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
+apps/web/e2e\live.spec.ts:10:test('LIVE: build, publish, and run an inference loop against Codex from the UI', async ({
+apps/web/e2e\live.spec.ts:14:  test.setTimeout(300_000);
+apps/web/e2e\live.spec.ts:17:    timeout: 60_000,
+apps/web/e2e\live.spec.ts:66:    timeout: 240_000,
+apps/web/e2e\model-picker.spec.ts:324:  await page.waitForTimeout(2500);
+apps/web/e2e\model-picker.spec.ts:339:  await page.waitForTimeout(2100);
+apps/web/e2e\model-picker.spec.ts:443:  await page.waitForTimeout(2100);
+apps/web/e2e\node-placement.spec.ts:260:    test.setTimeout(180_000);
+apps/web/e2e\pwa.spec.ts:57:        { timeout: 6_000 },
+apps/web/e2e\pwa.spec.ts:87:  await page.waitForTimeout(1_000); // The initial event batch's reads settle before the socket drops.
+apps/web/e2e\pwa.spec.ts:100:      { timeout: 6_000 },
+apps/web/e2e\pwa.spec.ts:104:    await expect(live).toBeVisible({ timeout: 6_000 });
+apps/web/e2e\pwa.spec.ts:137:      { timeout: 6_000 },
+apps/web/e2e\pwa.spec.ts:143:      timeout: 6_000,
+apps/web/e2e\pwa.spec.ts:194:  await page.waitForTimeout(4_000);
+apps/web/e2e\pwa.spec.ts:208:  test.setTimeout(100_000);
+apps/web/e2e\pwa.spec.ts:321:    await page.waitForTimeout(1_000);
+apps/web/e2e\pwa.spec.ts:327:    await expect(toast).toBeVisible({ timeout: 20_000 });
+apps/web/e2e\pwa.spec.ts:348:    await expect(toast).toBeVisible({ timeout: 20_000 });
+apps/web/e2e\pwa.spec.ts:359:    await expect(toast).toBeVisible({ timeout: 20_000 });
+apps/web/e2e\pwa.spec.ts:469:      { timeout: 5_000 },
+apps/web/e2e\pwa.spec.ts:473:    await expect(row).toBeVisible({ timeout: 5_000 });
+apps/web/e2e\qa.spec.ts:110:    timeout: 30_000,
+apps/web/e2e\qa.spec.ts:166:  await expect(page.getByText('Failed: HARNESS_DELIVERY_UNCERTAIN')).toBeVisible();
+apps/web/e2e\qa.spec.ts:413:      { timeout: 30_000, intervals: [250, 500, 1000] },
+apps/web/e2e\qa.spec.ts:513:    await page.waitForTimeout(500);
+apps/web/e2e\responsive.spec.ts:307:      test.setTimeout(120_000);
+apps/web/e2e\responsive.spec.ts:717:      test.setTimeout(120_000);
+apps/web/e2e\responsive.spec.ts:784:          await page.waitForTimeout(400); // Fit-view transition and initial card measurements.
+apps/web/e2e\responsive.spec.ts:872:      test.setTimeout(90_000);
+apps/web/e2e\responsive.spec.ts:948:        await page.waitForTimeout(500);
+apps/web/e2e\responsive.spec.ts:994:        await page.waitForTimeout(500);
+apps/web/e2e\routing.spec.ts:4: * GG_ROUTING_SCREENSHOTS=1 writes the owner-review images into docs/qa; normal CI keeps
+apps/web/e2e\routing.spec.ts:70:    process.env['GG_ROUTING_SCREENSHOTS'] === '1'
+apps/web/e2e\routing.spec.ts:73:  if (process.env['GG_ROUTING_SCREENSHOTS'] === '1') await mkdir(qaDirectory, { recursive: true });
+apps/web/e2e\routing.spec.ts:481:    test.setTimeout(90_000);
+apps/web/e2e\routing.spec.ts:511:      process.env['GG_ROUTING_PROFILE'] === '1'
+apps/web/e2e\routing.spec.ts:654:          await new Promise<void>((resolve) => setTimeout(resolve, remainingMs));
+apps/web/e2e\routing.spec.ts:698:    const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
+apps/web/e2e\routing.spec.ts:726:      (process.env['GG_ROUTING_SCREENSHOTS'] === '1'
+apps/web/e2e\thread-history.spec.ts:10:  test.setTimeout(180_000);
+apps/web/e2e\undo.spec.ts:148:  await page.waitForTimeout(900);
+apps/web/e2e\undo.spec.ts:617:  await page.waitForTimeout(1200);
+apps/web/e2e\undo.spec.ts:671:  test.setTimeout(180_000);
+apps/web/e2e\validation.spec.ts:109:  await page.waitForTimeout(600);
+apps/web/e2e\webhook-delivery.spec.ts:16:        setTimeout(() => res.destroy(), 5);
+apps/web/e2e\webhook-delivery.spec.ts:60:  await expect(page.getByText('Delivered after 3 attempts')).toBeVisible({ timeout: 20000 });
+| WP-A2   | #67, #241                  | Sol             | Opus     | Sol                                | `codex-wp-a2-browser-gates`                                                                                               | follow-up applied `f9efab0`; #67 (+ #341 expectations) **merged** PR #350 as `8cc61b8` (2026-10-19); #241 held as draft PR #351 (main merged `78f8797`) until #204/#205 land and WP-A1 (`.nvmrc` 22) merges                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+- **Launched (D-037, Sol):** #319 (interactive shutdown choice), #265 (missing-session recovery), #255 (exact values and execution context), and #241 (PR #351 restacked: the Edge browser suite as a CI gate, with #400).
+- **#186:** paging, backpressure, typed failure and cursor recovery lossless; an interleaved A/B on 41,001 events showed base 3,526 ms total with a 2,569 ms stall against head 3,315 ms with 181 ms, so round 1's slower numbers were host load. Blocking: the held live queue counted every event appended during the whole replay, failing fast readers of active runs; fixed ports in tests. The reviewer also found three browser specs failing on `main` since #244, filed as **#400**.
+### WP-A1 (#263, #127, #114) and WP-A2 (#67, #241) â€” implementer findings awaiting review
+WP-A1: Node 23 now refuses install (`ERR_PNPM_UNSUPPORTED_ENGINE`, wanted `^22`); a domain adversarial test relied on `module.registerHooks`, which exists only on Node 23+, so the pre-dispatch "green" Node 22 baseline was partly cache replay (I01 evidence); turbo `transit` task makes dependency sources invalidate dependent checks (seeded regression: `1 cached` replay before, 78 real failures after; unrelated control still cached); esbuild 0.18.20 remains dev-only via drizzle-kit's legacy loader with no compatible fix, `audit --audit-level=high` passes. Forced full gate failed four coverage tasks under load; reviewer triages. WP-A2: two-tab test now waits on tab activation and observable reconciliation (70/70, zero retries; historical exact failure not reproduced, stated honestly); browser CI job added with zero retries; full suite 341/15/1 classified as six #205, three stale #341 expectations, six load/selector cases; both narrow Claude tests also assert the pre-#204 "incompatible model retained" behaviour and must be rewritten by #204/#205.
+### WP-A2 (#67, #241) â€” Opus review of `309195b`: approve #67, approve #241's design and hold its merge
+Triage: every unit failure is load (branch, base and main have byte-identical web test inputs; each failing file passes alone); the two-tab and modal flows pass 42/42 with zero retries under load; `cron.spec.ts:220` is a latent race (substring match becomes ambiguous once the sr-only live region fills after its 350 ms settle timer); the six (a) failures reproduce alone and belong to #205 (two also assert the pre-#204 "incompatible model retained" behaviour); the three (b) failures are stale against the accepted #341 implementation (`5f7909d`, `d2d3291`), so updating them is legitimate test maintenance. Blocking for the package: QA report must move into `docs/qa/`; the cron `exact: true` fix; docs/10 still mentions a nightly live job; the job needs a step-level timeout so failure artifacts upload; CHANGELOG conflict. Non-blocking: eslint must ignore `playwright-report/**`; browser job should use `node-version-file`; static skip summary; "retained traces" overclaim; main has no branch protection (required checks are an owner decision at #241 closure). Sequencing accepted: split #67 into its own PR now; open #241 as a draft to get the first Ubuntu run; land the follow-up fixes and the stale #341 expectations; #204/#205 fix the six model tests; then rebase, one green first-attempt run, merge. Disposition: follow-up sent to the Sol thread (`wp-a2-2.md`).
+- 2026-10-18 baseline on main `cfae696`, Node 22.14.0: `pnpm check` exit 0 in 9m07s; coverage web 98.03% statements / 94.86% branches; other packages cached (see D-004). Browser suite on main (Edge, after `pnpm build`), run while eight workers loaded the machine: 342 passed, 14 failed, 1 skipped in 57.8 min. Six failures are the known #205 set (`claude-harness.spec.ts:159` Ã—2, `model-picker.spec.ts:28` Ã—2, `:94`, `:151`). Eight more failed on timeouts or performance budgets under that load (`earlier-node-outputs.spec.ts:8` Ã—2, `form-controls.spec.ts:130`, `responsive.spec.ts:301` and `:864`, `edge-routes.spec.ts:248`, `routing.spec.ts:472` Ã—2) and are re-run alone on a quiet machine before being classified; WP-A2 (#241) owns the classification. Log: scratchpad `baseline-e2e-main.log` of the orchestrating session.
+- **CP-61 (2026-10-24):** **Fifteenth merge:** hygiene PR #395 (`4df00b06`, **D-039**). **D-038** (parked work does not hold a drain). Round-1 reviews of the six wave pull requests and of #33 and #116 are recorded in section 7; fix rounds running for #343, #224, #186, #270, #116 and #240; Sol QA running for #205; #33 waits for QA. Filed #398 (fixed by the orchestrator in PR #399, audit running) and #400.
