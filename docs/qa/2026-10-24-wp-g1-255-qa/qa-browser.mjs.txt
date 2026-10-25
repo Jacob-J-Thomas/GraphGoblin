@@ -1,0 +1,88 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {createRequire} from 'node:module';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-g1-255-qa');
+const req=createRequire(resolve(root,'apps/web/package.json'));
+const {chromium,expect}=req('@playwright/test');
+const base='http://127.0.0.1:6080';
+const index=JSON.parse(await readFile(join(out,'fixture-index.json'),'utf8'));
+const results=[],omitted=[],pageErrors=[];
+const norm=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const save=async(name,value)=>writeFile(join(out,name),norm(JSON.stringify(value,null,2)));
+const api=async path=>(await fetch(base+path)).json();
+const history=async key=>(await api('/runs/'+index[key].runId+'/events?limit=1000')).items;
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true,serviceWorkers:'block'});
+const page=await context.newPage();page.on('pageerror',e=>pageErrors.push(e.message));
+page.setDefaultTimeout(20000);
+async function shot(name){const bytes=await page.screenshot({fullPage:true});if(bytes.length>1000000){omitted.push({name,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}else await writeFile(join(out,name),bytes);}
+async function test(id,expected,steps,fn){if(process.env.GG_QA_ONLY&&!process.env.GG_QA_ONLY.split(',').includes(id))return;try{const actual=await fn();results.push({id,expected,steps,actual,result:'PASS'});console.log('PASS '+id);}catch(e){const screenshot='failure-'+id.replaceAll(/[^a-zA-Z0-9-]/g,'-')+'.png';await shot(screenshot).catch(()=>{});results.push({id,expected,steps,actual:norm(e.stack),result:'FAIL',screenshot});console.log('FAIL '+id+' '+e.message);}}
+async function open(key,p=page){await p.goto(base+'/app/runs/'+index[key].runId);await expect(p.getByRole('list',{name:'Timeline'}).getByRole('button')).toHaveCount(index[key].eventCount,{timeout:30000});}
+async function select(event,p=page){await p.getByRole('list',{name:'Timeline'}).getByRole('button').filter({hasText:'#'+event.seq}).filter({hasText:event.type}).first().click();await expect(p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true})).toBeVisible();await expect(p.getByRole('heading',{name:'Thread at event '+event.seq,exact:true})).toBeVisible();}
+async function exact(event,p=page){const disclosure=p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true});if(await disclosure.getAttribute('aria-expanded')!=='true')await disclosure.click();await expect(p.getByTestId('recorded-event-json')).toContainText('"seq": '+event.seq);const raw=JSON.parse(await p.getByTestId('recorded-event-json').innerText());assert.deepEqual(raw,event);const d=p.waitForEvent('download');await p.getByRole('button',{name:'Download Exact recorded event as JSON',exact:true}).click();const download=await d;const stream=await download.createReadStream();const chunks=[];for await(const chunk of stream)chunks.push(chunk);const bytes=Buffer.concat(chunks);assert.deepEqual(JSON.parse(bytes),event);const name='download-'+event.runId+'-'+event.seq+'.json';if(bytes.length>1000000)omitted.push({name,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});else await writeFile(join(out,name),bytes);return name;}
+async function fullThread(p=page){const b=p.getByRole('button',{name:'Full thread JSON',exact:true});if(await b.getAttribute('aria-expanded')!=='true')await b.click();await expect(p.getByTestId('thread-json')).toContainText('"vars"');return JSON.parse(await p.getByTestId('thread-json').innerText());}
+try{
+ await test('patch-browser','Each add shows original inserted value; completed replace/remove and later-node values agree with API','Select multi-patch and later node.finished, inspect every row, exact event and full thread',async()=>{
+  const events=await history('patch');await open('patch');const first=events.find(e=>e.type==='node.finished'&&e.nodeId==='patch');await select(first);
+  const list=page.getByRole('list',{name:'Patch diff'});await expect(list.locator(':scope > li')).toHaveCount(first.patch.length);
+  const inserted=[];for(let i=0;i<first.patch.length;i++){const op=first.patch[i];const row=list.locator(':scope > li').nth(i);if(op.op==='add'){await expect(row).toContainText('Added value');const got=JSON.parse(await row.locator('pre').last().innerText());assert.deepEqual(got,op.value);inserted.push({path:op.path,value:got});}if(op.op==='remove'){assert.equal(await row.locator('pre').last().innerText(),'(absent)');}}
+  const patchThread=await fullThread();assert.equal(patchThread.vars.array[0].marker,'FIRST-replaced-in-same-node');assert.equal(patchThread.vars.nested.items[0].nested,'NESTED-original');await exact(first);await shot('patch-multiple-dark-1440.png');
+  const later=events.find(e=>e.type==='node.finished'&&e.nodeId==='later');await select(later);const lastThread=await fullThread();assert.deepEqual(lastThread.vars,(await api('/runs/'+index.patch.runId+'/thread')).vars);return {inserted,firstThread:patchThread.vars,laterThread:lastThread.vars};
+ });
+ const values={'0':'0%','1':'100%','1e-12':'<0.01%','0.999999999999':'>99.99%','0.5':'50%','0.5000000000000001':'50%','0.12345678901234566':'12.35%'};
+ for(const kind of ['expression','llm','choice','noul','score'])for(const p of kind==='expression'?['null']:Object.keys(values)){
+  const key=kind+'-'+p;
+  await test('decision-browser-'+key,'Pinned node/route labels and readable percentage; exact recorded number downloadable','Select decision.made, inspect evaluation and progress, download raw JSON',async()=>{
+   await open(key);const e=(await history(key)).find(e=>e.type==='decision.made');await select(e);await expect(page.getByRole('list',{name:'Timeline'})).toContainText(e.portId==='accept'?'A'.repeat(120)+' (accept)':'Pinned reject (reject)');
+   const evaluation=page.getByRole('heading',{name:'Evaluation details'}).locator('..').locator('..');
+   if(kind!=='expression')await expect(evaluation).toContainText(values[p]);
+   if(kind==='choice')await expect(page.getByRole('list',{name:'Alternative probabilities'})).toContainText('A'.repeat(120)+' (accept): '+values[p]);
+   if(kind==='score')await expect(page.getByRole('list',{name:'Rubric index probabilities'})).toContainText('0: '+values[p]);
+   if(kind==='llm')await expect(evaluation).toContainText('informational only');
+   const artifact=await exact(e);const drawer=page.getByRole('button',{name:/Node progress/});await drawer.click();
+   await expect(page.getByRole('heading',{name:'D'.repeat(120)+' (decide)',exact:true})).toBeVisible();
+   if(p==='0.12345678901234566')await shot('decision-'+kind+'-dark-1440.png');
+   return {portId:e.portId,display:kind==='expression'?'expression route':values[p],artifact};
+  });
+ }
+ for(const key of ['cancelled','deadline','provider','parent','child','resumed-cancelled'])await test('cause-browser-'+key,'Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert','Read inspector, timeline, exact terminal event and run-list row',async()=>{
+  await open(key);const record=await api('/runs/'+index[key].runId),events=await history(key);const text=await page.locator('body').innerText();
+  if(['cancelled','parent','child','resumed-cancelled'].includes(key)){
+   const actor=key==='child'?'run '+index.parent.runId:'user local';await expect(page.getByText(new RegExp('Cancelled by '+actor))).toBeVisible();await expect(page.getByRole('alert').filter({hasText:'Failed:'})).toHaveCount(0);await expect(page.getByRole('list',{name:'Timeline'})).toContainText('Cancelled');
+  }else{await expect(page.getByRole('alert')).toContainText(record.failure.code);await expect(page.getByRole('alert')).toContainText(record.failure.message);}
+  const terminal=events.findLast(e=>e.type=== (record.status==='cancelled'?'run.cancelled':'run.failed'));await select(terminal);const artifact=await exact(terminal);await shot('cause-'+key+'-dark-1440.png');
+  await page.goto(base+'/app/runs');const row=page.getByRole('row').filter({hasText:record.id});await expect(row).toContainText(record.pinned.name);await expect(row).toContainText(record.status);if(record.status==='failed')await expect(row).toContainText(record.failure.message);return {status:record.status,failure:record.failure??null,artifact,inspectorText:text};
+ });
+ await test('pinned-browser','Historical inspector, timeline, progress and run list retain old labels after republish','Inspect old patch/Choice runs, exact definition/run JSON, current published version',async()=>{
+  const actual=[];for(const key of ['patch','choice-0.12345678901234566']){await open(key);await expect(page.getByRole('list',{name:'Timeline'})).not.toContainText('RENAMED');
+   const defButton=page.getByRole('button',{name:'Pinned definition JSON',exact:true});await defButton.click();const d=page.waitForEvent('download');await page.getByRole('button',{name:'Download Pinned definition JSON as JSON'}).click();const downloaded=await d;const name='pinned-definition-'+key+'.json';await downloaded.saveAs(join(out,name));const pinned=JSON.parse(await readFile(join(out,name),'utf8'));assert.ok(!pinned.name.includes('RENAMED'));
+   await page.goto(base+'/app/runs');const row=page.getByRole('row').filter({hasText:index[key].runId});await expect(row).not.toContainText('RENAMED');await expect(row).toContainText(pinned.name);actual.push({key,name:pinned.name,artifact:name});}return actual;
+ });
+ await test('unavailable-definition','Unavailable pinned definition is disclosed; no current labels guessed','Inject 404 only on immutable version read in fresh browser context',async()=>{
+  const c=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});const p=await c.newPage();await p.route('**/loops/*/versions/*',r=>r.fulfill({status:404,contentType:'application/problem+json',body:JSON.stringify({type:'about:blank',title:'QA unreadable pin',status:404,code:'NOT_FOUND'})}));await open('choice-0.12345678901234566',p);await expect(p.getByText(/Pinned definition unavailable/)).toBeVisible();await expect(p.getByRole('list',{name:'Timeline'})).not.toContainText('RENAMED');await expect(p.getByRole('button',{name:'Pinned definition JSON',exact:true})).toHaveCount(0);const text=await p.locator('body').innerText();await c.close();return text;
+ });
+ await test('historical-browser','Missing seed/provenance/confidence/probabilities explicitly not recorded','Open current-contract accepted older events and inspect decision/exact payload',async()=>{
+  await open('historical');await expect(page.getByText(/Initial thread not recorded/)).toBeVisible();const e=(await history('historical')).find(e=>e.type==='decision.made');await select(e);await expect(page.getByText('Alternative probabilities: not recorded.',{exact:true})).toBeVisible();await expect(page.locator('body')).toContainText('Not recorded');await exact(e);await shot('historical-dark-1440.png');return await page.locator('body').innerText();
+ });
+ await test('replay-browser','Replay first event exposes inherited seed/counters; source remains unchanged','Select replay queued and completed events, compare reconstructed thread to API',async()=>{
+  await open('replay');const es=await history('replay');await select(es[0]);const seed=await fullThread();assert.deepEqual(seed,es[0].initialThread);await select(es.at(-1));const final=await fullThread();assert.deepEqual(final,await api('/runs/'+index.replay.runId+'/thread'));return {seed:seed.vars,counters:seed.counters,final:final.vars};
+ });
+ for(const width of [1440,390])for(const theme of ['dark','light'])await test('layout-'+width+'-'+theme,'Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures','Use long labels, both themes, each event panel and keyboard Enter/Tab',async()=>{
+  await page.setViewportSize({width,height:900});await page.goto(base+'/app/runs/'+index.patch.runId);await page.evaluate(t=>localStorage.setItem('graphgoblin-theme',t),theme);await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
+  const widths=[];async function fits(panel){const actual=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));widths.push({panel,...actual});assert.ok(actual.scroll<=actual.client,JSON.stringify(actual));}
+  await open('patch');const es=await history('patch');await select(es.find(e=>e.type==='node.finished'&&e.nodeId==='patch'));await fits('patch');
+  const raw=page.getByRole('button',{name:/^Exact recorded event #/});await raw.focus();await page.keyboard.press('Enter');await expect(raw).toHaveAttribute('aria-expanded','true');await fits('raw patch');await page.keyboard.press('Tab');assert.ok(await page.evaluate(()=>document.activeElement.tagName!=='BODY'));
+  await open('choice-0.12345678901234566');await select((await history('choice-0.12345678901234566')).find(e=>e.type==='decision.made'));await page.getByRole('button',{name:/Node progress/}).focus();await page.keyboard.press('Enter');await fits('evaluation and progress');await shot('layout-'+width+'-'+theme+'.png');return widths;
+ });
+ await test('large-browser','Large event and thread stay bounded; exact download preserved; reconstruct on request and show 55 messages','Open >2MB history, request reconstruction, keyboard expand/collapse, compare full download hash',async()=>{
+  await page.setViewportSize({width:390,height:900});await open('large');const es=await history('large'),e=es.find(e=>e.type==='node.finished'&&e.nodeId==='big');await select(e);
+  const reconstruct=page.getByRole('button',{name:'Reconstruct the thread at event '+e.seq,exact:true});await expect(reconstruct).toBeVisible();await reconstruct.focus();await page.keyboard.press('Enter');await expect(page.getByRole('heading',{name:'Messages (55)',exact:true})).toBeVisible();await page.getByRole('button',{name:'Show all messages',exact:true}).click();await expect(page.getByRole('list',{name:'Messages'}).locator(':scope > li')).toHaveCount(55);
+  const raw=page.getByRole('button',{name:'Exact recorded event #'+e.seq,exact:true});await raw.click();await expect(page.getByTestId('recorded-event-json')).not.toContainText('_EXACT_END');const expand=page.getByRole('button',{name:'Show all of Exact recorded event',exact:true});await expand.focus();await page.keyboard.press('Enter');await expect(page.getByTestId('recorded-event-json')).toContainText('_EXACT_END');assert.deepEqual(JSON.parse(await page.getByTestId('recorded-event-json').innerText()),e);await page.getByRole('button',{name:'Show less of Exact recorded event',exact:true}).click();
+  const d=page.waitForEvent('download');await page.getByRole('button',{name:'Download Exact recorded event as JSON',exact:true}).click();const downloaded=await d;const stream=await downloaded.createReadStream(),chunks=[];for await(const b of stream)chunks.push(b);const bytes=Buffer.concat(chunks);assert.deepEqual(JSON.parse(bytes),e);omitted.push({name:'large-exact-event.json',size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+  const bounds=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));assert.ok(bounds.scroll<=bounds.client);const eventHash=createHash('sha256').update(bytes).digest('hex');await shot('large-bounded-390.png');return {bounds,eventSeq:e.seq,size:bytes.length,hash:eventHash};
+ });
+}finally{await save('browser-results.json',results);await save('browser-omitted.json',omitted);await save('browser-page-errors.json',pageErrors);await browser.close();}
+console.log('BROWSER_COMPLETE '+results.filter(r=>r.result==='PASS').length+' passed, '+results.filter(r=>r.result==='FAIL').length+' failed');
+if(results.some(r=>r.result==='FAIL'))process.exitCode=1;

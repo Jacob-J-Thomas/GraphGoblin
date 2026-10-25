@@ -1,3 +1,4 @@
+import type { LoopDefinition } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Alert, Button, Card } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
@@ -19,6 +20,7 @@ export function Timeline({
   error,
   selected,
   onSelect,
+  definition,
   total = events.length,
   hasOlder = false,
   hasNewer = false,
@@ -30,6 +32,7 @@ export function Timeline({
   onPause,
 }: {
   events: TimelineEvent[];
+  definition?: LoopDefinition | undefined;
   status: StreamStatus;
   error: string | undefined;
   selected: number | undefined;
@@ -250,7 +253,7 @@ export function Timeline({
                     <span aria-hidden="true"> - Load exact event payload</span>
                   </>
                 ) : (
-                  describeEvent(event)
+                  describeEvent(event, definition)
                 )}
               </span>
             </button>

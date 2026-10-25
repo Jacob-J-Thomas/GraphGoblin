@@ -1,0 +1,109 @@
+import {readFile,writeFile,mkdtemp,copyFile,stat} from 'node:fs/promises';
+import {openSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {spawn,spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-g1-255-qa');
+const req=createRequire(resolve(root,'apps/web/package.json'));
+const load=async name=>import(import.meta.resolve(name,pathToFileURL(resolve(root,'apps/web/package.json')).href));
+const contracts=await load('@graphgoblin/contracts');
+const {CURRENT_DEFINITION_FORMAT,RunEventSchema}=contracts;
+const {replayThread}=await load('@graphgoblin/domain');
+const base='http://127.0.0.1:6080';
+const norm=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const checks=[],omitted=[];
+async function save(name,value){const raw=JSON.stringify(value,null,2);if(Buffer.byteLength(raw)>1000000){omitted.push({name,size:Buffer.byteLength(raw),sha256:createHash('sha256').update(raw).digest('hex')});return;}await writeFile(join(out,name),norm(raw));}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function api(method,path,body,headers={}){const r=await fetch(base+path,{method,headers:{...(body===undefined?{}:{'content-type':'application/json'}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});const text=await r.text();const value=text?JSON.parse(text):null;if(r.status>=400)throw new Error(method+' '+path+' '+r.status+' '+text);return value;}
+async function ctl(path,body={}){const r=await fetch('http://127.0.0.1:6081'+path,{method:'POST',body:JSON.stringify(body)});const v=await r.json();if(!r.ok)throw new Error(JSON.stringify(v));return v;}
+async function poll(fn,predicate,what){for(let i=0;i<600;i++){const v=await fn();if(predicate(v))return v;await sleep(50);}throw new Error('Timed out '+what);}
+const edge=(from,port,to)=>({id:from+'-'+port,from:{node:from,port},to:{node:to}});
+const start={id:'start',kind:'trigger',label:'Pinned initial trigger',config:{type:'manual'}};
+const done={id:'done',kind:'exit',label:'Pinned completion',config:{}};
+const set=(path,value)=>({op:'set',path,value:{kind:'literal',value}});
+function chain(name,nodes,extra={}){const all=[start,...nodes,done];return {schemaVersion:CURRENT_DEFINITION_FORMAT,name,...extra,nodes:all,edges:all.slice(0,-1).map((n,i)=>edge(n.id,'out',all[i+1].id))};}
+async function publish(def){const {loop}=await api('POST','/loops',{definition:def});await api('POST','/loops/'+loop.id+'/publish');return loop.id;}
+async function startRun(loopId){return (await api('POST','/loops/'+loopId+'/runs',{input:{source:'independent QA'}})).run;}
+async function wait(run,status){return poll(()=>api('GET','/runs/'+run.id),r=>r.status===status,run.id+' '+status);}
+const hist=async id=>(await api('GET','/runs/'+id+'/events?limit=1000')).items;
+const records={};
+async function capture(key,run){const current=await api('GET','/runs/'+run.id);const events=await hist(run.id);events.forEach(e=>RunEventSchema.parse(e));let thread;try{thread=await api('GET','/runs/'+run.id+'/thread');}catch{}records[key]={run:current,events,thread,version:await api('GET','/loops/'+run.loopId+'/versions/'+run.versionId)};return records[key];}
+function check(id,expected,actual,steps){checks.push({id,steps,expected,actual,result:'PASS'});console.log('PASS '+id);}
+const dataDir=await mkdtemp(join(tmpdir(),'gg-qa-g1-255-'));
+const serverFile=join(dataDir,'qa-server.mjs');await copyFile(join(out,'qa-server.mjs.txt'),serverFile);
+const env={...process.env,GG_DATA_DIR:dataDir,GG_QA_DATA:dataDir,GG_QA_ROOT:root};
+const key=spawnSync(process.execPath,[resolve(root,'apps/api/dist/main.js'),'--create-api-key','independent-qa'],{env,encoding:'utf8',windowsHide:true});
+assert.equal(key.status,0,'Binary API key creation failed '+key.stderr);
+check('admission-api-key','API key created by built binary','CLI exit 0; token intentionally not retained','Built main.js --create-api-key independent-qa against disposable data');
+const child=spawn(process.execPath,['--experimental-import-meta-resolve',serverFile],{env,stdio:['ignore',openSync(join(out,'gateway.log.txt'),'a'),openSync(join(out,'gateway.log.txt'),'a')],windowsHide:true});child.unref();
+await poll(()=>fetch(base+'/healthz').then(r=>r.ok).catch(()=>false),Boolean,'server readiness');
+await save('environment.json',{revision:'373470f236bb1b7695c4ff0435968b2eb86d5516',node:process.version,dataDir,port:6080,controlPort:6081,pid:child.pid,serverFile,browser:'Microsoft Edge',providerEvidence:'fake-only; real built gateway, physical SQLite'});
+try{
+ await api('PUT','/secrets/jev-api-key',{value:'independent-qa-synthetic-no-live-key'});
+ const patchDef=chain('Pinned multi-patch evidence',[
+  {id:'patch',kind:'mutate',label:'P'.repeat(120),config:{operations:[
+   set('/vars/array',[]),set('/vars/nested',{items:[]}),set('/vars/object',{}),
+   set('/vars/array/-',{marker:'FIRST-original',n:0.12345678901234567}),set('/vars/array/-',null),set('/vars/array/-',['THIRD',false]),
+   set('/vars/nested/items/-',{nested:'NESTED-original'}),set('/vars/nested/items/-','NESTED-second'),
+   set('/vars/object/added',{truth:true}),set('/vars/object/remove','REMOVE-me'),
+   set('/vars/array/0/marker','FIRST-replaced-in-same-node'),{op:'delete',path:'/vars/object/remove'},
+   {op:'append-message',content:'APPENDED message alpha'}, {op:'append-message',content:'APPENDED message beta'},
+  ]}},
+  {id:'later',kind:'mutate',label:'Pinned later change',config:{operations:[set('/vars/array/0/marker','FIRST-later-node'),set('/vars/nested/items/0/nested','NESTED-later-node')]}}
+ ]);
+ const patch=await startRun(await publish(patchDef));await wait(patch,'succeeded');const pc=await capture('patch',patch);
+ assert.deepEqual(pc.thread.vars,{array:[{marker:'FIRST-later-node',n:0.12345678901234567},null,['THIRD',false]],nested:{items:[{nested:'NESTED-later-node'},'NESTED-second']},object:{added:{truth:true}}});
+ check('patch-api','Ordered patches reconstruct exact final values',pc.thread.vars,'Publish multiple append/object/replace/remove mutations; read events and thread');
+ const finishes=pc.events.filter(e=>e.type==='node.finished'&&['patch','later'].includes(e.nodeId));
+ const sourceBefore=JSON.stringify(pc);
+ const replay=(await api('POST','/runs/'+patch.id+'/replay',{nodeId:'later'})).run;await wait(replay,'succeeded');const rc=await capture('replay',replay);
+ const sourceSeed=pc.events[0].initialThread;const atLater=pc.events.find(e=>e.type==='node.started'&&e.nodeId==='later');const expectedSeed=replayThread(sourceSeed,pc.events,atLater.seq-1);
+ assert.deepEqual(rc.events[0].initialThread.vars,expectedSeed.vars);assert.deepEqual(rc.events[0].initialThread.counters,expectedSeed.counters);assert.deepEqual(rc.thread.vars,pc.thread.vars);
+ assert.equal(JSON.stringify(await capture('patch',patch)),sourceBefore);
+ check('replay-api','Fork seed/counters and final values correct; source unchanged',{seed:rc.events[0].initialThread.vars,counters:rc.events[0].initialThread.counters},'Public replay at later node and independent domain reconstruction of source prefix');
+ function decisionDef(kind,name){let config;const routes=[{id:'accept',label:'A'.repeat(120)},{id:'reject',label:'Pinned reject'}];
+  if(kind==='expression')config={kind,jsonata:'"accept"',routes};
+  else if(kind==='llm')config={kind,harness:'codex',model:{mode:'inherit'},effort:{mode:'inherit'},instructions:'Choose from pinned routes',routes};
+  else {let answer=kind==='choice'?{type:kind,options:routes.map(r=>({...r,criteria:r.id+' criterion'}))}:kind==='noul'?{type:kind,true:{...routes[0],criteria:'holds'},false:{...routes[1],criteria:'does not hold'}}:{type:kind,anchors:['Low anchor','High anchor'],bands:[{...routes[0],min:0,max:0.8},{...routes[1],min:0.8,max:1}]};config={kind:'classifier',model:'jev',question:'Independent '+kind,recordAlternatives:true,answer};}
+  return {schemaVersion:CURRENT_DEFINITION_FORMAT,name,nodes:[start,{id:'decide',kind:'decision',label:'D'.repeat(120),config},done],edges:[edge('start','out','decide'),edge('decide','accept','done'),edge('decide','reject','done')]};}
+ for(const kind of ['expression','llm','choice','noul','score']){
+  for(const p of kind==='expression'?[null]:[0,1,0.000000000001,0.999999999999,0.5,0.5000000000000001,0.12345678901234566]){
+   if(p!==null)await ctl('/probability',{value:p});
+   const k=kind+'-'+String(p),run=await startRun(await publish(decisionDef(kind,'Pinned '+k)));await wait(run,'succeeded');const c=await capture(k,run);
+   const e=c.events.find(e=>e.type==='decision.made');assert.ok(e);if(kind==='llm')assert.equal(e.observation.confidence,p);if(kind==='noul')assert.equal(e.observation.answer.trueProbability,p);if(kind==='choice'||kind==='score')assert.equal(e.observation.answer.confidence,p);
+   check('decision-api-'+k,'Actual recorded decision includes exact fake number and port',{portId:e.portId,observation:e.observation},'Publish '+kind+' decision; run through built gateway; read validated event');
+  }
+ }
+ const work=chain('Pinned inference', [{id:'work',kind:'inference',label:'Pinned provider work',config:{prompt:{template:'Independent QA fake provider only'}}}]);
+ await ctl('/script',{turns:[{delayMs:60000,finalText:'must not finish'}]});const cancelled=await startRun(await publish({...work,name:'Pinned user cancellation'}));
+ await poll(()=>hist(cancelled.id),es=>es.some(e=>e.type==='harness.session'),'cancel harness start');await api('POST','/runs/'+cancelled.id+'/cancel');await wait(cancelled,'cancelled');const cc=await capture('cancelled',cancelled);assert.ok(cc.events.some(e=>e.type==='run.cancel_requested'&&e.actor.kind==='user'));assert.ok(!cc.events.some(e=>e.type==='run.failed'));
+ const repeatCancel=await fetch(base+'/runs/'+cancelled.id+'/cancel',{method:'POST'});assert.equal(repeatCancel.status,409);check('user-cancel-api','Recorded user cancellation; no failure; duplicate cancel rejected',{status:cc.run.status,duplicateCancelStatus:repeatCancel.status},'Cancel active inference then repeat cancel');
+ const deadline=await startRun(await publish(chain('Pinned deadline',[{id:'wait',kind:'wait',label:'Pinned deadline wait',config:{mode:'input',prompt:'Waiting for deadline'}}],{settings:{runDeadlineSeconds:1}})));await wait(deadline,'waiting');await ctl('/idle');await ctl('/advance',{ms:1001});await wait(deadline,'failed');const dc=await capture('deadline',deadline);assert.equal(dc.run.failure.code,'RUN_DEADLINE_EXCEEDED');check('deadline-api','Engine deadline remains recorded failure',dc.run.failure,'Await worker idle, advance fake clock 1001ms and poll real timer service');
+ await ctl('/script',{turns:[{error:{code:'HARNESS_TRANSPORT_FAILED',message:'QA provider diagnostic: socket closed code=ECONNRESET',retriable:false},submission:'definitely-not-submitted'}]});
+ const provider=await startRun(await publish({...work,name:'Pinned provider diagnostic'}));await wait(provider,'failed');const fc=await capture('provider',provider);assert.equal(fc.run.failure.code,'HARNESS_TRANSPORT_FAILED');assert.match(fc.run.failure.message,/QA provider diagnostic/);check('provider-api','Exact diagnostic retained',fc.run.failure,'Injected fake transport failure through harness port');
+ await ctl('/script',{turns:[{error:{code:'HARNESS_QUOTA_EXHAUSTED',message:'QA resumable quota diagnostic',retriable:false},submission:'definitely-not-submitted'}]});
+ const resumable=await startRun(await publish({...work,name:'Pinned resumed cancellation'}));await wait(resumable,'failed');await ctl('/idle');
+ await ctl('/script',{turns:[{delayMs:60000,finalText:'resumed must not finish'}]});await api('POST','/runs/'+resumable.id+'/resume');await poll(()=>hist(resumable.id),es=>es.filter(e=>e.type==='harness.session').length>=2,'resumed provider');await api('POST','/runs/'+resumable.id+'/cancel');await wait(resumable,'cancelled');const res=await capture('resumed-cancelled',resumable);assert.ok(res.events.some(e=>e.type==='run.resumed'));check('resume-cancel-api','Resumed run cancels with earlier failure retained as history',res.run.status,'Resume definitely-unsubmitted quota failure; cancel new active attempt');
+ await ctl('/script',{turns:[{delayMs:60000,finalText:'child must not finish'}]});const childLoop=await publish({...work,name:'Pinned child loop'});
+ const parent=await startRun(await publish(chain('Pinned parent loop',[{id:'child',kind:'subloop',label:'Pinned awaited child',config:{loopRef:{loopId:childLoop}}}])));
+ const pe=await poll(()=>hist(parent.id),es=>es.some(e=>e.type==='child_run.started'),'child admission');const childId=pe.find(e=>e.type==='child_run.started').childRunId;
+ await poll(()=>hist(childId),es=>es.some(e=>e.type==='harness.session'),'child active');await api('POST','/runs/'+parent.id+'/cancel');await wait(parent,'cancelled');await wait({id:childId},'cancelled');await capture('parent',parent);const cr=await capture('child',await api('GET','/runs/'+childId));assert.ok(cr.events.some(e=>e.type==='run.cancel_requested'&&e.actor.kind==='run'&&e.actor.id===parent.id));check('parent-child-api','Child cancellation names parent actor',cr.events.filter(e=>e.type==='run.cancel_requested'),'Cancel waiting parent while child harness active');
+ // Historical accepted shapes from real persisted runs; facts removed, never invented.
+ await ctl('/probability',{value:0.5});const old=await startRun(await publish(decisionDef('choice','Pinned older accepted history')));await wait(old,'succeeded');await ctl('/historical',{runId:old.id});await capture('historical',old);check('historical-api','Older optional facts accepted by current contracts',{queuedSeed:records.historical.events[0].initialThread??'absent',observation:records.historical.events.find(e=>e.type==='decision.made').observation},'Physical SQLite fixture removes optional seed/confidence/probability/provenance facts; validate REST events');
+ // Rename and republish both mutation and decision definitions, keeping old pins.
+ for(const key of ['patch','choice-0.12345678901234566']){const c=records[key];const def=structuredClone(c.version.definition);def.name='RENAMED '+key;for(const n of def.nodes){n.label='RENAMED '+n.id;if(n.kind==='decision'){const config=n.config;const rows=config.kind==='classifier'?config.answer.options:config.routes;for(const r of rows??[])r.label='RENAMED '+r.id;}}
+  const current=await api('GET','/loops/'+c.run.loopId);await api('PUT','/loops/'+c.run.loopId+'/draft',{definition:def},{'if-match':String(current.draftToken)});await api('POST','/loops/'+c.run.loopId+'/publish');const pin=await api('GET','/loops/'+c.run.loopId+'/versions/'+c.run.versionId);assert.deepEqual(pin,c.version);check('pinned-api-'+key,'Old immutable version unchanged after republish',pin.definition.name,'Rename loop/nodes/routes through draft API; republish');}
+ const large='LONG_VALUE_'+ 'x'.repeat(2050000)+'_EXACT_END';const lr=await startRun(await publish(chain('Pinned large value',[{id:'big',kind:'mutate',label:'B'.repeat(120),config:{operations:[{op:'set',path:'/vars/large',value:{kind:'expression',jsonata:'$join(["LONG_VALUE_",$pad("",2050000,"x"),"_EXACT_END"])'}},...Array.from({length:55},(_,i)=>({op:'append-message',content:'Message '+i}))]}}])));await wait(lr,'succeeded');await capture('large',lr);assert.equal(records.large.thread.vars.large,large);check('large-api','Large exact string preserved',{length:records.large.thread.vars.large.length,sha256:createHash('sha256').update(large).digest('hex')},'2.05MB generated string through mutation run and real SQLite');
+ const bad=await fetch(base+'/runs/'+patch.id+'/replay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({nodeId:'missing'})});check('negative-replay','Unknown replay node rejected',{status:bad.status},'POST replay with missing node');assert.ok(bad.status>=400&&bad.status<500);
+ await save('api-checks.json',checks);await save('fixture-index.json',Object.fromEntries(Object.entries(records).map(([k,v])=>[k,{runId:v.run.id,loopId:v.run.loopId,versionId:v.run.versionId,status:v.run.status,eventCount:v.events.length}])));
+ for(const [k,v] of Object.entries(records))await save('api-'+k+'.json',v);
+ await save('provider-state.json',await ctl('/state'));await save('omitted-api.json',omitted);
+ console.log('SEED_COMPLETE '+Object.keys(records).length+' fixtures');
+}catch(e){await save('seed-error.json',{error:norm(e.stack),checks,created:Object.keys(records)});console.error(norm(e.stack));process.exitCode=1;}
+// Keep the execution session alive so its child gateway remains available to the next QA scripts.
+child.ref();
+await new Promise(resolve=>child.on('exit',resolve));

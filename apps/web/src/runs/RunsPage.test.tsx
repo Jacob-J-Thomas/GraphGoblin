@@ -1,4 +1,4 @@
-import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { minimalLoop, samplePin } from '@graphgoblin/contracts/testing';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -29,9 +29,14 @@ describe('RunsPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop({ ...minimalLoop(), name: 'alpha' }, { published: true });
-    const parent = api.addRun({ loopId: loop.id, status: 'waiting' });
+    const parent = api.addRun({
+      loopId: loop.id,
+      status: 'waiting',
+      pinned: samplePin({ name: 'alpha' }),
+    });
     const child = api.addRun({
       loopId: 'UNKNOWNLOOP',
+      pinned: samplePin({ name: 'Original deleted loop' }),
       status: 'succeeded',
       parentRunId: parent.id,
       startedAt: undefined,
@@ -46,7 +51,7 @@ describe('RunsPage', () => {
       'href',
       `/runs/${parent.id}`,
     );
-    expect(within(childRow).getByText('UNKNOWNLOOP')).toBeInTheDocument();
+    expect(within(childRow).getByText('Original deleted loop')).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Status'), 'waiting');
     await waitFor(() =>
@@ -233,4 +238,26 @@ describe('RunsPage', () => {
     renderApp('/runs?status=failed');
     expect(await screen.findByText('No runs match.')).toBeInTheDocument();
   });
+});
+
+it('keeps the pinned loop name after rename and shows recorded failure diagnostics (#255)', async () => {
+  const api = new FakeApi();
+  const loop = api.addLoop({ ...minimalLoop(), name: 'Renamed loop' });
+  const run = api.addRun({
+    loopId: loop.id,
+    status: 'failed',
+    pinned: samplePin({ name: 'Original loop' }),
+    failure: {
+      code: 'HARNESS_TRANSPORT_FAILED',
+      message: 'Recorded connection diagnostic',
+      resumable: false,
+    },
+  });
+  renderApp('/runs', api);
+  const row = (await screen.findByRole('link', { name: run.id })).closest('tr')!;
+  expect(within(row).getByText('Original loop')).toBeInTheDocument();
+  expect(within(row).queryByText('Renamed loop')).not.toBeInTheDocument();
+  expect(
+    within(row).getByText('HARNESS_TRANSPORT_FAILED: Recorded connection diagnostic'),
+  ).toBeInTheDocument();
 });

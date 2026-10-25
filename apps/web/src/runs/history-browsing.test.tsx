@@ -120,7 +120,7 @@ it('browses older history during execution, reloads at the live acknowledgement 
   const timeline = screen.getByRole('list', { name: 'Timeline' });
   expect(within(timeline).getAllByRole('listitem')).toHaveLength(80);
   expect(log().events).toHaveLength(512);
-  expect(await screen.findByText('Exited: success')).toBeInTheDocument();
+  expect(await screen.findByText(/Exited: success$/)).toBeInTheDocument();
   expect(screen.getByText(/Last gate decision/)).toHaveTextContent('on pass 9 of 10');
   expect(screen.getByTestId('run-result')).toHaveTextContent('null');
   await user.click(screen.getByRole('button', { name: 'Full thread JSON' }));

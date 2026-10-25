@@ -11,7 +11,7 @@ import type {
   LoopDefinition,
   ReturnChannel,
 } from '@graphgoblin/contracts';
-import { getAtPointer } from '@graphgoblin/domain';
+import { decisionRouteDeclarations, getAtPointer } from '@graphgoblin/domain';
 
 export interface PatchLine {
   op: string;
@@ -21,7 +21,7 @@ export interface PatchLine {
   after: unknown;
 }
 
-/** One line per patch operation with the value at its path before and after. */
+/** Add operations show the recorded inserted value; other operations show the path before/after the completed patch. */
 export function patchDiff(
   before: ContextThread,
   after: ContextThread,
@@ -36,12 +36,13 @@ export function patchDiff(
     path: op.path,
     ...('from' in op ? { from: op.from } : {}),
     before: read(before, op.path),
-    after: read(after, op.path),
+    after: op.op === 'add' ? op.value : read(after, op.path),
   }));
 }
 
 /** A one-line description of an event for the timeline. */
-export function describeEvent(event: RunEvent): string {
+export function describeEvent(event: RunEvent, definition?: LoopDefinition): string {
+  const node = (id: string) => nodeName(definition, id);
   switch (event.type) {
     case 'run.started':
       return `attempt ${event.attempt}`;
@@ -54,15 +55,15 @@ export function describeEvent(event: RunEvent): string {
     case 'run.cancel_requested':
       return `by ${event.actor.kind} ${event.actor.id}`;
     case 'run.waiting':
-      return `${event.nodeId} waits for ${event.wait.kind}`;
+      return `${node(event.nodeId)} waits for ${event.wait.kind}`;
     case 'run.woken':
-      return `${event.nodeId} woken by ${event.reason}`;
+      return `${node(event.nodeId)} woken by ${event.reason}`;
     case 'iteration.incremented':
-      return `iteration ${event.from} → ${event.to} at ${event.targetNodeId}`;
+      return `iteration ${event.from} → ${event.to} at ${node(event.targetNodeId)}`;
     case 'node.started':
-      return `${event.nodeId} (${event.kind}) attempt ${event.attempt}`;
+      return `${node(event.nodeId)} (${event.kind}) attempt ${event.attempt}`;
     case 'node.finished':
-      return `${event.nodeId}${event.route ? ` → ${event.route}` : ''}, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`;
+      return `${node(event.nodeId)}${event.route ? ` → ${routeName(definition, event.nodeId, event.route)}` : ''}, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`;
     case 'node.progress':
     case 'harness.usage':
     case 'heartbeat.beat':
@@ -72,11 +73,11 @@ export function describeEvent(event: RunEvent): string {
     case 'harness.turn':
     case 'harness.submission':
     case 'harness.session':
-      return 'nodeId' in event ? event.nodeId : '';
+      return 'nodeId' in event ? node(event.nodeId) : '';
     case 'decision.made':
-      return describeDecision(event);
+      return describeDecision(event, definition);
     case 'exit.evaluated':
-      return describeExit(event);
+      return describeExit(event, definition);
     case 'signal.received':
       return event.name;
     case 'delivery.queued':
@@ -87,19 +88,24 @@ export function describeEvent(event: RunEvent): string {
     case 'return.delivered':
     case 'return.failed':
       return event.channel.kind;
-    case 'run.queued':
     case 'run.cancelled':
+      return 'Cancelled';
+    case 'run.queued':
       return '';
   }
 }
 
-function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): string {
+function describeDecision(
+  event: Extract<RunEvent, { type: 'decision.made' }>,
+  definition?: LoopDefinition,
+): string {
+  const route = (id: string) => routeName(definition, event.nodeId, id);
   const { observation, provenance } = event;
   let description: string;
   let confidence: number | null;
   switch (observation.kind) {
     case 'route':
-      description = `Chose ${observation.routeId}`;
+      description = `Chose ${route(observation.routeId)}`;
       confidence = observation.confidence;
       break;
     case 'boolean':
@@ -111,13 +117,13 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
       confidence = answer.confidence;
       switch (answer.type) {
         case 'choice':
-          description = `Chose ${answer.optionId}`;
+          description = `Chose ${route(answer.optionId)}`;
           break;
         case 'score':
-          description = `Scored ${answer.score} to band ${event.gate?.limit ? event.gate.repeatRouteId : event.portId}`;
+          description = `Scored ${answer.score} to band ${route(event.gate?.limit ? event.gate.repeatRouteId : event.portId)}`;
           break;
         case 'noul':
-          description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability ?? 'not recorded'})`;
+          description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability === null ? 'not recorded' : formatProbability(answer.trueProbability)})`;
           break;
       }
       break;
@@ -129,7 +135,7 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
     provenance.kind === 'llm' ? 'self-reported confidence (informational)' : 'confidence';
   const confidenceText =
     confidence !== null
-      ? ` with ${confidenceLabel} ${confidence}`
+      ? ` with ${confidenceLabel} ${formatProbability(confidence)}`
       : provenance.kind === 'llm' ||
           (observation.kind === 'classifier' && observation.answer.type !== 'score')
         ? ` with ${confidenceLabel} not recorded`
@@ -138,8 +144,11 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
   return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes}${event.gate.maxPasses === null ? ' (unlimited)' : ` of ${event.gate.maxPasses}`}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
 }
 
-function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
-  return `Exited: ${event.outcome}`;
+function describeExit(
+  event: Extract<RunEvent, { type: 'exit.evaluated' }>,
+  definition?: LoopDefinition,
+): string {
+  return `${definition ? nodeName(definition, event.nodeId) + ': ' : ''}Exited: ${event.outcome}`;
 }
 
 /**
@@ -147,7 +156,10 @@ function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): str
  * a loop-back exit used to say "iteration 2 of 5", a gate says which pass chose what and whether a
  * limit stopped the repeat (#129). Undefined when no gate decided.
  */
-export function lastGateSummary(events: readonly RunEvent[]): string | undefined {
+export function lastGateSummary(
+  events: readonly RunEvent[],
+  definition?: LoopDefinition,
+): string | undefined {
   const event = events.findLast(
     (e): e is Extract<RunEvent, { type: 'decision.made' }> =>
       e.type === 'decision.made' && e.gate !== undefined,
@@ -156,7 +168,7 @@ export function lastGateSummary(events: readonly RunEvent[]): string | undefined
   if (!event || !gate) return undefined;
   // An Unlimited gate records `maxPasses: null` (#243): name the pass without a bound.
   const of = gate.maxPasses === null ? ' (unlimited passes)' : ` of ${gate.maxPasses}`;
-  const chose = `Last gate decision: ${event.nodeId} chose ${gate.limit ? gate.repeatRouteId : event.portId} on pass ${gate.previousPasses}${of}`;
+  const chose = `Last gate decision: ${nodeName(definition, event.nodeId)} chose ${routeName(definition, event.nodeId, gate.limit ? gate.repeatRouteId : event.portId)} on pass ${gate.previousPasses}${of}`;
   if (!gate.limit) return `${chose}.`;
   const limit = gate.limit === 'max-passes' ? 'maximum passes' : 'maximum run time';
   return `${chose}; ${limit} stopped the repeat, so it took Limit reached.`;
@@ -253,4 +265,50 @@ export function observationDescription(observation: EvaluationObservation): stri
     case 'classifier':
       return answerDescription(observation.answer);
   }
+}
+
+/** The caller supplies only the immutable run version. Stable IDs remain visible. */
+export function nodeName(definition: LoopDefinition | undefined, id: string): string {
+  const node = definition?.nodes.find((item) => item.id === id);
+  return node ? `${node.label} (${id})` : definition ? `${id} (label not recorded)` : id;
+}
+
+export function routeName(
+  definition: LoopDefinition | undefined,
+  nodeId: string,
+  id: string,
+): string {
+  const node = definition?.nodes.find((item) => item.id === nodeId);
+  if (node?.kind !== 'decision') return id;
+  if (id === 'limit-reached') return 'Limit reached (limit-reached)';
+  const route = decisionRouteDeclarations(node.config).find((item) => item.id === id);
+  return route ? `${route.label} (${id})` : `${id} (label not recorded)`;
+}
+
+/** Two percentage decimals for scanning; exact numbers remain in the recorded-event disclosure. */
+export function formatProbability(value: number | null): string {
+  if (value === null) return 'Not recorded';
+  if (value > 0 && value < 0.0001) return '<0.01%';
+  if (value < 1 && value > 0.9999) return '>99.99%';
+  return new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 }).format(
+    value,
+  );
+}
+
+/** A cancellation's actor is its recorded request's actor, never a provider error. */
+export function cancellationSummary(events: readonly RunEvent[]): string | undefined {
+  const cancelled = events.findLast((event) => event.type === 'run.cancelled');
+  if (!cancelled) return undefined;
+  const resumed = events.findLast(
+    (event) => event.type === 'run.resumed' && event.seq < cancelled.seq,
+  );
+  const request = events.findLast(
+    (event) =>
+      event.type === 'run.cancel_requested' &&
+      event.seq > (resumed?.seq ?? 0) &&
+      event.seq < cancelled.seq,
+  );
+  return request?.type === 'run.cancel_requested'
+    ? `Cancelled by ${request.actor.kind} ${request.actor.id} (request #${request.seq}; cancellation #${cancelled.seq}).`
+    : 'Cancelled; actor not recorded.';
 }

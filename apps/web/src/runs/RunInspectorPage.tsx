@@ -1,3 +1,4 @@
+import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,7 +18,7 @@ import { DeliveryPanel } from './inspector/DeliveryPanel.js';
 import { useRunEvents } from './useRunEvents.js';
 import { useRunHistory } from './useRunHistory.js';
 import { useApi } from '../api/context.js';
-import { describeEvent, exitReturnSummary, lastGateSummary } from './projections.js';
+import { describeEvent, exitReturnSummary, lastGateSummary, nodeName } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
 
@@ -91,10 +92,6 @@ export function RunInspectorPage() {
   );
   const latestExit = observation.data?.exit;
   const finished = observation.data?.finished;
-  const needsPinnedDefinition =
-    latestExit !== undefined ||
-    selectedEvent?.type === 'decision.made' ||
-    selectedEvent?.type === 'run.failed';
   const resolveSeq = selectedSeq ?? (selectedEvent?.type === 'node.finished' ? seq : undefined);
   const selectedThread = useQuery({
     queryKey: ['run-thread-at', runId, resolveSeq],
@@ -118,13 +115,10 @@ export function RunInspectorPage() {
     resolveSeq === undefined ? threadQuery.data : (selectedThread.data?.thread ?? threadQuery.data);
   const shownSeq = resolveSeq === undefined ? undefined : selectedThread.data?.seq;
   const threadError = resolveSeq === undefined ? threadQuery.error : selectedThread.error;
-  const versionQuery = useLoopVersion(
-    runQuery.data?.loopId ?? '',
-    runQuery.data?.versionId ?? '',
-    needsPinnedDefinition,
-  );
+  // Node and route labels come from the pinned version, so it is always read (#255).
+  const versionQuery = useLoopVersion(runQuery.data?.loopId ?? '', runQuery.data?.versionId ?? '');
   const definition = versionQuery.data?.definition;
-  const gateSummary = lastGateSummary(evidence);
+  const gateSummary = lastGateSummary(evidence, definition);
   const returnSummary = threadQuery.data
     ? exitReturnSummary(evidence, definition, threadQuery.data.invocation.returnDefaults)
     : undefined;
@@ -147,7 +141,11 @@ export function RunInspectorPage() {
                 <RunStatusBadge status={run.status} />
               </div>
               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-                {run.currentNodeId ? <span>at {run.currentNodeId}</span> : null}
+                {run.currentNodeId ? (
+                  <span className="min-w-0 wrap-anywhere">
+                    at {nodeName(definition, run.currentNodeId)}
+                  </span>
+                ) : null}
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
                   loop
                 </Link>
@@ -164,7 +162,7 @@ export function RunInspectorPage() {
                 <RunControls run={run} />
               </div>
             </header>
-            {run.failure ? (
+            {run.status === 'failed' && run.failure ? (
               <Alert title={`Failed: ${run.failure.code}`}>
                 {run.failure.message}
                 {run.failure.resumable ? ' (resumable)' : ''}
@@ -175,8 +173,8 @@ export function RunInspectorPage() {
               <Alert>Run evidence could not be read: {observation.error.message}</Alert>
             ) : null}
             {latestExit ? (
-              <Card title="Exit evaluation">
-                <p>{describeEvent(latestExit)}</p>
+              <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
+                <p>{describeEvent(latestExit, definition)}</p>
                 {gateSummary ? <p>{gateSummary}</p> : null}
                 {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
               </Card>
@@ -201,7 +199,13 @@ export function RunInspectorPage() {
               </Card>
             ) : null}
             <RunLimits run={run} />
-            <WaitPanel run={run} />
+            <ExecutionContext
+              run={run}
+              events={log.events}
+              definition={definition}
+              definitionLoading={versionQuery.isPending}
+            />
+            <WaitPanel run={run} definition={definition} />
             <DeliveryPanel run={run} />
           </>
         )}
@@ -209,6 +213,7 @@ export function RunInspectorPage() {
       <div className="grid items-start gap-section lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <Timeline
           events={history.rows}
+          definition={definition}
           total={log.lastSeq}
           following={log.mode === 'live'}
           hasOlder={history.hasOlder}
@@ -244,6 +249,7 @@ export function RunInspectorPage() {
           selectedEvent?.type === 'child_run.finished' ? (
             <ChildRunDetails runId={selectedEvent.childRunId} />
           ) : null}
+          <RecordedEvent event={selectedEvent} />
           <EvaluationDetails
             event={selectedEvent}
             definition={definition}
@@ -269,6 +275,7 @@ export function RunInspectorPage() {
               seq={shownSeq ?? seq}
               live={shownSeq === undefined}
               before={shownSeq === resolveSeq ? beforeThread.data : undefined}
+              definition={definition}
             />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>
@@ -277,7 +284,7 @@ export function RunInspectorPage() {
             Activity below covers the retained history window. Earlier activity is available through
             Load older.
           </p>
-          <ProgressDrawer events={log.events} />
+          <ProgressDrawer events={log.events} definition={definition} />
         </div>
       </div>
     </Page>

@@ -1,0 +1,754 @@
+[
+  {
+    "id": "patch-browser",
+    "expected": "Each add shows original inserted value; completed replace/remove and later-node values agree with API",
+    "steps": "Select multi-patch and later node.finished, inspect every row, exact event and full thread",
+    "actual": {
+      "inserted": [
+        {
+          "path": "/vars/array",
+          "value": []
+        },
+        {
+          "path": "/vars/nested",
+          "value": {
+            "items": []
+          }
+        },
+        {
+          "path": "/vars/object",
+          "value": {}
+        },
+        {
+          "path": "/vars/array/-",
+          "value": {
+            "marker": "FIRST-original",
+            "n": 0.12345678901234566
+          }
+        },
+        {
+          "path": "/vars/array/-",
+          "value": null
+        },
+        {
+          "path": "/vars/array/-",
+          "value": [
+            "THIRD",
+            false
+          ]
+        },
+        {
+          "path": "/vars/nested/items/-",
+          "value": {
+            "nested": "NESTED-original"
+          }
+        },
+        {
+          "path": "/vars/nested/items/-",
+          "value": "NESTED-second"
+        },
+        {
+          "path": "/vars/object/added",
+          "value": {
+            "truth": true
+          }
+        },
+        {
+          "path": "/vars/object/remove",
+          "value": "REMOVE-me"
+        },
+        {
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PWGDG08JMHRYYN75EY7M50",
+            "role": "note",
+            "content": "APPENDED message alpha",
+            "nodeId": "patch",
+            "ts": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        {
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5PWGDG08JMHRYYN75EY7M51",
+            "role": "note",
+            "content": "APPENDED message beta",
+            "nodeId": "patch",
+            "ts": "2026-10-24T12:00:00.000Z"
+          }
+        }
+      ],
+      "firstThread": {
+        "array": [
+          {
+            "marker": "FIRST-replaced-in-same-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-original"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      },
+      "laterThread": {
+        "array": [
+          {
+            "marker": "FIRST-later-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-later-node"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      }
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-expression-null",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "expression route",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M56-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5T-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M5Y-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-llm-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M62-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M66-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6T-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-choice-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M6Y-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "reject",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M72-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M76-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "reject",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-noul-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "reject",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7T-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "0%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M7Y-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-1",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "100%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M82-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-1e-12",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "<0.01%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M86-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.999999999999",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": ">99.99%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8A-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.5",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8E-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.5000000000000001",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "50%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8J-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "decision-browser-score-0.12345678901234566",
+    "expected": "Pinned node/route labels and readable percentage; exact recorded number downloadable",
+    "steps": "Select decision.made, inspect evaluation and progress, download raw JSON",
+    "actual": {
+      "portId": "accept",
+      "display": "12.35%",
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8P-6.json"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-cancelled",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": {
+      "status": "cancelled",
+      "failure": null,
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8T-13.json",
+      "inspectorText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGDG08JMHRYYN75EY7M8T\ncancelled\nat work\nloop\nchild runs\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned user cancellation v1 · version ID 01M5PWGDG08JMHRYYN75EY7M8S\n\nLoading pinned definition…\n\nCancelled by user local (request #11; cancellation #13). Recorded node position: work.\n\nExact run record\nTimeline (13 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 2 ms\n#5\nnode.started\nwork (inference) attempt 1\n#6\nharness.turn\nwork\n#7\nharness.session\nwork\n#8\nharness.submission\nwork\n#9\nnode.progress\nwork\n#10\nharness.usage\nwork\n#11\nrun.cancel_requested\nby user local\n#12\nharness.submission\nwork\n#13\nrun.cancelled\nCancelled\nExact recorded event #13\nThread at event 13\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-deadline",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": {
+      "status": "failed",
+      "failure": {
+        "code": "RUN_DEADLINE_EXCEEDED",
+        "message": "The run exceeded its configured elapsed execution deadline",
+        "resumable": false
+      },
+      "artifact": "download-01M5PWGDG08JMHRYYN75EY7M8Z-7.json",
+      "inspectorText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGDG08JMHRYYN75EY7M8Z\nfailed\nat Pinned deadline wait (wait)\nloop\nchild runs\n\nFailed: RUN_DEADLINE_EXCEEDED\n\nThe run exceeded its configured elapsed execution deadline\nExecution limits\n\nMaximum node visits: 10. Run deadline: 1 seconds.\n\nDeadline at: 2026-10-24T12:00:01.000Z\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned deadline v1 · version ID 01M5PWGDG08JMHRYYN75EY7M8Y\n\nExact run record\nPinned definition JSON\nTimeline (7 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 1 ms\n#5\nnode.started\nPinned deadline wait (wait) (wait) attempt 1\n#6\nrun.waiting\nPinned deadline wait (wait) waits for input\n#7\nrun.failed\nRUN_DEADLINE_EXCEEDED: The run exceeded its configured elapsed execution deadline\nExact recorded event #7\nThread at event 7\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (0 nodes)"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-provider",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": {
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_TRANSPORT_FAILED",
+        "message": "QA provider diagnostic: socket closed code=ECONNRESET",
+        "nodeId": "work",
+        "resumable": false,
+        "inference": {
+          "visitId": "01M5PWGEF9XC82S3Y8Q98QPKM6:5",
+          "turnId": "01M5PWGEF9XC82S3Y8Q98QPKM8",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored",
+          "sessionId": "fake-session-2"
+        }
+      },
+      "artifact": "download-01M5PWGEF9XC82S3Y8Q98QPKM6-11.json",
+      "inspectorText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGEF9XC82S3Y8Q98QPKM6\nfailed\nat work\nloop\nchild runs\n\nFailed: HARNESS_TRANSPORT_FAILED\n\nQA provider diagnostic: socket closed code=ECONNRESET\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned provider diagnostic v1 · version ID 01M5PWGEF9XC82S3Y8Q98QPKM5\n\nLoading pinned definition…\n\nExact run record\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 2 ms\n#5\nnode.started\nwork (inference) attempt 1\n#6\nharness.turn\nwork\n#7\nharness.session\nwork\n#8\nnode.progress\nwork\n#9\nharness.submission\nwork\n#10\nharness.submission\nwork\n#11\nrun.failed\nHARNESS_TRANSPORT_FAILED: QA provider diagnostic: socket closed code=ECONNRESET\nExact recorded event #11\nThread at event 11\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-parent",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": {
+      "status": "cancelled",
+      "failure": null,
+      "artifact": "download-01M5PWGEF9XC82S3Y8Q98QPKMJ-9.json",
+      "inspectorText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGEF9XC82S3Y8Q98QPKMJ\ncancelled\nat Pinned awaited child (child)\nloop\nchild runs\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned parent loop v1 · version ID 01M5PWGEF9XC82S3Y8Q98QPKMH\n\nCancelled by user local (request #8; cancellation #9). Recorded node position: Pinned awaited child (child).\n\nExact run record\nPinned definition JSON\nTimeline (9 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 1 ms\n#5\nnode.started\nPinned awaited child (child) (subloop) attempt 1\n#6\nchild_run.started\nPinned awaited child (child)\n#7\nrun.waiting\nPinned awaited child (child) waits for child\n#8\nrun.cancel_requested\nby user local\n#9\nrun.cancelled\nCancelled\nExact recorded event #9\nThread at event 9\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (0 nodes)"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-child",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": {
+      "status": "cancelled",
+      "failure": null,
+      "artifact": "download-01M5PWGEF9XC82S3Y8Q98QPKMM-13.json",
+      "inspectorText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGEF9XC82S3Y8Q98QPKMM\ncancelled\nat Pinned provider work (work)\nloop\nparent run\nchild runs\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned child loop v1 · version ID 01M5PWGEF9XC82S3Y8Q98QPKMF\n\nCancelled by run 01M5PWGEF9XC82S3Y8Q98QPKMJ (request #11; cancellation #13). Recorded node position: Pinned provider work (work).\n\nExact run record\nPinned definition JSON\nTimeline (13 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 3 ms\n#5\nnode.started\nPinned provider work (work) (inference) attempt 1\n#6\nharness.turn\nPinned provider work (work)\n#7\nharness.session\nPinned provider work (work)\n#8\nharness.submission\nPinned provider work (work)\n#9\nnode.progress\nPinned provider work (work)\n#10\nharness.usage\nPinned provider work (work)\n#11\nrun.cancel_requested\nby run 01M5PWGEF9XC82S3Y8Q98QPKMJ\n#12\nharness.submission\nPinned provider work (work)\n#13\nrun.cancelled\nCancelled\nExact recorded event #13\nThread at event 13\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "cause-browser-resumed-cancelled",
+    "expected": "Current cancellation and failure cause match recorded facts; cancelled runs have no current failure alert",
+    "steps": "Read inspector, timeline, exact terminal event and run-list row",
+    "actual": {
+      "status": "cancelled",
+      "failure": null,
+      "artifact": "download-01M5PWGEF9XC82S3Y8Q98QPKMB-21.json",
+      "inspectorText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGEF9XC82S3Y8Q98QPKMB\ncancelled\nat Pinned provider work (work)\nloop\nchild runs\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned resumed cancellation v1 · version ID 01M5PWGEF9XC82S3Y8Q98QPKMA\n\nCancelled by user local (request #19; cancellation #21). Recorded node position: Pinned provider work (work).\n\nExact run record\nPinned definition JSON\nTimeline (21 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 2 ms\n#5\nnode.started\nPinned provider work (work) (inference) attempt 1\n#6\nharness.turn\nPinned provider work (work)\n#7\nharness.session\nPinned provider work (work)\n#8\nnode.progress\nPinned provider work (work)\n#9\nharness.submission\nPinned provider work (work)\n#10\nharness.submission\nPinned provider work (work)\n#11\nrun.failed\nHARNESS_QUOTA_EXHAUSTED: QA resumable quota diagnostic\n#12\nrun.resumed\nby user local\n#13\nnode.started\nPinned provider work (work) (inference) attempt 2\n#14\nharness.turn\nPinned provider work (work)\n#15\nharness.session\nPinned provider work (work)\n#16\nharness.submission\nPinned provider work (work)\n#17\nnode.progress\nPinned provider work (work)\n#18\nharness.usage\nPinned provider work (work)\n#19\nrun.cancel_requested\nby user local\n#20\nharness.submission\nPinned provider work (work)\n#21\nrun.cancelled\nCancelled\nExact recorded event #21\nThread at event 21\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "pinned-browser",
+    "expected": "Historical inspector, timeline, progress and run list retain old labels after republish",
+    "steps": "Inspect old patch/Choice runs, exact definition/run JSON, current published version",
+    "actual": [
+      {
+        "key": "patch",
+        "name": "Pinned multi-patch evidence",
+        "artifact": "pinned-definition-patch.json"
+      },
+      {
+        "key": "choice-0.12345678901234566",
+        "name": "Pinned choice-0.12345678901234566",
+        "artifact": "pinned-definition-choice-0.12345678901234566.json"
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "unavailable-definition",
+    "expected": "Unavailable pinned definition is disclosed; no current labels guessed",
+    "steps": "Inject 404 only on immutable version read in fresh browser context",
+    "actual": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGDG08JMHRYYN75EY7M6Y\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nNo value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned choice-0.12345678901234566 v1 · version ID 01M5PWGDG08JMHRYYN75EY7M6X\n\nPinned definition unavailable. Authored node and route labels are not recorded in the available history.\n\nExact run record\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 2 ms\n#5\nnode.started\ndecide (decision) attempt 1\n#6\ndecision.made\nChose accept with classifier via typesafe (jev-latest) with confidence 12.35%\n#7\nnode.finished\ndecide → accept, 2 changes, 1 ms\n#8\nnode.started\ndone (exit) attempt 1\n#9\nexit.evaluated\nExited: success\n#10\nnode.finished\ndone, 0 changes, 1 ms\n#11\nrun.finished\nsucceeded (success)\nExact recorded event #11\nThread at event 11\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+    "result": "PASS"
+  },
+  {
+    "id": "historical-browser",
+    "expected": "Missing seed/provenance/confidence/probabilities explicitly not recorded",
+    "steps": "Open current-contract accepted older events and inspect decision/exact payload",
+    "actual": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGEF9XC82S3Y8Q98QPKMS\nsucceeded\nloop\nchild runs\nExit evaluation\n\nPinned completion (done): Exited: success\n\nNo value was returned: Returns is None, so no destination received anything (caller from the exit). This is the exit’s configuration, not a failure.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned older accepted history v1 · version ID 01M5PWGEF9XC82S3Y8Q98QPKMR\n\nInitial thread not recorded. Historical reconstruction uses the documented fallback and may be incomplete.\n\nExact run record\nPinned definition JSON\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 1 ms\n#5\nnode.started\nDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1\n#6\ndecision.made\nChose AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept) with classifier with confidence not recorded\n#7\nnode.finished\nDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept), 2 changes, 2 ms\n#8\nnode.started\nPinned completion (done) (exit) attempt 1\n#9\nexit.evaluated\nPinned completion (done): Exited: success\n#10\nnode.finished\nPinned completion (done), 0 changes, 1 ms\n#11\nrun.finished\nsucceeded (success)\nExact recorded event #6\n{\n  \"provenance\": {\n    \"kind\": \"classifier\",\n    \"provider\": null,\n    \"classifierId\": null,\n    \"model\": null,\n    \"effort\": null\n  },\n  \"observation\": {\n    \"kind\": \"classifier\",\n    \"answer\": {\n      \"type\": \"choice\",\n      \"optionId\": \"accept\",\n      \"confidence\": null,\n      \"probabilities\": null\n    }\n  },\n  \"portId\": \"accept\",\n  \"diagnostics\": [],\n  \"runId\": \"01M5PWGEF9XC82S3Y8Q98QPKMS\",\n  \"seq\": 6,\n  \"ts\": \"2026-10-24T12:00:01.001Z\",\n  \"type\": \"decision.made\",\n  \"nodeId\": \"decide\"\n}\nDownload JSON\nEvaluation details\n\nChose AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept) with classifier with confidence not recorded\n\nNode: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide)\n\nOption ID\naccept\nSelected port\naccept\nLabel\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nCriterion\naccept criterion\nEvaluator\nclassifier\nProvider\nNot recorded\nClassifier\nNot recorded\nModel\nNot recorded\nConfidence acceptance\nNo minimum configured in run version\nConfidence\nNot recorded\n\nAlternative probabilities: not recorded.\n\nThread at event 6\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+    "result": "PASS"
+  },
+  {
+    "id": "replay-browser",
+    "expected": "Replay first event exposes inherited seed/counters; source remains unchanged",
+    "steps": "Select replay queued and completed events, compare reconstructed thread to API",
+    "actual": {
+      "seed": {
+        "array": [
+          {
+            "marker": "FIRST-replaced-in-same-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-original"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      },
+      "counters": {
+        "nodeVisits": {
+          "start": 1,
+          "patch": 1
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      "final": {
+        "array": [
+          {
+            "marker": "FIRST-later-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-later-node"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      }
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "layout-1440-dark",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "raw patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 1440,
+        "scroll": 1440
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "layout-1440-light",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "raw patch",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 1440,
+        "scroll": 1440
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "layout-390-dark",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "raw patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 390,
+        "scroll": 390
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "layout-390-light",
+    "expected": "Inspector, patches, evaluations, progress and exact JSON wrap without horizontal overflow; keyboard opens disclosures",
+    "steps": "Use long labels, both themes, each event panel and keyboard Enter/Tab",
+    "actual": [
+      {
+        "panel": "patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "raw patch",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "panel": "evaluation and progress",
+        "client": 390,
+        "scroll": 390
+      }
+    ],
+    "result": "PASS"
+  },
+  {
+    "id": "large-browser",
+    "expected": "Large event and thread stay bounded; exact download preserved; reconstruct on request and show 55 messages",
+    "steps": "Open >2MB history, request reconstruction, keyboard expand/collapse, compare full download hash",
+    "actual": {
+      "bounds": {
+        "client": 390,
+        "scroll": 390
+      },
+      "eventSeq": 6,
+      "size": 2064197,
+      "hash": "bba406b5303d553c0f51bb28ecaa551ca12239dc3040e1bea60e30667c91736e"
+    },
+    "result": "PASS"
+  }
+]

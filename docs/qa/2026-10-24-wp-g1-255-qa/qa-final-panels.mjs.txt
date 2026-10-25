@@ -1,0 +1,22 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-g1-255-qa'),base='http://127.0.0.1:6080';
+const {chromium,expect}=createRequire(resolve('apps/web/package.json'))('@playwright/test');
+const api=async(method,path,body)=>{const r=await fetch(base+path,{method,headers:body===undefined?{}:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const v=await r.json();assert.ok(r.ok,JSON.stringify(v));return v;};
+for(let i=0;i<120;i++){let ready=false;try{ready=(await fetch(base+'/healthz')).ok;}catch{}if(ready)break;if(i===119)throw new Error('Gateway readiness');await new Promise(r=>setTimeout(r,250));}
+const browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:1440,height:900},serviceWorkers:'block'});const checks=[];
+try{
+ const lifecycle=JSON.parse(await readFile(join(out,'lifecycle-results.json'),'utf8'));
+ await page.goto(base+'/app/runs/'+lifecycle.run.id);const drawer=page.getByRole('button',{name:/Node progress/});await drawer.click();const id=await drawer.getAttribute('aria-controls');assert.ok(id,'Public disclosure controls its progress panel');const panel=page.locator('[id="'+id+'"]');await expect(panel).toContainText('LIFECYCLE exact appended answer');
+ const progressText=await panel.innerText();await panel.screenshot({path:join(out,'progress-appended-value.png')});checks.push({id:'progress-appended-value',steps:'Open persisted inference history; expand Node progress; inspect only its aria-controls target',expected:'Exact appended provider message is readable inside progress panel',actual:progressText,result:'PASS'});
+ const node=(id,operations)=>({id,kind:'mutate',label:id,config:{operations}}),set=(path,value)=>({op:'set',path,value:{kind:'literal',value}});
+ const nodes=[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},node('prepare',[set('/vars/item',{keep:'before-value',remove:'removed-before-value'})]),node('change',[set('/vars/item/keep','after-value'),{op:'delete',path:'/vars/item/remove'}]),{id:'done',kind:'exit',label:'Done',config:{}}];
+ const def={schemaVersion:4,name:'QA existing replace and remove',nodes,edges:nodes.slice(0,-1).map((n,i)=>({id:'e'+i,from:{node:n.id,port:'out'},to:{node:nodes[i+1].id}}))};const {loop}=await api('POST','/loops',{definition:def});await api('POST','/loops/'+loop.id+'/publish');const run=(await api('POST','/loops/'+loop.id+'/runs',{})).run;
+ for(let i=0;i<400;i++){if((await api('GET','/runs/'+run.id)).status==='succeeded')break;if(i===399)throw new Error('Run completion');await new Promise(r=>setTimeout(r,50));}
+ const events=(await api('GET','/runs/'+run.id+'/events?limit=1000')).items,e=events.find(e=>e.type==='node.finished'&&e.nodeId==='change');await page.goto(base+'/app/runs/'+run.id);await page.getByRole('list',{name:'Timeline'}).getByRole('button').filter({hasText:'#'+e.seq}).filter({hasText:'node.finished'}).click();const diff=page.getByRole('list',{name:'Patch diff'}),replacement=diff.locator(':scope > li').filter({hasText:'/vars/item/keep'}),removal=diff.locator(':scope > li').filter({hasText:'/vars/item/remove'});
+ assert.equal(JSON.parse(await replacement.locator('pre').first().innerText()),'before-value');assert.equal(JSON.parse(await replacement.locator('pre').last().innerText()),'after-value');assert.equal(JSON.parse(await removal.locator('pre').first().innerText()),'removed-before-value');assert.equal(await removal.locator('pre').last().innerText(),'(absent)');
+ await diff.screenshot({path:join(out,'replace-remove-existing-values.png')});checks.push({id:'replace-remove-existing-values',steps:'Create values in one completed node, replace/remove them in the next; inspect that node patch',expected:'Existing before values and correct after/absent values',actual:{runId:run.id,event:e,patchText:await diff.innerText(),thread:await api('GET','/runs/'+run.id+'/thread')},result:'PASS'});
+ await writeFile(join(out,'final-panel-results.json'),JSON.stringify(checks,null,2));console.log('PASS two final panel checks');
+}finally{await browser.close();await fetch('http://127.0.0.1:6081/shutdown',{method:'POST',body:'{}'});}

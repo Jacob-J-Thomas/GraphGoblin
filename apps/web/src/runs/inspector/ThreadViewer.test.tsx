@@ -106,3 +106,37 @@ it('uses the exact server snapshot and before snapshot for a patch, independent 
   expect(screen.getByText('Patch from work')).toBeInTheDocument();
   expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
 });
+
+describe('ThreadViewer appended patch values (#255)', () => {
+  it('shows the individual recorded append, including null, without substituting the array', () => {
+    const thread = sampleThread();
+    thread.vars = { items: ['existing'] };
+    const events = [
+      event(thread.run.id, 1, 'run.queued', queuedFields({ initialThread: thread })),
+      event(thread.run.id, 2, 'node.started', {
+        nodeId: 'append',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'x',
+      }),
+      event(thread.run.id, 3, 'node.finished', {
+        nodeId: 'append',
+        durationMs: 1,
+        patch: [
+          { op: 'add', path: '/vars/items/-', value: null },
+          { op: 'add', path: '/vars/items/-', value: { exact: 'Appended exact value' } },
+        ],
+      }),
+    ];
+    // The server resolves the threads on both sides of the selected event.
+    const after = {
+      ...thread,
+      vars: { items: ['existing', null, { exact: 'Appended exact value' }] },
+    };
+    render(<ThreadViewer current={after} before={thread} events={events} seq={3} />);
+    const diff = screen.getByRole('list', { name: 'Patch diff' });
+    expect(within(diff).getByText('null')).toBeInTheDocument();
+    expect(within(diff).getByText(/Appended exact value/)).toBeInTheDocument();
+    expect(within(diff).queryByText(/existing/)).not.toBeInTheDocument();
+  });
+});
