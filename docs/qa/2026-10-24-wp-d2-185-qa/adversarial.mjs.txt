@@ -1,0 +1,55 @@
+import {createRequire} from 'node:module';
+import {pathToFileURL,fileURLToPath} from 'node:url';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {mkdtemp,writeFile,readFile,mkdir} from 'node:fs/promises';
+import {fork} from 'node:child_process';
+import {createWriteStream} from 'node:fs';
+import {createServer} from 'node:http';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d2-185-qa/adversarial');await mkdir(out,{recursive:true});
+const clean=s=>String(s).replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+const save=(name,v)=>writeFile(join(out,name),clean(JSON.stringify(v,null,2)));
+const sleep=ms=>new Promise(ok=>setTimeout(ok,ms));
+const until=async fn=>{const end=Date.now()+30000;while(Date.now()<end){const v=await fn();if(v)return v;await sleep(50);}throw Error('timeout');};
+const load=p=>import(pathToFileURL(join(root,p)));
+const {createGraphGoblinClient,waitForRun,subscribeRunEvents}=await load('packages/api-client/dist/index.js');
+const {chromium}=createRequire(join(root,'apps/web/package.json'))('@playwright/test');
+const gatewayCode=(await readFile(join(root,'docs/qa/2026-10-24-wp-d2-185-qa/native.mjs.txt'),'utf8')).replaceAll('6130','6133');
+await writeFile(join(out,'gateway.mjs.txt'),gatewayCode);
+const gatewayFile=join(tmpdir(),'gg-qa-d2-185-adversarial-gateway.mjs');await writeFile(gatewayFile,gatewayCode);
+const dataDir=await mkdtemp(join(tmpdir(),'gg-qa-d2-185-adversarial-'));
+const child=fork(gatewayFile,['gateway',dataDir],{cwd:root,stdio:['pipe','pipe','pipe','ipc']});
+const log=createWriteStream(join(out,'gateway.log.txt'));child.stdout.pipe(log);child.stderr.pipe(log);
+const ready=await new Promise((ok,no)=>{child.once('message',ok);child.once('error',no);child.once('exit',code=>no(Error('gateway exit '+code)));});
+let serial=0;const rpc=(op,extra={})=>new Promise((ok,no)=>{const id=++serial,handler=m=>{if(m.reply===id){child.off('message',handler);m.error?no(Error(m.error)):ok(m.value);}};child.on('message',handler);child.send({id,op,...extra});});
+const http=async(path,method='GET',body)=>{const r=await fetch('http://127.0.0.1:6133'+path,{method,headers:{authorization:'Bearer '+ready.token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});const text=await r.text();let value;try{value=JSON.parse(text);}catch{value=text;}if(!r.ok)throw Error(`${r.status} ${path} ${text}`);return value;};
+const client=createGraphGoblinClient({baseUrl:'http://127.0.0.1:6133'});
+const attempts=[],held=[];let hold=false;
+const receiver=createServer((req,res)=>{req.resume();req.on('end',()=>{attempts.push({path:req.url,key:req.headers['idempotency-key'],at:new Date().toISOString()});if(hold)held.push(res);else res.writeHead(200).end('ack');});});await new Promise(ok=>receiver.listen(6134,'127.0.0.1',ok));
+const results={},checks=[];const check=(name,pass,actual)=>{checks.push({name,pass,actual});console.log(`${pass?'PASS':'FAIL'} ${name}: ${JSON.stringify(actual)}`);};
+let browser;const streams=[];
+const def=(name,inference)=>({schemaVersion:4,name,nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},...(inference?[{id:'work',kind:'inference',label:'Work',config:{prompt:{template:'adversarial independent QA'}}}]:[]),{id:'done',kind:'exit',label:'Done',config:{returns:'trigger.payload'}}],edges:inference?[{id:'e1',from:{node:'start',port:'out'},to:{node:'work'}},{id:'e2',from:{node:'work',port:'out'},to:{node:'done'}}]:[{id:'e',from:{node:'start',port:'out'},to:{node:'done'}}]});
+const publish=async d=>{const c=await http('/loops','POST',{definition:d});await http('/loops/'+c.loop.id+'/publish','POST');return c.loop.id;};
+try{
+ await rpc('script',{turns:[{error:{code:'QA_FAILURE',message:'controlled fake failure',retriable:false}},{finalText:'new result',delayMs:8000}]});
+ const loop=await publish(def('Resume after delivered failed outcome',true));const {run}=await http('/loops/'+loop+'/runs','POST',{input:{answer:42},return:[{kind:'webhook',url:'http://127.0.0.1:6134/resume'}]});
+ const before=await until(async()=>{const v=await http('/runs/'+run.id);return v.finalizedAt?v:false;});results.before=before;check('old failure has delivery and marker',before.status==='failed'&&!!before.finalizedAt&&before.deliveries?.[0]?.status==='delivered',before);
+ browser=await chromium.launch({channel:'msedge',headless:true});const pages=[];
+ for(const width of [1440,390]){const context=await browser.newContext({viewport:{width,height:960},colorScheme:'dark'});const page=await context.newPage();await page.goto('http://127.0.0.1:6133/app/runs/'+run.id);await until(async()=>(await page.locator('body').innerText()).includes('Fully finalized.'));pages.push({page,width});}
+ await http('/runs/'+run.id+'/resume','POST',{});const active=await until(async()=>{const v=await http('/runs/'+run.id);return v.status==='running'?v:false;});results.active=active;check('resume clears marker with retained delivery',!active.finalizedAt&&active.deliveries?.length===1,active);
+ const wait=await waitForRun(client,run.id,{timeoutMs:300,pollMs:30});results.activeWait=wait;check('active resumed wait unfinished',wait.finished===false,wait.finished);
+ let done=false;const seen=[];const sub=subscribeRunEvents({client,runId:run.id,after:before.lastEventSeq,onEvent:e=>seen.push(e)});sub.done.then(()=>done=true);streams.push(sub);
+ for(const {page,width}of pages){await sleep(150);const text=await page.locator('body').innerText();results['activeBrowser'+width]={text,headings:await page.getByRole('heading').allTextContents()};await page.screenshot({path:join(out,`active-resumed-${width}-dark.png`),fullPage:true});check('inspector does not claim ended while execution active '+width,!text.includes('Execution ended; finalization pending.'),text.match(/Execution[^\n]*/g));}
+ check('subscription not settled by old marker',!done,done);
+ const after=await until(async()=>{const v=await http('/runs/'+run.id);return v.status==='succeeded'&&v.finalizedAt?v:false;});await sub.done;results.after=after;results.resumeEvents=seen;results.resumeRequests=attempts.slice();check('new outcome gets new marker',after.finalizedAt!==before.finalizedAt,{old:before.finalizedAt,new:after.finalizedAt});
+ await browser.close();browser=undefined;
+ // Real SQLite/gateway CPU for a minute with three open streams and a pending HTTP return.
+ hold=true;const costLoop=await publish(def('Minute pending delivery',false));const costRun=(await http('/loops/'+costLoop+'/runs','POST',{input:42,return:[{kind:'webhook',url:'http://127.0.0.1:6134/cost'}]})).run;
+ await until(async()=>{const v=await http('/runs/'+costRun.id);return v.status==='succeeded'&&v.deliveries?.[0]?.inFlight;});
+ let settled=0;for(let i=0;i<3;i++){const s=subscribeRunEvents({client,runId:costRun.id,onEvent:()=>{}});s.done.then(()=>settled++);streams.push(s);}
+ const start=await rpc('cpu');const t0=Date.now();for(let i=0;i<6;i++){await sleep(10000);console.log('REAL_CPU_PROGRESS '+(Date.now()-t0));}
+ const end=await rpc('cpu');const elapsedMs=Date.now()-t0;const pending=await http('/runs/'+costRun.id);const cpuMicros=end.cpu.user-start.cpu.user+end.cpu.system-start.cpu.system;
+ results.cost={start,end,elapsedMs,cpuMicros,cpuPercent:cpuMicros/(elapsedMs*1000)*100,settled,pending};check('real three streams stay pending for minute',settled===0&&pending.deliveries[0].status==='pending'&&!pending.finalizedAt,results.cost);
+ hold=false;for(const res of held)if(!res.destroyed)res.writeHead(200).end('ack');await until(async()=>{const v=await http('/runs/'+costRun.id);return v.finalizedAt;});
+}catch(e){checks.push({name:'driver error',pass:false,actual:clean(e.stack)});console.log(clean(e.stack));}
+finally{for(const s of streams)s.close();hold=false;for(const res of held)if(!res.destroyed)res.writeHead(200).end('ack');await browser?.close();receiver.closeAllConnections();await new Promise(ok=>receiver.close(ok));await rpc('stop');await save('results.json',results);await save('checks.json',checks);await save('receiver.json',attempts);await save('setup.json',{dataDir,pid:ready.pid,node:process.version,port:6133,receiverPort:6134});}
