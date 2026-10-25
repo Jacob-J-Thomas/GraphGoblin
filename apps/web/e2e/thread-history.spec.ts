@@ -42,9 +42,19 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
     await action('start');
     async function browserThread(page: Page) {
       await page.bringToFront();
-      return ContextThreadSchema.parse(
-        JSON.parse(await page.getByTestId('thread-json').innerText()),
-      );
+      const text = await page.getByTestId('thread-json').innerText();
+      // A refreshed thread briefly shows the bounded value's preparing note; read again later.
+      if (text.startsWith('Preparing the preview')) return undefined;
+      return ContextThreadSchema.parse(JSON.parse(text));
+    }
+    /**
+     * The browser thread once it equals `expected`, keeping the value that matched rather than
+     * reading again, which could catch the next refresh's preparing note.
+     */
+    async function matchedThread(page: Page, expected: ContextThread) {
+      let last: unknown;
+      await expect.poll(async () => (last = await browserThread(page))).toEqual(expected);
+      return ContextThreadSchema.parse(last);
     }
     async function snapshot() {
       const value = await action('snapshot', run.id);
@@ -59,15 +69,13 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       const record = RunRecordSchema.parse(
         await (await request.get(ready.url + '/runs/' + run.id)).json(),
       );
-      await expect.poll(() => browserThread(open)).toEqual(api);
-      const existing = await browserThread(open);
+      const existing = await matchedThread(open, api);
       // Drive the active renderer, as the two-tab draft fixture does: background reloads can
       // finish navigation while leaving the following UI wait stalled until activation.
       await reloaded.bringToFront();
       await reloaded.reload();
       await reloaded.getByRole('button', { name: 'Full thread JSON' }).click();
-      await expect.poll(() => browserThread(reloaded)).toEqual(api);
-      const reload = await browserThread(reloaded);
+      const reload = await matchedThread(reloaded, api);
       const after = await snapshot();
       observations.push({
         step,

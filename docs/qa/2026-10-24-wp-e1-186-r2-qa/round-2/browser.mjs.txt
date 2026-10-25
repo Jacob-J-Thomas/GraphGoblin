@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection'), r=JSON.parse(await readFile('.tmp/qa186r2/run.json','utf8'));
+const oracle=await ctl('/oracle',{runId:r.runId,full:true,at:[100,129,130]});
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const checks=[],errors=[];
+const context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+await context.addInitScript(token=>localStorage.setItem('graphgoblin-api-key',token),c.keys.admin);
+const page=await context.newPage(); page.on('pageerror',e=>errors.push(String(e)));
+const requests=[];page.on('request',req=>{if(req.url().includes('/events'))requests.push({url:req.url(),sse:req.headers().accept==='text/event-stream'});});
+const timeline=page.getByRole('list',{name:'Timeline',exact:true});
+const cache=()=>page.evaluate(id=>{const raw=sessionStorage.getItem('graphgoblin-run-events-v4');const state=JSON.parse(raw??'{}').state?.runs?.[id];return {rawBytes:raw?.length*2,log:state};},r.runId);
+const wait=async(fn,msg,ms=15000)=>{const end=Date.now()+ms;while(Date.now()<end){if(await fn())return;await new Promise(x=>setTimeout(x,100));}throw Error(msg);};
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e),stack:e.stack});}await writeFile(out+'/browser-results.json',JSON.stringify({checks,errors,requests},null,2));}
+await page.goto(c.url+'/app/runs/'+r.runId);
+await timeline.waitFor();
+await wait(async()=> (await cache()).log?.lastSeq===r.total,'history not loaded');
+await writeFile(out+'/initial-aria.txt',await page.locator('body').ariaSnapshot());
+await check('long real gateway history bounded persisted window',async()=>{const x=await cache();assert.ok(x.log.events.length+x.log.uncached.length<=512);assert.ok(x.log.bytes<=1048576);assert.equal(x.log.lastSeq,r.total);assert.equal(await timeline.getByRole('listitem').count(),80);return {rows:x.log.events.length+x.log.uncached.length,bytes:x.log.bytes,persistedUTF16Bytes:x.rawBytes,first:x.log.events[0].seq,last:x.log.events.at(-1).seq};});
+await check('projection evidence survives evicted latest exit/gate/finish',async()=>{assert.ok((await cache()).log.events[0].seq>oracle.observation.exit.seq);await page.getByText('Done: Exited: success',{exact:true}).waitFor();assert.ok(await page.getByText(/Last gate decision/).isVisible());return {recordStatus:oracle.record.status,observation:oracle.observation,exitText:await page.getByText('Done: Exited: success',{exact:true}).innerText()};});
+await check('older/newer via cursor at retained boundary, exact ordered membership',async()=>{
+ const boundaries=[]; for(let i=0;i<3;i++){await page.getByRole('button',{name:'Load older',exact:true}).click();await wait(async()=>!(await page.getByRole('button',{name:'Go to event',exact:true}).isDisabled()),'older pending');const x=(await cache()).log;const rows=[...x.events,...x.uncached].sort((a,b)=>a.seq-b.seq);assert.equal(new Set(rows.map(e=>e.seq)).size,rows.length);for(let j=1;j<rows.length;j++)assert.equal(rows[j].seq,rows[j-1].seq+1);assert.deepEqual(x.events,oracle.events.filter(e=>e.seq>=rows[0].seq&&e.seq<=rows.at(-1).seq));boundaries.push({first:rows[0].seq,last:rows.at(-1).seq});}
+ for(let i=0;i<3;i++){await page.getByRole('button',{name:'Load newer',exact:true}).click();await wait(async()=>!(await page.getByRole('button',{name:'Go to event',exact:true}).isDisabled()),'newer pending');}
+ assert.ok(requests.some(x=>x.url.includes('cursor=')));return {boundaries,cursorRequests:requests.filter(x=>x.url.includes('cursor=')).length};
+});
+async function seek(n){await page.getByRole('spinbutton',{name:'Event sequence'}).fill(String(n));await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByRole('heading',{name:'Thread at event '+n,exact:true}).waitFor();}
+async function shownThread(){const more=page.getByRole('button',{name:'Show all of Full thread JSON',exact:true});if(await more.isVisible())await more.click();return JSON.parse(await page.getByTestId('thread-json').innerText());}
+await check('seek evicted event, exact thread vars and counters',async()=>{await seek(100);await page.getByRole('button',{name:'Full thread JSON',exact:true}).click();await wait(async()=>{try{assert.deepEqual(await shownThread(),oracle.threads[100]);return true;}catch{return false;}},'thread mismatch');return {seq:100,vars:oracle.threads[100].vars,counters:oracle.threads[100].counters};});
+await check('old thread remains visible with Reading note until new selected thread arrives',async()=>{
+ let release;const held=new Promise(x=>release=x);let intercepted=false;
+ await page.route('**/runs/'+r.runId+'/thread?at=129',async route=>{intercepted=true;await held;await route.continue();});
+ await page.getByRole('spinbutton',{name:'Event sequence'}).fill('129');await page.getByRole('button',{name:'Go to event',exact:true}).click();
+ try{await wait(()=>intercepted,'thread not requested');await page.getByText('Reading the thread at event 129',{exact:false}).waitFor();assert.ok(await page.getByRole('heading',{name:'Thread at event 100',exact:true}).isVisible());assert.deepEqual(await shownThread(),oracle.threads[100]);await page.screenshot({path:out+'/reading-note.png'});}finally{release();}
+ await page.getByRole('heading',{name:'Thread at event 129',exact:true}).waitFor();await wait(async()=>{try{assert.deepEqual(await shownThread(),oracle.threads[129]);return true;}catch{return false;}},'new thread mismatch');await page.unroute('**/runs/'+r.runId+'/thread?at=129');return {heldSeq:100,requestedSeq:129,retainedThreadExact:true};
+});
+await check('reload restores frozen window and resumes at independent acknowledged cursor',async()=>{
+ const before=await cache();const requestCount=requests.length;await page.reload();await timeline.waitFor();await wait(()=>requests.slice(requestCount).some(x=>x.sse),'no SSE reopen');
+ const after=await cache();assert.equal(after.log.mode,'history');assert.deepEqual(after.log.events,before.log.events);assert.equal(after.log.lastSeq,before.log.lastSeq);
+ const reopened=requests.slice(requestCount).find(x=>x.sse);assert.equal(new URL(reopened.url).searchParams.get('after'),String(before.log.lastSeq));return {mode:after.log.mode,first:after.log.events[0].seq,last:after.log.events.at(-1).seq,ack:after.log.lastSeq,reopen:reopened};
+});
+for(const width of [1440,390])for(const theme of ['dark','light'])await check('Timeline keyboard, selection, layout '+width+' '+theme,async()=>{
+ await page.setViewportSize({width,height:width===390?844:900});await page.evaluate(t=>{localStorage.setItem('graphgoblin-theme',t);document.documentElement.dataset.theme=t;},theme);
+ await page.getByRole('button',{name:'Follow live',exact:true}).click();await wait(async()=>(await cache()).log.mode==='live','not live');
+ const last=timeline.getByRole('button').last();await last.focus();await page.keyboard.press('Home');let seq=Number(await timeline.getByRole('button').first().getAttribute('data-seq'));assert.equal(Number(await page.locator(':focus').getAttribute('data-seq')),seq);
+ await page.keyboard.press('ArrowDown');assert.equal(Number(await page.locator(':focus').getAttribute('data-seq')),seq+1);
+ await page.keyboard.press('PageDown');assert.equal(Number(await page.locator(':focus').getAttribute('data-seq')),seq+81);
+ await page.keyboard.press('Enter');await page.getByRole('heading',{name:'Thread at event '+(seq+81),exact:true}).waitFor();
+ assert.equal(await page.locator(':focus').getAttribute('aria-current'),'true');
+ const aria=await timeline.ariaSnapshot();assert.ok(aria.includes('#'+(seq+81)));assert.ok(aria.includes('run.woken'));
+ await page.keyboard.press('End');const end=Number(await page.locator(':focus').getAttribute('data-seq'));assert.equal(end,r.total);
+ const rows=await timeline.getByRole('listitem').count();assert.ok(rows<=80);
+ const geometry=await page.evaluate(()=>({documentWidth:document.documentElement.scrollWidth,innerWidth,theme:document.documentElement.dataset.theme}));
+ assert.ok(geometry.documentWidth<=width);await timeline.scrollIntoViewIfNeeded();await page.screenshot({path:out+'/timeline-'+width+'-'+theme+'.png'});await writeFile(out+'/timeline-'+width+'-'+theme+'.aria.txt',aria);
+ return {width,theme,rows,selected:seq+81,end,geometry};
+});
+await check('Follow live reaches complete tail with no gap or duplicate',async()=>{await page.getByRole('button',{name:'Follow live',exact:true}).click();await wait(async()=>(await cache()).log.mode==='live','not live');const x=(await cache()).log;assert.deepEqual(x.events,oracle.events.slice(-512));assert.equal(Number(await timeline.getByRole('button').last().getAttribute('data-seq')),r.total);return {first:x.events[0].seq,last:x.events.at(-1).seq,count:x.events.length};});
+await context.close();await browser.close();
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass).map(x=>({name:x.name,error:x.error})),errors}));

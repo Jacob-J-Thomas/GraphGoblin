@@ -249,3 +249,19 @@ stores and reports, retrying native handle release. The `gg-publish-*` fixtures
 use separate real SQLite connections to arrange draft/publish interleavings,
 then close both clients and best-effort remove their temporary database directory.
 No owner process, store, or port is used.
+
+## Browser history retention measurements (#186 round 2, 2026-10-24)
+
+The same aged browser workload (`--passes=1000 --aged=2000 --profile=inspector --browser-ms=5000`) was observed before and after the browser changes with Node 22 and Edge.
+
+| Measurement                                   |                Before |                After |
+| --------------------------------------------- | --------------------: | -------------------: |
+| Inspector heap first / last / peak (MiB)      | 8.05 / 69.00 / 136.38 | 8.20 / 22.18 / 36.94 |
+| Persisted cache peak (estimated UTF-16 bytes) |             3,420,384 |              384,288 |
+| Timeline mounted rows, peak                   |                 4,586 |                   80 |
+| Timeline descendant DOM nodes, peak           |                22,930 |                  400 |
+| First rows observed (ms)                      |                2334.8 |               1246.8 |
+| Loaded-history readiness (ms)                 |                2422.1 |               1406.2 |
+| Pre-navigation target sequence                |                  3744 |                 3724 |
+
+The host was shared: measured busy fraction 81.1% before and 75.4% after. These are workload observations, not a quiet-host causal latency result or SLA. Heap is sampled CDP JS heap without forced per-sample GC; first-row timing is an observation upper bound. The final candidate kept executing, reached the pre-navigation cursor in its rendered tail, and reported no browser errors. The browser retains at most 512 rows / 1 MiB estimated row JSON per run, and mounts at most 80 Timeline rows. Full values and server history remain complete. Raw samples, exact commands, projection sources and capture hashes are in [the round-2 evidence](qa/2026-10-24-wp-e1-186-r2/README.md).

@@ -1,0 +1,35 @@
+import assert from'node:assert/strict';
+import{writeFile,readFile}from'node:fs/promises';
+import{chromium}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+import{definition}from'../../tooling/perf/common.mjs';
+import{CURRENT_DEFINITION_FORMAT}from'../../packages/contracts/dist/index.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa',checks=[];
+const ctl=async(path,b={})=>(await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)})).json();
+const c=await ctl('/connection'),headers={authorization:'Bearer '+c.keys.admin,'content-type':'application/json'};
+const post=async(path,b)=>{const r=await fetch(c.url+path,{method:'POST',headers,body:JSON.stringify(b)});if(!r.ok)throw Error(await r.text());return r.json();};
+const until=async(fn,msg)=>{for(let i=0;i<300;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error(msg);};
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block'});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,2500)});}await writeFile(out+'/projection-complete-results.json',JSON.stringify(checks,null,2));}
+await check('evicted durable failure retains exact code, message, status and thread',async()=>{
+ const run=await ctl('/start',{passes:1,delay:0,items:1,fail:true});await ctl('/idle');await ctl('/append',{runId:run.id,count:700});const all=await ctl('/oracle',{runId:run.id,full:true});
+ assert.equal(all.record.status,'failed');const failure=all.record.failure;assert.ok(failure);
+ const page=await context.newPage();await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();await until(async()=>Number(await list.getByRole('button').last().getAttribute('data-seq'))===all.last,'not tail');
+ await page.getByText('Failed: '+failure.code,{exact:true}).waitFor();assert.ok((await page.locator('body').innerText()).includes(failure.message));
+ const log=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id],run.id);assert.ok(log.events[0].seq>all.observation.lifecycle.seq);
+ await page.screenshot({path:out+'/failure-verified.png'});await writeFile(out+'/failure-verified.aria.txt',await page.locator('body').ariaSnapshot());await page.close();
+ return {runId:run.id,total:all.total,retainedFirst:log.events[0].seq,failure,lifecycle:all.observation.lifecycle};
+});
+await check('evicted webhook delivery, result and finish agree with full server history',async()=>{
+ const def=definition(CURRENT_DEFINITION_FORMAT,{passes:3,inference:true,contextBytes:0});def.name='QA delivery '+Date.now();const done=def.nodes.find(n=>n.kind==='exit');done.config.returns='outputs.work.value';done.config.destinations=[{kind:'webhook',url:'http://127.0.0.1:6154/return'}];
+ const {loop}=await post('/loops',{definition:def});await post('/loops/'+loop.id+'/publish');const {run}=await post('/loops/'+loop.id+'/runs',{});
+ await ctl('/idle');await until(async()=>(await ctl('/oracle',{runId:run.id})).record.deliveries?.[0]?.status==='delivered','not delivered');
+ await ctl('/append',{runId:run.id,count:700});const all=await ctl('/oracle',{runId:run.id,full:true});const delivered=all.record.deliveries[0];assert.equal(delivered.status,'delivered');assert.equal(all.record.result,all.observation.finished.result);
+ const receiver=JSON.parse(await readFile(out+'/webhook-receiver.json','utf8'));assert.ok(receiver.length);
+ const page=await context.newPage();await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();await until(async()=>Number(await list.getByRole('button').last().getAttribute('data-seq'))===all.last,'not tail');
+ assert.equal(JSON.parse(await page.getByTestId('run-result').innerText()),all.record.result);await page.getByText('Delivered after 1 attempt',{exact:true}).waitFor();assert.ok((await page.locator('body').innerText()).includes(delivered.id));await page.getByText('Exited: success',{exact:true}).waitFor();
+ const log=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id],run.id);assert.ok(log.events[0].seq>all.observation.finished.seq);
+ await page.screenshot({path:out+'/delivery-verified.png'});await writeFile(out+'/delivery-verified.aria.txt',await page.locator('body').ariaSnapshot());await page.close();
+ return {runId:run.id,total:all.total,retainedFirst:log.events[0].seq,result:all.record.result,delivery:delivered,observation:all.observation,receiverRequests:receiver.length};
+});
+await context.close();await browser.close();console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass)}));

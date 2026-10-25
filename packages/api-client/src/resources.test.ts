@@ -135,6 +135,32 @@ it('forwards run observation cancellation to GET without cancelling the run', as
   expect(requests[1]!.signal.aborted).toBe(false);
 });
 
+it('carries opaque browser cursors, exact thread boundaries and cancellation to run reads', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://graphgoblin.test',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(
+        Response.json({ items: [], olderCursor: 'opaque', newerCursor: null }),
+      );
+    },
+  });
+  const controller = new AbortController();
+  await runs.events(client, 'run', { cursor: 'opaque', limit: 128 }, { signal: controller.signal });
+  await runs.events(client, 'run', { around: 100 });
+  await runs.thread(client, 'run', { at: 99 }, { signal: controller.signal });
+  await runs.observation(client, 'run', { signal: controller.signal });
+  expect(new URL(requests[0]!.url).searchParams.get('cursor')).toBe('opaque');
+  expect(new URL(requests[1]!.url).searchParams.get('around')).toBe('100');
+  expect(new URL(requests[2]!.url).searchParams.get('at')).toBe('99');
+  expect(new URL(requests[3]!.url).pathname).toBe('/runs/run/observation');
+  controller.abort();
+  expect(requests[0]!.signal.aborted).toBe(true);
+  expect(requests[2]!.signal.aborted).toBe(true);
+  expect(requests[3]!.signal.aborted).toBe(true);
+});
+
 it('sends an explicit missing-session choice through the generated client endpoint', async () => {
   const requests: Request[] = [];
   const client = createGraphGoblinClient({

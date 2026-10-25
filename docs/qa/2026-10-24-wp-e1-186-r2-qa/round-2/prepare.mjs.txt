@@ -1,0 +1,24 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+const base='docs/qa/2026-10-24-wp-e1-186-r2-qa',out=base+'/round-2';
+await mkdir(out,{recursive:true});
+for(const name of ['server','api','browser','recovery','vars-progress','live-synchronized','projection-complete','receiver']){
+ let s=await readFile(base+'/'+name+'.mjs.txt','utf8');
+ s=s.replaceAll(base+'/',out+'/').replaceAll("const out='"+base+"'","const out='"+out+"'").replaceAll('.tmp/qa186/','.tmp/qa186r2/').replaceAll('gg-qa-e1-186r2-','gg-qa-e1-186r2-2-');
+ if(name==='browser'||name==='projection-complete')s=s.replaceAll("name:'Exited: success'","name:'Done: Exited: success'").replaceAll("getByText('Exited: success'","getByText('Done: Exited: success'");
+ if(name==='server'){
+  s=s.replace("const def=definition(CURRENT_DEFINITION_FORMAT", "const def=b.definition??definition(CURRENT_DEFINITION_FORMAT");
+  s=s.replace('fake.script(Array.from(', 'fake.script(b.script??Array.from(');
+  s=s.replace(" if(path==='/idle')", ` if(path==='/seed'){
+   const source=await container.repos.runs.get(b.source),seed=await container.repos.runs.getInitialThread(b.source);
+   const id=source.id.slice(0,18)+String(++seedCounter).padStart(8,'0');
+   await container.repos.runs.create({...source,id,status:b.status??'succeeded',lastEventSeq:0},seed);
+   await container.repos.events.append(id,b.drafts??Array.from({length:b.count},()=>({type:'run.woken',nodeId:'work',reason:'manual'})));
+   return container.repos.runs.get(id);
+ }
+ if(path==='/update')return container.repos.runs.update(b.runId,b.changes);
+ if(path==='/idle')`);
+  s=s.replace('async function control(path,b)', 'let seedCounter=0;\nasync function control(path,b)');
+ }
+ await writeFile('.tmp/qa186r2/'+name+'.mjs',s);await writeFile(out+'/'+name+'.mjs.txt',s);
+}
+await writeFile(out+'/prepare.mjs.txt',await readFile(import.meta.filename,'utf8'));

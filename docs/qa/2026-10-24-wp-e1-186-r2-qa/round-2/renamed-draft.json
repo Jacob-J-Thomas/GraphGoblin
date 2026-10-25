@@ -1,0 +1,175 @@
+{
+  "draft": {
+    "id": "01M5S3MKAMP9V900M24X7BF68P",
+    "loopId": "01M5S2W0197BR1FD16K29QZZDM",
+    "version": 2,
+    "status": "draft",
+    "definition": {
+      "schemaVersion": 4,
+      "name": "Renamed draft for independent QA",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10000,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "DRAFT RENAMED start",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "work",
+          "label": "DRAFT RENAMED work",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "inference",
+          "config": {
+            "harness": "codex",
+            "session": {
+              "policy": "fresh"
+            },
+            "prompt": {
+              "template": "controlled measurement"
+            },
+            "input": [],
+            "harnessOptions": {
+              "sandbox": "workspace-write",
+              "approval": "never"
+            },
+            "output": {
+              "captureTranscript": "none",
+              "toMessages": "final",
+              "transforms": []
+            }
+          }
+        },
+        {
+          "id": "gate",
+          "label": "DRAFT RENAMED gate",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "decision",
+          "config": {
+            "kind": "expression",
+            "jsonata": "\"again\"",
+            "maxPasses": 4,
+            "routes": [
+              {
+                "id": "again",
+                "label": "DRAFT RENAMED route",
+                "repeat": true
+              },
+              {
+                "id": "stop",
+                "label": "Stop"
+              }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "label": "DRAFT RENAMED done",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "a",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "work",
+            "port": "in"
+          }
+        },
+        {
+          "id": "b",
+          "from": {
+            "node": "work",
+            "port": "out"
+          },
+          "to": {
+            "node": "gate",
+            "port": "in"
+          }
+        },
+        {
+          "id": "c",
+          "from": {
+            "node": "gate",
+            "port": "again"
+          },
+          "to": {
+            "node": "work",
+            "port": "in"
+          }
+        },
+        {
+          "id": "d",
+          "from": {
+            "node": "gate",
+            "port": "stop"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e",
+          "from": {
+            "node": "gate",
+            "port": "limit-reached"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ]
+    },
+    "createdAt": "2026-10-25T08:43:05.940Z"
+  },
+  "draftToken": "43f56a6fd6ef82f6",
+  "issues": []
+}

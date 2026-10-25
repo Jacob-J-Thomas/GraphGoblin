@@ -1,0 +1,8 @@
+import {spawn}from'node:child_process';
+import {readFile,writeFile}from'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const c=await(await fetch('http://127.0.0.1:6151/connection',{method:'POST',body:'{}'})).json();
+const command='pnpm.cmd --filter @graphgoblin/web exec playwright test --config=../../.tmp/qa186r2/playwright.config.mjs';
+let log='';const p=spawn(process.env.ComSpec,['/d','/s','/c',command],{windowsHide:true,env:{...process.env,GG_E2E_BASE_URL:c.url,GG_QA_API_KEY:c.keys.admin,GG_E2E_BROWSER_CHANNEL:'msedge'}});p.stdout.on('data',b=>log+=b.toString());p.stderr.on('data',b=>log+=b.toString());const code=await new Promise(r=>p.on('close',r));
+await writeFile(out+'/bounded-spec-command.log.txt',('Command: '+command+'\nGateway: '+c.url+'\nGG_E2E_BROWSER_CHANNEL=msedge\n'+log+'\nExit: '+code).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(c.keys.admin,'<redacted disposable key>'));
+await writeFile(out+'/playwright.config.mjs.txt',await readFile('.tmp/qa186r2/playwright.config.mjs','utf8'));console.log(JSON.stringify({code,summary:log.slice(-4500)}));

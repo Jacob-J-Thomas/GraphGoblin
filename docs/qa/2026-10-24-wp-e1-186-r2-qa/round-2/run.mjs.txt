@@ -1,0 +1,13 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {writeFile,readFile} from 'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+for(const name of process.argv.slice(2)){
+ let log='';const started=new Date().toISOString();
+ const p=spawn(process.execPath,['.tmp/qa186r2/'+name+'.mjs'],{env:process.env,windowsHide:true});
+ p.stdout.on('data',b=>log+=b.toString());p.stderr.on('data',b=>log+=b.toString());
+ const code=await new Promise(r=>{p.on('error',e=>{log+=String(e);r(-1)});p.on('close',r)});
+ await writeFile(out+'/'+name+'.log.txt',('Node: '+process.version+'\nCommand: node .tmp/qa186r2/'+name+'.mjs\nStarted: '+started+'\n'+log+'\nExit: '+code).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+ await writeFile(out+'/'+name+'.mjs.txt',await readFile('.tmp/qa186r2/'+name+'.mjs','utf8'));
+ console.log(JSON.stringify({name,code,summary:log.slice(-3000)}));
+}
+await writeFile(out+'/run.mjs.txt',await readFile(import.meta.filename,'utf8'));

@@ -1,0 +1,128 @@
+{
+  "runId": "01M5RVRSG8PWB6B0PAWH9TYCZ2",
+  "steps": [
+    {
+      "query": "around=0&limit=1",
+      "response": {
+        "status": 200,
+        "body": {
+          "items": [],
+          "nextAfter": 1,
+          "hasMore": true,
+          "olderCursor": null,
+          "newerCursor": "eyJydW5JZCI6IjAxTTVSVlJTRzhQV0I2QjBQQVdIOVRZQ1oyIiwic2VxIjoxLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+        }
+      }
+    },
+    {
+      "query": "cursor=<newerCursor>&limit=1",
+      "response": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "runId": "01M5RVRSG8PWB6B0PAWH9TYCZ2",
+              "seq": 2,
+              "ts": "2026-10-25T06:25:34.762Z",
+              "type": "run.started",
+              "attempt": 1
+            }
+          ],
+          "nextAfter": 2,
+          "hasMore": true,
+          "olderCursor": "eyJydW5JZCI6IjAxTTVSVlJTRzhQV0I2QjBQQVdIOVRZQ1oyIiwic2VxIjoyLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+          "newerCursor": "eyJydW5JZCI6IjAxTTVSVlJTRzhQV0I2QjBQQVdIOVRZQ1oyIiwic2VxIjoyLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+        }
+      }
+    },
+    {
+      "query": "after=0&limit=1",
+      "response": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "runId": "01M5RVRSG8PWB6B0PAWH9TYCZ2",
+              "seq": 1,
+              "ts": "2026-10-25T06:25:34.728Z",
+              "type": "run.queued",
+              "versionId": "01M5RVRSEZ805NXAZ7PVAV7FXH",
+              "pinned": {
+                "source": "published",
+                "version": 1,
+                "name": "Independent QA 1792909534620",
+                "label": "Independent QA 1792909534620 v1",
+                "defaults": {
+                  "owner": {
+                    "byHarness": {}
+                  },
+                  "process": {
+                    "byHarness": {
+                      "codex": {
+                        "model": "gpt-6-luna",
+                        "effort": "low"
+                      }
+                    }
+                  }
+                },
+                "limits": {
+                  "maxNodeVisits": 10000,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null
+                },
+                "classifiers": {}
+              },
+              "initialThread": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5RVRSG8PWB6B0PAWH9TYCZ2",
+                  "loopId": "01M5RVRSEZ805NXAZ7PVAV7FXG",
+                  "versionId": "01M5RVRSEZ805NXAZ7PVAV7FXH",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5RVRSG8PWB6B0PAWH9TYCZ3",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "api-key",
+                    "id": "01M5RVNXE2D5T07G3TSF7A28B2"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-25T06:25:34.728Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {},
+                "gates": {
+                  "gate": {
+                    "passes": 1
+                  }
+                },
+                "counters": {
+                  "nodeVisits": {},
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              }
+            }
+          ],
+          "nextAfter": 1,
+          "hasMore": true
+        }
+      }
+    }
+  ],
+  "expected": "The newer cursor from the empty before-first page returns event 1.",
+  "actualFirst": 2,
+  "referenceFirst": 1,
+  "pass": false
+}

@@ -2,9 +2,6 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { sampleThread } from '@graphgoblin/contracts/testing';
-import { event, queuedFields } from '../../__fixtures__/fake-api.js';
-import { ThreadViewer } from '../../runs/inspector/ThreadViewer.js';
 import { BoundedValue, VALUE_PREVIEW_CHARS } from './bounded-value.js';
 
 // React settles a deferred value within one `act`, which hides the window the tests below are
@@ -115,56 +112,5 @@ describe('BoundedValue while a preview is pending', () => {
     expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
     expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
     expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
-  });
-});
-
-describe('ThreadViewer while a selection is being reconstructed', () => {
-  afterEach(() => {
-    gate = undefined;
-  });
-
-  it('keeps the previous thread mounted, with its own identifiers and a note, until the selected one is rebuilt', async () => {
-    // The thread's variables hold a gated object: the preview of the variables at event 3 (a new
-    // object, since the patch copies along its path) reads it in the deferred render.
-    const thread = sampleThread({ vars: { topic: 'hello', wide: gated([1, 2, 3]) } });
-    const events = [
-      event(thread.run.id, 1, 'run.queued', queuedFields({ initialThread: thread })),
-      event(thread.run.id, 2, 'node.started', {
-        nodeId: 'a',
-        kind: 'mutate',
-        attempt: 1,
-        configHash: 'h',
-      }),
-      event(thread.run.id, 3, 'node.finished', {
-        nodeId: 'a',
-        patch: [{ op: 'add', path: '/vars/count', value: 1 }],
-        durationMs: 1,
-      }),
-    ];
-    const { rerender } = render(
-      <Host>
-        <ThreadViewer current={thread} events={events} seq={1} />
-      </Host>,
-    );
-    expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
-    closeGate();
-    rerender(
-      <Host>
-        <ThreadViewer current={thread} events={events} seq={3} />
-      </Host>,
-    );
-    // The previous thread's body stays, under its own event's title, so open disclosures, the
-    // keyboard and the download names keep their place; the note says what is coming.
-    expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
-    expect(screen.queryByText('Thread at event 3')).not.toBeInTheDocument();
-    expect(screen.getByText('Reconstructing the thread at event 3…')).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
-    expect(screen.queryByText('Patch from a')).not.toBeInTheDocument();
-    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
-    await openGate();
-    expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
-    expect(screen.queryByText(/Reconstructing the thread/)).not.toBeInTheDocument();
-    expect(screen.getByText('Patch from a')).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
   });
 });

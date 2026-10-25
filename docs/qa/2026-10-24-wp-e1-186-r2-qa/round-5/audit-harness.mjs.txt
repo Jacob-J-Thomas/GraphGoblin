@@ -1,0 +1,30 @@
+import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import ts from 'typescript';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5';
+const clean=(s)=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+function assertions(source) {
+  const ast=ts.createSourceFile('spec.ts',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const values=[];
+  function visit(node) {
+    if(ts.isCallExpression(node)) {
+      const fn=node.expression;
+      if((ts.isIdentifier(fn)&&fn.text==='expect') || (ts.isPropertyAccessExpression(fn)&&/^to[A-Z]/.test(fn.name.text))) values.push(node.getText(ast));
+    }
+    ts.forEachChild(node,visit);
+  }
+  visit(ast);return values;
+}
+const records=[];let diff='';
+for(const name of (await readdir('apps/web/e2e')).filter((n)=>n.endsWith('.spec.ts')).sort()) {
+  const original='apps/web/e2e/'+name, copy='apps/web/.tmp/qa5/e2e/'+name;
+  const a=await readFile(original,'utf8'),b=await readFile(copy,'utf8');
+  const expected=assertions(a),actual=assertions(b);
+  records.push({spec:name,assertions:expected.length,unchanged:JSON.stringify(expected)===JSON.stringify(actual),originalSha256:createHash('sha256').update(a).digest('hex'),copySha256:createHash('sha256').update(b).digest('hex')});
+  try{diff+=execFileSync('git',['diff','--no-index','--',original,copy],{encoding:'utf8'});}catch(e){if(e.status===1)diff+=e.stdout;else throw e;}
+}
+await writeFile(out+'/harness-assertion-audit.json',JSON.stringify({specCount:records.length,totalAssertionExpressions:records.reduce((n,r)=>n+r.assertions,0),allUnchanged:records.every((r)=>r.unchanged),records},null,2));
+await writeFile(out+'/harness-adaptations.diff.txt',clean(diff));
+console.log(JSON.stringify({specs:records.length,allAssertionsUnchanged:records.every((r)=>r.unchanged),differences:records.filter((r)=>!r.unchanged)}));

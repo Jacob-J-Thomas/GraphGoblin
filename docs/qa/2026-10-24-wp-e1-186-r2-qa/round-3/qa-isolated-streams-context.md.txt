@@ -1,0 +1,695 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: qa.spec.ts >> streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event
+- Location: .tmp\qa3\specs\qa.spec.ts:94:1
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText(/Timeline \(1212 events, complete\)/)
+Expected: visible
+Timeout: 30000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" getByText(/Timeline \(1212 events, complete\)/) with timeout 30000ms
+  - waiting for getByText(/Timeline \(1212 events, complete\)/)
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - heading "Run 01M3Y7RKG0MTRXXKAS29AJ1F2M" [level=1]
+  - text: succeeded
+  - link "loop":
+    - /url: /app/loops/01M3Y7RKG0MTRXXKAS29AJ1F2J/edit
+  - link "child runs":
+    - /url: /app/runs?parent=01M3Y7RKG0MTRXXKAS29AJ1F2M
+- region "Exit evaluation":
+  - heading "Exit evaluation" [level=2]
+  - paragraph: "Done (done): Exited: success"
+  - paragraph: "No value was returned: Returns is None, so no destination received anything (caller from the exit). This is the exit’s configuration, not a failure."
+- region "Execution limits":
+  - heading "Execution limits" [level=2]
+  - paragraph: "Maximum node visits: 10. Run deadline: none."
+  - paragraph: "Structured completion: Unlimited."
+  - paragraph: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+- region "Execution context":
+  - heading "Execution context" [level=2]
+  - paragraph:
+    - text: qa many v1 · version ID
+    - code: 01M3Y7RKG0MTRXXKAS29AJ1F2K
+  - button "Exact run record"
+  - button "Pinned definition JSON"
+- region "Timeline (1214 events, complete)":
+  - heading "Timeline (1214 events, complete)" [level=2]
+  - button "Load older"
+  - button "Previous rows"
+  - button "Next rows" [disabled]
+  - button "Load newer" [disabled]
+  - button "Follow live" [disabled]
+  - text: Showing events 1135–1214 of the retained window. Event sequence
+  - spinbutton "Event sequence"
+  - button "Go to event"
+  - list "Timeline":
+    - listitem:
+      - button "#1135 node.progress Ask (ask)":
+        - text: "#1135"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1136 node.progress Ask (ask)":
+        - text: "#1136"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1137 node.progress Ask (ask)":
+        - text: "#1137"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1138 node.progress Ask (ask)":
+        - text: "#1138"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1139 node.progress Ask (ask)":
+        - text: "#1139"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1140 node.progress Ask (ask)":
+        - text: "#1140"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1141 node.progress Ask (ask)":
+        - text: "#1141"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1142 node.progress Ask (ask)":
+        - text: "#1142"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1143 node.progress Ask (ask)":
+        - text: "#1143"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1144 node.progress Ask (ask)":
+        - text: "#1144"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1145 node.progress Ask (ask)":
+        - text: "#1145"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1146 node.progress Ask (ask)":
+        - text: "#1146"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1147 node.progress Ask (ask)":
+        - text: "#1147"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1148 node.progress Ask (ask)":
+        - text: "#1148"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1149 node.progress Ask (ask)":
+        - text: "#1149"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1150 node.progress Ask (ask)":
+        - text: "#1150"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1151 node.progress Ask (ask)":
+        - text: "#1151"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1152 node.progress Ask (ask)":
+        - text: "#1152"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1153 node.progress Ask (ask)":
+        - text: "#1153"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1154 node.progress Ask (ask)":
+        - text: "#1154"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1155 node.progress Ask (ask)":
+        - text: "#1155"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1156 node.progress Ask (ask)":
+        - text: "#1156"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1157 node.progress Ask (ask)":
+        - text: "#1157"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1158 node.progress Ask (ask)":
+        - text: "#1158"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1159 node.progress Ask (ask)":
+        - text: "#1159"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1160 node.progress Ask (ask)":
+        - text: "#1160"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1161 node.progress Ask (ask)":
+        - text: "#1161"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1162 node.progress Ask (ask)":
+        - text: "#1162"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1163 node.progress Ask (ask)":
+        - text: "#1163"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1164 node.progress Ask (ask)":
+        - text: "#1164"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1165 node.progress Ask (ask)":
+        - text: "#1165"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1166 node.progress Ask (ask)":
+        - text: "#1166"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1167 node.progress Ask (ask)":
+        - text: "#1167"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1168 node.progress Ask (ask)":
+        - text: "#1168"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1169 node.progress Ask (ask)":
+        - text: "#1169"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1170 node.progress Ask (ask)":
+        - text: "#1170"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1171 node.progress Ask (ask)":
+        - text: "#1171"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1172 node.progress Ask (ask)":
+        - text: "#1172"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1173 node.progress Ask (ask)":
+        - text: "#1173"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1174 node.progress Ask (ask)":
+        - text: "#1174"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1175 node.progress Ask (ask)":
+        - text: "#1175"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1176 node.progress Ask (ask)":
+        - text: "#1176"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1177 node.progress Ask (ask)":
+        - text: "#1177"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1178 node.progress Ask (ask)":
+        - text: "#1178"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1179 node.progress Ask (ask)":
+        - text: "#1179"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1180 node.progress Ask (ask)":
+        - text: "#1180"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1181 node.progress Ask (ask)":
+        - text: "#1181"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1182 node.progress Ask (ask)":
+        - text: "#1182"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1183 node.progress Ask (ask)":
+        - text: "#1183"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1184 node.progress Ask (ask)":
+        - text: "#1184"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1185 node.progress Ask (ask)":
+        - text: "#1185"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1186 node.progress Ask (ask)":
+        - text: "#1186"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1187 node.progress Ask (ask)":
+        - text: "#1187"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1188 node.progress Ask (ask)":
+        - text: "#1188"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1189 node.progress Ask (ask)":
+        - text: "#1189"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1190 node.progress Ask (ask)":
+        - text: "#1190"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1191 node.progress Ask (ask)":
+        - text: "#1191"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1192 node.progress Ask (ask)":
+        - text: "#1192"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1193 node.progress Ask (ask)":
+        - text: "#1193"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1194 node.progress Ask (ask)":
+        - text: "#1194"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1195 node.progress Ask (ask)":
+        - text: "#1195"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1196 node.progress Ask (ask)":
+        - text: "#1196"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1197 node.progress Ask (ask)":
+        - text: "#1197"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1198 node.progress Ask (ask)":
+        - text: "#1198"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1199 node.progress Ask (ask)":
+        - text: "#1199"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1200 node.progress Ask (ask)":
+        - text: "#1200"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1201 node.progress Ask (ask)":
+        - text: "#1201"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1202 node.progress Ask (ask)":
+        - text: "#1202"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1203 node.progress Ask (ask)":
+        - text: "#1203"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1204 node.progress Ask (ask)":
+        - text: "#1204"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1205 node.progress Ask (ask)":
+        - text: "#1205"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1206 node.progress Ask (ask)":
+        - text: "#1206"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1207 node.progress Ask (ask)":
+        - text: "#1207"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1208 node.progress Ask (ask)":
+        - text: "#1208"
+        - code: node.progress
+        - text: Ask (ask)
+    - listitem:
+      - button "#1209 harness.usage Ask (ask)":
+        - text: "#1209"
+        - code: harness.usage
+        - text: Ask (ask)
+    - listitem:
+      - button "#1210 node.finished Ask (ask) → out, 5 changes, 1533 ms":
+        - text: "#1210"
+        - code: node.finished
+        - text: Ask (ask) → out, 5 changes, 1533 ms
+    - listitem:
+      - button "#1211 node.started Done (done) (exit) attempt 1":
+        - text: "#1211"
+        - code: node.started
+        - text: Done (done) (exit) attempt 1
+    - listitem:
+      - 'button "#1212 exit.evaluated Done (done): Exited: success"':
+        - text: "#1212"
+        - code: exit.evaluated
+        - text: "Done (done): Exited: success"
+    - listitem:
+      - button "#1213 node.finished Done (done), 0 changes, 1 ms":
+        - text: "#1213"
+        - code: node.finished
+        - text: Done (done), 0 changes, 1 ms
+    - listitem:
+      - button "#1214 run.finished succeeded (success)":
+        - text: "#1214"
+        - code: run.finished
+        - text: succeeded (success)
+- 'button "Exact recorded event #1214"'
+- region "Current thread":
+  - heading "Current thread" [level=2]
+  - heading "Messages (1)" [level=3]
+  - list "Messages":
+    - listitem:
+      - text: assistant
+      - code: Ask (ask)
+      - text: OK
+  - heading "Variables" [level=3]
+  - text: "{}"
+  - button "Full thread JSON"
+- paragraph: Activity below covers the retained history window. Earlier activity is available through Load older.
+- button "Node progress (2 nodes)"
+```
+
+# Test source
+
+```ts
+  9   |   approvalLoop,
+  10  |   closeNode,
+  11  |   control,
+  12  |   expect,
+  13  |   openNode,
+  14  |   publishLoop,
+  15  |   showLoopPanel,
+  16  |   test,
+  17  | } from './../../../e2e/fixtures.js';
+  18  | 
+  19  | const start = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
+  20  | const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
+  21  | function chain(name: string, middle: Record<string, unknown> & { id: string }) {
+  22  |   return {
+  23  |     schemaVersion: CURRENT_DEFINITION_FORMAT,
+  24  |     name,
+  25  |     nodes: [start, middle, done],
+  26  |     edges: [
+  27  |       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: middle.id } },
+  28  |       { id: 'e2', from: { node: middle.id, port: 'out' }, to: { node: 'done' } },
+  29  |     ],
+  30  |   };
+  31  | }
+  32  | const ask = (prompt: string) => ({
+  33  |   id: 'ask',
+  34  |   kind: 'inference',
+  35  |   label: 'Ask',
+  36  |   config: { prompt: { template: prompt } },
+  37  | });
+  38  | 
+  39  | async function startRun(request: APIRequestContext, loopId: string): Promise<string> {
+  40  |   const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  41  |   expect(res.status()).toBe(202);
+  42  |   return ((await res.json()) as { run: { id: string } }).run.id;
+  43  | }
+  44  | 
+  45  | async function timelineSeqs(page: Page): Promise<number[]> {
+  46  |   return page
+  47  |     .getByRole('list', { name: 'Timeline' })
+  48  |     .getByRole('button')
+  49  |     .evaluateAll((buttons) =>
+  50  |       buttons.map((b) => Number(/#(\d+)/.exec(b.textContent ?? '')?.[1] ?? NaN)),
+  51  |     );
+  52  | }
+  53  | 
+  54  | test('a subloop child run opens in the inspector and replays from its seeded thread', async ({
+  55  |   page,
+  56  |   request,
+  57  | }) => {
+  58  |   const errors: string[] = [];
+  59  |   page.on('pageerror', (e) => errors.push(e.message));
+  60  |   // Define this test's turn explicitly; the control server's harness is shared across specs.
+  61  |   await control(request, '/harness/script', {
+  62  |     turns: [{ matchPrompt: 'child turn', finalText: 'OK' }],
+  63  |   });
+  64  |   const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+  65  |   const parentId = await publishLoop(request, {
+  66  |     ...chain('qa parent', {
+  67  |       id: 'sub',
+  68  |       kind: 'subloop',
+  69  |       label: 'Sub',
+  70  |       config: { loopRef: { loopId: childId } },
+  71  |     }),
+  72  |   });
+  73  |   const parentRun = await startRun(request, parentId);
+  74  |   await expect
+  75  |     .poll(async () => {
+  76  |       const res = await request.get(`/runs?parent=${parentRun}`);
+  77  |       return ((await res.json()) as { items: unknown[] }).items.length;
+  78  |     })
+  79  |     .toBe(1);
+  80  |   const children = (await (await request.get(`/runs?parent=${parentRun}`)).json()) as {
+  81  |     items: { id: string }[];
+  82  |   };
+  83  |   await page.goto(`/app/runs/${children.items[0]!.id}`);
+  84  |   await expect(page.getByText(/events, complete/)).toBeVisible();
+  85  |   await expect(page.getByLabel('Messages')).toContainText('OK');
+  86  |   // The first event: the seeded thread, before any node ran.
+  87  |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').first().click();
+  88  |   await expect(page.getByText('Thread at event 1')).toBeVisible();
+  89  |   await expect(page.getByText('This screen failed to render')).toHaveCount(0);
+  90  |   await expect(page.getByText(/cannot be reconstructed/)).toHaveCount(0);
+  91  |   expect(errors).toEqual([]);
+  92  | });
+  93  | 
+  94  | test('streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event', async ({
+  95  |   page,
+  96  |   request,
+  97  | }) => {
+  98  |   await control(request, '/harness/script', {
+  99  |     turns: [{ matchPrompt: 'MANY ITEMS', items: 1200, delayMs: 1500 }],
+  100 |   });
+  101 |   const loopId = await publishLoop(request, chain('qa many', ask('MANY ITEMS')));
+  102 |   let runGets = 0;
+  103 |   page.on('request', (r) => {
+  104 |     if (/\/runs\/[0-9A-Z]{26}$/.test(new URL(r.url()).pathname)) runGets += 1;
+  105 |   });
+  106 |   const runId = await startRun(request, loopId);
+  107 |   const started = Date.now();
+  108 |   await page.goto(`/app/runs/${runId}`);
+> 109 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
+      |                                                                      ^ Error: expect(locator).toBeVisible() failed
+  110 |     timeout: 30_000,
+  111 |   });
+  112 |   const live = Date.now() - started;
+  113 |   // Twelve lifecycle/evidence facts include the persisted exit evaluation; all 1,200 items remain.
+  114 |   const timeline = page.getByRole('list', { name: 'Timeline' });
+  115 |   await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
+  116 |     1200,
+  117 |   );
+  118 |   await expect(timeline.getByRole('button', { name: /^#\d+ harness\.session ask$/ })).toHaveCount(
+  119 |     1,
+  120 |   );
+  121 |   await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
+  122 |   await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
+  123 |   const seqs = await timelineSeqs(page);
+  124 |   expect(seqs).toEqual(Array.from({ length: 1212 }, (_, i) => i + 1));
+  125 |   // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
+  126 |   // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
+  127 |   const liveRunGets = runGets;
+  128 |   expect(liveRunGets).toBeLessThanOrEqual(5 + Math.ceil(live / 100));
+  129 |   expect(liveRunGets).toBeLessThan(1200);
+  130 | 
+  131 |   // Opening the finished run fresh, then selecting an event deep in the log.
+  132 |   await page.evaluate(() => sessionStorage.clear());
+  133 |   const fresh = Date.now();
+  134 |   await page.reload();
+  135 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible();
+  136 |   const freshMs = Date.now() - fresh;
+  137 |   const click = Date.now();
+  138 |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
+  139 |   await expect(page.getByText('Thread at event 601')).toBeVisible();
+  140 |   const clickMs = Date.now() - click;
+  141 |   console.log(
+  142 |     `1,212-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
+  143 |   );
+  144 |   expect(freshMs).toBeLessThan(5_000);
+  145 |   expect(clickMs).toBeLessThan(2_000);
+  146 | });
+  147 | 
+  148 | test('failure reasons are typed and visible: harness failure and decider unavailable', async ({
+  149 |   page,
+  150 |   request,
+  151 | }) => {
+  152 |   await control(request, '/harness/script', {
+  153 |     turns: [{ matchPrompt: 'FAIL THIS', error: { code: 'TURN_FAILED', message: 'scripted' } }],
+  154 |   });
+  155 |   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+  156 |   await page.goto(`/app/runs/${await startRun(request, failing)}`);
+  157 |   await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+  158 | 
+  159 |   await control(request, '/deciders', { jev: true, codex: true });
+  160 |   try {
+  161 |     const decide = {
+  162 |       schemaVersion: CURRENT_DEFINITION_FORMAT,
+  163 |       name: 'qa decider',
+  164 |       nodes: [
+  165 |         start,
+  166 |         {
+  167 |           id: 'pick',
+  168 |           kind: 'decision',
+  169 |           label: 'Pick',
+  170 |           config: {
+  171 |             kind: 'llm',
+  172 |             harness: 'codex',
+  173 |             model: { mode: 'inherit' },
+  174 |             effort: { mode: 'inherit' },
+  175 |             instructions: 'which?',
+  176 |             routes: [
+  177 |               {
+  178 |                 id: 'a',
+  179 |                 label: 'A',
+  180 |               },
+  181 |               {
+  182 |                 id: 'b',
+  183 |                 label: 'B',
+  184 |               },
+  185 |             ],
+  186 |           },
+  187 |         },
+  188 |         done,
+  189 |       ],
+  190 |       edges: [
+  191 |         { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+  192 |         { id: 'e2', from: { node: 'pick', port: 'a' }, to: { node: 'done' } },
+  193 |         { id: 'e3', from: { node: 'pick', port: 'b' }, to: { node: 'done' } },
+  194 |       ],
+  195 |     };
+  196 |     const loopId = await publishLoop(request, decide);
+  197 |     // Publication admits a ready evaluator; losing it later is a typed runtime failure.
+  198 |     await control(request, '/deciders', { jev: true, codex: false });
+  199 |     await page.goto(`/app/runs/${await startRun(request, loopId)}`);
+  200 |     await expect(page.getByText('Failed: EVALUATION_UNAVAILABLE')).toBeVisible();
+  201 |   } finally {
+  202 |     await control(request, '/deciders', { jev: true, codex: true });
+  203 |   }
+  204 | });
+  205 | 
+  206 | test('the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees', async ({
+  207 |   page,
+  208 |   request,
+  209 | }) => {
+```

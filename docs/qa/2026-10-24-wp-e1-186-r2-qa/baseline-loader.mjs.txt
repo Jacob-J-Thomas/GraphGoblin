@@ -1,0 +1,18 @@
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {resolve as pathResolve,join} from 'node:path';
+const root=pathResolve('.tmp/qa186/baseline'),head=process.cwd();
+export async function resolve(spec,context,next){
+ if(spec.startsWith('@graphgoblin/')){
+  const parts=spec.split('/'),name=parts[1],sub=parts.length>2?'./'+parts.slice(2).join('/') : '.';
+  const base=join(root,name==='api'||name==='web'?'apps':'packages',name);
+  const pj=JSON.parse(await readFile(join(base,'package.json'),'utf8'));
+  const entry=pj.exports[sub];
+  return {url:pathToFileURL(join(base,entry.import??entry.default)).href,shortCircuit:true};
+ }
+ if(!spec.startsWith('.')&&!spec.startsWith('/')&&!spec.startsWith('file:')&&!spec.startsWith('node:')&&context.parentURL?.startsWith(pathToFileURL(root).href)){
+  const parent=fileURLToPath(context.parentURL).replace(root,head);
+  return next(spec,{...context,parentURL:pathToFileURL(parent).href});
+ }
+ return next(spec,context);
+}

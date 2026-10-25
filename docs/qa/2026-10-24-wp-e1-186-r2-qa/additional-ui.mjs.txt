@@ -1,0 +1,23 @@
+import assert from'node:assert/strict';
+import{readFile,writeFile}from'node:fs/promises';
+import{chromium}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+import{release}from'node:os';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa',c=await(await fetch('http://127.0.0.1:6151/connection')).json(),r=JSON.parse(await readFile('.tmp/qa186/run.json','utf8'));
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+const page=await context.newPage(),results=[];
+const until=async(fn,msg)=>{for(let i=0;i<200;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error(msg);};
+try{
+ await page.goto(c.url+'/app/runs/'+r.runId);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();
+ await until(async()=>Number(await list.getByRole('button').last().getAttribute('data-seq'))===r.total,'no tail');
+ for(const theme of['dark','light']){await page.setViewportSize({width:390,height:844});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.getByRole('heading',{name:/^Timeline \(/}).scrollIntoViewIfNeeded();await page.screenshot({path:out+'/timeline-controls-390-'+theme+'.png'});}
+ await page.setViewportSize({width:1440,height:900});await list.getByRole('button').last().focus();await page.keyboard.press('Home');const first=Number(await page.locator(':focus').getAttribute('data-seq'));await page.keyboard.press('PageDown');assert.equal(Number(await page.locator(':focus').getAttribute('data-seq')),first+80);await page.keyboard.press('PageUp');assert.equal(Number(await page.locator(':focus').getAttribute('data-seq')),first);
+ await page.keyboard.press('PageDown');await page.keyboard.press('Shift+Tab');assert.equal(Number(await page.locator(':focus').getAttribute('data-seq')),first+79);
+ const mounted=await list.getByRole('listitem').count();assert.ok(mounted<=80);results.push({name:'PageUp and backwards boundary Tab preserve keyboard focus',pass:true,first,focused:first+79,mounted});
+ const seek=async n=>{await page.getByRole('spinbutton',{name:'Event sequence'}).fill(String(n));await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByRole('heading',{name:'Thread at event '+n,exact:true}).waitFor();};
+ await seek(100);let resolve;const held=new Promise(r=>resolve=r);await page.route('**/runs/'+r.runId+'/thread?at=129',async route=>{await held;await route.continue();});
+ await page.getByRole('spinbutton',{name:'Event sequence'}).fill('129');await page.getByRole('button',{name:'Go to event',exact:true}).click();const note=page.getByText('Reading the thread at event 129',{exact:false});await note.waitFor();await note.scrollIntoViewIfNeeded();assert.ok(await page.getByRole('heading',{name:'Thread at event 100',exact:true}).isVisible());await page.screenshot({path:out+'/reading-note-visible.png'});resolve();await page.getByRole('heading',{name:'Thread at event 129',exact:true}).waitFor();results.push({name:'visible Reading note and labelled previous thread',pass:true,previous:100,requested:129});
+ await page.getByRole('spinbutton',{name:'Event sequence'}).fill('999999');await page.getByRole('button',{name:'Go to event',exact:true}).click();await page.getByText('Event 999999 is not available in this run.',{exact:true}).waitFor();assert.ok(await page.getByRole('heading',{name:'Thread at event 129',exact:true}).isVisible());results.push({name:'unavailable event shows explicit error and retains previous selection',pass:true,missing:999999,retainedSelection:129});
+ await writeFile(out+'/additional-ui.aria.txt',await page.locator('body').ariaSnapshot());
+}catch(e){results.push({pass:false,error:String(e).slice(0,2000)});}
+await writeFile(out+'/additional-ui-results.json',JSON.stringify(results,null,2));await writeFile(out+'/environment.json',JSON.stringify({node:process.version,os:release(),browser:'Microsoft Edge',browserVersion:browser.version(),headless:true,viewport:[1440,900,390,844],head:'bf9935754dcfbdef80b8d978fb2e605a5111b7f5',base:'498da565d445113116495301691e5e284d0e3d42',headGateway:c.url,dataDir:c.dir.replace(process.env.USERPROFILE,'%USERPROFILE%')},null,2));await context.close();await browser.close();console.log(JSON.stringify(results));

@@ -121,5 +121,14 @@ Tests use supported ports, real HTTP sockets and disposable SQLite storage. The
 only workload-specific observations support performance claims. The public SSE
 field order assertion in the existing edge test now validates terminal JSON data.
 
-History browsing follows in #186 round 2: per-run history retention, opaque-cursor
-browsing and Timeline windowing remain open. This ADR does not close the whole bolt.
+## Round 2: bounded browser history (2026-10-24)
+
+The browser half retains one window per run, at most 512 rows and 1,048,576 estimated UTF-16 row-JSON bytes, persisted with its independent SSE acknowledgement, mode and opaque paging boundaries. Count protects tiny events; bytes protect payload-heavy runs. A 512-row window covers about 40 passes of the measured cyclic workload; 128-event history reads align with the server's bounded replay pages. Oversized events retain a small sequence/type/description marker (ordinary accessible names are preserved, with the existing 4,096-character preview budget for pathological summaries); one exact explicitly requested payload is transient, never cached. Storage failures are nonfatal. Device cache version 2 discards the old cache; server history and stored shape are unchanged.
+
+History mode freezes the visible window while live acknowledgement continues. Older/newer pages join by sequence and trim the opposite side, invalidating any cursor no longer at the retained edge. Numeric seeks acquire fresh positions; subsequent paging passes run-bound opaque cursors unchanged. Returning live catches the acknowledged suffix before switching modes, bounded to eight additional pages per explicit action, with a visible retry reason if the history keeps outrunning that action.
+
+Timeline row windowing mounts 80 rows without fixed-height assumptions or a new dependency. Row interaction pauses follow, preserving keyboard focus and selection. Arrow, Home/End, Page Up/Down, boundary Tab and persistent paging controls support browsing; Follow live resumes tail scrolling.
+
+Whole-history projections move to server reads: run record for status/position/result/failure/delivery; indexed latest evidence for exit/gate/finish and attempt following; #116 current thread for live context; exact historical thread and previous boundary for selection/patches. Domain replay state is carried across server pages, including unfinished starts and delayed duplicate completions. Node progress explicitly describes the retained window; older progress and exact values remain browsable. Browser replay and its 32-thread cache are removed rather than being fed truncated history.
+
+These are implementation parameters, not owner-approved budgets or execution caps. Round 2 implements the bolt's remaining browser scope; review, independent QA and integrated acceptance are separate delivery gates. Measurements and limits are recorded in [the round-2 evidence](../qa/2026-10-24-wp-e1-186-r2/README.md).

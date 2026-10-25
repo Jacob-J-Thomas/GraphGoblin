@@ -1,0 +1,9 @@
+import{writeFile,readFile}from'node:fs/promises';
+const results=[];
+for(const port of[6151,6153,6154]){
+ try{const path=port===6154?'/stop':'/stop';const r=await fetch('http://127.0.0.1:'+port+path,{method:'POST',body:'{}'});results.push({port,status:r.status,response:await r.text()});}catch(e){results.push({port,error:String(e)});}
+}
+await new Promise(r=>setTimeout(r,500));
+for(const port of[6150,6151,6152,6153,6154]){try{await fetch('http://127.0.0.1:'+port+'/healthz',{signal:AbortSignal.timeout(2000)});results.push({port,closed:false});}catch{results.push({port,closed:true});}}
+await writeFile('docs/qa/2026-10-24-wp-e1-186-r2-qa/shutdown-results.json',JSON.stringify(results,null,2));
+console.log(JSON.stringify(results));

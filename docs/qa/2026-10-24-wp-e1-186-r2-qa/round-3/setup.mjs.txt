@@ -1,0 +1,12 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3';
+await mkdir('.tmp/qa3',{recursive:true});
+let server=await readFile('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2/server.mjs.txt','utf8');
+server=server.replaceAll('../../apps/',pathToFileURL(resolve('apps')).href+'/').replaceAll('../../packages/',pathToFileURL(resolve('packages')).href+'/').replaceAll('../../tooling/',pathToFileURL(resolve('tooling')).href+'/').replaceAll('gg-qa-e1-186r2-2-','gg-qa-e1-186r2-3-');
+server=server.replace("if(path==='/connection')",`if(path==='/script'){fake.script(b.turns);return {ok:true};}
+ if(path==='/shutdown'){return container.shutdown.requestInteractive();}
+ if(path==='/connection')`);
+await writeFile('.tmp/qa3/server.mjs',server);await writeFile(out+'/server.mjs.txt',server.replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%'));
+await writeFile(out+'/source.diff.txt',await new Promise((res,rej)=>import('node:child_process').then(({execFile})=>execFile('git',['diff','e83b5b56936c2e2677f4ad184f0d02f45c953c6d','HEAD','--','.',':!docs/qa'],{maxBuffer:10000000},(e,o)=>e?rej(e):res(o)))));

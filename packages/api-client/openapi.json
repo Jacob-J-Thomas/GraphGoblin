@@ -19621,6 +19621,16 @@
         "parameters": [
           {
             "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "in": "query",
+            "name": "at",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string",
               "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
             },
@@ -19672,6 +19682,24 @@
           },
           {
             "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740990
+            },
+            "in": "query",
+            "name": "around",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string",
               "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
             },
@@ -19701,12 +19729,85 @@
                     },
                     "hasMore": {
                       "type": "boolean"
+                    },
+                    "olderCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "newerCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
                     "items",
                     "nextAfter",
                     "hasMore"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{id}/observation": {
+      "get": {
+        "summary": "Latest durable inspector evidence, independent of the retained history window",
+        "tags": [
+          "runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lifecycle": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "exit": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "gate": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "finished": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "cancelled": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "cancelRequested": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "freshSessionChoices": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RunEvent"
+                      }
+                    }
+                  },
+                  "required": [
+                    "freshSessionChoices"
                   ],
                   "additionalProperties": false
                 }

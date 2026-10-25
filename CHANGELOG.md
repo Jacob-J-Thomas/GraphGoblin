@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Bound browser run history to 512 rows / 1 MiB, add older/newer and sequence browsing, and window Timeline rows while reading complete thread/evidence projections from the server. **Upgrade:** the old device event cache is discarded once and rebuilt from complete server history; no server migration is needed. (#186)
+
 - Reduce measured engine hot-path work with yielding finalization history pages and durable fresh-entry counts, preserving full history, visit limits, return delivery and recovery. (#268)
 
 - Run provider-free functional browser checks in CI on Edge with zero retries and one worker, publish live exclusions, and upload available failure or cancellation evidence and the HTML report. Update stale #244 delivery/event assertions (#400) and #204/#205 model assertions, synchronize draft/PWA lifecycles and zoomed editor targets, verify durable webhook defaults and authored fallback persistence, and retain a regression for missing post-terminal history. Drive native routing gestures on absolute deadlines without Playwright drag-interception overhead. Use bounded isolated web unit threads and calibrate the unchanged 300-graph correctness corpus's execution watchdog; retain conflict assertions, native performance limits and coverage thresholds. (#241)

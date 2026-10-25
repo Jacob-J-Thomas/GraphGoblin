@@ -1,0 +1,18 @@
+import {readFile,writeFile}from'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+let s=await readFile('.tmp/qa186r2/projection-complete.mjs','utf8');s=s.replace('async(path,b)=>','async(path,b={})=>').replaceAll('projection-complete-results.json','projection-verified-results.json').replaceAll("name:'Done: Exited: success'","name:'Done (done): Exited: success'").replaceAll("getByText('Done: Exited: success'","getByText('Done (done): Exited: success'");await writeFile('.tmp/qa186r2/projection-verified.mjs',s);
+s=await readFile('.tmp/qa186r2/live-synchronized.mjs','utf8');
+s=s.replace("{passes:250,delay:5,items:3,payload:4000}","{passes:250,delay:50,items:3,payload:32,script:Array.from({length:252},(_,i)=>({finalText:'verified-'+i+' '+ 'x'.repeat(40000),delayMs:50,items:Array.from({length:3},(_,j)=>({id:'v-'+i+'-'+j,type:'reasoning',summary:'Verified progress '+i+' '+j}))}))}");
+s=s.replaceAll('live-synchronized-results.json','live-verified-results.json').replaceAll('heavy-full.json','verified-heavy-full.json');await writeFile('.tmp/qa186r2/live-verified.mjs',s);
+let prefix=(await readFile('.tmp/qa186r2/merged-followup.mjs','utf8')).split('const fixture=')[0].replaceAll('merged-followup-results.json','oversized-verified-results.json').replace('writeFile(out+\'/\'+label+\'-omitted.json\',result)','writeFile(out+\'/\'+label+\'-omitted.json\',JSON.stringify(result,null,2))');
+const body=`const fixture=JSON.parse(await readFile(out+'/merged-fixtures.json','utf8'));
+const all=await ctl('/oracle',{runId:fixture.runId,full:true}),huge=all.events.find(e=>e.seq===fixture.oversizedSeq),page=await open(fixture.runId);
+await until(async()=>(await cache(page,fixture.runId))?.lastSeq===all.last,'no suffix');
+await check('oversized exact disclosure and downloads outside then inside retained window',async()=>{
+ const before=await cache(page,fixture.runId);assert.ok(before.events[0].seq>huge.seq);await seek(page,huge.seq);
+ const log=await cache(page,fixture.runId),marker=log.uncached.find(e=>e.seq===huge.seq);assert.ok(marker);assert.ok(marker.description.includes('work'));assert.ok(!marker.description.includes('Pinned Worker'));assert.ok(!log.events.some(e=>e.seq===huge.seq));
+ const outside=await exactDownload(page,huge,'oversized-outside');await seek(page,huge.seq-1);await seek(page,huge.seq);const inside=await exactDownload(page,huge,'oversized-inside');assert.equal(outside.sha256,inside.sha256);
+ const after=await cache(page,fixture.runId);assert.ok(after.bytes<=1048576);assert.ok(!after.events.some(e=>e.seq===huge.seq));await page.screenshot({path:out+'/oversized.png'});return {runId:fixture.runId,marker,outside,inside,retainedRows:after.events.length+after.uncached.length,retainedBytes:after.bytes};
+});
+await context.close();await browser.close();console.log(JSON.stringify({checks}));`;
+await writeFile('.tmp/qa186r2/oversized-verified.mjs',prefix+body);await writeFile(out+'/verify-prepare.mjs.txt',await readFile(import.meta.filename,'utf8'));

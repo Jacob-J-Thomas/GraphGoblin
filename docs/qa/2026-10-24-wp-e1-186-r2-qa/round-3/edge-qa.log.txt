@@ -1,0 +1,90 @@
+Command: pnpm.cmd --filter @graphgoblin/web exec playwright test --config .tmp/qa3/playwright.config.ts qa.spec.ts
+
+Running 10 tests using 1 worker
+
+(node:33656) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33656) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 .tmp\qa3\specs\qa.spec.ts:54:1 › a subloop child run opens in the inspector and replays from its seeded thread (1.5s)
+  x   2 .tmp\qa3\specs\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event (31.4s)
+(node:5312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x   3 .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable (10.7s)
+(node:7644) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7644) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  4 .tmp\qa3\specs\qa.spec.ts:206:1 › the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees (2.6s)
+  ok  5 .tmp\qa3\specs\qa.spec.ts:290:1 › keyboard only: add a node, connect it, and publish (1.9s)
+  ok  6 .tmp\qa3\specs\qa.spec.ts:355:1 › an edit made right before leaving the editor is kept (931ms)
+  ok  7 .tmp\qa3\specs\qa.spec.ts:375:1 › Settings defaults reach the next run without a restart (798ms)
+  ok  8 .tmp\qa3\specs\qa.spec.ts:416:1 › with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it (2.2s)
+  ok  9 .tmp\qa3\specs\qa.spec.ts:443:1 › with GG_REQUIRE_API_KEY, editor and inspector deep links go live once the key is entered (3.8s)
+  ok 10 .tmp\qa3\specs\qa.spec.ts:482:1 › main screens fit 1024x768 without horizontal scrolling, and deep links load cold (4.7s)
+
+
+  1) .tmp\qa3\specs\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Timeline \(1212 events, complete\)/)
+    Expected: visible
+    Timeout: 30000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/Timeline \(1212 events, complete\)/) with timeout 30000ms
+      - waiting for getByText(/Timeline \(1212 events, complete\)/)
+
+
+      107 |   const started = Date.now();
+      108 |   await page.goto(`/app/runs/${runId}`);
+    > 109 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
+          |                                                                      ^
+      110 |     timeout: 30_000,
+      111 |   });
+      112 |   const live = Date.now() - started;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\qa.spec.ts:109:70
+
+    Error Context: ..\..\.tmp\qa3\pw-results\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event\error-context.md
+
+  2) .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Failed: HARNESS_TURN_FAILED')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Failed: HARNESS_TURN_FAILED') with timeout 10000ms
+      - waiting for getByText('Failed: HARNESS_TURN_FAILED')
+
+
+      155 |   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+      156 |   await page.goto(`/app/runs/${await startRun(request, failing)}`);
+    > 157 |   await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+          |                                                               ^
+      158 |
+      159 |   await control(request, '/deciders', { jev: true, codex: true });
+      160 |   try {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\qa.spec.ts:157:63
+
+    Error Context: ..\..\.tmp\qa3\pw-results\qa-failure-reasons-are-typ-0d3ec-ure-and-decider-unavailable\error-context.md
+
+  2 failed
+    .tmp\qa3\specs\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event 
+    .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable 
+  8 passed (1.2m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 186-r2-3\apps\web
+
+
+Exit: 1

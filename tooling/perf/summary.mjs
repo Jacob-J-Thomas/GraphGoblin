@@ -123,6 +123,7 @@ function browser(value) {
           'name',
           'durationMs',
           'historyReadyMs',
+          'firstRowsMs',
           'historyTargetSeq',
           'historyReadyCount',
           'executionContinued',

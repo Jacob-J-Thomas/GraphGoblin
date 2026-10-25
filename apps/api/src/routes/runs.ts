@@ -23,8 +23,11 @@ import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
 import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
+import { historicalThread, historyCursor, readHistoryCursor } from '../run-history.js';
 
 const IdParams = z.object({ id: UlidSchema });
+/** Fresh-session choices the observation read returns; earlier ones stay in the history. */
+const FRESH_SESSION_NOTES = 20;
 
 const SessionSchema = z.object({
   runId: z.string(),
@@ -183,12 +186,18 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'The current context thread',
         params: IdParams,
+        querystring: z.strictObject({
+          at: z.coerce.number().int().nonnegative().safe().optional(),
+        }),
         response: { 200: ContextThreadSchema },
       },
     },
     async (request, reply) => {
       await ownedRun(request, request.params.id);
-      const thread = await manager.getThread(request.params.id);
+      const thread =
+        request.query.at === undefined
+          ? await manager.getThread(request.params.id)
+          : await historicalThread(container, request.params.id, request.query.at);
       if (!thread) return problem(reply, 404, 'THREAD_NOT_FOUND', 'the run has no thread');
       return thread;
     },
@@ -201,15 +210,31 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'A page of events; with Accept: text/event-stream, a live SSE tail',
         params: IdParams,
-        querystring: z.object({
-          after: z.coerce.number().int().min(0).optional(),
-          limit: z.coerce.number().int().min(1).max(1000).optional(),
-        }),
+        querystring: z
+          .object({
+            after: z.coerce.number().int().min(0).optional(),
+            limit: z.coerce.number().int().min(1).max(1000).optional(),
+            cursor: z.string().optional(),
+            around: z.coerce
+              .number()
+              .int()
+              .nonnegative()
+              .max(Number.MAX_SAFE_INTEGER - 1)
+              .optional(),
+          })
+          .refine(
+            (query) =>
+              [query.after, query.around, query.cursor].filter((value) => value !== undefined)
+                .length <= 1,
+            { message: 'Choose one of after, around or cursor.' },
+          ),
         response: {
           200: z.object({
             items: z.array(RunEventSchema),
             nextAfter: z.number().int(),
             hasMore: z.boolean(),
+            olderCursor: z.string().nullable().optional(),
+            newerCursor: z.string().nullable().optional(),
           }),
         },
       },
@@ -237,7 +262,77 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         return reply;
       }
       const limit = request.query.limit ?? 500;
+      if (request.query.cursor !== undefined || request.query.around !== undefined) {
+        const position =
+          request.query.cursor !== undefined
+            ? readHistoryCursor(request.query.cursor, request.params.id)
+            : { seq: request.query.around! + 1, direction: 'older' as const };
+        const page = await repos.events.window(
+          request.params.id,
+          position.seq,
+          position.direction,
+          limit,
+        );
+        return {
+          items: page.items,
+          nextAfter: page.newerThan,
+          hasMore: page.hasNewer,
+          olderCursor: page.hasOlder
+            ? historyCursor({ runId: request.params.id, seq: page.olderThan, direction: 'older' })
+            : null,
+          newerCursor: page.hasNewer
+            ? historyCursor({ runId: request.params.id, seq: page.newerThan, direction: 'newer' })
+            : null,
+        };
+      }
       return repos.events.page(request.params.id, after, limit);
+    },
+  );
+
+  app.get(
+    '/runs/:id/observation',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Latest durable inspector evidence, independent of the retained history window',
+        params: IdParams,
+        response: {
+          200: z.object({
+            lifecycle: RunEventSchema.optional(),
+            exit: RunEventSchema.optional(),
+            gate: RunEventSchema.optional(),
+            finished: RunEventSchema.optional(),
+            cancelled: RunEventSchema.optional(),
+            cancelRequested: RunEventSchema.optional(),
+            freshSessionChoices: z.array(RunEventSchema),
+          }),
+        },
+      },
+    },
+    async (request) => {
+      const runId = request.params.id;
+      await ownedRun(request, runId);
+      const gate = await repos.events.latestGate(runId);
+      const cancelled = await repos.events.latest(runId, 'run.cancelled');
+      // The request that led to the latest cancellation: one a later resume answered does not.
+      const requested = cancelled
+        ? await repos.events.latest(runId, 'run.cancel_requested', cancelled.seq)
+        : undefined;
+      const resumed = requested
+        ? await repos.events.latest(runId, 'run.resumed', cancelled!.seq)
+        : undefined;
+      return {
+        lifecycle: await repos.events.lastLifecycleEvent(runId),
+        exit: await repos.events.latest(runId, 'exit.evaluated'),
+        gate,
+        finished: await repos.events.latest(runId, 'run.finished'),
+        cancelled,
+        cancelRequested:
+          requested && (resumed === undefined || requested.seq > resumed.seq)
+            ? requested
+            : undefined,
+        freshSessionChoices: await repos.events.freshSessionChoices(runId, FRESH_SESSION_NOTES),
+      };
     },
   );
 

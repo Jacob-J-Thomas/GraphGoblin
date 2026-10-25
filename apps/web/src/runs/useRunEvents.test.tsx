@@ -101,7 +101,7 @@ describe('run stream reachability', () => {
         }),
       );
     });
-    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(1);
+    expect(useRunEventStore.getState().runs[runId]?.uncached).toHaveLength(1);
   });
   it.each(['SSE_SLOW_CONSUMER', 'SSE_REPLAY_FAILED'])(
     'shows a %s reason during retry and clears it when the stream reopens',
@@ -136,7 +136,7 @@ describe('run stream reachability', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
     });
-    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(600);
+    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(512);
   });
   it('leaves an accepted clean close on the stream backoff without reporting an outage', () => {
     mountStream();

@@ -1,0 +1,28 @@
+const fixture=JSON.parse(await readFile(out+'/merged-fixtures.json','utf8'));
+const all=await ctl('/oracle',{runId:fixture.runId,full:true});const record=all.record;
+const detail=await api('/loops/'+record.loopId),pinned=detail.current.definition,draft=structuredClone(pinned);
+draft.name='Renamed draft for independent QA';for(const node of draft.nodes)node.label='DRAFT RENAMED '+node.id;draft.nodes.find(n=>n.id==='gate').config.routes[0].label='DRAFT RENAMED route';
+const saved=await fetch(c.url+'/loops/'+record.loopId+'/draft',{method:'PUT',headers:{...headers,'if-match':detail.draftToken},body:JSON.stringify({definition:draft})});assert.equal(saved.status,200);await writeFile(out+'/renamed-draft.json',JSON.stringify(await saved.json(),null,2));
+const labels=await open(fixture.runId),prob=await open(fixture.probabilityRunId),unknown=await open(fixture.unknownId);
+await unknown.route('**/loops/*/versions/*',r=>r.fulfill({status:404,contentType:'application/problem+json',body:JSON.stringify({status:404,detail:'QA labels unavailable'})}));await unknown.reload();
+const huge=all.events.find(e=>e.seq===fixture.oversizedSeq);
+for(const width of [1440,390])for(const theme of ['dark','light']){
+ for(const p of [labels,prob,unknown]){await p.setViewportSize({width,height:width===390?844:900});await p.evaluate(t=>{localStorage.setItem('graphgoblin-theme',t);document.documentElement.dataset.theme=t;},theme);}
+ await check(`renamed current draft, exact append and downloaded normal event ${width} ${theme}`,async()=>{
+  await seek(labels,fixture.finished.seq);await labels.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();assert.ok(!(await labels.locator('body').innerText()).includes('DRAFT RENAMED'));
+  const added=fixture.finished.patch.find(p=>p.op==='add'&&p.path==='/messages/-');assert.ok(added);assert.deepEqual(JSON.parse(await labels.getByLabel('Value after /messages/-',{exact:true}).innerText()),added.value);
+  assert.equal(await labels.getByLabel('Value before /messages/-',{exact:true}).innerText(),'(absent)');
+  const downloaded=await exactDownload(labels,fixture.finished,'matrix-normal-'+width+'-'+theme);return {runId:fixture.runId,pinnedVersion:record.versionId,draftLabel:draft.nodes.find(n=>n.id==='work').label,addedValueHash:hash(added.value),downloaded};
+ });
+ await check(`oversized exact download and ID-only marker ${width} ${theme}`,async()=>{
+  await seek(labels,huge.seq);const marker=(await cache(labels,fixture.runId)).uncached.find(e=>e.seq===huge.seq);assert.equal(marker.description,'work, 1 change, 1 ms');const downloaded=await exactDownload(labels,huge,'matrix-huge-'+width+'-'+theme);return {marker,downloaded};
+ });
+ await check(`probabilities, unknown actor and unavailable labels ${width} ${theme}`,async()=>{
+  await seek(prob,1);assert.ok((await prob.locator('body').innerText()).includes('12.35%'));assert.ok((await prob.locator('body').innerText()).includes('87.65%'));assert.ok(await prob.locator('[title="0.123456"]').count()>0);
+  await unknown.getByText('Pinned definition unavailable. Authored node and route labels are not recorded in the available history.',{exact:true}).waitFor();assert.ok((await unknown.getByRole('region',{name:'Execution context',exact:true}).innerText()).includes('actor not recorded'));
+  const geometry=await Promise.all([labels,prob,unknown].map(p=>p.evaluate(()=>({width:innerWidth,documentWidth:document.documentElement.scrollWidth}))));assert.ok(geometry.every(g=>g.documentWidth<=width));
+  await prob.getByRole('region',{name:'Decision evaluation',exact:true}).scrollIntoViewIfNeeded();await prob.screenshot({path:out+'/probability-'+width+'-'+theme+'.png'});
+  await unknown.getByRole('region',{name:'Execution context',exact:true}).scrollIntoViewIfNeeded();await unknown.screenshot({path:out+'/unknown-'+width+'-'+theme+'.png'});return {geometry,display:['12.35%','87.65%'],exactTitle:'0.123456',unknownActor:true,unavailableLabels:true};
+ });
+}
+await context.close();await browser.close();console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failures:checks.filter(x=>!x.pass)}));

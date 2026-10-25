@@ -1,0 +1,9 @@
+import {readFile,writeFile}from'node:fs/promises';
+const root='docs/qa/2026-10-24-wp-e1-186-r2-qa',out=root+'/round-2';
+let prefix=(await readFile('.tmp/qa186r2/merged-inspector.mjs','utf8')).split("const def=definition(")[0].replaceAll('merged-inspector-results.json','merged-followup-results.json');
+prefix=prefix.replace("await p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true}).click();","const disclosure=p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true});if(await disclosure.getAttribute('aria-expanded')!=='true')await disclosure.click();");
+await writeFile('.tmp/qa186r2/merged-followup.mjs',prefix+await readFile('.tmp/qa186r2/followup-body.txt','utf8'));
+let s=await readFile(root+'/native-slow-reader.mjs.txt','utf8');s=s.replaceAll("const out='"+root+"'","const out='"+out+"'").replaceAll('.tmp/qa186/','.tmp/qa186r2/');await writeFile('.tmp/qa186r2/native-slow-reader.mjs',s);
+s=await readFile(root+'/benchmark.mjs.txt','utf8');s=s.replaceAll("const out='"+root+"'","const out='"+out+"'").replace("[['before',6153],['after',6151]]","[['after',6151]]").replaceAll('bf9935754dcfbdef80b8d978fb2e605a5111b7f5','dc325b2fd8a4a40dda2c77789080fc822235dd69').replaceAll('before-after-results.json','benchmark-after-results.json').replaceAll('.tmp/qa186/','.tmp/qa186r2/');await writeFile('.tmp/qa186r2/benchmark-after.mjs',s);
+await writeFile(out+'/followup-prepare.mjs.txt',await readFile(import.meta.filename,'utf8'));
+await writeFile(out+'/followup-body.txt',await readFile('.tmp/qa186r2/followup-body.txt','utf8'));

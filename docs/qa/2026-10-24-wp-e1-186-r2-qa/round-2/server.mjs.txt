@@ -1,0 +1,67 @@
+import {createServer} from 'node:http';
+import {mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {resolve,join} from 'node:path';
+import {createContainer} from '../../apps/api/dist/container.js';
+import {buildApp} from '../../apps/api/dist/app.js';
+import {loadConfig} from '../../apps/api/dist/config.js';
+import {FakeHarness,FakeStructured,FakeDecider,FakeClassifierRegistry,FakeClassifier} from '../../packages/engine/dist/testing/index.js';
+import {CURRENT_DEFINITION_FORMAT} from '../../packages/contracts/dist/index.js';
+import {reconcileThread} from '../../packages/domain/dist/index.js';
+import {definition} from '../../tooling/perf/common.mjs';
+const dir=process.env.QA_STORE ?? await mkdtemp(join(tmpdir(),'gg-qa-e1-186r2-2-'));
+const fake=new FakeHarness();
+const container=await createContainer(loadConfig({GG_DATA_DIR:dir,GG_DB_URL:'file:'+join(dir,'qa.db').replaceAll('\\','/'),GG_WEB_DIST:resolve(process.env.QA_WEB ?? 'apps/web/dist'),GG_REQUIRE_API_KEY:'true',GG_SWAGGER_UI:'false'}),{harnesses:{codex:fake},structured:new FakeStructured(),deciders:[new FakeDecider('codex')],classifiers:new FakeClassifierRegistry(new FakeClassifier('jev')),startTimers:false});
+await container.start();
+const keys={};
+for(const [name,owner,scopes] of [['admin','local',['*']],['reader','local',['runs:read']],['denied','local',['loops:read']],['other','other',['runs:read']]]) keys[name]=(await container.repos.apiKeys.create(owner,'QA '+name,scopes)).token;
+const app=await buildApp(container,{logger:false});
+const port=Number(process.env.QA_PORT??6150), controlPort=port+1;
+const url=await app.listen({host:'127.0.0.1',port});
+async function publish(def){
+ const headers={authorization:'Bearer '+keys.admin};
+ const created=await app.inject({method:'POST',url:'/loops',headers,payload:{definition:def}});
+ if(created.statusCode!==201)throw Error(created.body);
+ const id=created.json().loop.id;
+ const published=await app.inject({method:'POST',url:'/loops/'+id+'/publish',headers});
+ if(published.statusCode!==200)throw Error(published.body);
+ const started=await app.inject({method:'POST',url:'/loops/'+id+'/runs',headers,payload:{}});
+ if(started.statusCode!==202)throw Error(started.body);
+ return started.json().run;
+}
+let seedCounter=0;
+async function control(path,b){
+ if(path==='/connection')return {url,keys,dir,pid:process.pid};
+ if(path==='/start'){
+  const def=b.definition??definition(CURRENT_DEFINITION_FORMAT,{passes:b.passes??300,inference:true,contextBytes:0});
+  def.name='Independent QA '+Date.now(); if(b.result)def.nodes.find(n=>n.kind==='exit').config.returns='outputs.work.value'; if(b.delivery)def.nodes.find(n=>n.kind==='exit').config.destinations=[{kind:'file',path:join(dir,'qa-return.json'),format:'json'}];
+  fake.script(b.script??Array.from({length:(b.passes??300)+2},(_,i)=>({finalText:'QA output '+i,delayMs:b.delay??30,items:Array.from({length:b.items??2},(_,j)=>({id:'p-'+i+'-'+j,type:'reasoning',summary:'QA progress '+i+' '+j+' '+'x'.repeat(b.payload??0)}))})));
+  if(b.fail)fake.script([{error:{code:'QA_FAILURE',message:'Independent QA failure',retriable:false}}]); return publish(def);
+ }
+ if(path==='/seed'){
+   const source=await container.repos.runs.get(b.source),seed=await container.repos.runs.getInitialThread(b.source);
+   const id=source.id.slice(0,18)+String(++seedCounter).padStart(8,'0');
+   await container.repos.runs.create({...source,id,status:b.status??'succeeded',lastEventSeq:0},seed);
+   await container.repos.events.append(id,b.drafts??Array.from({length:b.count},()=>({type:'run.woken',nodeId:'work',reason:'manual'})));
+   return container.repos.runs.get(id);
+ }
+ if(path==='/update')return container.repos.runs.update(b.runId,b.changes);
+ if(path==='/idle'){await container.manager.waitForIdle();return {idle:true};}
+ if(path==='/append'){
+  const drafts=b.drafts??Array.from({length:b.count??1},()=>({type:'run.woken',nodeId:'qa',reason:'manual',payload:'x'.repeat(b.payload??0)}));
+  const events=await container.repos.events.append(b.runId,drafts);
+  return {count:events.length,first:events[0]?.seq,last:events.at(-1)?.seq,ts:events[0]?.ts};
+ }
+ if(path==='/oracle'){
+  const all=await container.repos.events.read(b.runId);
+  const seed=await container.repos.runs.getInitialThread(b.runId);
+  const checkpoint=await container.repos.runs.getThreadCheckpoint(b.runId);
+  return {record:await container.repos.runs.get(b.runId),checkpoint:checkpoint?{seq:checkpoint.seq,hasReplayState:!!checkpoint.replayState}:null,total:all.length,last:all.at(-1)?.seq,timestamps:new Set(all.map(e=>e.ts)).size,events:b.full?all:undefined,threads:Object.fromEntries((b.at??[]).map(at=>[at,reconcileThread(seed,all,undefined,at)])),observation:{lifecycle:all.findLast(e=>['run.finished','run.failed','run.cancelled','run.started','run.resumed'].includes(e.type)),exit:all.findLast(e=>e.type==='exit.evaluated'),gate:all.findLast(e=>e.type==='decision.made'&&e.gate!==undefined),finished:all.findLast(e=>e.type==='run.finished')}};
+ }
+ if(path==='/stop'){setTimeout(async()=>{await container.manager.waitForIdle();await app.close();await container.dispose();server.close();process.exit(0);},100);return {stopping:true};}
+ throw Error('unknown control path '+path);
+}
+const server=createServer(async(req,res)=>{try{let body='';for await(const chunk of req)body+=chunk;res.setHeader('content-type','application/json');res.end(JSON.stringify(await control(req.url,body?JSON.parse(body):{})));}catch(e){res.statusCode=500;res.end(JSON.stringify({error:String(e),stack:e.stack}));}});
+await new Promise(r=>server.listen(controlPort,'127.0.0.1',r));
+console.log(JSON.stringify({url,control:controlPort,dir:dir.replace(process.env.USERPROFILE,'%USERPROFILE%'),pid:process.pid,node:process.version}));
+

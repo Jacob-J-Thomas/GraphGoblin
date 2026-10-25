@@ -1,0 +1,439 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: responsive.spec.ts >> responsive dark >> screens and transient states fit at 360, 768, 1024, and 1440 px
+- Location: .tmp\qa5\e2e\responsive.spec.ts:304:5
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('responsive sweep').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" getByText('responsive sweep').first() with timeout 10000ms
+  - waiting for getByText('responsive sweep').first()
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- heading "Loops" [level=1]
+- form "Create loop":
+  - text: New loop name
+  - textbox "New loop name":
+    - /placeholder: nightly-triage
+  - button "Create" [disabled]
+- text: Import an exported loop (JSON)
+- button "Import an exported loop (JSON)"
+- text: No file chosen
+- button "New from template"
+- table:
+  - rowgroup:
+    - row "Name State Last run Actions":
+      - columnheader "Name"
+      - columnheader "State"
+      - columnheader "Last run"
+      - columnheader "Actions"
+  - rowgroup:
+    - row "QA evidence starting point Define acceptance criteria, assess supplied test evidence, and challenge the assessment with one bounded rerun. This worksheet supplies neither authenticated post-merge proof nor enforced isolation. Updated 10/18/2026, 4:53:36 PM draft only never run Edit QA evidence starting point Export QA evidence starting point Delete QA evidence starting point":
+      - cell "QA evidence starting point Define acceptance criteria, assess supplied test evidence, and challenge the assessment with one bounded rerun. This worksheet supplies neither authenticated post-merge proof nor enforced isolation. Updated 10/18/2026, 4:53:36 PM":
+        - link "QA evidence starting point":
+          - /url: /app/loops/01M50Z9ZMQX528RPWRBDD85DVJ/edit
+        - paragraph: Define acceptance criteria, assess supplied test evidence, and challenge the assessment with one bounded rerun. This worksheet supplies neither authenticated post-merge proof nor enforced isolation.
+        - paragraph:
+          - text: Updated
+          - time: 10/18/2026, 4:53:36 PM
+      - cell "draft only"
+      - cell "never run"
+      - cell "Edit QA evidence starting point Export QA evidence starting point Delete QA evidence starting point":
+        - link "Edit QA evidence starting point":
+          - /url: /app/loops/01M50Z9ZMQX528RPWRBDD85DVJ/edit
+          - text: Edit
+        - button "Export QA evidence starting point": Export
+        - status
+        - button "Delete QA evidence starting point": Delete
+    - row "Starter assistant Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time. Updated 10/15/2026, 6:45:21 PM draft only never run Edit Starter assistant Export Starter assistant Delete Starter assistant":
+      - cell "Starter assistant Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time. Updated 10/15/2026, 6:45:21 PM":
+        - link "Starter assistant":
+          - /url: /app/loops/01M50Z9G2GXTVHBYM6MTJY457P/edit
+        - paragraph: Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.
+        - paragraph:
+          - text: Updated
+          - time: 10/15/2026, 6:45:21 PM
+      - cell "draft only"
+      - cell "never run"
+      - cell "Edit Starter assistant Export Starter assistant Delete Starter assistant":
+        - link "Edit Starter assistant":
+          - /url: /app/loops/01M50Z9G2GXTVHBYM6MTJY457P/edit
+          - text: Edit
+        - button "Export Starter assistant": Export
+        - status
+        - button "Delete Starter assistant": Delete
+    - row "aidlc-full-v1-qa Verify merge SHA, execute locked preconfigured checklist with QA role, hash-check evidence, persist proof branch and return pass/fail/blocked. Strict audit fails closed. Updated 10/15/2026, 6:40:52 PM published, unpublished changes never run Edit aidlc-full-v1-qa Export aidlc-full-v1-qa Delete aidlc-full-v1-qa":
+      - cell "aidlc-full-v1-qa Verify merge SHA, execute locked preconfigured checklist with QA role, hash-check evidence, persist proof branch and return pass/fail/blocked. Strict audit fails closed. Updated 10/15/2026, 6:40:52 PM":
+        - link "aidlc-full-v1-qa":
+          - /url: /app/loops/01M4A20B0Y7K7V6WS1FMJEQTTG/edit
+        - paragraph: Verify merge SHA, execute locked preconfigured checklist with QA role, hash-check evidence, persist proof branch and return pass/fail/blocked. Strict audit fails closed.
+        - paragraph:
+          - text: Updated
+          - time: 10/15/2026, 6:40:52 PM
+      - cell "published, unpublished changes"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-qa Export aidlc-full-v1-qa Delete aidlc-full-v1-qa":
+        - link "Edit aidlc-full-v1-qa":
+          - /url: /app/loops/01M4A20B0Y7K7V6WS1FMJEQTTG/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-qa": Export
+        - status
+        - button "Delete aidlc-full-v1-qa": Delete
+    - row "aidlc-full-v1-pr-ci Reconcile PR, bounded exact-head CI poll, reviewer verdict comment and label, policy-authorized merge observation. Single-identity mode never claims API approval. Updated 10/15/2026, 4:52:07 PM published, unpublished changes never run Edit aidlc-full-v1-pr-ci Export aidlc-full-v1-pr-ci Delete aidlc-full-v1-pr-ci":
+      - cell "aidlc-full-v1-pr-ci Reconcile PR, bounded exact-head CI poll, reviewer verdict comment and label, policy-authorized merge observation. Single-identity mode never claims API approval. Updated 10/15/2026, 4:52:07 PM":
+        - link "aidlc-full-v1-pr-ci":
+          - /url: /app/loops/01M4A20B05SZ4F1ZYGDVDVR8Z8/edit
+        - paragraph: Reconcile PR, bounded exact-head CI poll, reviewer verdict comment and label, policy-authorized merge observation. Single-identity mode never claims API approval.
+        - paragraph:
+          - text: Updated
+          - time: 10/15/2026, 4:52:07 PM
+      - cell "published, unpublished changes"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-pr-ci Export aidlc-full-v1-pr-ci Delete aidlc-full-v1-pr-ci":
+        - link "Edit aidlc-full-v1-pr-ci":
+          - /url: /app/loops/01M4A20B05SZ4F1ZYGDVDVR8Z8/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-pr-ci": Export
+        - status
+        - button "Delete aidlc-full-v1-pr-ci": Delete
+    - row "aidlc-full-v1-review Fresh reviewer derived from actual implementer family, exact-head findings, draft PR comments and idempotent future issues. Parent owns three-cycle fix cap. Updated 10/11/2026, 1:14:06 AM published, unpublished changes never run Edit aidlc-full-v1-review Export aidlc-full-v1-review Delete aidlc-full-v1-review":
+      - cell "aidlc-full-v1-review Fresh reviewer derived from actual implementer family, exact-head findings, draft PR comments and idempotent future issues. Parent owns three-cycle fix cap. Updated 10/11/2026, 1:14:06 AM":
+        - link "aidlc-full-v1-review":
+          - /url: /app/loops/01M4A20AZ69E2FK2W23WGWJ23M/edit
+        - paragraph: Fresh reviewer derived from actual implementer family, exact-head findings, draft PR comments and idempotent future issues. Parent owns three-cycle fix cap.
+        - paragraph:
+          - text: Updated
+          - time: 10/11/2026, 1:14:06 AM
+      - cell "published, unpublished changes"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-review Export aidlc-full-v1-review Delete aidlc-full-v1-review":
+        - link "Edit aidlc-full-v1-review":
+          - /url: /app/loops/01M4A20AZ69E2FK2W23WGWJ23M/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-review": Export
+        - status
+        - button "Delete aidlc-full-v1-review": Delete
+    - row "aidlc-full-v1-implementation Jev UI classification, forced-schema uncertain judgement, configurable code/visual implementer, authoritative Git snapshot and script checks. Updated 10/10/2026, 2:42:15 PM published, unpublished changes never run Edit aidlc-full-v1-implementation Export aidlc-full-v1-implementation Delete aidlc-full-v1-implementation":
+      - cell "aidlc-full-v1-implementation Jev UI classification, forced-schema uncertain judgement, configurable code/visual implementer, authoritative Git snapshot and script checks. Updated 10/10/2026, 2:42:15 PM":
+        - link "aidlc-full-v1-implementation":
+          - /url: /app/loops/01M4A20AXYYXMKJQ265Y3ACECG/edit
+        - paragraph: Jev UI classification, forced-schema uncertain judgement, configurable code/visual implementer, authoritative Git snapshot and script checks.
+        - paragraph:
+          - text: Updated
+          - time: 10/10/2026, 2:42:15 PM
+      - cell "published, unpublished changes"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-implementation Export aidlc-full-v1-implementation Delete aidlc-full-v1-implementation":
+        - link "Edit aidlc-full-v1-implementation":
+          - /url: /app/loops/01M4A20AXYYXMKJQ265Y3ACECG/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-implementation": Export
+        - status
+        - button "Delete aidlc-full-v1-implementation": Delete
+    - row "aidlc-full-v1-closing QA-before-closure policy, merge/checklist/proof provenance, no remaining tasks and authorized issue closure. Updated 10/7/2026, 5:28:51 PM published, unpublished changes never run Edit aidlc-full-v1-closing Export aidlc-full-v1-closing Delete aidlc-full-v1-closing":
+      - cell "aidlc-full-v1-closing QA-before-closure policy, merge/checklist/proof provenance, no remaining tasks and authorized issue closure. Updated 10/7/2026, 5:28:51 PM":
+        - link "aidlc-full-v1-closing":
+          - /url: /app/loops/01M4A20B1QPZNYG5A1AMPW711P/edit
+        - paragraph: QA-before-closure policy, merge/checklist/proof provenance, no remaining tasks and authorized issue closure.
+        - paragraph:
+          - text: Updated
+          - time: 10/7/2026, 5:28:51 PM
+      - cell "published, unpublished changes"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-closing Export aidlc-full-v1-closing Delete aidlc-full-v1-closing":
+        - link "Edit aidlc-full-v1-closing":
+          - /url: /app/loops/01M4A20B1QPZNYG5A1AMPW711P/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-closing": Export
+        - status
+        - button "Delete aidlc-full-v1-closing": Delete
+    - row "aidlc-full-v1-parent Manual bounded sequential planning, implementation, review/fix, PR/CI, merged QA/rework, closing and ParentReport. Updated 10/6/2026, 11:41:07 PM published never run Edit aidlc-full-v1-parent Export aidlc-full-v1-parent Delete aidlc-full-v1-parent":
+      - cell "aidlc-full-v1-parent Manual bounded sequential planning, implementation, review/fix, PR/CI, merged QA/rework, closing and ParentReport. Updated 10/6/2026, 11:41:07 PM":
+        - link "aidlc-full-v1-parent":
+          - /url: /app/loops/01M4A20B5KQQVB63NHGP5JF0WV/edit
+        - paragraph: Manual bounded sequential planning, implementation, review/fix, PR/CI, merged QA/rework, closing and ParentReport.
+        - paragraph:
+          - text: Updated
+          - time: 10/6/2026, 11:41:07 PM
+      - cell "published"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-parent Export aidlc-full-v1-parent Delete aidlc-full-v1-parent":
+        - link "Edit aidlc-full-v1-parent":
+          - /url: /app/loops/01M4A20B5KQQVB63NHGP5JF0WV/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-parent": Export
+        - status
+        - button "Delete aidlc-full-v1-parent": Delete
+    - row "aidlc-full-v1-planning Two configurable planner slots selected by Jev Choice; uncertain selection gets forced-schema LLM judgement. Updated 10/6/2026, 11:41:06 PM published never run Edit aidlc-full-v1-planning Export aidlc-full-v1-planning Delete aidlc-full-v1-planning":
+      - cell "aidlc-full-v1-planning Two configurable planner slots selected by Jev Choice; uncertain selection gets forced-schema LLM judgement. Updated 10/6/2026, 11:41:06 PM":
+        - link "aidlc-full-v1-planning":
+          - /url: /app/loops/01M4A1ZWQA1G8AWNJXRC8VKQXY/edit
+        - paragraph: Two configurable planner slots selected by Jev Choice; uncertain selection gets forced-schema LLM judgement.
+        - paragraph:
+          - text: Updated
+          - time: 10/6/2026, 11:41:06 PM
+      - cell "published"
+      - cell "never run"
+      - cell "Edit aidlc-full-v1-planning Export aidlc-full-v1-planning Delete aidlc-full-v1-planning":
+        - link "Edit aidlc-full-v1-planning":
+          - /url: /app/loops/01M4A1ZWQA1G8AWNJXRC8VKQXY/edit
+          - text: Edit
+        - button "Export aidlc-full-v1-planning": Export
+        - status
+        - button "Delete aidlc-full-v1-planning": Delete
+    - 'row "aidlc-trial-codex-first A bounded real-worker scratch trial: plan, implement, fresh same-family review, local tests, candidate QA and evidence verification. No GitHub, merge or issue closure. Pre-existing scratch workspace only; external admission must validate path, model availability and confinement. Admission enforces temp/gg-aidlc-trial isolation and the locked checklist. Updated 10/6/2026, 8:37:21 PM published never run Edit aidlc-trial-codex-first Export aidlc-trial-codex-first Delete aidlc-trial-codex-first"':
+      - 'cell "aidlc-trial-codex-first A bounded real-worker scratch trial: plan, implement, fresh same-family review, local tests, candidate QA and evidence verification. No GitHub, merge or issue closure. Pre-existing scratch workspace only; external admission must validate path, model availability and confinement. Admission enforces temp/gg-aidlc-trial isolation and the locked checklist. Updated 10/6/2026, 8:37:21 PM"':
+        - link "aidlc-trial-codex-first":
+          - /url: /app/loops/01M4A043CKM48M448VXVK33KFX/edit
+        - paragraph: "A bounded real-worker scratch trial: plan, implement, fresh same-family review, local tests, candidate QA and evidence verification. No GitHub, merge or issue closure. Pre-existing scratch workspace only; external admission must validate path, model availability and confinement. Admission enforces temp/gg-aidlc-trial isolation and the locked checklist."
+        - paragraph:
+          - text: Updated
+          - time: 10/6/2026, 8:37:21 PM
+      - cell "published"
+      - cell "never run"
+      - cell "Edit aidlc-trial-codex-first Export aidlc-trial-codex-first Delete aidlc-trial-codex-first":
+        - link "Edit aidlc-trial-codex-first":
+          - /url: /app/loops/01M4A043CKM48M448VXVK33KFX/edit
+          - text: Edit
+        - button "Export aidlc-trial-codex-first": Export
+        - status
+        - button "Delete aidlc-trial-codex-first": Delete
+- status:
+  - text: A new version is available
+  - button "Update"
+  - button "Later"
+```
+
+# Test source
+
+```ts
+  270 |       await expect(state).toBeVisible();
+  271 |       await state.scrollIntoViewIfNeeded();
+  272 |       await page.evaluate(() => document.fonts.ready);
+  273 |       // Visibility and the DOM text alone miss ellipsis clipping. Measure the rendered text
+  274 |       // against its own box, the badge, and every clipping ancestor up to the viewport.
+  275 |       const clipped = await state.evaluate((el) => {
+  276 |         if (el.scrollWidth > el.clientWidth) return true;
+  277 |         const range = document.createRange();
+  278 |         range.selectNodeContents(el);
+  279 |         for (const rect of range.getClientRects()) {
+  280 |           if (rect.left < 0 || rect.right > innerWidth) return true;
+  281 |           for (let parent: Element | null = el; parent; parent = parent.parentElement) {
+  282 |             const css = getComputedStyle(parent);
+  283 |             const box = parent.getBoundingClientRect();
+  284 |             const left = box.left + parent.clientLeft;
+  285 |             const top = box.top + parent.clientTop;
+  286 |             if (
+  287 |               /^(auto|scroll|hidden|clip)$/.test(css.overflowX) &&
+  288 |               (rect.left < left - 1 || rect.right > left + parent.clientWidth + 1)
+  289 |             )
+  290 |               return true;
+  291 |             if (
+  292 |               /^(auto|scroll|hidden|clip)$/.test(css.overflowY) &&
+  293 |               (rect.top < top - 1 || rect.bottom > top + parent.clientHeight + 1)
+  294 |             )
+  295 |               return true;
+  296 |           }
+  297 |         }
+  298 |         return false;
+  299 |       });
+  300 |       expect(clipped, `${theme}: full publish state is readable`).toBe(false);
+  301 |       await geometry(page, 'Loops with unpublished changes');
+  302 |     });
+  303 | 
+  304 |     test('screens and transient states fit at 360, 768, 1024, and 1440 px', async ({
+  305 |       page,
+  306 |       request,
+  307 |     }, testInfo) => {
+  308 |       // Four viewports, every Settings section, and real outage probes share this test.
+  309 |       test.setTimeout(120_000);
+  310 |       const { loopId, runId } = await seed(request);
+  311 |       const keyed = await control(request, '/apps', { requireApiKey: true });
+  312 |       const evidence: { theme: string; state: string; scrollWidth: number; innerWidth: number }[] =
+  313 |         [];
+  314 |       const measure = async (state: string, scope?: Locator) => {
+  315 |         evidence.push({ theme, ...(await geometry(page, state, scope)) });
+  316 |       };
+  317 |       const screens = [
+  318 |         ['Loops', '/app/loops', 'responsive sweep'],
+  319 |         ['Editor', `/app/loops/${loopId}/edit`, 'Approve'],
+  320 |         ['Runs', '/app/runs', 'responsive sweep'],
+  321 |         ['New run', `/app/runs/new?loop=${loopId}`, 'Start run'],
+  322 |         ['Run inspector', `/app/runs/${runId}`, 'Input requested'],
+  323 |         ['Events', '/app/events', 'issue-opened'],
+  324 |         ['Settings', '/app/settings', 'GPT-5.5'],
+  325 |         ['404', '/app/nowhere', 'Page not found'],
+  326 |       ] as const;
+  327 |       for (const viewport of WIDTHS) {
+  328 |         await page.setViewportSize(viewport);
+  329 |         for (const [state, path, ready] of screens) {
+  330 |           await page.goto(path);
+  331 |           await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  332 |           await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
+  333 |           await measure(state);
+  334 |           if (state === 'Settings') {
+  335 |             for (const name of SETTINGS) {
+  336 |               const section = page.getByRole('region', { name, exact: true });
+  337 |               await expect(section).toBeVisible();
+  338 |               await measure(`Settings: ${name}`, section);
+  339 |             }
+  340 |           }
+  341 |         }
+  342 | 
+  343 |         await page.goto(`${String(keyed['url'])}/app/loops`);
+  344 |         await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+  345 |         await measure('API key panel', page.getByRole('form', { name: 'Enter API key' }));
+  346 | 
+  347 |         // A real query transport failure creates probe demand; /healthz also fails during the outage.
+  348 |         let probes = 0;
+  349 |         await page.route(
+  350 |           (url) => url.pathname === '/healthz',
+  351 |           async (route) => {
+  352 |             probes += 1;
+  353 |             await route.abort('connectionrefused');
+  354 |           },
+  355 |         );
+  356 |         await page.route(
+  357 |           (url) => url.pathname === '/loops',
+  358 |           (route) => route.abort('connectionrefused'),
+  359 |         );
+  360 |         await page.goto('/app/loops');
+  361 |         const offline = page
+  362 |           .getByRole('status')
+  363 |           .filter({ hasText: 'Cannot reach the GraphGoblin API' });
+  364 |         await expect(offline).toBeVisible();
+  365 |         await expect.poll(() => probes).toBeGreaterThan(0);
+  366 |         await measure('Offline banner (API outage)', offline);
+  367 |         await page.unrouteAll({ behavior: 'wait' });
+  368 | 
+  369 |         await page.goto('/app/loops');
+> 370 |         await expect(page.getByText('responsive sweep').first()).toBeVisible();
+      |                                                                  ^ Error: expect(locator).toBeVisible() failed
+  371 |         try {
+  372 |           const toast = await showWaitingWorker(page, request);
+  373 |           await measure('Update toast', toast);
+  374 |           await toast.getByRole('button', { name: 'Later' }).click();
+  375 |         } finally {
+  376 |           await control(request, '/worker/reset');
+  377 |         }
+  378 | 
+  379 |         // The same malformed Events test route used by screens.capture.ts exercises the real boundary.
+  380 |         await page.route(
+  381 |           (url) => url.pathname === '/events',
+  382 |           (route) =>
+  383 |             route.fulfill({
+  384 |               json: {
+  385 |                 items: [
+  386 |                   { id: 'broken', type: 'x', source: 'api', receivedAt: new Date().toISOString() },
+  387 |                 ],
+  388 |               },
+  389 |             }),
+  390 |         );
+  391 |         await page.goto('/app/events');
+  392 |         const error = page.getByRole('alert').filter({ hasText: 'This screen failed to render' });
+  393 |         await expect(error).toBeVisible();
+  394 |         await measure('Error boundary', error);
+  395 |         await page.unrouteAll({ behavior: 'wait' });
+  396 |       }
+  397 |       const path = testInfo.outputPath('scroll-widths.json');
+  398 |       await writeFile(path, JSON.stringify(evidence, null, 2) + '\n');
+  399 |       await testInfo.attach('scroll-widths', { path, contentType: 'application/json' });
+  400 |       const table = [
+  401 |         '| Screen / state | Theme | 360 px | 768 px | 1024 px | 1440 px |',
+  402 |         '| --- | --- | --- | --- | --- | --- |',
+  403 |         ...[...new Set(evidence.map((row) => row.state))].map((state) => {
+  404 |           const cells = evidence
+  405 |             .filter((row) => row.state === state)
+  406 |             .map((row) => `${row.scrollWidth} / ${row.innerWidth}`);
+  407 |           return `| ${state} | ${theme} | ${cells.join(' | ')} |`;
+  408 |         }),
+  409 |       ].join('\n');
+  410 |       const markdown = testInfo.outputPath('scroll-widths.md');
+  411 |       await writeFile(markdown, table + '\n');
+  412 |       await testInfo.attach('scroll-width table', { path: markdown, contentType: 'text/markdown' });
+  413 |     });
+  414 | 
+  415 |     test('all nine node dialogs fit their controls at 360 and 768 px', async ({
+  416 |       page,
+  417 |       request,
+  418 |     }) => {
+  419 |       const { loopId, kinds } = await seedDialogs(request);
+  420 |       for (const viewport of WIDTHS.slice(0, 2)) {
+  421 |         await page.setViewportSize(viewport);
+  422 |         await page.goto(`/app/loops/${loopId}/edit`);
+  423 |         for (const kind of kinds) {
+  424 |           await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
+  425 |           await page.keyboard.press('Enter');
+  426 |           const dialog = page.getByRole('dialog', { name: `Edit ${kind} ${kind}` });
+  427 |           await expect(dialog).toBeVisible();
+  428 |           await geometry(page, `${kind} dialog at ${viewport.width}`, dialog);
+  429 |           const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  430 |           if (await advanced.count()) {
+  431 |             await openAdvanced(dialog);
+  432 |             await geometry(page, `${kind} advanced at ${viewport.width}`, dialog);
+  433 |           }
+  434 |           if (kind === 'mutate') {
+  435 |             await openItem(dialog, 'Operations 1');
+  436 |             await geometry(page, `mutate operation at ${viewport.width}`, dialog);
+  437 |           }
+  438 |           await page.keyboard.press('Escape');
+  439 |           await expect(dialog).toHaveCount(0);
+  440 |         }
+  441 |       }
+  442 |     });
+  443 | 
+  444 |     test('the header navigation folds into a Menu at 360 px and shows its links at 768 px', async ({
+  445 |       page,
+  446 |     }) => {
+  447 |       await page.setViewportSize({ width: 360, height: 780 });
+  448 |       await page.goto('/app/loops');
+  449 |       const menu = page.getByRole('button', { name: 'Menu' });
+  450 |       const nav = page.getByRole('navigation', { name: 'Main' });
+  451 |       await expect(menu).toBeVisible();
+  452 |       await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  453 |       await expect(nav.getByRole('link', { name: 'Runs' })).toBeHidden();
+  454 |       await menu.click();
+  455 |       await expect(menu).toHaveAttribute('aria-expanded', 'true');
+  456 |       for (const name of ['Loops', 'Runs', 'Events', 'Settings']) {
+  457 |         const link = nav.getByRole('link', { name });
+  458 |         await expect(link).toBeVisible();
+  459 |         // Each link is a full-width row at least 44 px tall.
+  460 |         expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  461 |       }
+  462 |       await nav.getByRole('link', { name: 'Runs' }).click();
+  463 |       await expect(page).toHaveURL(/\/app\/runs$/);
+  464 |       await expect(page.getByRole('heading', { level: 1, name: 'Runs' })).toBeVisible();
+  465 |       await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  466 |       await expect(nav.getByRole('link', { name: 'Loops' })).toBeHidden();
+  467 |       // Escape closes it from inside and gives focus back to Menu.
+  468 |       await menu.click();
+  469 |       await nav.getByRole('link', { name: 'Loops' }).focus();
+  470 |       await page.keyboard.press('Escape');
+```

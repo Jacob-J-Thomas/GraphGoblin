@@ -1002,7 +1002,9 @@ export interface paths {
         /** The current context thread */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    at?: number;
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -1043,6 +1045,8 @@ export interface paths {
                 query?: {
                     after?: number;
                     limit?: number;
+                    cursor?: string;
+                    around?: number;
                 };
                 header?: never;
                 path: {
@@ -1062,6 +1066,54 @@ export interface paths {
                             items: components["schemas"]["RunEvent"][];
                             nextAfter: number;
                             hasMore: boolean;
+                            olderCursor?: (string | null) | undefined;
+                            newerCursor?: (string | null) | undefined;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{id}/observation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Latest durable inspector evidence, independent of the retained history window */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            lifecycle?: components["schemas"]["RunEvent"] | undefined;
+                            exit?: components["schemas"]["RunEvent"] | undefined;
+                            gate?: components["schemas"]["RunEvent"] | undefined;
+                            finished?: components["schemas"]["RunEvent"] | undefined;
+                            cancelled?: components["schemas"]["RunEvent"] | undefined;
+                            cancelRequested?: components["schemas"]["RunEvent"] | undefined;
+                            freshSessionChoices: components["schemas"]["RunEvent"][];
                         };
                     };
                 };

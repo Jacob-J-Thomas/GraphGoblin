@@ -7,12 +7,18 @@ import { cancellationSummary, nodeName } from '../projections.js';
 /** Read-only evidence, separate from failure/resume eligibility and stream status. */
 export function ExecutionContext({
   run,
-  events,
+  cancellation,
+  cancellationUnavailable = false,
   definition,
   definitionLoading,
 }: {
   run: RunRecord;
-  events: readonly RunEvent[];
+  /**
+   * The latest cancellation and the request that led to it, read from the server for the whole
+   * run (never from the browsed window); undefined until that read answers.
+   */
+  cancellation: readonly RunEvent[] | undefined;
+  cancellationUnavailable?: boolean;
   definition: LoopDefinition | undefined;
   definitionLoading: boolean;
 }) {
@@ -30,18 +36,14 @@ export function ExecutionContext({
             : 'Pinned definition unavailable. Authored node and route labels are not recorded in the available history.'}
         </p>
       ) : null}
-      {events.length > 0 && (events[0]?.type !== 'run.queued' || !events[0].initialThread) ? (
-        <p className="text-sm text-muted">
-          Initial thread not recorded. Historical reconstruction uses the documented fallback and
-          may be incomplete.
-        </p>
-      ) : null}
       {run.status === 'cancelled' ? (
         <p className="text-sm wrap-anywhere">
-          {cancellationSummary(events) ??
-            ((events.at(-1)?.seq ?? 0) < run.lastEventSeq
-              ? 'Cancelled. Cancellation history is incomplete; actor not available yet.'
-              : 'Cancelled; terminal cancellation event not recorded, so its actor cannot be established.')}
+          {cancellation
+            ? (cancellationSummary(cancellation) ??
+              'Cancelled; terminal cancellation event not recorded, so its actor cannot be established.')
+            : cancellationUnavailable
+              ? 'Cancelled. The cancellation record could not be read.'
+              : 'Cancelled. Reading the cancellation record…'}
           {run.currentNodeId
             ? ` Recorded node position: ${nodeName(definition, run.currentNodeId)}.`
             : ' Node position not recorded.'}

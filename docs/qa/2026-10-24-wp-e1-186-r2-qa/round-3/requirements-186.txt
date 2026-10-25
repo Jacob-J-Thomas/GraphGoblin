@@ -1,0 +1,58 @@
+# #186 [I05/U14/B35] Bound streaming replay and slow-consumer buffering
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:architecture, area:web, area:api, backlog, kind:bolt, status:approved-held
+parent: #303 [I05/U14] Bound handling and repair measured costs
+sub-issues: -
+created: 2026-10-12T16:51:47Z updated: 2026-10-18T23:35:54Z
+
+## Body
+
+Part of #303
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B35 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Bound streaming replay and slow-consumer buffering
+
+## Acceptance criteria
+
+- [ ] Replay is paged and buffers are bounded; slow-reader handling uses recoverable cursors or an explicit failure without silently losing history. Reconnect preserves event ordering and visibility.
+
+- [ ] Bound temporary server/browser buffers and page replay while preserving stored history and the loop's intended context. Slow/disconnected readers recover in order from a cursor or receive an explicit stream failure; no silent gaps.
+
+## Verification
+
+Long cyclic run, slow/stalled reader, reconnect and per-run browser history; measure memory before/after.
+
+Slow/stalled consumers, reconnect, identical timestamps, older-history browsing during execution and before/after memory measurements.
+
+## Dependencies
+
+- #190 — B34
+- #279 — implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+The owner approved this bounded architecture/cutover plan. A materially different design, or a diagnostic result requiring broader scope, returns for explicit review before implementation.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#186
+
+
+## Comments (0)

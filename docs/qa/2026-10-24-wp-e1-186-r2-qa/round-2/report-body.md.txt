@@ -1,0 +1,141 @@
+# Independent QA round 2 - WP-E1 #186 round 2
+
+## 1. Verdict
+
+**FAIL** at **dc325b2fd8a4a40dda2c77789080fc822235dd69**. The round-1 zero-boundary defect is fixed in the exercised matrix. A separate merged-inspector regression loses recorded cancellation context when browsing older history, and an extreme accepted cursor can return an invalid continuation. The required infrastructure gate also remains red under the recorded D-015 environment restriction.
+
+The verified local branch is `codex-qa-wp-e1-186-r2-2`; the implementation branch/PR identified by the brief is `codex-wp-e1-186-r2` / #405. Worktree: `%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-2`. Comparison base: `d33ac0e56be9f559ab88c60ac204e4efdc123501`. [Environment and documentation scan](environment.json), [requested source diff](source.diff.txt).
+
+This is independent QA, not implementation or review. No sub-agent, production-source edit, Git-index action, commit, branch switch, GitHub write or owner-instance operation was performed. Round 1's files are unchanged. The only deliverable changes are this round-2 evidence folder; ignored build/coverage/scratch output remains for the orchestrator. Final source/head status is recorded below with the retained artifacts.
+
+### Environment and provenance
+
+Node **v22.14.0** was first on PATH for builds, gates and scripts. Dependencies were already populated, and no install, dependency link or junction was used. `pnpm build` passed before gateway/browser work. No pnpm store-lock fallback was needed.
+
+The principal built gateway used real Node PID **10360**, HTTP **6150**, control **6151**, and the fresh file-backed store `%USERPROFILE%\AppData\Local\Temp\gg-qa-e1-186r2-2-4zxDM0`. The real webhook receiver used **6154**. A separate restart experiment used **6156/6157**, store `%USERPROFILE%\AppData\Local\Temp\gg-qa-e1-186r2-2-restart-2hsFUa`, and real PIDs **54096 -> 46152**. It minted its authentication key through the built `main.js --create-api-key` CLI before starting the gateway. Test-specific admin/read/wrong-scope/other-owner keys in the main fixture were created through the public repository interface. The CLI token is redacted in retained logs.
+
+Microsoft Edge ran headlessly through installed Playwright against this worktree's built web assets. Service workers were blocked to make the executable revision explicit. Inference/classifier/decider content is **fake-only**. HTTP, SQLite, SSE transport/parser, browser rendering/downloads, process exit/restart and webhook delivery used real components and processes. Small exact-count logs, missing-actor evidence and recorded classifier probabilities were constructed through supported repository/event-store interfaces; those synthetic histories are identified in their scripts. The decisive cancellation reproduction used a real long run and the public cancellation route, without synthetic post-cancellation events.
+
+**D-015 registered:** native process-tree termination is denied in this sandbox. Forced descendant termination/cleanup is not established. Native process inventory through `Get-CimInstance Win32_Process` also returned Access denied. Graceful exits of the two restart processes were verified with exit code 0; this does not establish forced descendant termination.
+
+**Gate-fixture environment deviation:** the API gate was launched without the supported `GG_TEST_PORT_START`, `GG_TEST_PORT_COUNT` and `GG_TEST_STORE_PREFIX` overrides. Its standard subprocess fixture therefore chose from its default 5600-5699 range and `gg-api-process-` prefix; other existing unit fixtures also retain their own temporary names. This is a QA execution deviation, not a feature defect. It was not repeated. All independently managed gateway, control and receiver processes used 6150-6159 and the required `gg-qa-e1-186r2-2-` store prefix. No owner port/store was used. Later dependency-gate commands carry the restricted fixture overrides.
+
+## 2. Defects
+
+### QA-186R2-002 - major - browsing older history drops the recorded cancellation actor
+
+1. Start the retained fake-harness cyclic workload; allow it to exceed 700 events while still running.
+2. Cancel through `POST /runs/{id}/cancel` using the fixture's API key. In the decisive reproduction, run `01M5S33YPB7AA4FFCD7F8B65G0` ended with **723 events**: event **721** is `run.cancel_requested` with the API-key actor, and event **723** is `run.cancelled`.
+3. Open the inspector at the live end. Execution context correctly names the actor.
+4. Enter **50** in Event sequence and choose **Go to event**. The window freezes at **1-50** while the acknowledged run history remains 723 events.
+
+Expected: whole-run Execution context retains the recorded cancellation identity while browsing another event/window. Actual: it replaces that identity with **"Cancelled. Cancellation history is incomplete; actor not available yet."** The completed durable history and the actor did not change. The condition persists in the frozen window; there is no pending cancellation read that will resolve it.
+
+Evidence: [exact observed context, window and cancellation events](cancellation-defect.json), [recorded events 721/723](long-cancel-events.json), [reproduction script](merged-followup.mjs.txt), [results](merged-followup-results.json), [browsed accessibility snapshot](long-cancel-browsed.aria.txt), and screenshots at [1440 dark](verified-cancel-1440-dark.png), [1440 light](verified-cancel-1440-light.png), [390 dark](verified-cancel-390-dark.png), [390 light](verified-cancel-390-light.png).
+
+A separate synthetic post-terminal suffix makes the statement stronger and false: with the cancellation and actor evicted but the retained suffix reaching the run's last sequence, the inspector says **"terminal cancellation event not recorded"**, even though it is durable. [Synthetic case and exact actor](merged-fixtures.json), [rendered text](cancellation-outside.aria.txt), [screenshot](cancellation-outside.png), [script/results](merged-inspector-results.json).
+
+Location confirmed from current source: `RunInspectorPage.tsx:204` supplies only `log.events` to ExecutionContext; `ExecutionEvidence.tsx:35-38` derives the cancellation summary and its history claims from that retained slice. No fix was made.
+
+### QA-186R2-003 - minor - maximum safe newer cursor returns an invalid older cursor
+
+This is an adversarial numeric boundary, not an ordinary UI-generated cursor sequence. Using the public built `historyCursor` helper, encode `{runId, seq: 9007199254740991, direction: "newer"}` for an existing run. GET `/runs/{id}/events?cursor={cursor}&limit=1` accepts it with HTTP **200**, `items: []`, and `nextAfter: 9007199254740991`. Its returned `olderCursor` encodes **9007199254740992**. Following that server-returned cursor receives HTTP **400**, `INVALID_CURSOR`, **"Choose a cursor returned by this run history."** The neighbouring accepted value 9007199254740990 returns a valid continuation and event 1778.
+
+Expected: an accepted page supplies a valid continuation to the durable tail, or rejects the unsupported boundary up front. Actual: its own emitted continuation is unusable. The input cursor is constructed for this adversarial test and passes the API's canonical/safe-integer validation; no normal browser navigation is claimed to produce that initial extreme value.
+
+Evidence: [both numeric cases and complete responses](numeric-edge-results.json), [reproduction script](numeric-edge.mjs.txt), [log](numeric-edge.log.txt). Source: `events.window` adds one to the empty newer position for `olderThan`, while the cursor decoder requires a safe integer. [Retained source excerpts](source-excerpts.txt). No fix was made.
+
+### Required gate failure - D-015-limited native process tests
+
+`pnpm.cmd --filter @graphgoblin/infrastructure test:coverage` failed: **6 failed / 791 passed**, **4 failed / 51 passed files**. Seven failure blocks include a duplicate test's assertion and cleanup error:
+
+- ProcessScripts child/grandchild abort: EBUSY cleanup.
+- Claude transport deadline/output overflow: EBUSY cleanup.
+- Already-aborted/running Claude cancellation: EBUSY cleanup.
+- Claude descendant termination: marker grew from 9 to 14 characters; EBUSY cleanup also failed.
+- Claude readiness hang: expected deadline wording, received "did not confirm that it stopped" wording.
+- Incomplete-UTF-8 process cancellation: child PID remained detectable when the test expected it to be gone.
+
+[Complete command output](infrastructure.log.txt). These are unresolved gate results under D-015, not six attributed #186 regressions. The gate did not emit a coverage summary; no fabricated percentage or narrowed replacement denominator is presented. There was **no ordinary timing/timeout failure in an untouched test file** in this gate run, so no such isolated diagnostic rerun was applicable. The round-1 SQLite timing failure did not recur here. No native suite was retried to green.
+
+### Additional observation requiring qualification
+
+An extra three-tab viewport sweep timed out clicking **Show all of Exact recorded event** for the 600,000-character intrinsic value in a background Edge page. The earlier focused disclosure/full-value/download experiment passed. The extra sweep also used the wrong region name for an evaluation screenshot. Its partial results and script are retained; it is not counted as a clean matrix pass. Any corrected foreground download/viewport results are recorded separately below. This does not establish reliable arbitrary-size expanded rendering; general large-value rendering belongs to #259.
+
+After that sweep and the other QA jobs finished, its timing observation received **one isolated foreground diagnostic**, with no other QA test executing. It passed: the Show-all click completed in **10,382 ms**, and the expanded JSON equalled the durable event. [Initial sweep](evidence-matrix-results.json), [isolated result](expansion-isolated-results.json), [script](expansion-isolated.mjs.txt). Both results stand; the host remained shared. The diagnostic metadata spells its production component in PascalCase; the actual unchanged source filename is `apps/web/src/components/ui/bounded-value.tsx`.
+
+## 3. Coverage of criteria
+
+Touched systems: SQLite window bounds/order/validation and indexed observations; REST history/thread/observation reads and authorization; API-client cursor resources and typed SSE recovery; domain carried replay; browser retention/persistence/migration and independent acknowledgement; older/newer/seek/live browsing; pinned definition labels; selected exact payloads/downloads; thread/patch/variables/counters; status/failure/result/exit/gate/delivery/cancellation projections; progress groups; Timeline DOM/keyboard/focus/layout; generated API docs and performance measurement.
+
+| Requirement / system | Steps and expected result | Actual / status | Evidence |
+| --- | --- | --- | --- |
+| #186 acceptance: paged replay, bounded buffers, explicit recoverable slow-reader handling; no silent gaps | Stalled real socket, typed failure, resume from last complete event and compare complete durable log | **Passed exercised cases:** pause 6,100 ms, typed 503 `SSE_SLOW_CONSUMER`; 18 complete events + 64 resumed = all 82, zero gaps/duplicates | [Native result](native-slow-reader.json), [raw accepted/partial stream](paused-stream.log.txt), [script](native-slow-reader.mjs.txt) |
+| #186 acceptance: preserve stored history and intended context with bounded browser history | Long small-event and payload-heavy runs; compare retained suffix and server-resolved threads to fresh full replay | **Passed exercised cases:** 512-row/count bound; byte-heavy completed run 3,008 events retains 79 rows / 1,012,262 estimated bytes | [API](api-results.json), [live results](live-verified-results.json), [variables/progress](vars-progress-results.json) |
+| QA-186R2-001 fix: zero, tail, beyond-tail, around/page edges, every returned neighbouring cursor | One-, two-, 1,003-event logs; limits 1/2/500; traverse both sides and validate each returned cursor against a fresh full read | **Passed 56 cases:** 28,736 HTTP reads, 9,625 validated pages, 19,111 neighbouring edges. Zero has `nextAfter: 0`; empty newer past-tail pages lead back to the tail; no missing/duplicate event | [Matrix and response excerpts](cursors-results.json), [script](cursors.mjs.txt), [log](cursors.log.txt) |
+| Extreme accepted newer cursor | Follow the older cursor returned from an empty page at each of the top two safe integers | **1 passed / 1 failed:** maximum-safe position emits an unsafe older bound and its continuation fails with 400 | [Numeric responses](numeric-edge-results.json), [script](numeric-edge.mjs.txt) |
+| REST validation/auth/owner isolation and paged historical thread | Malformed/cross-run cursors, mixed queries, numeric boundaries, wrong scope/owner/no key; thread boundaries 0, 127/128/129, 511/512/513 and checkpoint neighbours | **52/52 passed**, including exact full-replay comparisons and observation after 750 later rows | [Results](api-results.json), [retained full oracle](api-full.json), [script](api.mjs.txt) |
+| Older/newer browsing, evicted selection, independent ack and reload | Freeze visible membership, advance live acknowledgement, reload and verify reopened `after` and unchanged visible window | **Passed:** frozen 522-600, ack 756 -> 796; reload resumes after 796. Four controlled recovery cases pass | [Live](live-verified-results.json), [recovery](recovery-results.json), [browser checks](browser-results.json) |
+| Typed stream-error disclosure and live join | Inject a public HTTP `stream.error`, observe it, reconnect to real gateway after last complete event, browse/reload/follow | **Passed:** error visible; reconnect after 600; exact retained suffix, separate tabs and patch before/after verified | [Results](recovery-results.json), [visible error](slow-consumer-note.png), [script](recovery.mjs.txt) |
+| Whole-history projections beyond the retained window | Evict failure/delivery/exit/gate/finish; compare UI with record/full log/current and selected server thread | **Passed for status, failure, delivery/result, exit, gate, finish, threads, variables, counters and retained progress. Cancellation context failed separately.** | [Projection results](projection-verified-results.json), [failure](failure-verified.aria.txt), [delivery](delivery-verified.aria.txt), [variables](vars-progress-results.json), [merged follow-up](merged-followup-results.json) |
+| #255 pinned labels and exact values in merged inspector | Timeline live/older, patch title, messages, progress; rename current draft and retain original run version; inspect/download normal event inside/outside retained history | **Passed exercised cases:** Pinned Worker / Pinned Gate / Pinned Again remain, event 12 downloads match at 1,044 bytes and SHA-256 `539b69139fbccbb488ab9f4d37a8cf8b719d12b6a27612b16e4c8b72a0d8ca2f` | [Merged results](merged-inspector-results.json), [corrected follow-up](merged-followup-results.json), [inside exact bytes](inside-window-download.json), [outside exact bytes](outside-window-download.json), [renamed draft](renamed-draft.json) |
+| #255 oversized uncached event | Select event 753 from outside history, select another event and reselect it within the browsed window; compare exact disclosure and downloads | **Passed focused case:** ID-only marker `work, 1 change, 1 ms`; 1,200,263-byte exact downloads have identical SHA-256 `ee4ef43ef03ae6bba4114566e13e1fb08f6d12928301bd54fd251293ba6a7ad4`; row remains uncached, 128 retained rows / 36,750 estimated bytes | [Results](oversized-verified-results.json), [script](oversized-verified.mjs.txt), [screenshot](oversized.png), [omitted bytes inventory](NOT-KEPT.md) |
+| #255 readable probabilities / honest missing labels or actor | Recorded classifier probabilities 0.123456/0.876544; missing actor; controlled pinned-version 404 | **Passed focused cases:** 12.35% / 87.65%, exact numeric title; explicit labels-unavailable and actor-not-recorded text | [Merged results](merged-inspector-results.json); final viewport sweep below |
+| Timeline 1440/390, both themes, keyboard/focus and 80-row ceiling | Home/End/Arrow/PageDown/Enter, persistent controls, selection, follow; inspect four screenshot pairs | **Passed four original viewport cases and four merged-label/cancellation layout cases:** no document overflow, <=80 rows | [Browser results](browser-results.json), [merged follow-up](merged-followup-results.json), screenshots in inventory |
+| Restart and binary-created authentication | Fresh second store, CLI key, real graceful exit and new process on same store; compare events and thread boundaries and use key in Edge | **6/6 passed:** PIDs 54096 -> 46152, 1,608 identical events, historical thread equality and old inspector selection | [Result including redacted CLI and process logs](restart-results.json), [script](restart.mjs.txt), [browser](restart-browser.png) |
+| Repository bounded-history browser spec | Run unchanged `bounded-history.spec.ts` in Edge against already built gateway, with QA-only config/auth and no default e2e server | **1 passed**, 37.5 s test / 58.1 s runner; retries 0 | [Command log](bounded-spec-command.log.txt), [config](playwright.config.mjs.txt), [runner](bounded-spec.mjs.txt) |
+| Timeline DOM/heap measurement after only | Repeat 500-pass / 3-item / 32-character-padding workload, sample CDP heap/cache/DOM through 6,008 events | **Measured:** 172 samples; peak 80 rows / 400 descendants; peak heap 42,494,628 bytes; post-GC 12,725,372 bytes; peak framed cache 348,434 bytes | [Samples](benchmark-verified-results.json), [script](benchmark-verified.mjs.txt), [screenshot](measurement-after.png) |
+| Changed docs encoding, routes and references | Scan UTF-8 changed docs for double-encoding/BOM and run generated-doc gate | **Passed:** zero suspicious sequences in 07, 09, 10, ADR-0050, generated API reference; `check:docs` passed | [Document hashes/scan](environment.json), [gate](docs.log.txt), [diff](source.diff.txt) |
+
+The after-only benchmark's host busy fraction was **0.8814**, with 154,533 ms observation duration. These are actual samples on a shared host, not a quiet-host latency SLA or a new causal before/after claim. Round 1 retains the earlier before figures; this report does not claim to rerun them.
+
+Progress is intentionally scoped to the **retained window** under ADR-0050. Its group count was compared to the corresponding full-read slice, and the UI scope sentence was checked. The variable workload preserved 150 history entries and exact work/gate visits; selected evicted event 203 showed before-count 39 / after-count 40. Server thread evidence starts from stored `initial_thread`; the obsolete "Initial thread not recorded" fallback was absent.
+
+### Harness failures, finite corrections and unresolved checks
+
+All initial outputs remain linked. No product failure was silently converted into a pass:
+
+- `browser` reused an obsolete exact exit string (it omitted `(done)`) and incorrectly demanded exactly 512 rows after Follow live. The supported implementation may retain a shorter exact suffix. The focused merged follow-up verified `Done (done): Exited: success` and an exact 128-row suffix ending at 1453.
+- The first merged script selected history and then reloaded. Its expectation that this discarded the frozen window was wrong. A fresh page supplied the intended evicted-window setup for the follow-up.
+- Its first oversized follow-up compared the exact payload successfully but then passed a metadata object directly to `writeFile`. The corrected focused script serializes that metadata and verifies both full downloads; the initial failure remains recorded.
+- The first webhook projection helper sent an empty JSON Content-Type request to publish. The corrected request body `{}` passed the failure/delivery projection checks.
+- The first heavy-live script supplied progress summaries beyond the current 2,000-character contract, so those items did not create the intended payload-heavy window. Its downstream history assumptions consequently failed. The corrected workload uses 40,000-character fake inference outputs through the supported harness port; all four live checks passed. This is a changed fixture, not a retry of a product defect.
+- The first benchmark sampled before the session cache existed (undefined count, zero rows). The corrected sampler waits for the public persisted acknowledgement before taking any numeric sample; its complete sample curve is retained.
+- The extra viewport sweep's oversized Show-all timeout remains an observation. Its evaluation screenshot region name was wrong. Foreground, bounded-disclosure/download evidence is reported separately; no claim that all full expansions passed is made.
+
+### Not established / limits
+
+- Forced native descendant shutdown/cleanup and a passing full infrastructure coverage gate remain D-015-limited.
+- No live provider turns, paid-provider acceptance, PWA offline/update installation, full application e2e suite, Linux native signals, or owner product acceptance were run or claimed.
+- General arbitrary-size expanded rendering and all of #259's acceptance are not completed by this bounded #186 QA. One explicitly requested intrinsic payload can exceed the retention budget transiently; it remains exact and is not cached as a full event.
+- The viewport expansion observation is kept even if later foreground exact-download cases pass. It is not erased by those narrower successes.
+
+### Gates
+
+All commands used Node 22.14.0. The gate table and individual case ledger below are generated from retained outputs. Coverage summaries: web **98.71% lines / 94.44% branches**; API **97.49% / 92.11%**; API client **100% / 98.39%**; domain **98.48% / 95.81%**. Infrastructure did not emit percentages after its failed tests. No threshold was lowered, no coverage exclusion was added, and no replacement narrowed gate is called a full pass. Licences are not applicable because the requested diff changes no dependency manifest/lockfile.
+
+<!-- GATES -->
+
+### Final viewport evidence
+
+<!-- VISUAL -->
+
+### Individual check ledger
+
+Each row names the case and the exact executable script that supplies its ordered steps and assertions. Expected behavior is stated by the case and the criterion table above; actual excerpts below are abbreviated, with full responses/numbers/errors in the linked JSON. Initial harness failures and the failed extra sweep remain failures in this ledger; overlapping cases are not counted as unique product tests.
+
+<!-- CHECKS -->
+
+## 4. Report path and evidence folder
+
+Report: `docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2/README.md`. Evidence folder: the same `round-2/` directory. Executable QA scripts are retained as `.mjs.txt`; copy them back into the ignored `.tmp/qa186r2/` directory using `.mjs` names for the same relative imports. Logs end in `.log.txt`. Run scripts with Node 22 first on PATH. The report's inventory links every retained artifact. Captures above 1,000,000 bytes are listed with size/SHA-256 in [NOT-KEPT.md](NOT-KEPT.md), and are not cited as retained exact captures. [Normalization record](normalization.json) identifies any local-path/BOM normalization of text evidence; [artifact manifest](artifact-manifest.json) records retained byte sizes and digests. A digest for a downloaded value refers to its original downloaded bytes.
+
+<!-- INVENTORY -->
+
+## 5. Observations outside scope
+
+- D-015 native process failures require unrestricted follow-up. No attempt was made to terminate the owner's processes or use denied native tree-kill operations.
+- The background-tab intrinsic-value expansion stall remains outside a general #259 rendering acceptance claim. The failed extra sweep and its exact point of progress are retained and identified as partial where applicable.
+- Existing test fixtures perform their normal temporary setup/teardown; no directory cleanup command was issued by this QA worker. Generated `dist`, coverage folders, `.tmp/qa186r2`, browser-runner scratch output, all disposable stores and any denied-cleanup native descendants are left for orchestrator cleanup. No owner store or paid-provider quota was used.
+
+<!-- FINAL -->

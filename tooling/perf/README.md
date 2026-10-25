@@ -203,3 +203,7 @@ only `replay --passes=100`, `browser --passes=100`, and `readiness`.
 See [the measured baseline](../../docs/qa/2026-10-18-sustained-run-measurements.md)
 for results, load conditions, attribution limits, and the finite follow-on list.
 Short observer tests run with tooling's normal tests; measurements never do.
+
+Browser observations additionally record firstRowsMs (first rows observed after the shell readiness check), Timeline descendant node count per sample and its peak. The workload, readiness cursor target, sampling interval and existing tests are unchanged. The first-row value is an observation upper bound, not a mutation timestamp or Web Vital. Round-2 evidence pairs the same aged browser workload before/after windowing.
+
+Loaded-history readiness also checks that the rendered Timeline tail reaches the pre-navigation target. This is equivalent to the old item/heading criterion for an unbounded Timeline, and prevents a paused or empty row window from qualifying solely through its live acknowledgement. Heap, DOM, storage sampling and first-row observation are unchanged.

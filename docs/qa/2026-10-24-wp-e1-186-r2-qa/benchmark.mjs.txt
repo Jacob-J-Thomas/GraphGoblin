@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {cpus} from 'node:os';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa',results=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const cpu=()=>cpus().reduce((a,c)=>({idle:a.idle+c.times.idle,total:a.total+Object.values(c.times).reduce((s,x)=>s+x,0)}),{idle:0,total:0});
+for(const [label,port] of [['before',6153],['after',6151]]){
+ const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:'+port+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+ const c=await ctl('/connection');await ctl('/idle');
+ const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
+ await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ const run=await ctl('/start',{passes:500,delay:1,items:3,payload:32});
+ const begin=Date.now(),startCPU=cpu(),samples=[];
+ const result={label,source:label==='before'?'498da565d445113116495301691e5e284d0e3d42':'bf9935754dcfbdef80b8d978fb2e605a5111b7f5',runId:run.id,workload:{passes:500,delayMs:1,itemsPerTurn:3,summaryPadding:32,growContext:false},errors,samples};
+ results.push(result);
+ try{
+ await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();
+ const cdp=await context.newCDPSession(page);await cdp.send('Performance.enable');
+ let terminal=false,total=0;
+ for(let i=0;i<240;i++){
+  const cache=await page.evaluate(id=>{const raw=sessionStorage.getItem('graphgoblin-run-events-v4')??'';const log=raw?JSON.parse(raw).state.runs[id]:null;return {count:log?.events.length+(log?.uncached?.length??0),cacheUTF16Bytes:raw.length*2,retainedUTF16Bytes:log?.bytes,ack:log?.lastSeq};},run.id);
+  const heap=await cdp.send('Runtime.getHeapUsage');
+  samples.push({elapsedMs:Date.now()-begin,heapUsed:heap.usedSize,heapTotal:heap.totalSize,rows:await list.getByRole('listitem').count(),timelineDescendants:await list.locator('*').count(),...cache});
+  if(label==='after'){assert.ok(cache.count<=512);assert.ok(cache.retainedUTF16Bytes<=1048576);assert.ok(samples.at(-1).rows<=80);}
+  if(i%3===0){const state=await (await fetch(c.url+'/runs/'+run.id,{headers:{authorization:'Bearer '+c.keys.reader}})).json();terminal=['succeeded','failed','cancelled'].includes(state.status);total=state.lastEventSeq;result.status=state.status;}
+  await writeFile(out+'/before-after-results.json',JSON.stringify(results,null,2));
+  if(terminal&&cache.ack>=total)break;
+  await sleep(750);
+ }
+ await ctl('/idle');const state=await (await fetch(c.url+'/runs/'+run.id,{headers:{authorization:'Bearer '+c.keys.reader}})).json();assert.equal(state.status,'succeeded');assert.ok(state.lastEventSeq>5000);
+ await cdp.send('HeapProfiler.collectGarbage');await sleep(200);
+ const collected=await cdp.send('Runtime.getHeapUsage');
+ const full=await ctl('/oracle',{runId:run.id,full:true});await writeFile('.tmp/qa186/benchmark-'+label+'-full.json',JSON.stringify(full));
+ Object.assign(result,{pass:true,total:full.total,postGCHeapUsed:collected.usedSize,peakHeapUsed:Math.max(...samples.map(x=>x.heapUsed)),peakCacheUTF16Bytes:Math.max(...samples.map(x=>x.cacheUTF16Bytes)),peakRows:Math.max(...samples.map(x=>x.rows)),peakTimelineDescendants:Math.max(...samples.map(x=>x.timelineDescendants)),durationMs:Date.now()-begin});
+ await list.scrollIntoViewIfNeeded();await page.screenshot({path:out+'/measurement-'+label+'.png'});
+ }catch(e){Object.assign(result,{pass:false,error:String(e).slice(0,3000)});}
+ const finishCPU=cpu();result.hostBusyFraction=1-(finishCPU.idle-startCPU.idle)/(finishCPU.total-startCPU.total);
+ await context.close();await browser.close();await writeFile(out+'/before-after-results.json',JSON.stringify(results,null,2));
+}
+console.log(JSON.stringify(results.map(({samples,...rest})=>({...rest,samples:samples.length}))));

@@ -1,0 +1,73 @@
+import { readFile, writeFile, mkdir, readdir, cp } from 'node:fs/promises';
+import { resolve, join, dirname, relative } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5');
+const qa = resolve('apps/web/.tmp/qa5');
+await mkdir(join(qa, 'e2e'), { recursive: true });
+await mkdir(join(qa, 'testing'), { recursive: true });
+await cp('apps/web/dist', join(qa, 'dist'), { recursive: true });
+const clean = (s) => s.replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%');
+const url = (p) => pathToFileURL(resolve(p)).href;
+const transformations = [];
+async function copy(from, to, mutate, keep = false) {
+  const original = await readFile(from, 'utf8');
+  const next = mutate(original).replace(/file:\/\/\/[^'"\s]+\.js/g, (p) => {
+    for (const extension of ['.ts', '.tsx']) if (existsSync(fileURLToPath(p.slice(0, -3) + extension))) return p.slice(0, -3) + extension;
+    return p;
+  });
+  await writeFile(to, next);
+  transformations.push({ source: relative(root, from), target: relative(root, to), changes: original === next ? 'none' : 'QA environment/import relocation only' });
+  if (keep) await writeFile(join(out, 'harness-' + from.split('/').at(-1) + '.mjs.txt'), clean(next));
+}
+const relocate = (s, from) => s.replace(/(from\s+|import\s*)(['"])(\.{1,2}\/[^'"]+)\2/g, (match, prefix, quote, spec) => prefix + quote + url(join(dirname(from), spec)) + quote)
+  .replaceAll("'@graphgoblin/infrastructure/sqlite'", JSON.stringify(url('packages/infrastructure/src/sqlite/index.ts')))
+  .replaceAll("'@graphgoblin/infrastructure/sqlite/testing'", JSON.stringify(url('packages/infrastructure/src/sqlite/testing/index.ts')));
+await copy('apps/api/src/testing/test-app.ts', join(qa, 'testing/test-app.ts'), (s) => relocate(s, 'apps/api/src/testing/test-app.ts')
+  .replace(url('apps/api/src/testing/thread-history.js'), './thread-history.js')
+  .replace(url('apps/api/src/testing/fake-classifier.js'), './fake-classifier.js')
+  .replace("'gg-api-'", "'gg-qa-e1-186r2-5-app-'")
+  .replace('await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);', '/* QA: retain disposable directory for orchestrator inspection. */'), true);
+await copy('apps/api/src/testing/thread-history.ts', join(qa, 'testing/thread-history.ts'), (s) => relocate(s, 'apps/api/src/testing/thread-history.ts').replace("'gg-wp-g1-116-'", "'gg-qa-e1-186r2-5-thread-'"), true);
+await copy('apps/api/src/testing/fake-classifier.ts', join(qa, 'testing/fake-classifier.ts'), (s) => s
+  .replace("server.listen(0, '127.0.0.1', resolve)", "server.listen(6153, `127.0.2.${++qaClassifier}`, resolve)")
+  .replace('http://127.0.0.1:${address.port}', 'http://${address.address}:${address.port}') + '\nlet qaClassifier = 0;\n', true);
+const source = resolve('apps/web/e2e');
+for (const name of await readdir(source)) {
+  if (!name.endsWith('.ts')) continue;
+  await copy('apps/web/e2e/' + name, join(qa, 'e2e', name), (s) => {
+    s = s.replaceAll("'@graphgoblin/api/testing'", "'../testing/test-app.js'");
+    s = s.replaceAll("'../src/", "'" + url('apps/web/src') + '/').replaceAll("'../scripts/", "'" + url('apps/web/scripts') + '/');
+    s = s.replace(/(mkdtemp\(join\(tmpdir\(\),\s*)'[^']*'/g, (match,prefix) => prefix + "'gg-qa-e1-186r2-5-" + match.slice(prefix.length + 1));
+    if (name === 'server.ts') s = s
+      .replace("const dist = resolve(", "let qaAux = 0;\nconst dist = resolve(")
+      .replace("host: '127.0.0.1',\n    port: id === 'main' ? Number(process.env['GG_E2E_MAIN_PORT'] ?? 0) : 0,", "host: id === 'main' ? '127.0.0.1' : `127.0.1.${++qaAux}`,\n    port: id === 'main' ? 6150 : 6152,")
+      .replace("server.listen(Number(new URL(instance.url).port), '127.0.0.1'", "server.listen(Number(new URL(instance.url).port), new URL(instance.url).hostname")
+      .replace("history.app.listen({ host: '127.0.0.1', port: 0 })", "history.app.listen({ host: `127.0.1.${++qaAux}`, port: 6152 })")
+      .replace("await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);", "/* QA: retain disposable directory. */");
+    if (name === 'global-setup.ts') s = s
+      .replace("const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');", `const webRoot = ${JSON.stringify(resolve('apps/web'))};`)
+      .replace("'e2e/server.ts'", "'.tmp/qa5/e2e/server.ts'");
+    if (name === 'shutdown.spec.ts') s = s.replaceAll('5980', '6154').replaceAll('5989', '6158');
+    if (name === 'webhook-delivery.spec.ts') s = s.replace("receiver.listen(0, '127.0.0.1', ok)", "receiver.listen(6159, '127.0.0.1', ok)");
+    if (name === 'stored-loop-defaults.spec.ts') s = s.replace("t.app.listen({ host: '127.0.0.1', port: 0 })", "t.app.listen({ host: '127.0.0.1', port: 6154 })").replace("await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }).catch(() => undefined);", '/* QA: retain disposable directory. */');
+    if (name === 'execution-evidence-setup.ts') s = s.replace('port: 6002', 'port: 6155');
+    if (name === 'issue-170-qa.spec.ts') s = s.replace('if (baselineDir) await rm(baselineDir, { recursive: true, force: true });', '/* QA: retain disposable baseline oracle. */');
+    if (name === 'issue-170-qa.spec.ts') s = s.replace("'../../../packages/contracts/src/__golden__/loop-every-field.json'", JSON.stringify(url('packages/contracts/src/__golden__/loop-every-field.json')));
+    return s;
+  }, ['server.ts', 'global-setup.ts'].includes(name));
+}
+const config = await readFile('apps/web/playwright.config.ts', 'utf8');
+await writeFile(join(qa, 'playwright.config.ts'), config.replace("testDir: 'e2e'", "testDir: './e2e'").replace("outputDir: 'test-results'", "outputDir: './results'").replace("globalSetup: './e2e/global-setup.ts'", "globalSetup: './e2e/global-setup.ts'"));
+await writeFile(join(out, 'harness-playwright.config.mjs.txt'), config.replace("outputDir: 'test-results'", "outputDir: './results'"));
+await writeFile(join(out, 'harness-adaptations.json'), clean(JSON.stringify(transformations, null, 2)));
+for (const [name, args] of [
+  ['source.diff.txt', ['diff', '9a3eded1', 'HEAD', '--', '.', ':!docs/qa']],
+  ['spec-changes-since-round3.diff.txt', ['diff', 'cf1a8bef', 'HEAD', '--', 'apps/web/e2e/qa.spec.ts', 'apps/web/e2e/inspector-large-values.spec.ts', 'apps/web/e2e/thread-history.spec.ts']],
+]) await writeFile(join(out, name), clean(execFileSync('git', args, { encoding: 'utf8', maxBuffer: 10_000_000 })));
+const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+await writeFile(join(out, 'environment.json'), clean(JSON.stringify({ head, node: process.version, cwd: root, branch: execFileSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).trim(), round4Present: false, browser: 'msedge', live: false, ports: [6150,6159], auxiliaryOrigins: '127.0.1.n:6152, classifiers 127.0.2.n:6153', note: 'Unique loopback addresses keep all original long-lived E2E auxiliary instances without exhausting the assigned ten ports. Assertions unchanged. Original service-worker policy, retries, timeouts, workers, viewport and browser settings retained.' }, null, 2)));
+console.log('QA-only Edge harness prepared; assertions unchanged.');

@@ -43,6 +43,13 @@ it('reads only the checkpoint event for a current terminal snapshot', async () =
   expect(await t.reader.getThread(t.run.id)).toEqual(reconcileThread(t.initial, t.history));
   expect(t.reads).toEqual([{ after: checkpoint.seq - 1, seqs: [checkpoint.seq] }]);
   expect(await t.engine.ports.runs.getThreadCheckpoint(t.run.id)).toEqual(checkpoint);
+  // A read bounded before the checkpoint does not see it; one at the checkpoint does.
+  expect(
+    await t.engine.ports.runs.getThreadCheckpoint(t.run.id, checkpoint.seq - 1),
+  ).toBeUndefined();
+  expect(await t.engine.ports.runs.getThreadCheckpoint(t.run.id, checkpoint.seq)).toEqual(
+    checkpoint,
+  );
 });
 it('catches up a completed checkpoint without replaying a duplicate completion patch', async () => {
   const t = await setup();

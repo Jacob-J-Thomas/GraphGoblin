@@ -1,0 +1,12 @@
+import assert from'node:assert/strict';
+import{readFile,writeFile}from'node:fs/promises';
+import{historyCursor}from'../../apps/api/dist/run-history.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const c=await(await fetch('http://127.0.0.1:6151/connection',{method:'POST',body:'{}'})).json(),runId=JSON.parse(await readFile('.tmp/qa186r2/run.json','utf8')).runId;
+const get=async query=>{const r=await fetch(c.url+'/runs/'+runId+'/events?'+query,{headers:{authorization:'Bearer '+c.keys.reader}});return{status:r.status,body:await r.json()};};
+const checks=[];
+for(const seq of[Number.MAX_SAFE_INTEGER-1,Number.MAX_SAFE_INTEGER]){
+ const response=await get('cursor='+historyCursor({runId,seq,direction:'newer'})+'&limit=1'),older=response.body.olderCursor?await get('cursor='+response.body.olderCursor+'&limit=1'):null;
+ checks.push({name:'empty newer safe-integer boundary '+seq,pass:response.status===200&&older?.status===200,steps:{cursor:{runId,seq,direction:'newer'},response,followOlder:older},expected:'An accepted empty newer page returns a valid older continuation to the last event.'});
+}
+await writeFile(out+'/numeric-edge-results.json',JSON.stringify(checks,null,2));console.log(JSON.stringify(checks));

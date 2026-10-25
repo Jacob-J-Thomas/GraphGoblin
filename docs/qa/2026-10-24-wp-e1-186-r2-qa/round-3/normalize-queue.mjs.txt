@@ -1,0 +1,1 @@
+import{readFile,writeFile}from'node:fs/promises';const p='.tmp/qa3/e2e-bounded-final.log.txt';const b=await readFile(p);await writeFile(p,b[0]===255&&b[1]===254?b.toString('utf16le').replace(/^\uFEFF/,''):b);

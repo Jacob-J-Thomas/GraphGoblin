@@ -1,0 +1,8 @@
+import {spawn} from 'node:child_process';
+import {readFile,writeFile} from 'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3';
+while(!(await readFile('.tmp/qa3/e2e-bounded-final.log.txt','utf8')).includes('"name":"qa-isolated"'))await new Promise(r=>setTimeout(r,1000));
+const records=[];
+for(const [name,args] of [['native-slow-reader',['.tmp/qa3/native-slow-reader.mjs']],['extras',['.tmp/qa3/extras.mjs']],['coverage',['.tmp/qa3/gates.mjs','web','api','api-client','domain','infrastructure']]]){
+ const start=new Date().toISOString();let log='';const child=spawn(process.execPath,args,{windowsHide:true,env:process.env});child.stdout.on('data',b=>log+=b);child.stderr.on('data',b=>log+=b);const code=await new Promise(r=>child.on('close',r));await writeFile(out+'/'+name+'.log.txt',('Command: node '+args.join(' ')+'\n'+log+'\nExit: '+code).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));records.push({name,code,start,end:new Date().toISOString()});console.log(JSON.stringify(records.at(-1)));await writeFile(out+'/remaining.json',JSON.stringify(records,null,2));
+}

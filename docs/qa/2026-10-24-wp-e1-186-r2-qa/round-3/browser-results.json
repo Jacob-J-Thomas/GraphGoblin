@@ -1,0 +1,1288 @@
+{
+  "checks": [
+    {
+      "name": "cursor limits, both directions, empty and populated histories",
+      "steps": "Seed 0/1/2/1003 rows; request limits 1/2/500 at zero, first/tail neighbours and maximum safe integer neighbours; follow each emitted cursor",
+      "expected": "Every accepted page and every emitted continuation is valid, ordered and includes the opposite edge",
+      "pass": true,
+      "actual": {
+        "pages": 162,
+        "edges": 110,
+        "samples": [
+          {
+            "count": 0,
+            "limit": 1,
+            "direction": "older",
+            "seq": 0,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 0,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 0,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 0,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 0,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 0,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740990,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 0,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740991,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1,
+            "limit": 1,
+            "direction": "older",
+            "seq": 0,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": true,
+              "olderCursor": null,
+              "newerCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAyIiwic2VxIjowLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+            }
+          },
+          {
+            "count": 1,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000002",
+                  "seq": 1,
+                  "ts": "2026-10-25T10:02:50.806Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000002",
+                  "seq": 1,
+                  "ts": "2026-10-25T10:02:50.806Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 0,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000002",
+                  "seq": 1,
+                  "ts": "2026-10-25T10:02:50.806Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1,
+              "hasMore": false,
+              "olderCursor": null,
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740990,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAyIiwic2VxIjoyLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740991,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAyIiwic2VxIjoyLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 2,
+            "limit": 1,
+            "direction": "older",
+            "seq": 0,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": true,
+              "olderCursor": null,
+              "newerCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAzIiwic2VxIjowLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+            }
+          },
+          {
+            "count": 2,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000003",
+                  "seq": 2,
+                  "ts": "2026-10-25T10:02:51.116Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 2,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAzIiwic2VxIjoyLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 2,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000003",
+                  "seq": 2,
+                  "ts": "2026-10-25T10:02:51.116Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 2,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAzIiwic2VxIjoyLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 2,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 0,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000003",
+                  "seq": 1,
+                  "ts": "2026-10-25T10:02:51.116Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1,
+              "hasMore": true,
+              "olderCursor": null,
+              "newerCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAzIiwic2VxIjoxLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+            }
+          },
+          {
+            "count": 2,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740990,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAzIiwic2VxIjozLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 2,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740991,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDAzIiwic2VxIjozLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1003,
+            "limit": 1,
+            "direction": "older",
+            "seq": 0,
+            "response": {
+              "items": [],
+              "nextAfter": 0,
+              "hasMore": true,
+              "olderCursor": null,
+              "newerCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDA0Iiwic2VxIjowLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+            }
+          },
+          {
+            "count": 1003,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000004",
+                  "seq": 1003,
+                  "ts": "2026-10-25T10:02:51.557Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1003,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDA0Iiwic2VxIjoxMDAzLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1003,
+            "limit": 1,
+            "direction": "older",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000004",
+                  "seq": 1003,
+                  "ts": "2026-10-25T10:02:51.557Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1003,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDA0Iiwic2VxIjoxMDAzLCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1003,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 0,
+            "response": {
+              "items": [
+                {
+                  "runId": "01M5S86KFNS1EWH8DK00000004",
+                  "seq": 1,
+                  "ts": "2026-10-25T10:02:51.557Z",
+                  "type": "run.woken",
+                  "nodeId": "work",
+                  "reason": "manual"
+                }
+              ],
+              "nextAfter": 1,
+              "hasMore": true,
+              "olderCursor": null,
+              "newerCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDA0Iiwic2VxIjoxLCJkaXJlY3Rpb24iOiJuZXdlciJ9"
+            }
+          },
+          {
+            "count": 1003,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740990,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740990,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDA0Iiwic2VxIjoxMDA0LCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          },
+          {
+            "count": 1003,
+            "limit": 1,
+            "direction": "newer",
+            "seq": 9007199254740991,
+            "response": {
+              "items": [],
+              "nextAfter": 9007199254740991,
+              "hasMore": false,
+              "olderCursor": "eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhESzAwMDAwMDA0Iiwic2VxIjoxMDA0LCJkaXJlY3Rpb24iOiJvbGRlciJ9",
+              "newerCursor": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "observation authorization and malformed history",
+      "steps": "GET observation with reader, wrong scope, other owner, absent key; invalid cursors, unsafe integer and fractional seeks",
+      "expected": "200/403/404/401 and 400 respectively",
+      "pass": true,
+      "actual": [
+        {
+          "status": 200,
+          "body": {
+            "lifecycle": {
+              "runId": "01M5S86KFNS1EWH8DKJME36BEQ",
+              "seq": 28,
+              "ts": "2026-10-25T10:02:50.515Z",
+              "type": "run.finished",
+              "status": "succeeded",
+              "outcome": "success"
+            },
+            "exit": {
+              "runId": "01M5S86KFNS1EWH8DKJME36BEQ",
+              "seq": 26,
+              "ts": "2026-10-25T10:02:50.515Z",
+              "type": "exit.evaluated",
+              "nodeId": "done",
+              "outcome": "success"
+            },
+            "gate": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "again",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "limit-reached",
+              "gate": {
+                "previousPasses": 2,
+                "passes": 2,
+                "repeatRouteId": "again",
+                "maxPasses": 2,
+                "elapsedSeconds": 0.222,
+                "limit": "max-passes"
+              },
+              "diagnostics": [],
+              "runId": "01M5S86KFNS1EWH8DKJME36BEQ",
+              "seq": 23,
+              "ts": "2026-10-25T10:02:50.493Z",
+              "type": "decision.made",
+              "nodeId": "gate"
+            },
+            "finished": {
+              "runId": "01M5S86KFNS1EWH8DKJME36BEQ",
+              "seq": 28,
+              "ts": "2026-10-25T10:02:50.515Z",
+              "type": "run.finished",
+              "status": "succeeded",
+              "outcome": "success"
+            },
+            "freshSessionChoices": []
+          }
+        },
+        {
+          "status": 403,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/forbidden",
+            "title": "forbidden",
+            "status": 403,
+            "code": "FORBIDDEN",
+            "detail": "this key lacks the \"runs:read\" scope"
+          }
+        },
+        {
+          "status": 404,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/run-not-found",
+            "title": "run not found",
+            "status": 404,
+            "code": "RUN_NOT_FOUND",
+            "detail": "run 01M5S86KFNS1EWH8DKJME36BEQ not found"
+          }
+        },
+        {
+          "status": 401,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/unauthorized",
+            "title": "unauthorized",
+            "status": 401,
+            "code": "UNAUTHORIZED",
+            "detail": "the API key is missing, malformed, or revoked"
+          }
+        },
+        {
+          "q": "cursor=!!!",
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-cursor",
+            "title": "invalid cursor",
+            "status": 400,
+            "code": "INVALID_CURSOR",
+            "detail": "Choose a cursor returned by this run history."
+          }
+        },
+        {
+          "q": "cursor=eyJydW5JZCI6IjAxTTVTODZLRk5TMUVXSDhES0pNRTM2QkVRIiwic2VxIjo5MDA3MTk5MjU0NzQwOTkyLCJkaXJlY3Rpb24iOiJuZXdlciJ9",
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-cursor",
+            "title": "invalid cursor",
+            "status": 400,
+            "code": "INVALID_CURSOR",
+            "detail": "Choose a cursor returned by this run history."
+          }
+        },
+        {
+          "q": "around=-1",
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/around",
+                "message": "Too small: expected number to be >=0"
+              }
+            ]
+          }
+        },
+        {
+          "q": "around=1.5",
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/around",
+                "message": "Invalid input: expected int, received number"
+              }
+            ]
+          }
+        },
+        {
+          "q": "around=1&after=0",
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/",
+                "message": "Choose one of after, around or cursor."
+              }
+            ]
+          }
+        },
+        {
+          "q": "limit=0",
+          "status": 400,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/validation-failed",
+            "title": "validation failed",
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "detail": "the request did not match the schema",
+            "errors": [
+              {
+                "path": "/limit",
+                "message": "Too small: expected number to be >=1"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "QA-186R2-002 real long cancellation, both browsing directions",
+      "steps": "Cancel >700-event running workload; seek 50; Load newer and older; reload frozen window; Follow live",
+      "expected": "Execution context always retains the recorded actor, bounded window and 80 mounted rows",
+      "pass": false,
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Load older', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-4…>…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "stack": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Load older', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-4…>…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186-r2-3\\.tmp\\qa3\\browser.mjs:51:218\n    at async check (%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186-r2-3\\.tmp\\qa3\\browser.mjs:16:100)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/.tmp/qa3/browser.mjs:49:1"
+    },
+    {
+      "name": "QA-186R2-002 synthetic post-terminal suffix",
+      "steps": "Append 700 explicit synthetic audit rows after cancellation; reload then seek 50 and tail",
+      "expected": "Whole-run recorded actor survives eviction and opposite-direction seek",
+      "pass": true,
+      "actual": {
+        "text": "Execution context\n\nIndependent QA 1792922572586 v1 · version ID 01M5S86NSH237WA9W8DG0R322Y\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #725; cancellation #726). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON",
+        "observation": {
+          "lifecycle": {
+            "runId": "01M5S86NTA7E79PCGCWTMBKZ66",
+            "seq": 726,
+            "ts": "2026-10-25T10:02:57.642Z",
+            "type": "run.cancelled"
+          },
+          "gate": {
+            "provenance": {
+              "kind": "expression",
+              "provider": null,
+              "classifierId": null,
+              "model": null,
+              "effort": null
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "again",
+              "confidence": null,
+              "reasoning": null
+            },
+            "portId": "again",
+            "gate": {
+              "previousPasses": 72,
+              "passes": 73,
+              "repeatRouteId": "again",
+              "maxPasses": 150,
+              "elapsedSeconds": 4.975,
+              "limit": null
+            },
+            "diagnostics": [],
+            "runId": "01M5S86NTA7E79PCGCWTMBKZ66",
+            "seq": 723,
+            "ts": "2026-10-25T10:02:57.604Z",
+            "type": "decision.made",
+            "nodeId": "gate"
+          },
+          "cancelled": {
+            "runId": "01M5S86NTA7E79PCGCWTMBKZ66",
+            "seq": 726,
+            "ts": "2026-10-25T10:02:57.642Z",
+            "type": "run.cancelled"
+          },
+          "cancelRequested": {
+            "runId": "01M5S86NTA7E79PCGCWTMBKZ66",
+            "seq": 725,
+            "ts": "2026-10-25T10:02:57.613Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "api-key",
+              "id": "01M5S80Q6HBDZQ90Z2XXGG2QBJ"
+            }
+          },
+          "freshSessionChoices": []
+        },
+        "window": [
+          1299,
+          1426
+        ]
+      }
+    },
+    {
+      "name": "observation pending, failed, then answered",
+      "steps": "Intercept observation at the HTTP boundary, hold read; return 503 for all retries; restore real response and reload",
+      "expected": "Reading the cancellation record, explicit unreadable record, then correct actor",
+      "pass": true,
+      "actual": {
+        "requests": 6,
+        "pending": "Execution context\n\nIndependent QA 1792922572586 v1 · version ID 01M5S86NSH237WA9W8DG0R322Y\n\nLoading pinned definition…\n\nCancelled. Reading the cancellation record… Recorded node position: work.\n\nExact run record",
+        "failed": "Execution context\n\nIndependent QA 1792922572586 v1 · version ID 01M5S86NSH237WA9W8DG0R322Y\n\nCancelled. The cancellation record could not be read. Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON",
+        "answered": "Execution context\n\nIndependent QA 1792922572586 v1 · version ID 01M5S86NSH237WA9W8DG0R322Y\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #725; cancellation #726). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON"
+      }
+    },
+    {
+      "name": "request answered by resume and twice-cancelled run",
+      "steps": "Synthetic valid event histories: request, resume, cancel; then second request, 600 intervening rows and cancellation",
+      "expected": "Answered request omitted; latest second actor retained across event 1 and tail browsing",
+      "pass": true,
+      "actual": {
+        "first": {
+          "lifecycle": {
+            "runId": "01M5S86KFNS1EWH8DK00000005",
+            "seq": 3,
+            "ts": "2026-10-25T10:03:32.370Z",
+            "type": "run.cancelled"
+          },
+          "cancelled": {
+            "runId": "01M5S86KFNS1EWH8DK00000005",
+            "seq": 3,
+            "ts": "2026-10-25T10:03:32.370Z",
+            "type": "run.cancelled"
+          },
+          "freshSessionChoices": []
+        },
+        "firstText": "Execution context\n\nIndependent QA 1792922570097 v1 · version ID 01M5S86KDXP71F37FED0F6B70V\n\nCancelled; actor not recorded. Node position not recorded.\n\nExact run record\nPinned definition JSON",
+        "second": {
+          "lifecycle": {
+            "runId": "01M5S86KFNS1EWH8DK00000005",
+            "seq": 606,
+            "ts": "2026-10-25T10:03:32.940Z",
+            "type": "run.cancelled"
+          },
+          "cancelled": {
+            "runId": "01M5S86KFNS1EWH8DK00000005",
+            "seq": 606,
+            "ts": "2026-10-25T10:03:32.940Z",
+            "type": "run.cancelled"
+          },
+          "cancelRequested": {
+            "runId": "01M5S86KFNS1EWH8DK00000005",
+            "seq": 5,
+            "ts": "2026-10-25T10:03:32.940Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "api-key",
+              "id": "second-actor"
+            }
+          },
+          "freshSessionChoices": []
+        }
+      }
+    },
+    {
+      "name": "missing-session long bounded inspector recovery via inspector",
+      "steps": "Create >1000-event real fake-harness failure with 25 explicit synthetic historical choices outside window; older/newer/reload; decline plain resume; recover inspector",
+      "expected": "Latest 20 notes remain ordered; recovery choice remains available; one choice succeeds; observer follows outcome without reload",
+      "pass": true,
+      "actual": {
+        "id": "01M5S87Y721NCEZKAB6W5HYV5F",
+        "eventsBefore": 909,
+        "failedSeq": 1635,
+        "latest20": [
+          {
+            "seq": 915,
+            "actor": "historical-choice-5"
+          },
+          {
+            "seq": 916,
+            "actor": "historical-choice-6"
+          },
+          {
+            "seq": 917,
+            "actor": "historical-choice-7"
+          },
+          {
+            "seq": 918,
+            "actor": "historical-choice-8"
+          },
+          {
+            "seq": 919,
+            "actor": "historical-choice-9"
+          },
+          {
+            "seq": 920,
+            "actor": "historical-choice-10"
+          },
+          {
+            "seq": 921,
+            "actor": "historical-choice-11"
+          },
+          {
+            "seq": 922,
+            "actor": "historical-choice-12"
+          },
+          {
+            "seq": 923,
+            "actor": "historical-choice-13"
+          },
+          {
+            "seq": 924,
+            "actor": "historical-choice-14"
+          },
+          {
+            "seq": 925,
+            "actor": "historical-choice-15"
+          },
+          {
+            "seq": 926,
+            "actor": "historical-choice-16"
+          },
+          {
+            "seq": 927,
+            "actor": "historical-choice-17"
+          },
+          {
+            "seq": 928,
+            "actor": "historical-choice-18"
+          },
+          {
+            "seq": 929,
+            "actor": "historical-choice-19"
+          },
+          {
+            "seq": 930,
+            "actor": "historical-choice-20"
+          },
+          {
+            "seq": 931,
+            "actor": "historical-choice-21"
+          },
+          {
+            "seq": 932,
+            "actor": "historical-choice-22"
+          },
+          {
+            "seq": 933,
+            "actor": "historical-choice-23"
+          },
+          {
+            "seq": 934,
+            "actor": "historical-choice-24"
+          }
+        ],
+        "notesBefore": [
+          "10/25/2026, 5:03:52 AM: user historical-choice-5 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-5).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-6 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-6).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-7 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-7).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-8 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-8).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-9 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-9).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-10 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-10).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-11 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-11).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-12 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-12).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-13 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-13).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-14 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-14).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-15 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-15).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-16 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-16).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-17 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-17).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-18 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-18).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-19 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-19).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-20 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-20).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-21 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-21).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-22 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-22).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-23 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-23).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-24 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-24)."
+        ],
+        "notesAfter": [
+          "10/25/2026, 5:03:52 AM: user historical-choice-6 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-6).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-7 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-7).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-8 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-8).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-9 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-9).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-10 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-10).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-11 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-11).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-12 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-12).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-13 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-13).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-14 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-14).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-15 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-15).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-16 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-16).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-17 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-17).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-18 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-18).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-19 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-19).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-20 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-20).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-21 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-21).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-22 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-22).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-23 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-23).",
+          "10/25/2026, 5:03:52 AM: user historical-choice-24 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-24).",
+          "10/25/2026, 5:03:54 AM: api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ chose a fresh session for work; prior provider context was not carried over (resume-previous, fake-session-75)."
+        ],
+        "status": "succeeded",
+        "lastEventSeq": 1740,
+        "rejectedPlain": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "cannot resume a run that is failed"
+          }
+        },
+        "stale": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "The observed missing-session failure is no longer current for this inference node"
+          }
+        }
+      }
+    },
+    {
+      "name": "missing-session long bounded inspector recovery via other-tab",
+      "steps": "Create >1000-event real fake-harness failure with 25 explicit synthetic historical choices outside window; older/newer/reload; decline plain resume; recover other-tab",
+      "expected": "Latest 20 notes remain ordered; recovery choice remains available; one choice succeeds; observer follows outcome without reload",
+      "pass": true,
+      "actual": {
+        "id": "01M5S88N6X2SY7704GF982XSWA",
+        "eventsBefore": 909,
+        "failedSeq": 1635,
+        "latest20": [
+          {
+            "seq": 915,
+            "actor": "historical-choice-5"
+          },
+          {
+            "seq": 916,
+            "actor": "historical-choice-6"
+          },
+          {
+            "seq": 917,
+            "actor": "historical-choice-7"
+          },
+          {
+            "seq": 918,
+            "actor": "historical-choice-8"
+          },
+          {
+            "seq": 919,
+            "actor": "historical-choice-9"
+          },
+          {
+            "seq": 920,
+            "actor": "historical-choice-10"
+          },
+          {
+            "seq": 921,
+            "actor": "historical-choice-11"
+          },
+          {
+            "seq": 922,
+            "actor": "historical-choice-12"
+          },
+          {
+            "seq": 923,
+            "actor": "historical-choice-13"
+          },
+          {
+            "seq": 924,
+            "actor": "historical-choice-14"
+          },
+          {
+            "seq": 925,
+            "actor": "historical-choice-15"
+          },
+          {
+            "seq": 926,
+            "actor": "historical-choice-16"
+          },
+          {
+            "seq": 927,
+            "actor": "historical-choice-17"
+          },
+          {
+            "seq": 928,
+            "actor": "historical-choice-18"
+          },
+          {
+            "seq": 929,
+            "actor": "historical-choice-19"
+          },
+          {
+            "seq": 930,
+            "actor": "historical-choice-20"
+          },
+          {
+            "seq": 931,
+            "actor": "historical-choice-21"
+          },
+          {
+            "seq": 932,
+            "actor": "historical-choice-22"
+          },
+          {
+            "seq": 933,
+            "actor": "historical-choice-23"
+          },
+          {
+            "seq": 934,
+            "actor": "historical-choice-24"
+          }
+        ],
+        "notesBefore": [
+          "10/25/2026, 5:04:02 AM: user historical-choice-5 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-5).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-6 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-6).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-7 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-7).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-8 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-8).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-9 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-9).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-10 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-10).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-11 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-11).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-12 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-12).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-13 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-13).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-14 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-14).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-15 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-15).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-16 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-16).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-17 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-17).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-18 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-18).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-19 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-19).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-20 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-20).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-21 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-21).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-22 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-22).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-23 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-23).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-24 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-24)."
+        ],
+        "notesAfter": [
+          "10/25/2026, 5:04:02 AM: user historical-choice-6 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-6).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-7 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-7).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-8 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-8).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-9 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-9).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-10 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-10).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-11 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-11).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-12 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-12).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-13 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-13).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-14 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-14).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-15 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-15).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-16 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-16).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-17 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-17).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-18 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-18).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-19 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-19).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-20 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-20).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-21 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-21).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-22 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-22).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-23 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-23).",
+          "10/25/2026, 5:04:02 AM: user historical-choice-24 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-24).",
+          "10/25/2026, 5:04:04 AM: api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ chose a fresh session for work; prior provider context was not carried over (resume-previous, fake-session-77)."
+        ],
+        "status": "succeeded",
+        "lastEventSeq": 1740,
+        "rejectedPlain": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "cannot resume a run that is failed"
+          }
+        },
+        "stale": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "The observed missing-session failure is no longer current for this inference node"
+          }
+        }
+      }
+    },
+    {
+      "name": "missing-session long bounded inspector recovery via api",
+      "steps": "Create >1000-event real fake-harness failure with 25 explicit synthetic historical choices outside window; older/newer/reload; decline plain resume; recover api",
+      "expected": "Latest 20 notes remain ordered; recovery choice remains available; one choice succeeds; observer follows outcome without reload",
+      "pass": true,
+      "actual": {
+        "id": "01M5S88X5HMBSFR1BYTQSRH136",
+        "eventsBefore": 909,
+        "failedSeq": 1635,
+        "latest20": [
+          {
+            "seq": 915,
+            "actor": "historical-choice-5"
+          },
+          {
+            "seq": 916,
+            "actor": "historical-choice-6"
+          },
+          {
+            "seq": 917,
+            "actor": "historical-choice-7"
+          },
+          {
+            "seq": 918,
+            "actor": "historical-choice-8"
+          },
+          {
+            "seq": 919,
+            "actor": "historical-choice-9"
+          },
+          {
+            "seq": 920,
+            "actor": "historical-choice-10"
+          },
+          {
+            "seq": 921,
+            "actor": "historical-choice-11"
+          },
+          {
+            "seq": 922,
+            "actor": "historical-choice-12"
+          },
+          {
+            "seq": 923,
+            "actor": "historical-choice-13"
+          },
+          {
+            "seq": 924,
+            "actor": "historical-choice-14"
+          },
+          {
+            "seq": 925,
+            "actor": "historical-choice-15"
+          },
+          {
+            "seq": 926,
+            "actor": "historical-choice-16"
+          },
+          {
+            "seq": 927,
+            "actor": "historical-choice-17"
+          },
+          {
+            "seq": 928,
+            "actor": "historical-choice-18"
+          },
+          {
+            "seq": 929,
+            "actor": "historical-choice-19"
+          },
+          {
+            "seq": 930,
+            "actor": "historical-choice-20"
+          },
+          {
+            "seq": 931,
+            "actor": "historical-choice-21"
+          },
+          {
+            "seq": 932,
+            "actor": "historical-choice-22"
+          },
+          {
+            "seq": 933,
+            "actor": "historical-choice-23"
+          },
+          {
+            "seq": 934,
+            "actor": "historical-choice-24"
+          }
+        ],
+        "notesBefore": [
+          "10/25/2026, 5:04:10 AM: user historical-choice-5 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-5).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-6 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-6).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-7 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-7).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-8 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-8).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-9 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-9).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-10 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-10).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-11 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-11).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-12 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-12).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-13 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-13).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-14 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-14).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-15 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-15).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-16 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-16).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-17 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-17).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-18 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-18).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-19 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-19).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-20 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-20).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-21 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-21).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-22 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-22).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-23 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-23).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-24 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-24)."
+        ],
+        "notesAfter": [
+          "10/25/2026, 5:04:10 AM: user historical-choice-6 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-6).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-7 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-7).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-8 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-8).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-9 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-9).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-10 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-10).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-11 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-11).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-12 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-12).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-13 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-13).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-14 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-14).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-15 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-15).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-16 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-16).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-17 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-17).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-18 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-18).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-19 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-19).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-20 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-20).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-21 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-21).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-22 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-22).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-23 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-23).",
+          "10/25/2026, 5:04:10 AM: user historical-choice-24 chose a fresh session for work; prior provider context was not carried over (resume-previous, removed-24).",
+          "10/25/2026, 5:04:11 AM: api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ chose a fresh session for work; prior provider context was not carried over (resume-previous, fake-session-79)."
+        ],
+        "status": "succeeded",
+        "lastEventSeq": 1740,
+        "rejectedPlain": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "cannot resume a run that is failed"
+          }
+        },
+        "stale": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "The observed missing-session failure is no longer current for this inference node"
+          }
+        },
+        "recovery": {
+          "status": 200,
+          "body": {
+            "id": "01M5S88X5HMBSFR1BYTQSRH136",
+            "ownerId": "local",
+            "loopId": "01M5S88X4P1AYEFC62DBJ6VS0T",
+            "versionId": "01M5S88X4P1AYEFC62DBJ6VS0V",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent QA 1792922645648",
+              "label": "Independent QA 1792922645648 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10000,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5S88X5HMBSFR1BYTQSRH137",
+            "status": "running",
+            "currentNodeId": "work",
+            "iteration": 1,
+            "createdAt": "2026-10-25T10:04:05.681Z",
+            "startedAt": "2026-10-25T10:04:05.691Z",
+            "lastEventSeq": 1636
+          }
+        }
+      }
+    },
+    {
+      "name": "#255 pinned labels and exact historical patch/message",
+      "steps": "Run pinned worker with messages; append 700 rows; seek original node.finished; inspect patch and messages and exact download; phone and desktop in light/dark",
+      "expected": "Pinned Worker in Timeline, patch and messages; exact downloaded bytes match durable event; no horizontal overflow",
+      "pass": true,
+      "actual": {
+        "eventSeq": 11,
+        "dimensions": [
+          {
+            "width": 1440,
+            "theme": "dark",
+            "innerWidth": 1440,
+            "scroll": 1440
+          },
+          {
+            "width": 1440,
+            "theme": "light",
+            "innerWidth": 1440,
+            "scroll": 1440
+          },
+          {
+            "width": 390,
+            "theme": "dark",
+            "innerWidth": 390,
+            "scroll": 390
+          },
+          {
+            "width": 390,
+            "theme": "light",
+            "innerWidth": 390,
+            "scroll": 390
+          }
+        ]
+      }
+    }
+  ],
+  "errors": []
+}

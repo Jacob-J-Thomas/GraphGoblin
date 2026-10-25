@@ -1,0 +1,18 @@
+import {readFile,writeFile,mkdir,readdir} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {resolve,dirname,relative} from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3'),scratch='apps/web/.tmp/qa3';
+function relocate(text,original,dest){return text.replace(/(from\s+['"])(\.[^'"]+)(['"])/g,(_,a,p,z)=>a+('./'+relative(dirname(dest),resolve(dirname(original),p))).replaceAll('\\','/')+z);}
+let testApp=relocate(await readFile('apps/api/src/testing/test-app.ts','utf8'),'apps/api/src/testing/test-app.ts',scratch+'/test-app.ts').replaceAll("'gg-api-'","'gg-qa-e1-186r2-3-e2e-'").replace(/await rm\(dataDir, \{ recursive: true, force: true \}\)\.catch\(\(\) => undefined\);/g,'// Disposable QA directory retained.').replace("'@graphgoblin/infrastructure/sqlite/testing'","'../../../../packages/infrastructure/src/sqlite/testing/index.js'");
+await writeFile(scratch+'/test-app.ts',testApp);await writeFile(out+'/e2e-test-app.ts.txt',testApp);
+let server=await readFile(scratch+'/server.ts','utf8');server=server.replace('port<=6158','port<=6159').replace("?? 0) : 0,","?? 0) : await qaPort(),").replace('  createTestApp,','').replace("import {createThreadHistoryFixture}","import {createThreadHistoryFixture}");await writeFile(scratch+'/server.ts',server);await writeFile(out+'/e2e-server-bounded.ts.txt',server);
+let thread=await readFile(scratch+'/thread-history.ts','utf8');thread=thread.replaceAll('gg-wp-g1-116-','gg-qa-e1-186r2-3-thread-');await writeFile(scratch+'/thread-history.ts',thread);await writeFile(out+'/e2e-thread-history.ts.txt',thread);
+await mkdir(out+'/first-e2e-errors',{recursive:true});
+async function captureErrors(dir,dest){for(const e of await readdir(dir,{withFileTypes:true})){if(e.isDirectory()){await mkdir(dest+'/'+e.name,{recursive:true});await captureErrors(dir+'/'+e.name,dest+'/'+e.name);}else if(e.name==='error-context.md'){await writeFile(dest+'/'+e.name,(await readFile(dir+'/'+e.name,'utf8')).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));}}}
+await captureErrors('.tmp/qa3/pw-results',out+'/first-e2e-errors');
+const records=[];
+async function run(name,args){let log='';const command='pnpm.cmd --filter @graphgoblin/web exec playwright test --config .tmp/qa3/playwright.config.ts '+args.join(' ');const p=spawn(process.env.ComSpec,['/d','/s','/c',command],{windowsHide:true,env:{...process.env,GG_E2E_MAIN_PORT:'6152',GG_E2E_CONTROL_PORT:'6153',GG_E2E_BROWSER_CHANNEL:'msedge'}});p.stdout.on('data',b=>log+=b);p.stderr.on('data',b=>log+=b);const code=await new Promise(r=>p.once('close',r));await writeFile(out+'/edge-'+name+'.log.txt',('Command: '+command+'\n'+log+'\nExit: '+code).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));await mkdir(out+'/edge-'+name+'-errors',{recursive:true});await captureErrors('.tmp/qa3/pw-results',out+'/edge-'+name+'-errors');records.push({name,command,code});await writeFile(out+'/edge-results.json',JSON.stringify(records,null,2));console.log(JSON.stringify(records.at(-1)));}
+for(const name of ['bounded-history','thread-history','inspector-large-values','missing-session','history','webhook-delivery','qa'])await run(name,[name+'.spec.ts']);
+// One alone diagnostic for the untouched qa.spec.ts label/count assertions. It does not replace the failed results.
+await run('qa-isolated',['qa.spec.ts','--grep','"streams 1,200|failure reasons"']);
+await writeFile(out+'/e2e-bounded.mjs.txt',await readFile(import.meta.filename,'utf8'));

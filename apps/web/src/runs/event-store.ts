@@ -1,60 +1,127 @@
 import { CURRENT_DEFINITION_FORMAT, type RunEvent } from '@graphgoblin/contracts';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { descriptionParts, type DescriptionPart } from './projections.js';
 
+// 512 ordinary events cover several dozen turns. 1 MiB (UTF-16 JSON estimate) bounds
+// payload-heavy windows independently of count; both apply to memory and session storage.
+export const MAX_HISTORY_EVENTS = 512;
+export const MAX_HISTORY_BYTES = 1_048_576;
+export interface UncachedEvent {
+  seq: number;
+  type: RunEvent['type'];
+  uncached: true;
+  /**
+   * The row's description as parts, its nodes and routes named from the pinned version when it is
+   * shown. Recorded text is cut to the 4,096-character preview budget of #259; the parts carry
+   * no other value of the event.
+   */
+  description: DescriptionPart[];
+}
+export type TimelineEvent = RunEvent | UncachedEvent;
 export interface RunEventLog {
   events: RunEvent[];
-  /** The highest `seq` received; the SSE subscription resumes after it. */
+  /** Oversized payloads stay on the server. Their selectable rows preserve history membership. */
+  uncached: UncachedEvent[];
+  /** Live acknowledgement, independent of the history window being browsed. */
   lastSeq: number;
-  /**
-   * Characters of JSON the recorded events amount to, accumulated as they arrive. The inspector
-   * uses it to tell a history whose reconstruction would freeze the page (#259).
-   */
   bytes: number;
+  mode: 'live' | 'history';
+  olderCursor?: string | null | undefined;
+  newerCursor?: string | null | undefined;
 }
-
-/**
- * Recorded characters of JSON above which a run's history is "large": replaying it for a newly
- * selected event, and enumerating the keys of a value it holds, would each freeze the page for
- * hundreds of milliseconds (a 350,000-property variable measured at 344 to 473 ms), as would
- * serialising the log into session storage on every append. The inspector reconstructs the thread
- * at an event of such a run on request only, and the stored copy leaves such a log out, so a
- * reload replays it from its first event (#259). Ordinary runs record kilobytes to a few hundred
- * kilobytes.
- */
-export const LARGE_HISTORY_BYTES = 2_000_000;
-
+export interface HistoryWindow {
+  items: RunEvent[];
+  olderCursor?: string | null | undefined;
+  newerCursor?: string | null | undefined;
+}
 export interface RunEventStoreState {
   runs: Record<string, RunEventLog>;
-  /** Append events in order; any at or below the cursor are dropped as duplicates. */
   append: (runId: string, ...events: RunEvent[]) => void;
+  window: (
+    runId: string,
+    page: HistoryWindow,
+    direction: 'older' | 'newer' | 'live' | 'seek',
+  ) => void;
+  resume: (runId: string) => void;
+  pause: (runId: string) => void;
   clear: (runId: string) => void;
 }
 
-/**
- * Session storage that never throws on write. Very long logs can exceed the browser's quota; the
- * in-memory log stays complete and the stored copy is dropped, so a reload replays the run from
- * its first event instead of resuming (still without gaps or duplicates).
- */
+/** Storage denial/quota never prevents live observation, even if removal is denied too. */
 export const quotaSafeSessionStorage = {
-  getItem: (name: string) => sessionStorage.getItem(name),
+  getItem: (name: string) => {
+    try {
+      return sessionStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
   setItem: (name: string, value: string) => {
     try {
       sessionStorage.setItem(name, value);
     } catch {
-      sessionStorage.removeItem(name);
+      try {
+        sessionStorage.removeItem(name);
+      } catch {
+        /* storage unavailable */
+      }
     }
   },
-  removeItem: (name: string) => sessionStorage.removeItem(name),
+  removeItem: (name: string) => {
+    try {
+      sessionStorage.removeItem(name);
+    } catch {
+      /* storage unavailable */
+    }
+  },
+};
+const EMPTY: RunEventLog = { events: [], uncached: [], lastSeq: 0, bytes: 0, mode: 'live' };
+export const timelineEvents = (log: RunEventLog): TimelineEvent[] =>
+  [...log.events, ...log.uncached].sort((a, b) => a.seq - b.seq);
+
+function bounded(items: TimelineEvent[], older: boolean) {
+  const unique = [...new Map(items.map((item) => [item.seq, item])).values()].sort(
+    (a, b) => a.seq - b.seq,
+  );
+  const kept: TimelineEvent[] = [];
+  let bytes = 0;
+  for (const item of older ? unique : unique.reverse()) {
+    let row = item;
+    let size = JSON.stringify(row).length * 2;
+    if (size > MAX_HISTORY_BYTES) {
+      // Preserve the row's ordinary accessible name even when its payload stays on the server.
+      // Pathological free-text summaries use the same 4,096-character preview budget as #259.
+      row = {
+        seq: item.seq,
+        type: item.type,
+        uncached: true,
+        description:
+          'uncached' in item
+            ? item.description
+            : descriptionParts(item).map((part) =>
+                typeof part === 'string' ? part.slice(0, 4096) : part,
+              ),
+      };
+      size = JSON.stringify(row).length * 2;
+    }
+    if (kept.length === MAX_HISTORY_EVENTS || bytes + size > MAX_HISTORY_BYTES) break;
+    kept.push(row);
+    bytes += size;
+  }
+  kept.sort((a, b) => a.seq - b.seq);
+  return {
+    events: kept.filter((row): row is RunEvent => !('uncached' in row)),
+    uncached: kept.filter((row): row is UncachedEvent => 'uncached' in row),
+    bytes,
+  };
+}
+const keepRun = (runs: Record<string, RunEventLog>, id: string, log: RunEventLog) => {
+  const next = { ...runs, [id]: log };
+  if (Object.keys(next).length > 20) delete next[Object.keys(next)[0]!];
+  return next;
 };
 
-/** Keep at most this many runs' logs in session storage. */
-const MAX_RUNS = 20;
-
-/**
- * Per-run event logs fed by the SSE hook. Persisted to session storage, so a reload keeps the
- * timeline and resumes the stream after the stored cursor without gaps or duplicates.
- */
 export const useRunEventStore = create<RunEventStoreState>()(
   persist(
     (set) => ({
@@ -64,21 +131,54 @@ export const useRunEventStore = create<RunEventStoreState>()(
           const log = state.runs[runId] ?? EMPTY;
           const fresh: RunEvent[] = [];
           let lastSeq = log.lastSeq;
-          let bytes = log.bytes;
           for (const event of incoming) {
             if (event.seq <= lastSeq) continue;
             fresh.push(event);
             lastSeq = event.seq;
-            bytes += JSON.stringify(event).length;
           }
-          if (fresh.length === 0) return state;
-          const runs = {
-            ...state.runs,
-            [runId]: { events: [...log.events, ...fresh], lastSeq, bytes },
+          if (!fresh.length) return state;
+          const next =
+            log.mode === 'live'
+              ? {
+                  ...log,
+                  ...bounded([...timelineEvents(log), ...fresh], false),
+                  olderCursor: undefined,
+                  newerCursor: null,
+                  lastSeq,
+                }
+              : { ...log, lastSeq };
+          return { runs: keepRun(state.runs, runId, next) };
+        }),
+      window: (runId, page, direction) =>
+        set((state) => {
+          const log = state.runs[runId] ?? EMPTY;
+          const merge = direction === 'older' || direction === 'newer';
+          const window = bounded(
+            [...(merge ? timelineEvents(log) : []), ...page.items],
+            direction === 'older',
+          );
+          const rows = timelineEvents({ ...log, ...window });
+          return {
+            runs: keepRun(state.runs, runId, {
+              ...log,
+              ...window,
+              mode: direction === 'live' ? 'live' : 'history',
+              // A trimmed boundary needs a new numeric seek, never a stale page cursor that skips rows.
+              olderCursor: rows[0]?.seq === page.items[0]?.seq ? page.olderCursor : undefined,
+              newerCursor:
+                rows.at(-1)?.seq === page.items.at(-1)?.seq ? page.newerCursor : undefined,
+            }),
           };
-          const ids = Object.keys(runs);
-          if (ids.length > MAX_RUNS) delete runs[ids[0] as string];
-          return { runs };
+        }),
+      resume: (runId) =>
+        set((state) => {
+          const log = state.runs[runId];
+          return log ? { runs: { ...state.runs, [runId]: { ...log, mode: 'live' } } } : state;
+        }),
+      pause: (runId) =>
+        set((state) => {
+          const log = state.runs[runId];
+          return log ? { runs: { ...state.runs, [runId]: { ...log, mode: 'history' } } } : state;
         }),
       clear: (runId) =>
         set((state) => {
@@ -89,26 +189,17 @@ export const useRunEventStore = create<RunEventStoreState>()(
     {
       name: `graphgoblin-run-events-v${CURRENT_DEFINITION_FORMAT}`,
       storage: createJSONStorage(() => {
-        // Once at module initialisation, before hydration. Never read old events or cursors.
         for (const version of [1, 2, 3])
-          sessionStorage.removeItem(`graphgoblin-run-events-v${version}`);
-        sessionStorage.removeItem('graphgoblin-run-events');
+          quotaSafeSessionStorage.removeItem(`graphgoblin-run-events-v${version}`);
+        quotaSafeSessionStorage.removeItem('graphgoblin-run-events');
         return quotaSafeSessionStorage;
       }),
-      // Version 1 added `bytes` to each log. A stored log of an earlier version has no size to
-      // carry on from, so it is dropped and the run replays from its first event.
-      version: 1,
+      // Device cache only: discard the old unbounded shape; complete server history is untouched.
+      version: 2,
       migrate: () => ({ runs: {} }),
-      partialize: (state) => ({
-        runs: Object.fromEntries(
-          Object.entries(state.runs).filter(([, log]) => log.bytes <= LARGE_HISTORY_BYTES),
-        ),
-      }),
     },
   ),
 );
-
-const EMPTY: RunEventLog = { events: [], lastSeq: 0, bytes: 0 };
 
 export function useRunEventLog(runId: string): RunEventLog {
   return useRunEventStore((s) => s.runs[runId] ?? EMPTY);

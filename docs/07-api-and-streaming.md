@@ -141,7 +141,7 @@ snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-
 projection (status, position, result and failure); the record contains no context-thread
 snapshot. Separate reads can observe different event prefixes while execution advances.
 
-A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
+An authoritative SSE completion closes that observed tail, not the lifetime of a resumable failed run.
 Observers following all attempts first catch up with JSON event pages after their stored
 cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
 Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
@@ -195,6 +195,14 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
 `docs/qa/2026-10-23-wp-g1-116/measure-after.json`. The repeatable script is
 `apps/api/scripts/thread-read-measure.ts`.
 
+## Browser history reads (#186 round 2)
+
+The existing JSON `GET /runs/{id}/events?after=N&limit=L` remains a forward read; SSE and `stream.complete` are unchanged. Browser navigation adds mutually exclusive seek `around=N` (a page ending at or before N, inclusive) or opaque `cursor=C` (strictly older or newer than its encoded sequence). Pages remain ascending by sequence, with unchanged event payloads, `nextAfter` and `hasMore`; navigation responses also supply nullable `olderCursor` and `newerCursor`. An empty page still splits the history at its position, so its cursors lead to every event on the side it did not read: `around=0` returns no events, `nextAfter: 0` and a newer cursor that starts at event 1, and an empty page past the tail returns an older cursor that ends at the last event. These cursors are bound to the run, canonical base64url JSON, validated within 256 characters, and treated as opaque by clients. They are distinct from #367's Runs/inbound Events cursors. Ownership is checked before decoding or reading history. No timestamp ordering or client-side cursor construction is used.
+
+`GET /runs/{id}/thread?at=N` resolves the exact context after boundary N (zero is the admitted seed). The current read without `at` keeps #116's behavior. Historical reconstruction uses 128-event pages and carries the domain open-visit/strict replay state across pages, retaining only the thread and one page, and yields between reads. It uses a verified preceding checkpoint when available and never writes execution state. Neither a page nor the checkpoint read decodes anything recorded after N, so damage to a later event or a later checkpoint fails only reads at or after it (D-016). Work is proportional to the prefix after that checkpoint; the requested thread's intrinsic size remains supported.
+
+`GET /runs/{id}/observation` returns the latest durable lifecycle, exit, gate decision and finish evidence, the latest `run.cancelled` and the `run.cancel_requested` that led to it (one a later `run.resumed` answered does not; each field optional), and `freshSessionChoices`, the latest 20 `run.resumed` events that record a fresh-session choice (#265), oldest first, independently of browser retention. Type-indexed latest reads select exact events; the last gate uses one descending type-index scan with a JSON gate predicate, without materializing the log or making a round trip for each ungated decision. Run status/result/delivery authority remains the run record, and this read does not change stream completion or delivery finality.
+
 ## SSE protocol (Decided)
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
@@ -242,7 +250,7 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
   past historical terminal events, and retries EOF without completion even after a terminal event.
   Malformed completion controls reject with `RunEventParseError`. Controls never advance the cursor.
   The client's `onEvent(event, jsonBytes)` supplies the received JSON's estimated UTF-16 byte size
-  for batching without another serialization. History browsing follows in #186 round 2.
+  for batching without another serialization. Browser history reads are documented above.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 
 ## Evaluation events

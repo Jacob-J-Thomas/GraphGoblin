@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186-r2/apps/web
+
+ ❯ src/runs/useRunHistory.test.tsx (5 tests | 1 failed | 4 skipped) 57ms
+   × does not carry a pending read or its error into a different run 55ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/useRunHis ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/useRunHistory.test.tsx > does not carry a pending read or its error into a different run
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/runs/useRunHistory.test.tsx:43:31
+     41|   expect(result.current.busy).toBe(true);
+     42|   rerender({ runId: 'next' });
+     43|   expect(result.current.busy).toBe(false);
+       |                               ^
+     44|   await act(() =>
+     45|     Promise.resolve().then(() => pending[0]!(Response.json({ items: it…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  00:02:54
+   Duration  12.72s (environment 43%, transform 26%, import 19%, setup 12%)
+
+  Transform  transforming modules took 3.16s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186-
+  │ r2\apps\web
+
+EXIT_CODE=1

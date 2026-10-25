@@ -1,9 +1,8 @@
 import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
-import { useQueryClient } from '@tanstack/react-query';
-import { GraphGoblinApiError } from '@graphgoblin/api-client';
-import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
 import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
 import { Page } from '../components/layout/index.js';
@@ -18,6 +17,8 @@ import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
 import { DeliveryPanel } from './inspector/DeliveryPanel.js';
 import { useRunEvents } from './useRunEvents.js';
+import { useRunHistory } from './useRunHistory.js';
+import { useApi } from '../api/context.js';
 import { describeEvent, exitReturnSummary, lastGateSummary, nodeName } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
@@ -75,26 +76,66 @@ export function RunInspectorPage() {
   const threadQuery = useRunThread(runId);
   const log = useRunEvents(runId, () => {
     void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
-    // The thread exists once the run has started; fetch it as soon as events show progress.
-    if (!queryClient.getQueryData(keys.thread(runId))) {
-      void queryClient.invalidateQueries({ queryKey: keys.thread(runId) });
-    }
+    void queryClient.invalidateQueries({ queryKey: keys.thread(runId) });
+    void queryClient.invalidateQueries({ queryKey: ['run-observation', runId] });
   });
-  const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
+  const client = useApi();
+  const history = useRunHistory(runId, log);
+  const selectedSeq = history.selectedSeq;
   const seq = selectedSeq ?? log.lastSeq;
-  const selectedEvent = log.events.find((event) => event.seq === seq);
-  const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
-  const finished = log.events.findLast(
-    (event): event is Extract<RunEvent, { type: 'run.finished' }> => event.type === 'run.finished',
-  );
+  const selectedEvent = history.selectedEvent;
+  const observation = useQuery({
+    queryKey: ['run-observation', runId],
+    queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
+  });
+  const present = (events: (RunEvent | undefined)[]) =>
+    events.filter((event): event is RunEvent => event !== undefined);
+  const evidence = present([
+    observation.data?.lifecycle,
+    observation.data?.exit,
+    observation.data?.gate,
+    observation.data?.finished,
+  ]);
+  const latestExit = observation.data?.exit;
+  const finished = observation.data?.finished;
+  // Whole-run cancellation and recovery evidence, whatever window the Timeline is browsing.
+  const cancellation = observation.data
+    ? present([observation.data.cancelRequested, observation.data.cancelled])
+    : undefined;
+  const recovery = present([
+    ...(observation.data?.freshSessionChoices ?? []),
+    observation.data?.lifecycle?.type === 'run.failed' ? observation.data.lifecycle : undefined,
+  ]);
+  const resolveSeq = selectedSeq ?? (selectedEvent?.type === 'node.finished' ? seq : undefined);
+  const selectedThread = useQuery({
+    queryKey: ['run-thread-at', runId, resolveSeq],
+    queryFn: async ({ signal }) => ({
+      thread: await runs.thread(client, runId, { at: resolveSeq! }, { signal }),
+      seq: resolveSeq!,
+    }),
+    placeholderData: (previous) => previous,
+    enabled: resolveSeq !== undefined,
+    gcTime: 0,
+    staleTime: Infinity,
+  });
+  const beforeThread = useQuery({
+    queryKey: ['run-thread-before', runId, resolveSeq],
+    queryFn: ({ signal }) => runs.thread(client, runId, { at: Math.max(0, seq - 1) }, { signal }),
+    enabled: resolveSeq !== undefined && selectedEvent?.type === 'node.finished',
+    gcTime: 0,
+    staleTime: Infinity,
+  });
+  const shownThread =
+    resolveSeq === undefined ? threadQuery.data : (selectedThread.data?.thread ?? threadQuery.data);
+  const shownSeq = resolveSeq === undefined ? undefined : selectedThread.data?.seq;
+  const threadError = resolveSeq === undefined ? threadQuery.error : selectedThread.error;
+  // Node and route labels come from the pinned version, so it is always read (#255).
   const versionQuery = useLoopVersion(runQuery.data?.loopId ?? '', runQuery.data?.versionId ?? '');
   const definition = versionQuery.data?.definition;
-  const gateSummary = lastGateSummary(log.events, definition);
-  const returnSummary = exitReturnSummary(
-    log.events,
-    definition,
-    threadQuery.data?.invocation.returnDefaults,
-  );
+  const gateSummary = lastGateSummary(evidence, definition);
+  const returnSummary = threadQuery.data
+    ? exitReturnSummary(evidence, definition, threadQuery.data.invocation.returnDefaults)
+    : undefined;
 
   return (
     <Page wide>
@@ -142,7 +183,10 @@ export function RunInspectorPage() {
                 <FailedChildLink details={run.failure.details} />
               </Alert>
             ) : null}
-            <SessionRecoveryControls run={run} events={log.events} />
+            {observation.error ? (
+              <Alert>Run evidence could not be read: {observation.error.message}</Alert>
+            ) : null}
+            <SessionRecoveryControls run={run} events={recovery} />
             {latestExit ? (
               <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
                 <p>{describeEvent(latestExit, definition)}</p>
@@ -152,10 +196,17 @@ export function RunInspectorPage() {
             ) : null}
             {/* A null return is a value: show the row's recorded result, or the finish event's
                 when the row has none. */}
-            {run.result !== undefined || finished?.result !== undefined ? (
+            {run.result !== undefined ||
+            (finished?.type === 'run.finished' ? finished.result : undefined) !== undefined ? (
               <Card title="Result">
                 <BoundedValue
-                  value={run.result !== undefined ? run.result : finished?.result}
+                  value={
+                    run.result !== undefined
+                      ? run.result
+                      : finished?.type === 'run.finished'
+                        ? finished.result
+                        : undefined
+                  }
                   label="Result"
                   testId="run-result"
                   fileName={`run-${run.id}-result`}
@@ -165,7 +216,8 @@ export function RunInspectorPage() {
             <RunLimits run={run} />
             <ExecutionContext
               run={run}
-              events={log.events}
+              cancellation={cancellation}
+              cancellationUnavailable={observation.isError}
               definition={definition}
               definitionLoading={versionQuery.isPending}
             />
@@ -176,14 +228,39 @@ export function RunInspectorPage() {
       </QueryState>
       <div className="grid items-start gap-section lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <Timeline
-          events={log.events}
+          events={history.rows}
           definition={definition}
+          total={log.lastSeq}
+          following={log.mode === 'live'}
+          hasOlder={history.hasOlder}
+          hasNewer={history.hasNewer}
+          busy={history.busy}
+          onOlder={() => {
+            void history.older();
+          }}
+          onNewer={() => {
+            void history.newer();
+          }}
+          onLive={() => {
+            void history.live();
+          }}
+          onPause={history.pause}
           status={log.status}
-          error={log.error}
+          error={history.error ?? log.error}
           selected={seq}
-          onSelect={setSelectedSeq}
+          onSelect={history.select}
         />
         <div className="grid min-w-0 gap-section">
+          {history.payload ? (
+            <Card title={`Event ${history.selectedSeq} payload`}>
+              <BoundedValue
+                value={history.payload}
+                label="Event payload"
+                testId="event-payload"
+                fileName={`run-${runId}-event-${history.selectedSeq}`}
+              />
+            </Card>
+          ) : null}
           {selectedEvent?.type === 'child_run.started' ||
           selectedEvent?.type === 'child_run.finished' ? (
             <ChildRunDetails runId={selectedEvent.childRunId} />
@@ -195,17 +272,34 @@ export function RunInspectorPage() {
             definitionLoading={versionQuery.isPending}
             exitReturns={returnSummary}
           />
-          {threadQuery.data ? (
+          {threadError &&
+          !(threadError instanceof GraphGoblinApiError && threadError.status === 404) ? (
+            <Alert>Thread read failed: {threadError.message}</Alert>
+          ) : null}
+          {resolveSeq !== undefined && (selectedThread.isFetching || shownSeq !== resolveSeq) ? (
+            <p className="text-sm text-muted" aria-live="polite">
+              Reading the thread at event {resolveSeq}…
+            </p>
+          ) : null}
+          {beforeThread.error ? (
+            <Alert>Patch comparison could not be read: {beforeThread.error.message}</Alert>
+          ) : null}
+          {shownThread ? (
             <ThreadViewer
-              current={threadQuery.data}
-              events={log.events}
-              seq={seq}
+              current={shownThread}
+              events={selectedEvent ? [selectedEvent] : []}
+              seq={shownSeq ?? seq}
+              live={shownSeq === undefined}
+              before={shownSeq === resolveSeq ? beforeThread.data : undefined}
               definition={definition}
-              historyBytes={log.bytes}
             />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>
           )}
+          <p className="text-xs text-muted">
+            Activity below covers the retained history window. Earlier activity is available through
+            Load older.
+          </p>
           <ProgressDrawer events={log.events} definition={definition} />
         </div>
       </div>

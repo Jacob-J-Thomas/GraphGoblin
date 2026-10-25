@@ -128,8 +128,12 @@ export interface RunRepository {
     seq: number,
     replayState: ReplayState,
   ): Promise<void>;
-  /** A snapshot and sequence; absent replay state means its prefix must still be read. */
-  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined>;
+  /**
+   * A snapshot and sequence; absent replay state means its prefix must still be read. With
+   * `atOrBefore`, a checkpoint after that sequence is not decoded and reads as absent, so damage
+   * to it never blocks an earlier historical read (D-016).
+   */
+  getThreadCheckpoint(runId: string, atOrBefore?: number): Promise<ThreadCheckpoint | undefined>;
 }
 
 export interface LoopRepository {

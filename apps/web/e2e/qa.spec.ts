@@ -116,25 +116,33 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   const eventCount = completedRun.lastEventSeq;
   const completeTimeline = `Timeline (${eventCount} events, complete)`;
   await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
+  // The Timeline mounts a bounded window at the live end (#186); every item stays durable and
+  // browsable on the server.
   const timeline = page.getByRole('list', { name: 'Timeline' });
-  await expect(
-    timeline.getByRole('button', { name: /^#\d+ node\.progress Ask \(ask\)$/ }),
-  ).toHaveCount(1200);
-  await expect(
-    timeline.getByRole('button', { name: /^#\d+ harness\.session Ask \(ask\)$/ }),
-  ).toHaveCount(1);
-  await expect(
-    timeline.getByRole('button', { name: /^#\d+ harness\.usage Ask \(ask\)$/ }),
-  ).toHaveCount(1);
-  await expect(
-    timeline.getByRole('button', { name: /^#\d+ harness\.turn Ask \(ask\)$/ }),
-  ).toHaveCount(1);
-  await expect(
-    timeline.getByRole('button', { name: /^#\d+ harness\.submission Ask \(ask\)$/ }),
-  ).toHaveCount(1);
-  await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
   const seqs = await timelineSeqs(page);
-  expect(seqs).toEqual(Array.from({ length: eventCount }, (_, i) => i + 1));
+  expect(seqs.length).toBeGreaterThan(0);
+  expect(seqs.length).toBeLessThanOrEqual(80);
+  expect(seqs).toEqual(
+    Array.from({ length: seqs.length }, (_, i) => eventCount - seqs.length + 1 + i),
+  );
+  await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
+  const durable: { seq: number; type: string; nodeId?: string }[] = [];
+  for (let after = 0; ;) {
+    const chunk = (await (
+      await request.get(`/runs/${runId}/events?after=${after}&limit=1000`)
+    ).json()) as { items: { seq: number; type: string; nodeId?: string }[]; hasMore: boolean };
+    durable.push(...chunk.items);
+    if (!chunk.hasMore) break;
+    after = chunk.items.at(-1)!.seq;
+  }
+  expect(durable.map((event) => event.seq)).toEqual(
+    Array.from({ length: eventCount }, (_, i) => i + 1),
+  );
+  const count = (type: string) =>
+    durable.filter((event) => event.type === type && event.nodeId === 'ask').length;
+  expect(count('node.progress')).toBe(1200);
+  for (const type of ['harness.session', 'harness.usage', 'harness.turn', 'harness.submission'])
+    expect(count(type)).toBe(1);
   // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
   // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
   const liveRunGets = runGets;
@@ -148,7 +156,8 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
   const freshMs = Date.now() - fresh;
   const click = Date.now();
-  await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
+  await page.getByRole('spinbutton', { name: 'Event sequence' }).fill('601');
+  await page.getByRole('button', { name: 'Go to event' }).click();
   await expect(page.getByText('Thread at event 601')).toBeVisible();
   const clickMs = Date.now() - click;
   console.log(

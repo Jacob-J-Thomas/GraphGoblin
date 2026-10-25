@@ -214,94 +214,53 @@ test('the keyboard stays inside an expanded value that a live event replaces (#2
   await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
 });
 
-test('a run with a large history reconstructs the thread at an event on request (#259)', async ({
+test('oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259)', async ({
   page,
   request,
 }) => {
   const instance = await control(request, '/apps');
   const url = String(instance['url']);
-  const instanceId = instance['instanceId'];
   const created = await request.post(url + '/loops', {
     data: { definition: inferenceLoop('Large history', true) },
   });
-  expect(created.status(), await created.text()).toBe(201);
+  expect(created.status()).toBe(201);
   const { loop } = (await created.json()) as { loop: { id: string } };
   expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
-  await control(request, '/harness/script', { instanceId, turns: [{ finalText: HUGE }] });
-  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
-  expect(started.status()).toBe(202);
-  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
-  const run = async () =>
-    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  await control(request, '/harness/script', {
+    instanceId: instance['instanceId'],
+    turns: [{ finalText: HUGE }],
+  });
+  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: {} });
+  const runId = RunRecordSchema.parse((await started.json()).run).id;
   await expect
-    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+    .poll(
+      async () =>
+        RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+      { timeout: 30_000 },
+    )
     .toBe('waiting');
-
   await page.goto(url + '/app/runs/' + runId);
   const timeline = page.getByRole('list', { name: 'Timeline' });
   await expect(timeline.getByText('run.waiting')).toBeVisible();
-  // The history is above the threshold: the latest event asks before anything is replayed.
-  const reconstruct = page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ });
-  await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
-  await expect(reconstruct).toBeVisible();
-  await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
-  await expect(reconstruct).toHaveText(
-    `Reconstruct the thread at event ${(await run()).lastEventSeq}`,
-  );
-  const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
-  expect(waitSeq).toBeDefined();
-  await reconstruct.click();
-  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
-  await expect(reconstruct).toHaveCount(0);
-
-  // A live event that becomes the selection (the inspector follows the latest event until one is
-  // selected by hand) asks again.
-  const waiting = (await run()).waiting;
-  expect(waiting).toBeDefined();
-  const answered = await request.post(url + '/runs/' + runId + '/input', {
-    data: { waitId: waiting!.waitId, input: { approved: true } },
-  });
-  expect(answered.status(), await answered.text()).toBe(200);
-  await expect(timeline.getByText('run.finished')).toBeVisible();
-  // Caller delivery follows run.finished. Observe that durable fact before freezing the latest
-  // selection; otherwise the later last-button click can select a different, unreplayed event.
-  await expect(timeline.getByText('return.delivered', { exact: true })).toBeVisible();
-  const completed = await run();
-  expect(completed.status).toBe('succeeded');
-  await expect(
-    page.getByRole('heading', {
-      name: `Timeline (${completed.lastEventSeq} events, complete)`,
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(reconstruct).toBeVisible();
-  await expect(reconstruct).toHaveText(`Reconstruct the thread at event ${completed.lastEventSeq}`);
-  const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
-  expect(finishedSeq).toBeDefined();
-  expect(finishedSeq).not.toBe(waitSeq);
-
-  // The first event asks too; the events reconstructed earlier stay shown on return.
-  await timeline.getByRole('button').first().click();
-  await expect(page.getByRole('heading', { name: 'Thread at event 1', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Reconstruct the thread at event 1' }).click();
-  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
-  await timeline.getByRole('button').filter({ hasText: 'run.waiting' }).click();
-  await expect(
-    page.getByRole('heading', { name: `Thread at event ${waitSeq}`, exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
-  await expect(reconstruct).toHaveCount(0);
-  await timeline.getByRole('button').last().click();
-  await expect(
-    page.getByRole('button', { name: `Reconstruct the thread at event ${finishedSeq}` }),
-  ).toBeVisible();
-
-  // The log of such a run is not stored: a reload replays it from the first event and asks again.
+  await expect(timeline.getByText('Load exact event payload').first()).toBeVisible();
+  const cacheBytes = () =>
+    page.evaluate(() => (sessionStorage.getItem('graphgoblin-run-events-v4')?.length ?? 0) * 2);
+  expect(await cacheBytes()).toBeLessThan(1_100_000);
+  await timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }).click();
+  await expect(page.getByRole('list', { name: 'Patch diff' })).toBeVisible();
+  await page.getByRole('button', { name: 'Full thread JSON' }).click();
+  await page.getByRole('button', { name: 'Show all of Full thread JSON' }).click();
+  const thread = JSON.parse(await page.getByTestId('thread-json').innerText()) as {
+    outputs: { work: { value: string } };
+  };
+  expect(thread.outputs.work.value).toBe(HUGE);
+  expect(await cacheBytes()).toBeLessThan(1_100_000);
   await page.reload();
-  await expect(page.getByRole('list', { name: 'Timeline' }).getByText('run.finished')).toBeVisible({
-    timeout: 20_000,
-  });
   await expect(
-    page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ }),
+    timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }),
   ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Follow live' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Follow live' }).click();
+  await expect(timeline.getByText('run.waiting')).toBeVisible();
+  expect(await cacheBytes()).toBeLessThan(1_100_000);
 });

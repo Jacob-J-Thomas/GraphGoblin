@@ -333,7 +333,10 @@ export class SqliteRunRepository implements RunRepository {
       .where(eq(runs.id, runId));
   }
 
-  async getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined> {
+  async getThreadCheckpoint(
+    runId: string,
+    atOrBefore?: number,
+  ): Promise<ThreadCheckpoint | undefined> {
     const [row] = await this.db
       .select({
         thread: sql<string | null>`${runs.threadSnapshot}`,
@@ -344,6 +347,8 @@ export class SqliteRunRepository implements RunRepository {
       .where(eq(runs.id, runId))
       .limit(1);
     if (row?.thread === null || row?.thread === undefined) return undefined;
+    // A later checkpoint is left undecoded for an earlier read (see the port).
+    if (row.seq !== null && row.seq > (atOrBefore ?? Infinity)) return undefined;
     const thread = decodeStoredThread(runId, 'thread_snapshot', row.thread);
     return row.seq === null
       ? undefined

@@ -4,22 +4,16 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { FakeHarness } from '@graphgoblin/engine/testing';
-import {
-  ContextThreadSchema,
-  LoopDefinitionSchema,
-  RunEventSchema,
-  RunRecordSchema,
-} from '@graphgoblin/contracts';
+import { ContextThreadSchema, RunEventSchema, RunRecordSchema } from '@graphgoblin/contracts';
 import { replayThread } from '@graphgoblin/domain';
-import { initialThreadFrom, tryThreadAt } from '../src/runs/projections.js';
 import { replaySeedLoop } from './replay-seed-fixture.js';
 
 // Retain this disposable store for inspection. Never remove directories in the worker sandbox.
-const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-'));
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-e1-186r2-'));
 const container = await createContainer(
   loadConfig({
     GG_DATA_DIR: dataDir,
-    GG_PORT: '5700',
+    GG_PORT: '5828',
     GG_SWAGGER_UI: 'false',
     GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
   }),
@@ -27,10 +21,10 @@ const container = await createContainer(
 );
 await container.start();
 const app = await buildApp(container, { logger: false });
-await app.listen({ port: 5700, host: '127.0.0.1' });
+await app.listen({ port: 5828, host: '127.0.0.1' });
 async function api(path: string, body?: unknown): Promise<unknown> {
   const response = await fetch(
-    `http://127.0.0.1:5700${path}`,
+    `http://127.0.0.1:5828${path}`,
     body === undefined
       ? {}
       : {
@@ -94,23 +88,18 @@ try {
     assert.ok(checkpoint);
     assert.deepEqual(replayThread(actualSeed, events, checkpoint.seq), checkpoint.thread);
     assert.deepEqual(replayThread(actualSeed, events), current);
-    const initial = initialThreadFrom(
-      current,
-      events,
-      LoopDefinitionSchema.parse(replaySeedLoop()),
-    );
-    const sequences = events.map((event) => {
+    const sequences = [];
+    for (const event of events) {
       const expected = replayThread(actualSeed, events, event.seq);
-      const actual = tryThreadAt(initial, events, event.seq);
-      const discrepancies = actual.ok
-        ? Object.keys(expected).filter(
-            (key) =>
-              JSON.stringify(Reflect.get(expected, key)) !==
-              JSON.stringify(Reflect.get(actual.thread, key)),
-          )
-        : ['reconstruction error'];
-      return { seq: event.seq, type: event.type, discrepancies, expected, actual };
-    });
+      const actual = ContextThreadSchema.parse(
+        await api(`/runs/${fork.id}/thread?at=${event.seq}`),
+      );
+      const discrepancies = Object.keys(expected).filter(
+        (key) =>
+          JSON.stringify(Reflect.get(expected, key)) !== JSON.stringify(Reflect.get(actual, key)),
+      );
+      sequences.push({ seq: event.seq, type: event.type, discrepancies, expected, actual });
+    }
     comparisons.push({
       forkId: fork.id,
       parentId,
@@ -122,7 +111,9 @@ try {
     parentId = fork.id;
   }
   assert.equal(await frozenSource(), beforeSource);
-  const output = resolve(process.argv[2] ?? '../../docs/qa/2026-10-22-wp-g1-245-before.json');
+  const output = resolve(
+    process.argv[2] ?? '../../docs/qa/2026-10-24-wp-e1-186-r2/replay-seed-check.json',
+  );
   await writeFile(
     output,
     JSON.stringify({ dataDir, sourceId: source.id, sourceUnchanged: true, comparisons }, null, 2),

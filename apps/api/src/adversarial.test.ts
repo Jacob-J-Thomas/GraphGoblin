@@ -141,6 +141,7 @@ describe('adversarial API invariants', () => {
     'GET /runs/diagnostics': 'runs:read',
     'GET /runs/{id}': 'runs:read',
     'GET /runs/{id}/thread': 'runs:read',
+    'GET /runs/{id}/observation': 'runs:read',
     'GET /runs/{id}/events': 'runs:read',
     'GET /runs/{id}/sessions': 'runs:read',
     'GET /runs/{id}/artifacts/{artifactId}': 'runs:read',

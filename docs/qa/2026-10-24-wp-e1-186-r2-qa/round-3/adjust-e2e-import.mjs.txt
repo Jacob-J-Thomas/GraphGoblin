@@ -1,0 +1,2 @@
+import{readFile,writeFile}from'node:fs/promises';
+const p='.tmp/qa3/e2e-prepare.mjs';let s=await readFile(p,'utf8');s=s.replace("await writeFile(scratch+'/thread-history.ts',fixture);","fixture=fixture.replace(\"'@graphgoblin/infrastructure/sqlite'\",\"'../../../../packages/infrastructure/src/sqlite/index.js'\");await writeFile(scratch+'/thread-history.ts',fixture);");await writeFile(p,s);

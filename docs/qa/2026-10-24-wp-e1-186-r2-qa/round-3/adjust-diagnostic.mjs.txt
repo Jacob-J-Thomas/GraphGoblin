@@ -1,0 +1,1 @@
+import{readFile,writeFile}from'node:fs/promises';const p='.tmp/qa3/large-value-diagnostic.mjs';let s=await readFile(p,'utf8');s=s.replace('--grep "large values stay bounded"','--grep large.values.stay.bounded');await writeFile(p,s);

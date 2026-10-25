@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile}from'node:fs/promises';
+import{chromium}from'../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa',checks=[];
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection'),before=JSON.parse(await readFile(out+'/restart-before.json','utf8'));
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,2500)});}await writeFile(out+'/projection-results.json',JSON.stringify(checks,null,2));}
+await check('real gateway process restart preserves complete original history and historical threads',async()=>{const after=await ctl('/oracle',{runId:before.runId,at:[0,128,129,before.oracle.total+100]});assert.notEqual(c.pid,before.pid);assert.deepEqual(after,before.oracle);return {beforePid:before.pid,afterPid:c.pid,runId:before.runId,total:after.total,checkpoint:after.checkpoint,identical:true};});
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+for(const kind of ['failure','delivery'])await check('evicted '+kind+' projection equals fresh full history and record',async()=>{
+ const run=await ctl('/start',{passes:kind==='failure'?1:3,delay:0,items:3,fail:kind==='failure',result:true,delivery:kind==='delivery'});await ctl('/idle');
+ await ctl('/append',{runId:run.id,count:700});
+ const full=await ctl('/oracle',{runId:run.id,full:true});await writeFile('.tmp/qa186/'+kind+'-full.json',JSON.stringify(full));
+ const page=await context.newPage();await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();
+ const until=async(fn)=>{for(let i=0;i<200;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error('projection did not settle');};
+ await until(async()=>Number(await list.getByRole('button').last().getAttribute('data-seq'))===full.last);
+ const log=await page.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')).state.runs[id],run.id);
+ assert.ok(log.events[0].seq>full.observation.lifecycle.seq);
+ if(kind==='failure'){assert.equal(full.record.status,'failed');assert.equal(full.record.failure.code,'QA_FAILURE');await page.getByText('Failed: QA_FAILURE',{exact:true}).waitFor();assert.ok((await page.locator('body').innerText()).includes(full.record.failure.message));}
+ else{assert.equal(full.record.status,'succeeded');assert.ok(full.record.result!==undefined);assert.equal(JSON.parse(await page.getByTestId('run-result').innerText()),full.record.result);assert.ok(full.record.delivery);assert.ok((await page.locator('body').innerText()).includes('delivered'));const file=JSON.parse(await readFile(c.dir+'/qa-return.json','utf8'));assert.deepEqual(file,full.record.result);}
+ await writeFile(out+'/'+kind+'-projection.aria.txt',await page.locator('body').ariaSnapshot());await page.screenshot({path:out+'/'+kind+'-projection.png'});
+ await page.close();return {runId:run.id,total:full.total,retainedFirst:log.events[0].seq,record:full.record,observation:full.observation};
+});
+await context.close();await browser.close();
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass)}));

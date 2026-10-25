@@ -1,0 +1,18 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve,dirname,relative} from 'node:path';
+const scratch='apps/web/.tmp/qa3',out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3';await mkdir(scratch+'/specs',{recursive:true});
+function relocate(text,original,dest){return text.replace(/(from\s+['"])(\.[^'"]+)(['"])/g,(_,a,p,z)=>a+('./'+relative(dirname(dest),resolve(dirname(original),p))).replaceAll('\\','/')+z);}
+let server=await readFile('apps/web/e2e/server.ts','utf8');
+server=relocate(server,'apps/web/e2e/server.ts',scratch+'/server.ts').replace("const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');","const dist = resolve('dist');");
+server=server.replaceAll('port: 0','port: await qaPort()').replaceAll('gg-e2e-live-','gg-qa-e1-186r2-3-e2e-').replace(/await rm\(dataDir, \{ recursive: true, force: true \}\)\.catch\(\(\) => undefined\);/g,"// QA retains disposable directories for orchestrator cleanup.");
+server=`import {createServer as qaNetServer} from 'node:net';
+async function qaPort():Promise<number>{for(let port=6154;port<=6158;port++){const probe=qaNetServer();const ok=await new Promise<boolean>(r=>{probe.once('error',()=>r(false));probe.listen(port,'127.0.0.1',()=>probe.close(()=>r(true)));});if(ok)return port;}throw Error('No free QA port 6154-6158');}\n`+server;
+let fixture=relocate(await readFile('apps/api/src/testing/thread-history.ts','utf8'),'apps/api/src/testing/thread-history.ts',scratch+'/thread-history.ts').replaceAll('gg-thread-history-','gg-qa-e1-186r2-3-thread-');fixture=fixture.replace("'@graphgoblin/infrastructure/sqlite'","'../../../../packages/infrastructure/src/sqlite/index.js'");await writeFile(scratch+'/thread-history.ts',fixture);await writeFile(out+'/e2e-thread-history.ts.txt',fixture);
+server=server.replace('  createThreadHistoryFixture,','').replace("import { existsSync }", "import {createThreadHistoryFixture} from './thread-history.js';\nimport { existsSync }");
+await writeFile(scratch+'/server.ts',server);await writeFile(out+'/e2e-server.ts.txt',server);
+let setup=await readFile('apps/web/e2e/global-setup.ts','utf8');setup=setup.replace("const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');","const webRoot = resolve('.');").replace("'e2e/server.ts'","'.tmp/qa3/server.ts'");await writeFile(scratch+'/global-setup.ts',setup);await writeFile(out+'/e2e-global-setup.ts.txt',setup);
+for(const name of ['bounded-history','thread-history','inspector-large-values','missing-session','history','webhook-delivery','qa']){const original='apps/web/e2e/'+name+'.spec.ts',dest=scratch+'/specs/'+name+'.spec.ts';let spec=relocate(await readFile(original,'utf8'),original,dest);if(name==='webhook-delivery')spec=spec.replaceAll("receiver.listen(0,","receiver.listen(6159,");await writeFile(dest,spec);}
+const config=`import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./specs',testMatch:'**/*.spec.ts',globalSetup:'./global-setup.ts',fullyParallel:false,workers:1,retries:0,timeout:60000,expect:{timeout:10000},reporter:[['list']],outputDir:'../../../../.tmp/qa3/pw-results',use:{channel:'msedge',headless:true,trace:'off',serviceWorkers:'block',viewport:{width:1440,height:900}}});\n`;
+await writeFile(scratch+'/playwright.config.ts',config);await writeFile(out+'/playwright.config.ts.txt',config);
+await writeFile(out+'/e2e-prepare.mjs.txt',await readFile(import.meta.filename,'utf8'));

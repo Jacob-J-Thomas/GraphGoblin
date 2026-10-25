@@ -1,0 +1,23 @@
+import {readFile,writeFile,readdir}from'node:fs/promises';
+import {execFileSync}from'node:child_process';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const read=async name=>JSON.parse(await readFile(out+'/'+name,'utf8'));
+const esc=s=>String(s).replaceAll('|','\\|').replaceAll('\n',' ').replaceAll('\r','');
+const gates=[...await read('gates-build.json'),...await read('gates-typecheck.json'),...await read('dependency-gates.json')];
+const table='| Command | Result | Evidence |\n| --- | --- | --- |\n'+gates.map(x=>'| `'+x.command+'` | '+(x.code===0?'PASS':'FAIL')+' (exit '+x.code+') | ['+x.name+']('+x.name+(x.name==='api-client'||x.name==='domain'?'-coverage':'')+'.log.txt) |').join('\n');
+const names=['api','cursors','numeric-edge','browser','recovery','vars-progress','merged-inspector','merged-followup','oversized-verified','projection-complete','projection-verified','live-synchronized','live-verified','visual-evidence','evidence-matrix','restart'];
+let ledger='';
+for(const name of names){
+ let data;try{data=await read(name+'-results.json');}catch{continue;}
+ const checks=Array.isArray(data)?data:data.checks??[];
+ ledger+='\n#### '+name+'\n\nSteps: ['+name+'.mjs.txt]('+name+'.mjs.txt). Full actual results: ['+name+'-results.json]('+name+'-results.json).\n\n| Case / expected behavior | Steps | Actual excerpt | Status |\n| --- | --- | --- | --- |\n';
+ for(const x of checks){const actual=x.error??JSON.stringify(x.evidence??Object.fromEntries(Object.entries(x).filter(([k])=>!['name','pass'].includes(k))));ledger+='| '+esc(x.name)+' | Run named case in linked script | '+esc(actual.slice(0,260))+' | '+(x.pass?'PASS':'FAIL')+' |\n';}
+ if(!Array.isArray(data)&&data.pass===false&&checks.every(x=>x.pass))ledger+='\nFixture completion failed: '+esc(data.error)+'\n';
+}
+for(const name of ['native-slow-reader','expansion-isolated']){try{const x=await read(name+(name==='native-slow-reader'?'':'-results')+'.json');ledger+='\n#### '+name+'\n\nSteps: ['+name+'.mjs.txt]('+name+'.mjs.txt). Expected: '+(name==='native-slow-reader'?'typed failure and exact complete cursor recovery':'one isolated foreground expansion of the previously timed-out value')+'. Actual: ['+name+']('+name+(name==='native-slow-reader'?'':'-results')+'.json), '+(x.pass?'PASS':'FAIL')+'.\n';}catch{}}
+const visual=await read('visual-evidence-results.json');
+const vt='**'+visual.filter(x=>x.pass).length+'/'+visual.length+' passed.** A separate single-page-at-a-time foreground sweep covered probabilities, unknown actor/unavailable labels, original pinned labels/array-append values after a renamed draft, and bounded oversized-event disclosure with exact full download at 1440/390 in both themes. It does not request Show all. [Results](visual-evidence-results.json), [script](visual-evidence.mjs.txt). Every oversized download was 1,200,263 bytes with SHA-256 `ee4ef43ef03ae6bba4114566e13e1fb08f6d12928301bd54fd251293ba6a7ad4`.\n\nThe earlier extra sweep completed with its failed outcomes retained in [evidence-matrix-results.json](evidence-matrix-results.json). No result is removed by the later bounded-download success. [One isolated expansion diagnostic](expansion-isolated-results.json) records the sole follow-up to its timing observation.';
+const files=(await readdir(out)).sort();
+const inventory='| Artifact | Purpose |\n| --- | --- |\n'+files.filter(n=>n!=='README.md').map(n=>'| ['+n+']('+n+') | '+(n.endsWith('.mjs.txt')?'Executable QA script retained as text':n.endsWith('.log.txt')?'Command or transport log':n.endsWith('.png')?'Edge screenshot':n.endsWith('.json')?'Structured result, capture or manifest':'Evidence, requirements, source diff or retention note')+' |').join('\n');
+let text=await readFile('.tmp/qa186r2/report-body.md','utf8');text=text.replace('<!-- GATES -->',table).replace('<!-- CHECKS -->',ledger).replace('<!-- VISUAL -->',vt).replace('<!-- INVENTORY -->',inventory).replace('<!-- FINAL -->','Final process/head/source state and cleanup responses: [final-state.json](final-state.json).');
+await writeFile(out+'/README.md',text);await writeFile(out+'/report.mjs.txt',await readFile(import.meta.filename,'utf8'));console.log(JSON.stringify({gates:gates.length,cases:ledger.split('| Run named case').length-1,artifacts:files.length,reportBytes:Buffer.byteLength(text)}));
