@@ -1,0 +1,14 @@
+import{readdir,readFile,writeFile,stat,copyFile}from'node:fs/promises';
+import{createHash}from'node:crypto';
+import{join}from'node:path';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa',temp='.tmp/qa186';
+const excluded=[];
+for(const name of await readdir(temp)){
+ if(!name.endsWith('-full.json')&&!['api-full.json','paused-stream.txt','baseline.tar'].includes(name))continue;
+ const path=join(temp,name),s=await stat(path);const bytes=await readFile(path),sha256=createHash('sha256').update(bytes).digest('hex');
+ if(s.size>1000000)excluded.push({name,bytes:s.size,sha256,reason:'Above the 1,000,000-byte retained capture limit; remains only in ignored temporary workspace.'});
+ else await copyFile(path,join(out,name==='paused-stream.txt'?'paused-stream.log.txt':name));
+}
+await writeFile(out+'/NOT-KEPT.md','# Captures not retained in QA evidence\n\nFiles above 1,000,000 bytes are left in the ignored .tmp/qa186/ directory for orchestrator disposal. They are not linked as inspectable report evidence. Digests identify the exact raw captures; summaries and assertions are retained separately.\n\n| Temporary capture | Bytes | SHA-256 | Reason |\n| --- | ---: | --- | --- |\n'+excluded.map(x=>'| '+x.name+' | '+x.bytes+' | '+x.sha256+' | '+x.reason+' |').join('\n')+'\n');
+await writeFile(out+'/oversized-captures.json',JSON.stringify(excluded,null,2));
+console.log(excluded.map(x=>({name:x.name,bytes:x.bytes})));

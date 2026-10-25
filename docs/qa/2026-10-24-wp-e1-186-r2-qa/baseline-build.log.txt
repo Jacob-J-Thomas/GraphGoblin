@@ -1,0 +1,24 @@
+node : node:internal/fs/promises:638
+At line:59 char:1
++ node .tmp/qa186/baseline-build.mjs *> docs/qa/2026-10-24-wp-e1-186-r2 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/fs/promises:638:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e
+1-186-r2\.tmp\qa186\baseline\packages\tooling\package.json'
+    at async open (node:internal/fs/promises:638:25)
+    at async readFile (node:internal/fs/promises:1242:14)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/.tmp/qa186/baselin
+e-build.mjs:23:23 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186-r2\\.tmp\\qa186\\baseline
+\\packages\\tooling\\package.json'
+}
+
+Node.js v22.14.0

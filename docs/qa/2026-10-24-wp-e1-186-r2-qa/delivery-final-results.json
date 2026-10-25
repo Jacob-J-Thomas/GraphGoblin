@@ -1,0 +1,85 @@
+[
+  {
+    "name": "evicted webhook delivery, result and finish agree with full server history",
+    "pass": true,
+    "evidence": {
+      "runId": "01M5RX8FXSDBNCM0ANT1T7XCYB",
+      "total": 741,
+      "retainedFirst": 230,
+      "result": "OK",
+      "delivery": {
+        "id": "01M5RX8G4FXP25GD1RS57XPX3E",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:6154/return"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false
+      },
+      "observation": {
+        "lifecycle": {
+          "runId": "01M5RX8FXSDBNCM0ANT1T7XCYB",
+          "seq": 38,
+          "ts": "2026-10-25T06:51:37.999Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "OK"
+        },
+        "exit": {
+          "runId": "01M5RX8FXSDBNCM0ANT1T7XCYB",
+          "seq": 36,
+          "ts": "2026-10-25T06:51:37.999Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        "gate": {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 3,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.186,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M5RX8FXSDBNCM0ANT1T7XCYB",
+          "seq": 33,
+          "ts": "2026-10-25T06:51:37.983Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        "finished": {
+          "runId": "01M5RX8FXSDBNCM0ANT1T7XCYB",
+          "seq": 38,
+          "ts": "2026-10-25T06:51:37.999Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "OK"
+        }
+      },
+      "receiverRequests": 1
+    }
+  }
+]

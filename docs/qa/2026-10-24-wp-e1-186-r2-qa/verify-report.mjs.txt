@@ -1,0 +1,30 @@
+import{readdir,readFile,writeFile,stat,copyFile}from'node:fs/promises';
+import{join}from'node:path';
+import{createHash}from'node:crypto';
+import{execFileSync}from'node:child_process';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa';
+const report=await readFile(out+'/README.md','utf8');
+const names=(await readdir(out)).sort(),missing=[],oversized=[],paths=[],invalid=[],broken=[];
+const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
+for(const n of names){
+ if(n==='README.md')continue;
+ if(!report.includes(']('+n+')'))missing.push(n);
+ const s=await stat(join(out,n));if(s.size>1000000)oversized.push({name:n,bytes:s.size});
+ if(/\.(md|txt|json|jsonl)$/.test(n)){
+ const b=await readFile(join(out,n));let text=b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8');
+ if(/C:[\\/]+Users[\\/]+(?!%)[^\\/%]+/i.test(text))paths.push(n);
+ if(text.includes('\u0000'))invalid.push({file:n,error:'NUL in retained text'});
+ if(n.endsWith('.json'))try{JSON.parse(text.replace(/^\uFEFF/,''));}catch(e){invalid.push({file:n,error:String(e)});}
+ }
+}
+for(const m of report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){if(m[1].includes('://'))continue;try{await stat(join(out,m[1]));}catch{broken.push(m[1]);}}
+const head=git('rev-parse','HEAD'),status=git('status','--short');
+const result={head,headMatches:head==='bf9935754dcfbdef80b8d978fb2e605a5111b7f5',status,onlyQaChanges:status.split(/\r?\n/).every(s=>s.includes('docs/qa/2026-10-24-wp-e1-186-r2-qa/')),artefacts:names.length,missingLinks:missing,brokenLinks:broken,oversizedKept:oversized,unredactedPaths:paths,invalidTextOrJson:invalid};
+result.pass=result.headMatches&&result.onlyQaChanges&&![missing,broken,oversized,paths,invalid].some(x=>x.length);
+await writeFile(out+'/report-verification.json',JSON.stringify(result,null,2));
+await writeFile(out+'/final-state.log.txt','git rev-parse HEAD\n'+head+'\n\ngit status --short\n'+status+'\n\nManually managed listeners 6150–6154 closed; see shutdown-results.json. No directories deleted.\n');
+const manifest=[];
+for(const n of names.filter(n=>n!=='artifact-manifest.json')){const bytes=await readFile(join(out,n));manifest.push({file:n,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}
+await writeFile(out+'/artifact-manifest.json',JSON.stringify({algorithm:'SHA-256',selfExcluded:true,files:manifest},null,2));
+console.log(JSON.stringify(result));
+if(!result.pass)process.exitCode=1;

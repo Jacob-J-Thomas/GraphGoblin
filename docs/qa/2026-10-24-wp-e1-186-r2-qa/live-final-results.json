@@ -1,0 +1,152 @@
+{
+  "runId": "01M5RWK75XZVH91XABHSK8HT1H",
+  "checks": [
+    {
+      "name": "bounded heavy history while actual run executes",
+      "pass": true,
+      "evidence": {
+        "runStatus": "running",
+        "frozenFirst": 601,
+        "frozenLast": 721,
+        "ackBefore": 750,
+        "ackAfter": 775,
+        "rows": 121,
+        "bytes": 984806
+      }
+    },
+    {
+      "name": "reload during execution freezes membership and monotonic complete-event cursor",
+      "pass": true,
+      "evidence": {
+        "snapshotAck": 775,
+        "reopenedAfter": 775,
+        "observedAck": 775,
+        "windowFirst": 601,
+        "windowLast": 721
+      }
+    },
+    {
+      "name": "same workload reaches thousands, follows exact suffix and remains byte bounded",
+      "pass": true,
+      "evidence": {
+        "total": 3033,
+        "retained": 512,
+        "bytes": 837438,
+        "sessionBytes": 838764,
+        "first": 2522,
+        "last": 3033,
+        "scroll": {
+          "top": 1856,
+          "height": 540,
+          "total": 2396
+        }
+      }
+    },
+    {
+      "name": "legacy cache migration with stopped old page starts SSE at zero",
+      "pass": true,
+      "evidence": {
+        "oldSentinel": 999999,
+        "reopen": "http://127.0.0.1:6150/runs/01M5RWK75XZVH91XABHSK8HT1H/events?after=0",
+        "observedAck": 2422
+      }
+    }
+  ],
+  "samples": [
+    {
+      "ack": 787,
+      "count": 58,
+      "retainedUTF16Bytes": 982160,
+      "persistedUTF16Bytes": 982576,
+      "rows": 58,
+      "dom": 290,
+      "heapUsed": 33556812
+    },
+    {
+      "ack": 794,
+      "count": 65,
+      "retainedUTF16Bytes": 997720,
+      "persistedUTF16Bytes": 998150,
+      "rows": 68,
+      "dom": 340,
+      "heapUsed": 17390060
+    },
+    {
+      "ack": 799,
+      "count": 70,
+      "retainedUTF16Bytes": 1001916,
+      "persistedUTF16Bytes": 1002358,
+      "rows": 70,
+      "dom": 350,
+      "heapUsed": 22832088
+    },
+    {
+      "ack": 818,
+      "count": 89,
+      "retainedUTF16Bytes": 1037226,
+      "persistedUTF16Bytes": 1037706,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 33830328
+    },
+    {
+      "ack": 833,
+      "count": 103,
+      "retainedUTF16Bytes": 959970,
+      "persistedUTF16Bytes": 960476,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 43885628
+    },
+    {
+      "ack": 848,
+      "count": 118,
+      "retainedUTF16Bytes": 981078,
+      "persistedUTF16Bytes": 981614,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 19740752
+    },
+    {
+      "ack": 869,
+      "count": 139,
+      "retainedUTF16Bytes": 1019232,
+      "persistedUTF16Bytes": 1019812,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 32619728
+    },
+    {
+      "ack": 883,
+      "count": 153,
+      "retainedUTF16Bytes": 1039900,
+      "persistedUTF16Bytes": 1040508,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 43640256
+    },
+    {
+      "ack": 896,
+      "count": 165,
+      "retainedUTF16Bytes": 959802,
+      "persistedUTF16Bytes": 960432,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 22115956
+    },
+    {
+      "ack": 907,
+      "count": 176,
+      "retainedUTF16Bytes": 979114,
+      "persistedUTF16Bytes": 979766,
+      "rows": 80,
+      "dom": 400,
+      "heapUsed": 33144004
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:6150/runs/01M5RWK75XZVH91XABHSK8HT1H/events?after=0",
+    "http://127.0.0.1:6150/runs/01M5RWK75XZVH91XABHSK8HT1H/events?after=775",
+    "http://127.0.0.1:6150/runs/01M5RWK75XZVH91XABHSK8HT1H/events?after=0"
+  ]
+}
