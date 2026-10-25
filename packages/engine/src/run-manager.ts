@@ -1016,10 +1016,12 @@ export class RunManager {
       // A drain stops starting recovered work (#224); the receipts stay due for the next start.
       try {
         // Round robin over a finite round: every page of a round uses the round's start as its
-        // due cutoff, so receipts that arrive later cannot extend it. A full page continues the
-        // round in the next sweep; a short page ends it, and the next round starts from the
-        // beginning. Receipts whose failure metadata cannot be written are revisited once per
-        // round without filling every batch, and older due receipts always come round again.
+        // due cutoff, so receipts that arrive later cannot extend it while the clock advances (a
+        // clock set back behind the cutoff lets them join until time passes it). A full page
+        // continues the round in the next sweep; a short page ends it, and the next round starts
+        // from the beginning. Receipts whose failure metadata cannot be written are revisited
+        // once per round without filling every batch, and older due receipts always come round
+        // again.
         const round = this.eventRecoveryRound ?? { cutoff: this.now() };
         const eventDue = await this.ports.admission.events.due(round.cutoff, 5, round.after);
         const last = eventDue.at(-1);
