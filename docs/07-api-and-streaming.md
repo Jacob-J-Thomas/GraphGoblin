@@ -71,7 +71,7 @@ The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unrea
 
 Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
 
-## Pinned execution limits (#243)
+## Pinned execution limits (#243, #270)
 
 Run responses expose `pinned.limits`: `maxNodeVisits` defaults to 10 and
 `runDeadlineSeconds` defaults to null (no deadline). Explicit null removes the visit
@@ -80,6 +80,15 @@ pauses and downtime. Queue time is excluded. Editing a loop or Settings cannot c
 an existing run's pin. Expiry fails with non-resumable `RUN_DEADLINE_EXCEEDED` and
 cancels awaited children; explicit Cancel remains `cancelled`. Observation deadlines
 on client/MCP waits only stop observation and do not impose a run deadline.
+
+`pinned.limits.structuredTimeoutMs` defaults to null (Unlimited). A positive value
+sets milliseconds per LLM decision or structured repair completion, independently
+of the run deadline. Expiry aborts that completion and releases capacity with resumable
+`STRUCTURED_COMPLETION_TIMEOUT`; its message and `failure.details.timeoutMs` name the
+deadline. LLM decision failures also include evaluation provenance (provider, model
+and effort) in `failure.details.provenance`. Late results cannot change the failure
+or thread. Explicit Cancel remains `cancelled`, without a timeout failure. Export/API
+clients must accept this nullable pin and the new `RunErrorCode` value.
 
 ## Artifact downloads
 
@@ -189,12 +198,51 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
 ## SSE protocol (Decided)
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
-- Each SSE message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`.
+- Each persisted run-event message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`. Stream controls have no id.
 - `node.progress` is validated against the strict `RunEventSchema` payload contract. Inference item variants expose only the bounded summary and allowlisted command/status fields; script progress has its own `{ exitCode, stderr, stdoutBytes }` shape. Invalid progress fields are rejected by clients and are absent from the OpenAPI schema.
 - A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.
-- The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered, whether that event is replayed or arrives live.
-- If the run is already terminal when the client subscribes and the cursor is at or past its terminal event, the response ends right after the replay (a `: connected` comment and no events), so a reconnect after the end never idles. Since WP-G the terminal event is persisted before terminal status (05), so a healthy current log needs no grace. If no terminal event is visible even after re-reading the log, the stream allows up to 2 seconds for late subscription delivery, then closes instead of idling forever. This is a defensive bound for incomplete legacy or inconsistent logs.
+- A terminal event is history, not a completion signal: an earlier `run.failed`, `run.finished`, or `run.cancelled` can be superseded by `run.started` or `run.resumed`. Replay continues through those markers and through already-durable delivery audits after the final outcome.
+- After catching up, confirm that the current lifecycle is terminal. This check runs whatever the run's status said when the stream opened, because the status write can lag a durable outcome the cursor already holds; replay that delivers a started or resumed marker skips it until a later terminal event arrives. A lifecycle notification at or below the cursor (a cursor past the durable tail) is not delivered but still starts a confirmation, and any lifecycle notification that arrives while a confirmation is in progress makes it start over, so such a cursor neither waits forever after a later outcome nor completes while a resume is active. Then read the durable tail again while retaining the single writer. If more rows or held notifications exist, deliver them and repeat confirmation. Once caught up to that read's snapshot, send id-less `event: stream.complete` with `data: {"after":<written cursor>}` and close. This control also completes an empty response opened at or past the terminal cursor; it confirms the cursor without advancing it. Future appends after the completion snapshot require another subscription from that cursor.
+- Confirmation uses the indexed lifecycle tail, with five fixed type seeks and one row read, including the pre-header check for an empty terminal replay; it never scans the history. The terminal event precedes its status write, including crash recovery, but delivery audits may follow it. If no current terminal marker is visible, the stream allows up to 2 seconds for late subscription delivery, then closes without `stream.complete`. This defensive grace remains for inconsistent logs and is unconfirmed EOF, so clients retry it.
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
+- Replay reads at most 128 events per repository page, writes that page before reading the next,
+  and yields to the event loop between pages. Stored history and execution context stay complete.
+  Replay/catch-up ignores live notifications: subsequent log pages return their committed events.
+  After a short page, live notifications are enabled before another cursor read, closing the
+  read/switch race. Full pages continue catch-up; a short confirmation page hands off to live.
+  The live queue is capped at 256 events or 1 MiB of encoded UTF-8 frames. Overflow, an oversized
+  live event or a live sequence gap clears that queue and resumes paged reads on this connection,
+  without a failure or dropped durable history. Overlap is deduplicated and handoff is sorted.
+  Contiguity is checked only for live notifications; replay follows authoritative repository order.
+- Every write honours backpressure: after `write` returns false, no more payload or heartbeat
+  bytes are written until `drain`. Large event frames are written in 16 KiB chunks; normal Node
+  pending writes are capped at 256 KiB. Event payloads are not truncated. A page still occupies
+  the intrinsic memory of its events, plus one serialized event; these bounds control incidental
+  buffering, not supported stored-value size. Heartbeats are skipped while replay/drain is busy.
+- An outstanding-write ceiling or 5 seconds without `drain` sends an id-less
+  `event: stream.error` with Problem Details: status `503`, code `SSE_SLOW_CONSUMER`, and detail
+  "The reader fell behind; reconnecting from the last received event." This ends the response.
+  The one bounded control frame may exceed the normal write ceiling; a peer that never drains
+  is destroyed after another 2 seconds. A severed connection may prevent the control frame from
+  arriving; clients must report a network/premature-close error and resume from their own cursor.
+  These are engineering parameters, justified in ADR-0050, not owner-approved latency limits.
+- Normal frames place `id` after `data`. On failure an unfinished frame receives an invalid
+  data suffix and its id is reset to the previous complete event before the problem control.
+  This also handles complete JSON followed by an unfinished id, including a newline on a write
+  boundary. A wholly accepted frame is left intact. Invalid partial data can be reported as a
+  parse error; the complete-event cursor remains unchanged.
+  `after` and `Last-Event-ID` remain exclusive sequence cursors and control frames carry no id.
+  The API client surfaces controls as `GraphGoblinApiError`; `SSE_SLOW_CONSUMER` and `SSE_REPLAY_FAILED` retry
+  automatically with the existing exponential backoff. It reports via `onError` before retry,
+  resets backoff on event progress, and rejects `done` when `maxAttempts` is exhausted. A later
+  page corruption ends with fatal `STORED_EVENT_INVALID`; this code is also fatal when returned
+  as HTTP Problem Details before SSE headers, whether from the first page or lifecycle lookup.
+  Other read failures end with retryable `SSE_REPLAY_FAILED`, matching transient HTTP 5xx handling.
+  The helper resolves `done` only on valid `stream.complete` (or explicit close/abort), continues
+  past historical terminal events, and retries EOF without completion even after a terminal event.
+  Malformed completion controls reject with `RunEventParseError`. Controls never advance the cursor.
+  The client's `onEvent(event, jsonBytes)` supplies the received JSON's estimated UTF-16 byte size
+  for batching without another serialization. History browsing follows in #186 round 2.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 
 ## Evaluation events
@@ -217,9 +265,11 @@ SQLite reads validate every stored row against `RunEventSchema`. A non-conformin
 the entire requested page; it is neither repaired nor converted into a synthetic event.
 JSON and SSE replay return HTTP 500 Problem Details with code `STORED_EVENT_INVALID` and
 the run id, sequence, and event type in `detail`, without payloads or provider diagnostics.
-SSE validates its replay, including any terminal-status recheck, before sending headers or
-frames, and releases its subscription on failure. No event cursor advances for a rejected
-page. Migration `0007`, rather than the reader, repairs historical decisions missing `skipped`.
+SSE validates the first page (and an empty terminal-cursor recheck) before sending headers;
+a failure there still returns HTTP Problem Details. Once headers are sent, a later unreadable
+page sends an id-less `stream.error` Problem Details control and releases the subscription.
+No event cursor advances for a rejected page. Migration `0007`, rather than the reader,
+repairs historical decisions missing `skipped`.
 
 ## Authentication (Decided for 1.0)
 

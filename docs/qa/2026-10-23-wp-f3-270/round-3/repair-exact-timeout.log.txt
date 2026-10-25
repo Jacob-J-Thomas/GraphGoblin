@@ -1,0 +1,65 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/engine", "exec", "vitest", "run", "src/repair-deadline.test.ts", "--silent=false", "--reporter=verbose", "--maxWorkers=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/engine
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+ ✓ src/repair-deadline.test.ts > retains the structured repair provider, resolved model and effort on an inference transform timeout 257ms
+ × src/repair-deadline.test.ts > same-session schema repair follows node timeout (configured: false), independently of the structured-port deadline 15373ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ × src/repair-deadline.test.ts > same-session schema repair follows node timeout (configured: true), independently of the structured-port deadline 15014ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/repair-deadline.test.ts > same-session schema repair follows node timeout (configured: false), independently of the structured-port deadline
+ FAIL  src/repair-deadline.test.ts > same-session schema repair follows node timeout (configured: true), independently of the structured-port deadline
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/repair-deadline.test.ts:78:23
+     76| });
+     77|
+     78| it.each([false, true])(
+       |                       ^
+     79|   'same-session schema repair follows node timeout (configured: %s), i…
+     80|   async (bounded) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/repair-deadline.test.ts > same-session schema repair follows node timeout (configured: false), independently of the structured-port deadline
+ FAIL  src/repair-deadline.test.ts > same-session schema repair follows node timeout (configured: true), independently of the structured-port deadline
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/repair-deadline.test.ts:5:1
+      3|
+      4| let e: TestEngine | undefined;
+      5| afterEach(async () => {
+       | ^
+      6|   vi.useRealTimers();
+      7|   e?.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  06:14:31
+   Duration  47.02s (tests 67%, transform 27%, import 6%)
+
+  Transform  transforming modules took 12.59s · 27% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\engine
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/engine", "exec", "vitest", "run", "src/repair-deadline.test.ts", "--silent=false", "--reporter=verbose", "--maxWorkers=1"], "exitCode": 1, "seconds": 57.485}

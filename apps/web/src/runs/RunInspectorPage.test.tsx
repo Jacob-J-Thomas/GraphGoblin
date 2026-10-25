@@ -622,7 +622,7 @@ describe('RunInspectorPage', () => {
   });
 
   it.each(['succeeded', 'exhausted'] as const)(
-    'does not reopen a finished %s stream and retains the result',
+    'confirms a finished %s cursor and catches up delivery audits while retaining the result',
     async (status) => {
       const api = new FakeApi();
       const run = seedRun(api, { status, result: { work: 'kept' } });
@@ -638,9 +638,15 @@ describe('RunInspectorPage', () => {
       expect(screen.getByTestId('run-result')).toHaveTextContent('kept');
       first.unmount();
       api.calls.length = 0;
+      api.pushEvent(
+        run.id,
+        event(run.id, 8, 'return.delivered', { channel: { kind: 'caller' }, target: 'run.result' }),
+      );
       renderApp(`/runs/${run.id}`, api);
-      await screen.findByText(/Timeline \(7 events, complete\)/);
-      expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(0);
+      await waitFor(() => expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(1));
+      expect(api.callsTo('GET', `/runs/${run.id}/events`)[0]!.search.get('after')).toBe('7');
+      await screen.findByText(/Timeline \(8 events, complete\)/);
+      expect(screen.getByTestId('run-result')).toHaveTextContent('kept');
     },
   );
 

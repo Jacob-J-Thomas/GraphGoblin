@@ -179,7 +179,7 @@ Every new `decision.made` event contains `{portId, provenance, observation}` and
 
 ### Explicit decision failures (#98)
 
-A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. Cancellation remains cancellation. Classifier confidence rejection retains the validated classifier observation, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. Typed classifier, route and boolean operations take caller-prepared inputs and dispatch exhaustively. The expression route operation accepts only a scalar declared string ID; all other results fail. Operations do not render instructions/questions or select context.
+A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. A configured completion deadline fails with resumable `STRUCTURED_COMPLETION_TIMEOUT`; external provider timeouts retain their provider-failure classification. Cancellation remains cancellation. Classifier confidence rejection retains the validated classifier observation, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. Typed classifier, route and boolean operations take caller-prepared inputs and dispatch exhaustively. The expression route operation accepts only a scalar declared string ID; all other results fail. Operations do not render instructions/questions or select context.
 
 ## Subloops as child runs (Decided)
 
@@ -562,9 +562,10 @@ Schema-based exit policies and non-repeating ordered iteration/duration limits p
 ## Visible execution limits and unlimited mode (#243)
 
 The editor's Loop tab and Settings show the defaults before a run exists:
-`maxNodeVisits: 10` and no run deadline (`runDeadlineSeconds: null`). Omission means the
+`maxNodeVisits: 10`, no run deadline (`runDeadlineSeconds: null`) and no structured
+completion deadline (`structuredTimeoutMs: null`, described below). Omission means the
 contract default. For visits and repeat passes, `null` is an explicit Unlimited choice,
-with a warning. The deadline's neutral No run deadline choice is the default; choose
+with a warning. The run deadline's neutral No run deadline choice is the default; choose
 Limited and enter seconds to add one. Each new run pins the effective
 values in `pinned.limits`; the run inspector shows those values and its absolute deadline.
 Definition changes and Settings edits cannot alter an existing run's pin.
@@ -577,11 +578,46 @@ and authored gate `maxRunTimeSeconds` remain independent explicit controls.
 
 Format 4 uses per-gate passes instead of shared iterations. Set `maxPasses: null` for
 unlimited marked repetition; evidence records null and passes continue increasing.
-The gate's authored non-repeat routes and explicit time check still apply. Disable both
-loop controls, pass limits and any authored watchdogs to permit intentionally indefinite
+The gate's authored non-repeat routes and explicit time check still apply. Disable loop controls, completion deadlines,
+pass limits and any authored watchdogs to permit intentionally indefinite
 execution, ending through authored exits, Cancel or an external/resource failure.
 GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
 Authors may use script/decision nodes for their own usage-aware behavior.
+
+## Structured completion deadlines (#270)
+
+`settings.structuredTimeoutMs` is a positive integer number of milliseconds per LLM
+decision evaluation or output-transform repair attempt through `StructuredPort`, or `null`
+for Unlimited. Omission
+means `null`: there is no default completion deadline. The editor's Loop tab exposes
+this control; Settings shows the default and the run inspector shows the effective
+value pinned in `run.pinned.limits`. Choosing Limited suggests 120,000 ms without
+imposing that value until saved. Changes affect new runs only, including after restart.
+
+One engine helper owns the deadline around both port paths, independent of the adapter.
+The clock starts at that port boundary, after admission and model/context preparation.
+It passes a combined abort signal, cancels overdue work and fails the node and run with
+`STRUCTURED_COMPLETION_TIMEOUT`, naming the duration in the message and
+`details.timeoutMs`; decisions and structured-port repairs also include the completion
+provider, resolved model and effort
+in `details.provenance`. This failure is resumable for a deliberate new attempt; no automatic
+retry occurs. The engine releases its run slot without waiting indefinitely for an
+uncooperative adapter. A late fulfillment or non-abort rejection is observed, discarded and logged
+once as `late structured completion discarded`, with run/node identity and no provider
+body. Acknowledging the forwarded abort reason or an AbortError is normal cleanup
+and does not produce this warning. A late result cannot validate a value, append a
+decision, or patch the thread.
+
+Cancel still produces `run.cancelled` and status `cancelled`, with no timeout failure.
+The first settled call outcome wins; the manager honours an observed run cancellation
+before persisting a failure. A run deadline remains `RUN_DEADLINE_EXCEEDED`. Both signals
+also settle stalled structured calls. Unlimited removes only the completion timer:
+explicit run deadlines, node watchdogs, authored gate limits and Cancel still apply.
+Classifiers keep their provider timeout semantics. Inference output-schema repairs run
+as turns on the node's own `HarnessPort` session, outside this structured-port deadline.
+They follow the node's explicit `timeoutSeconds` (failing with `INFERENCE_TIMEOUT`) and
+the run deadline, just like the initial inference turn. This is an elapsed completion deadline,
+never a cost, token, subscription or usage budget. See ADR-0051.
 
 ## Deliberate shutdown (#224, ADR-0049)
 

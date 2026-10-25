@@ -1,0 +1,76 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > loads the pinned definition for fallback gate counts before any decision event 487ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold 297ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows Claude requested effort and states that effective effort is not reported 170ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > streams the timeline, replays the thread at any event, and shows the patch diff 958ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed command in progress while the run is still running 162ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed tool call without its provider diagnostics 261ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and reports logs that do not replay 343ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > resumes the stream after the stored cursor on reload 244ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > renders the input form from the wait node schema and submits input 463ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > sends a signal to a run waiting for one, and describes timer waits 416ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > cancels, pauses, and resumes runs 500ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > keeps the keyboard order: loop, parent run, child runs, then the run controls 311ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > explains a deleted child while preserving the parent inspector history 222ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links an available child from a child-finished event 341ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows failures, results, parent links, and stream errors 79ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links a subloop failure to the child run that failed (#251) 63ms
+ × src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished succeeded stream and retains the result 165ms
+   → expected [ { method: 'GET', …(5) } ] to have a length of +0 but got 1
+ × src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished exhausted stream and retains the result 140ms
+   → expected [ { method: 'GET', …(5) } ] to have a length of +0 but got 1
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259) 615ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > says a quiet exit returned nothing by configuration, at the top and in its details 183ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > names the exit and start-request destinations that a None return left empty 53ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > shows a null return as the result rather than as nothing 52ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > does not claim a None configuration when an expression exit recorded no value 145ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > keeps the last gate pass and stopping limit beside the exit outcome 52ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/RunInspec ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished succeeded stream and retains 
+the result
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished exhausted stream and retains 
+the result
+AssertionError: expected [ { method: 'GET', …(5) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/runs/RunInspectorPage.test.tsx:643:60
+    641|       renderApp(`/runs/${run.id}`, api);
+    642|       await screen.findByText(/Timeline \(7 events, complete\)/);
+    643|       expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLengt…
+       |                                                            ^
+    644|     },
+    645|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 passed (24)
+   Start at  10:56:03
+   Duration  24.23s (tests 28%, transform 27%, import 27%, environment 14%, setup 5%)
+
+  Transform  transforming modules took 6.47s · 27% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+

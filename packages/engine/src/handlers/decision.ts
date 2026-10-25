@@ -43,6 +43,8 @@ export const decisionHandler: NodeHandler<'decision'> = {
       ports: ctx.ports,
       resolveModel: (...args: Parameters<typeof ctx.services.resolveModel>) =>
         ctx.services.resolveModel(...args),
+      structuredTimeoutMs: ctx.run.pinned.limits.structuredTimeoutMs,
+      runId: ctx.run.id,
     };
     let payload: DecisionPayload;
     switch (config.kind) {

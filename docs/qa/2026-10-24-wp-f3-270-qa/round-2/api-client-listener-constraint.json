@@ -1,0 +1,6 @@
+{
+  "file": "packages/api-client/src/templates.test.ts",
+  "line": 14,
+  "excerpt": "async function setup(): Promise<GraphGoblinClient> {\n  app = await createTestApp();\n  await app.app.listen({ port: 0, host: '127.0.0.1' });\n  return createGraphGoblinClient({\n    baseUrl: `http://127.0.0.1:${(app.app.server.address() as AddressInfo).port}`,\n  });\n}\n",
+  "deviation": "Component tests use port 0, unconstrained to the assigned 5880-5889 range. Actual allocated ports were not captured. Manually served built-app instances used 5880."
+}

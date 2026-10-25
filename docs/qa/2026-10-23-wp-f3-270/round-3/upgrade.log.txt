@@ -1,0 +1,136 @@
+{"command": ["pnpm.cmd", "test:upgrade"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+$ node --expose-gc --test tooling/scripts/upgrade.acceptance.mjs
+TAP version 13
+# Subtest: format-3 export, inspect, verified backup, apply, startup admission, restoration and re-upgrade
+ok 1 - format-3 export, inspect, verified backup, apply, startup admission, restoration and re-upgrade
+  ---
+  duration_ms: 152952.8812
+  ...
+# {"export":"ok","inspect":{"ok":true,"command":"inspect","status":"upgrade-required","counts":{"loops":9,"versions":8,"drafts":8,"templateInstances":1,"templateLoops":1,"runs":9,"events":9,"receipts":9,"artifactFiles":1,"workspaces":1,"workspaceFiles":1},"pending":4,"invalid":0,"blockedRuns":0,"blockedReceipts":0,"disarm":5,"pendingByKind":{"webhook-json-decoding":4},"workspaceLeftInPlace":[],"planHash":"5713274e20bc22843430592b5290d3a48502fb2a19711c37dd3ca7dda2093f78"},"apply":{"status":"upgraded","definitions":16,"deletedRuns":9,"deletedArtifactFiles":1,"deletedWorkspaces":1,"disarmed":5,"backupDir":"%USERPROFILE%\\\\source\\\\repos\\\\GraphGoblin\\\\.claude\\\\worktrees\\\\codex-wp-f3-270\\\\.tmp\\\\upgrade-acceptance-7CoP14\\\\backup","readback":"verified"}}
+# Subtest: strict CLI argument surface refuses duplicates, absent and unknown values
+ok 2 - strict CLI argument surface refuses duplicates, absent and unknown values
+  ---
+  duration_ms: 0.9671
+  ...
+# Subtest: bulk approval groups pending proposals by kind and loop, approves null removals, and lists authored work
+ok 3 - bulk approval groups pending proposals by kind and loop, approves null removals, and lists authored work
+  ---
+  duration_ms: 4233.8178
+  ...
+# Subtest: bulk merge preserves authored resolutions and every stage map, and existing output is never overwritten
+ok 4 - bulk merge preserves authored resolutions and every stage map, and existing output is never overwritten
+  ---
+  duration_ms: 66.5344
+  ...
+# Subtest: resolved inspect reports require --merge and preserve the owner choices when supplied
+ok 5 - resolved inspect reports require --merge and preserve the owner choices when supplied
+  ---
+  duration_ms: 40890.6017
+  ...
+# Subtest: bulk summaries count merged v1 and v2 answers in their own namespaces
+ok 6 - bulk summaries count merged v1 and v2 answers in their own namespaces
+  ---
+  duration_ms: 24920.434
+  ...
+# Subtest: bulk approval refuses malformed reports and merge namespaces without creating output
+ok 7 - bulk approval refuses malformed reports and merge namespaces without creating output
+  ---
+  duration_ms: 2233.3182
+  ...
+# Subtest: generated approvals compose and apply real frozen workflow proposals including ignored continuation removal
+ok 8 - generated approvals compose and apply real frozen workflow proposals including ignored continuation removal
+  ---
+  duration_ms: 96918.2995
+  ...
+# {"command":"resolutions --from inspect.json --approve-generated --out resolutions.json","approved":13,"byKind":{"exit-policy":{"pending":1,"approved":1,"kept":0,"unresolved":0},"ignored-loop-back":{"pending":1,"approved":1,"kept":0,"unresolved":0},"opaque-consumer":{"pending":4,"approved":4,"kept":0,"unresolved":0},"output-consumer":{"pending":3,"approved":3,"kept":0,"unresolved":0},"webhook-json-decoding":{"pending":4,"approved":4,"kept":0,"unresolved":0}},"unresolved":0,"apply":"upgraded"}
+# Subtest: portable refusal, explicit resolutions, new output and complete original preservation
+ok 9 - portable refusal, explicit resolutions, new output and complete original preservation
+  ---
+  duration_ms: 1802.6951
+  ...
+# Subtest: real frozen AIDLC artifact requires explicit choices and preserves every old stable route
+ok 10 - real frozen AIDLC artifact requires explicit choices and preserves every old stable route
+  ---
+  duration_ms: 1114.2289
+  ...
+# Subtest: format-2 provider exit exports require namespaced sides and subsequent hash-bound graph review
+ok 11 - format-2 provider exit exports require namespaced sides and subsequent hash-bound graph review
+  ---
+  duration_ms: 1194.5171
+  ...
+# Subtest: native read-only client cannot create a missing file or write existing rows
+ok 12 - native read-only client cannot create a missing file or write existing rows
+  ---
+  duration_ms: 31680.4621
+  ...
+# Subtest: held live installation lock refuses inventory/apply before any SQLite file or backup creation
+ok 13 - held live installation lock refuses inventory/apply before any SQLite file or backup creation
+  ---
+  duration_ms: 167.2804
+  ...
+# Subtest: refuses unresolved reviews, unused resolutions, changed plan/artifacts and invalid backup without data loss
+ok 14 - refuses unresolved reviews, unused resolutions, changed plan/artifacts and invalid backup without data loss
+  ---
+  duration_ms: 20684.0551
+  ...
+# Subtest: workspace cleanup deletes stored run IDs and reports other top-level user entries left in place
+ok 15 - workspace cleanup deletes stored run IDs and reports other top-level user entries left in place
+  ---
+  duration_ms: 23691.6246
+  ...
+# Subtest: inspect refuses a workspace FIFO without opening it
+ok 16 - inspect refuses a workspace FIFO without opening it # SKIP Windows cannot create FIFO fixtures
+  ---
+  duration_ms: 0.5469
+  ...
+# Subtest: workspace inventory binds the plan, stays read-only, and a changed workspace refuses apply before deletion
+ok 17 - workspace inventory binds the plan, stays read-only, and a changed workspace refuses apply before deletion
+  ---
+  duration_ms: 35769.9073
+  ...
+# Subtest: a database inside a cleanup subtree is refused without deleting or modifying it
+ok 18 - a database inside a cleanup subtree is refused without deleting or modifying it
+  ---
+  duration_ms: 2253.0587
+  ...
+# Subtest: workspace cleanup helper removes nested junctions as links and never traverses user directories; a linked root refuses
+ok 19 - workspace cleanup helper removes nested junctions as links and never traverses user directories; a linked root refuses
+  ---
+  duration_ms: 35981.3109
+  ...
+# Subtest: external database backup copies base/WAL/SHM exactly and refuses overlapping or reused backup destinations
+ok 20 - external database backup copies base/WAL/SHM exactly and refuses overlapping or reused backup destinations
+  ---
+  duration_ms: 2307.9323
+  ...
+# Subtest: committed external SQLite WAL is backed up exactly, converted, restored and re-upgraded
+ok 21 - committed external SQLite WAL is backed up exactly, converted, restored and re-upgraded
+  ---
+  duration_ms: 31688.1086
+  ...
+# Subtest: internal database symlink and external linked sidecars refuse before a backup is created
+ok 22 - internal database symlink and external linked sidecars refuse before a backup is created # SKIP Host does not permit file symlinks; directory-junction refusal is tested separately
+  ---
+  duration_ms: 85.9299
+  ...
+# Subtest: linked database ancestors, data roots and physically overlapping backup parents refuse before copy
+ok 23 - linked database ancestors, data roots and physically overlapping backup parents refuse before copy
+  ---
+  duration_ms: 98.4662
+  ...
+# Subtest: ordinary non-database links remain preserved without claiming their external content is snapshotted
+ok 24 - ordinary non-database links remain preserved without claiming their external content is snapshotted # SKIP Host does not permit file symlinks; directory-junction refusal is tested separately
+  ---
+  duration_ms: 56.3434
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 3
+# todo 0
+# duration_ms 514563.7511
+
+{"command": ["pnpm.cmd", "test:upgrade"], "exitCode": 0, "seconds": 515.39}

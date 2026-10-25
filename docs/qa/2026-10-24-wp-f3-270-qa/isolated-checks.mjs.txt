@@ -1,0 +1,19 @@
+﻿import {readFile,writeFile} from 'node:fs/promises';
+import {createWriteStream} from 'node:fs';
+import {spawn} from 'node:child_process';
+import {resolve} from 'node:path';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const groups=[['domain','packages/domain'],['adapter-codex','packages/adapter-codex'],['infrastructure','packages/infrastructure'],['web','apps/web']];
+const tasks=[];
+for(const [pkg,folder] of groups){const encoded=await readFile(resolve(out,pkg+'-coverage.log.txt'));const log=encoded[0]===255&&encoded[1]===254?encoded.subarray(2).toString('utf16le'):encoded.toString('utf8');const files=[...new Set([...log.matchAll(/ FAIL\s+(\S+\.test\.(?:ts|tsx))/g)].map(m=>m[1]))];for(const file of files){if(!/^[A-Za-z0-9_./-]+$/.test(file))throw Error('Unexpected path');tasks.push({pkg,folder,file});}}
+const results=[];
+for(const task of tasks){
+ const name=task.pkg+'-isolated-'+task.file.replaceAll(/[^a-z0-9]/gi,'-'),log=name+'.log.txt';
+ const command='pnpm.cmd --filter @graphgoblin/'+task.pkg+' exec vitest run '+task.file;
+ const started=Date.now(),stream=createWriteStream(resolve(out,log));
+ console.log('START '+command);
+ const child=spawn('cmd.exe',['/d','/s','/c',command],{cwd:root,env:process.env,stdio:['ignore','pipe','pipe']});
+ child.stdout.pipe(stream,{end:false});child.stderr.pipe(stream,{end:false});
+ const exit=await new Promise((done,reject)=>{child.once('error',reject);child.once('exit',done)});await new Promise(r=>stream.end(r));
+ const row={...task,command,exit,elapsedMs:Date.now()-started,log};results.push(row);await writeFile(resolve(out,'isolated-results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(row));
+}

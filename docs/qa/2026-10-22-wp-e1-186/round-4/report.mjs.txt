@@ -1,0 +1,119 @@
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+const out='docs/qa/2026-10-22-wp-e1-186/round-4';
+const read=path=>{
+  const bytes=readFileSync(path);
+  return (bytes[0]===255&&bytes[1]===254?bytes.subarray(2).toString('utf16le'):bytes.toString('utf8')).replace(/\u001b\[[0-9;]*m/g,'');
+};
+const counts=path=>[...read(path).matchAll(/^\s*Tests\s+([^\r\n]+)/gm)].at(-1)?.[1].trim().replaceAll('|',';')??'No Vitest count available';
+const gates=JSON.parse(read('.tmp/r4-gates.json'));
+const isolates=existsSync('.tmp/r4-isolates.json')?JSON.parse(read('.tmp/r4-isolates.json')):[];
+const after=JSON.parse(read('.tmp/r4-after/transport-results.json'));
+const corrupt=JSON.parse(read('.tmp/r4-after/initial-corruption-results.json'));
+const real=after.cases.find(item=>item.name==='real manager failure then resume through REST');
+const sourceFiles=JSON.parse(read('.tmp/r4-source-frozen.json'));
+const rows=[];
+for(const file of Object.keys(sourceFiles)) {
+  if(file.startsWith('docs/qa/')) continue;
+  const diff=execFileSync('git',['diff','--unified=0','--',file],{encoding:'utf8'});
+  const ranges=[...diff.matchAll(/^@@ .* \+(\d+)(?:,(\d+))? @@/gm)].map(match=>{
+    const start=Number(match[1]),count=Number(match[2]??1);return count>1?`${start}-${start+count-1}`:String(start);
+  });
+  rows.push(`| \`${file}\` | ${ranges.join(', ')||'new file'} |`);
+}
+const coverageRows=[];
+for(const [label,name] of [['API','coverage-api'],['API client','coverage-client'],['Web','coverage-web']]) {
+  const result=gates.results.filter(item=>item.name.startsWith(name)).at(-1);
+  const cov=result?.coverage;
+  coverageRows.push(`| ${label} | ${counts(result.log)} | ${cov?.lines.pct}% (${cov?.lines.covered}/${cov?.lines.total}) | ${cov?.branches.pct}% (${cov?.branches.covered}/${cov?.branches.total}) | ${result.code===0?'PASS':'FAIL'} |`);
+}
+const gateRows=gates.results.map(item=>`| \`${item.command.replaceAll(process.env.USERPROFILE,'%USERPROFILE%')}\` | ${item.code===0?'PASS':`FAIL (${item.code})`} | [${item.name}](${item.log.replace('.tmp/r4-','')}) |`);
+const isolateRows=isolates.map(item=>`| ${item.package} / ${item.file} | ${counts(item.log)} | ${item.code===0?'PASS':`FAIL (${item.code})`} | [log](${item.log.replace('.tmp/r4-','')}) |`);
+const failedIsolates=isolates.filter(item=>item.code!==0 && !item.resolved).map(item=>`${item.package}/${item.file}`).join(', ')||'none';
+const text=`# #186 round 4: authoritative stream completion
+
+## 1. Branch and worktree
+
+Branch \`codex-wp-e1-186\`, worktree \`%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186\`, base/head \`389dc14f24fcab33f6c22b0ba14428596fdda539\`. Uncommitted; ready for orchestrator commit. No staging, commit, push, merge, rebase, stash, branch switch, subagents or manual directory deletion. Node 22.14.0 first on PATH; PowerShell \`pnpm.cmd\`. Manual socket probe binds 5745; its disposable stores use \`gg-wp-e1-186-\`. The owner ports/store/checkout and independent QA folder are untouched. Automated pre-existing suites retain their ordinary ports, public test-support fixture paths and cleanup.
+
+## 2. Per bolt
+
+**#186, audit P1: confirmed before, fixed after.** On the audited build, a real manager/REST failure-resume-success log ends at 24, but raw and typed streams stop at the obsolete failure at 12 with no error. The page-boundary failed/resumed/finished/audit fixture ends at 132 but replay from 126 stops at 128; from 128 it omits audit 132. After: the real run delivers ${real.raw.count} events through ${real.raw.last}, and the typed client also ends at ${real.client.lastSeq}; the boundary fixture delivers all requested rows through 132, including the audit, before completion. [Before](transport-before.json), [after](transport-after.json), [raw before log](transport-before.log.txt), [after log](transport-after.log.txt).
+
+**Audit P2, terminal cursor: confirmed before, fixed after.** At cancelled-run cursors 387 and 487 the wire returns HTTP 200 and no events. Before, each helper reopens twice and rejects with \`gave up on the event stream ... after 2 attempts\`. After, each wire reply contains one id-less \`stream.complete\`; each helper opens once, resolves with no errors, and keeps its original cursor. After the final marker but before an audit, audit 132 is delivered and completion then resolves. Arbitrary EOF remains an interruption; the missing-marker grace probe still retries twice and rejects under its explicit attempt cap. This is deliberately not authoritative completion.
+
+**Audit P2, initial corruption: confirmed before, fixed after.** First-page corruption and a corrupt consumed lifecycle marker return HTTP 500 \`STORED_EVENT_INVALID\`. Before, each is requested twice and rejects generically. After, each makes ${corrupt.cases.map(item=>item.requests.length).join('/')} requests, rejects with \`GraphGoblinApiError\` and code \`STORED_EVENT_INVALID\`, and retains cursors 0/8 with no events. [Before](initial-corruption-before.json), [after](initial-corruption-after.json), [before log](corruption-before.log.txt), [after log](corruption-after.log.txt). The socket probe also confirms later-page fatal corruption at cursor 128 without retry/advance.
+
+**Audit N2: removed.** Initial source inspection confirmed unconditional \`console.warn(JSON.stringify({probe,...}))\` in the memory/SQLite catch-up cases; [baseline copy](baseline-apps-api-src-sse-catchup.test.ts.txt) preserves it. The focused normal file run passes without routine probe JSON. No payload/order assertion was removed.
+
+The audit originals are [transport](audit-transport-probe.mjs.txt), [initial corruption](audit-initial-corruption-probe.mjs.txt) and [report](audit-pr391-round1.md.txt). Configured copies use the assigned port/prefix and distinguish completion controls from stored events. The original transport script's auxiliary handoff fixture times out, exactly as the audit report documents: it waits for a fourth read after live handoff. That timeout is retained, not product evidence. The final configured auxiliary fixture seeds 257 rows, appends twice on each of three reads (terminal on the third), and confirms 263 complete ordered rows. Only that auxiliary fixture changes; the three finding workloads remain identical. [Before configured source](transport-probe-before.mjs.txt), [final source](transport-probe.mjs.txt), [corruption source](initial-corruption-probe.mjs.txt), [explicit before verification](before-verification.json), [after verification](after-verification.json). The initial verification rejected the known auxiliary timeout; the corrected verifier explicitly records/excludes it only for the before phase. Both after probes must pass every recorded case. These are fake-provider, real SQLite/socket or public HTTP-injection transport checks, not live-provider or whole-intent acceptance.
+
+## 3. Files changed
+
+API: replay/live writer completion, new route/component regressions, protocol-aware existing fixtures, bounded-read assertions and N2 logging removal. Client: authoritative completion parsing, shared HTTP/control fatal classification, new regressions and updated fake/real HTTP response fixtures. Web: remove the cached-any-terminal subscription bypass, add a regression, and update its shared FakeApi fixture to model completion after the current lifecycle and synchronous audit suffix. The hook change is transport handling only; retained history shape, limits and Timeline are unchanged. This minimal hook edit is on the shared reachability/G1 surface. No shared route, engine/recovery, SQLite implementation, migration or dependency changes this round.
+
+| File | Candidate line ranges |
+| --- | --- |
+${rows.join('\n')}
+
+New API/client test files are listed above as new files. Final source copies, byte hashes, baseline copies and capture transformations appear in [source hashes](source-frozen.json), [copy provenance](copy-provenance.json) and [artifact manifest](artifact-manifest.json).
+
+## 4. Tests
+
+The eight new API tests and ten client tests failed on the audited source before corrective production edits: [API red](red-api.log.txt), [client red](red-client.log.txt). Quotes include \`expected [ 129, 130, 131 ] to deeply equal [ 129, 130, 131, 132 ]\`, \`expected [ 1 ] to deeply equal [ 1, 2, 3, 4 ]\`, empty-response \`gave up ... after 1 attempts\`, and generic rejection \`to be an instance of GraphGoblinApiError\`. Tests include real failed/resumed manager execution, page-boundary obsolete outcomes, trailing audits, at/past cursors, lookup/append races, EOF after a terminal event, unchanged fatal HTTP cursors, and malformed completion controls.
+
+The hook regression failed before the hook edit: \`expected "vi.fn()" to be called 1 times, but got 0 times\` ([red](red-web.log.txt)). The hook source was still byte-identical to HEAD; this case uses the already-corrected client dependency but invokes no helper at all before failing, so it isolates the cached-terminal bypass. After: focused API ${counts('.tmp/r4-focused-api.log.txt')}; focused client ${counts('.tmp/r4-focused-client.log.txt')}; hook ${counts('.tmp/r4-focused-web.log.txt')}. [API](focused-api.log.txt), [client](focused-client.log.txt), [hook](focused-web.log.txt). Two subsequent fixture-only fixes supply required empty payload arguments and return promises without unnecessary async fetch fakes; full type/lint and coverage below validate final bytes.
+
+The first full web run and one unchanged-file isolated rerun both expose two obsolete no-reopen assertions in RunInspectorPage.test.tsx (2 failed, 22 passed alone). The updated succeeded/exhausted cases now append a durable audit while unmounted, require exactly one reopened subscription from cursor 7, and assert eight complete rows plus the retained result. The changed file passes ${counts('.tmp/r4-focused-inspector-corrected.log.txt')} ([log](focused-inspector-corrected.log.txt)). This test-only change justifies another full web coverage invocation; the original failed invocation remains failed. Final exact-byte regression proof replaces only the server SSE, client SSE and hook modules with their archived audited-head blobs, runs the eight API, ten client and three hook/inspector regressions, then restores all fixed bytes in finally with SHA-256 verification. All 21 fail on those historical production sources for the intended assertions. [Proof](regression-baseline-proof.json), [runner](proof-hook.mjs.txt), [API red](final-red-api.log.txt), [client red](final-red-client.log.txt), [web red](final-red-web.log.txt). Other dependencies/fixtures remain current; no Git checkout/index operation is involved.
+
+| Package | Full invocation counts | Lines | Branches | Invocation |
+| --- | --- | ---: | ---: | --- |
+${coverageRows.join('\n')}
+
+Untouched failing files are rerun alone once; full invocation outcomes remain unchanged:
+
+| Package/file | Isolated counts | Result | Capture |
+| --- | --- | --- | --- |
+${isolateRows.length?isolateRows.join('\n'):'| None | No isolated rerun required | N/A | Full runs passed |'}
+
+No thresholds, exclusions, assertions, test timeouts or retry limits were weakened. The corrected handoff fixture is a disclosed audit-probe repair, not a product-test retry to green.
+
+The existing real Edge inspector large-value cases pass at 1440 and 390 px (2 passed, 13.9 s): [log](browser-inspector.log.txt). They use the built web app with the normal source-backed E2E API and fake provider; the two audit reproductions above use the built API exports.
+
+## 5. Gates
+
+Each command uses Node 22 first on PATH. Coverage adds \`--coverage.reportOnFailure=true\` so failures retain truthful denominators; the web command keeps \`--maxWorkers=1\`.
+
+| Command | Result | Capture |
+| --- | --- | --- |
+| \`pnpm.cmd build\` (before probe) | PASS | [log](before-build.log.txt) |
+${gateRows.join('\n')}
+
+Executable helpers and temporary output paths under \`.tmp/\` in these commands are **not kept** in Git. Their \`.mjs.txt\` source copies, retained result JSON and \`.log.txt\` captures are beside this report. Original profile paths are replaced with %USERPROFILE%; copy provenance records original and retained sizes/hashes.
+
+The first typecheck failed on two new hook fixture calls missing their fourth argument; first lint failed on five new fetch fakes with async/no-await. Those fixtures were corrected without casts or suppressions. Static checks stopped before full coverage, and the failures remain recorded. Passed layers/deps/docs were not repeated; typecheck, lint and explicit changed-file prettier checks passed after correction. API/client full suites run once. The first web run tests the original inspector assertions, then the final full web invocation tests their corrected contract; [final-web runner](final-web.mjs.txt) also repeats typecheck/lint/changed-file prettier for that new test edit. Production code stays unchanged across the full invocations. COMMON also requires tokens and relevant browser checks for the hook change: tests use the normal ephemeral E2E server, installed Edge, no retry, and system-temp output. The old 1,200-item qa.spec assertion fails on its hardcoded total (see outside-scope observation below); it is rerun alone once, and the current large-value inspector cases run separately at both widths. [Additional runner](extra-gates.mjs.txt), [browser follow-up](browser-followup.mjs.txt), [browser output disposition](browser-output.json), [large-value output](browser-inspector-output.json). These additional checks run independently after the build while final unit verification continues; their results are merged without repeating them. Formatting uses only explicit changed paths, including the additional final report/manifest Markdown checks; no repository-wide formatter invocation. [Initial gates](initial-gates.json), [final gates](gates.json), [runner](gates.mjs.txt), [tested-source integrity](gate-source-integrity.json), [final web source integrity](final-web-source-integrity.json). Turbo's access-denied cache warnings are retained as warnings, not relabelled native-test assertions.
+
+## 6. Docs
+
+Docs 07 defines id-less \`stream.complete\` with \`data: {"after":<written cursor>}\`, continued historical terminal replay, durable-tail confirmation, unconfirmed EOF retries and fatal corruption before/after headers. ADR-0050 records the decision and bounded-work cost. Docs 09 describes cached-terminal subscription confirmation; docs 10 links correctness evidence. The existing top Unreleased #186 CHANGELOG bullet includes the completion protocol and coordinated API/client/web rebuild requirement, ending in \`(#186)\`. The implementation README adds round 4. OpenAPI/stored shapes remain unchanged; requested generated-doc checking still runs. No independent QA files are edited.
+
+## 7. Decisions and parameters
+
+Terminal rows precede terminal status writes but are not necessarily the last stored rows: return-delivery bookkeeping follows, and started/resumed supersede earlier outcomes (the existing engine terminalEvent rule). The single writer now delivers all replay/held rows before checking the current lifecycle. It then reads another bounded page AFTER the lookup; more rows, overflow or held notifications return to catch-up. Once the terminal outcome is consumed and the confirmed tail is empty, completion is written through the existing backpressure machinery before closing. This acknowledges the confirmation snapshot; subsequent resume/audit appends require another subscription from the cursor.
+
+Controls have no id. The completion payload confirms the existing cursor (including a past-end cursor) rather than inventing a new durable seq. The client validates it against lastSeq and resolves; malformed controls are fatal RunEventParseError. It delivers terminal rows like any other historical event, and EOF without completion remains retryable even after such a row. A single retryableProblem policy makes STORED_EVENT_INVALID fatal for both HTTP and stream controls while preserving transient 5xx retries. The hook always confirms cached histories through this protocol.
+
+Empty terminal cursors use three empty bounded page reads and two fixed lifecycle lookups rather than round 3's two reads/one lookup; the added tail read closes the lookup/append race while work remains independent of history length. Each lifecycle lookup remains five seeks on the existing index and at most one decoded marker. The 128-event page, 256-event/1 MiB handoff queue, 16 KiB write chunks, 256 KiB writable ceiling, 5-second drain timeout and 2-second failure/grace periods are unchanged. Grace without a current marker closes without authoritative completion. Port-only compositions can use their newest observed lifecycle marker; a consumed cursor needs the bounded lookup. No new tuning parameter, dependency or stored shape.
+
+## 8. Caveats and open items
+
+Audit N1's unchanged template/restart/upgrade timing failures stay outside this fix under D-035; no such implementation was edited. Full failures and their one isolated rerun are retained above. Isolated files still failing without a subsequent corrective change: ${failedIsolates}. The inspector's original isolated failure remains a failure in the table; its updated file and final full result are recorded separately. Native process-control qualification is constrained by D-015; no escalation, process-kill workaround or manual directory cleanup was attempted. A read-only WMI process-activity query was denied with \`HRESULT 0x80041003\`; [diagnostic record](web-process-activity.json) states that its raw tool output was not separately kept. Progress monitoring used ordinary coverage artifact writes instead. Specific failures, where present, are preserved verbatim in the full and isolated logs and must be qualified by the orchestrator's environment. Native signal/termination and live-provider behaviour are not independently qualified by this round.
+
+The shared web FakeApi fixture models completion for component tests; real transport claims come from built API probes and real-socket API tests. The original auxiliary probe timeout is a fixture issue explicitly recorded by the auditor, not a new server regression. Historical round-3 evidence keeps its original read counts; this report documents the additional constant confirmation read. Large original captures and disposable stores are not proposed for commit; [NOT-KEPT](NOT-KEPT.md) records sizes/hashes where required. Text copies use UTF-8/LF and %USERPROFILE% paths, and all artifact hashes are computed after their final writes/formatting. The [integrity result](validation.json) checks unchanged independent QA bytes, source hashes, head and index.
+
+**Observed outside scope:** unchanged \`apps/web/e2e/qa.spec.ts:109\` (also 124/135) expects 1,212 rows, but the current stored lifecycle/evidence includes harness.turn and harness.submission and the browser reaches **Timeline (1214 events, complete)** with all 1,200 progress items. The first invocation and one unchanged isolated repeat are retained as failures; no assertion or test timeout in that spec was changed. [First browser log](browser.log.txt), [repeat](browser-qa-alone.log.txt), [captured page](browser-error-context.md.txt), [repeat page](browser-qa-alone-error-context.md.txt). An explicit [snapshot observation](browser-qa-observation.json), checked by [this source](inspect-browser.mjs.txt), verifies 1,214 unique ordered rows (1-1214), exactly 1,200 progress rows and complete state in both captures. The old spec's subsequent fresh-open timing, deep selection and fetch-budget assertions were not reached; no pass for those assertions is claimed. This is separate from the completed transport probes and current inspector cases. The larger raw traces are not kept; their exact sizes/SHA-256 appear in NOT-KEPT. The orchestrator can route the old event-count expectation independently.
+
+History browsing follows in #186 round 2. No per-run retained-history or Timeline work was started. The orchestrator commits, then runs audit round 2 at the resulting exact head. This implementation report is not independent audit approval, CI qualification, merge or whole-#186 completion.
+`;
+writeFileSync(`${out}/REPORT.md`,text);
+console.log('report written');

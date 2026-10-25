@@ -1,0 +1,72 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createHook } from 'node:async_hooks';
+const root = process.cwd();
+const evidence = resolve(root, 'docs/qa/2026-10-24-wp-f3-270-qa');
+const load = p => import(pathToFileURL(resolve(root, p)).href);
+const { createContainer } = await load('apps/api/dist/container.js');
+const { loadConfig } = await load('apps/api/dist/config.js');
+const { buildApp } = await load('apps/api/dist/app.js');
+const { FakeHarness } = await load('packages/engine/dist/testing/index.js');
+const dataDir = process.env.GG_QA_DIR || await mkdtemp(join(tmpdir(), 'gg-qa-f3-270-api-'));
+let options = { mode: 'stall' };
+const calls = [], logs = [], timerStacks = [];
+const hook = createHook({ init(id, type) {
+  if (type === 'Timeout') {
+    const stack = new Error().stack;
+    if (stack.includes('completion-deadline.js')) timerStacks.push({ id, at: Date.now(), stack });
+  }
+}}).enable();
+const logger = Object.fromEntries(['debug','info','warn','error'].map(level => [level, (data,msg) => {
+  logs.push({ at: Date.now(), level, data, msg });
+}]));
+const fake = new FakeHarness([], 'codex');
+const structured = { complete(request, signal) {
+  const call = { id: calls.length, at: Date.now(), request, signal, abortedAt: null };
+  calls.push(call);
+  signal.addEventListener('abort', () => { call.abortedAt = Date.now(); call.reason = String(signal.reason); }, { once: true });
+  return new Promise((resolve, reject) => {
+    call.release = (value, error) => {
+      call.releasedAt = Date.now();
+      if (error) reject(new Error(error));
+      else resolve({ value: value ?? options.value ?? { route:'yes', confidence:1, reasoning:'QA result' } });
+    };
+    if (options.mode === 'fast') setTimeout(() => call.release(options.value), options.delayMs ?? 30);
+  });
+}};
+const container = await createContainer(loadConfig({
+  GG_DATA_DIR:dataDir, GG_PORT:'5880', GG_MAX_CONCURRENT_RUNS:'1',
+  GG_WEB_DIST:resolve(root,'apps/web/dist'), GG_MASTER_KEY:Buffer.alloc(32,8).toString('base64'),
+}), { harnesses:{codex:fake}, structured, logger });
+await container.start();
+const app = await buildApp(container, { logger:false });
+app.post('/qa/config', async req => { options = req.body; if (options.turns) fake.script(options.turns); return { ok:true }; });
+app.get('/qa/observations', async () => ({
+  calls:calls.map(({release,signal,...call}) => ({...call,aborted:signal.aborted})),
+  logs, timerStacks,
+  started:fake.started, resumed:fake.resumed,
+}));
+app.post('/qa/release', async req => {
+  const {id,value,error} = req.body; calls[id].release(value,error); return { ok:true };
+});
+let stopping = false;
+async function stop() {
+  if (stopping) return; stopping = true;
+  container.manager.stop();
+  for (const row of await container.repos.runs.listRecoveryCandidates()) {
+    const r = await container.repos.runs.get(row.id);
+    if (r && ['running','queued','paused','waiting'].includes(r.status)) await container.manager.cancel(r.id);
+  }
+  for (const call of calls) if (!call.releasedAt) call.release(null,'QA shutdown late rejection');
+  await app.close(); await container.stop(); hook.disable(); process.exit(0);
+}
+app.post('/qa/stop', async () => { setTimeout(stop,100); return { ok:true }; });
+const url = await app.listen({ host:'127.0.0.1', port:5880 });
+const keyResponse = await fetch(url+'/api-keys',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({label:'Independent QA #270'})});
+const keyBody = await keyResponse.json();
+const metadata = { node:process.version, pid:process.pid, url, dataDir, keyCreated:keyResponse.status===201, keyId:keyBody.key?.id, startedAt:Date.now() };
+await writeFile(join(evidence,'instance.json'), JSON.stringify(metadata,null,2).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+console.log(JSON.stringify(metadata).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+process.on('SIGINT',stop); process.on('SIGTERM',stop);

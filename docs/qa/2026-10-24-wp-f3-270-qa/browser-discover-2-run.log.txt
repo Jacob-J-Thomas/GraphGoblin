@@ -1,0 +1,98 @@
+[{"id":"01M5PFH84DCKX5WT0QAVMB0GZX","name":"QA supplemental pre-field saved loop"},{"id":"01M5PFH844DBAMT4VVX7RY8CEA","name":"QA supplemental imported finite"},{"id":"01M5PFH83C8HAJ4QRSZBS13MVE","name":"QA supplemental export finite"},{"id":"01M5PFH82QPF9NCZ9NZK3461WN","name":"QA supplemental bound 31536000000"},{"id":"01M5PFH824MWGX593T9CK92XH1","name":"QA supplemental bound 1"},{"id":"01M5PFH81F68X5EV86NJA61QDY","name":"QA supplemental bound null"},{"id":"01M5PFH7BYK40XBVSCFBN93R7Q","name":"QA supplemental queue release"},{"id":"01M5PFH791NS9BZM41CRY2X8H4","name":"QA supplemental 500ms deadline"},{"id":"01M5PFBF77TXR6Y33QB431KRN5","name":"QA Unlimited 122 seconds"},{"id":"01M5PFBD3QDN4XFERD0S5S2J9R","name":"QA inference schema repair"},{"id":"01M5PFBC38HP2HH2BB8ED1PKTS","name":"QA inference structured repair"},{"id":"01M5PFBB9JC8E3GFGYNX1TG5KG","name":"QA pinned resume"},{"id":"01M5PFBB8MZYVW3ERJQ8KPG2XP","name":"QA export finite"},{"id":"01M5PFBB7R5SJA25Q9WS1V2E8D","name":"QA bound 31536000000"},{"id":"01M5PFBB738GW03ECT71K26K70","name":"QA bound 1"},{"id":"01M5PFBB6DJ5MKXX1W5RWJFC5X","name":"QA bound null"},{"id":"01M5PFBACR6JD1EN3R9TB3E6DC","name":"QA race 550 1"},{"id":"01M5PFB9NEARCWF0QDNYX5VPD8","name":"QA race 550 0"},{"id":"01M5PFB8XGMDRF72FKF63XYRPK","name":"QA race 500 1"},{"id":"01M5PFB87BXKAF6GPM02WZC94Z","name":"QA race 500 0"},{"id":"01M5PFB7JGHMXE25XSSBDFHKH8","name":"QA race 450 1"},{"id":"01M5PFB6MY0MBR4R4R28AMHY65","name":"QA race 450 0"},{"id":"01M5PFB5WRH2QNH6HKH9594053","name":"QA fast completion"},{"id":"01M5PFB54QXZJM1SYDGY3MAATD","name":"QA queue release"},{"id":"01M5PFB4Y6RN7GG7HE8ETNYXGS","name":"QA 500ms deadline"}]
+GraphGoblin
+Loops
+Runs
+Events
+Settings
+Loops
+/
+QA bound null
+published v1
+All changes saved
+Undo
+Redo
+Open in Runs
+Ready to publish
+Publish
+Palette
+Trigger
+Starts a run
+Decision
+Chooses a route and can limit repeats
+Inference
+Hands work to a harness
+Script
+Runs a program
+Mutate
+Changes the context thread
+Subloop
+Runs another loop
+Wait
+Parks until input, time, or a signal
+Heartbeat
+Polls on an interval
+Exit
+Finishes with an outcome and return value
+TRIGGER
+Start
+start
+out
+MUTATE
+Quick
+work
+out
+EXIT
+Done
+done
+React Flow
+Loop settings
+
+Required fields are marked *
+
+Name
+*
+Description
+SETTINGS
+
+Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision or structured repair call when Limited; it defaults to Unlimited. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+
+Working directory
+Kind
+fixed
+template
+temp
+Defaults
+By harness
+
+Defaults keyed by their harness; omitted fields inherit only within that harness.
+
+Add entry
+Maximum node visits
+Limited
+Unlimited
+
+Fresh entries per node. Default 10; unlimited removes this cutoff.
+
+Run deadline seconds
+Limited
+No run deadline
+
+Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+
+No deadline; set one to stop a forgotten run.
+
+Structured completion milliseconds
+Limited
+Unlimited
+
+Milliseconds per LLM decision or structured repair completion. No deadline by default; Unlimited removes this cutoff.
+
+No completion deadline; LLM decisions and repairs remain cancellable.
+
+Subloop depth limit
+VARIABLES
+
+Each variable maps a name to a JSON Schema.
+
+Variables *
+Add entry

@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ ✓ src/adversarial.test.ts > adversarial API invariants > 12: every advertised private route rejects missing and revoked credentials 1092ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: a credential without read scope cannot enumerate private resources 123ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope 2939ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write"],"status":403}) 271ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:read"],"status":403}) 137ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["secrets:write"],"status":403}) 112ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:read","secrets:write"],"status":403}) 104ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:write"],"status":200}) 143ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["*"],"status":200}) 142ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-008: local trusted mode keeps full access without a key 124ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 12: every mutating route rejects a valid key with no write scopes 347ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 12/13: API keys cannot bypass signatures; signatures bind exact body bytes 332ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -300001 ms 118ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -299999 ms 191ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 299999 ms 184ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 300001 ms 119ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 13: byte limit, 61st delivery and deleted endpoint are rejected 346ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 14: exits cannot chain loops through Events; external Event intake still starts runs 303ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 15: a draft cron is not armed 104ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 4: deletion is refused while a version is pinned by an active run 243ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: disconnect during replay validation unsubscribes before headers are sent 4308ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID 99999 always closes 738ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID -1 always closes 287ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID not-a-number always closes 174ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 16: 1000 persisted events stream in sequence without duplicates 290ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 17: traversal, long paths, and Range cannot disclose files outside static root 131ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 18: secrets never appear in read responses or invalid-request errors 367ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 19: malformed JSON, 10 MB bodies, strict unknowns and numeric strings are rejected 145ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a parent started during a DELETE never pins the deleted loop 334ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 356ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > ADV-009: every ULID id route validates before repository lookup 362ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary missing-terminal 108ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary usage-only 89ms
+ ✓ src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary expired-resume 95ms
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  02:54:22
+   Duration  25.27s (tests 61%, import 23%, transform 15%)
+

@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdtemp,copyFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {pathToFileURL} from 'node:url';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa/round-2');
+const {openDatabase}=await import(pathToFileURL(resolve(root,'packages/infrastructure/dist/sqlite/index.js')).href);
+const {singleNodeLoop}=await import(pathToFileURL(resolve(root,'packages/engine/dist/testing/index.js')).href);
+const target=JSON.parse(await readFile(join(out,'browser-targets.json'),'utf8'));target.oldDir=target.oldDir.replace('%USERPROFILE%',process.env.USERPROFILE);
+const runtime=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-2-webhook-runtime-'));await copyFile(join(out,'server.mjs.txt'),join(runtime,'server.mjs'));let child;
+const scrub=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%');
+const save=(file,data)=>writeFile(join(out,file),scrub(JSON.stringify(data,null,2)));
+const dbFor=dir=>openDatabase({url:'file:'+join(dir,'graphgoblin.db').replaceAll('\\','/')});
+async function api(path,body){const r=await fetch(target.base+path,{method:body===undefined?'GET':'POST',headers:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});return{http:r.status,data:await r.json()}}
+async function ok(...args){const r=await api(...args);assert(r.http<300,JSON.stringify(r));return r.data}
+async function start(dataDir,label){let ready;const chunks=[];child=spawn(process.execPath,[join(runtime,'server.mjs')],{cwd:root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,GG_DATA_DIR:dataDir,GG_DB_URL:'file:'+join(dataDir,'graphgoblin.db').replaceAll('\\','/'),GG_PORT:'5880'}});for(const s of[child.stdout,child.stderr])s.on('data',b=>{chunks.push(b.toString());writeFile(join(out,label+'.log.txt'),scrub(chunks.join('')));for(const line of b.toString().split('\n'))try{const x=JSON.parse(line);if(x.ready)ready=x}catch{}});const until=Date.now()+90000;while(!ready){if(child.exitCode!==null)throw Error(chunks.join(''));assert(Date.now()<until);await new Promise(r=>setTimeout(r,50))}return ready}
+async function stop(){if(child&&child.exitCode===null){const exit=once(child,'exit');child.stdin.end('stop\n');assert.equal((await exit)[0],0)}}
+let result;
+try{
+const sourceProcess=await start(target.oldDir,'webhook-source-api');
+const def=singleNodeLoop('Webhook final public-port fixture',{id:'work',kind:'mutate',label:'Quick',config:{operations:[{op:'delete',path:'/vars/missing'}]}});def.nodes[0].config={type:'webhook',authentication:{type:'hmac-sha256',message:'body',secretRef:'qa-secret'}};
+const created=await ok('/loops',{definition:def});await ok('/loops/'+created.loop.id+'/publish',{});const claim=await ok('/qa/claim-webhook',{loopId:created.loop.id,versionId:created.draft.id});assert.equal(claim.state,'pending');assert(claim.receipt.intent);await stop();
+const receiptDir=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-2-webhook-cold-'));const sourceDb=dbFor(target.oldDir);await sourceDb.client.execute({sql:'VACUUM INTO ?',args:[join(receiptDir,'graphgoblin.db')]});sourceDb.close();const db=dbFor(receiptDir);
+const before=(await db.client.execute({sql:'SELECT * FROM webhook_receipts WHERE id=?',args:[claim.receipt.id]})).rows[0];const intent=JSON.parse(before.intent);for(const p of[intent.run.pinned,intent.queued.pinned]){delete p.limits.structuredTimeoutMs;delete p.limits.runDeadlineSeconds}await db.client.execute({sql:'UPDATE webhook_receipts SET intent=? WHERE id=?',args:[JSON.stringify(intent),claim.receipt.id]});await db.client.execute('DELETE FROM __drizzle_migrations WHERE created_at=1792818000000');await save('webhook-final-before.json',{receiptDir,sourceProcess,claim,before,pre0020Intent:intent,ledger:(await db.client.execute('SELECT * FROM __drizzle_migrations ORDER BY id')).rows});db.close();
+const upgradedProcess=await start(receiptDir,'webhook-final-cold-api');const until=Date.now()+20000;let response;do{response=await api('/runs/'+intent.run.id);if(response.http===200&&response.data.status==='succeeded')break;assert(Date.now()<until,JSON.stringify(response));await new Promise(r=>setTimeout(r,50))}while(true);
+assert.equal(response.data.pinned.limits.structuredTimeoutMs,null);assert.equal(response.data.pinned.limits.runDeadlineSeconds,null);const events=await ok('/runs/'+intent.run.id+'/events?limit=1000');assert.equal(events.items.filter(e=>e.type==='run.queued').length,1);assert.equal(events.items.find(e=>e.type==='run.queued').pinned.limits.structuredTimeoutMs,null);const obs=await ok('/qa/observations');await stop();const afterDb=dbFor(receiptDir);const after=(await afterDb.client.execute({sql:'SELECT * FROM webhook_receipts WHERE id=?',args:[claim.receipt.id]})).rows[0];assert.equal(after.status,'admitted');afterDb.close();result={status:'PASS',sourceProcess,upgradedProcess,run:response.data,events,after,observations:obs,receiptDir,runtime};
+}catch(e){result={status:'FAIL',error:String(e),stack:e.stack,runtime};console.error(e)}finally{await stop();await save('webhook-final-results.json',result);console.log(JSON.stringify({status:result.status,error:result.error}))}

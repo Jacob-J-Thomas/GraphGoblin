@@ -345,6 +345,31 @@ export class FakeApi {
       `id: ${event.seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`,
     );
     for (const controller of this.streams.get(runId) ?? []) controller.enqueue(frame);
+    // Model the server's tail confirmation after a synchronous batch, including any audits
+    // or resume that follow an outcome. A terminal event alone is no longer completion.
+    queueMicrotask(() => this.completeStream(runId));
+  }
+
+  private completeStream(runId: string, after?: number): void {
+    const log = this.events.get(runId) ?? [];
+    const marker = log
+      .slice()
+      .reverse()
+      .find((event) =>
+        ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'].includes(
+          event.type,
+        ),
+      );
+    if (!marker || marker.type === 'run.started' || marker.type === 'run.resumed') return;
+    const cursor = Math.max(after ?? 0, log.at(-1)?.seq ?? 0);
+    const frame = new TextEncoder().encode(
+      `event: stream.complete\ndata: ${JSON.stringify({ after: cursor })}\n\n`,
+    );
+    for (const controller of this.streams.get(runId) ?? []) {
+      controller.enqueue(frame);
+      controller.close();
+    }
+    this.streams.delete(runId);
   }
 
   /** Close every open stream for a run, as a dropped connection would. */
@@ -432,6 +457,7 @@ export class FakeApi {
     const events = (this.events.get(runId) ?? []).filter((e) => e.seq > after);
     const encoder = new TextEncoder();
     const streams = this.streams;
+    const complete = () => this.completeStream(runId, after);
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         for (const event of events) {
@@ -444,6 +470,7 @@ export class FakeApi {
         const set = streams.get(runId) ?? new Set();
         set.add(controller);
         streams.set(runId, set);
+        complete();
       },
       cancel() {
         streams.get(runId)?.clear();

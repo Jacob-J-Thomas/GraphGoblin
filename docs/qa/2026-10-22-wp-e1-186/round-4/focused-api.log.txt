@@ -1,0 +1,59 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > replays a real failed, resumed and succeeded run through its current outcome 3341ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 0 526ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 128 373ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 131 534ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 132 977ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 232 531ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup racing a audit 8ms
+ ✓ src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup racing a resume 5ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 3419ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 7918ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id 748ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id 324ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 564ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 0 past the end 35ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 100 past the end 73ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 0 past the end 162ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 100 past the end 36ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > bounds confirmation after catching up through post-terminal delivery audit events 65ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps defensive grace for a missing current terminal marker 11ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps defensive grace for a resumed current terminal marker 7ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling on a paused real high-water-mark transport 170ms
+ ✓ src/edges.test.ts > scopes > rejects every write route for a key without the matching scope 4589ms
+ ✓ src/edges.test.ts > loop and run route branches > shows the published version without a draft and reports a missing published export 329ms
+ ✓ src/edges.test.ts > loop and run route branches > starts runs with every optional body field, signals without a payload, and delivers caller return defaults 639ms
+ ✓ src/edges.test.ts > loop and run route branches > reports missing artifact content 1141ms
+ ✓ src/edges.test.ts > loop and run route branches > skips unset harnesses and reports non-Error preflight failures 367ms
+ ✓ src/edges.test.ts > error handler > maps every error family to problem details 378ms
+ ✓ src/edges.test.ts > error handler > serves Swagger UI when enabled 1273ms
+ ✓ src/edges.test.ts > SSE framing > merges events appended during replay in order, sends heartbeats, and completes after the durable suffix 586ms
+ ✓ src/edges.test.ts > SSE terminal runs > waits out the grace when the status is terminal but the log has no terminal event 285ms
+ ✓ src/edges.test.ts > SSE terminal runs > ends on the terminal event that arrives during the grace 427ms
+ ✓ src/edges.test.ts > SSE terminal runs > keeps tailing a run that is not terminal 398ms
+ ✓ src/edges.test.ts > test helper > surfaces create and publish failures 242ms
+ ✓ src/edges.test.ts > composition defaults > opens a file database, generates a master key, and runs with default ports 517ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 1479ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 564ms
+ ✓ src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1252ms
+ ✓ src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 1147ms
+ ✓ src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 1036ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 806ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 896ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 941ms
+ ✓ src/sse.test.ts > SSE event stream > stops writing when the client disconnects 5406ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader 526ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 75ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 15ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once 20ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure 123ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure 158ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 4690ms
+
+ Test Files  5 passed (5)
+      Tests  50 passed (50)
+   Start at  10:11:49
+   Duration  122.15s (tests 44%, import 41%, transform 15%, worker 1%)
+

@@ -1,0 +1,354 @@
+{
+  "legacy": {
+    "loop": {
+      "id": "01M5PFT9VR4GG5JXH9Y0TW0NV1",
+      "ownerId": "local",
+      "name": "QA physical pre-field fixture",
+      "draftVersionId": "01M5PFT9VR4GG5JXH9Y0TW0NV2",
+      "createdAt": "2026-10-24T08:18:12.472Z",
+      "updatedAt": "2026-10-24T08:18:12.472Z"
+    },
+    "draft": {
+      "id": "01M5PFT9VR4GG5JXH9Y0TW0NV2",
+      "loopId": "01M5PFT9VR4GG5JXH9Y0TW0NV1",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "QA physical pre-field fixture",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "a",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T08:18:12.472Z"
+    },
+    "draftToken": "dc5c59d0a59ae0f5"
+  },
+  "run": {
+    "id": "01M5PFH79Q2AGNJS30P2CH950Q",
+    "ownerId": "local",
+    "loopId": "01M5PFH791NS9BZM41CRY2X8H4",
+    "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA supplemental 500ms deadline",
+      "label": "QA supplemental 500ms deadline v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": 500
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PFH79Q2AGNJS30P2CH950R",
+    "status": "failed",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "failure": {
+      "code": "STRUCTURED_COMPLETION_TIMEOUT",
+      "message": "Structured completion exceeded its configured deadline of 500 ms",
+      "nodeId": "work",
+      "resumable": true,
+      "details": {
+        "timeoutMs": 500,
+        "provenance": {
+          "kind": "llm",
+          "provider": "codex",
+          "classifierId": null,
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    "createdAt": "2026-10-24T08:13:14.935Z",
+    "startedAt": "2026-10-24T08:13:14.946Z",
+    "finishedAt": "2026-10-24T08:13:15.512Z",
+    "lastEventSeq": 6
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 1,
+        "ts": "2026-10-24T08:13:14.935Z",
+        "type": "run.queued",
+        "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA supplemental 500ms deadline",
+          "label": "QA supplemental 500ms deadline v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PFH79Q2AGNJS30P2CH950Q",
+            "loopId": "01M5PFH791NS9BZM41CRY2X8H4",
+            "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PFH79Q2AGNJS30P2CH950R",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T08:13:14.935Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 2,
+        "ts": "2026-10-24T08:13:14.949Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 3,
+        "ts": "2026-10-24T08:13:14.964Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 4,
+        "ts": "2026-10-24T08:13:14.971Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T08:13:14.969Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T08:13:14.969Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 5,
+        "ts": "2026-10-24T08:13:14.994Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "decision",
+        "attempt": 1,
+        "configHash": "6ae97fdcb88b8b58"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 6,
+        "ts": "2026-10-24T08:13:15.510Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      }
+    ],
+    "nextAfter": 6,
+    "hasMore": false
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5PFH79Q2AGNJS30P2CH950Q",
+      "loopId": "01M5PFH791NS9BZM41CRY2X8H4",
+      "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5PFH79Q2AGNJS30P2CH950R",
+      "source": "manual.api",
+      "caller": {
+        "kind": "user",
+        "id": "local"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-24T08:13:14.935Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-24T08:13:14.969Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "start",
+      "value": null,
+      "at": "2026-10-24T08:13:14.969Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  },
+  "original": {
+    "node": "v22.14.0",
+    "pid": 57932,
+    "url": "http://127.0.0.1:5880",
+    "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-api-LhcPkQ",
+    "keyCreated": true,
+    "keyId": "01M5PF7PQDWVD6433GCWC3AN9Y",
+    "startedAt": 1792829283081
+  }
+}

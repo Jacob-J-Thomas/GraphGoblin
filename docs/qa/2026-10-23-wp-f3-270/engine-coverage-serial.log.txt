@@ -1,0 +1,72 @@
+$ vitest run --coverage --maxWorkers=2
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/awaited-children.test.ts (16 tests | 1 failed) 12884ms
+   ❯ child results (#242) (10)
+     × a later visit without output removes the result an earlier visit stored, and a custom mapping sees no result 5273ms
+ ❯ src/recovery.test.ts (69 tests | 1 failed) 24387ms
+   ❯ thread checkpoints (review finding 9) (5)
+     × a long log resumes from its checkpoint (10,000 completions) 9954ms
+ ❯ src/unlimited.test.ts (21 tests | 1 failed) 14201ms
+   ❯ execution guardrails (#243) (21)
+     × allows unlimited marked passes beyond ten without a synthetic exhaustion 5167ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/awaited-children.test.ts > child results (#242) > a later visit without output removes the result an earlier visit stored, and a custom mapping sees no result
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/awaited-children.test.ts:320:3
+    318|   );
+    319|
+    320|   it('a later visit without output removes the result an earlier visit…
+       |   ^
+    321|     const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    322|     // The child returns data on its first call and nothing on its sec…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/recovery.test.ts > thread checkpoints (review finding 9) > a long log resumes from its checkpoint (10,000 completions)
+AssertionError: expected 2027.959799999997 to be less than 2000
+ ❯ src/recovery.test.ts:667:21
+    665|     );
+    666|     // Generous: the point is that it does not replay 10,000 patches (…
+    667|     expect(elapsed).toBeLessThan(2_000);
+       |                     ^
+    668|   }, 30_000);
+    669| });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/unlimited.test.ts > execution guardrails (#243) > allows unlimited marked passes beyond ten without a synthetic exhaustion
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/unlimited.test.ts:62:3
+     60| }
+     61| describe('execution guardrails (#243)', () => {
+     62|   it('allows unlimited marked passes beyond ten without a synthetic ex…
+       |   ^
+     63|     const e = await engine();
+     64|     const def = cycle({ maxNodeVisits: null, runDeadlineSeconds: null …
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  3 failed | 38 passed (41)
+      Tests  3 failed | 1591 passed (1594)
+   Start at  19:08:17
+   Duration  547.35s (import 52%, tests 32%, transform 14%, worker 2%)
+
+     Import  156 modules were evaluated 369 times · 405.24s total, 52% of tracked time
+             ~56.01s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\engine
+System.Management.Automation.RemoteException

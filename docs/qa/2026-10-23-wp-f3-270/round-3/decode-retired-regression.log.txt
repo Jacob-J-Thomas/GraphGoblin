@@ -1,0 +1,152 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "exec", "vitest", "run", "src/retired-event-destination.test.ts", "--maxWorkers=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+
+ ❯ src/retired-event-destination.test.ts (5 tests | 5 failed) 5712ms
+   ❯ a stored definition with an Event destination (#242) (5)
+     × is refused on every read of the loop and its versions with a per-loop diagnostic 2323ms
+     × is refused before a run starts, and a parent calling it fails before any child exists 1358ms
+     × a run already pinned to a published version holding one fails explicitly before it executes again 1053ms
+     × a run already pinned to a draft-run snapshot holding one fails explicitly before it executes again 616ms
+     × refuses a webhook delivery deterministically and logs the diagnostic, saving nothing 358ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > is refused on every read of the loop and its versions with a per-loop diagnostic
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ expectUpgradeRequired src/retired-event-destination.test.ts:91:31
+     89|   identity: { loopId: string; versionId: string; version: number; path…
+     90| ) {
+     91|   expect(response.statusCode).toBe(409);
+       |                               ^
+     92|   const body = response.json<Record<string, unknown>>();
+     93|   expect(body).toMatchObject({
+ ❯ src/retired-event-destination.test.ts:122:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > is refused before a run starts, and a parent calling it fails before any child exists
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ expectUpgradeRequired src/retired-event-destination.test.ts:91:31
+     89|   identity: { loopId: string; versionId: string; version: number; path…
+     90| ) {
+     91|   expect(response.statusCode).toBe(409);
+       |                               ^
+     92|   const body = response.json<Record<string, unknown>>();
+     93|   expect(body).toMatchObject({
+ ❯ src/retired-event-destination.test.ts:151:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > a run already pinned to a published version holding one fails explicitly before it executes again
+AssertionError: expected { …(15) } to match object { status: 'failed', failure: { …(3) } }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+-     "code": "LOOP_UPGRADE_REQUIRED",
+-     "details": {
+-       "loopId": "01M3Y7RKG0RQ26CS0QENHWB6GZ",
+-       "paths": [
+-         "/nodes/3/config/destinations/1",
+-       ],
+-       "versionId": "01M3Y7RKG0RQ26CS0QENHWB6H0",
+-     },
+-     "resumable": false,
++     "code": "INTERNAL_ERROR",
++     "resumable": true,
+    },
+    "status": "failed",
+  }
+
+ ❯ src/retired-event-destination.test.ts:231:22
+    229|       await t.idle();
+    230|       const failed = (await t.app.inject(`/runs/${waiting.id}`)).json<…
+    231|       expect(failed).toMatchObject({
+       |                      ^
+    232|         status: 'failed',
+    233|         failure: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > a run already pinned to a draft-run snapshot holding one fails explicitly before it executes again
+AssertionError: expected { …(15) } to match object { status: 'failed', failure: { …(3) } }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+-     "code": "LOOP_UPGRADE_REQUIRED",
+-     "details": {
+-       "loopId": "01M3Y7RKG0TGV12TF38H7PW8HM",
+-       "paths": [
+-         "/nodes/3/config/destinations/1",
+-       ],
+-       "versionId": "01M3Y7RKG0TGV12TF38H7PW8HS",
+-     },
+-     "resumable": false,
++     "code": "INTERNAL_ERROR",
++     "resumable": true,
+    },
+    "status": "failed",
+  }
+
+ ❯ src/retired-event-destination.test.ts:231:22
+    229|       await t.idle();
+    230|       const failed = (await t.app.inject(`/runs/${waiting.id}`)).json<…
+    231|       expect(failed).toMatchObject({
+       |                      ^
+    232|         status: 'failed',
+    233|         failure: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > refuses a webhook delivery deterministically and logs the diagnostic, saving nothing
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ src/retired-event-destination.test.ts:269:10
+    267|     const path = (await t.app.inject(`/loops/${loopId}/triggers`)).jso…
+    268|       webhooks: { path: string }[];
+    269|     }>().webhooks[0]!.path;
+       |          ^
+    270|     const delivered = await t.app.inject({
+    271|       method: 'POST',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  04:53:52
+   Duration  51.04s (transform 64%, import 24%, tests 12%)
+
+  Transform  transforming modules took 31.01s · 64% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\api
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "exec", "vitest", "run", "src/retired-event-destination.test.ts", "--maxWorkers=1"], "exitCode": 1, "seconds": 58.234}

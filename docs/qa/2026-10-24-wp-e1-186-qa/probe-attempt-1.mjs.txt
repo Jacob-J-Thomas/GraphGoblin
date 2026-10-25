@@ -1,0 +1,67 @@
+import {fork} from 'node:child_process';
+import {readFile,writeFile,mkdtemp,copyFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {get} from 'node:http';
+import {createHash} from 'node:crypto';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-e1-186-qa');
+const runtime=await mkdtemp(join(tmpdir(),'gg-qa-e1-186-runtime-'));
+const dataDir=await mkdtemp(join(tmpdir(),'gg-qa-e1-186-store-'));
+await copyFile(join(out,'worker.mjs.txt'),join(runtime,'worker.mjs'));
+const dep=(name)=>import(import.meta.resolve(name,pathToFileURL(join(root,'apps/web/package.json'))));
+const {SseParser,subscribeRunEvents,createGraphGoblinClient}=await dep('@graphgoblin/api-client');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const results={revision:'8b760b6b1250bd64ab541cbfd53af83c04e140e2',started:new Date().toISOString(),dataDir,runtime,cases:[],errors:[]};
+const portable=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+async function save(){await writeFile(join(out,'runtime-results.json'),portable(JSON.stringify(results,null,2)));}
+let child,base,token,definition,nextId=0,bootInfo;
+const pending=new Map();
+async function boot(){
+ const start=performance.now();
+ child=fork(join(runtime,'worker.mjs'),[],{cwd:root,windowsHide:true,execArgv:['--experimental-import-meta-resolve'],env:{...process.env,GG_QA_OPTIONS:JSON.stringify({dataDir,port:5950})},stdio:['ignore','pipe','pipe','ipc']});
+ child.stdout.on('data',b=>process.stdout.write(b));child.stderr.on('data',b=>process.stderr.write(b));
+ const ready=new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('worker boot timeout')),120000);child.on('exit',(code)=>{for(const entry of pending.values())entry.reject(new Error('worker exited '+code));pending.clear();});child.on('message',msg=>{if(msg.ready){clearTimeout(timeout);resolve(msg);}else{const p=pending.get(msg.id);if(!p)return;pending.delete(msg.id);msg.error?p.reject(new Error(msg.error)):p.resolve(msg.result);}});});
+ bootInfo=await ready;({base,token,definition}=bootInfo);results.boots??=[];results.boots.push({pid:bootInfo.pid,ms:performance.now()-start});
+}
+function call(name,args){const id=++nextId;return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});child.send({id,name,args});});}
+async function api(path,body,extra={}){const r=await fetch(base+path,{...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)}),headers:{authorization:'Bearer '+token,'content-type':'application/json',...extra},signal:AbortSignal.timeout(120000)});if(!r.ok)throw new Error(path+' HTTP '+r.status+' '+await r.text());return r.json();}
+async function makeRun(count,payloadBytes=256){const {loop}=await api('/loops',{definition});await api('/loops/'+loop.id+'/publish',{});const {run}=await api('/loops/'+loop.id+'/runs',{});for(let i=0;i<100;i++){const {run:r}=await api('/runs/'+run.id);if(r.status==='waiting')break;await sleep(20);}await call('seed',{runId:run.id,count,payloadBytes});return run.id;}
+function collector(after=0){return {after,count:0,last:after,gaps:0,duplicates:0,controls:[],hash:createHash('sha256'),firstMs:null,consume(frame,at){if(frame.event==='stream.error'){this.controls.push({problem:JSON.parse(frame.data),id:frame.id,atMs:at});return;}let e;try{e=JSON.parse(frame.data);}catch{this.partialFrames=(this.partialFrames??0)+1;return;}if(!Number.isInteger(e.seq))return;if(e.seq<=this.last)this.duplicates++;if(e.seq!==this.last+1)this.gaps++;if(this.firstMs===null)this.firstMs=at;this.count++;this.last=e.seq;this.hash.update(JSON.stringify(e)+'\n');},summary(ms){return {after:this.after,count:this.count,last:this.last,gaps:this.gaps,duplicates:this.duplicates,controls:this.controls,partialFrames:this.partialFrames??0,firstMs:this.firstMs,totalMs:ms,sha256:this.hash.digest('hex')};}};}
+async function raw(runId,{after=0,pauseMs=0,paceMs=0,headers={},onProgress}={}){
+ const start=performance.now(),c=collector(after),parser=new SseParser();
+ return new Promise((resolve,reject)=>{let pauseTimer;const request=get(base+'/runs/'+runId+'/events?after='+after,{headers:{authorization:'Bearer '+token,accept:'text/event-stream',...headers}},res=>{let bytes=0;res.setEncoding('utf8');res.pause();pauseTimer=setTimeout(()=>res.resume(),pauseMs);res.on('data',chunk=>{bytes+=Buffer.byteLength(chunk);for(const frame of parser.push(chunk))c.consume(frame,performance.now()-start);onProgress?.(c);if(paceMs){res.pause();pauseTimer=setTimeout(()=>res.resume(),paceMs);}});const finish=(error)=>{clearTimeout(pauseTimer);resolve({...c.summary(performance.now()-start),bytes,status:res.statusCode,transportError:error});};res.once('end',()=>finish());res.once('error',e=>finish(String(e)));});request.on('error',reject);request.setTimeout(120000,()=>request.destroy(new Error('raw timeout')));});
+}
+async function fetched(runId,after=0){const start=performance.now(),c=collector(after),p=new SseParser();const res=await fetch(base+'/runs/'+runId+'/events?after='+after,{headers:{authorization:'Bearer '+token,accept:'text/event-stream'},signal:AbortSignal.timeout(120000)});const reader=res.body.getReader(),d=new TextDecoder();for(;;){const {value,done}=await reader.read();if(done)break;for(const f of p.push(d.decode(value,{stream:true})))c.consume(f,performance.now()-start);}return {...c.summary(performance.now()-start),status:res.status};}
+function clientRead(runId,after=0){const start=performance.now(),c=collector(after),errors=[],opens=[];const client=createGraphGoblinClient({baseUrl:base,apiKey:token});const sub=subscribeRunEvents({client,runId,after,onEvent:e=>c.consume({data:JSON.stringify(e)},performance.now()-start),onOpen:()=>opens.push(performance.now()-start),onError:(e,attempt)=>errors.push({code:e.code??e.problem?.code,message:e.message,attempt}),backoff:{initialMs:50,maxMs:100,maxAttempts:5}});return sub.done.then(()=>({...c.summary(performance.now()-start),lastSeq:sub.lastSeq,errors,opens}),e=>({...c.summary(performance.now()-start),lastSeq:sub.lastSeq,errors,opens,rejected:{code:e.code??e.problem?.code,message:e.message}}));}
+async function record(name,fn){console.log('QA_CASE '+name);try{const actual=await fn();results.cases.push({name,...actual});}catch(e){results.cases.push({name,error:e.stack});results.errors.push({name,error:e.stack});}await save();}
+try{
+ await boot();
+ const long=await makeRun(40000);results.longRunId=long;await save();
+ await record('fast readers under continuous appends',async()=>{
+  await call('resetStats');await call('produce',{runId:long,durationMs:15000});
+  const reads=[fetched(long),fetched(long,20000),clientRead(long),clientRead(long,20000)];
+  await sleep(15000);const producer=await call('stopProducer');await api('/runs/'+long+'/cancel',{});
+  const readers=await Promise.all(reads),stats=await call('stats');const stored=await api('/runs/'+long);
+  return {producer,readers,storedLastSeq:stored.run.lastEventSeq,stats,pass:readers.every(r=>!r.rejected&&r.gaps===0&&r.duplicates===0&&r.controls.length===0&&r.last===stored.run.lastEventSeq&&r.count===r.last-r.after)};
+ });
+ await record('terminal cursor boundaries',async()=>{const total=(await api('/runs/'+long)).run.lastEventSeq;const readers=[];for(const after of [0,Math.floor(total/2),total-1,total,total+100])readers.push(await raw(long,{after}));return {total,readers,pass:readers.every(r=>r.count===Math.max(0,total-r.after)&&r.gaps===0&&r.controls.length===0)&&readers.slice(-2).every(r=>r.totalMs<2000)};});
+ await record('paced slow reader and recoverable stalled socket',async()=>{
+  const id=await makeRun(40000,1024);await api('/runs/'+id+'/cancel',{});await call('resetStats');
+  const paced=await raw(id,{pauseMs:1000,paceMs:5});
+  const stalled=await raw(id,{pauseMs:5600});
+  const resumed=await raw(id,{after:stalled.last});const stats=await call('stats');
+  return {runId:id,paced,stalled,resumed,stats,pass:paced.controls.length===0&&paced.gaps===0&&stalled.controls.some(c=>c.problem.code==='SSE_SLOW_CONSUMER'&&c.atMs>=5000)&&resumed.gaps===0&&resumed.duplicates===0&&stalled.count+resumed.count===paced.count};
+ });
+ await record('transient SQLite read failure beyond page one',async()=>{const id=await makeRun(600);await api('/runs/'+id+'/cancel',{});await call('fault',{runId:id});const read=await clientRead(id);return {runId:id,read,faultEvents:(await call('stats')).faultEvents,pass:read.last>600&&read.gaps===0&&!read.rejected&&read.errors.some(e=>e.code==='SSE_REPLAY_FAILED')};});
+ await record('corrupt SQLite page is fatal without cursor advance',async()=>{const id=await makeRun(600);await api('/runs/'+id+'/cancel',{});await call('corrupt',{runId:id,seq:129});const wire=await raw(id);const read=await clientRead(id);await call('repair',{runId:id,seq:129});return {runId:id,wire,read,pass:wire.count===128&&wire.controls[0]?.problem.code==='STORED_EVENT_INVALID'&&wire.controls[0]?.id===undefined&&read.lastSeq===128&&read.rejected?.code==='STORED_EVENT_INVALID'};});
+ await record('burst and oversized live notification catch-up',async()=>{const id=await makeRun(128);const promise=clientRead(id);await sleep(400);await call('burst',{runId:id,count:600});await call('burst',{runId:id,count:1,payloadBytes:1100000});await api('/runs/'+id+'/cancel',{});const read=await promise;return {runId:id,read,pass:read.gaps===0&&read.duplicates===0&&read.controls.length===0&&!read.errors.length&&!read.rejected&&read.last>729};});
+ await record('adjacent API boundary cases',async()=>{const cases=[];for(const path of ['/runs/'+long+'/events/stream','/runs/'+long+'/events?after=-1','/runs/'+long+'/events?limit=1001','/runs/00000000000000000000000000/events']){const r=await fetch(base+path,{headers:{authorization:'Bearer '+token,accept:'text/event-stream'}});cases.push({path,status:r.status,body:await r.text()});}const paged=await api('/runs/'+long+'/events?after=20000&limit=128');return {cases,paged:{count:paged.items.length,first:paged.items[0].seq,last:paged.items.at(-1).seq,hasMore:paged.hasMore,nextAfter:paged.nextAfter},pass:cases.map(x=>x.status).join(',')==='404,400,400,404'&&paged.items.length===128};});
+ // Browser phase is launched separately while this real worker remains alive.
+ const live=await makeRun(40000);results.browserLiveRunId=live;
+ await writeFile(join(runtime,'connection.json'),JSON.stringify({base,token,longRunId:long,liveRunId:live,dataDir}));
+ await writeFile(join(out,'runtime-location.log.txt'),portable(runtime));
+ console.log('QA_READY_BROWSER '+runtime);await save();
+ const control=join(runtime,'control.json');let last='';
+ for(;;){await sleep(200);let text;try{text=await readFile(control,'utf8');}catch{continue;}if(text===last)continue;last=text;const req=JSON.parse(text);if(req.name==='finish')break;let response;try{if(req.name==='restart'){const before=await call('stats');const exited=new Promise(r=>child.once('exit',(code,signal)=>r({code,signal})));child.kill();const oldExit=await exited;await boot();response={before,oldExit,boot:results.boots.at(-1)};}else response=await call(req.name,req.args);}catch(e){response={error:e.stack};}await writeFile(join(runtime,'control-result.json'),JSON.stringify({id:req.id,response}));}
+}catch(e){results.error=e.stack;console.error(e.stack);}finally{if(child?.connected)await call('close').catch(e=>{results.closeError=e.stack;child.kill();});results.finished=new Date().toISOString();await save();console.log('QA_FINISHED');}

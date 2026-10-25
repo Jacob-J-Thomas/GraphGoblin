@@ -1,0 +1,65 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/packages/infrastructure
+
+ ✓ src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > returns no marker for an empty or unrelated history, isolated by run 185ms
+ ✓ src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > finds a terminal marker before thousands of delivery audits without decoding older rows 585ms
+ × src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > lets run.started invalidate an old failure before a later outcome 149ms
+   → Generated run event could not be recorded: failure.code: Invalid option: expected one of "HARNESS_NOT_INSTALLED"|"HARNESS_NOT_AUTHENTICATED"|"HARNESS_QUOTA_EXHAUSTED"|"HARNESS_TURN_FAILED"|"HARNESS_TRANSPORT_FAILED"|"HARNESS_OUTPUT_LIMIT"|"RUN_DEADLINE_EXCEEDED"|"HARNESS_DELIVERY_UNCERTAIN"|"HARNESS_SESSION_MISSING"|"HARNESS_TERMINATION_UNCONFIRMED"|"WORKING_DIRECTORY_MISSING"|"SCRIPT_EXIT_CODE"|"SCRIPT_TIMEOUT"|"INFERENCE_TIMEOUT"|"OUTPUT_SCHEMA_MISMATCH"|"ARTIFACT_WRITE_FAILED"|"SUBLOOP_DEPTH_EXCEEDED"|"SUBLOOP_NOT_FOUND"|"LOOP_UPGRADE_REQUIRED"|"DECISION_NO_ROUTE"|"EVALUATION_UNAVAILABLE"|"EVALUATION_PROVIDER_FAILED"|"EVALUATION_INVALID_CONFIGURATION"|"EVALUATION_INVALID_RESPONSE"|"EVALUATION_RESULT_REJECTED"|"EVALUATION_EXPRESSION_FAILED"|"DECIDER_UNAVAILABLE"|"SECRET_MISSING"|"TEMPLATE_ERROR"|"TEMPLATE_PREREQUISITE_UNAVAILABLE"|"TEMPLATE_ISOLATION_UNAVAILABLE"|"TEMPLATE_REPORT_UNAVAILABLE"|"TEMPLATE_AUTHORITY_REFUSED"|"TEMPLATE_BINDING_CHANGED"|"EXPRESSION_ERROR"|"WAIT_TIMEOUT"|"HEARTBEAT_EXHAUSTED"|"HTTP_PROBE_BODY_OVERFLOW"|"RETURN_DELIVERY_FAILED"|"MAX_NODE_VISITS"|"EVENT_INVALID"|"INTERNAL_ERROR"
+ × src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > lets run.resumed invalidate an old failure before a later outcome 142ms
+   → Generated run event could not be recorded: failure.code: Invalid option: expected one of "HARNESS_NOT_INSTALLED"|"HARNESS_NOT_AUTHENTICATED"|"HARNESS_QUOTA_EXHAUSTED"|"HARNESS_TURN_FAILED"|"HARNESS_TRANSPORT_FAILED"|"HARNESS_OUTPUT_LIMIT"|"RUN_DEADLINE_EXCEEDED"|"HARNESS_DELIVERY_UNCERTAIN"|"HARNESS_SESSION_MISSING"|"HARNESS_TERMINATION_UNCONFIRMED"|"WORKING_DIRECTORY_MISSING"|"SCRIPT_EXIT_CODE"|"SCRIPT_TIMEOUT"|"INFERENCE_TIMEOUT"|"OUTPUT_SCHEMA_MISMATCH"|"ARTIFACT_WRITE_FAILED"|"SUBLOOP_DEPTH_EXCEEDED"|"SUBLOOP_NOT_FOUND"|"LOOP_UPGRADE_REQUIRED"|"DECISION_NO_ROUTE"|"EVALUATION_UNAVAILABLE"|"EVALUATION_PROVIDER_FAILED"|"EVALUATION_INVALID_CONFIGURATION"|"EVALUATION_INVALID_RESPONSE"|"EVALUATION_RESULT_REJECTED"|"EVALUATION_EXPRESSION_FAILED"|"DECIDER_UNAVAILABLE"|"SECRET_MISSING"|"TEMPLATE_ERROR"|"TEMPLATE_PREREQUISITE_UNAVAILABLE"|"TEMPLATE_ISOLATION_UNAVAILABLE"|"TEMPLATE_REPORT_UNAVAILABLE"|"TEMPLATE_AUTHORITY_REFUSED"|"TEMPLATE_BINDING_CHANGED"|"EXPRESSION_ERROR"|"WAIT_TIMEOUT"|"HEARTBEAT_EXHAUSTED"|"HTTP_PROBE_BODY_OVERFLOW"|"RETURN_DELIVERY_FAILED"|"MAX_NODE_VISITS"|"EVENT_INVALID"|"INTERNAL_ERROR"
+ ✓ src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > rejects corrupt current lifecycle payloads with their stored row identity 218ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > lets run.started invalidate an old failure before 
+a later outcome
+ FAIL  src/sqlite/lifecycle-tail.test.ts > indexed lifecycle tail > lets run.resumed invalidate an old failure before 
+a later outcome
+RunFailureError: Generated run event could not be recorded: failure.code: Invalid option: expected one of "HARNESS_NOT_
+INSTALLED"|"HARNESS_NOT_AUTHENTICATED"|"HARNESS_QUOTA_EXHAUSTED"|"HARNESS_TURN_FAILED"|"HARNESS_TRANSPORT_FAILED"|"HARN
+ESS_OUTPUT_LIMIT"|"RUN_DEADLINE_EXCEEDED"|"HARNESS_DELIVERY_UNCERTAIN"|"HARNESS_SESSION_MISSING"|"HARNESS_TERMINATION_U
+NCONFIRMED"|"WORKING_DIRECTORY_MISSING"|"SCRIPT_EXIT_CODE"|"SCRIPT_TIMEOUT"|"INFERENCE_TIMEOUT"|"OUTPUT_SCHEMA_MISMATCH
+"|"ARTIFACT_WRITE_FAILED"|"SUBLOOP_DEPTH_EXCEEDED"|"SUBLOOP_NOT_FOUND"|"LOOP_UPGRADE_REQUIRED"|"DECISION_NO_ROUTE"|"EVA
+LUATION_UNAVAILABLE"|"EVALUATION_PROVIDER_FAILED"|"EVALUATION_INVALID_CONFIGURATION"|"EVALUATION_INVALID_RESPONSE"|"EVA
+LUATION_RESULT_REJECTED"|"EVALUATION_EXPRESSION_FAILED"|"DECIDER_UNAVAILABLE"|"SECRET_MISSING"|"TEMPLATE_ERROR"|"TEMPLA
+TE_PREREQUISITE_UNAVAILABLE"|"TEMPLATE_ISOLATION_UNAVAILABLE"|"TEMPLATE_REPORT_UNAVAILABLE"|"TEMPLATE_AUTHORITY_REFUSED
+"|"TEMPLATE_BINDING_CHANGED"|"EXPRESSION_ERROR"|"WAIT_TIMEOUT"|"HEARTBEAT_EXHAUSTED"|"HTTP_PROBE_BODY_OVERFLOW"|"RETURN
+_DELIVERY_FAILED"|"MAX_NODE_VISITS"|"EVENT_INVALID"|"INTERNAL_ERROR"
+ ❯ validateGeneratedEvent ../engine/src/event-validation.ts:18:9
+     16|     .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+     17|     .join('; ');
+     18|   throw new RunFailureError(
+       |         ^
+     19|     'EVENT_INVALID',
+     20|     `Generated run event could not be recorded: ${reason}`,
+ ❯ src/sqlite/events.ts:87:23
+ ❯ LibSQLSession.transaction 
+../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:122:19
+ ❯ SqliteEventStore.append src/sqlite/events.ts:70:20
+ ❯ src/sqlite/lifecycle-tail.test.ts:43:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'EVENT_INVALID', options: { resumable: false }, toFailure: 'Function<toFailure>' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  06:35:20
+   Duration  15.03s (transform 55%, import 35%, tests 10%)
+
+  Transform  transforming modules took 7.19s · 55% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\packages\infrastructure
+

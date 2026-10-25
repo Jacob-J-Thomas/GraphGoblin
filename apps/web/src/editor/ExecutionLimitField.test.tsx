@@ -132,7 +132,9 @@ describe('execution limit presentation', () => {
       <RunLimits
         run={runRecord({
           startedAt: '2026-10-21T12:00:00.000Z',
-          pinned: samplePin({ limits: { maxNodeVisits: null, runDeadlineSeconds: 2 } }),
+          pinned: samplePin({
+            limits: { structuredTimeoutMs: null, maxNodeVisits: null, runDeadlineSeconds: 2 },
+          }),
         })}
       />,
     );
@@ -145,11 +147,51 @@ describe('execution limit presentation', () => {
     renderWith(
       <RunLimits
         run={runRecord({
-          pinned: samplePin({ limits: { maxNodeVisits: 3, runDeadlineSeconds: null } }),
+          pinned: samplePin({
+            limits: { structuredTimeoutMs: null, maxNodeVisits: 3, runDeadlineSeconds: null },
+          }),
         })}
       />,
     );
     expect(screen.getByText(/Maximum node visits: 3/)).toHaveTextContent('Run deadline: none');
     expect(screen.queryByText(/Deadline at:/)).toBeNull();
   });
+});
+
+it('lets the author set and disable a visible structured-completion deadline', async () => {
+  const changes: unknown[] = [];
+  const user = userEvent.setup();
+  renderWith(
+    <SchemaForm
+      label="Limits"
+      schema={ExecutionLimitsSchema}
+      value={{}}
+      controls={{ 'execution-limit': ExecutionLimitField }}
+      onChange={(value) => changes.push(value)}
+    />,
+  );
+  expect(screen.getByText(/No completion deadline;/)).toBeVisible();
+  const mode = screen.getByRole('combobox', { name: 'Structured timeout ms mode' });
+  await user.selectOptions(mode, 'limited');
+  expect(screen.getByRole('spinbutton', { name: 'Structured timeout ms' })).toHaveValue(120000);
+  expect(changes.at(-1)).toMatchObject({ structuredTimeoutMs: 120000 });
+  await user.selectOptions(mode, 'unlimited');
+  expect(changes.at(-1)).toMatchObject({ structuredTimeoutMs: null });
+});
+
+it('shows a pinned finite structured completion limit', () => {
+  renderWith(
+    <RunLimits
+      run={runRecord({
+        pinned: samplePin({
+          limits: {
+            maxNodeVisits: 10,
+            runDeadlineSeconds: null,
+            structuredTimeoutMs: 4500,
+          },
+        }),
+      })}
+    />,
+  );
+  expect(screen.getByText('Structured completion: 4500 ms per call.')).toBeVisible();
 });

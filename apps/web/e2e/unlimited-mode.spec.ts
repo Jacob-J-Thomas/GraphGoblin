@@ -16,6 +16,15 @@ test('visible defaults and explicit unlimited persist; inspector shows the pin',
     'unlimited',
   );
   await expect(page.getByText(/No deadline; set one/)).toBeVisible();
+  const completionMode = page.getByRole('combobox', {
+    name: 'Structured completion milliseconds mode',
+  });
+  await expect(completionMode).toHaveValue('unlimited');
+  await completionMode.selectOption('limited');
+  const completion = page.getByRole('spinbutton', { name: 'Structured completion milliseconds' });
+  await expect(completion).toHaveValue('120000');
+  await completion.fill('250');
+
   await page.getByRole('combobox', { name: 'Run deadline seconds mode' }).selectOption('limited');
   await expect(page.getByRole('spinbutton', { name: 'Run deadline seconds' })).toHaveValue('3600');
   await page.getByRole('spinbutton', { name: 'Run deadline seconds' }).fill('');
@@ -53,6 +62,9 @@ test('visible defaults and explicit unlimited persist; inspector shows the pin',
   await expect(page.getByRole('combobox', { name: 'Run deadline seconds mode' })).toHaveValue(
     'unlimited',
   );
+  await expect(
+    page.getByRole('spinbutton', { name: 'Structured completion milliseconds' }),
+  ).toHaveValue('250');
   const started = await request.post(`/loops/${loop.id}/runs`, {
     data: { allowDraft: true, versionId: draft.id },
   });
@@ -60,8 +72,12 @@ test('visible defaults and explicit unlimited persist; inspector shows the pin',
   const { run } = (await started.json()) as { run: { id: string } };
   await page.goto(`/app/runs/${run.id}`);
   await expect(page.getByText('Maximum node visits: Unlimited. Run deadline: none.')).toBeVisible();
+  await expect(page.getByText('Structured completion: 250 ms per call.')).toBeVisible();
   await request.post(`/runs/${run.id}/cancel`, { data: {} });
   await page.goto('/app/settings');
+  await expect(
+    page.getByText('No structured completion deadline unless the loop sets one.'),
+  ).toBeVisible();
   await expect(
     page.getByText(/Maximum node visits: 10. No run deadline unless the loop sets one/),
   ).toBeVisible();
