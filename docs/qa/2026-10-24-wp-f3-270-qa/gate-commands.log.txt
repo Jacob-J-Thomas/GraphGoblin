@@ -1,0 +1,26 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$report = Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-f3-270-qa'
+$commands = @(
+  @('typecheck'), @('lint'), @('format:check'), @('check:layers'), @('check:deps'), @('check:tokens'), @('check:docs'),
+  @('--filter','@graphgoblin/contracts','test:coverage'),
+  @('--filter','@graphgoblin/domain','test:coverage'),
+  @('--filter','@graphgoblin/engine','test:coverage'),
+  @('--filter','@graphgoblin/adapter-codex','test:coverage'),
+  @('--filter','@graphgoblin/infrastructure','test:coverage'),
+  @('--filter','@graphgoblin/api-client','test:coverage'),
+  @('--filter','@graphgoblin/api','test:coverage'),
+  @('--filter','@graphgoblin/web','test:coverage')
+)
+$results = @()
+foreach ($taskArgs in $commands) {
+  $name = if ($taskArgs[0] -eq '--filter') { ($taskArgs[1] -replace '@graphgoblin/','') + '-coverage' } else { $taskArgs[0] -replace ':','-' }
+  $watch = [Diagnostics.Stopwatch]::StartNew()
+  $log = Join-Path $report ($name + '.log.txt')
+  & pnpm.cmd @taskArgs *> $log
+  $code = $LASTEXITCODE
+  $watch.Stop()
+  $result = @{ command=('pnpm.cmd ' + ($taskArgs -join ' ')); exit=$code; elapsedMs=$watch.ElapsedMilliseconds; log=($name + '.log.txt') }
+  $results += $result
+  $results | ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $report 'gates.json')
+  $result | ConvertTo-Json -Compress
+}

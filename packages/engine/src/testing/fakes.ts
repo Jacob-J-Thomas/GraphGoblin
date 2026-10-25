@@ -868,7 +868,6 @@ export class InMemorySecrets implements SecretsPort {
 export const DEFAULT_TEST_SETTINGS: EngineSettings = {
   defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
   maxConcurrentRuns: 4,
-  structuredTimeoutMs: 5000,
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {

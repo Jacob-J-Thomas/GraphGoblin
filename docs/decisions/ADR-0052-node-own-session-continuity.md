@@ -46,7 +46,7 @@ it never resets the shared thread, another node or loop guardrails.
 
 Existing `(runId, nodeId, attempt)` rows already store harness and native session ID.
 The event log supplies completion count and final-attempt identity. No stored schema
-changes or historical data rewrites are needed, so migration 0020 is not used.
+changes or historical data rewrites are needed, so no migration is added.
 SQLite rows/logs retain usable references after restart; adapters already resume a
 native ID with full settings and no adapter-local cache. Replay forks and subloop
 children have new run IDs/logs: neither handles nor reset counts carry over, even

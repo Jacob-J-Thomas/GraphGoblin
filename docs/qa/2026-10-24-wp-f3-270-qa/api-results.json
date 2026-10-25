@@ -1,0 +1,6464 @@
+[
+  {
+    "name": "configured-500ms-decision-capacity-late",
+    "status": "FAIL",
+    "elapsedMs": 1031,
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   classifierId: null,\n    effort: 'low',\n    kind: 'llm',\n    model: 'gpt-6-luna',\n    provider: 'codex'\n  }\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   classifierId: null,\n    effort: 'low',\n    kind: 'llm',\n    model: 'gpt-6-luna',\n    provider: 'codex'\n  }\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:37:59\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runCase (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:20:71)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:30:1"
+  },
+  {
+    "name": "fast-decision",
+    "status": "PASS",
+    "elapsedMs": 806,
+    "call": {
+      "id": 1,
+      "at": 1792829397365,
+      "request": {
+        "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose a route\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "reasoning": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "confidence",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": null,
+      "aborted": false
+    },
+    "snapshot": {
+      "run": {
+        "id": "01M5PFB63QX00084F3SGTV13HJ",
+        "ownerId": "local",
+        "loopId": "01M5PFB5WRH2QNH6HKH9594053",
+        "versionId": "01M5PFB5WRH2QNH6HKH9594054",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA fast completion",
+          "label": "QA fast completion v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB63RA05HJ2FVNMDH4PHG",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T08:09:57.111Z",
+        "startedAt": "2026-10-24T08:09:57.145Z",
+        "finishedAt": "2026-10-24T08:09:57.532Z",
+        "lastEventSeq": 11
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB63QX00084F3SGTV13HJ",
+          "loopId": "01M5PFB5WRH2QNH6HKH9594053",
+          "versionId": "01M5PFB5WRH2QNH6HKH9594054",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB63RA05HJ2FVNMDH4PHG",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:57.111Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:57.227Z"
+          },
+          "work": {
+            "nodeId": "work",
+            "value": {
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "yes",
+                "confidence": 1,
+                "reasoning": "QA result"
+              },
+              "portId": "yes"
+            },
+            "at": "2026-10-24T08:09:57.398Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "work",
+          "value": {
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "yes",
+              "confidence": 1,
+              "reasoning": "QA result"
+            },
+            "portId": "yes"
+          },
+          "at": "2026-10-24T08:09:57.398Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 1,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:57.111Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB5WRH2QNH6HKH9594054",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA fast completion",
+              "label": "QA fast completion v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB63QX00084F3SGTV13HJ",
+                "loopId": "01M5PFB5WRH2QNH6HKH9594053",
+                "versionId": "01M5PFB5WRH2QNH6HKH9594054",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB63RA05HJ2FVNMDH4PHG",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:57.111Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:57.182Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:57.194Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:57.229Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:57.227Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:57.227Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:57.326Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "yes",
+              "confidence": 1,
+              "reasoning": "QA result"
+            },
+            "portId": "yes",
+            "diagnostics": [],
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:57.402Z",
+            "type": "decision.made",
+            "nodeId": "work"
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:57.402Z",
+            "type": "node.finished",
+            "nodeId": "work",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/work",
+                "value": {
+                  "nodeId": "work",
+                  "value": {
+                    "provenance": {
+                      "kind": "llm",
+                      "provider": "codex",
+                      "classifierId": null,
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "yes",
+                      "confidence": 1,
+                      "reasoning": "QA result"
+                    },
+                    "portId": "yes"
+                  },
+                  "at": "2026-10-24T08:09:57.398Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "work",
+                  "value": {
+                    "provenance": {
+                      "kind": "llm",
+                      "provider": "codex",
+                      "classifierId": null,
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "yes",
+                      "confidence": 1,
+                      "reasoning": "QA result"
+                    },
+                    "portId": "yes"
+                  },
+                  "at": "2026-10-24T08:09:57.398Z"
+                }
+              }
+            ],
+            "route": "yes",
+            "durationMs": 37
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 8,
+            "ts": "2026-10-24T08:09:57.458Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 9,
+            "ts": "2026-10-24T08:09:57.493Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 10,
+            "ts": "2026-10-24T08:09:57.493Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 4
+          },
+          {
+            "runId": "01M5PFB63QX00084F3SGTV13HJ",
+            "seq": 11,
+            "ts": "2026-10-24T08:09:57.493Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "observation": {
+      "id": 1,
+      "at": 1792829397365,
+      "request": {
+        "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose a route\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "reasoning": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "confidence",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": null,
+      "releasedAt": 1792829397395,
+      "aborted": false
+    }
+  },
+  {
+    "name": "cancel-race-450ms-0",
+    "status": "PASS",
+    "elapsedMs": 943,
+    "offset": 450,
+    "requestedAfterMs": 452,
+    "cancel": {
+      "status": 200,
+      "data": {
+        "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+        "ownerId": "local",
+        "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+        "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 450 0",
+          "label": "QA race 450 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+        "status": "running",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:58.482Z",
+        "createdAt": "2026-10-24T08:09:57.714Z",
+        "startedAt": "2026-10-24T08:09:57.762Z",
+        "lastEventSeq": 6
+      }
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+        "ownerId": "local",
+        "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+        "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 450 0",
+          "label": "QA race 450 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+        "status": "cancelled",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:58.482Z",
+        "createdAt": "2026-10-24T08:09:57.714Z",
+        "startedAt": "2026-10-24T08:09:57.762Z",
+        "finishedAt": "2026-10-24T08:09:58.496Z",
+        "lastEventSeq": 7
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+          "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+          "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:57.714Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:57.857Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:09:57.857Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:57.714Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 450 0",
+              "label": "QA race 450 0 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+                "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+                "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:57.714Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:57.809Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:57.814Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:57.860Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:57.857Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:57.857Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:58.015Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:58.484Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:58.493Z",
+            "type": "run.cancelled"
+          }
+        ],
+        "nextAfter": 7,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+        "ownerId": "local",
+        "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+        "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 450 0",
+          "label": "QA race 450 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+        "status": "cancelled",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:58.482Z",
+        "createdAt": "2026-10-24T08:09:57.714Z",
+        "startedAt": "2026-10-24T08:09:57.762Z",
+        "finishedAt": "2026-10-24T08:09:58.496Z",
+        "lastEventSeq": 7
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+          "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+          "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:57.714Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:57.857Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:09:57.857Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:57.714Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 450 0",
+              "label": "QA race 450 0 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+                "loopId": "01M5PFB6MY0MBR4R4R28AMHY65",
+                "versionId": "01M5PFB6MY0MBR4R4R28AMHY66",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB6PJ7FY5K38GT4YRB5GW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:57.714Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:57.809Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:57.814Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:57.860Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:57.857Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:57.857Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:58.015Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:58.484Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFB6PJ7FY5K38GT4YRB5GV",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:58.493Z",
+            "type": "run.cancelled"
+          }
+        ],
+        "nextAfter": 7,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "cancel-race-450ms-1",
+    "status": "PASS",
+    "elapsedMs": 667,
+    "offset": 450,
+    "requestedAfterMs": 477,
+    "cancel": {
+      "status": 200,
+      "data": {
+        "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+        "ownerId": "local",
+        "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+        "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 450 1",
+          "label": "QA race 450 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB7K4X4VPY75WY1QST2BQ",
+        "status": "running",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:59.151Z",
+        "createdAt": "2026-10-24T08:09:58.628Z",
+        "startedAt": "2026-10-24T08:09:58.637Z",
+        "lastEventSeq": 6
+      }
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+        "ownerId": "local",
+        "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+        "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 450 1",
+          "label": "QA race 450 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB7K4X4VPY75WY1QST2BQ",
+        "status": "cancelled",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:59.151Z",
+        "createdAt": "2026-10-24T08:09:58.628Z",
+        "startedAt": "2026-10-24T08:09:58.637Z",
+        "finishedAt": "2026-10-24T08:09:59.163Z",
+        "lastEventSeq": 7
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+          "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+          "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB7K4X4VPY75WY1QST2BQ",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:58.628Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:58.654Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:09:58.654Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:58.628Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 450 1",
+              "label": "QA race 450 1 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+                "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+                "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB7K4X4VPY75WY1QST2BQ",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:58.628Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:58.641Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:58.649Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:58.655Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:58.654Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:58.654Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:58.665Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:59.153Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:59.161Z",
+            "type": "run.cancelled"
+          }
+        ],
+        "nextAfter": 7,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+        "ownerId": "local",
+        "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+        "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 450 1",
+          "label": "QA race 450 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB7K4X4VPY75WY1QST2BQ",
+        "status": "cancelled",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:59.151Z",
+        "createdAt": "2026-10-24T08:09:58.628Z",
+        "startedAt": "2026-10-24T08:09:58.637Z",
+        "finishedAt": "2026-10-24T08:09:59.163Z",
+        "lastEventSeq": 7
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+          "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+          "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB7K4X4VPY75WY1QST2BQ",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:58.628Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:58.654Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:09:58.654Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:58.628Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 450 1",
+              "label": "QA race 450 1 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB7K4X4VPY75WY1QST2BP",
+                "loopId": "01M5PFB7JGHMXE25XSSBDFHKH8",
+                "versionId": "01M5PFB7JGHMXE25XSSBDFHKH9",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB7K4X4VPY75WY1QST2BQ",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:58.628Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:58.641Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:58.649Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:58.655Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:58.654Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:58.654Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:58.665Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:59.153Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFB7K4X4VPY75WY1QST2BP",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:59.161Z",
+            "type": "run.cancelled"
+          }
+        ],
+        "nextAfter": 7,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "cancel-race-500ms-0",
+    "status": "PASS",
+    "elapsedMs": 706,
+    "offset": 500,
+    "requestedAfterMs": 540,
+    "cancel": {
+      "status": 409,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "run 01M5PFB885V5FG7W9WPGRKCRXE is already failed"
+      }
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFB885V5FG7W9WPGRKCRXE",
+        "ownerId": "local",
+        "loopId": "01M5PFB87BXKAF6GPM02WZC94Z",
+        "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 500 0",
+          "label": "QA race 500 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB885V5FG7W9WPGRKCRXF",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:09:59.301Z",
+        "startedAt": "2026-10-24T08:09:59.311Z",
+        "finishedAt": "2026-10-24T08:09:59.845Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB885V5FG7W9WPGRKCRXE",
+          "loopId": "01M5PFB87BXKAF6GPM02WZC94Z",
+          "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB885V5FG7W9WPGRKCRXF",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:59.301Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:59.323Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:09:59.323Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:59.301Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 500 0",
+              "label": "QA race 500 0 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB885V5FG7W9WPGRKCRXE",
+                "loopId": "01M5PFB87BXKAF6GPM02WZC94Z",
+                "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB885V5FG7W9WPGRKCRXF",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:59.301Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:59.313Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:59.318Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:59.324Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:59.323Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:59.323Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:59.334Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:59.843Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFB885V5FG7W9WPGRKCRXE",
+        "ownerId": "local",
+        "loopId": "01M5PFB87BXKAF6GPM02WZC94Z",
+        "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 500 0",
+          "label": "QA race 500 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB885V5FG7W9WPGRKCRXF",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:09:59.301Z",
+        "startedAt": "2026-10-24T08:09:59.311Z",
+        "finishedAt": "2026-10-24T08:09:59.845Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB885V5FG7W9WPGRKCRXE",
+          "loopId": "01M5PFB87BXKAF6GPM02WZC94Z",
+          "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB885V5FG7W9WPGRKCRXF",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:09:59.301Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:09:59.323Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:09:59.323Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:59.301Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 500 0",
+              "label": "QA race 500 0 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB885V5FG7W9WPGRKCRXE",
+                "loopId": "01M5PFB87BXKAF6GPM02WZC94Z",
+                "versionId": "01M5PFB87BXKAF6GPM02WZC950",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB885V5FG7W9WPGRKCRXF",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:59.301Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:59.313Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:59.318Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:59.324Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:59.323Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:59.323Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:59.334Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB885V5FG7W9WPGRKCRXE",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:59.843Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "cancel-race-500ms-1",
+    "status": "PASS",
+    "elapsedMs": 762,
+    "offset": 500,
+    "requestedAfterMs": 584,
+    "cancel": {
+      "status": 409,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "run 01M5PFB8Y6V19M0M2THM1SN4DJ is already failed"
+      }
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+        "ownerId": "local",
+        "loopId": "01M5PFB8XGMDRF72FKF63XYRPK",
+        "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 500 1",
+          "label": "QA race 500 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB8Y6V19M0M2THM1SN4DK",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:00.006Z",
+        "startedAt": "2026-10-24T08:10:00.017Z",
+        "finishedAt": "2026-10-24T08:10:00.563Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+          "loopId": "01M5PFB8XGMDRF72FKF63XYRPK",
+          "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB8Y6V19M0M2THM1SN4DK",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:00.006Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:00.033Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:00.033Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:00.006Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 500 1",
+              "label": "QA race 500 1 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+                "loopId": "01M5PFB8XGMDRF72FKF63XYRPK",
+                "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB8Y6V19M0M2THM1SN4DK",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:00.006Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:00.021Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:00.027Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:00.035Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.033Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.033Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:00.047Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:00.561Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+        "ownerId": "local",
+        "loopId": "01M5PFB8XGMDRF72FKF63XYRPK",
+        "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 500 1",
+          "label": "QA race 500 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB8Y6V19M0M2THM1SN4DK",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:00.006Z",
+        "startedAt": "2026-10-24T08:10:00.017Z",
+        "finishedAt": "2026-10-24T08:10:00.563Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+          "loopId": "01M5PFB8XGMDRF72FKF63XYRPK",
+          "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB8Y6V19M0M2THM1SN4DK",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:00.006Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:00.033Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:00.033Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:00.006Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 500 1",
+              "label": "QA race 500 1 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+                "loopId": "01M5PFB8XGMDRF72FKF63XYRPK",
+                "versionId": "01M5PFB8XGMDRF72FKF63XYRPM",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB8Y6V19M0M2THM1SN4DK",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:00.006Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:00.021Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:00.027Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:00.035Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.033Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.033Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:00.047Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB8Y6V19M0M2THM1SN4DJ",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:00.561Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "cancel-race-550ms-0",
+    "status": "PASS",
+    "elapsedMs": 742,
+    "offset": 550,
+    "requestedAfterMs": 580,
+    "cancel": {
+      "status": 409,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "run 01M5PFB9P23MBENV83RWEGT8X3 is already failed"
+      }
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFB9P23MBENV83RWEGT8X3",
+        "ownerId": "local",
+        "loopId": "01M5PFB9NEARCWF0QDNYX5VPD8",
+        "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 550 0",
+          "label": "QA race 550 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB9P23MBENV83RWEGT8X4",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:00.770Z",
+        "startedAt": "2026-10-24T08:10:00.779Z",
+        "finishedAt": "2026-10-24T08:10:01.344Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB9P23MBENV83RWEGT8X3",
+          "loopId": "01M5PFB9NEARCWF0QDNYX5VPD8",
+          "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB9P23MBENV83RWEGT8X4",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:00.770Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:00.795Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:00.795Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:00.770Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 550 0",
+              "label": "QA race 550 0 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB9P23MBENV83RWEGT8X3",
+                "loopId": "01M5PFB9NEARCWF0QDNYX5VPD8",
+                "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB9P23MBENV83RWEGT8X4",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:00.770Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:00.782Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:00.790Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:00.797Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.795Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.795Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:00.807Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:01.342Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFB9P23MBENV83RWEGT8X3",
+        "ownerId": "local",
+        "loopId": "01M5PFB9NEARCWF0QDNYX5VPD8",
+        "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 550 0",
+          "label": "QA race 550 0 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFB9P23MBENV83RWEGT8X4",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:00.770Z",
+        "startedAt": "2026-10-24T08:10:00.779Z",
+        "finishedAt": "2026-10-24T08:10:01.344Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFB9P23MBENV83RWEGT8X3",
+          "loopId": "01M5PFB9NEARCWF0QDNYX5VPD8",
+          "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFB9P23MBENV83RWEGT8X4",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:00.770Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:00.795Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:00.795Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:00.770Z",
+            "type": "run.queued",
+            "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 550 0",
+              "label": "QA race 550 0 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFB9P23MBENV83RWEGT8X3",
+                "loopId": "01M5PFB9NEARCWF0QDNYX5VPD8",
+                "versionId": "01M5PFB9NEARCWF0QDNYX5VPD9",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFB9P23MBENV83RWEGT8X4",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:00.770Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:00.782Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:00.790Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:00.797Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.795Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:00.795Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:00.807Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFB9P23MBENV83RWEGT8X3",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:01.342Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "cancel-race-550ms-1",
+    "status": "PASS",
+    "elapsedMs": 808,
+    "offset": 550,
+    "requestedAfterMs": 567,
+    "cancel": {
+      "status": 409,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "run 01M5PFBADEGQGHK9V4CT2EX6WN is already failed"
+      }
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFBADEGQGHK9V4CT2EX6WN",
+        "ownerId": "local",
+        "loopId": "01M5PFBACR6JD1EN3R9TB3E6DC",
+        "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 550 1",
+          "label": "QA race 550 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBADEGQGHK9V4CT2EX6WP",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:01.518Z",
+        "startedAt": "2026-10-24T08:10:01.528Z",
+        "finishedAt": "2026-10-24T08:10:02.190Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBADEGQGHK9V4CT2EX6WN",
+          "loopId": "01M5PFBACR6JD1EN3R9TB3E6DC",
+          "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBADEGQGHK9V4CT2EX6WP",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:01.518Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:01.542Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:01.542Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:01.518Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 550 1",
+              "label": "QA race 550 1 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBADEGQGHK9V4CT2EX6WN",
+                "loopId": "01M5PFBACR6JD1EN3R9TB3E6DC",
+                "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBADEGQGHK9V4CT2EX6WP",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:01.518Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:01.531Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:01.538Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:01.544Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:01.542Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:01.542Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:01.554Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:02.188Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFBADEGQGHK9V4CT2EX6WN",
+        "ownerId": "local",
+        "loopId": "01M5PFBACR6JD1EN3R9TB3E6DC",
+        "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA race 550 1",
+          "label": "QA race 550 1 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBADEGQGHK9V4CT2EX6WP",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:01.518Z",
+        "startedAt": "2026-10-24T08:10:01.528Z",
+        "finishedAt": "2026-10-24T08:10:02.190Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBADEGQGHK9V4CT2EX6WN",
+          "loopId": "01M5PFBACR6JD1EN3R9TB3E6DC",
+          "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBADEGQGHK9V4CT2EX6WP",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:01.518Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:01.542Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:01.542Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:01.518Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA race 550 1",
+              "label": "QA race 550 1 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBADEGQGHK9V4CT2EX6WN",
+                "loopId": "01M5PFBACR6JD1EN3R9TB3E6DC",
+                "versionId": "01M5PFBACR6JD1EN3R9TB3E6DD",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBADEGQGHK9V4CT2EX6WP",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:01.518Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:01.531Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:01.538Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:01.544Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:01.542Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:01.542Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:01.554Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFBADEGQGHK9V4CT2EX6WN",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:02.188Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "API-boundaries-export-import",
+    "status": "FAIL",
+    "elapsedMs": 110,
+    "error": "TypeError: Cannot read properties of undefined (reading 'settings')",
+    "stack": "TypeError: Cannot read properties of undefined (reading 'settings')\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:63:158\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runCase (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:20:71)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:60:1"
+  },
+  {
+    "name": "pinned-despite-draft-edit-resume",
+    "status": "PASS",
+    "elapsedMs": 809,
+    "updated": {
+      "draft": {
+        "id": "01M5PFBBC7299CA3XJ4K1Q6R77",
+        "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+        "version": 2,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA pinned resume",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Route",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose a route",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "yes",
+              "from": {
+                "node": "work",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "no",
+              "from": {
+                "node": "work",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T08:10:02.503Z"
+      },
+      "draftToken": "e43e335a3f2fc8cb",
+      "issues": []
+    },
+    "before": {
+      "run": {
+        "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+        "ownerId": "local",
+        "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+        "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA pinned resume",
+          "label": "QA pinned resume v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBBABEXZC5K2VZ840DHD5",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "createdAt": "2026-10-24T08:10:02.442Z",
+        "startedAt": "2026-10-24T08:10:02.456Z",
+        "finishedAt": "2026-10-24T08:10:03.011Z",
+        "lastEventSeq": 6
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+          "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+          "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBBABEXZC5K2VZ840DHD5",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:02.442Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:02.467Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:02.467Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:02.442Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA pinned resume",
+              "label": "QA pinned resume v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+                "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+                "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBBABEXZC5K2VZ840DHD5",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:02.442Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:02.459Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:02.463Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:02.469Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:02.467Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:02.467Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:02.491Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:03.009Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          }
+        ],
+        "nextAfter": 6,
+        "hasMore": false
+      }
+    },
+    "resumed": {
+      "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+      "ownerId": "local",
+      "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+      "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA pinned resume",
+        "label": "QA pinned resume v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": 500
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5PFBBABEXZC5K2VZ840DHD5",
+      "status": "running",
+      "currentNodeId": "work",
+      "iteration": 1,
+      "createdAt": "2026-10-24T08:10:02.442Z",
+      "startedAt": "2026-10-24T08:10:02.456Z",
+      "lastEventSeq": 7
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+        "ownerId": "local",
+        "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+        "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA pinned resume",
+          "label": "QA pinned resume v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBBABEXZC5K2VZ840DHD5",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T08:10:02.442Z",
+        "startedAt": "2026-10-24T08:10:02.456Z",
+        "finishedAt": "2026-10-24T08:10:03.191Z",
+        "lastEventSeq": 14
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+          "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+          "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBBABEXZC5K2VZ840DHD5",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:02.442Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:02.467Z"
+          },
+          "work": {
+            "nodeId": "work",
+            "value": {
+              "provenance": {
+                "kind": "llm",
+                "provider": "codex",
+                "classifierId": null,
+                "model": "gpt-6-luna",
+                "effort": "low"
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "yes",
+                "confidence": 1,
+                "reasoning": "QA result"
+              },
+              "portId": "yes"
+            },
+            "at": "2026-10-24T08:10:03.161Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "work",
+          "value": {
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "yes",
+              "confidence": 1,
+              "reasoning": "QA result"
+            },
+            "portId": "yes"
+          },
+          "at": "2026-10-24T08:10:03.161Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 2,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:02.442Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA pinned resume",
+              "label": "QA pinned resume v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBBAA4SDT6E79JFBQMF45",
+                "loopId": "01M5PFBB9JC8E3GFGYNX1TG5KG",
+                "versionId": "01M5PFBB9JC8E3GFGYNX1TG5KH",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBBABEXZC5K2VZ840DHD5",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:02.442Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:02.459Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:02.463Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:02.469Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:02.467Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:02.467Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:02.491Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:03.009Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 7,
+            "ts": "2026-10-24T08:10:03.110Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 8,
+            "ts": "2026-10-24T08:10:03.127Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 2,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "yes",
+              "confidence": 1,
+              "reasoning": "QA result"
+            },
+            "portId": "yes",
+            "diagnostics": [],
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 9,
+            "ts": "2026-10-24T08:10:03.164Z",
+            "type": "decision.made",
+            "nodeId": "work"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 10,
+            "ts": "2026-10-24T08:10:03.164Z",
+            "type": "node.finished",
+            "nodeId": "work",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/work",
+                "value": {
+                  "nodeId": "work",
+                  "value": {
+                    "provenance": {
+                      "kind": "llm",
+                      "provider": "codex",
+                      "classifierId": null,
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "yes",
+                      "confidence": 1,
+                      "reasoning": "QA result"
+                    },
+                    "portId": "yes"
+                  },
+                  "at": "2026-10-24T08:10:03.161Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "work",
+                  "value": {
+                    "provenance": {
+                      "kind": "llm",
+                      "provider": "codex",
+                      "classifierId": null,
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "yes",
+                      "confidence": 1,
+                      "reasoning": "QA result"
+                    },
+                    "portId": "yes"
+                  },
+                  "at": "2026-10-24T08:10:03.161Z"
+                }
+              }
+            ],
+            "route": "yes",
+            "durationMs": 32
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 11,
+            "ts": "2026-10-24T08:10:03.178Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 12,
+            "ts": "2026-10-24T08:10:03.188Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 13,
+            "ts": "2026-10-24T08:10:03.188Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PFBBAA4SDT6E79JFBQMF45",
+            "seq": 14,
+            "ts": "2026-10-24T08:10:03.188Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 14,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "name": "inference-output-transform-structured-repair",
+    "status": "PASS",
+    "elapsedMs": 1040,
+    "before": {
+      "run": {
+        "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+        "ownerId": "local",
+        "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+        "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA inference structured repair",
+          "label": "QA inference structured repair v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBC3XCXXMKD90GM02Z1E9",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500
+          },
+          "inference": {
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "createdAt": "2026-10-24T08:10:03.261Z",
+        "startedAt": "2026-10-24T08:10:03.269Z",
+        "finishedAt": "2026-10-24T08:10:03.941Z",
+        "lastEventSeq": 12
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+          "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+          "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBC3XCXXMKD90GM02Z1E9",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:03.261Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:03.291Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:03.291Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:03.261Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA inference structured repair",
+              "label": "QA inference structured repair v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+                "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+                "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBC3XCXXMKD90GM02Z1E9",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:03.261Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:03.276Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:03.285Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:03.293Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:03.291Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:03.291Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:03.310Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c9133299152eca09"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:03.319Z",
+            "type": "harness.turn",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Give an answer"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 7,
+            "ts": "2026-10-24T08:10:03.327Z",
+            "type": "harness.session",
+            "nodeId": "work",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 8,
+            "ts": "2026-10-24T08:10:03.330Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 9,
+            "ts": "2026-10-24T08:10:03.341Z",
+            "type": "node.progress",
+            "nodeId": "work",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "not a number",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 10,
+            "ts": "2026-10-24T08:10:03.346Z",
+            "type": "harness.usage",
+            "nodeId": "work",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 11,
+            "ts": "2026-10-24T08:10:03.914Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 12,
+            "ts": "2026-10-24T08:10:03.939Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500
+              },
+              "inference": {
+                "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+                "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          }
+        ],
+        "nextAfter": 12,
+        "hasMore": false
+      }
+    },
+    "late": {
+      "run": {
+        "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+        "ownerId": "local",
+        "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+        "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA inference structured repair",
+          "label": "QA inference structured repair v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBC3XCXXMKD90GM02Z1E9",
+        "status": "failed",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500
+          },
+          "inference": {
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "createdAt": "2026-10-24T08:10:03.261Z",
+        "startedAt": "2026-10-24T08:10:03.269Z",
+        "finishedAt": "2026-10-24T08:10:03.941Z",
+        "lastEventSeq": 12
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+          "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+          "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBC3XCXXMKD90GM02Z1E9",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:03.261Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:03.291Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:03.291Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:03.261Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA inference structured repair",
+              "label": "QA inference structured repair v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+                "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+                "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBC3XCXXMKD90GM02Z1E9",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:03.261Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:03.276Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:03.285Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:03.293Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:03.291Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:03.291Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:03.310Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c9133299152eca09"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:03.319Z",
+            "type": "harness.turn",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Give an answer"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 7,
+            "ts": "2026-10-24T08:10:03.327Z",
+            "type": "harness.session",
+            "nodeId": "work",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 8,
+            "ts": "2026-10-24T08:10:03.330Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 9,
+            "ts": "2026-10-24T08:10:03.341Z",
+            "type": "node.progress",
+            "nodeId": "work",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "not a number",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 10,
+            "ts": "2026-10-24T08:10:03.346Z",
+            "type": "harness.usage",
+            "nodeId": "work",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 11,
+            "ts": "2026-10-24T08:10:03.914Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 12,
+            "ts": "2026-10-24T08:10:03.939Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500
+              },
+              "inference": {
+                "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+                "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          }
+        ],
+        "nextAfter": 12,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+        "ownerId": "local",
+        "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+        "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA inference structured repair",
+          "label": "QA inference structured repair v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBC3XCXXMKD90GM02Z1E9",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T08:10:03.261Z",
+        "startedAt": "2026-10-24T08:10:03.269Z",
+        "finishedAt": "2026-10-24T08:10:04.231Z",
+        "lastEventSeq": 24
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+          "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+          "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBC3XCXXMKD90GM02Z1E9",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:03.261Z"
+          }
+        },
+        "messages": [
+          {
+            "id": "01M5PFBCZNB9KSZERW05TZBC05",
+            "role": "assistant",
+            "content": "not a number",
+            "nodeId": "work",
+            "ts": "2026-10-24T08:10:04.149Z"
+          }
+        ],
+        "vars": {
+          "fixed": 123
+        },
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:03.291Z"
+          },
+          "work": {
+            "nodeId": "work",
+            "value": "not a number",
+            "at": "2026-10-24T08:10:04.149Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "work",
+          "value": "not a number",
+          "at": "2026-10-24T08:10:04.149Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 2,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:03.261Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA inference structured repair",
+              "label": "QA inference structured repair v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 500
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBC3XCXXMKD90GM02Z1E8",
+                "loopId": "01M5PFBC38HP2HH2BB8ED1PKTS",
+                "versionId": "01M5PFBC38HP2HH2BB8ED1PKTT",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBC3XCXXMKD90GM02Z1E9",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:03.261Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:03.276Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:03.285Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:03.293Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:03.291Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:03.291Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:03.310Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c9133299152eca09"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 6,
+            "ts": "2026-10-24T08:10:03.319Z",
+            "type": "harness.turn",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Give an answer"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 7,
+            "ts": "2026-10-24T08:10:03.327Z",
+            "type": "harness.session",
+            "nodeId": "work",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 8,
+            "ts": "2026-10-24T08:10:03.330Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 9,
+            "ts": "2026-10-24T08:10:03.341Z",
+            "type": "node.progress",
+            "nodeId": "work",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "not a number",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 10,
+            "ts": "2026-10-24T08:10:03.346Z",
+            "type": "harness.usage",
+            "nodeId": "work",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 11,
+            "ts": "2026-10-24T08:10:03.914Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 12,
+            "ts": "2026-10-24T08:10:03.939Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 500 ms",
+              "nodeId": "work",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 500
+              },
+              "inference": {
+                "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+                "turnId": "01M5PFBC5QVDEPGVP70WS9BFDQ",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 13,
+            "ts": "2026-10-24T08:10:04.075Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 14,
+            "ts": "2026-10-24T08:10:04.092Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "inference",
+            "attempt": 2,
+            "configHash": "c9133299152eca09"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 15,
+            "ts": "2026-10-24T08:10:04.097Z",
+            "type": "harness.turn",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBCY1TEGVZFK38TR6SH72",
+            "harness": "codex",
+            "promptKind": "continuation",
+            "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+            "resumeSessionId": "fake-session-1"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 16,
+            "ts": "2026-10-24T08:10:04.122Z",
+            "type": "harness.session",
+            "nodeId": "work",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 17,
+            "ts": "2026-10-24T08:10:04.124Z",
+            "type": "harness.submission",
+            "nodeId": "work",
+            "visitId": "01M5PFBC3XCXXMKD90GM02Z1E8:5",
+            "turnId": "01M5PFBCY1TEGVZFK38TR6SH72",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 18,
+            "ts": "2026-10-24T08:10:04.144Z",
+            "type": "node.progress",
+            "nodeId": "work",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "not a number",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 19,
+            "ts": "2026-10-24T08:10:04.146Z",
+            "type": "harness.usage",
+            "nodeId": "work",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 20,
+            "ts": "2026-10-24T08:10:04.179Z",
+            "type": "node.finished",
+            "nodeId": "work",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5PFBCZNB9KSZERW05TZBC05",
+                  "role": "assistant",
+                  "content": "not a number",
+                  "nodeId": "work",
+                  "ts": "2026-10-24T08:10:04.149Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/work",
+                "value": {
+                  "nodeId": "work",
+                  "value": "not a number",
+                  "at": "2026-10-24T08:10:04.149Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "work",
+                  "value": "not a number",
+                  "at": "2026-10-24T08:10:04.149Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              },
+              {
+                "op": "add",
+                "path": "/vars/fixed",
+                "value": 123
+              }
+            ],
+            "route": "out",
+            "durationMs": 82
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 21,
+            "ts": "2026-10-24T08:10:04.207Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 22,
+            "ts": "2026-10-24T08:10:04.212Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 23,
+            "ts": "2026-10-24T08:10:04.212Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PFBC3XCXXMKD90GM02Z1E8",
+            "seq": 24,
+            "ts": "2026-10-24T08:10:04.212Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 24,
+        "hasMore": false
+      }
+    },
+    "observation": {
+      "id": 10,
+      "at": 1792829403402,
+      "request": {
+        "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n{\n  \"nodeId\": \"work\",\n  \"value\": \"not a number\",\n  \"at\": \"2026-10-24T08:10:03.349Z\"\n}\n\nValidation errors:\n- / must be number\n",
+        "schema": {
+          "type": "number"
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": 1792829403913,
+      "reason": "RunFailureError: Structured completion exceeded its configured deadline of 500 ms",
+      "releasedAt": 1792829403976,
+      "aborted": true
+    }
+  },
+  {
+    "name": "inference-output-schema-same-session-repair",
+    "status": "FAIL",
+    "elapsedMs": 2151,
+    "error": "AssertionError [ERR_ASSERTION]: schema repair still running beyond its 500ms configured limit\n+ actual - expected\n\n+ 'running'\n- 'failed'\n",
+    "stack": "AssertionError [ERR_ASSERTION]: schema repair still running beyond its 500ms configured limit\n+ actual - expected\n\n+ 'running'\n- 'failed'\n\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:95:9\n    at async runCase (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:20:71)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:88:1"
+  },
+  {
+    "name": "unlimited-real-122-seconds-no-completion-timer",
+    "status": "PASS",
+    "elapsedMs": 122124,
+    "completionTimersBefore": 12,
+    "completionTimersAfter": 12,
+    "before": {
+      "run": {
+        "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+        "ownerId": "local",
+        "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+        "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA Unlimited 122 seconds",
+          "label": "QA Unlimited 122 seconds v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBF86EQX2AFT1K40WH9RW",
+        "status": "running",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "createdAt": "2026-10-24T08:10:06.470Z",
+        "startedAt": "2026-10-24T08:10:06.483Z",
+        "lastEventSeq": 5
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+          "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+          "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBF86EQX2AFT1K40WH9RW",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:06.470Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:06.621Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:06.621Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:06.470Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA Unlimited 122 seconds",
+              "label": "QA Unlimited 122 seconds v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+                "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+                "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBF86EQX2AFT1K40WH9RW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:06.470Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:06.493Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:06.513Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:06.624Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:06.621Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:06.621Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 3
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:06.681Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          }
+        ],
+        "nextAfter": 5,
+        "hasMore": false
+      }
+    },
+    "cancelled": {
+      "run": {
+        "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+        "ownerId": "local",
+        "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+        "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA Unlimited 122 seconds",
+          "label": "QA Unlimited 122 seconds v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBF86EQX2AFT1K40WH9RW",
+        "status": "cancelled",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:12:08.816Z",
+        "createdAt": "2026-10-24T08:10:06.470Z",
+        "startedAt": "2026-10-24T08:10:06.483Z",
+        "finishedAt": "2026-10-24T08:12:08.827Z",
+        "lastEventSeq": 7
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+          "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+          "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBF86EQX2AFT1K40WH9RW",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:06.470Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:06.621Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:06.621Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:06.470Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA Unlimited 122 seconds",
+              "label": "QA Unlimited 122 seconds v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+                "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+                "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBF86EQX2AFT1K40WH9RW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:06.470Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:06.493Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:06.513Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:06.624Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:06.621Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:06.621Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 3
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:06.681Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 6,
+            "ts": "2026-10-24T08:12:08.818Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 7,
+            "ts": "2026-10-24T08:12:08.826Z",
+            "type": "run.cancelled"
+          }
+        ],
+        "nextAfter": 7,
+        "hasMore": false
+      }
+    },
+    "after": {
+      "run": {
+        "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+        "ownerId": "local",
+        "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+        "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA Unlimited 122 seconds",
+          "label": "QA Unlimited 122 seconds v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PFBF86EQX2AFT1K40WH9RW",
+        "status": "cancelled",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:12:08.816Z",
+        "createdAt": "2026-10-24T08:10:06.470Z",
+        "startedAt": "2026-10-24T08:10:06.483Z",
+        "finishedAt": "2026-10-24T08:12:08.827Z",
+        "lastEventSeq": 7
+      },
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+          "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+          "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PFBF86EQX2AFT1K40WH9RW",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T08:10:06.470Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T08:10:06.621Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T08:10:06.621Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "events": {
+        "items": [
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 1,
+            "ts": "2026-10-24T08:10:06.470Z",
+            "type": "run.queued",
+            "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA Unlimited 122 seconds",
+              "label": "QA Unlimited 122 seconds v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PFBF86EQX2AFT1K40WH9RV",
+                "loopId": "01M5PFBF77TXR6Y33QB431KRN5",
+                "versionId": "01M5PFBF77TXR6Y33QB431KRN6",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PFBF86EQX2AFT1K40WH9RW",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:10:06.470Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 2,
+            "ts": "2026-10-24T08:10:06.493Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 3,
+            "ts": "2026-10-24T08:10:06.513Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 4,
+            "ts": "2026-10-24T08:10:06.624Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:06.621Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:10:06.621Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 3
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 5,
+            "ts": "2026-10-24T08:10:06.681Z",
+            "type": "node.started",
+            "nodeId": "work",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "6ae97fdcb88b8b58"
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 6,
+            "ts": "2026-10-24T08:12:08.818Z",
+            "type": "run.cancel_requested",
+            "actor": {
+              "kind": "user",
+              "id": "local"
+            }
+          },
+          {
+            "runId": "01M5PFBF86EQX2AFT1K40WH9RV",
+            "seq": 7,
+            "ts": "2026-10-24T08:12:08.826Z",
+            "type": "run.cancelled"
+          }
+        ],
+        "nextAfter": 7,
+        "hasMore": false
+      }
+    },
+    "observation": {
+      "id": 12,
+      "at": 1792829406689,
+      "request": {
+        "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose a route\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "reasoning": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "confidence",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": 1792829528820,
+      "reason": "Error: run cancelled",
+      "releasedAt": 1792829528850,
+      "aborted": true
+    }
+  }
+]

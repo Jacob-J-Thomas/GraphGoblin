@@ -69,7 +69,7 @@ export function samplePin(overrides: Partial<RunPin> = {}): RunPin {
     label: 'Minimal v1',
     defaults: { owner: { byHarness: {} }, process: { byHarness: {} } },
     classifiers: {},
-    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+    limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
     ...overrides,
   };
 }

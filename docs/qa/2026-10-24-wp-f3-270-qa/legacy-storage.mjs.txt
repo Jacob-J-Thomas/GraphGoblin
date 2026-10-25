@@ -1,0 +1,12 @@
+﻿import{readFile,writeFile}from'node:fs/promises';import{createRequire}from'node:module';import{resolve}from'node:path';import assert from'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const prep=JSON.parse(await readFile(resolve(out,'restart-before.json'),'utf8'));
+assert(prep.original.dataDir.includes('gg-qa-f3-270-api-'));
+const {createClient}=createRequire(resolve(root,'packages/infrastructure/package.json'))('@libsql/client');
+const client=createClient({url:'file:'+resolve(prep.original.dataDir,'graphgoblin.db').replaceAll('\\','/')});
+const before=await client.execute({sql:'SELECT definition FROM loop_versions WHERE id=?',args:[prep.legacy.draft.id]});
+await client.execute({sql:"UPDATE loop_versions SET definition=json_remove(definition, '$.settings.structuredTimeoutMs') WHERE id=? AND status='draft'",args:[prep.legacy.draft.id]});
+const after=await client.execute({sql:'SELECT definition FROM loop_versions WHERE id=?',args:[prep.legacy.draft.id]});
+const stored=JSON.parse(after.rows[0].definition);assert(!Object.hasOwn(stored.settings,'structuredTimeoutMs'));
+await writeFile(resolve(out,'legacy-storage.json'),JSON.stringify({before:JSON.parse(before.rows[0].definition),after:stored,versionId:prep.legacy.draft.id},null,2));
+client.close();console.log('Pre-field draft stored with no structuredTimeoutMs key');

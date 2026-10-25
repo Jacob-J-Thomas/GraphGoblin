@@ -1,0 +1,78 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/adapter-codex
+      Coverage enabled with v8
+
+ ❯ src/structured.test.ts (10 tests | 1 failed) 55ms
+   × calls harness cancellation once and cleans up when cancellation rejects=false 14ms
+ ❯ src/probe-directory.test.ts (4 tests | 2 failed) 10234ms
+   ❯ Codex readiness probe directory (4)
+     × runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 5026ms
+     × preserves 1 existing collision directories and bounds retries 5099ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:33:3
+     31|
+     32| describe('Codex readiness probe directory', () => {
+     33|   it('runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and…
+       |   ^
+     34|     const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-codex-long-'…
+     35|     try {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:59:18
+     57|   });
+     58|
+     59|   it.each([1, 4])(
+       |                  ^
+     60|     'preserves %i existing collision directories and bounds retries',
+     61|     async (collisions) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/structured.test.ts > calls harness cancellation once and cleans up when cancellation rejects=false
+AssertionError: expected Error: caller cancelled to be undefined // Object.is equality
+System.Management.Automation.RemoteException
+- Expected:
+undefined
+System.Management.Automation.RemoteException
++ Received:
+Error {
+  "message": "caller cancelled",
+}
+System.Management.Automation.RemoteException
+ ❯ src/structured.test.ts:157:82
+    155|       tempDir: () => Promise.resolve({ path: '/scratch', cleanup }),
+    156|     });
+    157|     await expect(structured.complete({ prompt: 'p', schema }, controll…
+       |                                                                                  ^
+    158|       fails ? failure : controller.signal.reason,
+    159|     );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed | 7 passed | 1 skipped (10)
+      Tests  3 failed | 497 passed | 5 skipped (505)
+   Start at  18:55:22
+   Duration  172.73s (transform 52%, tests 39%, import 9%)
+
+  Transform  transforming modules took 221.93s · 52% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\adapter-codex
+System.Management.Automation.RemoteException

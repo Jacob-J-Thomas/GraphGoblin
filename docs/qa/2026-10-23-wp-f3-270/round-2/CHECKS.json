@@ -1,0 +1,664 @@
+[
+  {
+    "name": "focused-engine",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/engine",
+      "exec",
+      "vitest",
+      "run",
+      "src/completion-deadline.test.ts",
+      "src/structured-deadline.test.ts",
+      "src/structured-cancel.test.ts",
+      "src/primitive-evaluator.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 77.985,
+    "log": "focused-engine.log.txt"
+  },
+  {
+    "name": "regenerate-contract-goldens",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/contracts",
+      "exec",
+      "vitest",
+      "run",
+      "src/parse-identity.test.ts",
+      "-u"
+    ],
+    "exitCode": 0,
+    "seconds": 27.25,
+    "log": "regenerate-contract-goldens.log.txt"
+  },
+  {
+    "name": "regenerate-domain-goldens",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/domain",
+      "exec",
+      "vitest",
+      "run",
+      "src/parse-identity.test.ts",
+      "src/upgrade-composed.test.ts",
+      "src/convert-v3-v4/conversion.test.ts",
+      "-u"
+    ],
+    "exitCode": 0,
+    "seconds": 34.25,
+    "log": "regenerate-domain-goldens.log.txt"
+  },
+  {
+    "name": "generate-docs",
+    "command": [
+      "pnpm.cmd",
+      "docs:generate"
+    ],
+    "exitCode": 0,
+    "seconds": 18.062,
+    "log": "generate-docs.log.txt"
+  },
+  {
+    "name": "generate-client",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api-client",
+      "generate"
+    ],
+    "exitCode": 0,
+    "seconds": 65.297,
+    "log": "generate-client.log.txt"
+  },
+  {
+    "name": "typecheck",
+    "command": [
+      "pnpm.cmd",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "seconds": 286.047,
+    "log": "typecheck.log.txt"
+  },
+  {
+    "name": "format",
+    "command": [
+      "pnpm.cmd",
+      "format"
+    ],
+    "exitCode": 0,
+    "seconds": 455.094,
+    "log": "format.log.txt"
+  },
+  {
+    "name": "check-docs",
+    "command": [
+      "pnpm.cmd",
+      "check:docs"
+    ],
+    "exitCode": 0,
+    "seconds": 9.672,
+    "log": "check-docs.log.txt"
+  },
+  {
+    "name": "check-layers",
+    "command": [
+      "pnpm.cmd",
+      "check:layers"
+    ],
+    "exitCode": 0,
+    "seconds": 1.391,
+    "log": "check-layers.log.txt"
+  },
+  {
+    "name": "check-deps",
+    "command": [
+      "pnpm.cmd",
+      "check:deps"
+    ],
+    "exitCode": 0,
+    "seconds": 36.421,
+    "log": "check-deps.log.txt"
+  },
+  {
+    "name": "check-tokens",
+    "command": [
+      "pnpm.cmd",
+      "check:tokens"
+    ],
+    "exitCode": 0,
+    "seconds": 8.453,
+    "log": "check-tokens.log.txt"
+  },
+  {
+    "name": "domain-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/domain",
+      "test:coverage",
+      "--coverage.reportOnFailure"
+    ],
+    "exitCode": 0,
+    "seconds": 89.922,
+    "log": "domain-coverage.log.txt",
+    "testsSummary": "593 passed (593)",
+    "coverage": {
+      "lines": 98.47,
+      "branches": 95.78
+    }
+  },
+  {
+    "name": "contracts-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/contracts",
+      "test:coverage",
+      "--coverage.reportOnFailure"
+    ],
+    "exitCode": 0,
+    "seconds": 37.547,
+    "log": "contracts-coverage.log.txt",
+    "testsSummary": "266 passed (266)",
+    "coverage": {
+      "lines": 99.74,
+      "branches": 95.0
+    }
+  },
+  {
+    "name": "engine-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/engine",
+      "test:coverage",
+      "--coverage.reportOnFailure"
+    ],
+    "exitCode": 0,
+    "seconds": 145.203,
+    "log": "engine-coverage.log.txt",
+    "testsSummary": "1597 passed (1597)",
+    "coverage": {
+      "lines": 98.05,
+      "branches": 93.02
+    }
+  },
+  {
+    "name": "adapter-codex-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/adapter-codex",
+      "test:coverage",
+      "--coverage.reportOnFailure"
+    ],
+    "exitCode": 1,
+    "seconds": 248.671,
+    "log": "adapter-codex-coverage.log.txt",
+    "testsSummary": "3 failed | 497 passed | 5 skipped (505)",
+    "coverage": {
+      "lines": 98.88,
+      "branches": 94.66
+    }
+  },
+  {
+    "name": "adapter-codex-isolated-src-probe-directory-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/adapter-codex",
+      "exec",
+      "vitest",
+      "run",
+      "src/probe-directory.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 1,
+    "seconds": 56.281,
+    "log": "adapter-codex-isolated-src-probe-directory-test-ts.log.txt"
+  },
+  {
+    "name": "api-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "test:coverage",
+      "--coverage.reportOnFailure"
+    ],
+    "exitCode": 1,
+    "seconds": 727.797,
+    "log": "api-coverage.log.txt",
+    "testsSummary": "10 failed | 1318 passed | 8 skipped (1336)",
+    "coverage": {
+      "lines": 97.94,
+      "branches": 93.23
+    }
+  },
+  {
+    "name": "format-test-fixes",
+    "command": [
+      "pnpm.cmd",
+      "exec",
+      "prettier",
+      "--write",
+      "apps/api/src/structured-deadline.test.ts",
+      "packages/engine/src/structured-deadline.test.ts"
+    ],
+    "exitCode": 0,
+    "seconds": 20.797,
+    "log": "format-test-fixes.log.txt"
+  },
+  {
+    "name": "api-focused-fixed",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/structured-deadline.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 108.719,
+    "log": "api-focused-fixed.log.txt"
+  },
+  {
+    "name": "engine-focused-final",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/engine",
+      "exec",
+      "vitest",
+      "run",
+      "src/completion-deadline.test.ts",
+      "src/structured-deadline.test.ts",
+      "src/structured-cancel.test.ts",
+      "src/primitive-evaluator.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 75.422,
+    "log": "engine-focused-final.log.txt"
+  },
+  {
+    "name": "api-isolated-src-main-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/main.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 1,
+    "seconds": 267.125,
+    "log": "api-isolated-src-main-test-ts.log.txt"
+  },
+  {
+    "name": "api-isolated-src-nested-readiness-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/nested-readiness.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 166.484,
+    "log": "api-isolated-src-nested-readiness-test-ts.log.txt"
+  },
+  {
+    "name": "api-isolated-src-subloop-restart-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/subloop-restart.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 1,
+    "seconds": 248.266,
+    "log": "api-isolated-src-subloop-restart-test-ts.log.txt"
+  },
+  {
+    "name": "api-isolated-src-templates-catalog-package-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/templates/catalog-package.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 11.765,
+    "log": "api-isolated-src-templates-catalog-package-test-ts.log.txt"
+  },
+  {
+    "name": "api-isolated-src-triggers-github-recipe-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/triggers/github-recipe.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 83.406,
+    "log": "api-isolated-src-triggers-github-recipe-test-ts.log.txt"
+  },
+  {
+    "name": "typecheck-final",
+    "command": [
+      "pnpm.cmd",
+      "typecheck",
+      "--concurrency=1"
+    ],
+    "exitCode": 0,
+    "seconds": 540.25,
+    "log": "typecheck-final.log.txt"
+  },
+  {
+    "name": "lint-final",
+    "command": [
+      "pnpm.cmd",
+      "lint",
+      "--concurrency=1"
+    ],
+    "exitCode": 0,
+    "seconds": 502.828,
+    "log": "lint-final.log.txt"
+  },
+  {
+    "name": "build",
+    "command": [
+      "pnpm.cmd",
+      "build",
+      "--concurrency=1"
+    ],
+    "exitCode": 0,
+    "seconds": 27.594,
+    "log": "build.log.txt"
+  },
+  {
+    "name": "browser",
+    "command": [
+      "pnpm.cmd",
+      "exec",
+      "playwright",
+      "test",
+      "e2e/unlimited-mode.spec.ts",
+      "--retries=0"
+    ],
+    "exitCode": 0,
+    "seconds": 26.891,
+    "log": "browser.log.txt"
+  },
+  {
+    "name": "web-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/web",
+      "test:coverage",
+      "--coverage.reportOnFailure",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 1,
+    "seconds": 2799.016,
+    "log": "web-coverage.log.txt",
+    "testsSummary": "1 failed | 1635 passed (1636)",
+    "coverage": {
+      "lines": 98.92,
+      "branches": 94.96
+    }
+  },
+  {
+    "name": "web-isolated-src-editor-routing-review-test-ts",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/web",
+      "exec",
+      "vitest",
+      "run",
+      "src/editor/routing-review.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 0,
+    "seconds": 38.047,
+    "log": "web-isolated-src-editor-routing-review-test-ts.log.txt"
+  },
+  {
+    "name": "api-client-coverage",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/api-client",
+      "test:coverage",
+      "--coverage.reportOnFailure"
+    ],
+    "exitCode": 0,
+    "seconds": 31.641,
+    "log": "api-client-coverage.log.txt",
+    "testsSummary": "72 passed (72)",
+    "coverage": {
+      "lines": 100.0,
+      "branches": 99.37
+    }
+  },
+  {
+    "name": "runtime",
+    "command": [
+      "node",
+      "--version"
+    ],
+    "exitCode": 0,
+    "seconds": 0.609,
+    "log": "runtime.log.txt"
+  },
+  {
+    "name": "format-reports",
+    "command": [
+      "pnpm.cmd",
+      "exec",
+      "prettier",
+      "--write",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/REPORT.md",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/FILES.md",
+      "docs/qa/2026-10-23-wp-f3-270/REPORT.md"
+    ],
+    "exitCode": 0,
+    "seconds": 6.218,
+    "log": "format-reports.log.txt"
+  },
+  {
+    "name": "format-changed",
+    "command": [
+      "pnpm.cmd",
+      "exec",
+      "prettier",
+      "--check",
+      "--ignore-unknown",
+      "CHANGELOG.md",
+      "apps/api/src/structured-deadline.test.ts",
+      "apps/web/src/editor/LoopSettingsPanel.tsx",
+      "apps/web/src/settings/sections/ExecutionDefaultsSection.tsx",
+      "docs/05-execution-engine.md",
+      "docs/07-api-and-streaming.md",
+      "docs/decisions/ADR-0051-structured-completion-deadlines.md",
+      "docs/guide/02-build-a-loop.md",
+      "docs/guide/06-settings-and-secrets.md",
+      "docs/qa/2026-10-23-wp-f3-270/ARTIFACTS.json",
+      "docs/qa/2026-10-23-wp-f3-270/REPORT.md",
+      "packages/adapter-codex/src/structured.test.ts",
+      "packages/api-client/openapi.json",
+      "packages/api-client/src/generated/schema.ts",
+      "packages/contracts/src/__golden__/export-every-field.json",
+      "packages/contracts/src/__golden__/loop-every-field.json",
+      "packages/contracts/src/__golden__/loop-kitchen-sink.json",
+      "packages/contracts/src/__golden__/loop-minimal.json",
+      "packages/contracts/src/loop.ts",
+      "packages/domain/src/__golden__/export-every-field.json",
+      "packages/domain/src/__golden__/export-kitchen-sink.json",
+      "packages/domain/src/__snapshots__/upgrade-composed.test.ts.snap",
+      "packages/domain/src/convert-v3-v4/__snapshots__/conversion.test.ts.snap",
+      "packages/engine/src/completion-deadline.ts",
+      "packages/engine/src/primitive-evaluator.test.ts",
+      "packages/engine/src/primitive-evaluator.ts",
+      "packages/engine/src/structured-deadline.test.ts",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/CHECKS.json",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/FILES.md",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/REPORT.md",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/adapter-codex-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/adapter-codex-isolated-src-probe-directory-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-client-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-focused-fixed.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-isolated-src-main-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-isolated-src-nested-readiness-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-isolated-src-subloop-restart-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-isolated-src-templates-catalog-package-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/api-isolated-src-triggers-github-recipe-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/browser.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/build.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/capture-error.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/check-deps.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/check-docs.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/check-layers.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/check-tokens.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/commands.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/contracts-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/domain-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/domain-export-regenerate.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/domain-golden-initial-stat.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/domain-regenerate.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/engine-before-fixes.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/engine-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/engine-focused-final.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/focused-engine.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/format-reports.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/format-test-fixes.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/format.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/generate-client.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/generate-docs.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/git-state.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/golden-stat.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/lint-final.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/lint.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/real-adapter-review.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/regenerate-contract-goldens.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/regenerate-domain-goldens.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/run-check.py",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/run-coverage.py",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/runtime.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/temp-leftovers.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/typecheck-final.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/typecheck.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/web-coverage.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/web-isolated-src-editor-routing-review-test-ts.log.txt",
+      "docs/qa/2026-10-23-wp-f3-270/round-2/web-process-observation.log.txt",
+      "packages/engine/src/completion-deadline.test.ts"
+    ],
+    "exitCode": 0,
+    "seconds": 20.813,
+    "log": "format-changed.log.txt"
+  },
+  {
+    "name": "lint-initial-partial",
+    "command": [
+      "pnpm.cmd",
+      "lint"
+    ],
+    "exitCode": null,
+    "result": "fixture lint error, then capture interrupted by UnicodeEncodeError",
+    "log": "lint.log.txt",
+    "detail": "See capture-error.log.txt; final lint passed after fixture narrowing and UTF-8 capture fix."
+  },
+  {
+    "name": "engine-before-fixes",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/engine",
+      "exec",
+      "vitest",
+      "run",
+      "src/completion-deadline.test.ts",
+      "src/structured-deadline.test.ts",
+      "--maxWorkers=1"
+    ],
+    "exitCode": 1,
+    "tests": {
+      "passed": 11,
+      "failed": 4
+    },
+    "log": "engine-before-fixes.log.txt"
+  },
+  {
+    "name": "domain-regenerate-requested",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/domain",
+      "exec",
+      "vitest",
+      "run",
+      "-u",
+      "src/parse-identity.test.ts",
+      "src/upgrade-composed.test.ts",
+      "src/convert-v3-v4/conversion.test.ts"
+    ],
+    "exitCode": 0,
+    "detail": "Collected two files, 112 tests; updated 39 snapshots.",
+    "log": "domain-regenerate.log.txt"
+  },
+  {
+    "name": "domain-export-regenerate",
+    "command": [
+      "pnpm.cmd",
+      "--filter",
+      "@graphgoblin/domain",
+      "exec",
+      "vitest",
+      "run",
+      "src/parse-identity.test.ts",
+      "-u"
+    ],
+    "exitCode": 0,
+    "detail": "3 tests, 2 export goldens updated.",
+    "log": "domain-export-regenerate.log.txt"
+  },
+  {
+    "name": "git-diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "log": "diff-check.log.txt"
+  }
+]

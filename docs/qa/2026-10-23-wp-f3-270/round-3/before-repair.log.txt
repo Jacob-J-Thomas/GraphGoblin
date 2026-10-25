@@ -1,0 +1,57 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/engine", "exec", "vitest", "run", "src/repair-deadline.test.ts", "--maxWorkers=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/engine
+
+stdout | src/repair-deadline.test.ts > retains the structured repair provider, resolved model and effort on an inference transform timeout
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+
+ ❯ src/repair-deadline.test.ts (3 tests | 1 failed) 656ms
+   × retains the structured repair provider, resolved model and effort on an inference transform timeout 253ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/repair-deadline.test.ts > retains the structured repair provider, resolved model and effort on an inference transform timeout
+AssertionError: expected { …(6) } to match object { …(3) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "STRUCTURED_COMPLETION_TIMEOUT",
+    "details": {
+-     "provenance": {
+-       "classifierId": null,
+-       "effort": "high",
+-       "kind": "llm",
+-       "model": "gpt-6-luna",
+-       "provider": "codex",
+-     },
+      "timeoutMs": 50,
+    },
+    "nodeId": "infer",
+  }
+
+ ❯ src/repair-deadline.test.ts:33:23
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  04:43:39
+   Duration  8.80s (transform 55%, import 36%, tests 8%)
+
+  Transform  transforming modules took 4.54s · 55% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\engine
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/engine", "exec", "vitest", "run", "src/repair-deadline.test.ts", "--maxWorkers=1"], "exitCode": 1, "seconds": 12.015}
