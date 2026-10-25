@@ -94,7 +94,7 @@ for (const viewport of [
     // The finished inference node's patch and the full thread carry the long value too, and the
     // progress drawer shows the harness items: with everything open, nothing widens the document.
     const timeline = page.getByRole('list', { name: 'Timeline' });
-    await timeline.getByRole('button', { name: /node\.finished Work \(work\),/ }).click();
+    await timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }).click();
     const diff = page.getByRole('list', { name: 'Patch diff' });
     await expect(diff).toBeVisible();
     await expect(
