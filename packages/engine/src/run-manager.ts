@@ -328,8 +328,8 @@ export class RunManager {
   private readonly stopCleanupFailures = new Set<string>();
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
-  /** Where the next Event recovery sweep continues (round robin over due receipts). */
-  private eventRecoveryAfter: string | undefined;
+  /** The Event recovery round in progress: its due cutoff and where its next page starts. */
+  private eventRecoveryRound: { cutoff: string; after?: string } | undefined;
   private readonly webhookDispatches = new Set<Promise<void>>();
 
   constructor(
@@ -1015,14 +1015,16 @@ export class RunManager {
       // A failed ledger read or retry-metadata write must not block the other intake path or boot.
       // A drain stops starting recovered work (#224); the receipts stay due for the next start.
       try {
-        const eventDue = await this.ports.admission.events.due(
-          this.now(),
-          5,
-          this.eventRecoveryAfter,
-        );
-        // Round robin: the next sweep continues after this page and a short page wraps to the
-        // start, so receipts whose failure metadata cannot be written never fill every batch.
-        this.eventRecoveryAfter = eventDue.length === 5 ? eventDue.at(-1)?.id : undefined;
+        // Round robin over a finite round: every page of a round uses the round's start as its
+        // due cutoff, so receipts that arrive later cannot extend it. A full page continues the
+        // round in the next sweep; a short page ends it, and the next round starts from the
+        // beginning. Receipts whose failure metadata cannot be written are revisited once per
+        // round without filling every batch, and older due receipts always come round again.
+        const round = this.eventRecoveryRound ?? { cutoff: this.now() };
+        const eventDue = await this.ports.admission.events.due(round.cutoff, 5, round.after);
+        const last = eventDue.at(-1);
+        this.eventRecoveryRound =
+          eventDue.length === 5 && last ? { cutoff: round.cutoff, after: last.id } : undefined;
         for (const receipt of eventDue) {
           if (this.stopped || this.draining) break;
           try {

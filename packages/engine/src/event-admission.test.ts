@@ -262,6 +262,44 @@ it('reaches a healthy receipt behind five whose failure metadata can never be wr
   expect(vi.mocked(store.create).mock.calls.length).toBe(revisits + 5);
 });
 
+it('comes back to older due receipts while full pages of newer ones keep arriving', async () => {
+  const { claim, input, store } = await setup();
+  let key = 0;
+  // Each new receipt's own first admission fails, so it stays pending and becomes due later.
+  const receiveFailing = async (count: number) => {
+    const ids: string[] = [];
+    const blocked = vi.spyOn(store, 'create').mockRejectedValue(Error('disk fault'));
+    for (let i = 0; i < count; i++) {
+      const dedupeKey = `k${key++}`;
+      const next = {
+        ...claim,
+        id: engine.ports.ids.next(),
+        inbound: { ...claim.inbound, id: engine.ports.ids.next(), dedupeKey },
+      };
+      await engine.manager.receiveEvent(next, { ...input, dedupeKey });
+      ids.push(next.id);
+    }
+    await engine.manager.waitForWebhookRecovery();
+    blocked.mockRestore();
+    return ids;
+  };
+  const sweep = async () => {
+    engine.ports.clock.advance(300_001);
+    await engine.manager.retryPendingWebhooks();
+    await engine.manager.waitForIdle();
+  };
+  const originals = await receiveFailing(5);
+  // A failing full page of the originals moves recovery past them.
+  const blocked = vi.spyOn(store, 'create').mockRejectedValue(Error('disk fault'));
+  await sweep();
+  blocked.mockRestore();
+  for (let i = 0; i < 4; i++) {
+    await receiveFailing(5);
+    await sweep();
+  }
+  for (const id of originals) expect(await store.get(id)).toMatchObject({ status: 'admitted' });
+});
+
 it('fake matches an unnamed retry across entries and refuses an ambiguous one', async () => {
   const { claim, input, store } = await setup();
   await engine.manager.receiveEvent({ ...claim, implicitEntry: true }, input);
