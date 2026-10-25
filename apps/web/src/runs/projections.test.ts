@@ -221,7 +221,7 @@ describe('run projections', () => {
         }),
       ),
     ).toBe(
-      'Answered true (true probability 0.72) with classifier via typesafe (jev-latest) with confidence 0.83',
+      'Answered true (true probability 72%) with classifier via typesafe (jev-latest) with confidence 83%',
     );
     expect(
       describeEvent(
@@ -264,7 +264,7 @@ describe('run projections', () => {
         }),
       ),
     ).toBe(
-      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 0.91',
+      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 91%',
     );
   });
 
@@ -319,7 +319,7 @@ describe('run projections', () => {
     freshStore.setState({ runs: {} });
   });
   it('describes every event type', () => {
-    const lines = ALL.map(describeEvent);
+    const lines = ALL.map((entry) => describeEvent(entry));
     expect(lines).toContain('attempt 1');
     expect(lines).toContain('by user local');
     expect(lines).toContain('w waits for input');

@@ -1,0 +1,692 @@
+{
+  "error": "Error: POST /runs/01M5PWGDG0HDMEM30MYMBPDEH5/cancel 409 {\"type\":\"https://graphgoblin.dev/problems/invalid-state\",\"title\":\"invalid state\",\"status\":409,\"code\":\"INVALID_STATE\",\"detail\":\"run 01M5PWGDG0HDMEM30MYMBPDEH5 is already cancelled\"}\n    at api (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-seed.mjs:21:312)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-seed.mjs:84:2",
+  "checks": [
+    {
+      "id": "admission-api-key",
+      "steps": "Built main.js --create-api-key independent-qa against disposable data",
+      "expected": "API key created by built binary",
+      "actual": "CLI exit 0; token intentionally not retained",
+      "result": "PASS"
+    },
+    {
+      "id": "patch-api",
+      "steps": "Publish multiple append/object/replace/remove mutations; read events and thread",
+      "expected": "Ordered patches reconstruct exact final values",
+      "actual": {
+        "array": [
+          {
+            "marker": "FIRST-later-node",
+            "n": 0.12345678901234566
+          },
+          null,
+          [
+            "THIRD",
+            false
+          ]
+        ],
+        "nested": {
+          "items": [
+            {
+              "nested": "NESTED-later-node"
+            },
+            "NESTED-second"
+          ]
+        },
+        "object": {
+          "added": {
+            "truth": true
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "replay-api",
+      "steps": "Public replay at later node and independent domain reconstruction of source prefix",
+      "expected": "Fork seed/counters and final values correct; source unchanged",
+      "actual": {
+        "seed": {
+          "array": [
+            {
+              "marker": "FIRST-replaced-in-same-node",
+              "n": 0.12345678901234566
+            },
+            null,
+            [
+              "THIRD",
+              false
+            ]
+          ],
+          "nested": {
+            "items": [
+              {
+                "nested": "NESTED-original"
+              },
+              "NESTED-second"
+            ]
+          },
+          "object": {
+            "added": {
+              "truth": true
+            }
+          }
+        },
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "patch": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-expression-null",
+      "steps": "Publish expression decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": null,
+          "reasoning": null
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-0",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 0,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-1",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 1,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-1e-12",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 1e-12,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-0.999999999999",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 0.999999999999,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-0.5",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 0.5,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-0.5000000000000001",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 0.5000000000000001,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-llm-0.12345678901234566",
+      "steps": "Publish llm decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "route",
+          "routeId": "accept",
+          "confidence": 0.12345678901234566,
+          "reasoning": "Independent QA controlled LLM decision"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-0",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 0,
+            "probabilities": {
+              "accept": 0,
+              "reject": 1
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-1",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 1,
+            "probabilities": {
+              "accept": 1,
+              "reject": 0
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-1e-12",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 1e-12,
+            "probabilities": {
+              "accept": 1e-12,
+              "reject": 0.999999999999
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-0.999999999999",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 0.999999999999,
+            "probabilities": {
+              "accept": 0.999999999999,
+              "reject": 9.999778782798785e-13
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-0.5",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 0.5,
+            "probabilities": {
+              "accept": 0.5,
+              "reject": 0.5
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-0.5000000000000001",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 0.5000000000000001,
+            "probabilities": {
+              "accept": 0.5000000000000001,
+              "reject": 0.4999999999999999
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-choice-0.12345678901234566",
+      "steps": "Publish choice decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "choice",
+            "optionId": "accept",
+            "confidence": 0.12345678901234566,
+            "probabilities": {
+              "accept": 0.12345678901234566,
+              "reject": 0.8765432109876543
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-0",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "reject",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": false,
+            "trueProbability": 0,
+            "confidence": 1
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-1",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": true,
+            "trueProbability": 1,
+            "confidence": 1
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-1e-12",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "reject",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": false,
+            "trueProbability": 1e-12,
+            "confidence": 0.999999999999
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-0.999999999999",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": true,
+            "trueProbability": 0.999999999999,
+            "confidence": 0.999999999999
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-0.5",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": true,
+            "trueProbability": 0.5,
+            "confidence": 0.5
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-0.5000000000000001",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": true,
+            "trueProbability": 0.5000000000000001,
+            "confidence": 0.5000000000000001
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-noul-0.12345678901234566",
+      "steps": "Publish noul decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "reject",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "noul",
+            "holds": false,
+            "trueProbability": 0.12345678901234566,
+            "confidence": 0.8765432109876543
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-0",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 0,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 0,
+              "1": 1
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-1",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 1,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 1,
+              "1": 0
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-1e-12",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 1e-12,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 1e-12,
+              "1": 0.999999999999
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-0.999999999999",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 0.999999999999,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 0.999999999999,
+              "1": 9.999778782798785e-13
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-0.5",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 0.5,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 0.5,
+              "1": 0.5
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-0.5000000000000001",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 0.5000000000000001,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 0.5000000000000001,
+              "1": 0.4999999999999999
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "id": "decision-api-score-0.12345678901234566",
+      "steps": "Publish score decision; run through built gateway; read validated event",
+      "expected": "Actual recorded decision includes exact fake number and port",
+      "actual": {
+        "portId": "accept",
+        "observation": {
+          "kind": "classifier",
+          "answer": {
+            "type": "score",
+            "score": 0.7123456789012345,
+            "confidence": 0.12345678901234566,
+            "legend": {
+              "0": "Low anchor",
+              "1": "High anchor"
+            },
+            "probabilities": {
+              "0": 0.12345678901234566,
+              "1": 0.8765432109876543
+            }
+          }
+        }
+      },
+      "result": "PASS"
+    }
+  ],
+  "created": [
+    "patch",
+    "replay",
+    "expression-null",
+    "llm-0",
+    "llm-1",
+    "llm-1e-12",
+    "llm-0.999999999999",
+    "llm-0.5",
+    "llm-0.5000000000000001",
+    "llm-0.12345678901234566",
+    "choice-0",
+    "choice-1",
+    "choice-1e-12",
+    "choice-0.999999999999",
+    "choice-0.5",
+    "choice-0.5000000000000001",
+    "choice-0.12345678901234566",
+    "noul-0",
+    "noul-1",
+    "noul-1e-12",
+    "noul-0.999999999999",
+    "noul-0.5",
+    "noul-0.5000000000000001",
+    "noul-0.12345678901234566",
+    "score-0",
+    "score-1",
+    "score-1e-12",
+    "score-0.999999999999",
+    "score-0.5",
+    "score-0.5000000000000001",
+    "score-0.12345678901234566",
+    "cancelled"
+  ]
+}
