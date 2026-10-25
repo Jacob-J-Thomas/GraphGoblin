@@ -1,0 +1,47 @@
+[
+  {
+    "pkg": "infrastructure",
+    "dir": "packages/infrastructure",
+    "file": "src/adversarial.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts --maxWorkers=1",
+    "code": 1,
+    "ms": 83615,
+    "evidence": "isolated-infrastructure-src-adversarial.test.log.txt"
+  },
+  {
+    "pkg": "infrastructure",
+    "dir": "packages/infrastructure",
+    "file": "src/process/scripts.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers=1",
+    "code": 1,
+    "ms": 93996,
+    "evidence": "isolated-infrastructure-src-process-scripts.test.log.txt"
+  },
+  {
+    "pkg": "infrastructure",
+    "dir": "packages/infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1",
+    "code": 1,
+    "ms": 102787,
+    "evidence": "isolated-infrastructure-src-sqlite-upgrade.test.log.txt"
+  },
+  {
+    "pkg": "infrastructure",
+    "file": "src/claude/process.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1",
+    "code": 1,
+    "ms": 55298,
+    "evidence": "isolated-infrastructure-src-claude-process.test.log.txt",
+    "reason": "Untouched stream test returned timedOut:true where false was expected; this is a timing failure even without the phrase Test timed out."
+  },
+  {
+    "pkg": "api",
+    "file": "src/create-api-key.test.ts",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/create-api-key.test.ts --maxWorkers=1",
+    "code": 0,
+    "ms": 66108,
+    "evidence": "isolated-api-src-create-api-key.test.log.txt",
+    "reason": "One bounded diagnosis of original unhandled worker exit 3221225477, not a replacement for the failed coverage run."
+  }
+]

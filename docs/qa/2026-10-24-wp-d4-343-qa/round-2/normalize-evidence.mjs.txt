@@ -1,0 +1,23 @@
+import {readFile,writeFile,readdir,stat,rename,mkdtemp} from 'node:fs/promises';import {join,resolve,sep} from 'node:path';import {tmpdir} from 'node:os';import {createHash} from 'node:crypto';
+const out=resolve('docs/qa/2026-10-24-wp-d4-343-qa/round-2');
+const archive=await mkdtemp(join(tmpdir(),'gg-qa-d4-343-2-large-'));let omitted=[];try{omitted=JSON.parse(await readFile(join(out,'oversized-captures.json'),'utf8'))}catch{}
+for(const name of await readdir(out)){
+ const path=join(out,name),s=await stat(path);if(!s.isFile())continue;
+ if(/\.(?:json|txt|md)$/.test(name)){
+  let bytes=await readFile(path),text=bytes[0]===255&&bytes[1]===254?bytes.toString('utf16le').slice(1):bytes.toString('utf8').replace(/^\ufeff/,'');
+  text=text.replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%');
+  // Only actual API tokens are redacted; do not alter gg-qa data-directory identities.
+  text=text.replace(/\bgg_[A-Za-z0-9_-]{20,}/g,'[disposable-key]');
+  const profileLeaf=process.env.USERPROFILE.split(/[\\/]/).at(-1);
+  text=text.replaceAll('\\Users\\'+profileLeaf,'%USERPROFILE%').replaceAll('/Users/'+profileLeaf,'%USERPROFILE%');
+  await writeFile(path,text);
+ }
+ const bytes=await readFile(path);
+ if(bytes.length>1000000){
+  const dest=join(archive,name);if(!resolve(path).startsWith(out+sep)||!resolve(dest).startsWith(resolve(archive)+sep))throw Error('archive boundary');
+  omitted.push({name,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),destination:dest.replaceAll(process.env.USERPROFILE,'%USERPROFILE%')});await rename(path,dest);
+ }
+}
+let md='# Captures not kept\n\n';md+=omitted.length?'Captures larger than 1,000,000 bytes were moved to the following disposable archive. No directory was deleted. Conclusions cite retained check excerpts rather than these full captures.\n\n| Name | Bytes | SHA-256 | Disposable path |\n| --- | --- | --- | --- |\n'+omitted.map(x=>`| ${x.name} | ${x.bytes} | ${x.sha256} | ${x.destination} |`).join('\n'):'No retained capture exceeds 1,000,000 bytes. No capture had to be omitted for size.\n';
+md+='\n\nGenerated package coverage reports and runtime SQLite stores remain in the disposable temp paths recorded in the result JSON. The retained report relies on command logs, aggregate coverage totals and SQL response excerpts, not on those unkept files.\n';
+await writeFile(join(out,'NOT-KEPT.md'),md);await writeFile(join(out,'oversized-captures.json'),JSON.stringify(omitted,null,2));console.log(JSON.stringify({normalized:true,omitted}));

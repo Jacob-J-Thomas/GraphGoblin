@@ -1,0 +1,51 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { resolve, join } from 'node:path';
+import { buildApp, createContainer, loadConfig } from '../../../../apps/api/dist/index.js';
+import { FakeHarness, FakeClock, FakeDecider } from '../../../../packages/engine/dist/testing/index.js';
+
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d4-343-round3-'));
+const clock = new FakeClock();
+const container = await createContainer(loadConfig({
+  GG_DATA_DIR: dataDir,
+  GG_PORT: '5750',
+  GG_WEB_DIST: resolve('apps/web/dist'),
+  GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
+  GG_SWAGGER_UI: 'false',
+}), { harnesses: { codex: new FakeHarness() }, deciders: [new FakeDecider('codex')], clock, startTimers: false });
+await container.start();
+const app = await buildApp(container, { logger: false });
+await app.ready();
+const definition = { schemaVersion: 4, name: 'Targeted Event recipient QA', nodes: [
+  { id: 'issue-entry', kind: 'trigger', label: 'Issue entry', config: { type: 'event', eventType: 'round3' } },
+  { id: 'done', kind: 'exit', label: 'Done', config: {} },
+], edges: [{ id: 'a', from: { node: 'issue-entry', port: 'out' }, to: { node: 'done' } }] };
+const created = await app.inject({ method: 'POST', url: '/loops', payload: { definition } });
+if (created.statusCode !== 201) throw Error(created.body);
+const loopId = created.json().loop.id;
+const published = await app.inject({ method: 'POST', url: `/loops/${loopId}/publish` });
+if (published.statusCode !== 200) throw Error(published.body);
+await container.handle.client.execute("CREATE TRIGGER hold_event BEFORE INSERT ON runs BEGIN SELECT RAISE(ABORT, 'qa-hold'); END");
+const rows = [];
+for (const dedupeKey of ['pending', 'failed']) {
+  const response = await app.inject({ method: 'POST', url: '/events', payload: { loopId, type: 'round3', dedupeKey, payload: { disposition: dedupeKey } } });
+  if (response.statusCode !== 202) throw Error(response.body);
+  rows.push(response.json());
+  await container.manager.waitForWebhookRecovery();
+}
+await container.handle.client.execute({ sql: "UPDATE event_receipts SET intent='{' WHERE id=?", args: [rows[1].admissionId] });
+clock.advance(5000);
+await container.manager.retryPendingWebhooks();
+await container.manager.waitForWebhookRecovery();
+const events = (await app.inject('/events')).json();
+if (!events.items.some(e => e.delivery.state === 'pending') || !events.items.some(e => e.delivery.state === 'failed')) throw Error('fixture dispositions missing');
+await writeFile('docs/qa/wp-d4-343/round-3/browser-fixture.json', JSON.stringify({ loopId, events }, null, 2));
+await app.listen({ port: 5750, host: '127.0.0.1' });
+console.log('ROUND3_READY http://127.0.0.1:5750/app/events');
+process.stdin.resume();
+process.stdin.once('data', async () => {
+  await app.close();
+  await container.stop();
+  console.log('ROUND3_STOPPED');
+  process.exit(0);
+});

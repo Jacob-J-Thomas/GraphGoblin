@@ -1,0 +1,11 @@
+import {readFile,writeFile,copyFile} from 'node:fs/promises';import {join} from 'node:path';
+const out='docs/qa/2026-10-24-wp-d4-343-qa/round-3',loc=JSON.parse(await readFile(join(out,'script-location.json'),'utf8')).staging.replace('%USERPROFILE%',process.env.USERPROFILE);
+for(const n of ['supplemental.mjs.txt','supplemental-results.json','supplemental.log.txt'])await copyFile(join(out,n),join(out,'initial-'+n));
+let p=await readFile(join(out,'prepare-supplemental.mjs.txt'),'utf8');p=p.replaceAll("'supplemental-results.json'","'supplemental-corrected-results.json'");
+p=p.replaceAll("'😀'","'\\\\u{1f600}'");
+let tail=await readFile(join(out,'text-cases.mjs.txt'),'utf8');
+const updates="await s.sql(\"UPDATE event_receipts SET next_attempt_at='2000-01-01' WHERE status='pending'\");await s.sql(\"UPDATE webhook_receipts SET next_attempt_at='2000-01-01' WHERE status='pending'\");";
+tail=tail.replace(updates,'').replace(" await fault(s,'qa_boot_bad'",' '+updates+"\n await fault(s,'qa_boot_bad'");
+await writeFile(join(out,'text-cases-corrected.mjs.txt'),tail);
+p=p.replace("'text-cases.mjs.txt'","'text-cases-corrected.mjs.txt'");
+await writeFile(join(out,'prepare-supplemental-corrected.mjs.txt'),p);await writeFile(join(loc,'prepare-supplemental-corrected.mjs'),p);

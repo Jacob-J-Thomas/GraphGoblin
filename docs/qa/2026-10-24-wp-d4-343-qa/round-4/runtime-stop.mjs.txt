@@ -1,0 +1,5 @@
+import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-d4-343-qa/round-4');const ready=JSON.parse(await readFile(join(out,'browser-ready.json'),'utf8'));const auth=JSON.parse(await readFile(ready.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const start=Date.now();const r=await fetch(auth.url+'/__qa',{method:'POST',headers:{authorization:'Bearer '+auth.key,'content-type':'application/json'},body:JSON.stringify({op:'stop'})});const acknowledgement={status:r.status,body:await r.json()};
+let closed=false;for(let i=0;i<200;i++){try{await fetch(auth.url+'/healthz',{signal:AbortSignal.timeout(500)})}catch{closed=true;break}await new Promise(r=>setTimeout(r,50))}
+await writeFile(join(out,'runtime-stop.json'),JSON.stringify({acknowledgement,closed,elapsedMs:Date.now()-start,url:auth.url},null,2));console.log({closed});

@@ -1,0 +1,25 @@
+import {readFile,writeFile,readdir,stat,mkdtemp,rename} from 'node:fs/promises';
+import {join} from 'node:path';import {tmpdir} from 'node:os';import {createHash} from 'node:crypto';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-d4-343-qa/round-4');
+const profile=process.env.USERPROFILE;const normalize=s=>s.replaceAll(profile,'%USERPROFILE%').replaceAll(profile.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(profile.slice(2),'%USERPROFILE%').replaceAll(profile.slice(2).replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(profile.slice(2).replaceAll('\\','/'),'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]');
+const previous=await readFile(join(out,'normalization.json'),'utf8').then(JSON.parse).catch(()=>({}));const large=previous.oversized??[];const changes=previous.changes??[];let archive;
+for(const name of await readdir(out)){
+ const path=join(out,name), info=await stat(path);if(!info.isFile()||!(/\.(json|txt|md)$/.test(name))||name==='normalize.mjs.txt')continue;
+ const original=await readFile(path);const encoding=original[0]===255&&original[1]===254?'utf16le':'utf8';let content=original.toString(encoding).replace(/^\uFEFF/,'');const normalized=normalize(content);if(content!==normalized||encoding!=='utf8'){changes.push({name,sourceEncoding:encoding,sourceBytes:original.length,sourceSha256:createHash('sha256').update(original).digest('hex'),retainedEncoding:'utf8'});await writeFile(path,normalized);content=normalized;}
+ const bytes=Buffer.from(content);if(bytes.length<=1000000)continue;
+ const sha256=createHash('sha256').update(bytes).digest('hex');
+ let extra;
+ if(name.endsWith('.log.txt')){
+  extra=name.replace('.log.txt','-excerpt.log.txt');
+  const headings=[...content.matchAll(/^\s*(?:FAIL\b.*|Test Files\s.*|Tests\s.*)$/gm)].map(x=>x[0]).join('\n');
+  await writeFile(join(out,extra),`Normalized source capture: ${name}\nBytes: ${bytes.length}\nSHA-256: ${sha256}\nBounded excerpt; full capture is not kept.\n\nFIRST 12000 CHARACTERS\n${content.slice(0,12000)}\n\nFAILURE HEADINGS\n${headings.slice(0,60000)}\n\nLAST 240000 CHARACTERS\n${content.slice(-240000)}`);
+ }
+ if(name.endsWith('.json')){
+  try{const value=JSON.parse(content);if(value.checks){extra=name.replace('.json','-checks.json');await writeFile(join(out,extra),JSON.stringify({revision:value.revision,node:value.node,runtime:value.runtime,processes:value.processes,checks:value.checks,sourceCapture:{name,bytes:bytes.length,sha256}},null,2));}}
+  catch{}
+ }
+ archive??=await mkdtemp(join(tmpdir(),'gg-qa-d4-343-4-oversized-'));await rename(path,join(archive,name));large.push({name,bytes:bytes.length,sha256,extract:extra??null});
+}
+await writeFile(join(out,'normalization.json'),JSON.stringify({localPaths:'%USERPROFILE%',disposableApiKeys:'[disposable-key]',oversized:large,changes},null,2));
+await writeFile(join(out,'NOT-KEPT.md'),'# Captures not kept\n\n'+(large.length?large.map(x=>`- ${x.name}: ${x.bytes} bytes; SHA-256 ${x.sha256}. ${x.extract?'Kept case evidence: ['+x.extract+']('+x.extract+'). ':''}Full capture moved to the disposable temp prefix; no directory deleted.`).join('\n'):'No capture exceeds 1,000,000 bytes.')+'\n\nDisposable SQLite stores, dependencies, built output, and generated coverage HTML remain outside the evidence folder. No evidence claim relies on a discarded full capture.\n');
+console.log(JSON.stringify({oversized:large,changes}));

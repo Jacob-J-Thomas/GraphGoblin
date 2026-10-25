@@ -1,0 +1,27 @@
+// Execute from the worktree: Get-Content -Raw <this file> | node --input-type=module
+// Public built entry points, disposable in-memory SQLite; no owner store or listener.
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const load = p => import(pathToFileURL(resolve(p)).href);
+const { createContainer, loadConfig } = await load('apps/api/dist/index.js');
+const { FakeHarness, FakeClock, FakeDecider } = await load('packages/engine/dist/testing/index.js');
+const { preparePollItems } = await load('packages/domain/dist/index.js');
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d4-343-key-audit-'));
+const c = await createContainer(loadConfig({
+  GG_DATA_DIR: dataDir, GG_DB_URL: ':memory:', GG_REQUIRE_API_KEY: 'false',
+  GG_MASTER_KEY: Buffer.alloc(32, 11).toString('base64'), GG_SWAGGER_UI: 'false',
+}), { clock: new FakeClock(Date.now()), harnesses: { codex: new FakeHarness() },
+  deciders: [new FakeDecider('codex')], startTimers: false });
+try {
+  const key = 'before\u0000after';
+  const json = JSON.stringify({ key });
+  const rows = (await c.handle.client.execute({
+    sql: "SELECT ? AS bound_key, hex(?) AS bound_hex, json_extract(?, '$.key') AS extracted_key, hex(json_extract(?, '$.key')) AS extracted_hex, json_extract(?, '$.key') = ? AS extracted_matches_bound",
+    args: [key, key, json, json, json, key],
+  })).rows;
+  const poll = await preparePollItems({ select: 'probe.items', dedupeKey: 'item.key', maxRunsPerPoll: 5 },
+    { now: new Date().toISOString(), probe: { items: [{ key }] } });
+  console.log(JSON.stringify({ node: process.version, dataDir, rows, poll }, null, 2));
+} finally { await c.stop(); }

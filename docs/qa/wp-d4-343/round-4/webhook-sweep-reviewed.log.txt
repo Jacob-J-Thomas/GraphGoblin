@@ -1,0 +1,14 @@
+758-      }
+759-      try {
+760:        const due = await this.ports.admission.due(this.now(), 5);
+761-        for (const receipt of due) {
+762-          if (this.stopped) break;
+763-          await this.dispatchWebhook(receipt);
+764-        }
+765-      } catch {
+766-        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook recovery failed');
+767-      }
+768-    })().finally(() => {
+769-      this.webhookRecovery = undefined;
+770-    });
+771-    return this.webhookRecovery;

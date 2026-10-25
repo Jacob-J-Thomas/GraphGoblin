@@ -1,0 +1,960 @@
+{
+  "facts": [
+    {
+      "key": "before\ud800after",
+      "first": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 422,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/key-invalid",
+          "title": "key invalid",
+          "status": 422,
+          "code": "KEY_INVALID",
+          "detail": "the webhook key must be nonempty valid Unicode without U+0000, at most 512 characters"
+        }
+      },
+      "retry": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 422,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/key-invalid",
+          "title": "key invalid",
+          "status": 422,
+          "code": "KEY_INVALID",
+          "detail": "the webhook key must be nonempty valid Unicode without U+0000, at most 512 characters"
+        }
+      },
+      "receipts": {
+        "method": "POST",
+        "path": "/__qa",
+        "status": 200,
+        "body": []
+      }
+    },
+    {
+      "key": "before�after",
+      "first": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 202,
+        "body": {
+          "accepted": true
+        }
+      },
+      "retry": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 202,
+        "body": {
+          "accepted": true
+        }
+      },
+      "receipts": {
+        "method": "POST",
+        "path": "/__qa",
+        "status": 200,
+        "body": [
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3M",
+            "status": "admitted",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "before�after",
+            "key_hex": "6265666F7265EFBFBD6166746572",
+            "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3R",
+            "status": "deduplicated",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "before�after",
+            "key_hex": "6265666F7265EFBFBD6166746572",
+            "intent": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "a\u0001b",
+      "first": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 202,
+        "body": {
+          "accepted": true
+        }
+      },
+      "retry": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 202,
+        "body": {
+          "accepted": true
+        }
+      },
+      "receipts": {
+        "method": "POST",
+        "path": "/__qa",
+        "status": 200,
+        "body": [
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3M",
+            "status": "admitted",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "before�after",
+            "key_hex": "6265666F7265EFBFBD6166746572",
+            "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3R",
+            "status": "deduplicated",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "before�after",
+            "key_hex": "6265666F7265EFBFBD6166746572",
+            "intent": null
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3W",
+            "status": "admitted",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "a\u0001b",
+            "key_hex": "610162",
+            "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY40",
+            "status": "deduplicated",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "a\u0001b",
+            "key_hex": "610162",
+            "intent": null
+          }
+        ]
+      }
+    },
+    {
+      "key": "a\tb",
+      "first": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 202,
+        "body": {
+          "accepted": true
+        }
+      },
+      "retry": {
+        "method": "POST",
+        "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+        "status": 202,
+        "body": {
+          "accepted": true
+        }
+      },
+      "receipts": {
+        "method": "POST",
+        "path": "/__qa",
+        "status": 200,
+        "body": [
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3M",
+            "status": "admitted",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "before�after",
+            "key_hex": "6265666F7265EFBFBD6166746572",
+            "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3R",
+            "status": "deduplicated",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "before�after",
+            "key_hex": "6265666F7265EFBFBD6166746572",
+            "intent": null
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3W",
+            "status": "admitted",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "a\u0001b",
+            "key_hex": "610162",
+            "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY40",
+            "status": "deduplicated",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "a\u0001b",
+            "key_hex": "610162",
+            "intent": null
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY44",
+            "status": "admitted",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "a\tb",
+            "key_hex": "610962",
+            "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY45\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY46\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY45\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY46\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\tb\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\tb\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY45\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY46\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\tb\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\tb\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY48",
+            "status": "deduplicated",
+            "attempts": 0,
+            "failure_code": null,
+            "dedupe_key": "a\tb",
+            "key_hex": "610962",
+            "intent": null
+          }
+        ]
+      }
+    }
+  ],
+  "runs": {
+    "method": "GET",
+    "path": "/runs?loopId=01M5QJH33ST4KYV31P5QD1DY3G",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY45",
+          "ownerId": "local",
+          "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+          "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Webhook Unicode storage identity",
+            "label": "Webhook Unicode storage identity v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5QJH33ST4KYV31P5QD1DY46",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-24T18:24:50.809Z",
+          "startedAt": "2026-10-24T18:24:50.809Z",
+          "finishedAt": "2026-10-24T18:24:50.809Z",
+          "lastEventSeq": 8
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3X",
+          "ownerId": "local",
+          "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+          "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Webhook Unicode storage identity",
+            "label": "Webhook Unicode storage identity v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5QJH33ST4KYV31P5QD1DY3Y",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-24T18:24:50.809Z",
+          "startedAt": "2026-10-24T18:24:50.809Z",
+          "finishedAt": "2026-10-24T18:24:50.809Z",
+          "lastEventSeq": 8
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3N",
+          "ownerId": "local",
+          "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+          "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Webhook Unicode storage identity",
+            "label": "Webhook Unicode storage identity v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5QJH33ST4KYV31P5QD1DY3P",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-24T18:24:50.809Z",
+          "startedAt": "2026-10-24T18:24:50.809Z",
+          "finishedAt": "2026-10-24T18:24:50.809Z",
+          "lastEventSeq": 8
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "log": [
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "loop": {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3G",
+          "ownerId": "local",
+          "name": "Webhook Unicode storage identity",
+          "draftVersionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+          "createdAt": "2026-10-24T18:24:50.809Z",
+          "updatedAt": "2026-10-24T18:24:50.809Z"
+        },
+        "draft": {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3H",
+          "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Webhook Unicode storage identity",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "none"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  },
+                  "dedupeKey": "key"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T18:24:50.809Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M5QJH33ST4KYV31P5QD1DY3G/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3H",
+          "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Webhook Unicode storage identity",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "none"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  },
+                  "dedupeKey": "key"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T18:24:50.809Z",
+          "publishedAt": "2026-10-24T18:24:50.809Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M5QJH33ST4KYV31P5QD1DY3G/triggers",
+      "status": 200,
+      "body": {
+        "schedules": [],
+        "webhooks": [
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3J",
+            "ownerId": "local",
+            "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+            "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+            "triggerNodeId": "start",
+            "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+            "authentication": {
+              "type": "none"
+            },
+            "configurationAvailable": true,
+            "body": {
+              "type": "json"
+            },
+            "eventType": {
+              "source": "constant",
+              "value": "webhook"
+            },
+            "dedupeKey": "key",
+            "enabled": true,
+            "createdAt": "2026-10-24T18:24:50.809Z"
+          }
+        ],
+        "polls": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 422,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/key-invalid",
+        "title": "key invalid",
+        "status": 422,
+        "code": "KEY_INVALID",
+        "detail": "the webhook key must be nonempty valid Unicode without U+0000, at most 512 characters"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 422,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/key-invalid",
+        "title": "key invalid",
+        "status": 422,
+        "code": "KEY_INVALID",
+        "detail": "the webhook key must be nonempty valid Unicode without U+0000, at most 512 characters"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": []
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": [
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3M",
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "before�after",
+          "key_hex": "6265666F7265EFBFBD6166746572",
+          "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3R",
+          "status": "deduplicated",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "before�after",
+          "key_hex": "6265666F7265EFBFBD6166746572",
+          "intent": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": [
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3M",
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "before�after",
+          "key_hex": "6265666F7265EFBFBD6166746572",
+          "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3R",
+          "status": "deduplicated",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "before�after",
+          "key_hex": "6265666F7265EFBFBD6166746572",
+          "intent": null
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3W",
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "a\u0001b",
+          "key_hex": "610162",
+          "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY40",
+          "status": "deduplicated",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "a\u0001b",
+          "key_hex": "610162",
+          "intent": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/FkiV52AIUrOuYjFQ49I3qs1YzqfRP923VupIoHxacKw",
+      "status": 202,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "body": [
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3M",
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "before�after",
+          "key_hex": "6265666F7265EFBFBD6166746572",
+          "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3N\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3P\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"before�after\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"before�after\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3R",
+          "status": "deduplicated",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "before�after",
+          "key_hex": "6265666F7265EFBFBD6166746572",
+          "intent": null
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY3W",
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "a\u0001b",
+          "key_hex": "610162",
+          "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3X\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY3Y\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\u0001b\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\u0001b\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY40",
+          "status": "deduplicated",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "a\u0001b",
+          "key_hex": "610162",
+          "intent": null
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY44",
+          "status": "admitted",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "a\tb",
+          "key_hex": "610962",
+          "intent": "{\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY45\",\"ownerId\":\"local\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"01M5QJH33ST4KYV31P5QD1DY46\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T18:24:50.809Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY45\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY46\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\tb\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\tb\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"queued\":{\"type\":\"run.queued\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Webhook Unicode storage identity\",\"label\":\"Webhook Unicode storage identity v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY45\",\"loopId\":\"01M5QJH33ST4KYV31P5QD1DY3G\",\"versionId\":\"01M5QJH33ST4KYV31P5QD1DY3H\",\"iteration\":1},\"invocation\":{\"id\":\"01M5QJH33ST4KYV31P5QD1DY46\",\"source\":\"webhook\",\"caller\":{\"kind\":\"system\",\"id\":\"webhook:01M5QJH33ST4KYV31P5QD1DY3J\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"key\":\"a\\tb\"},\"receivedAt\":\"2026-10-24T18:24:50.809Z\",\"dedupeKey\":\"a\\tb\",\"eventType\":\"webhook\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"pinnedLoopIds\":[\"01M5QJH33ST4KYV31P5QD1DY3G\"]}"
+        },
+        {
+          "id": "01M5QJH33ST4KYV31P5QD1DY48",
+          "status": "deduplicated",
+          "attempts": 0,
+          "failure_code": null,
+          "dedupe_key": "a\tb",
+          "key_hex": "610962",
+          "intent": null
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/runs?loopId=01M5QJH33ST4KYV31P5QD1DY3G",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY45",
+            "ownerId": "local",
+            "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+            "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Webhook Unicode storage identity",
+              "label": "Webhook Unicode storage identity v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5QJH33ST4KYV31P5QD1DY46",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-24T18:24:50.809Z",
+            "startedAt": "2026-10-24T18:24:50.809Z",
+            "finishedAt": "2026-10-24T18:24:50.809Z",
+            "lastEventSeq": 8
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3X",
+            "ownerId": "local",
+            "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+            "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Webhook Unicode storage identity",
+              "label": "Webhook Unicode storage identity v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5QJH33ST4KYV31P5QD1DY3Y",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-24T18:24:50.809Z",
+            "startedAt": "2026-10-24T18:24:50.809Z",
+            "finishedAt": "2026-10-24T18:24:50.809Z",
+            "lastEventSeq": 8
+          },
+          {
+            "id": "01M5QJH33ST4KYV31P5QD1DY3N",
+            "ownerId": "local",
+            "loopId": "01M5QJH33ST4KYV31P5QD1DY3G",
+            "versionId": "01M5QJH33ST4KYV31P5QD1DY3H",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Webhook Unicode storage identity",
+              "label": "Webhook Unicode storage identity v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5QJH33ST4KYV31P5QD1DY3P",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "createdAt": "2026-10-24T18:24:50.809Z",
+            "startedAt": "2026-10-24T18:24:50.809Z",
+            "finishedAt": "2026-10-24T18:24:50.809Z",
+            "lastEventSeq": 8
+          }
+        ],
+        "nextCursor": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+let s;
+const { pathToFileURL } = await import('node:url');
+const { openDatabase } = await import(pathToFileURL(join(root,'packages/infrastructure/dist/sqlite/index.js')).href);
+async function offline(instance,job){const h=openDatabase({url:'file:'+join(instance.data,'graphgoblin.db').replaceAll('\\','/')});try{return await job(h.client)}finally{h.close()}}
+for(const [index,phase] of ['before-receipt','pending-before-run','after-run-start'].entries()) {
+ await test('native-'+phase,'hard kill and restart; accepted identity has exactly one stable run; refused save leaves zero rows',async()=>{
+  s=await instance('crash-'+phase,5851+index);
+  const id=await loop(s,definition('Crash '+phase));
+  if(phase!=='after-run-start')await fault(s,'qa_crash',phase==='before-receipt'?'INSERT ON event_receipts':'INSERT ON runs');
+  const request={dedupeKey:'restart-key',payload:{original:'stable'}};
+  const ack=await ev(s,id,request); assert.equal(ack.status,phase==='before-receipt'?503:202);
+  await s.settle();
+  const before=await counts(s);
+  const receipt=await s.sql("SELECT id,status,attempts,json_extract(intent,'$.run.id') AS runId,json_extract(intent,'$.run.versionId') AS versionId FROM event_receipts");
+  if(phase==='before-receipt')assert.deepEqual(before,{inbound:0,receipts:0,runs:0});
+  if(phase==='pending-before-run'){assert.equal(before.runs,0);assert.equal(receipt[0].status,'pending')}
+  if(phase==='after-run-start'){assert.equal(before.runs,1);assert.equal(receipt[0].status,'admitted')}
+  const statesBefore=await s.events();
+  let hardKill,termination;
+  try {hardKill=s.proc.child.kill('SIGKILL');if(hardKill){termination=await s.proc.done;await s.proc.log();}else termination={class:'D-015',reason:'kill returned false'};}
+  catch(e){hardKill=false;termination={class:'D-015',code:e.code,message:e.message};}
+  if(!hardKill)await s.stop();
+  await offline(s,async c=>{if(phase!=='after-run-start')await c.execute('DROP TRIGGER qa_crash');await c.execute("UPDATE event_receipts SET next_attempt_at='2000-01-01'");});
+  await s.start();
+  const retry=await ev(s,id,{...request,payload:{changed:true}});assert.equal(retry.status,202);await s.settle();
+  const rows=await s.events();const item=rows[0];assert.equal(rows.length,1);assert.equal(item.runIds.length,1);
+  if(receipt.length){assert.equal(item.id,ack.body.id);assert.equal(item.admissionId,receipt[0].id);assert.equal(item.runIds[0],receipt[0].runId);assert.equal(retry.body.duplicate,true);assert.deepEqual(item.payload,{original:'stable'});}
+  const queued=await s.sql("SELECT run_id,count(*) AS n FROM run_events WHERE type='run.queued' GROUP BY run_id");assert.equal(queued.length,1);assert.equal(queued[0].n,1);
+  const runs=await s.runs(id);assert.equal(runs.length,1);
+  const stopped=await s.stop();
+  const result={phase,ack,before,receipt,statesBefore,hardKill,termination,restartItem:item,queued,runs,stopped,nativeVerdict:hardKill?'PASS':'NOT TESTABLE - D-015; cooperative restart supplemental only'};
+  // A denied kill is a limit on this criterion, not a product failure.
+  return result;
+ });
+}
+await test('upgrade-0017-0018','0017 additive upgrade preserves raw inbound history and existing run links; old key does not suppress targeted admission',async()=>{
+ s=await instance('upgrade',5854);
+ const id=await loop(s,definition('Historical'));
+ const e=await ev(s,id,{dedupeKey:'historical-key',payload:{old:'history'}});await s.settle();
+ const before=await s.sql('SELECT * FROM inbound_events');
+ const oldEvents=await s.events();await s.stop();
+ const projected=await offline(s,async c=>{await c.execute('DROP TABLE event_receipts');await c.execute('DELETE FROM __drizzle_migrations WHERE created_at=1792798427210');return {ledger:(await c.execute('SELECT count(*) AS n,max(created_at) AS latest FROM __drizzle_migrations')).rows,tables:(await c.execute("SELECT name FROM sqlite_master WHERE name='event_receipts'")).rows,history:(await c.execute('SELECT * FROM inbound_events')).rows};});
+ assert.equal(projected.ledger[0].n,18);assert.equal(projected.tables.length,0);
+ await s.start();
+ const ledger=await s.sql('SELECT count(*) AS n,max(created_at) AS latest FROM __drizzle_migrations');assert.equal(ledger[0].n,19);
+ const after=await s.sql('SELECT * FROM inbound_events');assert.deepEqual(after,before);
+ const history=await s.events();assert.equal(history.length,1);assert.equal(history[0].delivery,undefined);assert.deepEqual(history[0].runIds,oldEvents[0].runIds);
+ const fresh=await ev(s,id,{dedupeKey:'historical-key',payload:{new:'targeted'}});assert.equal(fresh.status,202);assert.equal(fresh.body.duplicate,false);assert.notEqual(fresh.body.id,e.body.id);await s.settle();
+ const current=await s.events();const runs=await s.runs(id);assert.equal(runs.length,2);
+ const stopped=await s.stop();return {projected,before,after,ledger,history,current,runs,stopped};
+});
+await save();console.log('LIFECYCLE_DONE');

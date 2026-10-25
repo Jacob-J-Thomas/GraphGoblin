@@ -1,0 +1,96 @@
+"""Pin the completed round's evidence; this validates provenance, not test-suite success."""
+import sys
+sys.dont_write_bytecode = True
+
+from pathlib import Path
+import datetime
+import hashlib
+import json
+import re
+import subprocess
+
+import evidence
+
+QA = Path(__file__).resolve().parent
+REPO = Path(__file__).resolve().parents[4]
+HEAD = '9dcf40fa7cc478fcd5b75ebb92cd464d2fb548c2'
+
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=REPO, text=True, encoding='utf-8').strip()
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+assert git('rev-parse', 'HEAD') == HEAD
+assert git('branch', '--show-current') == 'codex-wp-d4-343'
+assert not git('diff', '--cached', '--name-only')
+subprocess.run(['git', 'diff', '--check'], cwd=REPO, check=True)
+assert not list(QA.rglob('*.pyc')), 'Do not include generated interpreter caches'
+
+report = (QA / 'REPORT.md').read_text(encoding='utf-8')
+assert len(re.findall(r'^## [1-8]\.', report, re.M)) == 8
+assert '| Pending' not in report and 'pending completion' not in report.lower()
+for target in re.findall(r'\]\(([^)]+)\)', report):
+    if target.startswith(('http:', 'https:')):
+        continue
+    if target in {'EVIDENCE-MANIFEST.json', 'VALIDATION.log.txt'}:
+        continue
+    assert (QA / target).exists(), target
+
+normalization = json.loads((QA / 'NORMALIZATION.json').read_text(encoding='utf-8'))
+for name, record in normalization.items():
+    path = QA / name
+    assert path.exists(), name
+    assert record['capturedBytes'] <= 1_000_000, name
+    assert record['retainedSha256'] == sha(path), name
+    assert record['retainedBytes'] == path.stat().st_size, name
+
+sources = []
+for name in git('diff', '--name-only').splitlines():
+    assert not name.startswith('docs/qa/'), 'Previous-round evidence must stay unchanged'
+    path = REPO / name
+    sources.append({'path': name, 'bytes': path.stat().st_size, 'sha256': sha(path)})
+assert len(sources) == 17, len(sources)
+
+artifacts = []
+for path in sorted(QA.rglob('*')):
+    if not path.is_file() or path.name in {'EVIDENCE-MANIFEST.json', 'VALIDATION.log.txt'}:
+        continue
+    assert path.stat().st_size <= 1_000_000, path.name
+    if path.suffix != '.png':
+        text = path.read_text(encoding='utf-8-sig')
+        profile = str(Path.home())
+        for prefix in [profile, profile.replace('\\', '/'), profile.replace('\\', '\\\\')]:
+            assert prefix not in text, path.name
+        assert Path.home().name.lower() not in text.lower(), path.name
+    artifacts.append({'path': path.relative_to(QA).as_posix(), 'bytes': path.stat().st_size, 'sha256': sha(path)})
+
+manifest = {
+    'head': HEAD,
+    'createdUtc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    'captureLimitBytes': 1_000_000,
+    'sourceFiles': sources,
+    'artifacts': artifacts,
+    'excludedSelfReferences': ['EVIDENCE-MANIFEST.json', 'VALIDATION.log.txt'],
+}
+manifest_path = QA / 'EVIDENCE-MANIFEST.json'
+manifest_path.write_bytes((json.dumps(manifest, indent=2) + '\n').encode('utf-8'))
+for row in sources:
+    assert sha(REPO / row['path']) == row['sha256']
+for row in artifacts:
+    assert sha(QA / row['path']) == row['sha256']
+
+result = '\n'.join([
+    'Evidence integrity validation: PASS (does not qualify failed test suites).',
+    f'HEAD and branch match {HEAD}; index diff is empty; whitespace check passed.',
+    f'{len(sources)} source hashes and {len(artifacts)} artifact hashes match.',
+    f'{len(normalization)} capture provenance records match their retained logs.',
+    'Eight report sections, cited local files, portable paths and capture caps validated.',
+    f'Maximum retained artifact: {max(row["bytes"] for row in artifacts)} bytes.',
+    f'Manifest SHA-256: {sha(manifest_path)}',
+]) + '\n'
+(QA / 'VALIDATION.log.txt').write_bytes(result.encode('utf-8'))
+print(result)

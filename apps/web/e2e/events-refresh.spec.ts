@@ -1,22 +1,14 @@
-import { control, expect, test } from './fixtures.js';
-import type { APIRequestContext } from '@playwright/test';
+import { control, expect, publishEventLoop, test } from './fixtures.js';
 
-async function postEvent(
-  request: APIRequestContext,
-  url: string,
+async function seedEvents(
+  send: Awaited<ReturnType<typeof publishEventLoop>>,
   type: string,
-  index: number | string,
+  count: number,
 ) {
-  expect(
-    (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
-  ).toBe(202);
-}
-
-async function seedEvents(request: APIRequestContext, url: string, type: string, count: number) {
   for (let start = 0; start < count; start += 20)
     await Promise.all(
       Array.from({ length: Math.min(20, count - start) }, (_, offset) =>
-        postEvent(request, url, type, start + offset),
+        send(type, { index: start + offset }),
       ),
     );
 }
@@ -26,19 +18,17 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again 
   request,
 }) => {
   const url = String((await control(request, '/apps'))['url']);
-  const send = async (type: string, index: number | string) => {
-    expect(
-      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
-    ).toBe(202);
-  };
-  for (let i = 0; i < 101; i++) await send('refresh-events', i);
+  const send = await publishEventLoop(request, ['refresh-events', 'other-type'], url);
+  for (let i = 0; i < 101; i++) await send('refresh-events', { index: i });
   const path = '/app/events?type=refresh-events&before=2099-01-01T00%3A00%3A00.000Z';
   await page.goto(url + path);
   await expect(page.locator('tbody tr')).toHaveCount(100);
-  const first = await page.locator('tbody tr').first().innerText();
-  await send('refresh-events', 'first-arrival');
+  // Delivery state and run links may change while the loaded Event membership stays fixed.
+  const payloadRows = page.locator('[data-testid^="payload-"]');
+  const first = await payloadRows.first().textContent();
+  await send('refresh-events', { index: 'first-arrival' });
   await expect(page.getByText('New events available', { exact: true })).toBeVisible();
-  expect(await page.locator('tbody tr').first().innerText()).toBe(first);
+  expect(await payloadRows.first().textContent()).toBe(first);
   await expect(page.getByText(/first-arrival/)).toHaveCount(0);
   const more = page.getByRole('button', { name: 'Load more', exact: true });
   await more.click();
@@ -46,15 +36,15 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again 
   const end = page.getByText('All events loaded.', { exact: true });
   await expect(end).toBeFocused();
   const readingY = await page.evaluate(() => window.scrollY);
-  const olderRows = await page.locator('tbody').innerText();
-  await send('other-type', 'excluded');
-  await send('refresh-events', 'older-arrival');
+  const olderRows = await payloadRows.allTextContents();
+  await send('other-type', { index: 'excluded' });
+  await send('refresh-events', { index: 'older-arrival' });
   // Synchronize on an actual completed probe after the second arrival, not a fixed delay.
   await page.waitForResponse((response) => {
     const parsed = new URL(response.url());
     return parsed.pathname === '/events' && parsed.searchParams.get('limit') === '1';
   });
-  expect(await page.locator('tbody').innerText()).toBe(olderRows);
+  expect(await payloadRows.allTextContents()).toEqual(olderRows);
   await expect(end).toBeFocused();
   expect(Math.abs((await page.evaluate(() => window.scrollY)) - readingY)).toBeLessThanOrEqual(1);
   await expect(page).toHaveURL(url + path);
@@ -82,20 +72,16 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
   const instance = await control(request, '/apps');
   const url = String(instance['url']);
   const instanceId = String(instance['instanceId']);
-  const send = async (type: string, index: number | string) => {
-    expect(
-      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
-    ).toBe(202);
-  };
+  const send = await publishEventLoop(request, ['refresh-outage', 'other-type'], url);
   // Bound concurrent setup requests, avoiding 201 serial HTTP round trips under host load.
   for (let start = 0; start < 201; start += 20) {
     await Promise.all(
       Array.from({ length: Math.min(20, 201 - start) }, (_, offset) =>
-        send('refresh-outage', start + offset),
+        send('refresh-outage', { index: start + offset }),
       ),
     );
   }
-  await send('other-type', 'excluded');
+  await send('other-type', { index: 'excluded' });
   const before = '2099-01-01T00:00:00.000Z';
   const filters = `type=refresh-outage&before=${encodeURIComponent(before)}`;
   const path = `/app/events?${filters}&keep=reader`;
@@ -103,9 +89,10 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
   await expect(page.locator('tbody tr')).toHaveCount(100);
   await page.getByRole('button', { name: 'Load more', exact: true }).click();
   await expect(page.locator('tbody tr')).toHaveCount(200);
-  await send('refresh-outage', 'notice-before-outage');
+  await send('refresh-outage', { index: 'notice-before-outage' });
   await expect(page.getByText('New events available', { exact: true })).toBeVisible();
-  const oldRows = await page.locator('tbody').innerText();
+  const payloadRows = page.locator('[data-testid^="payload-"]');
+  const oldRows = await payloadRows.allTextContents();
   const anchor = page.locator('tbody tr').nth(140);
   const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
   try {
@@ -121,7 +108,7 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
     await expect(status).toContainText('Refresh failed');
     await expect(status).toContainText('Refresh to try again.');
     await expect(page.locator('tbody tr')).toHaveCount(200);
-    expect(await page.locator('tbody').innerText()).toBe(oldRows);
+    expect(await payloadRows.allTextContents()).toEqual(oldRows);
     await expect(page).toHaveURL(url + path);
     const failedBox = await anchor.boundingBox();
     if (!failedBox) throw new Error('The failed Refresh removed the reading anchor');
@@ -129,10 +116,10 @@ test('Events keeps an offline Refresh snapshot, recovers deliberately and clears
   } finally {
     await control(request, '/api/listener', { instanceId, listening: true });
   }
-  await send('refresh-outage', 'after-outage');
+  await send('refresh-outage', { index: 'after-outage' });
   const status = page.getByRole('status').filter({ hasText: 'New events available' });
   await expect(status).not.toContainText('Could not check for new events');
-  expect(await page.locator('tbody').innerText()).toBe(oldRows);
+  expect(await payloadRows.allTextContents()).toEqual(oldRows);
   await refresh.click();
   await expect(page.locator('tbody tr')).toHaveCount(100);
   await expect(page.locator('tbody tr').first()).toContainText('after-outage');
@@ -177,7 +164,8 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer 
   request,
 }) => {
   const url = String((await control(request, '/apps'))['url']);
-  await seedEvents(request, url, 'refresh-race', 201);
+  const send = await publishEventLoop(request, ['refresh-race'], url);
+  await seedEvents(send, 'refresh-race', 201);
   const path = '/app/events?type=refresh-race&before=2099-01-01T00%3A00%3A00.000Z&keep=reader';
   await page.goto(url + path);
   const more = page.getByRole('button', { name: 'Load more', exact: true });
@@ -228,12 +216,13 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer 
     await expect(refresh).toHaveAttribute('aria-busy', 'false');
     await page.goBack();
     await expect(page).toHaveURL(url + path);
-    await postEvent(request, url, 'refresh-race', 'winning-refresh');
+    await send('refresh-race', { index: 'winning-refresh' });
     await refresh.click();
     await expect(page.locator('tbody tr').first()).toContainText('winning-refresh');
     await more.click();
     await expect(page.locator('tbody tr')).toHaveCount(200);
-    const snapshot = await page.locator('tbody').innerText();
+    const payloadRows = page.locator('[data-testid^="payload-"]');
+    const snapshot = await payloadRows.allTextContents();
     const response = page.waitForResponse((result) => {
       const query = new URL(result.url()).searchParams;
       return (
@@ -254,7 +243,7 @@ test('Events drops an obsolete Refresh after clearing the filter, Back, a newer 
         ),
     );
     await expect(page.locator('tbody tr')).toHaveCount(200);
-    expect(await page.locator('tbody').innerText()).toBe(snapshot);
+    expect(await payloadRows.allTextContents()).toEqual(snapshot);
     await expect(page.getByText('Showing the newest events.', { exact: true })).toBeVisible();
     await expect(page).toHaveURL(url + path);
   } finally {
@@ -268,7 +257,8 @@ test('Events updates the hundredth pending receipt after a head arrival without 
   request,
 }) => {
   const url = String((await control(request, '/apps'))['url']);
-  await seedEvents(request, url, 'receipt-boundary', 101);
+  const send = await publishEventLoop(request, ['receipt-boundary'], url);
+  await seedEvents(send, 'receipt-boundary', 101);
   const first = (await (await request.get(url + '/events?type=receipt-boundary')).json()) as {
     items: { id: string }[];
   };
@@ -283,26 +273,31 @@ test('Events updates the hundredth pending receipt after a head arrival without 
     }
     const response = await route.fetch();
     const body = (await response.json()) as {
-      items: { id: string; delivery?: { state: string; attempts: number } }[];
+      items: { id: string; runIds: string[]; delivery?: { state: string; attempts: number } }[];
       nextCursor: string | null;
     };
     body.items = body.items.map((item) =>
       item.id === receiptId
-        ? { ...item, delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 } }
+        ? {
+            ...item, // Retain the real admissionId, frozen target and other Event fields.
+            runIds: admitted ? item.runIds : [],
+            delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 },
+          }
         : item,
     );
     await route.fulfill({ response, json: body });
   });
   await page.goto(url + '/app/events?type=receipt-boundary');
-  await expect(page.getByText('Pending admission', { exact: true })).toBeVisible();
+  const receipt = page.getByRole('row').filter({ has: page.getByTestId(`payload-${receiptId}`) });
+  await expect(receipt.getByText('Pending admission', { exact: true })).toBeVisible();
   const ids = () =>
     page
       .locator('[data-testid^="payload-"]')
       .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-testid')));
   const before = await ids();
-  await postEvent(request, url, 'receipt-boundary', 'new-arrival');
+  await send('receipt-boundary', { index: 'new-arrival' });
   admitted = true;
-  await expect(page.getByText('Admitted', { exact: true })).toBeVisible();
+  await expect(receipt.getByText('Admitted', { exact: true })).toBeVisible();
   expect(await ids()).toEqual(before);
   await expect(page.getByText('New events available', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Load more', exact: true }).click();
