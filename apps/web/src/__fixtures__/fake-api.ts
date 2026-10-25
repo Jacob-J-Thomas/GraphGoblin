@@ -26,6 +26,7 @@ import {
 } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import {
+  reconcileThread,
   exportLoop,
   importLoop,
   LoopFormatUpgradeRequiredError,
@@ -761,14 +762,98 @@ export class FakeApi {
         if (!this.runs.has(runId!)) return problem(404, 'RUN_NOT_FOUND');
         const after = Number(call.search.get('after') ?? 0);
         if (call.headers.get('accept') === 'text/event-stream') return this.stream(runId!, after);
-        return json({ items: (this.events.get(runId!) ?? []).filter((e) => e.seq > after) });
+        const all = this.events.get(runId!) ?? [];
+        const cursor = call.search.get('cursor');
+        const position: { seq: number; direction: string } | undefined = cursor
+          ? (JSON.parse(atob(cursor)) as { seq: number; direction: string })
+          : undefined;
+        const around = call.search.get('around');
+        const older = position?.direction === 'older' || around !== null;
+        const bound = position?.seq ?? (around !== null ? Number(around) + 1 : after);
+        const limit = Number(call.search.get('limit') ?? 500);
+        const matches = all.filter((e) => (older ? e.seq < bound : e.seq > bound));
+        const items = older ? matches.slice(-limit) : matches.slice(0, limit);
+        const first = items[0]?.seq ?? bound;
+        const last = items.at(-1)?.seq ?? bound;
+        return json({
+          items,
+          nextAfter: last,
+          hasMore: all.some((e) => e.seq > last),
+          olderCursor: all.some((e) => e.seq < first)
+            ? btoa(JSON.stringify({ seq: first, direction: 'older' }))
+            : null,
+          newerCursor: all.some((e) => e.seq > last)
+            ? btoa(JSON.stringify({ seq: last, direction: 'newer' }))
+            : null,
+        });
       },
     ],
     [
       'GET /runs/:id/thread',
+      (call, [runId]) => {
+        const current = this.threads.get(runId!);
+        if (!current) return problem(404, 'THREAD_NOT_FOUND', 'the run has no thread');
+        const events = this.events.get(runId!) ?? [];
+        if (!events.length) return json(current);
+        const first = events[0];
+        const run = this.runs.get(runId!);
+        const loop = run ? this.loops.get(run.loopId) : undefined;
+        const definition =
+          loop?.history.find((v) => v.id === run?.versionId)?.definition ??
+          loop?.current?.definition ??
+          loop?.draft?.definition;
+        const initial =
+          first?.type === 'run.queued' && first.initialThread
+            ? first.initialThread
+            : {
+                ...current,
+                run: { ...current.run, iteration: 1 },
+                messages: [],
+                vars: {},
+                artifacts: [],
+                outputs: {},
+                counters: {
+                  nodeVisits: {},
+                  usage: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    cachedInputTokens: 0,
+                    reasoningOutputTokens: 0,
+                  },
+                },
+                gates: Object.fromEntries(
+                  (definition?.nodes ?? [])
+                    .filter(
+                      (node) => node.kind === 'decision' && node.config.maxPasses !== undefined,
+                    )
+                    .map((node) => [node.id, { passes: 1 }]),
+                ),
+              };
+        try {
+          const at = call.search.get('at');
+          return json(
+            reconcileThread(initial, events, undefined, at === null ? undefined : Number(at)),
+          );
+        } catch (error) {
+          return problem(500, 'THREAD_REPLAY_FAILED', String(error));
+        }
+      },
+    ],
+    [
+      'GET /runs/:id/observation',
       (_call, [runId]) => {
-        const thread = this.threads.get(runId!);
-        return thread ? json(thread) : problem(404, 'THREAD_NOT_FOUND', 'the run has no thread');
+        if (!this.runs.has(runId!)) return problem(404, 'RUN_NOT_FOUND');
+        const all = this.events.get(runId!) ?? [];
+        return json({
+          lifecycle: all.findLast((event) =>
+            ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'].includes(
+              event.type,
+            ),
+          ),
+          exit: all.findLast((event) => event.type === 'exit.evaluated'),
+          gate: all.findLast((event) => event.type === 'decision.made' && event.gate !== undefined),
+          finished: all.findLast((event) => event.type === 'run.finished'),
+        });
       },
     ],
     [

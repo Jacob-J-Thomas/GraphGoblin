@@ -61,6 +61,9 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       );
       await expect.poll(() => browserThread(open)).toEqual(api);
       const existing = await browserThread(open);
+      // Headless Edge can suspend a background tab's renderer across reload. Activate it before
+      // waiting for its controls, as the shared multi-tab editor fixture does.
+      await reloaded.bringToFront();
       await reloaded.reload();
       await reloaded.getByRole('button', { name: 'Full thread JSON' }).click();
       await expect.poll(() => browserThread(reloaded)).toEqual(api);

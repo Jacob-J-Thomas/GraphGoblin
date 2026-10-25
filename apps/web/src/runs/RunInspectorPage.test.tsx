@@ -56,7 +56,41 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
-  it('loads the pinned definition for fallback gate counts before any decision event', async () => {
+  it('keeps the previous resolved thread and identifiers while a selected server boundary is pending', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const run = seedRun(api);
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    api.override('GET /runs/:id/thread', async (call) => {
+      if (call.search.get('at') === '4') await pending;
+      return api.builtIn(call);
+    });
+    renderApp(`/runs/${run.id}`, api);
+    const timeline = await screen.findByRole('list', { name: 'Timeline' });
+    await user.click(await within(timeline).findByText('#3'));
+    await screen.findByText('Thread at event 3');
+    await user.click(screen.getByRole('button', { name: 'Full thread JSON' }));
+    const previous = screen.getByTestId('thread-json').textContent;
+    await user.click(within(timeline).getByText('#4'));
+    expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
+    expect(screen.getByText('Reading the thread at event 4…')).toBeInTheDocument();
+    expect(screen.getByTestId('thread-json').textContent).toBe(previous);
+    const disclosure = screen.getByRole('button', { name: 'Full thread JSON' });
+    act(() => disclosure.focus());
+    await act(async () => {
+      release();
+      await pending;
+    });
+    await screen.findByText('Thread at event 4');
+    expect(disclosure).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByTestId('thread-json')).toHaveTextContent('"topic": "loops"'),
+    );
+  });
+  it('reads seeded gate counts from the server before any decision event', async () => {
     const api = new FakeApi();
     const base = minimalLoop();
     const loop = api.addLoop(
@@ -106,9 +140,7 @@ describe('RunInspectorPage', () => {
         gate: { passes: 1 },
       }),
     );
-    expect(api.callsTo('GET', `/loops/${loop.id}/versions/${loop.currentVersionId}`)).toHaveLength(
-      1,
-    );
+    expect(api.callsTo('GET', `/runs/${run.id}/thread`).length).toBeGreaterThan(0);
   });
 
   it('shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold', async () => {
@@ -283,6 +315,9 @@ describe('RunInspectorPage', () => {
         }),
       ),
     );
+    await waitFor(() => expect(useRunEventStore.getState().runs[run.id]?.lastSeq).toBe(7));
+    expect(within(timeline).getAllByRole('button')).toHaveLength(6);
+    await user.click(screen.getByRole('button', { name: 'Follow live' }));
     await waitFor(() => expect(within(timeline).getAllByRole('button')).toHaveLength(7));
 
     // Progress drawer groups node activity.
@@ -376,9 +411,7 @@ describe('RunInspectorPage', () => {
       }),
     );
     renderApp(`/runs/${broken.id}`, api);
-    expect(
-      await screen.findByText('The thread cannot be reconstructed at event 2'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Thread read failed:/)).toBeInTheDocument();
   });
 
   it('resumes the stream after the stored cursor on reload', async () => {
@@ -686,7 +719,7 @@ describe('RunInspectorPage', () => {
     ).toHaveLength(2);
 
     // The patch diff bounds each side at the cell bound.
-    const diff = screen.getByRole('list', { name: 'Patch diff' });
+    const diff = await screen.findByRole('list', { name: 'Patch diff' });
     expect(within(diff).getByLabelText('Value before /vars/blob')).toHaveTextContent('(absent)');
     expect(within(diff).getByLabelText('Value after /vars/blob').textContent?.length).toBe(1_025);
 

@@ -1,7 +1,8 @@
-import type { RunEvent } from '@graphgoblin/contracts';
-import { Alert, Card } from '../../components/ui/index.js';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Alert, Button, Card } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
 import { describeEvent } from '../projections.js';
+import type { TimelineEvent } from '../event-store.js';
 import type { StreamStatus } from '../useRunEvents.js';
 
 const STREAM_LABEL: Record<StreamStatus, string> = {
@@ -10,56 +11,248 @@ const STREAM_LABEL: Record<StreamStatus, string> = {
   finished: 'complete',
   error: 'stream error',
 };
-
-/** The run's events as they stream in; choosing one shows the thread at that point. */
+// Count-based row windowing avoids fixed-height assumptions for wrapped, accessible names.
+export const TIMELINE_ROWS = 80;
 export function Timeline({
   events,
   status,
   error,
   selected,
   onSelect,
+  total = events.length,
+  hasOlder = false,
+  hasNewer = false,
+  busy = false,
+  following = true,
+  onOlder,
+  onNewer,
+  onLive,
+  onPause,
 }: {
-  events: RunEvent[];
+  events: TimelineEvent[];
   status: StreamStatus;
   error: string | undefined;
   selected: number | undefined;
   onSelect: (seq: number) => void;
+  total?: number;
+  hasOlder?: boolean;
+  hasNewer?: boolean;
+  busy?: boolean;
+  following?: boolean;
+  onOlder?: () => void;
+  onNewer?: () => void;
+  onLive?: () => void;
+  onPause?: () => void;
 }) {
+  const [anchor, setAnchor] = useState<number>();
+  const [jump, setJump] = useState('');
+  const listRef = useRef<HTMLOListElement>(null);
+  const focusRef = useRef<number | undefined>(undefined);
+  const readerScrollingRef = useRef(false);
+  useEffect(() => {
+    const released = () => {
+      readerScrollingRef.current = false;
+    };
+    window.addEventListener('pointerup', released);
+    window.addEventListener('pointercancel', released);
+    window.addEventListener('touchend', released);
+    return () => {
+      window.removeEventListener('pointerup', released);
+      window.removeEventListener('pointercancel', released);
+      window.removeEventListener('touchend', released);
+    };
+  }, []);
+  const tail = Math.max(0, events.length - TIMELINE_ROWS);
+  const anchorIndex =
+    anchor === undefined ? tail : events.findIndex((event) => event.seq >= anchor);
+  const start = following || anchor === undefined ? tail : Math.max(0, Math.min(tail, anchorIndex));
+  const shown = events.slice(start, start + TIMELINE_ROWS);
+  const end = start + shown.length;
+  useLayoutEffect(() => {
+    if (focusRef.current !== undefined) {
+      listRef.current
+        ?.querySelector<HTMLButtonElement>(`button[data-seq="${focusRef.current}"]`)
+        ?.focus();
+      focusRef.current = undefined;
+    }
+    if (following && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  });
+  function move(index: number) {
+    const row = events[index];
+    if (!row) return;
+    onPause?.();
+    setAnchor(events[Math.max(0, Math.min(index, events.length - TIMELINE_ROWS))]?.seq);
+    focusRef.current = row.seq;
+  }
   return (
-    <Card
-      flush
-      title={`Timeline (${events.length} events, ${STREAM_LABEL[status]})`}
-      actions={
-        status === 'live' ? (
-          <span
-            aria-hidden="true"
-            className="glow-live size-[7px] animate-pulse-soft rounded-full bg-status-info-border"
-          />
-        ) : undefined
-      }
-    >
+    <Card flush title={`Timeline (${total} events, ${STREAM_LABEL[status]})`}>
       {error ? (
         <div className="px-5 pt-4">
           <Alert>{error}</Alert>
         </div>
       ) : null}
-      <ol className="max-h-[60vh] overflow-auto p-2" aria-label="Timeline">
-        {events.map((event) => (
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 text-xs text-muted">
+        <Button
+          size="sm"
+          disabled={!hasOlder || busy}
+          onClick={() => {
+            onPause?.();
+            setAnchor(0);
+            onOlder?.();
+          }}
+        >
+          Load older
+        </Button>
+        <Button
+          size="sm"
+          disabled={start === 0 || busy}
+          onClick={() => move(Math.max(0, start - TIMELINE_ROWS))}
+        >
+          Previous rows
+        </Button>
+        <Button size="sm" disabled={end >= events.length || busy} onClick={() => move(end)}>
+          Next rows
+        </Button>
+        <Button
+          size="sm"
+          disabled={!hasNewer || busy}
+          onClick={() => {
+            setAnchor(undefined);
+            onNewer?.();
+          }}
+        >
+          Load newer
+        </Button>
+        <Button
+          size="sm"
+          disabled={following || busy}
+          onClick={() => {
+            setAnchor(undefined);
+            onLive?.();
+          }}
+        >
+          Follow live
+        </Button>
+        <span aria-live="polite">
+          {events.length
+            ? `Showing events ${shown[0]?.seq}–${shown.at(-1)?.seq} of the retained window.`
+            : 'No events loaded.'}
+        </span>
+      </div>
+      <form
+        className="flex items-center gap-2 px-4 py-2 text-sm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const seq = Number(jump);
+          if (Number.isSafeInteger(seq) && seq > 0) {
+            setAnchor(seq);
+            onSelect(seq);
+          }
+        }}
+      >
+        <label>
+          Event sequence{' '}
+          <input
+            className="w-24 rounded-sm border border-default bg-surface-control px-2 py-1"
+            type="number"
+            min="1"
+            step="1"
+            value={jump}
+            onChange={(event) => setJump(event.target.value)}
+          />
+        </label>
+        <Button size="sm" type="submit" disabled={busy}>
+          Go to event
+        </Button>
+      </form>
+      <ol
+        ref={listRef}
+        className="max-h-[60vh] overflow-auto p-2"
+        aria-label="Timeline"
+        onPointerDown={() => {
+          readerScrollingRef.current = true;
+        }}
+        onTouchMove={() => {
+          readerScrollingRef.current = true;
+        }}
+        onWheel={(event) => {
+          if (following && event.deltaY < 0 && event.currentTarget.scrollTop > 0) {
+            setAnchor(shown[0]?.seq);
+            onPause?.();
+          }
+        }}
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          // Fonts, layout and our own tail scrolling also emit scroll events. Only a reader's
+          // scrollbar/touch gesture may pause retention here; wheel and keyboard act explicitly.
+          if (
+            readerScrollingRef.current &&
+            following &&
+            element.scrollTop + element.clientHeight < element.scrollHeight - 8
+          ) {
+            setAnchor(shown[0]?.seq);
+            onPause?.();
+          }
+        }}
+        onKeyDown={(event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLButtonElement)) return;
+          const index = events.findIndex((row) => row.seq === Number(target.dataset['seq']));
+          let next: number | undefined;
+          if (event.key === 'ArrowDown') next = index + 1;
+          if (event.key === 'ArrowUp') next = index - 1;
+          if (event.key === 'Home') next = 0;
+          if (event.key === 'End') next = events.length - 1;
+          if (event.key === 'PageDown') next = Math.min(events.length - 1, index + TIMELINE_ROWS);
+          if (event.key === 'PageUp') next = Math.max(0, index - TIMELINE_ROWS);
+          if (event.key === 'Tab' && !event.shiftKey && index === end - 1 && end < events.length)
+            next = index + 1;
+          if (event.key === 'Tab' && event.shiftKey && index === start && start > 0)
+            next = index - 1;
+          if (next !== undefined && next >= 0 && next < events.length) {
+            event.preventDefault();
+            move(next);
+          }
+        }}
+      >
+        {shown.map((event) => (
           <li key={event.seq}>
             <button
               type="button"
+              data-seq={event.seq}
               aria-current={event.seq === selected ? 'true' : undefined}
+              aria-description={
+                'uncached' in event
+                  ? 'Select to load the exact event payload from the server.'
+                  : undefined
+              }
               className={cn(
                 'grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2',
                 'rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11',
                 'aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row',
                 'forced-colors:aria-[current=true]:outline',
               )}
-              onClick={() => onSelect(event.seq)}
+              onFocus={() => {
+                setAnchor(shown[0]?.seq);
+                onPause?.();
+              }}
+              onClick={() => {
+                setAnchor(shown[0]?.seq);
+                onSelect(event.seq);
+              }}
             >
               <span className="text-right font-mono text-xs text-subtle">#{event.seq}</span>
               <code className="text-[12.5px] font-medium">{event.type}</code>
-              <span className="min-w-0 break-words text-muted">{describeEvent(event)}</span>
+              <span className="min-w-0 break-words text-muted">
+                {'uncached' in event ? (
+                  <>
+                    {event.description}
+                    <span aria-hidden="true"> - Load exact event payload</span>
+                  </>
+                ) : (
+                  describeEvent(event)
+                )}
+              </span>
             </button>
           </li>
         ))}

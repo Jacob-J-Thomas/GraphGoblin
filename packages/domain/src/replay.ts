@@ -82,9 +82,12 @@ export function replayThread<T extends ReplayableThread>(
 }
 
 /** The replay state after the event `seq`, for replaying only the events that follow it. */
-export function replayStateAt(events: readonly ThreadReplayEvent[], seq: number): ReplayState {
-  let openNodeId: string | undefined;
-  let strict = false;
+export function replayStateAt(
+  events: readonly ThreadReplayEvent[],
+  seq: number,
+  initial: ReplayState = { strict: false },
+): ReplayState {
+  let { openNodeId, strict } = initial;
   for (const event of events) {
     if (event.seq > seq) break;
     if (event.type === 'node.started') {

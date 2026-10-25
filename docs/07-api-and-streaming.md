@@ -132,7 +132,7 @@ snapshots or execution state. `GET /runs/{id}` and MCP `get_run` retain the run-
 projection (status, position, result and failure); the record contains no context-thread
 snapshot. Separate reads can observe different event prefixes while execution advances.
 
-A terminal SSE event closes that subscription, not the lifetime of a resumable failed run.
+An authoritative SSE completion closes that observed tail, not the lifetime of a resumable failed run.
 Observers following all attempts first catch up with JSON event pages after their stored
 cursor through an observed `lastEventSeq`, then open a new SSE tail if execution is active.
 Historical terminal events in JSON pages do not end this catch-up. Lifecycle events determine
@@ -186,6 +186,14 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
 `docs/qa/2026-10-23-wp-g1-116/measure-after.json`. The repeatable script is
 `apps/api/scripts/thread-read-measure.ts`.
 
+## Browser history reads (#186 round 2)
+
+The existing JSON `GET /runs/{id}/events?after=N&limit=L` remains a forward read; SSE and `stream.complete` are unchanged. Browser navigation adds mutually exclusive seek `around=N` (a page ending at or before N, inclusive) or opaque `cursor=C` (strictly older or newer than its encoded sequence). Pages remain ascending by sequence, with unchanged event payloads, `nextAfter` and `hasMore`; navigation responses also supply nullable `olderCursor` and `newerCursor`. These cursors are bound to the run, canonical base64url JSON, validated within 256 characters, and treated as opaque by clients. They are distinct from #367's Runs/inbound Events cursors. Ownership is checked before decoding or reading history. No timestamp ordering or client-side cursor construction is used.
+
+`GET /runs/{id}/thread?at=N` resolves the exact context after boundary N (zero is the admitted seed). The current read without `at` keeps #116's behavior. Historical reconstruction uses 128-event pages and carries the domain open-visit/strict replay state across pages, retaining only the thread and one page, and yields between reads. It uses a verified preceding checkpoint when available and never writes execution state. Work is proportional to the prefix after that checkpoint; the requested thread's intrinsic size remains supported.
+
+`GET /runs/{id}/observation` returns the latest durable lifecycle, exit, gate decision and finish evidence (each optional) independently of browser retention. Type-indexed latest reads select exact events; the last gate uses one descending type-index scan with a JSON gate predicate, without materializing the log or making a round trip for each ungated decision. Run status/result/delivery authority remains the run record, and this read does not change stream completion or delivery finality.
+
 ## SSE protocol (Decided)
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
@@ -233,7 +241,7 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
   past historical terminal events, and retries EOF without completion even after a terminal event.
   Malformed completion controls reject with `RunEventParseError`. Controls never advance the cursor.
   The client's `onEvent(event, jsonBytes)` supplies the received JSON's estimated UTF-16 byte size
-  for batching without another serialization. History browsing follows in #186 round 2.
+  for batching without another serialization. Browser history reads are documented above.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 
 ## Evaluation events
@@ -465,7 +473,7 @@ using different harnesses can be checked against each relevant catalog.
 
 A draft has a version token, `draftToken`: a hash of the definition the next draft save replaces, which is the draft, or the published version when there is no draft. Equal content gives an equal token, so publishing (which keeps the content) does not change it. `GET /loops/{id}` returns it in the body and as the `ETag` header; `PUT /loops/{id}/draft` returns the new one the same way.
 
-`PUT /loops/{id}/draft` with `If-Match: "<draftToken>"` saves only when the server copy still has that token; otherwise it answers 409 `DRAFT_CONFLICT` with the server's current token as the problem's `draftToken` extension member, and saves nothing. `*`, weak tags (`W/"…"`), and lists are accepted. Draft saves and publishes of one loop are serialized in the API process, so of two different saves with the same token exactly one wins; a stale save whose definition already equals the server draft is a no-op 200 rather than a conflict. Storage also refuses to modify a version row that is no longer a draft: a save racing a publish creates a new draft, and a published version never changes. A save without `If-Match` stays unconditional (last write wins), for scripts and the MCP `design-loop` flow. In the client, `loops.saveDraft(client, loopId, definition, { ifMatch })` sends the header and a conflict surfaces as `GraphGoblinApiError` with `code: 'DRAFT_CONFLICT'` and `problem.draftToken`.
+`PUT /loops/{id}/draft` with `If-Match: "<draftToken>"` saves only when the server copy still has that token; otherwise it answers 409 `DRAFT_CONFLICT` with the server's current token as the problem's `draftToken` extension member, and saves nothing. `*`, weak tags (`W/"Ã¢â‚¬Â¦"`), and lists are accepted. Draft saves and publishes of one loop are serialized in the API process, so of two different saves with the same token exactly one wins; a stale save whose definition already equals the server draft is a no-op 200 rather than a conflict. Storage also refuses to modify a version row that is no longer a draft: a save racing a publish creates a new draft, and a published version never changes. A save without `If-Match` stays unconditional (last write wins), for scripts and the MCP `design-loop` flow. In the client, `loops.saveDraft(client, loopId, definition, { ifMatch })` sends the header and a conflict surfaces as `GraphGoblinApiError` with `code: 'DRAFT_CONFLICT'` and `problem.draftToken`.
 
 `PUT /settings` validates the shared `defaults` value (`{byHarness:{codex:{model?,effort?}}}`). Catalog metadata default effort remains guidance, not a hidden resolver layer. Old owner `defaultModel` and `defaultEffort` values are converted offline. Deleting the `defaults` setting restores process defaults.
 

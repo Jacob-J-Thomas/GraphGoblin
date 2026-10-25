@@ -59,7 +59,15 @@ export function followRunAttempts(
       // Appends already notify the inspector. Metadata can also catch up without another event.
       if (changed && !appended) observer.changed();
       if (controller.signal.aborted) return;
-      const events = observer.events();
+      const observation = await runs.observation(client, runId, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      // A lifecycle read can overtake the row/page snapshot. Reopen at the acknowledged cursor
+      // rather than declaring an unseen outcome complete and omitting its intervening history.
+      if (observation.lifecycle && observation.lifecycle.seq > observer.cursor()) {
+        observer.running();
+        return;
+      }
+      const events = observation.lifecycle ? [observation.lifecycle] : [];
       const status = events.length ? summarizeRun(events).status : run.status;
       if (!isTerminal(status)) {
         observer.running();

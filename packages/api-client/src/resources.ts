@@ -128,14 +128,30 @@ export const runs = {
   ) => unwrap(await client.GET('/runs', { params: { query }, ...options })),
   get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
     unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
-  thread: async (client: GraphGoblinClient, runId: string) =>
-    unwrap(await client.GET('/runs/{id}/thread', id(runId))),
-  /** One page of the persisted event log after `after`; use `subscribeRunEvents` for a live tail. */
+  thread: async (
+    client: GraphGoblinClient,
+    runId: string,
+    query: { at?: number } = {},
+    options: { signal?: AbortSignal } = {},
+  ) =>
+    unwrap(
+      await client.GET('/runs/{id}/thread', { params: { path: { id: runId }, query }, ...options }),
+    ),
+  observation: async (
+    client: GraphGoblinClient,
+    runId: string,
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/runs/{id}/observation', { ...id(runId), ...options })),
+  /** Forward replay uses `after`; browsing seeks `around` then passes opaque older/newer cursors unchanged. Use `subscribeRunEvents` for a live tail. */
   events: async (
     client: GraphGoblinClient,
     runId: string,
     query: QueryParams<'/runs/{id}/events', 'get'> = {},
-  ) => unwrap(await client.GET('/runs/{id}/events', { params: { path: { id: runId }, query } })),
+    options: { signal?: AbortSignal } = {},
+  ) =>
+    unwrap(
+      await client.GET('/runs/{id}/events', { params: { path: { id: runId }, query }, ...options }),
+    ),
   cancel: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/cancel', id(runId))),
   pause: async (client: GraphGoblinClient, runId: string) =>

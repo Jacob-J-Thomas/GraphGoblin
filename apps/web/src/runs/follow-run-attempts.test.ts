@@ -1,14 +1,55 @@
 import type { RunFailure } from '@graphgoblin/contracts';
 import { afterEach, expect, it, vi } from 'vitest';
-import { createAppClient } from '../api/context.js';
+import { createAppClient as appClient } from '../api/context.js';
 import { event, runRecord } from '../__fixtures__/fake-api.js';
 import { followRunAttempts } from './follow-run-attempts.js';
+
+// Observation is a separate server read model. Serve its latest lifecycle from the pages
+// this external HTTP fixture supplies, independently of the observer's retained array.
+function createAppClient(base: string, read: (request: Request) => Promise<Response>) {
+  let lifecycle: ReturnType<typeof event> | undefined;
+  return appClient(base, async (request) => {
+    if (request.url.includes('/observation')) return Response.json({ lifecycle });
+    const response = await read(request);
+    if (request.url.includes('/events') && response.ok) {
+      const page = (await response.clone().json()) as { items?: ReturnType<typeof event>[] };
+      for (const item of page.items ?? [])
+        if (
+          ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'].includes(
+            item.type,
+          )
+        )
+          lifecycle = item;
+    }
+    return response;
+  });
+}
 
 afterEach(() => vi.useRealTimers());
 const id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const failure: RunFailure = { code: 'SCRIPT_EXIT_CODE', message: 'failure', resumable: true };
 const resumed = (seq: number) =>
   event(id, seq, 'run.resumed', { actor: { kind: 'user', id: 'test' } });
+
+it('reopens at its cursor when the lifecycle observation overtakes the captured row and pages', async () => {
+  vi.useFakeTimers();
+  const client = appClient('http://test', (request) =>
+    Promise.resolve(
+      Response.json(
+        request.url.includes('/observation')
+          ? { lifecycle: event(id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }) }
+          : runRecord({ id, status: 'failed', failure, lastEventSeq: 1 }),
+      ),
+    ),
+  );
+  const o = observer(1);
+  const stop = followRunAttempts(client, id, o);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(o.running).toHaveBeenCalledOnce();
+  expect(o.finished).not.toHaveBeenCalled();
+  expect(o.cursor()).toBe(1);
+  stop();
+});
 function observer(start = 0) {
   let cursor = start;
   const recorded: ReturnType<typeof resumed>[] = [];

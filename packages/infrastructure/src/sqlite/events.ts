@@ -6,7 +6,7 @@ import {
   validateGeneratedEvent,
 } from '@graphgoblin/engine';
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
-import { and, asc, eq, gt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, lt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { runEvents, runs } from './schema.js';
 
@@ -156,6 +156,93 @@ export class SqliteEventStore implements EventStorePort {
     const rows = await this.readRows(runId, afterSeq, limit + 1);
     const items = rows.slice(0, limit).map(toEvent);
     return { items, nextAfter: items.at(-1)?.seq ?? afterSeq, hasMore: rows.length > limit };
+  }
+
+  /** A bounded, sequence-ordered browser window. Timestamps never determine membership. */
+  async window(runId: string, seq: number, direction: 'older' | 'newer', limit: number) {
+    const rows = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          direction === 'older' ? lt(runEvents.seq, seq) : gt(runEvents.seq, seq),
+        ),
+      )
+      .orderBy(direction === 'older' ? desc(runEvents.seq) : asc(runEvents.seq))
+      .limit(limit);
+    if (direction === 'older') rows.reverse();
+    const items = rows.map(toEvent);
+    const first = items[0]?.seq ?? seq;
+    const last = items.at(-1)?.seq ?? seq;
+    const exists = async (bound: number, side: 'older' | 'newer') =>
+      (
+        await this.db
+          .select({ seq: runEvents.seq })
+          .from(runEvents)
+          .where(
+            and(
+              eq(runEvents.runId, runId),
+              side === 'older' ? lt(runEvents.seq, bound) : gt(runEvents.seq, bound),
+            ),
+          )
+          .limit(1)
+      ).length > 0;
+    return { items, hasOlder: await exists(first, 'older'), hasNewer: await exists(last, 'newer') };
+  }
+
+  /** Latest matching evidence, independent of the browser window; indexed by run/type/seq. */
+  async latestGate(runId: string): Promise<RunEvent | undefined> {
+    // One indexed type scan, not one SQL round trip per ungated decision. Malformed JSON is
+    // selected too, so decoding reports corruption instead of silently treating it as no gate.
+    const [row] = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          eq(runEvents.type, 'decision.made'),
+          sql`case when json_valid(${runEvents.payload}) then json_type(${runEvents.payload}, '$.gate') is not null else 1 end`,
+        ),
+      )
+      .orderBy(desc(runEvents.seq))
+      .limit(1);
+    return row ? toEvent(row) : undefined;
+  }
+
+  async latest(
+    runId: string,
+    type: RunEvent['type'],
+    before = Number.MAX_SAFE_INTEGER,
+  ): Promise<RunEvent | undefined> {
+    const [row] = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(and(eq(runEvents.runId, runId), eq(runEvents.type, type), lt(runEvents.seq, before)))
+      .orderBy(desc(runEvents.seq))
+      .limit(1);
+    return row ? toEvent(row) : undefined;
   }
 
   private async readRows(runId: string, afterSeq: number, limit?: number): Promise<Row[]> {

@@ -165,3 +165,35 @@ describe('summarizeRun', () => {
     ).toBe('failed');
   });
 });
+
+it('carries replay state across pages including an open visit and delayed duplicate completion', () => {
+  const initial = sampleThread();
+  const history = [
+    ev(1, 'node.started', { nodeId: 'a', kind: 'mutate', attempt: 1, configHash: 'h' }),
+    ev(2, 'node.finished', {
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/once', value: 1 }],
+      durationMs: 1,
+    }),
+    ev(3, 'node.started', { nodeId: 'b', kind: 'mutate', attempt: 1, configHash: 'h' }),
+    ev(4, 'node.finished', {
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/duplicate', value: 1 }],
+      durationMs: 1,
+    }),
+    ev(5, 'node.finished', {
+      nodeId: 'b',
+      patch: [{ op: 'add', path: '/vars/done', value: true }],
+      durationMs: 1,
+    }),
+  ];
+  for (const split of [1, 2, 3, 4]) {
+    const prefix = history.slice(0, split),
+      tail = history.slice(split);
+    const state = replayStateAt(prefix, split);
+    expect(replayThread(replayThread(initial, prefix), tail, undefined, state)).toEqual(
+      replayThread(initial, history),
+    );
+    expect(replayStateAt(tail, 5, state)).toEqual(replayStateAt(history, 5));
+  }
+});

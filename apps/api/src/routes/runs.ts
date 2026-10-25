@@ -23,6 +23,7 @@ import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
 import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
+import { historicalThread, historyCursor, readHistoryCursor } from '../run-history.js';
 
 const IdParams = z.object({ id: UlidSchema });
 
@@ -183,12 +184,18 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'The current context thread',
         params: IdParams,
+        querystring: z.strictObject({
+          at: z.coerce.number().int().nonnegative().safe().optional(),
+        }),
         response: { 200: ContextThreadSchema },
       },
     },
     async (request, reply) => {
       await ownedRun(request, request.params.id);
-      const thread = await manager.getThread(request.params.id);
+      const thread =
+        request.query.at === undefined
+          ? await manager.getThread(request.params.id)
+          : await historicalThread(container, request.params.id, request.query.at);
       if (!thread) return problem(reply, 404, 'THREAD_NOT_FOUND', 'the run has no thread');
       return thread;
     },
@@ -201,15 +208,31 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'A page of events; with Accept: text/event-stream, a live SSE tail',
         params: IdParams,
-        querystring: z.object({
-          after: z.coerce.number().int().min(0).optional(),
-          limit: z.coerce.number().int().min(1).max(1000).optional(),
-        }),
+        querystring: z
+          .object({
+            after: z.coerce.number().int().min(0).optional(),
+            limit: z.coerce.number().int().min(1).max(1000).optional(),
+            cursor: z.string().optional(),
+            around: z.coerce
+              .number()
+              .int()
+              .nonnegative()
+              .max(Number.MAX_SAFE_INTEGER - 1)
+              .optional(),
+          })
+          .refine(
+            (query) =>
+              [query.after, query.around, query.cursor].filter((value) => value !== undefined)
+                .length <= 1,
+            { message: 'Choose one of after, around or cursor.' },
+          ),
         response: {
           200: z.object({
             items: z.array(RunEventSchema),
             nextAfter: z.number().int(),
             hasMore: z.boolean(),
+            olderCursor: z.string().nullable().optional(),
+            newerCursor: z.string().nullable().optional(),
           }),
         },
       },
@@ -230,7 +253,62 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         return reply;
       }
       const limit = request.query.limit ?? 500;
+      if (request.query.cursor !== undefined || request.query.around !== undefined) {
+        const position =
+          request.query.cursor !== undefined
+            ? readHistoryCursor(request.query.cursor, request.params.id)
+            : { seq: request.query.around! + 1, direction: 'older' as const };
+        const page = await repos.events.window(
+          request.params.id,
+          position.seq,
+          position.direction,
+          limit,
+        );
+        const first = page.items[0]?.seq ?? position.seq;
+        const last = page.items.at(-1)?.seq ?? position.seq;
+        return {
+          items: page.items,
+          nextAfter: last,
+          hasMore: page.hasNewer,
+          olderCursor: page.hasOlder
+            ? historyCursor({ runId: request.params.id, seq: first, direction: 'older' })
+            : null,
+          newerCursor: page.hasNewer
+            ? historyCursor({ runId: request.params.id, seq: last, direction: 'newer' })
+            : null,
+        };
+      }
       return repos.events.page(request.params.id, after, limit);
+    },
+  );
+
+  app.get(
+    '/runs/:id/observation',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Latest durable inspector evidence, independent of the retained history window',
+        params: IdParams,
+        response: {
+          200: z.object({
+            lifecycle: RunEventSchema.optional(),
+            exit: RunEventSchema.optional(),
+            gate: RunEventSchema.optional(),
+            finished: RunEventSchema.optional(),
+          }),
+        },
+      },
+    },
+    async (request) => {
+      const runId = request.params.id;
+      await ownedRun(request, runId);
+      const gate = await repos.events.latestGate(runId);
+      return {
+        lifecycle: await repos.events.lastLifecycleEvent(runId),
+        exit: await repos.events.latest(runId, 'exit.evaluated'),
+        gate,
+        finished: await repos.events.latest(runId, 'run.finished'),
+      };
     },
   );
 

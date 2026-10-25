@@ -6,6 +6,49 @@ import { SqliteEventStore } from './events.js';
 
 let handle: DatabaseHandle;
 const runId = fakeUlid('invalid-event');
+
+it('finds the latest gate past ungated decisions in one read model and reports malformed history', async () => {
+  const store = new SqliteEventStore(handle.db, new FakeClock());
+  const decision = {
+    type: 'decision.made' as const,
+    nodeId: 'gate',
+    portId: 'done',
+    provenance: {
+      kind: 'expression' as const,
+      provider: null,
+      model: null,
+      effort: null,
+      classifierId: null,
+    },
+    diagnostics: [],
+    observation: { kind: 'route' as const, routeId: 'done', confidence: null, reasoning: null },
+  };
+  const events = await store.append(runId, [
+    {
+      ...decision,
+      gate: {
+        previousPasses: 1,
+        passes: 1,
+        maxPasses: 3,
+        repeatRouteId: 'repeat',
+        elapsedSeconds: 0,
+        limit: null,
+      },
+    },
+    decision,
+    decision,
+  ]);
+  expect(await store.latestGate(runId)).toEqual(events[0]);
+  expect(await store.latestGate('absent')).toBeUndefined();
+  await handle.client.execute({
+    sql: 'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = ?',
+    args: ['{invalid', runId, 3],
+  });
+  await expect(store.latestGate(runId)).rejects.toMatchObject({
+    code: 'HISTORY_UNREADABLE',
+    seq: 3,
+  });
+});
 beforeEach(async () => {
   handle = await openMemoryDatabase();
 });
@@ -75,4 +118,38 @@ describe('strict stored event reads', () => {
       expect(await store.page(runId, 3, 1)).toEqual({ items: [], nextAfter: 3, hasMore: false });
     },
   );
+});
+
+it('reads bounded history windows in both directions and latest evidence without decoding unrelated rows', async () => {
+  const store = new SqliteEventStore(handle.db, new FakeClock());
+  const all = await store.append(runId, [
+    { type: 'run.queued', versionId: FIXTURE_IDS.version, pinned: samplePin() },
+    { type: 'run.started', attempt: 1 },
+    { type: 'run.cancelled' },
+    { type: 'run.started', attempt: 2 },
+    { type: 'run.cancelled' },
+  ]);
+  expect(await store.window(runId, 5, 'older', 2)).toEqual({
+    items: all.slice(2, 4),
+    hasOlder: true,
+    hasNewer: true,
+  });
+  expect(await store.window(runId, 0, 'newer', 2)).toEqual({
+    items: all.slice(0, 2),
+    hasOlder: false,
+    hasNewer: true,
+  });
+  expect(await store.window(runId, 4, 'newer', 2)).toEqual({
+    items: all.slice(4),
+    hasOlder: true,
+    hasNewer: false,
+  });
+  expect(await store.window('absent', 0, 'newer', 2)).toEqual({
+    items: [],
+    hasOlder: false,
+    hasNewer: false,
+  });
+  expect(await store.latest(runId, 'run.cancelled')).toEqual(all[4]);
+  expect(await store.latest(runId, 'run.cancelled', 5)).toEqual(all[2]);
+  expect(await store.latest(runId, 'run.failed')).toBeUndefined();
 });
