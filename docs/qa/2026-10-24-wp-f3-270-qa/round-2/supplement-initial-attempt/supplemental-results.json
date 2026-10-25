@@ -1,0 +1,37 @@
+[
+  {
+    "name": "nested-intent-defaults-and-damaged-bytes",
+    "status": "PASS",
+    "data": {
+      "runLimits": {
+        "maxNodeVisits": 10,
+        "structuredTimeoutMs": null,
+        "runDeadlineSeconds": null
+      },
+      "queuedLimits": {
+        "maxNodeVisits": 10,
+        "structuredTimeoutMs": null,
+        "runDeadlineSeconds": null
+      },
+      "snapshotSettings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "subloopDepthLimit": 8,
+        "structuredTimeoutMs": null,
+        "runDeadlineSeconds": null
+      },
+      "damaged": "{broken"
+    }
+  },
+  {
+    "name": "due-webhook-intent-cold-migration-recovery",
+    "status": "FAIL",
+    "error": "LibsqlError: URL_INVALID: URL component has invalid percent encoding: URIError: URI malformed",
+    "stack": "LibsqlError: URL_INVALID: URL component has invalid percent encoding: URIError: URI malformed\n    at percentDecode (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:85:19)\n    at parseUri (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:16:18)\n    at expandConfig (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/config.js:25:17)\n    at createClient (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/node.js:11:26)\n    at openDatabase (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/infrastructure/dist/sqlite/db.js:160:36)\n    at dbFor (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac80/supplemental.mjs:14:22)\n    at %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac80/supplemental.mjs:29:11\n    at check (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac80/supplemental.mjs:20:79)\n    at %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac80/supplemental.mjs:28:7"
+  }
+]

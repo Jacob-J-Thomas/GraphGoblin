@@ -1,0 +1,26 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 102808ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 21884ms
+ ❯ src/nested-readiness.test.ts (19 tests | 2 failed) 106833ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the claude executable fixture through public nested admission 21369ms
+     × uses the codex executable fixture through public nested admission 21381ms
+ ❯ src/wait-identity.test.ts (34 tests | 1 failed) 155362ms
+   ❯ durable wait boundaries (18)
+     × keeps the observed identity when SQLite is closed and reopened 20556ms
+{"level":30,"time":1792800158265,"pid":15672,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5697"}
+{"level":30,"time":1792800158266,"pid":15672,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5697,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-LdGcec","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792800159481,"pid":15672,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792800159496,"pid":15672,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":14.42659999999887,"msg":"request completed"}
+ ❯ src/triggers.test.ts (82 tests | 1 failed) 252118ms
+   ❯ boot (3)
+     × re-arms every published loop and catches up on missed fires 21426ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 2 failed) 79033ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20021ms
+     × observes only current state and cannot reconstruct a label transition between snapshots 20380ms

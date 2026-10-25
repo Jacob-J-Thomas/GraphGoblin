@@ -35,6 +35,7 @@ export function pinOf(record: LoopVersionRecord, selections: PinnedSelections): 
     label: pinLabel(source, name, record.version),
     defaults: selections.defaults,
     limits: {
+      structuredTimeoutMs: record.definition.settings.structuredTimeoutMs,
       maxNodeVisits: record.definition.settings.maxNodeVisits,
       runDeadlineSeconds: record.definition.settings.runDeadlineSeconds,
     },

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Generate against a disposable copy; shipped SQL/journal/snapshots are never mutated. */
-import { cp, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
@@ -9,7 +9,45 @@ import { pathToFileURL } from 'node:url';
 
 const infrastructure = resolve(import.meta.dirname, '../../packages/infrastructure');
 const require = createRequire(join(infrastructure, 'package.json'));
+
+/**
+ * drizzle-kit numbers the next migration from the last journal index and diffs against the
+ * lexically latest snapshot; the migrator skips an entry older than the newest applied one.
+ * So every entry's index must equal its position and its tag number, timestamps must rise and
+ * never lie ahead of the clock (drizzle-kit stamps a new migration with the current time, which
+ * would then sort before such an entry), and the snapshots that exist (data-only migrations may
+ * have none) must chain by prevId.
+ */
+export async function checkJournal(folder = join(infrastructure, 'drizzle'), now = Date.now()) {
+  const problems = [];
+  const { entries } = JSON.parse(await readFile(join(folder, 'meta/_journal.json'), 'utf8'));
+  const sql = new Set((await readdir(folder)).filter((name) => name.endsWith('.sql')));
+  entries.forEach((entry, position) => {
+    const number = Number(/^(\d{4})_/.exec(entry.tag)?.[1]);
+    if (entry.idx !== position || number !== position)
+      problems.push(`${entry.tag}: index ${entry.idx} at position ${position}`);
+    if (!sql.delete(`${entry.tag}.sql`)) problems.push(`${entry.tag}: no SQL file`);
+    if (position > 0 && !(entry.when > entries[position - 1].when))
+      problems.push(`${entry.tag}: timestamp not after ${entries[position - 1].tag}`);
+    if (entry.when > now) problems.push(`${entry.tag}: timestamp in the future`);
+  });
+  for (const name of sql) problems.push(`${name}: not in the journal`);
+  const snapshots = (await readdir(join(folder, 'meta')))
+    .filter((name) => /^\d{4}_snapshot\.json$/.test(name))
+    .sort();
+  let previous = '00000000-0000-0000-0000-000000000000';
+  for (const name of snapshots) {
+    if (Number(name.slice(0, 4)) >= entries.length) problems.push(`${name}: no journal entry`);
+    const snapshot = JSON.parse(await readFile(join(folder, 'meta', name), 'utf8'));
+    if (snapshot.prevId !== previous) problems.push(`${name}: prevId does not chain`);
+    previous = snapshot.id;
+  }
+  if (problems.length)
+    throw new Error('Migration journal is inconsistent:\n  ' + problems.join('\n  '));
+}
+
 export async function checkMigrations(schema = join(infrastructure, 'src/sqlite/schema.ts')) {
+  await checkJournal();
   const directory = await mkdtemp(join(tmpdir(), 'gg-check-migrations-'));
   try {
     const out = join(directory, 'drizzle');

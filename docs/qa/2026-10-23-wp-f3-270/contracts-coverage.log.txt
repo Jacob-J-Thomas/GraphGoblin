@@ -1,0 +1,148 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/contracts
+      Coverage enabled with v8
+
+ ❯ src/parse-identity.test.ts (6 tests | 4 failed) 658ms
+   ❯ parsing is unchanged (5)
+     × parses the minimal loop to the golden value 60ms
+     × parses the kitchen-sink loop to the golden value 277ms
+     × parses the every-field loop to the golden value 234ms
+     × parses an export envelope to the golden value 32ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/parse-identity.test.ts > parsing is unchanged > parses the minimal loop to the golden value
+Error: Snapshot `parsing is unchanged > parses the minimal loop to the golden value 1` mismatched
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -6,10 +6,11 @@
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
++     "structuredTimeoutMs": null,
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+System.Management.Automation.RemoteException
+ ❯ src/parse-identity.test.ts:55:5
+     53|     ['every-field', everyFieldLoop],
+     54|   ] as const)('parses the %s loop to the golden value', async (name, l…
+     55|     await expect(text(LoopDefinitionSchema.parse(loop()))).toMatchFile…
+       |     ^
+     56|       golden(`loop-${name}`),
+     57|     );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/parse-identity.test.ts > parsing is unchanged > parses the kitchen-sink loop to the golden value
+Error: Snapshot `parsing is unchanged > parses the kitchen-sink loop to the golden value 1` mismatched
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -13,10 +13,11 @@
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        }
+      },
++     "structuredTimeoutMs": null,
+      "maxNodeVisits": 3,
+      "runDeadlineSeconds": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {
+System.Management.Automation.RemoteException
+ ❯ src/parse-identity.test.ts:55:5
+     53|     ['every-field', everyFieldLoop],
+     54|   ] as const)('parses the %s loop to the golden value', async (name, l…
+     55|     await expect(text(LoopDefinitionSchema.parse(loop()))).toMatchFile…
+       |     ^
+     56|       golden(`loop-${name}`),
+     57|     );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/parse-identity.test.ts > parsing is unchanged > parses the every-field loop to the golden value
+Error: Snapshot `parsing is unchanged > parses the every-field loop to the golden value 1` mismatched
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -13,10 +13,11 @@
+            "model": "gpt-6-luna",
+            "effort": "medium"
+          }
+        }
+      },
++     "structuredTimeoutMs": null,
+      "maxNodeVisits": 7,
+      "runDeadlineSeconds": null,
+      "subloopDepthLimit": 4
+    },
+    "variables": {
+System.Management.Automation.RemoteException
+ ❯ src/parse-identity.test.ts:55:5
+     53|     ['every-field', everyFieldLoop],
+     54|   ] as const)('parses the %s loop to the golden value', async (name, l…
+     55|     await expect(text(LoopDefinitionSchema.parse(loop()))).toMatchFile…
+       |     ^
+     56|       golden(`loop-${name}`),
+     57|     );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/parse-identity.test.ts > parsing is unchanged > parses an export envelope to the golden value
+Error: Snapshot `parsing is unchanged > parses an export envelope to the golden value 1` mismatched
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -17,10 +17,11 @@
+              "model": "gpt-6-luna",
+              "effort": "medium"
+            }
+          }
+        },
++       "structuredTimeoutMs": null,
+        "maxNodeVisits": 7,
+        "runDeadlineSeconds": null,
+        "subloopDepthLimit": 4
+      },
+      "variables": {
+System.Management.Automation.RemoteException
+ ❯ src/parse-identity.test.ts:67:5
+     65|       loop: everyFieldLoop(),
+     66|     };
+     67|     await expect(text(LoopExportSchema.parse(envelope))).toMatchFileSn…
+       |     ^
+     68|       golden('export-every-field'),
+     69|     );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+System.Management.Automation.RemoteException
+
+  Snapshots  4 failed
+ Test Files  1 failed | 19 passed (20)
+      Tests  4 failed | 262 passed (266)
+   Start at  18:55:12
+   Duration  20.44s (transform 58%, import 36%, worker 4%, tests 2%)
+
+  Transform  transforming modules took 57.66s · 58% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\contracts
+System.Management.Automation.RemoteException
