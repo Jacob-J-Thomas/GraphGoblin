@@ -105,6 +105,9 @@ jobs:
       LIVE: '0'
     steps:
       - uses: actions/checkout@v4
+        with:
+          # issue-170-qa reads frozen golden definitions from an earlier commit with git ls-tree.
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
 
