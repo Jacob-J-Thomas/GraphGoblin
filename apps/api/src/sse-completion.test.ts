@@ -289,4 +289,32 @@ describe('authoritative SSE completion', () => {
       }
     },
   );
+  it('rechecks a pending finalization at most every 250 ms, even with frequent heartbeats', async () => {
+    const store = new InMemoryEventStore(new FakeClock());
+    const runId = FIXTURE_IDS.run;
+    await store.append(runId, [{ type: 'run.cancelled' }]);
+    const checks: number[] = [];
+    const app = Fastify();
+    app.get('/', (request, reply) =>
+      streamRunEvents(request, reply, store, runId, 1, {
+        lastLifecycleEvent: async () => (await store.read(runId)).at(-1),
+        isFinalized: () => {
+          checks.push(performance.now());
+          return Promise.resolve(false);
+        },
+        heartbeatMs: 20,
+        closeSignal: AbortSignal.timeout(1_200),
+      }),
+    );
+    try {
+      const response = await app.inject('/');
+      expect(response.body).not.toContain('stream.complete');
+      expect(response.body).toContain(': heartbeat');
+      const gaps = checks.slice(1).map((at, i) => at - checks[i]!);
+      expect(gaps.length).toBeGreaterThan(1);
+      expect(Math.min(...gaps)).toBeGreaterThanOrEqual(245);
+    } finally {
+      await app.close();
+    }
+  });
 });

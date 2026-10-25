@@ -38,7 +38,7 @@ acknowledgement, then confirm the durable tail under the existing single writer.
 Lifecycle changes invalidate the confirmation, including notifications below an
 ahead-of-tail cursor. Pending finalization stays live beyond the inconsistent-log
 grace. Because the existing marker write has no journal event, schedule at most one
-250 ms confirmation timer per pending connection. Delivery events also wake the writer.
+250 ms confirmation timer per pending connection; heartbeats and other writes do not ask again before it fires. Delivery events also wake the writer.
 This engineering parameter bounds observation latency and quiet-store reads; it
 does not alter request deadlines, retry policy or execution limits. Cancel it on close.
 Standalone stream compositions must supply the same finalization callback;

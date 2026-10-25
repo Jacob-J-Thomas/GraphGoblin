@@ -248,6 +248,9 @@ export async function streamRunEvents(
           // It has no event of its own, so a quiet pending finalizer gets one bounded recheck
           // per 250 ms. This is observation latency, not a delivery or execution deadline.
           if (!(await options.isFinalized())) {
+            // Only the timer or a lifecycle notification asks again: a heartbeat or another
+            // write in between must not turn this recheck into a tighter loop.
+            needsConfirmation = false;
             confirmation ??= setTimeout(() => {
               confirmation = undefined;
               needsConfirmation = true;
