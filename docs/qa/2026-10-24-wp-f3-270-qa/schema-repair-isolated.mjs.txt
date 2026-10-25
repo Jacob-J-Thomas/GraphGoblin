@@ -1,0 +1,14 @@
+﻿import{readFile,writeFile}from'node:fs/promises';import{resolve}from'node:path';import{pathToFileURL}from'node:url';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa'),base='http://127.0.0.1:5880';
+const {singleNodeLoop}=await import(pathToFileURL(resolve(root,'packages/engine/dist/testing/index.js')).href);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function api(path,body){const r=await fetch(base+path,{method:body===undefined?'GET':'POST',headers:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});if(!r.ok)throw Error(await r.text());return r.json()}
+async function poll(fn,pred){for(let i=0;i<200;i++){let x=await fn();if(pred(x))return x;await sleep(10)}throw Error('poll timeout')}
+await api('/qa/config',{mode:'stall',turns:[{finalText:'bad'},{finalText:'7',delayMs:15000}]});
+const o=await api('/qa/observations');
+const d=singleNodeLoop('QA isolated schema repair',{id:'work',kind:'inference',label:'Schema repair',config:{harness:'codex',prompt:{template:'Answer'},output:{captureTranscript:'none',schema:{jsonSchema:{type:'number'},repair:{enabled:true,maxAttempts:1}}}}});d.settings={structuredTimeoutMs:500,runDeadlineSeconds:null};
+const c=await api('/loops',{definition:d});await api('/loops/'+c.loop.id+'/publish',{});const {run}=await api('/loops/'+c.loop.id+'/runs',{});await poll(()=>api('/qa/observations'),x=>x.resumed.length>o.resumed.length);const observedAt=Date.now();
+const quick=singleNodeLoop('QA isolated queue',{id:'work',kind:'mutate',label:'Quick',config:{operations:[{op:'delete',path:'/vars/missing'}]}});const q=await api('/loops',{definition:quick});await api('/loops/'+q.loop.id+'/publish',{});const queued=await api('/loops/'+q.loop.id+'/runs',{});
+await sleep(1100);const delayed=await api('/runs/'+run.id),queuedAfter=await api('/runs/'+queued.run.id),events=await api('/runs/'+run.id+'/events?limit=1000');
+await api('/runs/'+run.id+'/cancel',{});await poll(()=>api('/runs/'+queued.run.id),r=>r.status==='succeeded');const cancelled=await api('/runs/'+run.id);
+const result={name:'isolated-output-schema-repair',status:delayed.status==='running'?'FAIL':'PASS',sampleAfterRepairObservedMs:Date.now()-observedAt,expected:'STRUCTURED_COMPLETION_TIMEOUT at 500ms, queue slot released',delayed,queued:queuedAfter,events,cancelled,observation:await api('/qa/observations')};await writeFile(resolve(out,'schema-repair-isolated.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));

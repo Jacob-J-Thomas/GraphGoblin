@@ -1,0 +1,160 @@
+﻿import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {resolve} from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-f3-270-qa');
+async function json(file,fallback=[]){try{return JSON.parse((await readFile(resolve(out,file),'utf8')).replace(/^\uFEFF/,''))}catch{return fallback}}
+async function raw(file){try{const b=await readFile(resolve(out,file));return b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8')}catch{return ''}}
+const primary=await json('api-results.json'),supplement=await json('api-supplemental.json');
+const configured=supplement.find(x=>x.name.startsWith('configured')),unlimited=primary.find(x=>x.name.startsWith('unlimited'));
+const native=await json('real-adapter-direct.json',{}),session=native.sessions?.[0];
+const iso=await json('isolated-results.json'),gates=await json('gates.json'),focused=await json('focused-results.json'),repair=await json('schema-repair-isolated.json',{});
+const focusedRows=focused.map(r=>`| \`${r.command}\` | ${r.exit===0?'PASS':'FAIL'}; ${r.elapsedMs} ms | [log](${r.log}) |`).join('\n');
+function flatten(rows){return rows.flatMap(r=>r.value?flatten(r.value):r)}
+const allGates=flatten(Array.isArray(gates)?gates:[gates]);
+const gateRows=allGates.map(g=>`| \`${g.command}\` | ${g.exit===0?'PASS':g.exit==null?'INCOMPLETE':'FAIL'}; ${g.elapsedMs==null?'not measured':(g.elapsedMs/1000).toFixed(2)} s | [log](${g.log}) |`).join('\n');
+const packages=['contracts','domain','engine','adapter-codex','infrastructure','api-client','api','web'];
+const coverage=[];
+for(const name of packages){const text=await raw(name+'-coverage.log.txt');const lines=text.match(/Lines\s*:\s*([\d.]+%)/)?.[1],branches=text.match(/Branches\s*:\s*([\d.]+%)/)?.[1],tests=text.match(/^\s+Tests\s+([^\r\n]+)/m)?.[1];coverage.push(`| ${name} | ${lines??'Not established'} | ${branches??'Not established'} | ${tests??'Not completed'}; [log](${name}-coverage.log.txt) |`)}
+const isoRows=iso.map(r=>`| ${r.file??r.name} | ${r.exit===0?'PASS':'FAIL'}; ${r.elapsedMs??'see log'} ms | [log](${r.log}) |`).join('\n');
+const races=primary.filter(r=>r.name.startsWith('cancel-race')).map(r=>`${r.offset} ms requested / ${r.requestedAfterMs} ms actual: ${r.after?.run.status}`).join('; ');
+let text=`# Independent QA: WP-F3 bolt #270
+
+## Verdict
+
+**FAIL** at \`f2fce3ae2b61e2a18744be4b73a7ee5ed7f2d00b\`. Two major defects and one minor diagnostic defect remain. This is independent QA, not implementation, review, release sign-off, or acceptance of all of #306/#288. No production code was changed, no commits were made, and nothing was posted to GitHub.
+
+Branch: \`codex-qa-wp-f3-270\`. Initial QA base and final tested HEAD are the requested revision. Worktree: \`%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f3-270\`. Only this QA folder is untracked. See [environment](environment.json), [binding requirements](requirements.log.txt), and [final Git state](git-state.log.txt).
+
+Node 22.14.0 was selected before pnpm, build, tests and native scripts. Populated local dependencies were confirmed; no installation, symlink or junction was needed. The built application served on 127.0.0.1:5880 with a disposable SQLite data directory, a generated API key, injected fake structured completion and FakeHarness ports, and the built web distribution. Microsoft Edge ran headless through Playwright at **1440 × 1000** and **390 × 1000**. The owner ports/store and main checkout were untouched. Scope deviation: the required API coverage suite started a disposable child on test-owned port 5605, outside the assigned 5880-5889 range. The suite was interrupted when this was observed; that child had already exited. API coverage is therefore incomplete. All manually controlled product and browser checks used port 5880. See [API suite output](api-coverage.log.txt) and [constraint record](constraints.log.txt). The process was actually stopped and restarted on the same directory: PID 57932 → 9816. See [initial instance](original-instance.json), [restarted instance](instance.json), [before restart](restart-before.json), and [after restart](restart-after.json).
+
+## Defects
+
+### D1 — Major: an inference output-schema repair ignores the configured completion deadline
+
+Reproduction, using the built API and FakeHarness:
+
+1. Create and publish an inference loop with \`settings.structuredTimeoutMs: 500\` and \`output.schema\` requiring a number, with one repair attempt enabled.
+2. Script the initial inference answer as \`bad\`, then script the same-session repair answer as \`7\` with an 1800 ms delay.
+3. Start the run. After observing \`harness.resume\`, inspect the run 750 ms later.
+
+The isolated recheck also left the run ${repair.delayed?.status??'unrecorded'} and its second run ${repair.queued?.status??'unrecorded'} beyond the deadline; explicit Cancel ended ${repair.cancelled?.status??'unrecorded'}. Its sample/cancel observation was ${repair.sampleAfterRepairObservedMs??'unrecorded'} ms after observing repair entry.
+
+Expected: abort the overdue repair, fail with \`STRUCTURED_COMPLETION_TIMEOUT\`, release capacity and retain a resumable failure. Actual: the run remains \`running\` beyond the limit, then **succeeds** with the late repaired output. There is no typed timeout to resume. The guard covers StructuredPort repairs, but this schema repair uses HarnessPort.resume directly.
+
+Evidence: [initial reproduction](inference-schema-repair.json), [QA script](api-cases.mjs.txt), [initial assertions/results](api-results.json), and [isolated recheck](schema-repair-isolated.json) / [script](schema-repair-isolated.mjs.txt). The recheck was run alone after other QA gates; its outcome is recorded without replacing the original.
+
+ADR-0051 explicitly retains node/run signals for same-session harness repairs. That documented exception does not satisfy the assigned Case 6, which asks for an inference output-schema repair to fail at this limit. QA made no product decision or production change to resolve that mismatch.
+
+### D2 — Major: a saved current-format loop without the new field cannot reopen
+
+Reproduction:
+
+1. Create a disposable current-format (format 4) draft using the built API.
+2. Stop that API process. In its disposable SQLite store, remove only \`settings.structuredTimeoutMs\` from that draft's persisted definition. All other fields remain the current parsed values. This represents the stored shape from immediately before the additive field.
+3. Start a new API process on the same store and request \`GET /loops/{id}\`; open the editor in Edge.
+
+Expected: HTTP 200 and Unlimited. Actual: HTTP **500 RESPONSE_INVALID**; Edge shows “Could not load loop” and “the server produced a response that does not match its schema”. The contract successfully parses the identical stored definition and defaults the field to null, so this is not an old-format conversion request or malformed fixture.
+
+Evidence: [stored before/after JSON](legacy-storage.json), [fixture writer](legacy-storage.mjs.txt), [HTTP and contract result](legacy-reopen.json), [browser screenshot](legacy-reopen-failure-390.png), and [capture script](restart-evidence.mjs.txt). Creating a new loop with the field omitted does pass; that does not establish reopening an existing record. ADR-0051 and the CHANGELOG promise no storage rewrite is needed for this additive default.
+
+### D3 — Minor: structured repair timeouts omit provider, model and effort
+
+Reproduce the inference output-transform repair in [api-cases.mjs.txt](api-cases.mjs.txt): a fast inference followed by a stalled StructuredPort coerce repair with the 500 ms limit. The timeout correctly fails and is resumable, but its failure details contain only \`{timeoutMs:500}\`; provider/model/effort are absent. The assigned change description requires that diagnostic context. The same omission occurs in the one native Codex repair check. Decision timeouts do include provenance.
+
+Evidence: \`inference-output-transform-structured-repair.before.run.failure\` in [API results](api-results.json), [native result](real-adapter-direct.json), and [passing decision comparison](api-supplemental.json). This does not prevent timeout or Resume, hence minor severity.
+
+## Touched systems and checks
+
+All dynamic evidence below is from this QA thread at the requested HEAD. Fake-only cases are explicitly labelled. Public constructors/ports, REST requests and real browser/native process boundaries were used; no production component was monkey-patched and no private fields were accessed. Timer observation uses Node's public async_hooks API to count Timeout resources whose creation stack includes the completion boundary.
+
+| System / case | Steps and expected | Actual / verdict | Evidence |
+| --- | --- | --- | --- |
+| Build / environment | Verify exact HEAD and populated dependencies, select Node 22, run pnpm build before serving | PASS: exact HEAD; 11 build tasks passed | [build](build.log.txt), [environment](environment.json) |
+| LLM decision, configured 500 ms; fake-only | Stall completion; queue an independent quick run under capacity 1; expect typed failure around 500 ms, abort and next run admission | PASS: abort after **${configured?.elapsedFromCompletionStartMs} ms**, timeout names 500 ms, provenance is codex/gpt-6-luna/low, queued run succeeds | [result](api-supplemental.json), [script](api-supplemental.mjs.txt) |
+| Late decision fulfillment; fake-only | Release a valid route after timeout; compare run failure, thread, and terminal events | PASS: thread and failure unchanged; one terminal event; no decision.made | [before/after](api-supplemental.json) |
+| Fast decision; fake-only | Return a route after 25 ms with a 500 ms limit | PASS: succeeded and decision.made retained | [fast-decision](api-results.json) |
+| Cancel before/at/after; fake-only | Two runs each at nominal 450/500/550 ms; release a late answer; require one terminal event and no overwrite | PASS: ${races}. Pre-deadline cancels have no timeout failure; at-boundary requests may race, and both tested outcomes remain singular | [race requests/events](api-results.json), [script](api-cases.mjs.txt) |
+| Exact cancel boundary; fake-only, public Node MockTimers | Schedule Cancel at exactly 499, 500 and 501 ms; test both registration orders at 500; release a late route | PASS: 499 cancelled; 500 cancel-first cancelled; 500 deadline-first failed with typed timeout; 501 typed timeout. Every run has one terminal event and unchanged outcome/thread after late fulfillment | [controlled clock](exact-races.json), [script](exact-races.mjs.txt), [warning/output](exact-races.log.txt) |
+| Unlimited; fake-only, real elapsed time | Null completion and run deadlines; keep provider stalled for 122 seconds; compare completion timer counts; cancel then release late answer | PASS: running after **${unlimited?.elapsedMs} ms**; timers **${unlimited?.completionTimersBefore} → ${unlimited?.completionTimersAfter}**; no abort before Cancel, then cancelled with no failure or thread overwrite | [Unlimited result](api-results.json), [timer/call observations](observations.json), [server instrumentation](server.mjs.txt) |
+| API contract boundaries | Accept null, 1 and 31536000000; refuse -1, 0, 0.5, string, boolean, and 31536000001; test invalid draft and import | PASS: valid boundaries retained; invalid values rejected with 400 and field messages | [API boundaries](api-supplemental.json) |
+| New omitted field | POST a current-format definition omitting the field | PASS: new definition is parsed to null | [omitted fixture](api-supplemental.json) |
+| Existing omitted field / SQLite / restart | Reopen an actual stored current-format definition lacking only the new field | **FAIL D2:** HTTP 500 and editor load failure, despite contract default null | [fixture](legacy-storage.json), [HTTP/browser](legacy-reopen.json), [screenshot](legacy-reopen-failure-390.png) |
+| Pins, edits and Resume | Start at 500; save draft with null during execution; expire; restore fake and Resume | PASS: original 500 pin remains and deliberate Resume succeeds | [pin/resume](api-results.json) |
+| Native process restart | Stop original process; start a new PID on the same SQLite store; compare durable original events; Resume timeout | PASS: original event prefix retained, pin 500 retained, Resume succeeds | [before](restart-before.json), [after](restart-after.json) |
+| Editor, 1440 and 390 | Open Loop settings; field follows existing visit/run-deadline limits; default Unlimited and help readable | PASS at both widths, visually inspected | [browser results](browser-results.json), [1440](loop-unlimited-1440.png), [390](loop-unlimited-390.png) |
+| Editor validation / keyboard / reload | Select Limited by keyboard (120000 suggestion), enter invalid values, then 500 and reload | PASS at both widths: visible messages and aria-invalid; valid value survives reload | [results](browser-results.json), [1440 invalid](invalid-1440.png), [390 invalid](invalid-390.png), [1440 saved](loop-limited-1440.png), [390 saved](loop-limited-390.png) |
+| Invalid-save protection, stale client, two tabs | Hold invalid local zero after saving 500; read server and second tab; write newer 750; send stale If-Match; reload second tab | PASS: invalid value did not persist, second tab read 500, stale write returned 409, second-tab reload read 750. Initial extra capture used an overly exact code-text locator | [supplemental result](browser-adversarial-supplemental.json), [script](browser-adversarial-supplemental.mjs.txt) |
+| Export / import | Download through loop-list UI and import same export through public API; require field 500 | PASS at both widths; independent API roundtrip also passed | [1440 download](ui-export-1440.json), [390 download](ui-export-390.json), [browser results](browser-results.json), [API roundtrip](api-supplemental.json) |
+| Inspector / Settings | Inspect a run pinned at 500 after editing draft to null; show unlimited process default in Settings | PASS at both widths | [1440 inspector](inspector-1440.png), [390 inspector](inspector-390.png), [1440 settings](settings-1440.png), [390 settings](settings-390.png) |
+| Inference output-transform structured repair; fake-only | Fast inference, stalled coerce repair, timeout, late repair, then Resume with fast repair | PASS for cutoff, late barrier and Resume; **FAIL D3** for diagnostic provenance | [repair snapshots](api-results.json) |
+| Inference output-schema same-session repair; fake-only | Invalid first answer, delayed repair beyond 500 ms | **FAIL D1**; no timeout or capacity release at the configured deadline | [initial](inference-schema-repair.json), [isolated](schema-repair-isolated.json) |
+| Native Codex adapter | Exactly one direct structured start on gpt-6-luna/low, 500 ms limit; verify abort, cancel and SDK settlement | ${native.status??'Not established'}: abort ${session?session.abortedAt-session.at:'?'} ms after start; cancel called ${session?.cancelCalls??'?'} time; SDK AbortError settled ${session?session.settledAt-session.abortedAt:'?'} ms later | [native JSON](real-adapter-direct.json), [native script](real-adapter-direct.mjs.txt), [native log](real-adapter-direct.log.txt) |
+
+The native check uses the real Codex adapter/SDK/CLI with a fake engine/store and a disposable read-only working directory. No provider answer or remote submission acknowledgement was verified. OS process-tree inventory was denied by the sandbox, so SDK settlement is not claimed as complete OS process-tree evidence. A preceding preflight-only attempt hit a 30-second QA watchdog before any completion start; it consumed no completion turn. The direct call was the only native completion start. See [preflight attempt](real-adapter-2.log.txt) and [script](real-adapter.mjs.txt).
+
+## Gates and coverage
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+| \`pnpm.cmd build\` | PASS: 11 successful tasks | [log](build.log.txt) |
+${gateRows}
+| \`pnpm.cmd format:check\` | INCOMPLETE: remained at Checking formatting; interrupted after more than eight minutes. Not a passing gate | [log](format-check.log.txt) |
+| \`pnpm.cmd check:licenses\` | Not run: candidate changes add no dependency | Candidate source inventory |
+
+No pnpm command reported ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK. No direct-tool fallback for that error was used. All gate results are this thread's results. Repository-wide formatting was not rerun to chase a green result. The QA README received a separate targeted formatting check, recorded in [report formatting](report-format.log.txt).
+
+| Package | Lines | Branches | Tests / evidence |
+| --- | --- | --- | --- |
+${coverage.join('\n')}
+
+The full web coverage attempt produced no test result after more than eight minutes and was interrupted as a bounded QA attempt. It is incomplete, not a passing denominator. Focused ExecutionLimitField component checks are recorded separately.
+
+A failed coverage run remains failed even when an isolated file passes. No threshold or exclusion was changed. Failed runs that do not emit a coverage summary cannot establish the required denominator. Exact failure details and first-run timings remain in the raw logs.
+
+### Focused component checks
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+${focusedRows}
+
+### Required isolated rechecks
+
+These ran sequentially, one file at a time, after the broad gates and other QA automation stopped. No broad suite was repeated. They cover timing failures in files unchanged by #270 and the single isolated recheck of D1. Both original and repeated observations are retained.
+
+| File / check | Isolated result | Evidence |
+| --- | --- | --- |
+${isoRows}
+
+## Limits and criteria coverage
+
+- **Case 1:** tested and passed for LLM decisions through the built API with a fake provider: cutoff, abort, queue admission, typed context and late overwrite barrier.
+- **Case 2:** tested and passed with a fast fake completion; no real successful provider answer was requested.
+- **Case 3:** tested and passed for six REST races and four controlled-clock schedules at exactly 499, 500 and 501 ms. Nominal “at deadline” is a real scheduling race, not a claim that an HTTP request can be delivered at an exact clock tick. Committed engine timer/race tests also ran as part of passing engine coverage.
+- **Case 4:** tested and passed across more than two minutes of actual elapsed time, including no completion timer creation.
+- **Case 5:** new records, controls/help/order, Settings, inspector pins, invalid messages, export/import and both widths passed. **Existing stored omission failed D2.**
+- **Case 6:** output-transform StructuredPort repair cutoff, late barrier and Resume passed. **Same-session inference output-schema repair failed D1**; its requested timeout-resume path cannot be established because the configured timeout never occurs. Diagnostic context failed D3 on structured repairs.
+- Bolt #270's configured deadline acceptance is therefore only partially satisfied; #306's agreement between UI, persisted config and execution is not complete for these repair/reopen paths. No integrated #288 acceptance is claimed.
+- A full successful real provider response, OS descendant-process inventory, and a live MCP session were not tested. MCP/API-client shape checks are limited to the generated-doc gate and client coverage. This run does not claim a whole-application regression pass.
+
+## QA methodology and corrections
+
+The first API script incorrectly required provenance to equal a shape without the extra nullable classifierId field and treated the export envelope as definition instead of loop. Those were QA harness errors. The corrected checks were run only for those affected cases and passed; original failures were retained. Initial browser launch/capture scripts also had fixture/Fetch API assumptions corrected; final six viewport checks passed. An extra inspector capture originally looked for an exact standalone code label; its corrected capture removes that unsupported text assumption. The initial isolated-file selector read UTF-16 PowerShell logs as UTF-8 and selected no tests. Its decoder was corrected before any isolated rerun executed; the retained isolated-results.json records the actual one-file runs. The public Node MockTimers check emitted its documented experimental API warning; all four stored cases passed their outcome, terminal-count, abort and late-barrier assertions. No product failure was erased by those harness corrections. [Initial API log](api-cases.log.txt), [corrected API log](api-supplemental.log.txt), [initial browser log](browser-cases.log.txt), [completed viewport log](browser-cases-2.log.txt), and [extra capture log](browser-adversarial.log.txt).
+
+The probe tolerance (450–2000 ms for a 500 ms deadline), 450/500/550 ms race offsets, 122000 ms Unlimited dwell and native watchdogs are QA engineering choices, not product defaults or owner-approved numeric policy. The Limited UI suggestion is 120000 ms; the actual contract default is null. No behavior docs, ADRs, CHANGELOG, generated references or production tests were modified by QA.
+
+## Observations outside scope
+
+Typecheck and lint passed. Lint retained a warning in ThreadViewer.tsx about a useState destructure; dependency cruising retained the existing drizzle.config.ts orphan warning. Timing failures in unchanged conversion/probe/native-process test files are reported with their isolated results above; this QA does not attribute them to #270 or silently waive them. Repository-wide formatting did not complete. No fixes were attempted.
+
+The QA-created instance and scratch directories were left for the orchestrator. QA issued no directory deletion commands; repository tests retain their own fixture cleanup. See [temporary resources](temporary-resources.log.txt). Normal test-generated coverage/output directories remain ignored. Captures above 1000000 bytes, if any, are catalogued by size and SHA-256 in [NOT-KEPT.md](NOT-KEPT.md); nothing excluded there is cited as retained evidence.
+
+## Report path and evidence folder
+
+Report: \`docs/qa/2026-10-24-wp-f3-270-qa/README.md\`. Evidence folder: \`docs/qa/2026-10-24-wp-f3-270-qa/\`. All retained evidence files are linked below. PowerShell UTF-16 logs are decoded to UTF-8 for retention; event/timing text is preserved. Textual local user paths are redacted to %USERPROFILE%, and manifest hashes describe those retained redacted bytes; expand that token from the environment before reusing captured instance metadata. Scripts are retained as .mjs.txt and can be run from the worktree root with Node 22 using \`Get-Content -Raw <script> | node --input-type=module -\`.
+
+## Retained artefacts
+
+`;
+const files=(await readdir(out)).filter(f=>f!=='README.md').sort();
+text+='';
+for(const f of files){const s=await stat(resolve(out,f));if(s.isFile())text+=`- [${f}](${f})\n`;}
+await writeFile(resolve(out,'README.md'),text);

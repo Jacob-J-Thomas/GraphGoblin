@@ -1,0 +1,20 @@
+node : file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:9
+At line:58 char:125
++ ... s.mjs.txt | node --input-type=module - *> docs/qa/2026-10-24-wp-f3-27 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/User...3-270/[eval1]:9:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+async function api(path,data,method=data===undefined?'GET':'POST',headers={}){const r=await fetch(base+path,{method,hea
+ders:{'content-type':'application/json',...headers},...(data===undefined?{}:{body:JSON.stringify(data)})});const 
+body=await r.json();assert(r.ok(),JSON.stringify(body));return body;}
+                                                                                                                       
+                                                                                                                       
+                       ^
+
+TypeError: r.ok is not a function
+    at api (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:9:262)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:17:16
+
+Node.js v22.14.0
