@@ -30,6 +30,7 @@ export const rawRunColumns = {
   createdAt: runs.createdAt,
   startedAt: runs.startedAt,
   finishedAt: runs.finishedAt,
+  finalizedAt: runs.finalizedAt,
   lastEventSeq: runs.lastEventSeq,
   pinned: sql<string | null>`${runs.pinned}`,
 };

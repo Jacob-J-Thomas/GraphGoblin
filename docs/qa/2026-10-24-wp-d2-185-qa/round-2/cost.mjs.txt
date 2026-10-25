@@ -1,0 +1,52 @@
+// Real HTTP stream, public EventStorePort injection. Synthetic pending finalizer.
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+import {writeFile} from 'node:fs/promises';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d2-185-qa/round-2');
+const heartbeatMs=Number(process.env.GG_QA_HEARTBEAT_MS??15000);
+const prefix=heartbeatMs===15000?'standard':'short';
+const require=createRequire(join(root,'apps/api/package.json'));
+const fastify=require('fastify');
+const {streamRunEvents}=await import(pathToFileURL(join(root,'apps/api/dist/sse.js')));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const traces={};const responseStates=[];let next=0,active=0,finalized=false;
+const app=fastify({logger:false});
+app.get('/pending',async(request,reply)=>{
+  const id=++next,trace={read:[],lifecycle:[],finalized:[],subscribed:0,unsubscribed:0};traces[id]=trace;
+  const record=kind=>trace[kind].push(performance.now());
+  // Explicit port implementation, rather than changing a running store's methods.
+  const store={
+    read:async()=>{record('read');return [];},
+    subscribe:()=>{trace.subscribed++;active++;return ()=>{trace.unsubscribed++;active--;};}
+  };
+  await streamRunEvents(request,reply,store,'01K00000000000000000000000',1,{
+    heartbeatMs, isTerminal:async()=>true,
+    lastLifecycleEvent:async()=>{record('lifecycle');return {type:'run.finished',seq:1};},
+    isFinalized:async()=>{record('finalized');return finalized;}
+  });
+});
+await app.listen({host:'127.0.0.1',port:6132});
+const controls=[];
+for(let i=0;i<3;i++){
+  const c=new AbortController();controls.push(c);
+  const response=await fetch('http://127.0.0.1:6132/pending',{signal:c.signal});
+  const state={body:'',ended:false};responseStates.push(state);void (async()=>{try{for await(const b of response.body){state.body+=new TextDecoder().decode(b);}}catch{}finally{state.ended=true;}})();
+}
+const start=performance.now(),cpuStart=process.cpuUsage();
+console.log('MEASUREMENT_STARTED three pending streams, 60000 ms');
+// Chunked waits allow the controlling agent to communicate while the process runs.
+for(let i=0;i<6;i++){await sleep(10000);console.log('MEASUREMENT_PROGRESS '+Math.round(performance.now()-start));}
+const elapsedMs=performance.now()-start,cpu=process.cpuUsage(cpuStart);
+const counts=()=>Object.values(traces).map(t=>({reads:t.read.length,lifecycle:t.lifecycle.length,finalized:t.finalized.length}));
+const pendingBeforeClose=responseStates.every(s=>!s.ended&&!s.body.includes('event: stream.complete'));const beforeClose=counts();for(const c of controls)c.abort();await sleep(1000);const afterClose=counts();await sleep(1000);const afterSettledClose=counts();
+const summaries=Object.entries(traces).map(([id,t])=>{
+  const times=t.finalized.filter(time=>time>=start+1000&&time<=start+elapsedMs);
+  const intervals=times.slice(1).map((time,i)=>time-times[i]);
+  return {id,reads:t.read.length,lifecycle:t.lifecycle.length,finalizationChecks:t.finalized.length,minIntervalMs:Math.min(...intervals),maxIntervalMs:Math.max(...intervals),under249Ms:intervals.filter(v=>v<249).length,subscribed:t.subscribed,unsubscribed:t.unsubscribed};
+});
+const result={heartbeatMs,start,elapsedMs,pendingBeforeClose,afterSettledClose,responseStates,cpu,cpuPercent:(cpu.user+cpu.system)/(elapsedMs*1000)*100,summaries,beforeClose,afterClose,activeAfterClose:active,traces};
+await writeFile(join(out,prefix+'-cost.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({...result,traces:undefined}));
+await app.close();
+if(!pendingBeforeClose||active!==0||JSON.stringify(afterClose)!==JSON.stringify(afterSettledClose)||summaries.some(s=>s.minIntervalMs<245||s.finalizationChecks>Math.ceil(elapsedMs/250)+2))process.exitCode=1;
+

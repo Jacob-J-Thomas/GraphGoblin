@@ -225,6 +225,13 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             const run = await repos.runs.get(request.params.id);
             return run !== undefined && isTerminal(run.status);
           },
+          isFinalized: async () => {
+            const run = await repos.runs.get(request.params.id);
+            return (
+              run?.finalizedAt !== undefined &&
+              !run.deliveries?.some((delivery) => delivery.status === 'pending')
+            );
+          },
           lastLifecycleEvent: () => repos.events.lastLifecycleEvent(request.params.id),
         });
         return reply;

@@ -368,3 +368,15 @@ it.each(['succeeded', 'running', 'resumed', 'receipted'] as const)(
     expect(await events.read(run.id)).toEqual(migrated);
   },
 );
+
+it('exposes and clears the existing durable finalization acknowledgement across run reads', async () => {
+  expect((await repo.get(run.id))?.finalizedAt).toBeUndefined();
+  await repo.markFinalized(run.id);
+  const marked = await repo.get(run.id);
+  expect(marked?.finalizedAt).toEqual(expect.any(String));
+  expect((await repo.list())[0]?.finalizedAt).toBe(marked?.finalizedAt);
+  expect((await repo.page({ ownerId: 'local' })).items[0]?.finalizedAt).toBe(marked?.finalizedAt);
+  expect((await repo.listChildren(run.parentRunId!))[0]?.finalizedAt).toBe(marked?.finalizedAt);
+  await repo.clearFinalized(run.id);
+  expect((await repo.get(run.id))?.finalizedAt).toBeUndefined();
+});

@@ -1,0 +1,74 @@
+pnpm.cmd : $ vitest run --coverage
+At line:21 char:3
++   & pnpm.cmd @pnpmArgs *> (Join-Path $qaDir ($check.name + '.log.txt' ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d2-185/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/awaited-children.test.ts (24 tests | 1 failed) 13280ms
+   ❯ identity-bound child wakes (#242) (2)
+     × a stale child wake never reaches the next visit of the same subloop node 1949ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+ ❯ src/own-session.test.ts (26 tests | 1 failed) 19668ms
+   ❯ claude own-session isolation (10)
+     × honors only the authored reset boundary undefined and keeps loop context 5086ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > identity-bound child wakes (#242) > a stale child wake never reaches the next 
+visit of the same subloop node
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/awaited-children.test.ts:141:85
+    139|   });
+    140|   const parent = await e.start(parentLoopId);
+    141|   await vi.waitFor(async () => expect(nextPark(await get(parent.id), f…
+       |                                                                                     ^
+    142|   release();
+    143|   await e.manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/own-session.test.ts > claude own-session isolation > honors only the authored reset boundary undefined and 
+keeps loop context
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/own-session.test.ts:184:29
+    182|   });
+    183|
+    184|   it.each([1, 2, undefined])(
+       |                             ^
+    185|     'honors only the authored reset boundary %s and keeps loop context…
+    186|     async (reset) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 49 passed (51)
+      Tests  2 failed | 1664 passed (1666)
+   Start at  23:35:57
+   Duration  114.41s (transform 37%, import 35%, tests 26%, worker 1%)
+
+  Transform  transforming modules took 307.62s · 37% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d2-
+  │ 185\packages\engine
+
