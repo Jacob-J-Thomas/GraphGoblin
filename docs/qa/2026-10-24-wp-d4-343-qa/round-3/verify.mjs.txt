@@ -1,0 +1,23 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const out=resolve('docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+const files=await readdir(out),md=await readFile(join(out,'README.md'),'utf8');
+const missing=[];
+for(const m of md.matchAll(/\]\(([^)]+)\)/g)){
+ const p=m[1];if(/^(https?:|#)/.test(p))continue;
+ try{await stat(resolve(out,p))}catch{missing.push(p)}
+}
+const unlinked=files.filter(n=>n!=='README.md'&&!md.includes(']('+n+')'));
+const oversized=[],paths=[];
+for(const n of files){const b=await readFile(join(out,n));if(b.length>1000000)oversized.push({file:n,bytes:b.length});if(/\.(txt|md|json)$/.test(n)&&n!=='verification.json'){
+ const text=b.toString('utf8');if(text.includes(process.env.USERPROFILE)||text.includes(JSON.stringify(process.env.USERPROFILE).slice(1,-1))||text.includes(process.env.USERPROFILE.replaceAll('\\','/')))paths.push(n);
+}}
+const git=args=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const head=git(['rev-parse','HEAD']),tracked=git(['diff','--name-only']),index=git(['diff','--cached','--name-only']);
+const result={at:new Date().toISOString(),head,headMatches:head==='94523682d084f7a566242602762a3b04d87a8e55',trackedChanges:tracked,indexChanges:index,missingLinks:missing,unlinkedFiles:unlinked,oversized,unredactedPaths:paths,pass:head==='94523682d084f7a566242602762a3b04d87a8e55'&&!tracked&&!index&&!missing.length&&!unlinked.length&&!oversized.length&&!paths.length};
+await writeFile(join(out,'verification.json'),JSON.stringify(result,null,2));
+const manifest=[];for(const n of (await readdir(out)).sort()){if(n==='MANIFEST.json')continue;const b=await readFile(join(out,n));manifest.push({file:n,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')})}
+await writeFile(join(out,'MANIFEST.json'),JSON.stringify({at:new Date().toISOString(),excludes:'MANIFEST.json itself',files:manifest},null,2));
+console.log(JSON.stringify(result,null,2));if(!result.pass)process.exitCode=1;

@@ -1,0 +1,5 @@
+import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {spawn} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-2');
+const tasks=[['typecheck','pnpm.cmd typecheck'],['lint','pnpm.cmd lint'],['check-layers','pnpm.cmd check:layers'],['check-deps','pnpm.cmd check:deps'],['check-docs','pnpm.cmd check:docs'],['check-tokens','pnpm.cmd check:tokens']];
+const results=[];
+for(const [name,command] of tasks){console.log('START',name);const start=Date.now();let output='';const p=spawn('cmd.exe',['/d','/c',command],{cwd:root,env:process.env,windowsHide:true});p.stdout.on('data',d=>output+=d);p.stderr.on('data',d=>output+=d);const code=await new Promise(r=>{p.on('exit',r);p.on('error',e=>{output+=e.stack;r(-1)})});await writeFile(join(out,name+'.log.txt'),output.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));results.push({name,command,code,ms:Date.now()-start,lock:output.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')});await writeFile(join(out,'gates-results.json'),JSON.stringify(results,null,2));console.log('DONE',name,code)}

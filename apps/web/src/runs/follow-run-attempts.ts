@@ -13,7 +13,8 @@ const RUN_OBSERVATION_POLL_MS = 2000;
 /**
  * Catch up past historical terminals in finite JSON pages, then follow an active SSE tail.
  * Durable lifecycle evidence can overtake the captured row; observe that outcome and recheck
- * the row until it catches up. Only resumable failures otherwise need continued checks.
+ * the row until it catches up. Only resumable failures, and missing-session failures awaiting an
+ * explicit fresh-session choice (made here, in another tab or through the API), need continued checks.
  */
 export function followRunAttempts(
   client: GraphGoblinClient,
@@ -76,7 +77,10 @@ export function followRunAttempts(
           ? terminal.failure
           : undefined
         : run.failure;
-      if (status !== run.status || (status === 'failed' && failure?.resumable))
+      if (
+        status !== run.status ||
+        (status === 'failed' && (failure?.resumable || failure?.missingSession !== undefined))
+      )
         timer = setTimeout(() => {
           void refresh();
         }, RUN_OBSERVATION_POLL_MS);

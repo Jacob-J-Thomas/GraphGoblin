@@ -29,7 +29,7 @@ for (const name of names) {
   if (data.length >= 1000000) oversized.push({ file: name, bytes: data.length });
   if (
     !name.endsWith('.png') &&
-    /(?:[A-Za-z]:[\\/]+Users[\\/]+98jak|[\\/]+Users[\\/]+98jak)/i.test(data.toString('utf8'))
+    /(?:[A-Za-z]:)?[\\/]+Users[\\/]+(?!%)[^\\/%\s]+[\\/]/i.test(data.toString('utf8'))
   )
     paths.push(name);
   if (name !== 'final-audit.json')

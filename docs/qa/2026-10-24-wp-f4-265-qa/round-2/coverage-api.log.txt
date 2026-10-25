@@ -1,0 +1,136 @@
+$ vitest run --coverage --maxWorkers=1 --config ../../docs/qa/2026-10-24-wp-f4-265-qa/round-2/api-allocation.vitest.mjs
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/apps/api
+      Coverage enabled with v8
+
+ ❯ src/subloop-restart.test.ts (0 test)
+ ❯ src/readiness-evidence.test.ts (9 tests | 6 failed) 511639ms
+   ❯ CLI evidence through Settings preflight and draft validation (9)
+     × auth-network preserves auth for both harnesses 60241ms
+     × quota-network preserves quota for both harnesses 60022ms
+     × stdout-quota-warning preserves quota for both harnesses 61098ms
+     × auth-empty preserves unknown for both harnesses 60129ms
+     × auth-unrecognised preserves unknown for both harnesses 60077ms
+     × auth-zero-stdout preserves auth for both harnesses 62282ms
+ ❯ src/main.test.ts (0 test)
+ ❯ src/nested-readiness.test.ts (19 tests | 2 failed) 104882ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the claude executable fixture through public nested admission 21152ms
+     × uses the codex executable fixture through public nested admission 20615ms
+ ❯ src/shutdown-process.test.ts (0 test)
+ ❯ src/retired-event-startup.test.ts (0 test)
+ ❯ src/shutdown-startup.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts [ src/main.test.ts ]
+Error: Cannot find module './testing/api-subprocess.js' imported from %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/apps/api/src/main.test.ts
+ ❯ src/main.test.ts:8:1
+      6| import { afterEach, describe, expect, it, vi } from 'vitest';
+      7| import { main } from './main.js';
+      8| import { createApiProcessFixture, eventually, listening } from './test…
+       | ^
+      9|
+     10| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/retired-event-startup.test.ts [ src/retired-event-startup.test.ts ]
+Error: Cannot find module './testing/api-subprocess.js' imported from %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/apps/api/src/retired-event-startup.test.ts
+ ❯ src/retired-event-startup.test.ts:20:1
+     18|   SqliteTriggerAdmission,
+     19| } from '@graphgoblin/infrastructure/sqlite';
+     20| import { createApiProcessFixture, eventually } from './testing/api-sub…
+       | ^
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/shutdown-process.test.ts [ src/shutdown-process.test.ts ]
+Error: Cannot find module './testing/api-subprocess.js' imported from %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/apps/api/src/shutdown-process.test.ts
+ ❯ src/shutdown-process.test.ts:6:1
+      4| import { afterEach, expect, it } from 'vitest';
+      5| import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/cont…
+      6| import { createApiProcessFixture, eventually, listening } from './test…
+       | ^
+      7|
+      8| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/shutdown-startup.test.ts [ src/shutdown-startup.test.ts ]
+Error: Cannot find module './testing/api-subprocess.js' imported from %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/apps/api/src/shutdown-startup.test.ts
+ ❯ src/shutdown-startup.test.ts:7:1
+      5| import { buildApp } from './app.js';
+      6| import { loadConfig } from './config.js';
+      7| import { createApiProcessFixture } from './testing/api-subprocess.js';
+       | ^
+      8|
+      9| it('a stop requested during startup leaves independent queued work uns…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/subloop-restart.test.ts [ src/subloop-restart.test.ts ]
+Error: Cannot find module './testing/api-subprocess.js' imported from %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/apps/api/src/subloop-restart.test.ts
+ ❯ src/subloop-restart.test.ts:20:1
+     18|   SqliteTriggerAdmission,
+     19| } from '@graphgoblin/infrastructure/sqlite';
+     20| import { createApiProcessFixture, eventually } from './testing/api-sub…
+       | ^
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the claude executable fixture through public nested admission
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the codex executable fixture through public nested admission
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/nested-readiness.test.ts:440:40
+    438|   });
+    439|
+    440|   it.each(['claude', 'codex'] as const)(
+       |                                        ^
+    441|     'uses the %s executable fixture through public nested admission',
+    442|     async (id) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network preserves auth for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > quota-network preserves quota for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > stdout-quota-warning preserves quota for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-empty preserves unknown for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-unrecognised preserves unknown for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stdout preserves auth for both harnesses
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/readiness-evidence.test.ts:29:14
+     27|     ['ready', 'ready'],
+     28|     ['auth', 'auth'],
+     29|   ] as const)(
+       |              ^
+     30|     '%s preserves %s for both harnesses',
+     31|     async (scenario, state) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+
+ Test Files  7 failed | 67 passed | 2 skipped (76)
+      Tests  8 failed | 1337 passed | 4 skipped (1349)
+   Start at  18:17:15
+   Duration  1858.21s (tests 80%, import 17%, transform 3%)
+
+    Isolate  76 workers spawned · ~661ms startup each (spawn + environment, per file)
+             at least ~49.61s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%
+  │ \source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f4-
+  │ 265\apps\api
+

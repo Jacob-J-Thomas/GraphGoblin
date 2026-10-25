@@ -34,9 +34,9 @@ Runs
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
-  POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
+  POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; 422 WEBHOOK_PAYLOAD_TOO_DEEP above nesting depth 994; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
-  POST   /events                        inbound Event intake; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  POST   /events                        targeted Event intake; body: { loopId, triggerNodeId?, type, payload?, dedupeKey? }; durably accepts one entry, returns admissionId, target, delivery, runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, webhooks), newest first
 
 Settings and catalog
@@ -65,7 +65,7 @@ unavailable. Enabled mismatches log a safe warning while both listings stay read
 refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
-event metadata does not change `POST /events` or publish anything to the bus.
+event metadata does not change `POST /events` or publish anything to the bus. Webhook-derived keys containing U+0000 (NUL) or ill-formed Unicode return 422 `KEY_INVALID` before any receipt or inbound row is saved.
 
 The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
 
@@ -663,6 +663,14 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
 
+### Targeted Event intake (#343)
+
+`POST /events` requires `{loopId, type, payload?, dedupeKey?, triggerNodeId?}` and `events:write`, plus ownership of the loop. A new request selects one matching Event trigger of the current published version; ambiguous matches require `triggerNodeId`. There is no broadcast form. `events.publish(client, body)` uses this same generated request contract. MCP currently has no tool that publishes an Event, and the web app only lists inbound Events.
+
+The 202 response is the saved Event with `duplicate`, durable `admissionId`, pinned `target: {loopId, versionId, triggerNodeId}` and current `delivery`. `runIds` is empty until atomic run admission. `GET /events` exposes the same target and delivery state. The Events page shows the linked target loop, entry trigger and admission identity even when no run has been admitted. Keyed retries return the original delivery, even across later publication, in owner/loop/trigger/type scope. Missing/invalid body fields are 400 `VALIDATION_FAILED`; foreign/missing loop 404 `LOOP_NOT_FOUND`; no published version 409 `VERSION_NOT_PUBLISHED`; unmatched/ambiguous entry 422 `EVENT_TRIGGER_NOT_FOUND`/`EVENT_TRIGGER_AMBIGUOUS`; failed key expression 422 `EVENT_KEY_EXPRESSION_FAILED`; excessive payload depth 422 `EVENT_PAYLOAD_TOO_DEEP`; unconfirmed persistence 503 `EVENT_ADMISSION_FAILED`; unreadable stored delivery on a keyed retry 500 `STORED_EVENT_INVALID`. See [08](08-triggers-and-integrations.md#inbound-events-decided-targeted-durable-admission-adr-0048) for retry, nesting and permanent key semantics. URL webhook acknowledgements remain exactly `{accepted:true}`.
+
+Targeted Event request keys must contain 1 to 512 characters of well-formed Unicode without U+0000 (NUL) (400 `VALIDATION_FAILED` naming `/dedupeKey` otherwise); an authored key containing NUL or invalid Unicode is refused with 422 `EVENT_KEY_INVALID`. This prevents SQLite text normalization or NUL truncation from changing an accepted identity.
+
 ### Process model defaults (#205)
 
 `GET /system/model-defaults` returns the configured process `HarnessDefaults` (`byHarness`), before loop and owner overrides. The editor uses these values to display effective inherited model and effort, including custom `GG_DEFAULTS`. It requires `system:read`, is read-only and contains no credentials.
@@ -684,7 +692,21 @@ before expiry. A force cleanup failure offers `["force"]`: a further explicit fo
 code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
 terminations remain warnings without preventing normal completion. A drain observation
 failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
-#319 will build the browser interaction on these phases and controls.
+Shutdown responses also carry an opaque `controlToken` (#319). A client can send it
+in `x-graphgoblin-shutdown-token` on POST. The gateway checks it synchronously before
+dispatch and returns 409 with the current snapshot if the gateway incarnation changed, the
+phase changed, or another control chose since the token was read. Every phase entry and
+every accepted wait issue a new token, so a phase that recurs (draining, then
+awaiting-choice, then draining after a wait) does not revive the earlier token. This
+prevents a delayed force from acknowledging another request's newly failed cleanup or
+overriding a later choice to keep waiting. The browser always sends this precondition and resets confirmation
+when the token changes. Unconditional operator/API actions remain supported; signals
+and the controller's force semantics are unchanged. The token is a concurrency value,
+not an authentication credential. Reads require `system:read`; actions require
+`system:write`, including conditional actions.
+
+Existing `GET /runs/{id}` reads supply pinned loop names when permitted, with run IDs
+as the fallback. See docs/09 for the app-wide notice.
 
 Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
 503 before saving any inbound record or dedupe key, so the same Event can be retried after
@@ -709,3 +731,22 @@ waits; independent runs admitted then remain queued for restart. A new closed in
 sealed atomically with wake admission: a late command returns 503 `SHUTTING_DOWN` before
 writing, while an earlier accepted wake keeps controls and SSE open until its runnable family
 settles. Durable future parks and pauses still recover on the next start.
+
+### Explicit missing-session action (#265)
+
+`POST /runs/{id}/recover-session` requires `runs:write` and the run's owner. Its strict
+JSON body is `{ "nodeId": "worker", "failureSeq": 17 }`, where `failureSeq` is the
+sequence of the observed `run.failed` event from `GET /runs/{id}/events`. It returns
+200 with the resumed run snapshot. Only the current `HARNESS_SESSION_MISSING` failure
+with typed missing-session provenance at that inference node is eligible. Wrong
+state/node, stale event sequence, repeated choice or a concurrent loser returns 409
+`INVALID_STATE`; malformed/extra fields return 400, missing write scope 403 and a run
+owned by someone else 404. The request cannot override model or context policy.
+
+The action explicitly discards prior provider conversation and restarts the node's
+authored task in a fresh session with the same model, effort and graph context.
+`run.resumed.freshSession` durably records actor (on the event), timestamp, node,
+visit, failed sequence, prior handle/origin, model/effort and
+`priorContextCarried: false`. The event survives restart and completes an interrupted
+resume. No request leaves the failure unchanged; `/resume` still refuses it.
+The typed client exposes `runs.recoverSession(client, runId, { nodeId, failureSeq })`.

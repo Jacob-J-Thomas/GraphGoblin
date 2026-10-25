@@ -1,0 +1,43 @@
+"""Run only once all capture writers stop. Preserve original hashes for normalized captures."""
+from pathlib import Path
+import hashlib
+import json
+import re
+
+root = Path('docs/qa/wp-d4-343/round-4').resolve()
+profile = str(Path.home())
+registry = root / 'NORMALIZATION.json'
+previous = json.loads(registry.read_text(encoding='utf-8')) if registry.exists() else []
+records = {entry['file']: entry for entry in previous}
+for path in sorted(root.iterdir()):
+    if not path.is_file() or path == registry or path.name in ('MANIFEST.json', 'VALIDATION.json'):
+        continue
+    if not (path.name.endswith('.log.txt') or path.suffix == '.json'):
+        continue
+    raw = path.read_bytes()
+    raw_hash = hashlib.sha256(raw).hexdigest()
+    if records.get(path.name, {}).get('kept_sha256') == raw_hash:
+        continue
+    record = {'file': path.name, 'original_bytes': len(raw), 'original_sha256': raw_hash}
+    if len(raw) > 1_000_000:
+        record['kept'] = False
+        # Only this helper's explicitly enumerated captures in the round-4 directory are eligible.
+        assert path.parent.resolve() == root
+        path.unlink()
+    else:
+        text = raw.decode('utf-16') if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else raw.decode('utf-8-sig')
+        for prefix in (profile.replace('\\', '\\\\'), profile, profile.replace('\\', '/')):
+            text = text.replace(prefix, '%USERPROFILE%')
+        text = re.sub(r'C:[/\\]*\s*(?:[\u2502|]\s*)?[/\\]*Users[/\\]+' + re.escape(Path.home().name), '%USERPROFILE%', text, flags=re.I)
+        data = text.replace('\r\n', '\n').replace('\r', '\n').encode('utf-8')
+        path.write_bytes(data)
+        record.update(kept=True, kept_bytes=len(data), kept_sha256=hashlib.sha256(data).hexdigest(), original_not_kept='Raw encoding/path spelling replaced by UTF-8 LF with profile paths normalized; original size and hash retained here.')
+    records[path.name] = record
+entries = list(records.values())
+registry.write_bytes((json.dumps(entries, indent=2) + '\n').encode('utf-8'))
+omitted = [r for r in entries if not r['kept']]
+if omitted:
+    body = '# Captures not kept\n\nCaptures above 1,000,000 bytes are not retained.\n\n'
+    body += '\n'.join(f"- `{r['file']}`: {r['original_bytes']} bytes; SHA-256 `{r['original_sha256']}`." for r in omitted) + '\n'
+    (root / 'NOT-KEPT.md').write_bytes(body.encode('utf-8'))
+print(json.dumps({'normalized_captures': len(entries), 'oversized_not_kept': len(omitted), 'largest_original_bytes': max(r['original_bytes'] for r in entries)}))

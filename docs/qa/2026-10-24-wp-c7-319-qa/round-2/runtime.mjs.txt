@@ -1,0 +1,79 @@
+import * as fs from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join as pathJoin } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const folder='docs/qa/2026-10-24-wp-c7-319-qa/round-2';
+const helperPath=pathJoin(tmpdir(),'gg-qa-c7-319-r2-helper-'+process.pid+'.mjs');
+await fs.writeFile(helperPath,await fs.readFile(folder+'/helpers.mjs.txt','utf8'));
+process.env.QA_RESULTS='runtime-results.json';
+const H=await import(pathToFileURL(helperPath).href);
+const {boot,hold,run,edge,context,check,ok,until,sleep,save,writeFile,join,access,keyboardTo,screenshot,gateways}=H;
+const browser=await edge();
+await save('environment.json',{head:'ebaaab0fdb683509386a5ded0692470cc75dcb75',node:process.version,browser:browser.version(),channel:'msedge',platform:process.platform,helperPath});
+const active=async(g,id)=>{const r=await run(g,id);ok(r.status==='running','Active work interrupted: '+JSON.stringify(r));return r;};
+const finish=async(g,id)=>{await writeFile(join(g.dir,'release'),'finish QA work');await until(()=>g.closed,45000);ok(g.exit.code===0,JSON.stringify(g.exit));await g.flush();return g.exit;};
+const exists=p=>access(p).then(()=>true,()=>false);
+async function state(g){return (await g.call('/system/shutdown')).body;}
+async function stale(g,token,phase){const r=await g.call('/system/shutdown','POST',{action:'force'},token);ok(r.status===409&&r.body.phase===phase,JSON.stringify(r));ok(r.body.controlToken===(await state(g)).controlToken,'409 did not carry current snapshot');return r;}
+async function open(p,name='Force stop'){await keyboardTo(p,p.getByRole('button',{name,exact:true}));await p.keyboard.press('Enter');await p.getByRole('dialog').waitFor();}
+async function confirm(p,name='Confirm force stop'){
+ const response=p.waitForResponse(r=>r.url().endsWith('/system/shutdown')&&r.request().method()==='POST',{timeout:45000});
+ await keyboardTo(p,p.getByRole('button',{name,exact:true}));await p.keyboard.press('Enter');
+ const r=await response;return{status:r.status(),body:await r.json(),request:JSON.parse(r.request().postData()),controlToken:r.request().headers()['x-graphgoblin-shutdown-token']};
+}
+async function delayedReads(p){let release;const held=new Promise(r=>release=r);let count=0;await p.route('**/system/shutdown',async route=>{if(route.request().method()==='GET'){count++;await held;}await route.continue().catch(()=>{});});return{release, count:()=>count};}
+async function pageFor(g,work,options){const c=await context(browser,g,options),p=await c.newPage();await p.goto(g.origin+'/app/runs/'+work.runId);await p.getByRole('button',{name:'Force stop',exact:true}).waitFor();return{c,p};}
+try{
+ await check('R2-01 REST phase-cycle-proof rejects recurring-phase stale force and accepted waits supersede choices',async()=>{
+  const g=await boot('r2-phase-cycle',{port:6070,env:{GG_SHUTDOWN_GRACE_MS:'1200'}});const work=await hold(g);const running=await state(g);
+  const drained=await g.call('/system/shutdown','POST',{action:'drain'},running.controlToken);ok(drained.status===202);const prepared=await state(g);ok(prepared.phase==='draining');ok((await state(g)).controlToken===prepared.controlToken,'Unchanged reads must be stable');
+  await until(async()=>(await state(g)).phase==='awaiting-choice');const expired=await state(g);
+  const waited=await g.call('/system/shutdown','POST',{action:'wait'},expired.controlToken);ok(waited.status===202&&waited.body.phase==='draining');ok(waited.body.controlToken!==prepared.controlToken,'Recurring phase reused token');
+  const rejected=await stale(g,prepared.controlToken,'draining');await active(g,work.runId);
+  const within=await g.call('/system/shutdown','POST',{action:'wait'},waited.body.controlToken);ok(within.status===202&&within.body.phase==='draining');ok(within.body.controlToken!==waited.body.controlToken,'Wait within draining reused token');
+  const rejectedWithin=await stale(g,waited.body.controlToken,'draining');const fresh=await g.call('/system/shutdown','POST',{action:'wait'},within.body.controlToken);ok(fresh.status===202);await active(g,work.runId);await sleep(2800);const after=await state(g);ok(after.phase==='draining','Wait restarted a grace timer');
+  const exit=await finish(g,work.runId);const n=await boot('r2-phase-restart',{port:6070,directory:g.dir});const restarted=await state(n);ok(restarted.phase==='running');const oldIncarnation=await stale(n,running.controlToken,'running');const recovered=await run(n,work.runId);ok(recovered.status==='succeeded');await n.close();
+  return{directory:g.dir,work,running,prepared,expired,waited,rejected,within,rejectedWithin,fresh,after,exit,restarted,oldIncarnation,recovered};
+ });
+ // A real HTTP GET is delayed, never replaced; the gateway and its work remain real processes.
+ for(const mode of ['observe','confirm-held'])await check('R2-02 '+mode+' Edge phase cycle with delayed GETs',async()=>{
+  const g=await boot('r2-browser-cycle-'+mode,{port:6071,env:{GG_SHUTDOWN_GRACE_MS:'15000'}});const work=await hold(g,'Browser phase recurrence '+mode);await g.call('/system/shutdown','POST',{action:'drain'});
+  const {c,p}=await pageFor(g,work,{width:1440,theme:mode==='observe'?'dark':'light'});const prepared=await state(g);ok(prepared.phase==='draining','Fixture missed initial draining');await open(p);await screenshot(p,'cycle-'+mode+'-prepared.png');const delay=await delayedReads(p);
+  await until(async()=>(await state(g)).phase==='awaiting-choice',30000);const expired=await state(g);ok(delay.count()>0,'No GET delayed');ok(await p.getByRole('dialog').isVisible(),'Held dialog unexpectedly removed before new snapshot');const waited=await g.call('/system/shutdown','POST',{action:'wait'},expired.controlToken);ok(waited.status===202);ok(waited.body.controlToken!==prepared.controlToken);await active(g,work.runId);
+  let response;
+  if(mode==='observe'){
+   delay.release();await until(async()=>!(await p.getByRole('dialog').isVisible()),15000);response=await stale(g,prepared.controlToken,'draining');
+  }else{
+   response=await confirm(p);ok(response.controlToken===prepared.controlToken,'Browser did not submit prepared token');ok(response.status===409&&response.body.phase==='draining',JSON.stringify(response));await p.getByText('Shutdown changed in another tab or control. Showing the current gateway state.',{exact:true}).waitFor();delay.release();
+  }
+  ok(!(await p.getByRole('dialog').isVisible()),'Old confirmation survived new token');const stillRunning=await active(g,work.runId);await screenshot(p,'cycle-'+mode+'-resolved.png');await c.close();const exit=await finish(g,work.runId);return{directory:g.dir,prepared,expired,waited,response,delayedGets:delay.count(),confirmationVisible:false,stillRunning,exit};
+ });
+ await check('R2-03 Edge wait within draining rejects old dialog, accepts fresh force, rejects stale force-failed acknowledgement',async()=>{
+  const g=await boot('r2-within-draining',{port:6072,env:{GG_SHUTDOWN_GRACE_MS:'120000'}});const work=await hold(g,'Wait within draining');await g.call('/system/shutdown','POST',{action:'drain'});const {c,p}=await pageFor(g,work,{width:390,theme:'light'});const prepared=await state(g);ok(prepared.phase==='draining');await open(p);await screenshot(p,'within-draining-prepared.png');const delay=await delayedReads(p);await until(()=>delay.count()>0,10000);
+  const waited=await g.call('/system/shutdown','POST',{action:'wait'},prepared.controlToken);ok(waited.status===202&&waited.body.phase==='draining');ok(waited.body.controlToken!==prepared.controlToken);const rejected=await confirm(p);ok(rejected.status===409&&rejected.body.phase==='draining');ok(rejected.controlToken===prepared.controlToken);await active(g,work.runId);await p.getByText('Shutdown changed in another tab or control. Showing the current gateway state.',{exact:true}).waitFor();ok(!(await p.getByRole('dialog').isVisible()));delay.release();await screenshot(p,'within-draining-stale-rejected.png');
+  // The 409 itself carries the current snapshot, so a newly opened confirmation uses the fresh token.
+  await open(p);const fresh=await confirm(p);ok(fresh.status===202,'Fresh choice was refused: '+JSON.stringify(fresh));ok(fresh.controlToken===waited.body.controlToken,'Fresh dialog used stale token');await until(async()=>g.closed||(await state(g)).phase==='force-failed',25000);
+  let failed,staleAck,ack,lockHeld,recovery;
+  if(!g.closed){
+   failed=await state(g);staleAck=await stale(g,fresh.controlToken,'force-failed');ok(!g.closed);lockHeld=await exists(join(g.dir,'graphgoblin.lock'));ok(lockHeld);await p.getByRole('button',{name:'Force exit',exact:true}).waitFor({timeout:10000});await screenshot(p,'within-draining-force-failed.png');
+   ack=await g.call('/system/shutdown','POST',{action:'force'},failed.controlToken);ok(ack.status===202);await until(()=>g.closed);ok(g.exit.code===1);ok(await exists(join(g.dir,'graphgoblin.lock')));
+  }else throw new Error('Fresh force succeeded natively; force-failed stale acknowledgement not testable on this fixture');
+  await writeFile(join(g.dir,'release'),'release own fixture after failed cleanup');await c.close();await g.flush();const n=await boot('r2-within-restart',{port:6072,directory:g.dir});recovery=await run(n,work.runId);ok(recovery.status==='failed');const events=(await n.call('/runs/'+work.runId+'/events')).body;const starts=events.items.filter(e=>e.type==='run.started').length;ok(starts===1,'Interrupted work replayed');await n.close();return{directory:g.dir,prepared,waited,rejected,fresh,failed,staleAck,ack,lockHeld,exit:g.exit,recovery,starts,nativeLimit:'D-015: Windows script-tree termination unconfirmed; no native success claim'};
+ });
+ for(const choice of ['wait','force'])await check('R2-04 two Edge tabs concurrently choose '+choice+' at awaiting-choice',async()=>{
+  const g=await boot('r2-concurrent-'+choice,{port:6073});const work=await hold(g);await g.call('/system/shutdown','POST',{action:'drain'});const prepared=await state(g);ok(prepared.phase==='draining');await until(async()=>(await state(g)).phase==='awaiting-choice');const current=await state(g);const priorPhase=await stale(g,prepared.controlToken,'awaiting-choice');await active(g,work.runId);
+  const c=await context(browser,g,{width:1440,theme:'dark'}),a=await c.newPage(),b=await c.newPage();const pages=[a,b];
+  for(const p of pages){await p.goto(g.origin+'/app/runs/'+work.runId);await p.getByText(/The gateway grace period elapsed/).waitFor();if(choice==='force'){await open(p);await keyboardTo(p,p.getByRole('button',{name:'Confirm force stop',exact:true}));}else await keyboardTo(p,p.getByRole('button',{name:'Keep waiting',exact:true}));}
+  let release;const gate=new Promise(r=>release=r);let waiting=0;const requests=[];
+  await c.route('**/system/shutdown',async route=>{if(route.request().method()==='POST'){requests.push({body:JSON.parse(route.request().postData()),controlToken:route.request().headers()['x-graphgoblin-shutdown-token']});waiting++;if(waiting===2)release();await gate;}await route.continue().catch(()=>{});});
+  const responses=pages.map(p=>p.waitForResponse(r=>r.url().endsWith('/system/shutdown')&&r.request().method()==='POST',{timeout:45000}));
+  await Promise.all(pages.map(p=>p.keyboard.press('Enter')));const results=await Promise.all(responses.map(async pending=>{const r=await pending;return{status:r.status(),body:await r.json()};}));ok(results.map(r=>r.status).sort().join(',')==='202,409',JSON.stringify(results));ok(waiting===2);ok(requests.every(r=>r.controlToken===current.controlToken),'Tabs did not prepare the same token');
+  if(choice==='wait'){ok(results.every(r=>r.body.phase==='draining'));ok(results[0].body.controlToken===results[1].body.controlToken);await active(g,work.runId);}else{await until(async()=>g.closed||(await state(g)).phase==='force-failed',25000);if(!g.closed){const failed=await state(g);await stale(g,current.controlToken,'force-failed');await g.call('/system/shutdown','POST',{action:'force'},failed.controlToken);await until(()=>g.closed);ok(g.exit.code===1);}}
+  for(let i=0;i<pages.length;i++)await screenshot(pages[i],'concurrent-'+choice+'-tab-'+(i+1)+'.png');await c.close();if(choice==='wait')await finish(g,work.runId);else{await writeFile(join(g.dir,'release'),'release own fixture');await g.flush();}return{directory:g.dir,prepared,current,priorPhase,requests,results,exit:g.exit};
+ });
+}catch(e){await save('runtime-fatal.log.txt',e.stack);process.exitCode=1;}
+finally{
+ for(const g of gateways)try{await g.close();}catch(e){await save(g.name+'-cleanup-error.log.txt',e.stack);process.exitCode=1;}
+ await browser.close();await save('gateway-inventory.json',gateways.map(g=>({name:g.name,directory:g.dir,pid:g.child.pid,exit:g.exit,closed:g.closed})));
+ if(H.records.some(r=>r.status==='FAIL'))process.exitCode=1;
+}

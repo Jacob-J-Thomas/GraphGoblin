@@ -7,6 +7,7 @@ import {
   type PatchOperation,
   type ProgressItemStatus,
   type Usage,
+  type MissingSession,
 } from '@graphgoblin/contracts';
 import { applyPatch, renderTemplate, threadView, validateJson } from '@graphgoblin/domain';
 import {
@@ -19,6 +20,7 @@ import {
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type {
   HarnessItem,
+  HarnessEvent,
   HarnessPort,
   HarnessResult,
   HarnessSession,
@@ -159,6 +161,21 @@ async function recordSubmission(
   }
 }
 
+async function recordSession(
+  ctx: NodeContext<'inference'>,
+  row: HarnessSessionRecord,
+  event: Extract<HarnessEvent, { type: 'session' }>,
+): Promise<void> {
+  await ctx.services.record({
+    type: 'harness.session',
+    nodeId: ctx.node.id,
+    harness: ctx.config.harness,
+    sessionId: event.sessionId,
+    mode: event.mode,
+    ...(row.model ? { model: row.model } : {}),
+    ...(row.effort ? { effort: row.effort } : {}),
+  });
+}
 /** Fold every provider boundary into the same invocation's evidence, independently of writes. */
 async function consume(
   ctx: NodeContext<'inference'>,
@@ -167,6 +184,7 @@ async function consume(
   pending: PendingTurn,
   state: TurnFailures,
 ): Promise<HarnessResult> {
+  let resumed: Extract<HarnessEvent, { type: 'session' }> | undefined;
   async function* events() {
     try {
       yield* session.events;
@@ -186,15 +204,8 @@ async function consume(
         row.status = 'active';
         row.updatedAt = ctx.services.now();
         await ctx.ports.sessions.upsert({ ...row });
-        await ctx.services.record({
-          type: 'harness.session',
-          nodeId: ctx.node.id,
-          harness: ctx.config.harness,
-          sessionId: event.sessionId,
-          mode: event.mode,
-          ...(row.model ? { model: row.model } : {}),
-          ...(row.effort ? { effort: row.effort } : {}),
-        });
+        if (event.mode === 'resumed') resumed = event;
+        else await recordSession(ctx, row, event);
         break;
       case 'submitted':
         await recordSubmission(ctx, pending, state, 'submitted', event.marker);
@@ -226,8 +237,9 @@ async function consume(
         break;
     }
   }
+  let result: HarnessResult;
   try {
-    return await session.result;
+    result = await session.result;
   } catch (error) {
     if (!(error instanceof RunFailureError) || isHarnessFailureCode(error.code)) {
       observe(state, error);
@@ -235,6 +247,9 @@ async function consume(
     }
     throw error;
   }
+  // Keep the requested handle as provenance immediately, but claim reuse only on success.
+  if (resumed) await recordSession(ctx, row, resumed);
+  return result;
 }
 
 /** An explicitly returned native candidate stays authoritative, including undefined or null. */
@@ -259,11 +274,12 @@ export const inferenceHandler: NodeHandler<'inference'> = {
   kind: 'inference',
   async execute(ctx) {
     const { config } = ctx;
+    const visit = visitTurn(await ctx.services.events(), ctx.node.id);
     const harness: HarnessPort | undefined = ctx.ports.harnesses[config.harness];
     const { model, effort } = await ctx.services.resolveModel(
       config.harness,
-      config.model,
-      config.effort,
+      visit.freshSession?.model ?? config.model,
+      visit.freshSession?.effort ?? config.effort,
     );
     const workingDirectory = await ctx.services.workingDirectory();
 
@@ -282,16 +298,39 @@ export const inferenceHandler: NodeHandler<'inference'> = {
     }
 
     // Provenance comes from this run's open logical visit, never a session repository row.
-    const visit = visitTurn(await ctx.services.events(), ctx.node.id);
+    const missingFailure = (task?: PendingTurn): RunFailureError => {
+      const origin: MissingSession['origin'] =
+        (!task || (task.turn.promptKind === 'authored' && task.turn.resumeSessionId)) &&
+        config.session.policy !== 'fresh'
+          ? config.session.policy
+          : 'current-visit';
+      const sessionId = task?.sessionId ?? task?.turn.resumeSessionId;
+      const missingSession: MissingSession = {
+        visitId: visit.visitId,
+        harness: config.harness,
+        origin,
+        model,
+        effort,
+        ...(sessionId ? { sessionId } : {}),
+      };
+      return new RunFailureError(
+        'HARNESS_SESSION_MISSING',
+        `The ${config.harness} session ${sessionId ? `"${sessionId}"` : '(no recorded handle)'} from ${origin} is missing. Choose Start fresh session for node "${ctx.node.id}" to continue without its prior provider conversation.`,
+        {
+          nodeId: ctx.node.id,
+          resumable: false,
+          missingSession,
+          ...(task ? { inference: provenance(task) } : {}),
+        },
+      );
+    };
     let pending = visit.pending;
     let resumeId: string | undefined;
     let prompt: string;
     let promptKind: PendingTurn['turn']['promptKind'] = 'authored';
     if (pending) {
-      if (
-        pending.submission === 'session-missing' ||
-        (pending.submission === 'delivery-uncertain' && !canContinueTurn(pending))
-      )
+      if (pending.submission === 'session-missing') throw missingFailure(pending);
+      if (pending.submission === 'delivery-uncertain' && !canContinueTurn(pending))
         throw recoveryFailure(pending, ctx.node.id);
       if (pending.submission === 'definitely-not-submitted') {
         prompt = pending.turn.prompt;
@@ -303,8 +342,11 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         promptKind = 'continuation';
       }
     } else {
-      prompt = await renderTemplate(config.prompt.template, view);
-      if (config.session.policy === 'resume-previous') {
+      prompt = visit.freshSession?.prompt ?? (await renderTemplate(config.prompt.template, view));
+      if (visit.freshSession) {
+        // This explicit choice applies only to this logical visit; the authored policy stays.
+        resumeId = undefined;
+      } else if (config.session.policy === 'resume-previous') {
         resumeId = (await ctx.ports.sessions.latestWithSession(ctx.run.id, config.harness))
           ?.sessionId;
       } else if (config.session.policy === 'resume-named') {
@@ -328,12 +370,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
                   visit.completedAttempt,
                   config.harness,
                 );
-          if (!previous?.sessionId)
-            throw new RunFailureError(
-              'HARNESS_SESSION_MISSING',
-              'The completed node visit has no recorded provider session. An explicit fresh-session choice is required.',
-              { nodeId: ctx.node.id, resumable: false },
-            );
+          if (!previous?.sessionId) throw missingFailure();
           resumeId = previous.sessionId;
         }
       }
@@ -700,13 +737,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         failure = new RunFailureError(
           code,
           missing
-            ? recoveryFailure(pending, ctx.node.id).message
+            ? missingFailure(pending).message
             : uncertain && !canContinueTurn(pending)
               ? failure.message + '. ' + recoveryFailure(pending, ctx.node.id).message
               : failure.message,
           {
             ...failure.options,
             inference: provenance(pending),
+            ...(missing ? { missingSession: missingFailure(pending).options.missingSession } : {}),
             ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
               ? {
                   details: {

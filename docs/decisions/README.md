@@ -52,6 +52,10 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0044: Loops compose only as awaited subloops](ADR-0044-awaited-subloops.md) supersedes ADR-0010's `event` channel: child wakes are bound to the observed park, a child returns its configured output or none, child execution failures and cancellations follow the inline rules, and exit-to-Event chaining is retired while external Event intake stays.
 [ADR-0045: Inherited session IDs do not establish authored-task acceptance](ADR-0045-inference-inherited-session-recovery.md) records D-022: uncertain authored work cannot continue an inherited conversation without acceptance evidence.
 
+[ADR-0047: Visible execution limits and explicit unlimited mode](ADR-0047-visible-execution-limits.md) records pinned node-visit and run-deadline limits and their visible controls.
+
+[ADR-0048: Targeted durable Event admission](ADR-0048-targeted-event-admission.md) records a single explicit recipient, receipt-before-acknowledgement, recipient-scoped keys and bounded payload nesting.
+
 [ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.
 
 [ADR-0057: Observe execution outcome and durable finalization separately](ADR-0057-execution-and-delivery-finalization.md) exposes the existing finalization marker as `finalizedAt` and extends the stream completion rule to wait for it, so readers tell execution end apart from delivery pending, delivered and failed.

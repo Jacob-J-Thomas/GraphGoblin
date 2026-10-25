@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { createHmac } from 'node:crypto';
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-2');
+const r=JSON.parse(await readFile(join(out,'browser-ready.json'),'utf8'));
+const a=JSON.parse(await readFile(r.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const log=[];
+async function call(method,path,body,extra={},auth=true){const res=await fetch(a.url+path,{method,headers:{...(auth?{authorization:'Bearer '+a.key}:{}),...(body!==undefined?{'content-type':'application/json'}:{}),...extra},...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{})});const raw=await res.text();let value;try{value=JSON.parse(raw)}catch{value=raw}const item={method,path,status:res.status,allow:res.headers.get('allow'),body:value};log.push(item);return item;}
+await call('PUT','/secrets/qa-hook-secret',{value:'qa-fake-secret'});
+const d={schemaVersion:4,name:'Protected webhook QA final',nodes:[{id:'entry',label:'Entry',kind:'trigger',config:{type:'webhook',authentication:{type:'hmac-sha256',message:'body',secretRef:'qa-hook-secret'}}},{id:'done',label:'Done',kind:'exit',config:{returns:'trigger.payload'}}],edges:[{id:'e',from:{node:'entry',port:'out'},to:{node:'done'}}]};
+const created=await call('POST','/loops',{definition:d});assert.equal(created.status,201);const id=created.body.loop.id;assert.equal((await call('POST','/loops/'+id+'/publish')).status,200);
+const hooks=await call('GET','/loops/'+id+'/triggers');const path=hooks.body.webhooks[0].path;
+const sign=body=>({'x-hub-signature-256':'sha256='+createHmac('sha256','qa-fake-secret').update(body).digest('hex')});
+const raw='{"raw":"kept"}';assert.equal((await call('POST',path,raw,sign(raw),false)).status,202);
+const deep='['.repeat(996)+'0'+']'.repeat(996);
+const badAuth=await call('POST',path,deep,{},false);assert.equal(badAuth.status,401);
+const validAuth=await call('POST',path,deep,sign(deep),false);assert.equal(validAuth.status,422);assert.equal(validAuth.body.code,'WEBHOOK_PAYLOAD_TOO_DEEP');
+const malformed='{broken';assert.equal((await call('POST',path,malformed,sign(malformed),false)).status,400);
+const wrongMethod=await call('GET',path,undefined,{},false);assert.equal(wrongMethod.status,404);
+const big=JSON.stringify({big:'x'.repeat(1024*1024)});assert.equal((await call('POST',path,big,sign(big),false)).status,413);
+await call('POST','/__qa',{op:'settle'});const runs=await call('GET','/runs?loopId='+id);assert.equal(runs.body.items.length,1);
+await writeFile(join(out,'webhook-protected-results.json'),JSON.stringify({checks:6,log},null,2));console.log('6 protected webhook checks PASS: raw HMAC, authentication before depth, authenticated depth, malformed JSON, non-POST refusal, size bound; exactly 1 run.');
+
+

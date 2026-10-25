@@ -36,6 +36,7 @@ export class ShutdownTransitionError extends Error {
 export class ShutdownController {
   readonly closing = new AbortController();
   private phase: ShutdownState['phase'] = 'running';
+  private revision = 0;
   private startedAt: string | undefined;
   private choiceAt: string | undefined;
   private error: string | undefined;
@@ -80,11 +81,19 @@ export class ShutdownController {
     };
   }
 
+  /**
+   * Advances on every phase entry and every accepted wait, so a control token names one entry
+   * into a phase: a phase that recurs does not revive choices prepared against its last entry.
+   */
+  controlRevision(): number {
+    return this.revision;
+  }
+
   async request(action: ShutdownAction): Promise<ShutdownState> {
     if (action === 'force' && this.phase === 'force-failed') {
       // Explicit acknowledgement of failed cleanup: main exits nonzero without disposing
       // storage or deleting ownership. The next process must reclaim the stale lock.
-      this.phase = 'exiting';
+      this.enter('exiting');
       this.resolveAbandoned();
       return this.state();
     }
@@ -95,20 +104,22 @@ export class ShutdownController {
     )
       throw new ShutdownTransitionError(this.state());
     if (action === 'wait') {
-      // Acknowledgement only: no new countdown or automatic interruption.
-      if (this.phase === 'awaiting-choice') this.phase = 'draining';
+      // Acknowledgement only: no new countdown or automatic interruption. It still supersedes
+      // choices other controls prepared against the earlier state, even within draining.
+      this.phase = 'draining';
+      this.revision += 1;
       clearTimeout(this.timer);
       return this.state();
     }
     if (!this.draining) {
-      this.phase = 'draining';
+      this.enter('draining');
       this.startedAt = new Date().toISOString();
       this.choiceAt = new Date(Date.now() + this.graceMs).toISOString();
       this.captured = this.manager.beginDrain();
       this.stopSources();
       this.timer = setTimeout(() => {
         if (this.phase !== 'draining') return;
-        this.phase = 'awaiting-choice';
+        this.enter('awaiting-choice');
         this.logger.warn(
           this.state(),
           'Shutdown grace elapsed: keep waiting or explicitly force with a second signal or POST /system/shutdown',
@@ -126,7 +137,7 @@ export class ShutdownController {
       );
     }
     if (action === 'force' && !this.forcing && this.phase !== 'ready' && this.phase !== 'stopped') {
-      this.phase = 'forcing';
+      this.enter('forcing');
       clearTimeout(this.timer);
       // Readiness owns both observers: neither a normal-drain completion nor a force
       // completion may close storage while the other sequence is still returning.
@@ -149,14 +160,20 @@ export class ShutdownController {
   }
 
   stopped(): void {
-    this.phase = 'stopped';
+    this.enter('stopped');
     clearTimeout(this.timer);
+  }
+
+  private enter(phase: ShutdownState['phase']): void {
+    if (this.phase === phase) return;
+    this.phase = phase;
+    this.revision += 1;
   }
 
   private complete(): void {
     if (['drain-failed', 'force-failed', 'exiting'].includes(this.phase)) return;
     clearTimeout(this.timer);
-    this.phase = 'ready';
+    this.enter('ready');
     this.closing.abort();
     this.resolveReady();
   }
@@ -164,7 +181,7 @@ export class ShutdownController {
   private failed(error: unknown, origin: 'drain' | 'force'): void {
     if (this.phase === 'exiting') return;
     clearTimeout(this.timer);
-    this.phase = origin === 'force' ? 'force-failed' : 'drain-failed';
+    this.enter(origin === 'force' ? 'force-failed' : 'drain-failed');
     this.error =
       'Shutdown cleanup failed; listener, store and ownership retained. Inspect logs and native processes.';
     this.logger.error(

@@ -27,7 +27,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { APIRequestContext, Browser, Page } from '@playwright/test';
 import { request as requestFactory } from '@playwright/test';
-import { control, test } from './fixtures.js';
+import { control, publishEventLoop, test } from './fixtures.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(
@@ -339,18 +339,13 @@ async function seed(api: APIRequestContext): Promise<Seeded> {
   (edited.nodes[1] as { label: string }).label = 'Triage new issues';
   await json(await api.put(`/loops/${nightly}/draft`, { data: { definition: edited } }));
 
-  await json(
-    await api.post('/events', {
-      data: {
-        type: 'issue.opened',
-        payload: { repo: 'graphgoblin', number: 482, title: 'Editor crashes on paste' },
-        dedupeKey: 'issue-482',
-      },
-    }),
+  const send = await publishEventLoop(api, ['issue-opened', 'build-finished']);
+  await send(
+    'issue-opened',
+    { repo: 'graphgoblin', number: 482, title: 'Editor crashes on paste' },
+    'issue-482',
   );
-  await json(
-    await api.post('/events', { data: { type: 'build.finished', payload: { ok: true } } }),
-  );
+  await send('build-finished', { ok: true });
   await json(await api.patch('/model-catalog/codex/gpt-6-astra', { data: { enabled: false } }));
   await api.put('/secrets/GITHUB_TOKEN', { data: { value: 'not-a-real-token' } });
   await json(await api.post('/api-keys', { data: { label: 'ci-bot', scopes: ['*'] } }));
@@ -505,7 +500,7 @@ const SCREENS: Screen[] = [
     path: (s) => `/app/runs/${s.batchRun}`,
     ready: /\d{3} events, complete/,
   },
-  { name: 'events', path: () => '/app/events', ready: 'issue.opened' },
+  { name: 'events', path: () => '/app/events', ready: 'issue-opened' },
   {
     name: 'settings',
     path: () => '/app/settings',

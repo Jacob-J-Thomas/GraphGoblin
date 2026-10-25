@@ -1,0 +1,34 @@
+process.env.QA_RESULTS='supplemental-results.json';
+const H=await import('data:text/javascript;base64,'+Buffer.from(await (await import('node:fs/promises')).readFile('docs/qa/2026-10-24-wp-c7-319-qa/helpers.mjs.txt','utf8')).toString('base64'));
+const {boot,hold,publish,definition,start,run,edge,context,check,ok,until,sleep,save,writeFile,join,keyboardTo,screenshot,gateways}=H;
+const browser=await edge();
+try{
+ const g=await boot('browser-cycle',{port:6074,env:{GG_SHUTDOWN_GRACE_MS:'15000'}});const work=await hold(g,'Old browser confirmation');
+ await check('REST malformed and incompatible actions are side-effect free',async()=>{const cases=[{body:{action:'bogus'},status:400},{body:{action:'force',extra:true},status:400},{body:[],status:400},{body:null,status:400},{body:{action:'wait'},token:'',status:400},{body:{action:'force'},token:'stale',status:409},{body:{action:'wait'},status:409}];const results=[];for(const v of cases){const r=await g.call('/system/shutdown','POST',v.body,v.token);ok(r.status===v.status,JSON.stringify(r));results.push(r);}ok((await g.call('/system/shutdown')).body.phase==='running');return results;});
+ const c=await context(browser,g),p=await c.newPage();await g.call('/system/shutdown','POST',{action:'drain'});await p.goto(g.origin+'/app/runs/'+work.runId);await p.getByRole('button',{name:'Force stop',exact:true}).waitFor();const initial=(await g.call('/system/shutdown')).body;ok(initial.phase==='draining','Fixture did not establish initial draining phase');
+ await keyboardTo(p,p.getByRole('button',{name:'Force stop',exact:true}));await p.keyboard.press('Enter');await p.getByRole('dialog').waitFor();
+ let release;const delay=new Promise(r=>release=r);let blocked=0;
+ await p.route('**/system/shutdown',async route=>{if(route.request().method()==='GET'){blocked++;await delay;}await route.continue().catch(()=>{});});
+ await until(async()=>(await g.call('/system/shutdown')).body.phase==='awaiting-choice',20000);
+ const intermediate=(await g.call('/system/shutdown')).body;
+ await g.call('/system/shutdown','POST',{action:'wait'});const current=(await g.call('/system/shutdown')).body;release();await sleep(2200);
+ await check('D1 browser confirmation invalidates across a phase cycle',async()=>{const remained=await p.getByRole('dialog').isVisible();await screenshot(p,'d1-stale-browser-confirmation.png');const evidence={initial,intermediate,current,blockedReads:blocked,confirmationRemained:remained};await save('d1-browser-cycle.json',evidence);ok(!remained,'Old force confirmation remained after draining -> awaiting-choice -> draining; identical token '+(initial.controlToken===current.controlToken));return evidence;});
+ if(await p.getByRole('dialog').isVisible())await check('D1 old browser force must return 409 after another control chose wait',async()=>{const pending=p.waitForResponse(r=>r.url().endsWith('/system/shutdown')&&r.request().method()==='POST');await keyboardTo(p,p.getByRole('button',{name:'Confirm force stop'}));await p.keyboard.press('Enter');const response=await pending;const proof={status:response.status(),body:await response.json()};await save('d1-browser-force-response.json',proof);ok(proof.status===409,'Old confirmation sent accepted force: '+JSON.stringify(proof));return proof;});
+ await c.close();await g.close();
+ const race=await boot('concurrent-force',{port:6074});const held=await hold(race);await race.call('/system/shutdown','POST',{action:'drain'});await until(async()=>(await race.call('/system/shutdown')).body.phase==='awaiting-choice');
+ const rc=await context(browser,race),a=await rc.newPage(),b=await rc.newPage();
+ for(const page of [a,b]){await page.goto(race.origin+'/app/loops');await page.getByText(/The gateway grace period elapsed/).waitFor();await keyboardTo(page,page.getByRole('button',{name:'Force stop',exact:true}));await page.keyboard.press('Enter');await page.getByRole('dialog').waitFor();await keyboardTo(page,page.getByRole('button',{name:'Confirm force stop'}));}
+ let releaseRace;const both=new Promise(r=>releaseRace=r);let waiting=0;const responses=[];
+ await rc.route('**/system/shutdown',async route=>{if(route.request().method()==='POST'){waiting++;if(waiting===2)releaseRace();await both;}await route.continue();});
+ rc.on('response',r=>{if(r.url().endsWith('/system/shutdown')&&r.request().method()==='POST')responses.push(r.status());});
+ await check('concurrent keyboard force confirmations dispatch once and return stale 409',async()=>{await Promise.all([a.keyboard.press('Enter'),b.keyboard.press('Enter')]);await until(()=>responses.length===2);ok(responses.includes(202)&&responses.includes(409),JSON.stringify(responses));return{statuses:responses,requests:waiting};});
+ await rc.close();await race.close();
+ // Required child starts after drain, succeeds, and only queued independent work waits for restart.
+ const family=await boot('family',{port:6074});
+ const leaf=await publish(family,definition('Required child after drain'));
+ const code=`const fs=require('fs');fs.writeFileSync(${JSON.stringify(join(family.dir,'started'))},'started');setInterval(()=>{if(fs.existsSync(${JSON.stringify(join(family.dir,'release'))}))process.exit(0)},25);setTimeout(()=>process.exit(0),180000)`;
+ const parentLoop=await publish(family,definition('Required parent',[{id:'hold',kind:'script',label:'Hold',config:{command:process.execPath,args:['-e',code]}},{id:'child',kind:'subloop',label:'Required child',config:{loopRef:{loopId:leaf}}}]));
+ const parent=await start(family,parentLoop);await until(()=>H.access(join(family.dir,'started')).then(()=>true,()=>false));const queued=await start(family,leaf);
+ await check('normal drain admits required child continuation and leaves independent queue recoverable',async()=>{await family.call('/system/shutdown','POST',{action:'drain'});await writeFile(join(family.dir,'release'),'finish');await until(()=>family.closed);ok(family.exit.code===0);await family.flush();const n=await boot('family-restart',{directory:family.dir,port:6074});await until(async()=>(await run(n,queued)).status==='succeeded');const r=await run(n,parent),events=(await n.call('/runs/'+parent+'/events')).body;ok(r.status==='succeeded');const children=events.items.filter(e=>e.type==='child_run.started');ok(children.length===1,JSON.stringify(children));await n.close();return{parent:r,queued:await runSafe(n,queued),childEvents:children,exit:family.exit};});
+}finally{for(const g of gateways)try{await g.close();}catch(e){await save(g.name+'-cleanup-error.log.txt',e.stack);}await browser.close();}
+async function runSafe(g,id){return g.closed?{id,note:'completed before final drain'}:run(g,id);}

@@ -1,3 +1,4 @@
+import { InMemoryEventAdmission } from './event-admission.js';
 /**
  * In-memory fakes for every engine port. Deterministic ids and clock. Used by the engine's own
  * tests and by API and E2E tests through `@graphgoblin/engine/testing`.
@@ -961,6 +962,7 @@ export type AdmissionWrite =
   | 'create.link';
 
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+  readonly events: InMemoryEventAdmission;
   readonly receipts = new Map<string, WebhookReceipt>();
   readonly inbound = new Map<string, WebhookClaim['inbound']>();
   /** Resolved endpoint provenance for preserved inbound-only claims in the testing adapter. */
@@ -970,11 +972,28 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   >();
   constructor(
     private readonly runs: InMemoryRunRepository,
-    private readonly events: InMemoryEventStore,
+    private readonly eventStore: InMemoryEventStore,
     private readonly loops: InMemoryLoopRepository,
     private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
-  ) {}
-  async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
+  ) {
+    this.events = new InMemoryEventAdmission(
+      (intent, committed) => this.create(intent, undefined, committed),
+      (owner, loop, node, key) =>
+        runs.hasTriggerKey(owner, loop, node, key) ||
+        [...this.receipts.values()].some(
+          (r) =>
+            r.ownerId === owner &&
+            r.loopId === loop &&
+            r.triggerNodeId === node &&
+            this.inbound.get(r.inboundId)?.dedupeKey === key,
+        ),
+    );
+  }
+  async create(
+    authored: RunAdmission,
+    receiptId?: string,
+    onCommitted?: () => void,
+  ): Promise<RunRecord> {
     const input = parseRunAdmission(authored);
     const receipt = receiptId ? this.receipts.get(receiptId) : undefined;
     if (
@@ -1003,9 +1022,9 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (run) {
       const thread = await this.runs.getInitialThread(run.id);
       if (!thread || (input.snapshot && !existing)) throw new AdmissionConflictError();
-      assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
+      assertAdmissionIdentity(input, run, thread, this.eventStore.all(run.id)[0]);
     } else {
-      if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
+      if (this.eventStore.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
       if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
@@ -1026,13 +1045,14 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (created) {
       if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
-      this.events.commitQueued(queuedEvent(input));
+      this.eventStore.commitQueued(queuedEvent(input));
     }
     if (admitted && linked) {
       this.receipts.set(admitted.id, admitted);
       this.inbound.set(linked.id, linked);
     }
-    if (created) this.events.notifyCommitted(queuedEvent(input));
+    onCommitted?.();
+    if (created) this.eventStore.notifyCommitted(queuedEvent(input));
     return run;
   }
   async createPollItem(authored: RunAdmission): Promise<RunRecord | undefined> {
@@ -1046,7 +1066,19 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
         receipt.triggerNodeId === nodeId &&
         receipt.intent?.initialThread.invocation.trigger.dedupeKey === dedupeKey,
     );
-    if (reserved || this.runs.hasTriggerKey(input.run.ownerId, input.run.loopId, nodeId, dedupeKey))
+    const pendingEvent = [...this.events.receipts.values()].some(
+      (r) =>
+        r.status === 'pending' &&
+        r.ownerId === input.run.ownerId &&
+        r.loopId === input.run.loopId &&
+        r.triggerNodeId === nodeId &&
+        r.intent?.initialThread.invocation.trigger.dedupeKey === dedupeKey,
+    );
+    if (
+      reserved ||
+      pendingEvent ||
+      this.runs.hasTriggerKey(input.run.ownerId, input.run.loopId, nodeId, dedupeKey)
+    )
       return undefined;
     return this.create(input);
   }
@@ -1054,15 +1086,23 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     const frozen = parseRunAdmission(intent);
     assertWebhookClaim(input, frozen);
     const keySeen =
-      !!input.inbound.dedupeKey &&
-      ([...this.receipts.values()].some(
-        (receipt) =>
-          receipt.ownerId === input.ownerId &&
-          receipt.loopId === input.loopId &&
-          receipt.triggerNodeId === input.triggerNodeId &&
-          (this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey ||
-            receipt.intent?.initialThread.invocation.trigger.dedupeKey === input.inbound.dedupeKey),
+      input.inbound.dedupeKey !== undefined &&
+      ([...this.events.receipts.values()].some(
+        (r) =>
+          r.ownerId === input.ownerId &&
+          r.loopId === input.loopId &&
+          r.triggerNodeId === input.triggerNodeId &&
+          r.intent?.initialThread.invocation.trigger.dedupeKey === input.inbound.dedupeKey,
       ) ||
+        [...this.receipts.values()].some(
+          (receipt) =>
+            receipt.ownerId === input.ownerId &&
+            receipt.loopId === input.loopId &&
+            receipt.triggerNodeId === input.triggerNodeId &&
+            (this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey ||
+              receipt.intent?.initialThread.invocation.trigger.dedupeKey ===
+                input.inbound.dedupeKey),
+        ) ||
         [...this.inbound.values()].some((inbound) => {
           const scope = this.inboundScopes.get(inbound.id);
           return (

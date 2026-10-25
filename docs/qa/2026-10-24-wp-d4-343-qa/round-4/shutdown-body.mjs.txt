@@ -1,0 +1,35 @@
+let s;
+const snapshot=async s=>({counts:await s.sql('SELECT (SELECT count(*) FROM inbound_events) inbound,(SELECT count(*) FROM event_receipts) events,(SELECT count(*) FROM webhook_receipts) webhooks,(SELECT count(*) FROM runs) runs'),events:await s.sql('SELECT id,status,attempts,next_attempt_at FROM event_receipts ORDER BY id'),webhooks:await s.sql('SELECT id,status,attempts,next_attempt_at FROM webhook_receipts ORDER BY id')});
+try{
+ s=await instance('shutdown-sweeps',6016);
+ const eventLoop=await loop(s,definition('Due Event')), hookLoop=await loop(s,definition('Due webhook',{type:'webhook'})), activeLoop=await loop(s,definition('Hold drain open',undefined,false,true));
+ const hookPath=(await s.call('GET','/loops/'+hookLoop+'/triggers')).body.webhooks[0].path;
+ await fault(s,'qa_due_runs','INSERT ON runs');
+ const dueEvent=await ev(s,eventLoop,{dedupeKey:'due-before-drain'});const dueWebhook=await s.call('POST',hookPath,{key:'due-before-drain'});await s.settle();await drop(s,'qa_due_runs');
+ await s.qa({op:'script',turns:[{delayMs:60000}]});const active=await ev(s,activeLoop);await eventually(async()=>(await s.qa({op:'harness'})).started.length===1);
+ const baseline=await snapshot(s);const drain=await s.call('POST','/system/shutdown',{action:'drain'});assert.equal(drain.status,200);
+ await test('shutdown-open-drain-refuses-intake','503 SHUTTING_DOWN / WEBHOOK_ADMISSION_FAILED; neither key is saved',async()=>{
+  const before=await snapshot(s);const event=await ev(s,eventLoop,{dedupeKey:'refused-in-drain'}),webhook=await s.call('POST',hookPath,{key:'refused-in-drain'});const after=await snapshot(s);
+  assert.equal(event.status,503);assert.equal(event.body.code,'SHUTTING_DOWN');assert.equal(webhook.status,503);assert.equal(webhook.body.code,'WEBHOOK_ADMISSION_FAILED');assert.deepEqual(after,before);return {drain,event,webhook,before,after};
+ });
+ await test('shutdown-sweeps-remain-pending','two due-receipt sweeps during open drain do not admit Events or webhooks',async()=>{
+  const before=await snapshot(s);await s.qa({op:'sweep',ms:300001});await s.qa({op:'sweep',ms:300001});const after=await snapshot(s);assert.deepEqual(after,before);
+  assert.ok(after.events.some(x=>x.id===dueEvent.body.admissionId&&x.status==='pending'));assert.ok(after.webhooks.some(x=>x.status==='pending'));return {baseline,before,after,shutdown:(await s.call('GET','/system/shutdown')).body};
+ });
+ const activeItem=await s.item(active.body.id);await s.call('POST','/runs/'+activeItem.runIds[0]+'/cancel');await s.settle();const stopped=await s.stop();
+ await test('shutdown-restart-recovers-due','new process same store admits due Event and webhook exactly once and permits previously refused key',async()=>{
+  await s.start();await s.settle();const after=await snapshot(s);assert.ok(after.events.every(x=>x.status==='admitted'));assert.ok(after.webhooks.every(x=>x.status==='admitted'));
+  const first=await ev(s,eventLoop,{dedupeKey:'refused-in-drain'});assert.equal(first.status,202);assert.equal(first.body.duplicate,false);const wh=await s.call('POST',hookPath,{key:'refused-in-drain'});assert.equal(wh.status,202);await s.settle();
+  const recovered=await s.item(dueEvent.body.id);assert.equal(recovered.runIds.length,1);const hRuns=await s.runs(hookLoop);assert.equal(hRuns.length,2);return {stopped,after,first,wh,recovered,hRuns};
+ });
+ await s.stop();s=await instance('shutdown-intake-lease',6017);
+ const id=await loop(s,definition('Accepted before drain'));
+ await test('shutdown-inflight-event-lease','drain begins inside injected public IdPort after intake has entered and before durable receipt; 202 and one admitted run survive restart',async()=>{
+  const before=await snapshot(s);await s.qa({op:'arm-drain',after:3});const ack=await ev(s,id,{dedupeKey:'lease',payload:{frozen:'before-drain'}});assert.equal(ack.status,202);
+  await s.qa({op:'recovery'});const state=await s.call('GET','/system/shutdown');const trace=await s.qa({op:'trace'});assert.ok(trace.some(t=>t.phase==='draining'));
+  const rows=await s.sql('SELECT id,status,json_extract(intent,\'$.run.id\') runId FROM event_receipts');assert.equal(rows.length,1);assert.equal(rows[0].status,'admitted');const beforeRestart=await s.item(ack.body.id);assert.equal(beforeRestart.runIds[0],rows[0].runId);
+  await s.stop();await s.start();await s.settle();const retry=await ev(s,id,{dedupeKey:'lease',payload:{changed:true}});assert.equal(retry.body.id,ack.body.id);assert.equal(retry.body.duplicate,true);const item=await s.item(ack.body.id);assert.equal(item.runIds.length,1);assert.deepEqual(item.payload,{frozen:'before-drain'});
+  const queued=await s.sql("SELECT count(*) n FROM run_events WHERE run_id=? AND type='run.queued'",[item.runIds[0]]);assert.equal(queued[0].n,1);return {before,ack,state,trace,rows,beforeRestart,retry,item,queued};
+ });
+}finally{if(s)await s.stop();await save()}
+console.log('SHUTDOWN_DONE');

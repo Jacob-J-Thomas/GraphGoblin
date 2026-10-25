@@ -727,96 +727,32 @@ describe('FixedWindowRateLimiter', () => {
 });
 
 describe('event triggers', () => {
-  it('fires matching event triggers before downstream checks, preserves dedupe, and lists events', async () => {
-    const plain = await t.publishLoop(
-      triggerLoop('plain', { type: 'event', eventType: 'issue-ready' }),
-    );
-    const filtered = await t.publishLoop(
+  it('fires one matching event trigger before downstream checks and lists its delivery', async () => {
+    const id = await t.publishLoop(
       checkedLoop(
         'filtered',
         { type: 'event', eventType: 'issue-ready' },
         'invocation.trigger.payload.priority > 2',
       ),
     );
-    const keyed = await t.publishLoop(
-      triggerLoop('keyed', { type: 'event', eventType: 'issue-ready', dedupeKey: 'issue' }),
-    );
-    await t.publishLoop(triggerLoop('other', { type: 'event', eventType: 'other-type' }));
-
-    const first = await t.app.inject({
+    const response = await t.app.inject({
       method: 'POST',
       url: '/events',
-      payload: { type: 'issue-ready', payload: { issue: 1, priority: 1 } },
+      payload: { loopId: id, type: 'issue-ready', payload: { priority: 1 } },
     });
-    expect(first.statusCode).toBe(202);
-    expect(first.json<{ runIds: string[]; duplicate: boolean }>()).toMatchObject({
-      duplicate: false,
-      source: 'api',
-    });
-    expect(first.json<{ runIds: string[] }>().runIds).toHaveLength(3);
+    expect(response.statusCode).toBe(202);
     await settle();
-    expect(await runsOf(plain)).toHaveLength(1);
-    expect(await runsOf(filtered)).toHaveLength(1);
-    expect((await runsOf(filtered))[0]?.status).toBe('succeeded');
+    const [run] = await runsOf(id);
+    expect(run?.status).toBe('succeeded');
     expect(
-      (await t.container.repos.events.read((await runsOf(filtered))[0]!.id))
-        .filter((event) => event.type === 'node.started')
-        .map((event) => event.nodeId),
+      (await t.container.repos.events.read(run!.id))
+        .filter((e) => e.type === 'node.started')
+        .map((e) => e.nodeId),
     ).toEqual(['trig', 'check', 'quiet']);
-    expect(await runsOf(keyed)).toHaveLength(1);
-
-    // Same issue again: the keyed trigger dedupes; high priority passes the downstream check.
-    const second = await t.app.inject({
-      method: 'POST',
-      url: '/events',
-      payload: { type: 'issue-ready', payload: { issue: 1, priority: 5 }, dedupeKey: 'evt-2' },
+    expect((await t.app.inject('/events?limit=2')).json()).toMatchObject({
+      items: [{ runIds: [run!.id], delivery: { state: 'admitted' } }],
     });
-    expect(second.json<{ runIds: string[] }>().runIds).toHaveLength(2);
-    await settle();
-    expect(await runsOf(keyed)).toHaveLength(1);
-    expect(await runsOf(filtered)).toHaveLength(2);
-    const secondRun = (await runsOf(filtered)).find((run) =>
-      second.json<{ runIds: string[] }>().runIds.includes(run.id),
-    )!;
-    const thread = await t.container.repos.runs.getInitialThread(secondRun.id);
-    expect(thread?.invocation).toMatchObject({
-      source: 'event',
-      caller: { kind: 'system' },
-      trigger: { kind: 'event', dedupeKey: 'evt-2' },
-    });
-
-    const duplicate = await t.app.inject({
-      method: 'POST',
-      url: '/events',
-      payload: { type: 'issue-ready', payload: { issue: 9, priority: 9 }, dedupeKey: 'evt-2' },
-    });
-    expect(duplicate.json()).toMatchObject({
-      duplicate: true,
-      runIds: second.json<{ runIds: string[] }>().runIds,
-    });
-
-    const listed = (await t.app.inject('/events?limit=2')).json<{ items: { id: string }[] }>();
-    expect(listed.items).toHaveLength(2);
-    expect(listed.items[0]?.id).toBe(second.json<{ id: string }>().id);
-    const typed = (await t.app.inject('/events?type=nothing')).json<{ items: unknown[] }>();
-    expect(typed.items).toEqual([]);
-    const before = (
-      await t.app.inject(`/events?before=${encodeURIComponent('2000-01-01T00:00:00.000Z')}`)
-    ).json<{ items: unknown[] }>();
-    expect(before.items).toEqual([]);
-  });
-
-  it('logs event trigger failures', async () => {
-    await t.publishLoop(
-      triggerLoop('broken', { type: 'event', eventType: 'boom', dedupeKey: '$error("bad")' }),
-    );
-    const result = await t.app.inject({
-      method: 'POST',
-      url: '/events',
-      payload: { type: 'boom' },
-    });
-    expect(result.json()).toMatchObject({ runIds: [] });
-    expect(t.logger.lines.some((l) => l.msg === 'event trigger failed')).toBe(true);
+    expect((await t.app.inject('/events?type=nothing')).json()).toMatchObject({ items: [] });
   });
 
   it('starts event triggers from external Events only; finished runs publish none (#242)', async () => {
@@ -835,12 +771,16 @@ describe('event triggers', () => {
     expect(await runsOf(b)).toEqual([]);
     expect((await t.app.inject('/events')).json<{ items: unknown[] }>().items).toEqual([]);
 
-    const posted = await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'go' } });
+    const posted = await t.app.inject({
+      method: 'POST',
+      url: '/events',
+      payload: { loopId: b, type: 'go' },
+    });
     const eventId = posted.json<{ id: string }>().id;
     await settle();
     const [bRun] = await runsOf(b);
     expect(bRun?.status).toBe('succeeded');
-    expect(await runsOf(a)).toHaveLength(2);
+    expect(await runsOf(a)).toHaveLength(1);
     expect((await t.container.repos.runs.getInitialThread(bRun!.id))?.invocation).toMatchObject({
       source: 'event',
       caller: { kind: 'system', id: `event:${eventId}` },
@@ -849,7 +789,7 @@ describe('event triggers', () => {
       items: { type: string; source: string; runIds: string[] }[];
     }>();
     expect(events.items.map((e) => [e.type, e.source, e.runIds.length])).toEqual([
-      ['go', 'api', 2],
+      ['go', 'api', 1],
     ]);
   });
 });

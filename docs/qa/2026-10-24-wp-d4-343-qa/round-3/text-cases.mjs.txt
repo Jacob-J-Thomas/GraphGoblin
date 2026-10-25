@@ -1,0 +1,63 @@
+// Appended to the acceptance script's public-process helper prefix by run-extra.mjs.txt.
+let s;
+try {
+s=await instance('text-identities',5858);
+const a=await loop(s,definition('Text controls'));
+const noRows=async(body,expected)=>{await s.settle();const before=await counts(s);const r=await s.call('POST','/events',body);const after=await counts(s);assert.equal(r.status,expected,JSON.stringify(r));assert.deepEqual(after,before);return {r,before,after}};
+for(const [name,key] of [['embedded','before\u0000after'],['leading','\u0000begin'],['trailing','end\u0000']]) {
+ await test('request-NUL-'+name,'400 /dedupeKey; no storage; NUL-free key reusable for one admission',async()=>{
+  const bad=await noRows({loopId:a,type:'ready',dedupeKey:key},400);assert.equal(bad.r.body.code,'VALIDATION_FAILED');assert.ok(bad.r.body.errors.some(e=>e.path==='/dedupeKey'));
+  const valid=key.replaceAll('\u0000','');const first=await ev(s,a,{dedupeKey:valid});await s.settle();const retry=await ev(s,a,{dedupeKey:valid});assert.equal(first.status,202);assert.equal(retry.body.id,first.body.id);assert.equal(retry.body.runIds.length,1);return {bad,first,retry};
+ });
+}
+for(const kind of ['event','webhook']) {
+ const id=await loop(s,definition('NUL '+kind,{type:kind,...(kind==='event'?{eventType:'ready'}:{}),dedupeKey:'key'}));
+ const path=kind==='event'?'/events':(await s.call('GET','/loops/'+id+'/triggers')).body.webhooks[0].path;
+ await test(kind+'-authored-NUL','422 invalid key before storage; same business key without NUL admits once',async()=>{
+  const snap=()=>s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM event_receipts) AS events,(SELECT count(*) FROM webhook_receipts) AS hooks,(SELECT count(*) FROM runs) AS runs');
+  const before=await snap();const body={key:'before\u0000after'};const r=await s.call('POST',path,kind==='event'?{loopId:id,type:'ready',payload:body}:body);assert.equal(r.status,422);assert.equal(r.body.code,kind==='event'?'EVENT_KEY_INVALID':'KEY_INVALID');assert.deepEqual(await snap(),before);
+  const rs=[];for(let i=0;i<2;i++){rs.push(await s.call('POST',path,kind==='event'?{loopId:id,type:'ready',payload:{key:'beforeafter'}}:{key:'beforeafter'}));await s.settle()}assert.ok(rs.every(r=>r.status===202));const runs=await s.runs(id);assert.equal(runs.length,1);return {before,r,afterRefusal:before,rs,runs};
+ });
+}
+for(const [label,value] of [['NUL','ready\u0000extra'],['surrogate','ready\ud800'],['LF','ready\n'],['CR','ready\r'],['astral','ready😀']]) {
+ await test('API-type-'+label,'unmatched type refused before saving',()=>noRows({loopId:a,type:value,dedupeKey:'type-probe'},422));
+ await test('API-trigger-'+label,'unmatched trigger refused before saving',()=>noRows({loopId:a,type:'ready',triggerNodeId:value,dedupeKey:'entry-probe'},422));
+}
+for(const [label,value] of [['NUL',a+'\u0000extra'],['surrogate',a+'\ud800'],['newline',a+'\n']]) {
+ await test('API-loop-'+label,'invalid or absent loop refuses before saving',async()=>{
+  const before=await counts(s),r=await s.call('POST','/events',{loopId:value,type:'ready'}),after=await counts(s);assert.ok([400,404].includes(r.status));assert.deepEqual(after,before);return {r,before,after};
+ });
+}
+for(const field of ['node-id','event-type']) for(const [label,value] of [['NUL','probe\u0000tail'],['surrogate','probe\ud800'],['astral','probe😀']]) {
+ await test('definition-'+field+'-'+label,'unsafe identifier refused by authored contract; zero loops added',async()=>{
+  const before=await s.sql('SELECT count(*) AS n FROM loops');const d=definition('Unsafe '+field+' '+label);
+  if(field==='event-type')d.nodes[0].config.eventType=value;else{d.nodes[0].id=value;d.edges[0].from.node=value;}
+  const r=await s.call('POST','/loops',{definition:d});const after=await s.sql('SELECT count(*) AS n FROM loops');assert.equal(r.status,400);assert.deepEqual(after,before);return {r,before,after};
+ });
+}
+for(const [label,key] of [['tab','a\tb'],['CR','a\rb'],['LF','a\nb'],['SOH','a\u0001b'],['DEL','a\u007fb'],['astral','😀'.repeat(256)],['composed','é'],['decomposed','e\u0301'],['replacement','\ufffd']]) {
+ await test('key-roundtrip-'+label,'literal bytes, receipt identity and run envelope retain exact value across retry',async()=>{
+  const first=await ev(s,a,{dedupeKey:key});assert.equal(first.status,202);await s.settle();const retry=await ev(s,a,{dedupeKey:key,payload:{changed:true}});assert.equal(retry.body.id,first.body.id);assert.equal(retry.body.dedupeKey,key);assert.equal(retry.body.runIds.length,1);
+  const rows=await s.sql('SELECT id,owner_id,loop_id,version_id,trigger_node_id,event_type,request_key,hex(request_key) AS key_hex,intent FROM event_receipts WHERE inbound_id=?',[first.body.id]);
+  const row=rows[0],intent=JSON.parse(row.intent);assert.equal(row.key_hex,Buffer.from(key).toString('hex').toUpperCase());assert.equal(row.request_key,key);
+  for(const k of ['id','loop_id','version_id'])assert.match(row[k],/^[0-9A-HJKMNP-TV-Z]{26}$/);assert.equal(row.trigger_node_id,'start');assert.equal(row.event_type,'ready');assert.equal(intent.initialThread.invocation.trigger.dedupeKey,key);return {first,retry,metadata:rows.map(({intent,...r})=>r),envelope:intent.initialThread.invocation.trigger};
+ });
+}
+await test('Unicode-distinct-keys','composed and decomposed keys remain distinct; 512 code units accepted, 514 refused',async()=>{
+ const rows=await s.sql('SELECT request_key,hex(request_key) AS h FROM event_receipts WHERE loop_id=? AND request_key IN (?,?)',[a,'é','e\u0301']);assert.equal(rows.length,2);assert.equal(new Set(rows.map(r=>r.h)).size,2);
+ const refusal=await noRows({loopId:a,type:'ready',dedupeKey:'😀'.repeat(257)},400);return {rows,refusal};
+});
+await test('raw-SQLite-comparison-probe','observe native text reads separately from equality and JSON1',async()=>{
+ const values=['before\u0000after','before\ud800after','a\u0001b','é','e\u0301'],facts=[];
+ for(const v of values){const j=JSON.stringify({v});facts.push({input:v,rows:await s.sql("SELECT ? AS bound,hex(?) AS bound_hex,json_extract(?,'$.v') AS extracted,hex(json_extract(?,'$.v')) AS extracted_hex,? = json_extract(?,'$.v') AS same",[v,v,j,j,v,j])})}return facts;
+});
+await test('boot-isolation-fresh','one bad Event metadata write does not block healthy Event or webhook at boot',async()=>{
+ const e1=await loop(s,definition('Boot faulty')),e2=await loop(s,definition('Boot healthy')),wh=await loop(s,definition('Boot webhook',{type:'webhook'}));const path=(await s.call('GET','/loops/'+wh+'/triggers')).body.webhooks[0].path;
+ await fault(s,'qa_boot_all','INSERT ON runs');const bad=await ev(s,e1),good=await ev(s,e2),hook=await s.call('POST',path,{boot:true});await s.settle();await drop(s,'qa_boot_all');
+ await fault(s,'qa_boot_bad','INSERT ON runs',`WHEN NEW.loop_id='${e1}'`);await fault(s,'qa_boot_meta','UPDATE ON event_receipts',`WHEN OLD.inbound_id='${bad.body.id}'`);
+ await s.sql("UPDATE event_receipts SET next_attempt_at='2000-01-01' WHERE status='pending'");await s.sql("UPDATE webhook_receipts SET next_attempt_at='2000-01-01' WHERE status='pending'");await s.stop();await s.start();await s.settle();
+ const states={bad:await s.item(bad.body.id),good:await s.item(good.body.id),hooks:await s.sql('SELECT status FROM webhook_receipts WHERE loop_id=?',[wh])};assert.equal(states.bad.delivery.state,'pending');assert.equal(states.good.delivery.state,'admitted');assert.ok(states.hooks.every(r=>r.status==='admitted'));
+ await drop(s,'qa_boot_bad');await drop(s,'qa_boot_meta');await s.sweep();assert.equal((await s.item(bad.body.id)).delivery.state,'admitted');return {states,recovered:await s.item(bad.body.id)};
+});
+await s.stop();await save();
+}catch(e){results.fatal=e.stack;await save();if(s)await s.stop().catch(()=>{});throw e}

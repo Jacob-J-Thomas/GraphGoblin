@@ -1,0 +1,58 @@
+
+Running 2 tests using 1 worker
+
+pnpm.cmd : (node:33240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:19 char:1
++ pnpm.cmd exec playwright test --config=e2e/shutdown.config.ts *> "../ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:33240) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\shutdown.spec.ts:81:1 � drain is visible everywhere, expiry offers choices, waiting has no timer, and completion exits cleanly (38.9s)
+  x  2 e2e\shutdown.spec.ts:179:1 � confirmed force interrupts a controlled native harness, releases ownership and preserves interruption on restart (4.2s)
+
+
+  1) e2e\shutdown.spec.ts:179:1 � confirmed force interrupts a controlled native harness, releases ownership and preserves interruption on restart 
+
+    Error: File %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-319\apps\web\e2e\shutdown-fake-codex.ps1 
+    cannot be loaded. The file 
+    %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-319\apps\web\e2e\shutdown-fake-codex.ps1 is not 
+    digitally signed. You cannot run this script on the current system. For more information about running scripts and 
+    setting execution policy, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+        + CategoryInfo          : SecurityError: (:) [], ParentContainsErrorRecordException
+        + FullyQualifiedErrorId : UnauthorizedAccess
+
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      201 |         });
+      202 |         const code = await new Promise<number | null>((done) => compile.once('exit', done));
+    > 203 |         expect(code, errors).toBe(0);
+          |                              ^
+      204 |       } else {
+      205 |         binary = join(directory, 'shutdown-codex');
+      206 |         await writeFile(
+        at Object.prepare (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-319\apps\web\e2e\shutdown.spec.ts:203:30)
+        at gateway (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-319\apps\web\e2e\shutdown.spec.ts:18:35)
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-319\apps\web\e2e\shutdown.spec.ts:182:13
+
+    Error Context: test-results\shutdown\shutdown-confirmed-force-i-90d68-ves-interruption-on-restart\error-context.md
+
+    attachment #2: trace (application/zip) ---------------------------------------------------------
+    test-results\shutdown\shutdown-confirmed-force-i-90d68-ves-interruption-on-restart\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\shutdown\shutdown-confirmed-force-i-90d68-ves-interruption-on-restart\trace.zip
+
+    ------------------------------------------------------------------------------------------------
+
+  1 failed
+    e2e\shutdown.spec.ts:179:1 � confirmed force interrupts a controlled native harness, releases ownership and preserves interruption on restart 
+  1 passed (1.2m)
+

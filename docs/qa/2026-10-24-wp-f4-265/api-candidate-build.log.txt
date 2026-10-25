@@ -1,0 +1,26 @@
+$ turbo run build --filter=@graphgoblin/api
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/api
+   • Running build in 1 package
+   • Remote caching disabled
+
+@graphgoblin/contracts:build: cache hit, replaying logs 827bec4e52a37cee
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs f01a29f4574fa907
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 498a17b2b1b99e84
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache miss, executing 19fccaf92ef88b64
+@graphgoblin/adapter-jev:build: cache miss, executing 316f6b5a44e9773d
+@graphgoblin/infrastructure:build: cache miss, executing 24d8e84054a149ad
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing 9997a9137af160d6
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+
+ Tasks:    7 successful, 7 total
+Cached:    2 cached, 7 total
+  Time:    53.318s 
+

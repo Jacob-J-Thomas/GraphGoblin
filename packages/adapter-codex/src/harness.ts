@@ -158,6 +158,7 @@ export class CodexHarness implements HarnessPort {
     sessionId.catch(() => undefined);
 
     let accepted = false;
+    let nativeResumeId: string | undefined;
     let announced: string | undefined;
     const announce = (id: string): void => {
       if (announced === id) return;
@@ -165,8 +166,7 @@ export class CodexHarness implements HarnessPort {
       resolveId(id);
       queue.push({ type: 'session', sessionId: id, mode: resumeId ? 'resumed' : 'fresh' });
     };
-    // A resumed session's id is known up front: report it before the CLI even starts.
-    if (resumeId) announce(resumeId);
+    // A requested handle is provenance, not evidence of reuse. Await native thread.started.
 
     const pump = async (): Promise<HarnessResult> => {
       try {
@@ -178,8 +178,20 @@ export class CodexHarness implements HarnessPort {
         for await (const event of streamed.events) {
           for (const out of accumulator.push(event)) {
             if (out.type === 'submitted') accepted = true;
-            if (out.type === 'session') announce(out.sessionId);
-            else queue.push(out);
+            if (out.type === 'session') {
+              if (resumeId && out.sessionId !== resumeId) {
+                controller.abort();
+                throw Object.assign(new Error('Codex did not resume the requested conversation'), {
+                  code: 'HARNESS_SESSION_MISSING',
+                  submission: 'session-missing',
+                  retriable: false,
+                });
+              }
+              if (resumeId) {
+                nativeResumeId = out.sessionId;
+                resolveId(out.sessionId);
+              } else announce(out.sessionId);
+            } else queue.push(out);
           }
         }
       } catch (error) {
@@ -192,7 +204,8 @@ export class CodexHarness implements HarnessPort {
       const outcome = accumulator.finish();
       if (
         controller.signal.aborted &&
-        outcome.failure?.code.toUpperCase() !== 'HARNESS_TERMINATION_UNCONFIRMED'
+        outcome.failure?.code.toUpperCase() !== 'HARNESS_TERMINATION_UNCONFIRMED' &&
+        outcome.failure?.code.toUpperCase() !== 'HARNESS_SESSION_MISSING'
       ) {
         queue.close();
         const error = abortError();
@@ -218,6 +231,8 @@ export class CodexHarness implements HarnessPort {
         rejectId(error);
         throw error;
       }
+      // Initialization alone cannot prove reuse when a missing-session refusal follows it.
+      if (nativeResumeId) announce(nativeResumeId);
       queue.close();
       return {
         finalText: outcome.finalText,

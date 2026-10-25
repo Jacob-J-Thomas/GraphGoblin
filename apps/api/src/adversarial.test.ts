@@ -147,6 +147,7 @@ describe('adversarial API invariants', () => {
     'POST /runs/{id}/cancel': 'runs:write',
     'POST /runs/{id}/pause': 'runs:write',
     'POST /runs/{id}/resume': 'runs:write',
+    'POST /runs/{id}/recover-session': 'runs:write',
     'POST /runs/{id}/input': 'runs:write',
     'POST /runs/{id}/signals/{name}': 'runs:write',
     'POST /runs/{id}/replay': 'runs:write',
@@ -403,18 +404,21 @@ describe('adversarial API invariants', () => {
       payload: { definition: chained },
     });
     expect(refused.statusCode).toBe(400);
+    const targets: string[] = [];
     for (let i = 0; i < 3; i++)
-      await t.publishLoop(triggerLoop(`event-${i}`, { type: 'event', eventType: 'event-0' }));
+      targets.push(
+        await t.publishLoop(triggerLoop(`event-${i}`, { type: 'event', eventType: 'event-0' })),
+      );
     const response = await t.app.inject({
       method: 'POST',
       url: '/events',
-      payload: { type: 'event-0', payload: null },
+      payload: { loopId: targets[0], type: 'event-0', payload: null },
     });
     expect(response.statusCode).toBe(202);
     await t.idle();
     const runs = await t.container.repos.runs.list({});
-    expect(runs).toHaveLength(3);
-    expect(runs.every((r) => r.status === 'succeeded')).toBe(true);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]).toMatchObject({ loopId: targets[0], status: 'succeeded' });
     // Finished runs publish nothing: the only stored Event is the external one.
     const events = (await t.app.inject('/events')).json<{ items: { source: string }[] }>();
     expect(events.items).toEqual([expect.objectContaining({ source: 'api' })]);

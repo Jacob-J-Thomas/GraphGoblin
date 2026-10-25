@@ -4,11 +4,19 @@ import { createTestApp } from './testing/test-app.js';
 it('B2 refuses an Event before consuming its dedupe key during drain', async () => {
   const t = await createTestApp();
   try {
+    const loopId = await t.publishLoop(
+      trigger('event', { type: 'event', eventType: 'shutdown-test' }),
+    );
     await t.app.inject({ method: 'POST', url: '/system/shutdown', payload: { action: 'drain' } });
     const response = await t.app.inject({
       method: 'POST',
       url: '/events',
-      payload: { type: 'shutdown-test', payload: { value: 1 }, dedupeKey: 'retry-after-restart' },
+      payload: {
+        loopId,
+        type: 'shutdown-test',
+        payload: { value: 1 },
+        dedupeKey: 'retry-after-restart',
+      },
     });
     expect(response.statusCode, response.body).toBe(503);
     expect(response.json()).toMatchObject({ code: 'SHUTTING_DOWN' });

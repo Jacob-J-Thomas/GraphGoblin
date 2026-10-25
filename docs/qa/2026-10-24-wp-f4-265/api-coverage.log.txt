@@ -1,0 +1,112 @@
+$ vitest run --coverage --maxWorkers=2
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-265/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 54166ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 2785ms
+{"level":30,"time":1792871394624,"pid":61152,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5686"}
+{"level":30,"time":1792871394625,"pid":61152,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5686,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-A1UtwU","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792871394854,"pid":61152,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792871394865,"pid":61152,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":10.540399999999863,"msg":"request completed"}
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 274151ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180579ms
+ ❯ src/missing-session.test.ts (6 tests | 1 failed) 21365ms
+   × allows an explicit parent Resume after its missing-session child was explicitly recovered (failure) 3353ms
+ ❯ src/templates/catalog-package.test.ts (4 tests | 1 failed) 30219ms
+   × ships only declared starting-point assets and removes stale files on rebuild 20080ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+AssertionError: expected [ 'DELETE /api-keys/{id}', …(53) ] to deeply equal [ 'DELETE /api-keys/{id}', …(52) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+@@ -39,10 +39,11 @@
+    "POST /loops/{id}/runs",
+    "POST /loops/{id}/validate",
+    "POST /runs/{id}/cancel",
+    "POST /runs/{id}/input",
+    "POST /runs/{id}/pause",
++   "POST /runs/{id}/recover-session",
+    "POST /runs/{id}/replay",
+    "POST /runs/{id}/resume",
+    "POST /runs/{id}/signals/{name}",
+    "POST /system/shutdown",
+    "POST /templates/{id}/draft",
+System.Management.Automation.RemoteException
+ ❯ src/adversarial.test.ts:196:31
+    195|       }
+    196|     }
+    197|     expect(advertised.sort()).toEqual(Object.keys(ROUTE_SCOPES).sort()…
+       |                         ^
+    198|     for (const route of advertised) {
+    199|       const required = ROUTE_SCOPES[route]!;
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/missing-session.test.ts > allows an explicit parent Resume after its missing-session child was explicitly recovered (failure)
+AssertionError: expected 409 to be 200 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 200
++ 409
+System.Management.Automation.RemoteException
+ ❯ src/missing-session.test.ts:216:9
+    214|       expect(
+    215|         (await t.app.inject({ method: 'POST', url: `/runs/${parent.id}…
+    216|       ).toBe(200);
+       |         ^
+    217|       await t.idle();
+    218|       expect((await t.container.repos.runs.get(parent.id))?.status).to…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates/catalog-package.test.ts:49:1
+     47| }
+     48|
+     49| it('ships only declared starting-point assets and removes stale files …
+       | ^
+     50|   const root = await temporaryRoot();
+     51|   try {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  4 failed | 68 passed | 2 skipped (74)
+      Tests  4 failed | 1352 passed | 11 skipped (1367)
+   Start at  14:33:02
+   Duration  2158.12s (tests 78%, import 19%, transform 3%)
+
+    Isolate  74 workers spawned · ~1.72s startup each (spawn + environment, per file)
+             at least ~61.89s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 265\apps\api
+System.Management.Automation.RemoteException

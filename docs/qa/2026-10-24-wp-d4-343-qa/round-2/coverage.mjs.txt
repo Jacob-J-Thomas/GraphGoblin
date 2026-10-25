@@ -1,0 +1,17 @@
+import {readFile,writeFile,mkdtemp} from 'node:fs/promises';import {join} from 'node:path';import {tmpdir} from 'node:os';import {spawn} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-2');
+// Gate runner is sequential; avoid loading simultaneous suites on the shared machine.
+for(;;){try{if(JSON.parse(await readFile(join(out,'gates-results.json'),'utf8')).length===6)break}catch{}await new Promise(r=>setTimeout(r,1000))}
+const coverageRoot=await mkdtemp(join(tmpdir(),'gg-qa-d4-343-2-coverage-'));const results=[];
+for(const pkg of ['domain','engine','api-client','web','infrastructure','api']){
+ const directory=pkg==='api'||pkg==='web'?'apps/'+pkg:'packages/'+pkg;
+ const exclusions=pkg==='api'?' --exclude src/main.test.ts --exclude src/readiness-evidence.test.ts --exclude src/nested-readiness.test.ts --exclude src/subloop-restart.test.ts --exclude src/targeted-events-restart.test.ts --exclude src/retired-event-startup.test.ts':'';
+ const reportDir=join(coverageRoot,pkg);const args=`test:coverage --maxWorkers=1 --coverage.reportOnFailure --coverage.reportsDirectory="${reportDir}"${exclusions}`;
+ let command=`pnpm.cmd --filter @graphgoblin/${pkg} ${args}`;
+ console.log('START',pkg);const started=Date.now();let text='';let proc=spawn('cmd.exe',['/d','/c',command],{cwd:root,env:process.env,windowsHide:true});proc.stdout.on('data',d=>text+=d);proc.stderr.on('data',d=>text+=d);let code=await new Promise(r=>{proc.on('exit',r);proc.on('error',e=>{text+=e.stack;r(-1)})});
+ await writeFile(join(out,'coverage-'+pkg+'.log.txt'),text.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+ const entry={pkg,command:command.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'),code,ms:Date.now()-started,exclusions,reportDir:reportDir.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'),lock:text.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')};
+ if(entry.lock){let alt='';const cmd='..\\..\\node_modules\\.bin\\vitest.cmd run --coverage '+args.split('test:coverage ')[1];const p=spawn('cmd.exe',['/d','/c',cmd],{cwd:join(root,directory),env:process.env,windowsHide:true});p.stdout.on('data',d=>alt+=d);p.stderr.on('data',d=>alt+=d);entry.fallbackCode=await new Promise(r=>p.on('exit',r));entry.fallbackCommand=cmd;await writeFile(join(out,'coverage-'+pkg+'-fallback.log.txt'),alt.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));}
+ try{const summary=JSON.parse(await readFile(join(reportDir,'coverage-summary.json'),'utf8'));entry.coverage=summary.total;await writeFile(join(out,'coverage-'+pkg+'-summary.json'),JSON.stringify(summary.total,null,2))}catch(e){entry.summaryUnavailable=String(e).replaceAll(process.env.USERPROFILE,'%USERPROFILE%')}
+ results.push(entry);await writeFile(join(out,'coverage-results.json'),JSON.stringify(results,null,2));console.log('DONE',pkg,code,entry.coverage?.lines,entry.coverage?.branches);
+}
