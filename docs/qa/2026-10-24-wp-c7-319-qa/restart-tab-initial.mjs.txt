@@ -1,0 +1,18 @@
+process.env.QA_RESULTS='restart-tab-results.json';
+const H=await import('data:text/javascript;base64,'+Buffer.from(await (await import('node:fs/promises')).readFile('docs/qa/2026-10-24-wp-c7-319-qa/helpers.mjs.txt','utf8')).toString('base64'));
+const {boot,hold,run,edge,context,check,ok,until,sleep,save,writeFile,join,keyboardTo,screenshot,gateways}=H;
+const browser=await edge();
+try{
+ const g=await boot('stale-restart',{port:6076});const held=await hold(g);
+ await g.call('/system/shutdown','POST',{action:'drain'});await until(async()=>(await g.call('/system/shutdown')).body.phase==='awaiting-choice');
+ const c=await context(browser,g),p=await c.newPage();await p.goto(g.origin+'/app/loops');await p.getByText(/The gateway grace period elapsed/).waitFor();
+ await keyboardTo(p,p.getByRole('button',{name:'Force stop',exact:true}));await p.keyboard.press('Enter');await p.getByRole('dialog').waitFor();
+ let release;const delay=new Promise(r=>release=r);let captured=0;
+ await p.route('**/system/shutdown',async route=>{if(route.request().method()==='POST'){captured++;await delay;}await route.continue();});
+ const response=p.waitForResponse(r=>r.url().endsWith('/system/shutdown')&&r.request().method()==='POST');
+ await keyboardTo(p,p.getByRole('button',{name:'Confirm force stop'}));await p.keyboard.press('Enter');await until(()=>captured===1);
+ await writeFile(join(g.dir,'release'),'complete normally');await until(()=>g.closed);await g.flush();
+ const next=await boot('stale-restart-new',{directory:g.dir,port:6076});release();
+ await check('delayed browser choice after real gateway restart returns current 409 without force',async()=>{const r=await response;const body=await r.json();ok(r.status()===409&&body.phase==='running',JSON.stringify(body));await p.getByText(/Shutdown changed in another tab or control/).waitFor();ok((await next.call('/system/shutdown')).body.phase==='running');ok((await run(next,held.runId)).status==='succeeded');await screenshot(p,'stale-tab-after-restart.png');return{status:r.status(),body,posts:captured,run:await run(next,held.runId)};});
+ await c.close();await next.close();
+}finally{for(const g of gateways)try{await g.close();}catch(e){await save(g.name+'-cleanup-error.log.txt',e.stack);}await browser.close();}

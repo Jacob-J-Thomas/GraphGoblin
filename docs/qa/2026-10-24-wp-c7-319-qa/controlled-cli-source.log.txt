@@ -1,0 +1,5 @@
+$ErrorActionPreference = 'Stop'
+$source = @'
+using System; using System.IO; using System.Threading; public class QaCli { public static void Main(string[] args) { if(Array.IndexOf(args,"--version")>=0){Console.WriteLine("codex-cli 0.160.0");return;} if(Array.IndexOf(args,"--help")>=0){Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config");return;} if(Array.IndexOf(args,"login")>=0){Console.WriteLine("Logged in using ChatGPT");return;} File.WriteAllText(Environment.GetEnvironmentVariable("QA_CLI_PID"),System.Diagnostics.Process.GetCurrentProcess().Id.ToString()); Console.WriteLine("{\"type\":\"thread.started\",\"thread_id\":\"qa-controlled-cli\"}"); Console.WriteLine("{\"type\":\"turn.started\"}");Console.Out.Flush(); for(int i=0;i<6000;i++){if(File.Exists(Environment.GetEnvironmentVariable("QA_CLI_RELEASE")))return;Thread.Sleep(25);} } }
+'@
+Add-Type -TypeDefinition $source -OutputAssembly '%USERPROFILE%\AppData\Local\Temp\gg-qa-c7-319-cli-seed-hgEXUC\qa-cli.exe' -OutputType ConsoleApplication

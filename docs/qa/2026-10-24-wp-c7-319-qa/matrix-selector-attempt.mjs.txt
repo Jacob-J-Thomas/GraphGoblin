@@ -1,0 +1,51 @@
+process.env.QA_RESULTS='matrix-results.json';
+const H=await import('data:text/javascript;base64,'+Buffer.from(await (await import('node:fs/promises')).readFile('docs/qa/2026-10-24-wp-c7-319-qa/helpers.mjs.txt','utf8')).toString('base64'));
+const {boot,publish,definition,start,run,edge,context,check,ok,until,sleep,save,readFile,keyboardTo,screenshot,gateways}=H;
+const browser=await edge();
+const titles={draining:'Gateway is draining','awaiting-choice':'Gateway is draining',forcing:'Gateway is force stopping','drain-failed':'Gateway drain failed','force-failed':'Force stop failed',exiting:'Gateway is exiting after failed cleanup',ready:'Gateway is stopping',stopped:'Gateway stopped'};
+const phaseSource=await readFile(H.join(H.out,'phase-server.mjs.txt'),'utf8');
+const cells=[];
+try{
+ const seed=await boot('matrix-seed',{port:6072});
+ const loop=await publish(seed,definition('Controlled phase fixture pinned loop'));
+ const id=await start(seed,loop);await until(async()=>(await run(seed,id)).status==='succeeded');await seed.close();
+ const routes={loops:'/loops',runs:'/runs',events:'/events',settings:'/settings',editor:'/loops/'+loop+'/edit',newrun:'/runs/new',inspector:'/runs/'+id,notfound:'/missing-qa-route'};
+ for(const phase of ['running','draining','awaiting-choice','forcing','drain-failed','force-failed','exiting','ready','stopped']){
+  const g=await boot('matrix-'+phase,{directory:seed.dir,port:6072,env:{QA_PHASE:phase,QA_RUN_ID:id},script:phaseSource});
+  const actual=(await g.call('/system/shutdown')).body;ok(actual.phase===phase,JSON.stringify(actual));
+  let actionPosts=0;
+  for(const width of [1440,390])for(const theme of ['dark','light']){
+   const c=await context(browser,g,{width,theme});c.on('request',r=>{if(r.url().endsWith('/system/shutdown')&&r.method()==='POST')actionPosts++;});
+   const page=await c.newPage();
+   for(const [route,path] of Object.entries(routes)){
+    await check('matrix '+[phase,width,theme,route].join('/'),async()=>{
+     await page.goto(g.origin+'/app'+path);await page.locator('header').waitFor();
+     const region=page.getByRole('region',{name:'Gateway shutdown'});
+     if(phase==='running'){await page.locator('header').waitFor();await sleep(150);ok(await region.count()===0,'Running notice visible');await page.keyboard.press('Tab');}
+     else{
+      await region.getByRole('heading',{name:titles[phase],exact:true}).waitFor();
+      const box=await region.boundingBox();ok(box&&box.x>=-1&&box.x+box.width<=width+1,'Notice horizontal overflow '+JSON.stringify(box));
+      const expectedWait=['draining','awaiting-choice'].includes(phase),expectedForce=expectedWait||phase==='force-failed';
+      ok(await region.getByRole('button',{name:'Keep waiting',exact:true}).count()===(expectedWait?1:0),'Wait availability');
+      ok(await region.getByRole('button',{name:phase==='force-failed'?'Force exit':'Force stop',exact:true}).count()===(expectedForce?1:0),'Force availability');
+      if(expectedForce){
+       const target=region.getByRole('button',{name:phase==='force-failed'?'Force exit':'Force stop',exact:true});
+       await keyboardTo(page,target);await page.keyboard.press('Enter');const d=page.getByRole('dialog');await d.waitFor();
+       const text=await d.innerText();ok(text.includes('External effects may be uncertain'));
+       if(phase==='force-failed')ok(text.includes('lock stays for next-start reclamation'));
+       const bounds=await d.boundingBox();ok(bounds.x>=-1&&bounds.x+bounds.width<=width+1,'Dialog horizontal overflow');
+       if(route==='loops')await screenshot(page,'dialog-'+phase+'-'+width+'-'+theme+'.png');
+       await page.keyboard.press('Escape');await d.waitFor({state:'hidden'});ok(await target.evaluate(el=>el===document.activeElement),'Focus did not return');
+      }else{await page.keyboard.press('Tab');}
+     }
+     const shot='phase-'+phase+'-'+width+'-'+theme+'-'+route+'.png';await screenshot(page,shot);
+     const cell={phase,width,theme,route,screenshot:shot,notice:await region.count()?await region.innerText():null,themeObserved:await page.locator('html').getAttribute('data-theme'),horizontalOverflow:await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)};cells.push(cell);ok(cell.themeObserved===theme);return cell;
+    });
+   }
+   // Each phase is reloaded, navigated and closed with observation only.
+   await page.reload();await page.goto(g.origin+'/app/loops');await page.close();await c.close();
+  }
+  await check('lifecycle no actions in '+phase,async()=>{ok(actionPosts===0,'Unexpected shutdown POST '+actionPosts);return{phase,actionPosts,contexts:4,routesEach:8};});
+  await save('matrix-cells.json',cells);await g.close();
+ }
+}finally{for(const g of gateways)try{await g.close();}catch{}await browser.close();}

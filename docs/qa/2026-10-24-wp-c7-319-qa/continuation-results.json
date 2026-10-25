@@ -1,0 +1,68 @@
+[
+  {
+    "name": "lost response says unknown and never retries the action",
+    "status": "PASS",
+    "ms": 6423,
+    "evidence": {
+      "postAttempts": 1,
+      "actualGatewayPhase": "draining",
+      "text": "Gateway is draining\n\nIndependent starts are refused. Active work is finishing; queued independent work remains recoverable after restart. Durable waits and paused runs remain saved.\n\nWaiting never starts a browser countdown. Any further choice comes from the gateway.\n\nHeld QA work — 01M5R2W98E79DC2XTSRR5J7VJP\n\nThe action outcome is unknown. It will not be retried automatically. Check gateway state before trying again.\n\nKeep waiting\nForce stop"
+    }
+  },
+  {
+    "name": "no system:read while running shows no shutdown notice",
+    "status": "PASS",
+    "ms": 1265,
+    "evidence": {
+      "at": "2026-10-24T23:11:27.909Z",
+      "path": "/system/shutdown",
+      "method": "GET",
+      "status": 403,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/forbidden",
+        "title": "forbidden",
+        "status": 403,
+        "code": "FORBIDDEN",
+        "detail": "this key lacks the \"system:read\" scope"
+      }
+    }
+  },
+  {
+    "name": "no system:write refuses action and keeps observation available",
+    "status": "PASS",
+    "ms": 437,
+    "evidence": {
+      "response": {
+        "at": "2026-10-24T23:11:29.985Z",
+        "path": "/system/shutdown",
+        "method": "POST",
+        "request": {
+          "action": "wait"
+        },
+        "status": 403,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/forbidden",
+          "title": "forbidden",
+          "status": 403,
+          "code": "FORBIDDEN",
+          "detail": "this key lacks the \"system:write\" scope"
+        }
+      },
+      "state": {
+        "phase": "awaiting-choice",
+        "graceMs": 800,
+        "startedAt": "2026-10-24T23:11:28.303Z",
+        "choiceAt": "2026-10-24T23:11:29.103Z",
+        "activeRunIds": [
+          "01M5R2XRTNGRZ84ZWR524W12SG"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+      }
+    }
+  }
+]
