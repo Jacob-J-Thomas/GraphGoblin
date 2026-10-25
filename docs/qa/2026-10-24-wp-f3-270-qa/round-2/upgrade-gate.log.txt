@@ -1,0 +1,45 @@
+pnpm.cmd : $ node --expose-gc --test tooling/scripts/upgrade.acceptance.mjs
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd test:upgrade *> docs/qa/2026-10-24-wp-f3-270-qa/ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node --expose....acceptance.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+TAP version 13
+# node:internal/modules/esm/resolve:275
+#     throw new ERR_MODULE_NOT_FOUND(
+#           ^
+# Error [ERR_MODULE_NOT_FOUND]: Cannot find module '%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f3-270-2\\apps\\api\\dist\\data-dir-lock.js' imported from %USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f3-270-2\\tooling\\scripts\\upgrade.acceptance.mjs
+#     at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+#     at moduleResolve (node:internal/modules/esm/resolve:860:10)
+#     at defaultResolve (node:internal/modules/esm/resolve:984:11)
+#     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:685:12)
+#     at \#cachedDefaultResolve (node:internal/modules/esm/loader:634:25)
+#     at ModuleLoader.resolve (node:internal/modules/esm/loader:617:38)
+#     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:273:38)
+#     at ModuleJob._link (node:internal/modules/esm/module_job:135:49) {
+#   code: 'ERR_MODULE_NOT_FOUND',
+#   url: '%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/apps/api/dist/data-dir-lock.js'
+# }
+# Node.js v22.14.0
+# Subtest: tooling\\scripts\\upgrade.acceptance.mjs
+not ok 1 - tooling\\scripts\\upgrade.acceptance.mjs
+  ---
+  duration_ms: 2614.8288
+  location: '%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f3-270-2\\tooling\\scripts\\upgrade.acceptance.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2630.712
+[ELIFECYCLE] Command failed with exit code 1.

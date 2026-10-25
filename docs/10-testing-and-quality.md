@@ -114,6 +114,8 @@ Live/paid smoke checks remain separate, manually authorized checks. CI schedules
 
 Storage readiness tests distinguish the format baseline from the migration head. Format 3 requires `0008_github_triggers`: preflight checks its SQL-derived catalogue, a current complete marker, a timestamp-only shipped-ledger prefix containing that baseline, and strict definitions before writes. Stores at 0008, 0009 or 0010 migrate normally to 0011. Post-migration validation requires the full head catalogue and exact timestamp list. Tests cover baseline damage/non-prefix ledgers before writes, historical applied SQL hashes, and a head ledger with missing additive structure after a no-op migration. Definitions are parsed once only when the preflight database is covered by the data-directory lock; external database URLs are reparsed. Offline-sort tests force multiple bounded fan-in passes, assert hash/issue ordering parity and exercise scratch cleanup after failure.
 
+A fixture that proves a data migration upgrades stored rows starts from a genuine store migrated only up to that migration (`openStoreBefore` in `@graphgoblin/infrastructure/sqlite/testing`, or `storeLoopBefore` in `@graphgoblin/api/testing` for a saved loop), seeds the older shape there, and then reopens the store, or starts a gateway on it, so the whole shipped suffix applies. Its pending count comes from that suffix (`shippedSqlMigrationsFrom`). Deleting one ledger row from a current store stops exercising the migration as soon as a later one lands, and deleting a longer suffix would replay later DDL against structures that already exist.
+
 `pnpm check` also runs `check:tokens` after `check:layers` and `check:contrast` at the end. The token guard checks web source (`.ts`, `.tsx`, `.css`), `index.html`, and `vite.config.ts` for Tailwind palette colour utilities and colour literals in CSS declarations, style/colour properties, and arbitrary colour utilities. CSS named colours are checked only in these colour-setting contexts; prose, identifiers, URLs, and non-colour hex data are permitted. `transparent`, `current`, `currentColor`, and token references are permitted. This static check does not evaluate computed JavaScript values. Tests and `__fixtures__` are skipped. `src/styles/` is the only directory allowlist; there are no inline suppressions. The explicit `CONFIG_EXCEPTIONS` list in the script starts empty and may contain one named, exact palette declaration per config file (a theme-colour meta tag in HTML or a named constant in Vite), never a whole-file or whole-value exemption.
 
 `pnpm docs:contrast` generates `docs/qa/design-contrast.md` from `apps/web/src/styles/tokens.css` and `tooling/scripts/design-contrast.pairs.json`; `check:contrast` rejects a missing/stale table or an enforced pair below 4.5:1 for text or 3:1 for non-text, in either theme. Focus-ring pairs cover every declared surface; decorative pairs are reported without enforcement. The approved palette uses opaque sRGB hex values; unsupported colours fail clearly. Use `--tokens <css>` or `GG_DESIGN_TOKENS` to override the input and `--output <md>` for a temporary test table. Node's built-in runner discovers the tooling unit and CLI fixture tests through the existing `tooling` test commands.
@@ -143,6 +145,29 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the 
 - No new dependency without a licence check and a line in `research/licenses.md`.
 
 ## Performance baseline (Decided by measurement, 2026-10-03)
+
+The #186 server/transport change has a current-baseline [before report](qa/2026-10-22-wp-e1-186-before.md)
+and the same-workload [after report](qa/2026-10-22-wp-e1-186-after.md), including full/late/slow/
+interrupted/reconnected exact payload hashes, event-loop delay, raw paused-socket wire bytes,
+and separate heap samples. Engineering bounds are ADR-0050. API regressions exercise paged
+replay with a concurrent append, bounded held live events, and a paused real socket against
+SQLite followed by complete cursor recovery. Client and hook regressions cover typed failure,
+resume cursor, visible retry reason and early batch flush. The tests were run red on the base.
+The round-1 7,078 ms replay and 569 ms loop maximum were host contention, as established by the
+reviewer's [interleaved same-host A/B](qa/2026-10-22-wp-e1-186/round-2/review-ab-bench-out.json)
+(41,001 events, three rounds): base 3,525.67 ms total / 2,569.01 ms stall / 2,561.28 ms first event;
+round-1 head 3,315.19 ms / 180.75 ms / 17.83 ms. The benchmark and reader source are retained
+with that evidence; this comparison is separate from the original non-interleaved runs.
+The [round-3 terminal-cursor evidence](qa/2026-10-22-wp-e1-186/README.md#round-3-bounded-terminal-confirmation)
+compares empty replies on 42,102-event histories and verifies constant read work at/past the end,
+including post-terminal delivery audits and resume invalidation. It does not repeat the full replay benchmark.
+The [round-4 completion evidence](qa/2026-10-22-wp-e1-186/README.md#round-4-authoritative-stream-completion)
+reproduces and fixes truncated resumed histories, omitted delivery audits, empty-cursor retries
+and initial corruption retries, using the audit's real SQLite/HTTP and injection probes plus
+regressions run red on the audited head. Completion checks retain bounded reads; this is
+transport correctness evidence rather than a new full-replay performance comparison.
+Shared-host observations are not a quiet-host performance guarantee. History browsing follows
+in #186 round 2.
 
 The sustained, file-backed baseline for #190 is recorded in [2026-10-18 sustained-run measurements](qa/2026-10-18-sustained-run-measurements.md). [The repeatable scripts](../tooling/perf/README.md) cover cyclic work, growing context, SSE replay and slow readers, transcripts, readiness, populated stores, and headless Edge. They run separately from coverage and preserve their disposable stores, JSON summaries, memory samples, and API CPU profiles. The earlier in-memory baseline below remains historical evidence.
 

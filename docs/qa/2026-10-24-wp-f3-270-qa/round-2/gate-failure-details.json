@@ -1,0 +1,130 @@
+[
+  {
+    "name": "adapter-codex-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage",
+    "pkg": "adapter-codex",
+    "exitCode": 1,
+    "elapsedMs": 70413,
+    "failedTests": [
+      " FAIL  src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+      " FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries"
+    ],
+    "errors": [
+      "Error: Test timed out in 5000ms.",
+      "Error: Test timed out in 5000ms.",
+      "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL"
+    ]
+  },
+  {
+    "name": "infrastructure-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage",
+    "pkg": "infrastructure",
+    "exitCode": 1,
+    "elapsedMs": 134764,
+    "failedTests": [
+      " FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      " FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted"
+    ],
+    "errors": [
+      "Error: Test timed out in 30000ms.",
+      "Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-claude-process-qZoZa6'",
+      "Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-claude-process-GNS2Q3'",
+      "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality",
+      "Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-claude-process-7YkZL4'",
+      "AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]",
+      "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality",
+      "Error: Test timed out in 15000ms.",
+      "Error: Test timed out in 15000ms.",
+      "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL"
+    ]
+  },
+  {
+    "name": "api-client-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage",
+    "pkg": "api-client",
+    "exitCode": 1,
+    "elapsedMs": 38687,
+    "failedTests": [
+      " FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup",
+      " FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup"
+    ],
+    "errors": [
+      "Error: Test timed out in 5000ms.",
+      "Error: Hook timed out in 10000ms.",
+      "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL"
+    ]
+  },
+  {
+    "name": "infrastructure-isolated-src-adversarial-test-ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts",
+    "pkg": "infrastructure",
+    "exitCode": 1,
+    "elapsedMs": 41051,
+    "failedTests": [
+      " FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild"
+    ],
+    "errors": [
+      "Error: Test timed out in 30000ms.",
+      "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+    ]
+  },
+  {
+    "name": "infrastructure-isolated-src-claude-process-test-ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts",
+    "pkg": "infrastructure",
+    "exitCode": 1,
+    "elapsedMs": 34078,
+    "failedTests": [
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started"
+    ],
+    "errors": [
+      "Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-claude-process-eJt9xc'",
+      "Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-claude-process-BBVocI'",
+      "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality",
+      "Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\\AppData\\Local\\Temp\\gg-claude-process-1F3BBr'",
+      "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+    ]
+  },
+  {
+    "name": "infrastructure-isolated-src-claude-readiness-test-ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/readiness.test.ts",
+    "pkg": "infrastructure",
+    "exitCode": 1,
+    "elapsedMs": 55364,
+    "failedTests": [
+      " FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies"
+    ],
+    "errors": [
+      "AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]",
+      "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+    ]
+  },
+  {
+    "name": "infrastructure-isolated-src-process-scripts-test-ts",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts",
+    "pkg": "infrastructure",
+    "exitCode": 1,
+    "elapsedMs": 50519,
+    "failedTests": [
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted"
+    ],
+    "errors": [
+      "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality",
+      "Error: Test timed out in 15000ms.",
+      "Error: Test timed out in 15000ms.",
+      "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+    ]
+  }
+]

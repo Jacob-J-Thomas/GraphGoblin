@@ -11,6 +11,11 @@ export function ExecutionDefaultsSection() {
           ? 'No run deadline unless the loop sets one.'
           : `Run deadline: ${defaults.runDeadlineSeconds} seconds.`}
       </p>
+      <p>
+        {defaults.structuredTimeoutMs === null
+          ? 'No structured completion deadline unless the loop sets one.'
+          : `Structured completion deadline: ${defaults.structuredTimeoutMs} milliseconds.`}
+      </p>
       <HelpText>
         These defaults apply when a loop omits its limits. Change each limit in the editor's Loop
         tab; Unlimited visits and passes must be chosen explicitly. Intentional repetitions use

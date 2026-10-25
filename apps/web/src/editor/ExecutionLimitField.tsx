@@ -13,10 +13,12 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
   const commit = useFormChange();
   const { defaultValue } = unwrap(schema);
   const effective = binding.value === undefined ? defaultValue : binding.value;
-  const deadline = name.endsWith('runDeadlineSeconds');
+  const completion = name.endsWith('structuredTimeoutMs');
+  const deadline = name.endsWith('runDeadlineSeconds') || completion;
   const modeId = useId();
   const { help } = fieldMeta(schema);
-  const fallback = typeof defaultValue === 'number' ? defaultValue : deadline ? 3600 : 10;
+  const fallback =
+    typeof defaultValue === 'number' ? defaultValue : completion ? 120_000 : deadline ? 3600 : 10;
   const parseErrors = useParseErrors();
   const [error, setError] = useState(() => parseErrors.get(name)?.message);
   const [draft, setDraft] = useState<{ text: string; stored: unknown } | undefined>(() => {
@@ -78,7 +80,11 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
           ) : null}
           {unlimited ? (
             deadline ? (
-              <HelpText>No deadline; set one to stop a forgotten run.</HelpText>
+              <HelpText>
+                {completion
+                  ? 'No completion deadline; LLM decisions and repairs remain cancellable.'
+                  : 'No deadline; set one to stop a forgotten run.'}
+              </HelpText>
             ) : (
               <HelpText tone="warn">
                 Unlimited: this guardrail will not stop execution. Use an authored exit or Cancel;
@@ -97,7 +103,7 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
               type="number"
               min={1}
               step={1}
-              max={deadline ? 31536000 : 10000}
+              max={completion ? 31_536_000_000 : deadline ? 31536000 : 10000}
               aria-label={label}
               value={incomplete ? '' : displayed}
               aria-invalid={error ? true : control['aria-invalid']}
@@ -124,7 +130,9 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
             onChange={(e) => choose(e.target.value)}
           >
             <option value="limited">Limited</option>
-            <option value="unlimited">{deadline ? 'No run deadline' : 'Unlimited'}</option>
+            <option value="unlimited">
+              {completion ? 'Unlimited' : deadline ? 'No run deadline' : 'Unlimited'}
+            </option>
           </Select>
         </div>
       )}

@@ -1,0 +1,1106 @@
+{
+  "preDraft": {
+    "loop": {
+      "id": "01M5PYKER6KVDN3CRQT5YBN8K3",
+      "ownerId": "local",
+      "name": "Pre243 draft",
+      "draftVersionId": "01M5PYKER6KVDN3CRQT5YBN8K4",
+      "createdAt": "2026-10-24T12:36:36.742Z",
+      "updatedAt": "2026-10-24T12:36:36.742Z"
+    },
+    "draft": {
+      "id": "01M5PYKER6KVDN3CRQT5YBN8K4",
+      "loopId": "01M5PYKER6KVDN3CRQT5YBN8K3",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pre243 draft",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.742Z"
+    },
+    "issues": []
+  },
+  "prePublished": {
+    "loop": {
+      "id": "01M5PYKESHGNE9TNMVM0543JPD",
+      "ownerId": "local",
+      "name": "Pre243 published",
+      "draftVersionId": "01M5PYKESHGNE9TNMVM0543JPE",
+      "createdAt": "2026-10-24T12:36:36.785Z",
+      "updatedAt": "2026-10-24T12:36:36.785Z"
+    },
+    "draft": {
+      "id": "01M5PYKESHGNE9TNMVM0543JPE",
+      "loopId": "01M5PYKESHGNE9TNMVM0543JPD",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pre243 published",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.785Z"
+    },
+    "issues": []
+  },
+  "postDraft": {
+    "loop": {
+      "id": "01M5PYKETY7E9RSV2RQPBPECSD",
+      "ownerId": "local",
+      "name": "Post243 draft",
+      "draftVersionId": "01M5PYKETY7E9RSV2RQPBPECSE",
+      "createdAt": "2026-10-24T12:36:36.830Z",
+      "updatedAt": "2026-10-24T12:36:36.830Z"
+    },
+    "draft": {
+      "id": "01M5PYKETY7E9RSV2RQPBPECSE",
+      "loopId": "01M5PYKETY7E9RSV2RQPBPECSD",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Post243 draft",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.830Z"
+    },
+    "issues": []
+  },
+  "postFinite": {
+    "loop": {
+      "id": "01M5PYKEVH6QCXQT79835NMWWJ",
+      "ownerId": "local",
+      "name": "Post243 finite",
+      "draftVersionId": "01M5PYKEVJZFSD3GF2X35698VY",
+      "createdAt": "2026-10-24T12:36:36.849Z",
+      "updatedAt": "2026-10-24T12:36:36.849Z"
+    },
+    "draft": {
+      "id": "01M5PYKEVJZFSD3GF2X35698VY",
+      "loopId": "01M5PYKEVH6QCXQT79835NMWWJ",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Post243 finite",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": 9876,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.849Z"
+    },
+    "issues": []
+  },
+  "authored": {
+    "loop": {
+      "id": "01M5PYKEWE6SCWWXRBV44FBFKJ",
+      "ownerId": "local",
+      "name": "Authored both",
+      "draftVersionId": "01M5PYKEWE6SCWWXRBV44FBFKK",
+      "createdAt": "2026-10-24T12:36:36.878Z",
+      "updatedAt": "2026-10-24T12:36:36.878Z"
+    },
+    "draft": {
+      "id": "01M5PYKEWE6SCWWXRBV44FBFKK",
+      "loopId": "01M5PYKEWE6SCWWXRBV44FBFKJ",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Authored both",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": 456,
+          "structuredTimeoutMs": 765,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.878Z"
+    },
+    "issues": []
+  },
+  "damaged": {
+    "loop": {
+      "id": "01M5PYKEX89HPEF1EZMBTNZ7CX",
+      "ownerId": "local",
+      "name": "Damaged JSON",
+      "draftVersionId": "01M5PYKEX89HPEF1EZMBTNZ7CY",
+      "createdAt": "2026-10-24T12:36:36.904Z",
+      "updatedAt": "2026-10-24T12:36:36.904Z"
+    },
+    "draft": {
+      "id": "01M5PYKEX89HPEF1EZMBTNZ7CY",
+      "loopId": "01M5PYKEX89HPEF1EZMBTNZ7CX",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Damaged JSON",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.904Z"
+    },
+    "issues": []
+  },
+  "snap": {
+    "loop": {
+      "id": "01M5PYKEXM94NDKX4MGMN8EGVF",
+      "ownerId": "local",
+      "name": "Snapshot old",
+      "draftVersionId": "01M5PYKEXM94NDKX4MGMN8EGVG",
+      "createdAt": "2026-10-24T12:36:36.916Z",
+      "updatedAt": "2026-10-24T12:36:36.916Z"
+    },
+    "draft": {
+      "id": "01M5PYKEXM94NDKX4MGMN8EGVG",
+      "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Snapshot old",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.916Z"
+    },
+    "issues": []
+  },
+  "finished": {
+    "id": "01M5PYKEY00SZWN636XMPP88K7",
+    "ownerId": "local",
+    "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+    "versionId": "01M5PYKEY1H6906RPXB109PRJH",
+    "pinned": {
+      "source": "draft",
+      "version": 1,
+      "name": "Snapshot old",
+      "label": "Snapshot old draft v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PYKEY1H6906RPXB109PRJG",
+    "status": "queued",
+    "iteration": 1,
+    "createdAt": "2026-10-24T12:36:36.928Z",
+    "lastEventSeq": 1
+  },
+  "wait": {
+    "loop": {
+      "id": "01M5PYKF47YFVVGHPPRMD38RFQ",
+      "ownerId": "local",
+      "name": "Waiting old",
+      "draftVersionId": "01M5PYKF47YFVVGHPPRMD38RFR",
+      "createdAt": "2026-10-24T12:36:37.126Z",
+      "updatedAt": "2026-10-24T12:36:37.126Z"
+    },
+    "draft": {
+      "id": "01M5PYKF47YFVVGHPPRMD38RFR",
+      "loopId": "01M5PYKF47YFVVGHPPRMD38RFQ",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Waiting old",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Input",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "Continue",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:37.126Z"
+    },
+    "issues": []
+  },
+  "waiting": {
+    "id": "01M5PYKF4XXNT8MPN4DGT04Z58",
+    "ownerId": "local",
+    "loopId": "01M5PYKF47YFVVGHPPRMD38RFQ",
+    "versionId": "01M5PYKF47YFVVGHPPRMD38RFR",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Waiting old",
+      "label": "Waiting old v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PYKF4XXNT8MPN4DGT04Z59",
+    "status": "queued",
+    "iteration": 1,
+    "createdAt": "2026-10-24T12:36:37.149Z",
+    "lastEventSeq": 1
+  },
+  "event": {
+    "loop": {
+      "id": "01M5PYKF90G24X53NJXPDCM3DN",
+      "ownerId": "local",
+      "name": "Queued Event old",
+      "draftVersionId": "01M5PYKF90G24X53NJXPDCM3DP",
+      "createdAt": "2026-10-24T12:36:37.280Z",
+      "updatedAt": "2026-10-24T12:36:37.280Z"
+    },
+    "draft": {
+      "id": "01M5PYKF90G24X53NJXPDCM3DP",
+      "loopId": "01M5PYKF90G24X53NJXPDCM3DN",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Queued Event old",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "event",
+              "eventType": "qa-ready"
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:37.280Z"
+    },
+    "issues": []
+  },
+  "emitted": {
+    "id": "01M5PYKF9TN6NA6RGVFPEMK70V",
+    "ownerId": "local",
+    "type": "qa-ready",
+    "payload": {
+      "qa": true
+    },
+    "source": "api",
+    "receivedAt": "2026-10-24T12:36:37.306Z",
+    "runIds": [
+      "01M5PYKFA025SDS57MZ4MC6WFS"
+    ],
+    "duplicate": false
+  },
+  "receiptId": "HWCACYVD0951FKDKYS9GGCH4XW",
+  "webhookRunId": "S5JBSD7P6MCJDRTBMM632WCW12",
+  "webhookSnapshotId": "26R1W2BGGJ1FYPBPJGEFS0FV87"
+}

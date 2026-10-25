@@ -1,0 +1,48 @@
+pnpm.cmd : $ vitest run --coverage
+At line:19 char:3
++   & pnpm.cmd @taskArgs *> $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/packages/domain
+      Coverage enabled with v8
+
+ ❯ src/convert-v3-v4/conversion.test.ts (102 tests | 1 failed) 23729ms
+   ❯ E2 review regressions (24)
+     × re-review F1 resolves every invalidated source with two authored gates (explicit return: false) 5129ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/convert-v3-v4/conversion.test.ts > E2 review regressions > re-review F1 resolves every invalidated source 
+with two authored gates (explicit return: false)
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/convert-v3-v4/conversion.test.ts:620:25
+    618|   });
+    619|
+    620|   it.each([false, true])(
+       |                         ^
+    621|     're-review F1 resolves every invalidated source with two authored …
+    622|     async (explicitReturn) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 29 passed (30)
+      Tests  1 failed | 592 passed (593)
+   Start at  03:27:45
+   Duration  47.68s (transform 53%, tests 29%, import 16%, worker 2%)
+
+  Transform  transforming modules took 147.73s · 53% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f3-
+  │ 270\packages\domain
+

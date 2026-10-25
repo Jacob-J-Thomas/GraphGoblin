@@ -1,0 +1,303 @@
+{
+  "receipt": {
+    "id": "HWCACYVD0951FKDKYS9GGCH4XW",
+    "owner_id": "local",
+    "loop_id": "01M5PYKEXM94NDKX4MGMN8EGVF",
+    "trigger_node_id": "start",
+    "content_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "inbound_id": "47YSAAMK9Q61SSV2EHCSP8F5BJ",
+    "status": "failed",
+    "intent": "{\"run\":{\"id\":\"S5JBSD7P6MCJDRTBMM632WCW12\",\"ownerId\":\"local\",\"loopId\":\"01M5PYKEXM94NDKX4MGMN8EGVF\",\"versionId\":\"26R1W2BGGJ1FYPBPJGEFS0FV87\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Snapshot old\",\"label\":\"Snapshot old draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"structuredTimeoutMs\":null,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"invocationId\":\"MDQP3HXR9B1E2DA0YP5YHJ0K8H\",\"status\":\"queued\",\"iteration\":1,\"createdAt\":\"2026-10-24T12:36:37.712Z\",\"lastEventSeq\":0},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"S5JBSD7P6MCJDRTBMM632WCW12\",\"loopId\":\"01M5PYKEXM94NDKX4MGMN8EGVF\",\"versionId\":\"26R1W2BGGJ1FYPBPJGEFS0FV87\",\"iteration\":1},\"invocation\":{\"id\":\"MDQP3HXR9B1E2DA0YP5YHJ0K8H\",\"source\":\"webhook\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"qa\":\"intent\"},\"receivedAt\":\"2026-10-24T12:36:37.712Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"pinnedLoopIds\":[\"01M5PYKEXM94NDKX4MGMN8EGVF\"],\"queued\":{\"type\":\"run.queued\",\"versionId\":\"26R1W2BGGJ1FYPBPJGEFS0FV87\",\"pinned\":{\"source\":\"draft\",\"version\":1,\"name\":\"Snapshot old\",\"label\":\"Snapshot old draft v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"structuredTimeoutMs\":null,\"runDeadlineSeconds\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"S5JBSD7P6MCJDRTBMM632WCW12\",\"loopId\":\"01M5PYKEXM94NDKX4MGMN8EGVF\",\"versionId\":\"26R1W2BGGJ1FYPBPJGEFS0FV87\",\"iteration\":1},\"invocation\":{\"id\":\"MDQP3HXR9B1E2DA0YP5YHJ0K8H\",\"source\":\"webhook\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"webhook\",\"payload\":{\"qa\":\"intent\"},\"receivedAt\":\"2026-10-24T12:36:37.712Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}},\"snapshot\":{\"id\":\"26R1W2BGGJ1FYPBPJGEFS0FV87\",\"loopId\":\"01M5PYKEXM94NDKX4MGMN8EGVF\",\"version\":1,\"status\":\"snapshot\",\"definition\":{\"schemaVersion\":4,\"name\":\"Snapshot old\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"subloopDepthLimit\":8,\"structuredTimeoutMs\":null,\"runDeadlineSeconds\":null},\"variables\":{},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"trigger\",\"config\":{\"type\":\"webhook\",\"authentication\":{\"type\":\"hmac-sha256\",\"message\":\"body\",\"header\":\"x-hub-signature-256\",\"secretRef\":\"qa-secret\"},\"body\":{\"type\":\"json\"},\"eventType\":{\"source\":\"constant\",\"value\":\"webhook\"}}},{\"id\":\"work\",\"label\":\"Quick\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"mutate\",\"config\":{\"operations\":[{\"op\":\"delete\",\"path\":\"/vars/missing\"}]}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":0,\"y\":0},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"none\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"work\",\"port\":\"in\"}},{\"id\":\"e2\",\"from\":{\"node\":\"work\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]},\"createdAt\":\"2026-10-24T12:36:36.916Z\"}}",
+    "attempts": 1,
+    "next_attempt_at": null,
+    "failure_code": "WEBHOOK_TARGET_REMOVED"
+  },
+  "parsed": {
+    "run": {
+      "id": "S5JBSD7P6MCJDRTBMM632WCW12",
+      "ownerId": "local",
+      "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+      "versionId": "26R1W2BGGJ1FYPBPJGEFS0FV87",
+      "pinned": {
+        "source": "draft",
+        "version": 1,
+        "name": "Snapshot old",
+        "label": "Snapshot old draft v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "MDQP3HXR9B1E2DA0YP5YHJ0K8H",
+      "status": "queued",
+      "iteration": 1,
+      "createdAt": "2026-10-24T12:36:37.712Z",
+      "lastEventSeq": 0
+    },
+    "initialThread": {
+      "schemaVersion": 1,
+      "run": {
+        "id": "S5JBSD7P6MCJDRTBMM632WCW12",
+        "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+        "versionId": "26R1W2BGGJ1FYPBPJGEFS0FV87",
+        "iteration": 1
+      },
+      "invocation": {
+        "id": "MDQP3HXR9B1E2DA0YP5YHJ0K8H",
+        "source": "webhook",
+        "trigger": {
+          "nodeId": "start",
+          "kind": "webhook",
+          "payload": {
+            "qa": "intent"
+          },
+          "receivedAt": "2026-10-24T12:36:37.712Z"
+        }
+      },
+      "messages": [],
+      "vars": {},
+      "artifacts": [],
+      "outputs": {},
+      "gates": {},
+      "counters": {
+        "nodeVisits": {},
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    },
+    "queued": {
+      "type": "run.queued",
+      "versionId": "26R1W2BGGJ1FYPBPJGEFS0FV87",
+      "pinned": {
+        "source": "draft",
+        "version": 1,
+        "name": "Snapshot old",
+        "label": "Snapshot old draft v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "S5JBSD7P6MCJDRTBMM632WCW12",
+          "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+          "versionId": "26R1W2BGGJ1FYPBPJGEFS0FV87",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "MDQP3HXR9B1E2DA0YP5YHJ0K8H",
+          "source": "webhook",
+          "trigger": {
+            "nodeId": "start",
+            "kind": "webhook",
+            "payload": {
+              "qa": "intent"
+            },
+            "receivedAt": "2026-10-24T12:36:37.712Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    "pinnedLoopIds": [
+      "01M5PYKEXM94NDKX4MGMN8EGVF"
+    ],
+    "snapshot": {
+      "id": "26R1W2BGGJ1FYPBPJGEFS0FV87",
+      "loopId": "01M5PYKEXM94NDKX4MGMN8EGVF",
+      "version": 1,
+      "status": "snapshot",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Snapshot old",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "webhook",
+              "authentication": {
+                "type": "hmac-sha256",
+                "message": "body",
+                "header": "x-hub-signature-256",
+                "secretRef": "qa-secret"
+              },
+              "body": {
+                "type": "json"
+              },
+              "eventType": {
+                "source": "constant",
+                "value": "webhook"
+              }
+            }
+          },
+          {
+            "id": "work",
+            "label": "Quick",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "delete",
+                  "path": "/vars/missing"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:36:36.916Z"
+    }
+  },
+  "runs": [
+    {
+      "id": "01M5PYKEY00SZWN636XMPP88K7",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M5PYKF4XXNT8MPN4DGT04Z58",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M5PYKFA025SDS57MZ4MC6WFS",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M5PYMA3F434M9TQJ664XS8DJ",
+      "status": "failed"
+    },
+    {
+      "id": "01M5PYMA8CDDPJRP8YQSCQ15X3",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M5PYMAW33VPKTMNBCK816292",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+      "status": "failed"
+    },
+    {
+      "id": "01M5PYMDRH1X06GQ51RA13YG71",
+      "status": "cancelled"
+    },
+    {
+      "id": "01M5PYMFZDFP4MDFD5C092YV1A",
+      "status": "succeeded"
+    }
+  ]
+}

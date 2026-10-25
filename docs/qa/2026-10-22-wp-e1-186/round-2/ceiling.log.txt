@@ -1,0 +1,55 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > scans multiple terminal pages before closing an already consumed cursor
+ × src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling through a real corked high-water-mark transport 227ms
+   → expected false to be true // Object.is equality
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-catchup.te ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling through a real corked 
+high-water-mark transport
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/sse-catchup.test.ts:201:52
+    199|     try {
+    200|       const text = await (await fetch(base)).text();
+    201|       expect(text.includes('event: stream.error')).toBe(true);
+       |                                                    ^
+    202|       expect(text.includes('SSE_SLOW_CONSUMER')).toBe(true);
+    203|       expect(ids(text)).toEqual([0]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  02:20:01
+   Duration  10.35s (import 55%, transform 43%, tests 2%)
+
+  Transform  transforming modules took 4.21s · 43% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

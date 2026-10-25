@@ -1,0 +1,54 @@
+import { spawn, execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync, openSync, closeSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const sha256 = value => createHash('sha256').update(value).digest('hex');
+const head = execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+if(head !== '389dc14f24fcab33f6c22b0ba14428596fdda539') throw new Error('unexpected head');
+const changed = execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split(/\r?\n/);
+const sourceFiles = [...changed.filter(path => /\.(ts|tsx|md)$/.test(path)), 'apps/api/src/sse-completion.test.ts', 'packages/api-client/src/sse-completion.test.ts'];
+const frozen = Object.fromEntries(sourceFiles.map(path => [path, sha256(readFileSync(path))]));
+writeFileSync('.tmp/r4-source-frozen.json',JSON.stringify(frozen,null,2));
+const resumed=process.argv.includes('--resume');
+const results=resumed?JSON.parse(readFileSync('.tmp/r4-initial-gates.json')).results:[];
+async function run(name, command, coverageDir) {
+  const log = `.tmp/r4-${name}.log.txt`;
+  const fd = openSync(log,'w');
+  console.log(`START ${name}: ${command}`);
+  const started = new Date().toISOString();
+  const code = await new Promise((resolve,reject)=>{
+    const child=spawn(process.env.ComSpec ?? 'C:\\Windows\\System32\\cmd.exe',['/d','/s','/c',command],{env:process.env,stdio:['ignore',fd,fd],windowsHide:true});
+    child.on('error',reject);child.on('close',resolve);
+  });
+  closeSync(fd);
+  const result={name,command,code,started,ended:new Date().toISOString(),log};
+  if(coverageDir && existsSync(`${coverageDir}/coverage-summary.json`)) {
+    const summary=readFileSync(`${coverageDir}/coverage-summary.json`);
+    writeFileSync(`.tmp/r4-${name}-summary.json`,summary);
+    result.coverage=JSON.parse(summary).total;
+  }
+  results.push(result);writeFileSync('.tmp/r4-gates.json',JSON.stringify({head,node:process.version,sourceFiles,results},null,2));
+  console.log(`END ${name}: ${code}`);
+  return code;
+}
+let staticFailed=false;
+for(const [name,command] of [
+ ['typecheck','pnpm.cmd typecheck'],['lint','pnpm.cmd lint'],
+ ['layers','pnpm.cmd check:layers'],['deps','pnpm.cmd check:deps'],['docs','pnpm.cmd check:docs'],
+ ['prettier',`pnpm.cmd exec prettier --check ${sourceFiles.join(' ')}`],
+]) {
+  if(resumed && name!=='prettier' && results.some(result=>result.name===name && result.code===0)) continue;
+  const code=await run(resumed?`${name}-corrected`:name,command);
+  if(code!==0) staticFailed=true;
+}
+if(staticFailed) throw new Error('static gates failed; full suites not started');
+// Required full invocations are each run once. Report failures; do not retry whole suites.
+await run('coverage-api','pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure=true','apps/api/coverage');
+await run('coverage-client','pnpm.cmd --filter @graphgoblin/api-client test:coverage --coverage.reportOnFailure=true','packages/api-client/coverage');
+await run('coverage-web','pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 --coverage.reportOnFailure=true','apps/web/coverage');
+await run('build','pnpm.cmd build');
+await run('transport-after','node --experimental-import-meta-resolve .tmp/r4-transport-probe.mjs .tmp/r4-after');
+await run('corruption-after','node --experimental-import-meta-resolve .tmp/r4-initial-corruption-probe.mjs .tmp/r4-after');
+const drift=sourceFiles.filter(path=>sha256(readFileSync(path))!==frozen[path]);
+writeFileSync('.tmp/r4-gate-source-integrity.json',JSON.stringify({head,drift},null,2));
+if(drift.length) throw new Error(`source drift: ${drift.join(', ')}`);
+console.log('GATES FINISHED');

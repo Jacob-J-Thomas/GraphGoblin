@@ -1,8 +1,8 @@
 import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
 import type { GraphGoblinClient } from './client.js';
-import { GraphGoblinApiError } from './errors.js';
+import { GraphGoblinApiError, type ProblemDetails } from './errors.js';
 
-/** Event types after which the API closes the stream and no further events can arrive. */
+/** Lifecycle outcomes; historical outcomes can be superseded and do not complete a stream. */
 export const TERMINAL_RUN_EVENT_TYPES: ReadonlySet<RunEvent['type']> = new Set([
   'run.finished',
   'run.failed',
@@ -90,8 +90,11 @@ export interface SubscribeRunEventsOptions {
   runId: string;
   /** Start after this sequence number (exclusive). Default 0: the whole log. */
   after?: number;
-  /** Called once per event, in `seq` order, never twice for one `seq`. Awaited before the next. */
-  onEvent: (event: RunEvent) => void | Promise<void>;
+  /**
+   * Called once per event, in `seq` order, never twice for one `seq`. Awaited before the next.
+   * jsonBytes estimates UTF-16 bytes from the received JSON text, without serializing again.
+   */
+  onEvent: (event: RunEvent, jsonBytes: number) => void | Promise<void>;
   /**
    * Called for recoverable problems: a dropped or refused connection before each retry (with the
    * 1-based attempt number), or a frame that failed `RunEventSchema` validation (attempt 0).
@@ -113,7 +116,7 @@ export interface RunEventSubscription {
   /** Stop streaming. Idempotent; `done` resolves. */
   close(): void;
   /**
-   * Resolves after a terminal event or when closed or aborted. Rejects when the API answers with
+   * Resolves after authoritative stream.complete or when closed or aborted. Rejects when the API answers with
    * a non-retryable error (for example 404 or 401), when `onEvent` throws, or when `maxAttempts`
    * consecutive connections fail.
    */
@@ -125,6 +128,11 @@ export interface RunEventSubscription {
 /** 408, 425, 429, and 5xx are worth retrying; other statuses will not change on their own. */
 function retryable(status: number): boolean {
   return status === 408 || status === 425 || status === 429 || status >= 500;
+}
+
+/** Corrupt history is fatal on either side of SSE headers; transient read failures retry. */
+function retryableProblem(error: GraphGoblinApiError): boolean {
+  return error.code !== 'STORED_EVENT_INVALID' && retryable(error.status);
 }
 
 export function defaultSleep(ms: number, signal: AbortSignal): Promise<void> {
@@ -152,8 +160,8 @@ class Fatal extends Error {
  * Stream a run's events over `GET /runs/{id}/events` with `Accept: text/event-stream`, using
  * `fetch` and a streaming body reader so it works in browsers and Node 18+.
  *
- * Resume: the helper tracks the last delivered `seq`. If the connection drops before a terminal
- * event, it reconnects with `after=<lastSeq>` after an exponential backoff (reset once a
+ * Resume: the helper tracks the last delivered `seq`. If the connection drops before the
+ * authoritative stream.complete control, it reconnects with `after=<lastSeq>` after an exponential backoff (reset once a
  * connection delivers an event), and drops any replayed event whose `seq` it has already seen.
  */
 export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEventSubscription {
@@ -171,7 +179,7 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
 
   let lastSeq = options.after ?? 0;
 
-  /** Read one connection to its end. Returns true after a terminal event or a close. */
+  /** Returns true only for authoritative completion or a requested close. */
   async function connect(): Promise<boolean> {
     const { baseUrl, headers, fetch } = client.config;
     const url = `${baseUrl}/runs/${encodeURIComponent(runId)}/events?after=${lastSeq}`;
@@ -190,19 +198,65 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
         // not JSON; keep the text
       }
       const error = GraphGoblinApiError.fromResponse(response, body);
-      throw retryable(response.status) ? error : new Fatal(error);
+      throw retryableProblem(error) ? error : new Fatal(error);
     }
     if (!response.body) throw new Fatal(new Error('the event stream response has no body'));
     onOpen?.();
 
-    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    // Cancel the underlying reader directly as well as aborting fetch. In particular, no
+    // transform-stream cancellation can keep a stalled body read alive after close().
+    const cancelReader = () => {
+      void reader.cancel().catch(() => undefined);
+    };
+    controller.signal.addEventListener('abort', cancelReader, { once: true });
+    if (controller.signal.aborted) cancelReader();
     const parser = new SseParser();
     try {
       for (;;) {
         const { value, done } = await reader.read();
         if (done) return false;
-        for (const frame of parser.push(value)) {
+        for (const frame of parser.push(decoder.decode(value, { stream: true }))) {
           if (controller.signal.aborted) return true;
+          if (frame.event === 'stream.complete') {
+            try {
+              const body: unknown = JSON.parse(frame.data);
+              if (
+                typeof body !== 'object' ||
+                body === null ||
+                !('after' in body) ||
+                body.after !== lastSeq
+              )
+                throw new Error('invalid stream completion cursor');
+            } catch (cause) {
+              throw new Fatal(new RunEventParseError(frame, cause));
+            }
+            // An id-less control confirms the delivered cursor; it never advances it.
+            return true;
+          }
+          if (frame.event === 'stream.error') {
+            let problem: ProblemDetails;
+            try {
+              const body: unknown = JSON.parse(frame.data);
+              if (
+                typeof body !== 'object' ||
+                body === null ||
+                !('code' in body) ||
+                typeof body.code !== 'string' ||
+                !('status' in body) ||
+                typeof body.status !== 'number'
+              )
+                throw new Error('invalid stream problem');
+              problem = body as ProblemDetails;
+            } catch (cause) {
+              throw new Fatal(new RunEventParseError(frame, cause));
+            }
+            const error = new GraphGoblinApiError(problem);
+            // Controls never advance lastSeq. Corrupt history needs repair; other server-side
+            // failures follow the same retry policy as an equivalent HTTP response.
+            throw retryableProblem(error) ? error : new Fatal(error);
+          }
           let event: RunEvent;
           try {
             event = RunEventSchema.parse(JSON.parse(frame.data));
@@ -214,15 +268,15 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
           }
           if (event.seq <= lastSeq) continue;
           try {
-            await onEvent(event);
+            await onEvent(event, frame.data.length * 2);
           } catch (error) {
             throw new Fatal(error);
           }
           lastSeq = event.seq;
-          if (TERMINAL_RUN_EVENT_TYPES.has(event.type)) return true;
         }
       }
     } finally {
+      controller.signal.removeEventListener('abort', cancelReader);
       await reader.cancel().catch(() => undefined);
     }
   }

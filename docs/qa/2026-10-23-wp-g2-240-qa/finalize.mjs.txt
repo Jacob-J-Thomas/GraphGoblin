@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {createRequire} from 'node:module';
+const root=process.cwd(),dir=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa');
+const req=createRequire(path.join(root,'package.json'));
+const prettier=req('prettier');
+const link=n=>`[${n}](${n})`;
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const snapshot=['HEAD: '+git('rev-parse','HEAD'),'Branch: '+git('branch','--show-current'),'Tracked diff: '+(git('diff','--stat')||'(none)'),'Staged diff: '+(git('diff','--cached','--stat')||'(none)'),'Status: '+git('status','--short')].join('\n')+'\n';
+fs.writeFileSync(path.join(dir,'final-state.log.txt'),snapshot);
+const gateResults={source:'Transcribed from returned tool completion results and retained logs',build:{status:'passed',tasks:11,cached:10},typecheck:{exitCode:0,tasks:20,cached:17},lint:{exitCode:0,warnings:1},coverage:{exitCode:1,interrupted:true,reportedFailures:8,summaryAvailable:false},initialFormat:{exitCode:1,interrupted:true},targetedTests:{exitCode:0,files:3,tests:42},primaryBrowser:{exitCode:0,widths:[1440,390],checks:50},supplemental:{exitCode:0,checks:4}};
+fs.writeFileSync(path.join(dir,'gate-results.json'),JSON.stringify(gateResults,null,2)+'\n');
+const format=JSON.parse(fs.readFileSync(path.join(dir,'format-final.json'),'utf8').replace(/^\uFEFF/,''));
+let text=fs.readFileSync(path.join(dir,'README.md'),'utf8');
+text=text.replace('A final report-era attempt is recorded separately below.',`Final attempt: exit ${format.exitCode}, ${format.durationSeconds.toFixed(2)} s; ${link('format-final.log.txt')}, ${link('format-final.json')}.`);
+text=text.replace("Root formatting's initial run was incomplete; final result is appended after the report is generated.",`Root formatting's final attempt exited ${format.exitCode}; see the gate result above.`);
+text=text.replace('The original setup failures are separately named and must not be counted as product tests.',`The original setup failures are separately named and must not be counted as product tests. ${link('gate-results.json')} records returned command outcomes; ${link('final-state.log.txt')} confirms the exact head and no tracked/staged changes.`);
+const auditPath=path.join(dir,'artifact-audit.json');
+fs.writeFileSync(auditPath,'{}\n');
+function artifactTable(){let t='| Artifact | Bytes |\n| --- | --- |\n';for(const n of fs.readdirSync(dir).sort())if(n!=='README.md'&&n!=='artifact-manifest.json')t+=`| ${link(n)} | ${fs.statSync(path.join(dir,n)).size} |\n`;return t;}
+const first=text.indexOf('| Artifact | Bytes |');const last=text.indexOf('## 5. Observations outside scope',first);
+if(first<0||last<0)throw new Error('Missing artifact table markers');
+const before=text.slice(0,first),after=text.slice(last);
+text=before+artifactTable()+'\n'+after;
+const missing=[];for(const m of text.matchAll(/\]\(([^)]+)\)/g)){const dest=m[1];if(!dest.includes('://')&&!fs.existsSync(path.join(dir,dest)))missing.push(dest);}
+const oversized=fs.readdirSync(dir).filter(n=>fs.statSync(path.join(dir,n)).size>1000000);
+if(oversized.length)throw new Error('Oversized captures require NOT-KEPT: '+oversized.join(', '));
+const userPathLeaks=[];
+for(const n of fs.readdirSync(dir)){if(n.endsWith('.png'))continue;const b=fs.readFileSync(path.join(dir,n));const t=b.toString('utf8');if(/C:[/\\]+Users[/\\]+%USERNAME%/i.test(t))userPathLeaks.push(n);}
+const audit={head:git('rev-parse','HEAD'),missingLinks:missing,userPathLeaks,oversizedFiles:oversized,trackedDiff:git('diff','--name-only'),stagedDiff:git('diff','--cached','--name-only'),checks:{primary:50,supplemental:4,targetedUnit:42},scope:'Only untracked QA evidence folder added; current app and staged content unchanged',politeSemanticsOnly:true};
+if(missing.length||userPathLeaks.length||audit.trackedDiff||audit.stagedDiff)throw new Error(JSON.stringify(audit));
+fs.writeFileSync(auditPath,JSON.stringify(audit,null,2)+'\n');
+text=before+artifactTable()+'\n'+after;
+const readme=path.join(dir,'README.md'),config=await prettier.resolveConfig(readme);
+text=await prettier.format(text,{...config,filepath:readme});
+fs.writeFileSync(readme,text);
+if(!await prettier.check(text,{...config,filepath:readme}))throw new Error('README formatting failed');
+const entries=fs.readdirSync(dir).filter(n=>n!=='artifact-manifest.json').sort().map(name=>{const bytes=fs.readFileSync(path.join(dir,name));return {name,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+fs.writeFileSync(path.join(dir,'artifact-manifest.json'),JSON.stringify(entries,null,2)+'\n');
+console.log(JSON.stringify({audit,artifactCount:entries.length+1,largest:entries.toSorted((a,b)=>b.bytes-a.bytes)[0],finalRootFormat:format},null,2));

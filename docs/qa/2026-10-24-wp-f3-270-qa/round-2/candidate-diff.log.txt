@@ -1,0 +1,4475 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d642a383..ba7afa9a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Enforce visible, pinned structured-completion deadlines for LLM decision evaluations and output-transform repairs through the structured port, abort overdue Codex work, release run capacity and discard late results while preserving explicit cancellation. No completion deadline applies by default; Unlimited removes that cutoff. **Upgrade:** engine embedders configure `LoopSettings.structuredTimeoutMs` instead of the previously unenforced `EngineSettings.structuredTimeoutMs`; startup migration `0020_completion_deadline_defaults` materializes omitted loop/pin deadline values as null in drafts, versions, run snapshots, queued events and admission intents, preserving authored values. This also fixes reopening pre-#243 loops without `runDeadlineSeconds`. Same-session inference schema repairs follow node/run timeouts. Timeout details retain the completion provider, model and effort. Direct evaluator callers must supply `runId` and `structuredTimeoutMs` (null for Unlimited). Export and API clients must accept the nullable loop-settings field `structuredTimeoutMs`, `pinned.limits.structuredTimeoutMs` and the `STRUCTURED_COMPLETION_TIMEOUT` value of `RunErrorCode`. Regenerate clients for this contract. (#270)
++
+ - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
+ 
+ - Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.
+diff --git a/apps/api/src/container.ts b/apps/api/src/container.ts
+index b80c14cf..5330172c 100644
+--- a/apps/api/src/container.ts
++++ b/apps/api/src/container.ts
+@@ -3,7 +3,7 @@ import { validateHarnessDefaults } from '@graphgoblin/domain';
+ import { mkdir, realpath } from 'node:fs/promises';
+ import { fileURLToPath } from 'node:url';
+ import { dirname, isAbsolute, relative, sep } from 'node:path';
+-import { createCodexAdapters } from '@graphgoblin/adapter-codex';
++import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
+ import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
+ import {
+   HttpProbes,
+@@ -278,7 +278,7 @@ export async function createContainer(
+       },
+       modelCatalog: catalog,
+       // LLM evaluation uses Codex; all classifier primitives use the owner registry.
+-      deciders: overrides.deciders ?? [codex.decider],
++      deciders: overrides.deciders ?? [new CodexDecider(structured)],
+       classifiers: overrides.classifiers ?? classifierRegistry,
+       structured,
+       scripts: overrides.scripts ?? new ProcessScripts(),
+@@ -302,7 +302,6 @@ export async function createContainer(
+     const settings: EngineSettings = {
+       defaults: config.defaults,
+       maxConcurrentRuns: config.maxConcurrentRuns,
+-      structuredTimeoutMs: 120_000,
+       // Harness-scoped Settings defaults are read at run start; GG_DEFAULTS are the fallback.
+       ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
+     };
+diff --git a/apps/api/src/stored-loop-defaults.test.ts b/apps/api/src/stored-loop-defaults.test.ts
+new file mode 100644
+index 00000000..be343045
+--- /dev/null
++++ b/apps/api/src/stored-loop-defaults.test.ts
+@@ -0,0 +1,90 @@
++import { mkdtemp, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { LoopDefinitionSchema } from '@graphgoblin/contracts';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { afterEach, beforeEach, expect, it } from 'vitest';
++import { createTestApp, type TestApp } from './testing/test-app.js';
++
++let t: TestApp;
++let dataDir: string;
++beforeEach(async () => {
++  dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-stored-'));
++  t = await createTestApp({ env: { GG_DATA_DIR: dataDir } });
++});
++afterEach(async () => {
++  await t.close();
++  await rm(dataDir, { recursive: true, force: true });
++});
++
++it.each([
++  ['draft', 'structuredTimeoutMs'],
++  ['published', 'structuredTimeoutMs'],
++  ['draft', 'runDeadlineSeconds'],
++  ['published', 'runDeadlineSeconds'],
++] as const)('reopens and exports a stored %s missing %s', async (status, field) => {
++  const response = await t.app.inject({
++    method: 'POST',
++    url: '/loops',
++    payload: { definition: minimalLoop() },
++  });
++  const { loop, draft } = response.json<{ loop: { id: string }; draft: { id: string } }>();
++  if (status === 'published')
++    expect(
++      (await t.app.inject({ method: 'POST', url: `/loops/${loop.id}/publish` })).statusCode,
++    ).toBe(200);
++  // Physical persisted current-format JSON, bypassing request parsing on purpose.
++  // Repeat with the shape saved before #243 too, without changing any frozen input fixture.
++  await t.container.handle.client.execute({
++    sql: 'UPDATE loop_versions SET definition = json_remove(definition, ?) WHERE id = ?',
++    args: [`$.settings.${field}`, draft.id],
++  });
++  const stored = (
++    await t.container.handle.client.execute({
++      sql: 'SELECT definition FROM loop_versions WHERE id = ?',
++      args: [draft.id],
++    })
++  ).rows[0]?.['definition'];
++  if (typeof stored !== 'string') throw new Error('expected stored definition');
++  expect(LoopDefinitionSchema.parse(JSON.parse(stored)).settings[field]).toBeNull();
++  await t.container.handle.client.execute(
++    'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
++  );
++  await t.container.handle.migrate();
++  const opened = await t.app.inject({ method: 'GET', url: `/loops/${loop.id}` });
++  process.stdout.write(
++    JSON.stringify({ status, removed: field, http: opened.statusCode, body: opened.json() }) + '\n',
++  );
++  expect(opened.statusCode, opened.body).toBe(200);
++  expect(opened.json()).toMatchObject({
++    [status === 'draft' ? 'draft' : 'current']: {
++      definition: { settings: { structuredTimeoutMs: null, runDeadlineSeconds: null } },
++    },
++  });
++  const version = await t.app.inject({
++    method: 'GET',
++    url: `/loops/${loop.id}/versions/${draft.id}`,
++  });
++  expect(version.statusCode, version.body).toBe(200);
++  expect(version.json()).toMatchObject({
++    definition: { settings: { structuredTimeoutMs: null, runDeadlineSeconds: null } },
++  });
++  const exported = await t.app.inject({
++    method: 'GET',
++    url: `/loops/${loop.id}/export${status === 'draft' ? '?draft=true' : ''}`,
++  });
++  expect(exported.statusCode, exported.body).toBe(200);
++  expect(exported.json()).toMatchObject({
++    loop: { settings: { structuredTimeoutMs: null, runDeadlineSeconds: null } },
++  });
++  const started = await t.app.inject({
++    method: 'POST',
++    url: `/loops/${loop.id}/runs`,
++    payload: status === 'draft' ? { allowDraft: true, versionId: draft.id } : {},
++  });
++  expect(started.statusCode, started.body).toBe(202);
++  expect(started.json()).toMatchObject({
++    run: { pinned: { limits: { structuredTimeoutMs: null, runDeadlineSeconds: null } } },
++  });
++  await t.idle();
++});
+diff --git a/apps/api/src/structured-deadline.test.ts b/apps/api/src/structured-deadline.test.ts
+new file mode 100644
+index 00000000..dbe8dd80
+--- /dev/null
++++ b/apps/api/src/structured-deadline.test.ts
+@@ -0,0 +1,260 @@
++import { mkdtemp, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { afterEach, expect, it } from 'vitest';
++import type { RunRecord } from '@graphgoblin/contracts';
++import {
++  CapturingLogger,
++  FakeClock,
++  FakeHarness,
++  singleNodeLoop,
++} from '@graphgoblin/engine/testing';
++import { buildApp } from './app.js';
++import { loadConfig } from './config.js';
++import { createContainer, type Container } from './container.js';
++import type { ApiInstance } from './types.js';
++
++let container: Container | undefined;
++let app: ApiInstance | undefined;
++let dataDir: string | undefined;
++let release: (() => void) | undefined;
++afterEach(async () => {
++  container?.manager.stop();
++  if (container) {
++    for (const row of await container.repos.runs.listRecoveryCandidates()) {
++      const run = await container.repos.runs.get(row.id);
++      if (run && ['running', 'queued', 'waiting', 'paused'].includes(run.status))
++        await container.manager.cancel(run.id);
++    }
++  }
++  release?.();
++  await app?.close();
++  await container?.stop();
++  if (dataDir) await rm(dataDir, { recursive: true, force: true });
++});
++
++it('API reports a stalled structured node as timed out and releases its run slot', async () => {
++  dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-'));
++  const clock = new FakeClock();
++  let signal: AbortSignal | undefined;
++  let reached!: () => void;
++  const requested = new Promise<void>((resolve) => {
++    reached = resolve;
++  });
++  container = await createContainer(
++    loadConfig({
++      GG_DATA_DIR: dataDir,
++      GG_DB_URL: ':memory:',
++      GG_MAX_CONCURRENT_RUNS: '1',
++      GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
++    }),
++    {
++      clock,
++      logger: new CapturingLogger(),
++      startTimers: false,
++      harnesses: { codex: new FakeHarness() },
++      structured: {
++        complete: (_request, supplied) => {
++          signal = supplied;
++          reached();
++          return new Promise((resolve) => {
++            release = () => resolve({ value: 1 });
++          });
++        },
++      },
++    },
++  );
++  await container.start();
++  app = await buildApp(container, { logger: false });
++  const definition = singleNodeLoop('API structured deadline', {
++    id: 'repair',
++    kind: 'mutate',
++    label: 'Repair',
++    config: {
++      operations: [
++        {
++          op: 'coerce',
++          source: '/vars/value',
++          target: '/vars/value',
++          jsonSchema: { type: 'number' },
++          repair: { enabled: true, maxAttempts: 1 },
++        },
++      ],
++    },
++  });
++  definition.settings = { runDeadlineSeconds: 1 };
++  const created = await app.inject({ method: 'POST', url: '/loops', payload: { definition } });
++  expect(created.statusCode).toBe(201);
++  const id = created.json<{ loop: { id: string } }>().loop.id;
++  expect((await app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(200);
++  const started = await app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} });
++  const runId = started.json<{ run: RunRecord }>().run.id;
++  expect(
++    await Promise.race([
++      requested.then(() => 'requested'),
++      container.manager.waitForIdle().then(() => 'idle'),
++    ]),
++  ).toBe('requested');
++  const firstSignal = signal;
++  const queued = await app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} });
++  const queuedId = queued.json<{ run: RunRecord }>().run.id;
++  expect((await container.repos.runs.get(queuedId))?.status).toBe('queued');
++  clock.advance(1001);
++  const read = async () =>
++    (await app!.inject({ method: 'GET', url: `/runs/${runId}` })).json<RunRecord>();
++  await expect.poll(async () => (await read()).status, { timeout: 2000 }).toBe('failed');
++  expect((await read()).failure).toMatchObject({ code: 'RUN_DEADLINE_EXCEEDED', nodeId: 'repair' });
++  expect(firstSignal?.aborted).toBe(true);
++  await expect
++    .poll(async () => (await container!.repos.runs.get(queuedId))?.status)
++    .toBe('running');
++});
++
++it.each([
++  ['repair', 'fast'],
++  ['repair', 'late'],
++  ['repair', 'cancel'],
++  ['route', 'fast'],
++  ['route', 'late'],
++  ['route', 'cancel'],
++] as const)(
++  'API %s completion handles %s with the configured completion deadline',
++  async (kind, mode) => {
++    dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-'));
++    let signal: AbortSignal | undefined;
++    let reached!: () => void;
++    const requested = new Promise<void>((resolve) => {
++      reached = resolve;
++    });
++    const logger = new CapturingLogger();
++    const value = kind === 'repair' ? 7 : { route: 'yes', confidence: 1, reasoning: 'Safe route' };
++    container = await createContainer(
++      loadConfig({
++        GG_DATA_DIR: dataDir,
++        GG_DB_URL: ':memory:',
++        GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
++      }),
++      {
++        logger,
++        startTimers: false,
++        harnesses: { codex: new FakeHarness() },
++        structured: {
++          complete: (_request, supplied) => {
++            signal = supplied;
++            reached();
++            return mode === 'fast'
++              ? Promise.resolve({ value })
++              : new Promise((resolve, reject) => {
++                  // CodexDecider turns a late value into an abort acknowledgement. Exercise
++                  // its non-abort late rejection here so the warning is a positive barrier;
++                  // repair/API and public-engine route cases cover late fulfillment.
++                  release = () =>
++                    kind === 'route'
++                      ? reject(new Error('late route provider failure'))
++                      : resolve({ value });
++                });
++          },
++        },
++      },
++    );
++    await container.start();
++    app = await buildApp(container, { logger: false });
++    const definition = singleNodeLoop(
++      'API completion boundary',
++      kind === 'repair'
++        ? {
++            id: 'work',
++            kind: 'mutate',
++            label: 'Repair',
++            config: {
++              operations: [
++                {
++                  op: 'coerce',
++                  source: '/vars/value',
++                  target: '/vars/value',
++                  jsonSchema: { type: 'number' },
++                  repair: { enabled: true, maxAttempts: 1 },
++                },
++              ],
++            },
++          }
++        : {
++            id: 'work',
++            kind: 'decision',
++            label: 'Route',
++            config: {
++              kind: 'llm',
++              harness: 'codex',
++              model: { mode: 'inherit' },
++              effort: { mode: 'inherit' },
++              instructions: 'Choose',
++              routes: [
++                { id: 'yes', label: 'Yes' },
++                { id: 'no', label: 'No' },
++              ],
++            },
++          },
++    );
++    definition.settings = {
++      structuredTimeoutMs: mode === 'cancel' ? null : mode === 'fast' ? 1000 : 100,
++    };
++    if (kind === 'route')
++      definition.edges.push(
++        ...['yes', 'no'].map((port) => ({
++          id: port,
++          from: { node: 'work', port },
++          to: { node: 'done' },
++        })),
++      );
++    const created = await app.inject({ method: 'POST', url: '/loops', payload: { definition } });
++    expect(created.statusCode).toBe(201);
++    const loopId = created.json<{ loop: { id: string } }>().loop.id;
++    expect((await app.inject({ method: 'POST', url: `/loops/${loopId}/publish` })).statusCode).toBe(
++      200,
++    );
++    const started = await app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} });
++    expect(started.statusCode).toBe(202);
++    const id = started.json<{ run: RunRecord }>().run.id;
++    expect(
++      await Promise.race([
++        requested.then(() => 'requested'),
++        container.manager.waitForIdle().then(() => 'idle'),
++      ]),
++    ).toBe('requested');
++    if (mode === 'cancel')
++      expect(
++        (await app.inject({ method: 'POST', url: `/runs/${id}/cancel`, payload: {} })).statusCode,
++      ).toBe(200);
++    await container.manager.waitForIdle();
++    const read = async () =>
++      (await app!.inject({ method: 'GET', url: `/runs/${id}` })).json<RunRecord>();
++    expect((await read()).status).toBe(
++      mode === 'fast' ? 'succeeded' : mode === 'cancel' ? 'cancelled' : 'failed',
++    );
++    if (mode === 'late')
++      expect((await read()).failure).toMatchObject({
++        code: 'STRUCTURED_COMPLETION_TIMEOUT',
++        details: { timeoutMs: 100 },
++        nodeId: 'work',
++      });
++    else expect((await read()).failure).toBeUndefined();
++    const before = await container.manager.getThread(id);
++    release?.();
++    if (mode !== 'fast')
++      await expect
++        .poll(
++          () =>
++            logger.lines.filter((line) => line.msg === 'late structured completion discarded')
++              .length,
++        )
++        .toBe(1);
++    expect(await container.manager.getThread(id)).toEqual(before);
++    expect(signal?.aborted).toBe(mode !== 'fast');
++    const events = await container.ports.events.read(id);
++    expect(
++      events.filter((event) =>
++        ['run.failed', 'run.finished', 'run.cancelled'].includes(event.type),
++      ),
++    ).toHaveLength(1);
++  },
++);
+diff --git a/apps/web/e2e/stored-loop-defaults.spec.ts b/apps/web/e2e/stored-loop-defaults.spec.ts
+new file mode 100644
+index 00000000..4d213b2d
+--- /dev/null
++++ b/apps/web/e2e/stored-loop-defaults.spec.ts
+@@ -0,0 +1,59 @@
++import { mkdtemp, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { resolve, join } from 'node:path';
++import { createTestApp } from '@graphgoblin/api/testing';
++import { approvalLoop, expect, showLoopPanel, test } from './fixtures.js';
++
++for (const status of ['draft', 'published'] as const) {
++  test(`editor reopens stored ${status} with omitted additive deadline defaults`, async ({
++    page,
++  }) => {
++    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-editor-'));
++    const t = await createTestApp({ env: { GG_DATA_DIR: dataDir, GG_WEB_DIST: resolve('dist') } });
++    try {
++      const url = await t.app.listen({ host: '127.0.0.1', port: 0 });
++      const response = await t.app.inject({
++        method: 'POST',
++        url: '/loops',
++        payload: { definition: approvalLoop(`Stored ${status}`) },
++      });
++      const { loop, draft } = response.json<{ loop: { id: string }; draft: { id: string } }>();
++      expect(response.statusCode).toBe(201);
++      if (status === 'published')
++        expect(
++          (await t.app.inject({ method: 'POST', url: `/loops/${loop.id}/publish` })).statusCode,
++        ).toBe(200);
++      await t.container.handle.client.execute({
++        sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
++        args: [draft.id],
++      });
++      await t.container.handle.client.execute(
++        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
++      );
++      await t.container.handle.migrate();
++      await page.goto(`${url}/app/loops/${loop.id}/edit`);
++      await expect(
++        page.getByRole('heading', { name: `Stored ${status}`, exact: true }),
++      ).toBeVisible();
++      await showLoopPanel(page);
++      await expect(
++        page.getByRole('combobox', { name: 'Structured completion milliseconds mode' }),
++      ).toHaveValue('unlimited');
++      await expect(page.getByRole('combobox', { name: 'Run deadline seconds mode' })).toHaveValue(
++        'unlimited',
++      );
++      await expect(page.getByText('Could not load loop', { exact: true })).toBeHidden();
++      process.stdout.write(
++        JSON.stringify({
++          status,
++          opened: true,
++          structuredTimeoutMs: null,
++          runDeadlineSeconds: null,
++        }) + '\n',
++      );
++    } finally {
++      await t.close();
++      await rm(dataDir, { recursive: true, force: true });
++    }
++  });
++}
+diff --git a/apps/web/e2e/unlimited-mode.spec.ts b/apps/web/e2e/unlimited-mode.spec.ts
+index d0abe964..46f4891d 100644
+--- a/apps/web/e2e/unlimited-mode.spec.ts
++++ b/apps/web/e2e/unlimited-mode.spec.ts
+@@ -16,6 +16,15 @@ test('visible defaults and explicit unlimited persist; inspector shows the pin',
+     'unlimited',
+   );
+   await expect(page.getByText(/No deadline; set one/)).toBeVisible();
++  const completionMode = page.getByRole('combobox', {
++    name: 'Structured completion milliseconds mode',
++  });
++  await expect(completionMode).toHaveValue('unlimited');
++  await completionMode.selectOption('limited');
++  const completion = page.getByRole('spinbutton', { name: 'Structured completion milliseconds' });
++  await expect(completion).toHaveValue('120000');
++  await completion.fill('250');
++
+   await page.getByRole('combobox', { name: 'Run deadline seconds mode' }).selectOption('limited');
+   await expect(page.getByRole('spinbutton', { name: 'Run deadline seconds' })).toHaveValue('3600');
+   await page.getByRole('spinbutton', { name: 'Run deadline seconds' }).fill('');
+@@ -53,6 +62,9 @@ test('visible defaults and explicit unlimited persist; inspector shows the pin',
+   await expect(page.getByRole('combobox', { name: 'Run deadline seconds mode' })).toHaveValue(
+     'unlimited',
+   );
++  await expect(
++    page.getByRole('spinbutton', { name: 'Structured completion milliseconds' }),
++  ).toHaveValue('250');
+   const started = await request.post(`/loops/${loop.id}/runs`, {
+     data: { allowDraft: true, versionId: draft.id },
+   });
+@@ -60,8 +72,12 @@ test('visible defaults and explicit unlimited persist; inspector shows the pin',
+   const { run } = (await started.json()) as { run: { id: string } };
+   await page.goto(`/app/runs/${run.id}`);
+   await expect(page.getByText('Maximum node visits: Unlimited. Run deadline: none.')).toBeVisible();
++  await expect(page.getByText('Structured completion: 250 ms per call.')).toBeVisible();
+   await request.post(`/runs/${run.id}/cancel`, { data: {} });
+   await page.goto('/app/settings');
++  await expect(
++    page.getByText('No structured completion deadline unless the loop sets one.'),
++  ).toBeVisible();
+   await expect(
+     page.getByText(/Maximum node visits: 10. No run deadline unless the loop sets one/),
+   ).toBeVisible();
+diff --git a/apps/web/src/editor/ExecutionLimitField.test.tsx b/apps/web/src/editor/ExecutionLimitField.test.tsx
+index 01fd0e4c..162720cc 100644
+--- a/apps/web/src/editor/ExecutionLimitField.test.tsx
++++ b/apps/web/src/editor/ExecutionLimitField.test.tsx
+@@ -132,7 +132,9 @@ describe('execution limit presentation', () => {
+       <RunLimits
+         run={runRecord({
+           startedAt: '2026-10-21T12:00:00.000Z',
+-          pinned: samplePin({ limits: { maxNodeVisits: null, runDeadlineSeconds: 2 } }),
++          pinned: samplePin({
++            limits: { structuredTimeoutMs: null, maxNodeVisits: null, runDeadlineSeconds: 2 },
++          }),
+         })}
+       />,
+     );
+@@ -145,7 +147,9 @@ describe('execution limit presentation', () => {
+     renderWith(
+       <RunLimits
+         run={runRecord({
+-          pinned: samplePin({ limits: { maxNodeVisits: 3, runDeadlineSeconds: null } }),
++          pinned: samplePin({
++            limits: { structuredTimeoutMs: null, maxNodeVisits: 3, runDeadlineSeconds: null },
++          }),
+         })}
+       />,
+     );
+@@ -153,3 +157,41 @@ describe('execution limit presentation', () => {
+     expect(screen.queryByText(/Deadline at:/)).toBeNull();
+   });
+ });
++
++it('lets the author set and disable a visible structured-completion deadline', async () => {
++  const changes: unknown[] = [];
++  const user = userEvent.setup();
++  renderWith(
++    <SchemaForm
++      label="Limits"
++      schema={ExecutionLimitsSchema}
++      value={{}}
++      controls={{ 'execution-limit': ExecutionLimitField }}
++      onChange={(value) => changes.push(value)}
++    />,
++  );
++  expect(screen.getByText(/No completion deadline;/)).toBeVisible();
++  const mode = screen.getByRole('combobox', { name: 'Structured timeout ms mode' });
++  await user.selectOptions(mode, 'limited');
++  expect(screen.getByRole('spinbutton', { name: 'Structured timeout ms' })).toHaveValue(120000);
++  expect(changes.at(-1)).toMatchObject({ structuredTimeoutMs: 120000 });
++  await user.selectOptions(mode, 'unlimited');
++  expect(changes.at(-1)).toMatchObject({ structuredTimeoutMs: null });
++});
++
++it('shows a pinned finite structured completion limit', () => {
++  renderWith(
++    <RunLimits
++      run={runRecord({
++        pinned: samplePin({
++          limits: {
++            maxNodeVisits: 10,
++            runDeadlineSeconds: null,
++            structuredTimeoutMs: 4500,
++          },
++        }),
++      })}
++    />,
++  );
++  expect(screen.getByText('Structured completion: 4500 ms per call.')).toBeVisible();
++});
+diff --git a/apps/web/src/editor/ExecutionLimitField.tsx b/apps/web/src/editor/ExecutionLimitField.tsx
+index 0966ee20..d8be8a0f 100644
+--- a/apps/web/src/editor/ExecutionLimitField.tsx
++++ b/apps/web/src/editor/ExecutionLimitField.tsx
+@@ -13,10 +13,12 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
+   const commit = useFormChange();
+   const { defaultValue } = unwrap(schema);
+   const effective = binding.value === undefined ? defaultValue : binding.value;
+-  const deadline = name.endsWith('runDeadlineSeconds');
++  const completion = name.endsWith('structuredTimeoutMs');
++  const deadline = name.endsWith('runDeadlineSeconds') || completion;
+   const modeId = useId();
+   const { help } = fieldMeta(schema);
+-  const fallback = typeof defaultValue === 'number' ? defaultValue : deadline ? 3600 : 10;
++  const fallback =
++    typeof defaultValue === 'number' ? defaultValue : completion ? 120_000 : deadline ? 3600 : 10;
+   const parseErrors = useParseErrors();
+   const [error, setError] = useState(() => parseErrors.get(name)?.message);
+   const [draft, setDraft] = useState<{ text: string; stored: unknown } | undefined>(() => {
+@@ -78,7 +80,11 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
+           ) : null}
+           {unlimited ? (
+             deadline ? (
+-              <HelpText>No deadline; set one to stop a forgotten run.</HelpText>
++              <HelpText>
++                {completion
++                  ? 'No completion deadline; LLM decisions and repairs remain cancellable.'
++                  : 'No deadline; set one to stop a forgotten run.'}
++              </HelpText>
+             ) : (
+               <HelpText tone="warn">
+                 Unlimited: this guardrail will not stop execution. Use an authored exit or Cancel;
+@@ -97,7 +103,7 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
+               type="number"
+               min={1}
+               step={1}
+-              max={deadline ? 31536000 : 10000}
++              max={completion ? 31_536_000_000 : deadline ? 31536000 : 10000}
+               aria-label={label}
+               value={incomplete ? '' : displayed}
+               aria-invalid={error ? true : control['aria-invalid']}
+@@ -124,7 +130,9 @@ export function ExecutionLimitField({ schema, name, label }: FieldProps) {
+             onChange={(e) => choose(e.target.value)}
+           >
+             <option value="limited">Limited</option>
+-            <option value="unlimited">{deadline ? 'No run deadline' : 'Unlimited'}</option>
++            <option value="unlimited">
++              {completion ? 'Unlimited' : deadline ? 'No run deadline' : 'Unlimited'}
++            </option>
+           </Select>
+         </div>
+       )}
+diff --git a/apps/web/src/editor/LoopSettingsPanel.tsx b/apps/web/src/editor/LoopSettingsPanel.tsx
+index 3362d30f..039d12ca 100644
+--- a/apps/web/src/editor/LoopSettingsPanel.tsx
++++ b/apps/web/src/editor/LoopSettingsPanel.tsx
+@@ -72,8 +72,10 @@ export function LoopSettingsPanel({
+       <HelpText>
+         Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum
+         passes for an intentional repeat. The elapsed execution deadline includes waits and pauses.
+-        There is no run deadline unless you set one. Visits and passes can be explicitly set to
+-        Unlimited; cancellation remains available.
++        There is no run deadline unless you set one. Structured completion milliseconds bounds each
++        LLM decision evaluation or output-transform repair through the structured port when Limited;
++        it defaults to Unlimited. Same-session inference schema repairs follow the node timeout.
++        Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+       </HelpText>
+       <CatalogWarningsContext
+         value={issues
+@@ -82,6 +84,7 @@ export function LoopSettingsPanel({
+       >
+         <FieldLabelsContext
+           value={{
++            structuredTimeoutMs: 'Structured completion milliseconds',
+             maxNodeVisits: 'Maximum node visits',
+             runDeadlineSeconds: 'Run deadline seconds',
+           }}
+diff --git a/apps/web/src/runs/inspector/RunLimits.tsx b/apps/web/src/runs/inspector/RunLimits.tsx
+index b4f5c557..e428dd6d 100644
+--- a/apps/web/src/runs/inspector/RunLimits.tsx
++++ b/apps/web/src/runs/inspector/RunLimits.tsx
+@@ -10,6 +10,13 @@ export function RunLimits({ run }: { run: RunRecord }) {
+         Maximum node visits: {limits.maxNodeVisits ?? 'Unlimited'}. Run deadline:{' '}
+         {deadline === null ? 'none' : `${deadline} seconds`}.
+       </p>
++      <p>
++        Structured completion:{' '}
++        {limits.structuredTimeoutMs === null
++          ? 'Unlimited'
++          : `${limits.structuredTimeoutMs} ms per call`}
++        .
++      </p>
+       {deadline !== null && run.startedAt ? (
+         <p>Deadline at: {new Date(Date.parse(run.startedAt) + deadline * 1000).toISOString()}</p>
+       ) : null}
+diff --git a/apps/web/src/settings/sections/ExecutionDefaultsSection.tsx b/apps/web/src/settings/sections/ExecutionDefaultsSection.tsx
+index 0d30d5e4..aca52a0f 100644
+--- a/apps/web/src/settings/sections/ExecutionDefaultsSection.tsx
++++ b/apps/web/src/settings/sections/ExecutionDefaultsSection.tsx
+@@ -11,6 +11,11 @@ export function ExecutionDefaultsSection() {
+           ? 'No run deadline unless the loop sets one.'
+           : `Run deadline: ${defaults.runDeadlineSeconds} seconds.`}
+       </p>
++      <p>
++        {defaults.structuredTimeoutMs === null
++          ? 'No structured completion deadline unless the loop sets one.'
++          : `Structured completion deadline: ${defaults.structuredTimeoutMs} milliseconds.`}
++      </p>
+       <HelpText>
+         These defaults apply when a loop omits its limits. Change each limit in the editor's Loop
+         tab; Unlimited visits and passes must be chosen explicitly. Intentional repetitions use
+diff --git a/docs/03-domain-model.md b/docs/03-domain-model.md
+index 45ceef25..064364e4 100644
+--- a/docs/03-domain-model.md
++++ b/docs/03-domain-model.md
+@@ -22,7 +22,12 @@
+ 
+ ## Loop definition (Decided shape, Draft details)
+ 
+-Stored as JSON in `loop_versions.definition`, validated by `contracts`.
++Stored as JSON in `loop_versions.definition`, validated by `contracts`. Migration
++`0020_completion_deadline_defaults` materializes omitted `structuredTimeoutMs` and
++`runDeadlineSeconds` as null in drafts, published versions, immutable run snapshots,
++run pins, queued events and saved admission intents. Exports and API reads then include
++these defaults without a compatibility reader. Explicit authored limits are preserved.
++See ADR-0051.
+ 
+ ```ts
+ type LoopDefinition = {
+diff --git a/docs/04-node-catalog.md b/docs/04-node-catalog.md
+index fc80a231..2b3895a0 100644
+--- a/docs/04-node-catalog.md
++++ b/docs/04-node-catalog.md
+@@ -31,11 +31,11 @@ the raw expression; a timezone issue focuses the time zone control.
+ 
+ Choose one `kind`; its fields describe that evaluator directly. See [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md).
+ 
+-| Kind         | Required authored fields                                                                      | Result and ports                                               |
+-| ------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+-| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.        |
+-| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route.    |
+-| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports. |
++| Kind         | Required authored fields                                                                      | Result and ports                                                                                                       |
++| ------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
++| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.                                                                |
++| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route, bounded by the pinned completion deadline when configured. |
++| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports.                                                         |
+ 
+ Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in` and `limit-reached`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
+ 
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index b05cee59..13868d11 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -160,7 +160,7 @@ Every new `decision.made` event contains `{portId, provenance, observation}` and
+ 
+ ### Explicit decision failures (#98)
+ 
+-A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. Cancellation remains cancellation. Classifier confidence rejection retains the validated classifier observation, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. Typed classifier, route and boolean operations take caller-prepared inputs and dispatch exhaustively. The expression route operation accepts only a scalar declared string ID; all other results fail. Operations do not render instructions/questions or select context.
++A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. A configured completion deadline fails with resumable `STRUCTURED_COMPLETION_TIMEOUT`; external provider timeouts retain their provider-failure classification. Cancellation remains cancellation. Classifier confidence rejection retains the validated classifier observation, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. Typed classifier, route and boolean operations take caller-prepared inputs and dispatch exhaustively. The expression route operation accepts only a scalar declared string ID; all other results fail. Operations do not render instructions/questions or select context.
+ 
+ ## Subloops as child runs (Decided)
+ 
+@@ -514,9 +514,10 @@ Schema-based exit policies and non-repeating ordered iteration/duration limits p
+ ## Visible execution limits and unlimited mode (#243)
+ 
+ The editor's Loop tab and Settings show the defaults before a run exists:
+-`maxNodeVisits: 10` and no run deadline (`runDeadlineSeconds: null`). Omission means the
++`maxNodeVisits: 10`, no run deadline (`runDeadlineSeconds: null`) and no structured
++completion deadline (`structuredTimeoutMs: null`, described below). Omission means the
+ contract default. For visits and repeat passes, `null` is an explicit Unlimited choice,
+-with a warning. The deadline's neutral No run deadline choice is the default; choose
++with a warning. The run deadline's neutral No run deadline choice is the default; choose
+ Limited and enter seconds to add one. Each new run pins the effective
+ values in `pinned.limits`; the run inspector shows those values and its absolute deadline.
+ Definition changes and Settings edits cannot alter an existing run's pin.
+@@ -529,8 +530,43 @@ and authored gate `maxRunTimeSeconds` remain independent explicit controls.
+ 
+ Format 4 uses per-gate passes instead of shared iterations. Set `maxPasses: null` for
+ unlimited marked repetition; evidence records null and passes continue increasing.
+-The gate's authored non-repeat routes and explicit time check still apply. Disable both
+-loop controls, pass limits and any authored watchdogs to permit intentionally indefinite
++The gate's authored non-repeat routes and explicit time check still apply. Disable loop controls, completion deadlines,
++pass limits and any authored watchdogs to permit intentionally indefinite
+ execution, ending through authored exits, Cancel or an external/resource failure.
+ GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
+ Authors may use script/decision nodes for their own usage-aware behavior.
++
++## Structured completion deadlines (#270)
++
++`settings.structuredTimeoutMs` is a positive integer number of milliseconds per LLM
++decision evaluation or output-transform repair attempt through `StructuredPort`, or `null`
++for Unlimited. Omission
++means `null`: there is no default completion deadline. The editor's Loop tab exposes
++this control; Settings shows the default and the run inspector shows the effective
++value pinned in `run.pinned.limits`. Choosing Limited suggests 120,000 ms without
++imposing that value until saved. Changes affect new runs only, including after restart.
++
++One engine helper owns the deadline around both port paths, independent of the adapter.
++The clock starts at that port boundary, after admission and model/context preparation.
++It passes a combined abort signal, cancels overdue work and fails the node and run with
++`STRUCTURED_COMPLETION_TIMEOUT`, naming the duration in the message and
++`details.timeoutMs`; decisions and structured-port repairs also include the completion
++provider, resolved model and effort
++in `details.provenance`. This failure is resumable for a deliberate new attempt; no automatic
++retry occurs. The engine releases its run slot without waiting indefinitely for an
++uncooperative adapter. A late fulfillment or non-abort rejection is observed, discarded and logged
++once as `late structured completion discarded`, with run/node identity and no provider
++body. Acknowledging the forwarded abort reason or an AbortError is normal cleanup
++and does not produce this warning. A late result cannot validate a value, append a
++decision, or patch the thread.
++
++Cancel still produces `run.cancelled` and status `cancelled`, with no timeout failure.
++The first settled call outcome wins; the manager honours an observed run cancellation
++before persisting a failure. A run deadline remains `RUN_DEADLINE_EXCEEDED`. Both signals
++also settle stalled structured calls. Unlimited removes only the completion timer:
++explicit run deadlines, node watchdogs, authored gate limits and Cancel still apply.
++Classifiers keep their provider timeout semantics. Inference output-schema repairs run
++as turns on the node's own `HarnessPort` session, outside this structured-port deadline.
++They follow the node's explicit `timeoutSeconds` (failing with `INFERENCE_TIMEOUT`) and
++the run deadline, just like the initial inference turn. This is an elapsed completion deadline,
++never a cost, token, subscription or usage budget. See ADR-0051.
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index dc2876f7..113b84a8 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -231,22 +231,45 @@ Inference `node.progress` uses a strict item variant for each normalized type (`
+ 
+ ### Codex structured completions and decider
+ 
+-`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema, sandbox `read-only`, approval `never`, no network, no web search, in the request's working directory or an empty temporary directory it removes afterwards. It returns the parsed JSON (or the raw text if the reply is not JSON) for the engine to validate. `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks `{ route: enum of labels, confidence, reasoning }` for choices and `{ holds, confidence, reasoning }` for yes/no questions; schemas follow OpenAI's strict structured-output rules, so Choice confidence bounds are enforced by complete local validation, without clamping or coercion. The exit yes/no contract remains unchanged pending #99. It is always `available()`; harness health is reported by `preflight`.
++`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema,
++sandbox `read-only`, approval `never`, no network and no web search, in the request's
++working directory or an empty temporary directory it removes afterwards. It returns
++parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
++`CodexDecider` (`DeciderPort`, `id: 'codex'`) asks for `{ route, confidence, reasoning }`,
++where route is an enum of declared route IDs. Schemas follow strict structured-output
++rules; the adapter validates the entire answer and confidence bounds without clamping
++or coercion. It is always `available()`; harness health is reported by `preflight`.
++
++The engine enforces the run's pinned `settings.structuredTimeoutMs` around LLM decision
++evaluations and output-transform repairs through `StructuredPort`. Inference output-schema
++repairs instead run on the node's own `HarnessPort` session and follow its explicit
++`timeoutSeconds` and the run deadline; this completion limit does not bound them. Omission/null means Unlimited; a finite authored value is milliseconds
++per completion, not a usage budget. The Loop tab, Settings defaults and inspector
++expose it. `CodexStructured` checks abort before acquiring resources and again before
++starting, passes the signal into the harness/SDK call, explicitly cancels the session
++on abort and removes its temporary directory after cancellation cleanup. It never
++adds its own hidden completion deadline. The engine returns the typed
++`STRUCTURED_COMPLETION_TIMEOUT` without waiting forever for a port that ignores abort;
++late fulfillments and non-abort rejections are logged once and cannot reach the run's thread.
++Decision and structured-port repair timeouts include provider, resolved model and effort
++in `details.provenance`. Explicit Cancel
++remains cancellation, and an authored run deadline retains its own failure code.
++See [ADR-0051](decisions/ADR-0051-structured-completion-deadlines.md).
+ 
+ ### Wiring
+ 
+ ```ts
+-import { createCodexAdapters } from '@graphgoblin/adapter-codex';
+-import { createJevDecider } from '@graphgoblin/adapter-jev';
++import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
+ 
+ const codex = createCodexAdapters({
+   logger,
+   model: settings.defaults.byHarness.codex?.model,
+   effort: settings.defaults.byHarness.codex?.effort,
+ });
+-const jev = createJevDecider({ secrets, logger }); // resolves `jev-api-key` in the background
+-await jev.init();
+-// ports: harnesses: { codex: codex.harness }, structured: codex.structured, deciders: [jev, codex.decider]
++const structured = codex.structured; // Or an injected StructuredPort.
++const decider = new CodexDecider(structured);
++// ports: harnesses: { codex: codex.harness }, structured,
++//        deciders: [decider], classifiers: classifierRegistry
+ ```
+ 
+ The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Classifier decisions and exit predicates use `resolve(ownerId, catalogId, primitive)` and check the requested capability before dispatch. Codex supplies the structured LLM evaluator; the separate exit judge facade is removed. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
+@@ -578,7 +601,7 @@ No readiness probes, probe directories, model selection or fallback policy chang
+ | Codex client options          | Binary override, environment, authored sanitized config overrides; no GraphGoblin usage budget                                                                                                                                                                                                                                                                                                                                                                                    |
+ | Codex no-turn probes / cancel | 15-second checks / five-second cancel grace; CLI job-object cancellation evidence has its existing platform qualification                                                                                                                                                                                                                                                                                                                                                         |
+ | Codex transcript excerpts     | Command output detail keeps a labelled 16,384-character excerpt; display summaries are bounded. Final answer/protocol are not truncated by this excerpt                                                                                                                                                                                                                                                                                                                           |
+-| Structured completion         | Explicit completion deadline contract; enforcement tracked separately by #270                                                                                                                                                                                                                                                                                                                                                                                                     |
++| Structured completion         | `settings.structuredTimeoutMs`: engine-enforced per-call deadline for LLM decision evaluations and output-transform repairs through `StructuredPort`; same-session inference schema repairs follow node/run deadlines; null (default) is Unlimited. Abort cancels provider work; timeout is `STRUCTURED_COMPLETION_TIMEOUT`, and late results are discarded (#270)                                                                                                                |
+ | External service              | Context windows, quotas, provider/CLI internals and service failures remain external limits with truthful failures                                                                                                                                                                                                                                                                                                                                                                |
+ 
+ Additional bounded metadata is independent of execution: Claude invalidation names are
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 4c1859b4..67d72b7a 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -71,7 +71,7 @@ The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unrea
+ 
+ Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
+ 
+-## Pinned execution limits (#243)
++## Pinned execution limits (#243, #270)
+ 
+ Run responses expose `pinned.limits`: `maxNodeVisits` defaults to 10 and
+ `runDeadlineSeconds` defaults to null (no deadline). Explicit null removes the visit
+@@ -81,6 +81,15 @@ an existing run's pin. Expiry fails with non-resumable `RUN_DEADLINE_EXCEEDED` a
+ cancels awaited children; explicit Cancel remains `cancelled`. Observation deadlines
+ on client/MCP waits only stop observation and do not impose a run deadline.
+ 
++`pinned.limits.structuredTimeoutMs` defaults to null (Unlimited). A positive value
++sets milliseconds per LLM decision or structured repair completion, independently
++of the run deadline. Expiry aborts that completion and releases capacity with resumable
++`STRUCTURED_COMPLETION_TIMEOUT`; its message and `failure.details.timeoutMs` name the
++deadline. LLM decision failures also include evaluation provenance (provider, model
++and effort) in `failure.details.provenance`. Late results cannot change the failure
++or thread. Explicit Cancel remains `cancelled`, without a timeout failure. Export/API
++clients must accept this nullable pin and the new `RunErrorCode` value.
++
+ ## Artifact downloads
+ 
+ `GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).
+diff --git a/docs/decisions/ADR-0051-structured-completion-deadlines.md b/docs/decisions/ADR-0051-structured-completion-deadlines.md
+new file mode 100644
+index 00000000..101a3f62
+--- /dev/null
++++ b/docs/decisions/ADR-0051-structured-completion-deadlines.md
+@@ -0,0 +1,73 @@
++# ADR-0051: Engine-owned structured-completion deadlines
++
++Status: implemented in PR #392; independent review approved with required fixes.
++The reviewer passed the real-adapter check on `12a96af9`. Independent QA at `f2fce3ae`
++found missing stored-definition defaults and repair provenance; round-3 corrections
++await independent review and QA.
++Date: 2026-10-23.
++Updated: 2026-10-24.
++
++The old process `EngineSettings.structuredTimeoutMs` declared a 120,000 ms limit in
++the API but no caller enforced it. Stalled repair calls also held capacity after a
++run deadline. Enforcing a formerly invisible constant would introduce a hidden stop.
++
++Move the configuration into visible `LoopSettings.structuredTimeoutMs` and the
++run's pinned execution limits. A positive integer sets milliseconds per LLM decision evaluation or output-transform
++repair through `StructuredPort`;
++omission/null means Unlimited, with no finite default. The editor's Limited suggestion
++is 120,000 ms, chosen to match the former declared value, not an owner-approved default.
++The upper bound is 31,536,000,000 ms (one year), matching the run deadline's range.
++This additive default introduces no deadline for existing records.
++
++Choose a one-off data migration (`0020_completion_deadline_defaults`) rather than
++schema decoding on every repository read. The read path currently returns stored JSON;
++Zod defaults are not applied by Drizzle or by response serialization. Missing
++`structuredTimeoutMs` therefore produced `500 RESPONSE_INVALID` despite parsing as null.
++Pre-#243 definitions missing `runDeadlineSeconds` had the same defect on the identical
++read path in current main. The migration materializes both absent deadline fields as null.
++It preserves explicit null/finite values, malformed JSON and invalid authored values.
++
++Unconditional read decoding was tested and rejected: it broke all five existing
++retired-Event API regressions (#242), whose precise refusal diagnostics and terminal-run
++finalization deliberately inspect the retired definition. The data migration fixes current
++stored defaults while preserving those established paths, without adding a compatibility
++schema, tolerant reader or alternate definition representation.
++
++The migrator transaction rewrites every `loop_versions.definition` (draft, published and
++immutable draft-run snapshot), existing run pins, queued-event pins, and saved webhook
++admission intents (run pin, queued pin and optional snapshot definition). It temporarily
++lifts and restores the exact snapshot-update trigger inside that same transaction.
++Exports, API version/detail reads and new run pins then use definitions with materialized
++defaults; existing run/event/admission decoders continue using their current schemas.
++The migration is idempotent and startup records it once. No authored limit is changed.
++Numbers 0018 and 0019 remain reserved for WP-D4 and WP-C7, so the migration uses 0020.
++
++The unused engine constructor setting is removed, with an embedding upgrade note.
++
++A single engine boundary handles LLM decision evaluations and output-transform repairs
++through the structured port with a
++child AbortController, timer and single settlement. It bounds even a port that never
++settles, propagates parent cancellation and run deadlines, checks elapsed time when a
++busy event loop delays a timer, and handles both late fulfillment and rejection.
++Long timers re-arm in chunks no larger than Node's 2,147,483,647 ms timer range.
++Timeout is the resumable `STRUCTURED_COMPLETION_TIMEOUT` with `details.timeoutMs`;
++Both paths retain the completion provider, resolved model and effort in
++`details.provenance`. A deliberate Resume can repeat a read-only evaluation after its external cause clears.
++No automatic retry is introduced. Explicit run cancellation remains status `cancelled`
++and has no timeout failure code. Existing terminal-event arbitration remains authoritative.
++
++CodexStructured owns adapter resource cleanup, explicitly calls session.cancel() on
++abort and forwards the signal through CodexHarness to the SDK/provider process. The
++engine does not wait indefinitely for a broken adapter before releasing its slot.
++The harness retains its existing bounded cancellation cleanup; no new kill grace is
++introduced here. Real process termination requires the separate adapter QA script.
++Late fulfillments and non-abort rejections are warned once; acknowledgement of the
++forwarded abort reason or an AbortError is normal cleanup and is not a late result.
++
++Unlimited disables only this cutoff. Explicit node/run deadlines remain independent;
++classifier calls retain their existing provider controls. Inference output-schema repairs are turns on the node's own `HarnessPort` session,
++not separate `StructuredPort` completions. They share the initial turn's explicit node
++`timeoutSeconds` (failure `INFERENCE_TIMEOUT`) and run deadline; `structuredTimeoutMs`
++does not govern them. The same-session regression exercises a repair past the structured
++cutoff, then verifies failure at the configured node timeout. This decision
++adds no spending, token, subscription, provider-turn or usage budget.
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 26730afa..a93a9449 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -99,12 +99,14 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
+ 
+ ## Set workspace and limits
+ 
+-| Setting             | Configure it                                                                                                                                                                                                   |
+-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+-| `maxNodeVisits`     | Default 10, range 1 to 10,000. Safety cap against unintended cycles; exceeding fresh visits per node fails `MAX_NODE_VISITS`. Intentional repeats use a decision gate.                                         |
+-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
+-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
+-| `defaults`          | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
++| Setting               | Configure it                                                                                                                                                                                                   |
++| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
++| `maxNodeVisits`       | Default 10, range 1 to 10,000. Safety cap against unintended cycles; exceeding fresh visits per node fails `MAX_NODE_VISITS`. Intentional repeats use a decision gate.                                         |
++| `runDeadlineSeconds`  | Default null (no run deadline), range 1 to 31,536,000 seconds when Limited. Includes waits, pauses and downtime; expiry fails `RUN_DEADLINE_EXCEEDED`.                                                         |
++| `structuredTimeoutMs` | Default null (Unlimited), range 1 to 31,536,000,000 milliseconds when Limited. Bounds each LLM decision or structured repair completion; expiry fails `STRUCTURED_COMPLETION_TIMEOUT`.                         |
++| `workingDirectory`    | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
++| `subloopDepthLimit`   | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
++| `defaults`            | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
+ 
+ For a repository workspace, use an absolute path. For a temporary workspace, use:
+ 
+@@ -384,6 +386,14 @@ Existing authored gate time checks and node timeouts still apply. The run inspec
+ Execution limits card shows the pinned values and absolute deadline, even after edits.
+ An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+ 
++Structured completion milliseconds is independently Unlimited by default. Choose Limited
++and enter milliseconds (the suggestion is 120000) to bound each LLM decision evaluation
++or output-transform repair through the structured port. Same-session inference schema
++repairs follow the node timeout and run deadline. The limit is pinned on the run. Expiry aborts the call, releases capacity and
++fails `STRUCTURED_COMPLETION_TIMEOUT`, naming the configured milliseconds. Late results
++are discarded. Unlimited removes this cutoff; explicit Cancel and other authored limits
++still apply. This is an execution deadline, not a usage budget.
++
+ Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+ has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+ script/decision nodes. Only a positively unsubmitted transient transport failure retries
+diff --git a/docs/guide/03-run-and-observe.md b/docs/guide/03-run-and-observe.md
+index 79d8a4ac..5b35f234 100644
+--- a/docs/guide/03-run-and-observe.md
++++ b/docs/guide/03-run-and-observe.md
+@@ -291,6 +291,7 @@ cannot authorize continuation.
+ | `WORKING_DIRECTORY_MISSING`                                         | Check the workspace path and permissions. The current filesystem adapter creates missing directories; filesystem failures can instead report `INTERNAL_ERROR`.                                                                                      |
+ | `SCRIPT_EXIT_CODE`                                                  | Fix the program or its patch output; add a route in a new version for an expected nonzero outcome.                                                                                                                                                  |
+ | `SCRIPT_TIMEOUT`                                                    | Resolve the slow program, or increase its timeout in a new version.                                                                                                                                                                                 |
++| `STRUCTURED_COMPLETION_TIMEOUT`                                     | Inspect the configured completion deadline and provider cause; Resume deliberately, or adjust the loop limit and start a new run.                                                                                                                   |
+ | `INFERENCE_TIMEOUT`                                                 | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                                                                                           |
+ | `OUTPUT_SCHEMA_MISMATCH`                                            | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                                                                                              |
+ | `ARTIFACT_WRITE_FAILED`                                             | Repair artifact storage, then explicitly resume to continue the recorded provider session with a continuation prompt.                                                                                                                               |
+diff --git a/docs/guide/06-settings-and-secrets.md b/docs/guide/06-settings-and-secrets.md
+index 56e88e7b..731dd994 100644
+--- a/docs/guide/06-settings-and-secrets.md
++++ b/docs/guide/06-settings-and-secrets.md
+@@ -324,6 +324,14 @@ Existing authored gate time checks and node timeouts still apply. The run inspec
+ Execution limits card shows the pinned values and absolute deadline, even after edits.
+ An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+ 
++Settings reads the schema's structured-completion default: null means no completion
++deadline unless the loop sets one. In the Loop tab, Structured completion milliseconds
++defaults to Unlimited. Choose Limited and enter milliseconds (the suggestion is 120000)
++to bound each LLM decision evaluation or output-transform repair through the structured port. The run inspector shows its pinned
++value. Expiry aborts the call and releases capacity with `STRUCTURED_COMPLETION_TIMEOUT`;
++late results cannot change that outcome. Unlimited disables this cutoff, while Cancel
++and independent authored limits remain available.
++
+ Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+ has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+ script/decision nodes. Only a positively unsubmitted transient transport failure retries
+diff --git a/docs/guide/07-troubleshooting.md b/docs/guide/07-troubleshooting.md
+index ad75739c..a9f2aae7 100644
+--- a/docs/guide/07-troubleshooting.md
++++ b/docs/guide/07-troubleshooting.md
+@@ -263,3 +263,15 @@ An unsupported whole-store format or a database/schema/I/O failure is a separate
+ error. Do not reset the whole store to dispose of one damaged run.
+ 
+ Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-api-and-streaming.md) and [Frontend and PWA](../09-frontend-and-pwa.md) for design context.
++
++## Structured completion timeout
++
++`STRUCTURED_COMPLETION_TIMEOUT` means an LLM decision evaluation or output-transform
++repair through the structured port exceeded
++the loop's **Structured completion milliseconds** limit. The failure names that limit
++and stores it in `details.timeoutMs`; the inspector shows the pinned value. The provider
++is aborted, the run slot is released and a late result cannot update the thread. Inspect
++the external cause and use Resume for a deliberate attempt when appropriate, or change
++the loop limit and start a new run. Choose Unlimited to remove this completion cutoff;
++run deadlines and node timeouts still apply. Explicit Cancel ends as `cancelled`, with
++no timeout failure. This limit measures elapsed time, not tokens or provider allowance.
+diff --git a/packages/adapter-codex/src/structured.test.ts b/packages/adapter-codex/src/structured.test.ts
+index 23c52cb0..47da6a9e 100644
+--- a/packages/adapter-codex/src/structured.test.ts
++++ b/packages/adapter-codex/src/structured.test.ts
+@@ -1,4 +1,8 @@
+ import { existsSync } from 'node:fs';
++import { mkdtemp, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import type { HarnessPort } from '@graphgoblin/engine';
+ import { FakeHarness } from '@graphgoblin/engine/testing';
+ import { describe, expect, it, vi } from 'vitest';
+ import { ReplayCodex } from './__fixtures__/replay.js';
+@@ -78,3 +82,112 @@ describe('CodexStructured', () => {
+     });
+   });
+ });
++
++it('does not create a directory or start provider work for an already aborted request', async () => {
++  const harness = new FakeHarness();
++  const tempDir = vi.fn();
++  const structured = createCodexStructured(harness, { tempDir });
++  const controller = new AbortController();
++  controller.abort();
++  await expect(
++    structured.complete({ prompt: 'p', schema }, controller.signal),
++  ).rejects.toMatchObject({ name: 'AbortError' });
++  expect(tempDir).not.toHaveBeenCalled();
++  expect(harness.started).toHaveLength(0);
++});
++
++it('cleans the directory if cancellation occurs while acquiring it', async () => {
++  const harness = new FakeHarness();
++  const cleanup = vi.fn(() => Promise.resolve());
++  const controller = new AbortController();
++  const structured = createCodexStructured(harness, {
++    tempDir: () => {
++      controller.abort();
++      return Promise.resolve({ path: '/scratch', cleanup });
++    },
++  });
++  await expect(
++    structured.complete({ prompt: 'p', schema }, controller.signal),
++  ).rejects.toMatchObject({ name: 'AbortError' });
++  expect(harness.started).toHaveLength(0);
++  expect(cleanup).toHaveBeenCalledOnce();
++});
++
++it('forwards abort through the Codex harness to the SDK call and cleans its directory', async () => {
++  const codex = new ReplayCodex({
++    events: [{ type: 'thread.started', thread_id: 'thread' }],
++    hangAfter: 0,
++  });
++  const cleanup = vi.fn(() => Promise.resolve());
++  const structured = createCodexStructured(new CodexHarness({ clientFactory: codex.factory }), {
++    tempDir: () => Promise.resolve({ path: '/scratch', cleanup }),
++  });
++  const controller = new AbortController();
++  const result = structured.complete({ prompt: 'p', schema }, controller.signal);
++  const rejected = expect(result).rejects.toMatchObject({ name: 'AbortError' });
++  await expect.poll(() => codex.runs[0]?.turnOptions?.signal !== undefined).toBe(true);
++  controller.abort();
++  await rejected;
++  expect(codex.runs[0]?.turnOptions?.signal?.aborted).toBe(true);
++  expect(cleanup).toHaveBeenCalledOnce();
++});
++
++it.each([false, true])(
++  'removes scratch only after harness cancellation settles, rejects=%s',
++  async (fails) => {
++    const scratch = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-'));
++    const order: string[] = [];
++    const cleanup = vi.fn(async () => {
++      order.push('cleanup');
++      await rm(scratch, { recursive: true, force: true });
++    });
++    const failure = new Error('cancel cleanup failure');
++    const cancelled = new Error('caller cancelled');
++    let settleCancel!: () => void;
++    const pending = new Promise<void>((resolve) => {
++      settleCancel = resolve;
++    });
++    const cancel = vi.fn(async () => {
++      await pending;
++      order.push('cancel settled');
++      if (fails) throw failure;
++    });
++    const controller = new AbortController();
++    const harness: HarnessPort = {
++      id: 'codex',
++      preflight: () => new FakeHarness().preflight(),
++      start: () => {
++        controller.abort(cancelled);
++        return {
++          sessionId: Promise.resolve('controlled'),
++          result: new Promise(() => {}),
++          events: { [Symbol.asyncIterator]: () => ({ next: () => new Promise(() => {}) }) },
++          cancel,
++        };
++      },
++      resume: () => {
++        throw new Error('not used');
++      },
++    };
++    const structured = createCodexStructured(harness, {
++      tempDir: () => Promise.resolve({ path: scratch, cleanup }),
++    });
++    const result = structured.complete({ prompt: 'p', schema }, controller.signal);
++    const rejected = expect(result).rejects.toBe(fails ? failure : cancelled);
++    try {
++      await expect.poll(() => cancel.mock.calls.length).toBe(1);
++      expect(cleanup).not.toHaveBeenCalled();
++      expect(existsSync(scratch)).toBe(true);
++      settleCancel();
++      await rejected;
++      expect(cancel).toHaveBeenCalledOnce();
++      expect(cleanup).toHaveBeenCalledOnce();
++      expect(order).toEqual(['cancel settled', 'cleanup']);
++      expect(existsSync(scratch)).toBe(false);
++    } finally {
++      settleCancel();
++      await result.catch(() => undefined);
++      await rm(scratch, { recursive: true, force: true });
++    }
++  },
++);
+diff --git a/packages/adapter-codex/src/structured.ts b/packages/adapter-codex/src/structured.ts
+index a92913a1..0c13726f 100644
+--- a/packages/adapter-codex/src/structured.ts
++++ b/packages/adapter-codex/src/structured.ts
+@@ -46,9 +46,11 @@ export class CodexStructured implements StructuredPort {
+     },
+     signal: AbortSignal,
+   ): Promise<{ value: unknown; usage?: Usage }> {
++    signal.throwIfAborted();
+     const fixed = request.workingDirectory ?? this.options.workingDirectory;
+     const temp = fixed ? undefined : await (this.options.tempDir ?? freshTempDir)();
+     try {
++      signal.throwIfAborted();
+       const session = this.harness.start(
+         {
+           workingDirectory: fixed ?? (temp as { path: string }).path,
+@@ -64,13 +66,40 @@ export class CodexStructured implements StructuredPort {
+         },
+         signal,
+       );
+-      // Drain events so the queue does not grow unread; the result carries everything needed.
+-      for await (const event of session.events) void event;
+-      const result = await session.result;
+-      return {
+-        value: result.structured !== undefined ? result.structured : parseLoose(result.finalText),
+-        usage: result.usage,
++      let cancellation: Promise<void> | undefined;
++      let rejectAbort!: (reason: unknown) => void;
++      const aborted = new Promise<never>((_resolve, reject) => {
++        rejectAbort = reject;
++      });
++      const onAbort = () => {
++        // cancel() owns the harness's bounded process shutdown. Wait for it before removing
++        // the scratch directory; the engine independently settles its deadline immediately.
++        cancellation ??= session.cancel();
++        void cancellation.then(
++          () => rejectAbort(signal.reason),
++          (error: unknown) => rejectAbort(error),
++        );
+       };
++      const work = async () => {
++        // Drain events so the queue cannot grow unread. Observe result rejection immediately,
++        // even if an external harness fails its result before closing the event iterator.
++        void session.result.catch(() => undefined);
++        for await (const event of session.events) void event;
++        const result = await session.result;
++        signal.throwIfAborted();
++        return {
++          value: result.structured !== undefined ? result.structured : parseLoose(result.finalText),
++          usage: result.usage,
++        };
++      };
++      signal.addEventListener('abort', onAbort, { once: true });
++      if (signal.aborted) onAbort();
++      try {
++        return await Promise.race([work(), aborted]);
++      } finally {
++        signal.removeEventListener('abort', onAbort);
++        await cancellation;
++      }
+     } finally {
+       await temp?.cleanup().catch(() => undefined);
+     }
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+index fc865ac8..bb431d8d 100644
+--- a/packages/api-client/openapi.json
++++ b/packages/api-client/openapi.json
+@@ -343,6 +343,19 @@
+                   }
+                 ]
+               },
++              "structuredTimeoutMs": {
++                "default": null,
++                "anyOf": [
++                  {
++                    "type": "integer",
++                    "exclusiveMinimum": 0,
++                    "maximum": 31536000000
++                  },
++                  {
++                    "type": "null"
++                  }
++                ]
++              },
+               "subloopDepthLimit": {
+                 "default": 8,
+                 "type": "integer",
+@@ -4335,6 +4348,7 @@
+               "HARNESS_TRANSPORT_FAILED",
+               "HARNESS_OUTPUT_LIMIT",
+               "RUN_DEADLINE_EXCEEDED",
++              "STRUCTURED_COMPLETION_TIMEOUT",
+               "HARNESS_DELIVERY_UNCERTAIN",
+               "HARNESS_SESSION_MISSING",
+               "HARNESS_TERMINATION_UNCONFIRMED",
+@@ -4692,6 +4706,19 @@
+                         "type": "null"
+                       }
+                     ]
++                  },
++                  "structuredTimeoutMs": {
++                    "default": null,
++                    "anyOf": [
++                      {
++                        "type": "integer",
++                        "exclusiveMinimum": 0,
++                        "maximum": 31536000000
++                      },
++                      {
++                        "type": "null"
++                      }
++                    ]
+                   }
+                 },
+                 "additionalProperties": false
+@@ -5783,6 +5810,19 @@
+                             "type": "null"
+                           }
+                         ]
++                      },
++                      "structuredTimeoutMs": {
++                        "default": null,
++                        "anyOf": [
++                          {
++                            "type": "integer",
++                            "exclusiveMinimum": 0,
++                            "maximum": 31536000000
++                          },
++                          {
++                            "type": "null"
++                          }
++                        ]
+                       }
+                     },
+                     "additionalProperties": false
+@@ -9037,6 +9077,19 @@
+                   }
+                 ]
+               },
++              "structuredTimeoutMs": {
++                "default": null,
++                "anyOf": [
++                  {
++                    "type": "integer",
++                    "exclusiveMinimum": 0,
++                    "maximum": 31536000000
++                  },
++                  {
++                    "type": "null"
++                  }
++                ]
++              },
+               "subloopDepthLimit": {
+                 "default": 8,
+                 "type": "integer",
+@@ -9049,6 +9102,7 @@
+               "defaults",
+               "maxNodeVisits",
+               "runDeadlineSeconds",
++              "structuredTimeoutMs",
+               "subloopDepthLimit"
+             ],
+             "additionalProperties": false
+@@ -13165,6 +13219,7 @@
+               "HARNESS_TRANSPORT_FAILED",
+               "HARNESS_OUTPUT_LIMIT",
+               "RUN_DEADLINE_EXCEEDED",
++              "STRUCTURED_COMPLETION_TIMEOUT",
+               "HARNESS_DELIVERY_UNCERTAIN",
+               "HARNESS_SESSION_MISSING",
+               "HARNESS_TERMINATION_UNCONFIRMED",
+@@ -13528,11 +13583,25 @@
+                         "type": "null"
+                       }
+                     ]
++                  },
++                  "structuredTimeoutMs": {
++                    "default": null,
++                    "anyOf": [
++                      {
++                        "type": "integer",
++                        "exclusiveMinimum": 0,
++                        "maximum": 31536000000
++                      },
++                      {
++                        "type": "null"
++                      }
++                    ]
+                   }
+                 },
+                 "required": [
+                   "maxNodeVisits",
+-                  "runDeadlineSeconds"
++                  "runDeadlineSeconds",
++                  "structuredTimeoutMs"
+                 ],
+                 "additionalProperties": false
+               },
+@@ -14629,11 +14698,25 @@
+                             "type": "null"
+                           }
+                         ]
++                      },
++                      "structuredTimeoutMs": {
++                        "default": null,
++                        "anyOf": [
++                          {
++                            "type": "integer",
++                            "exclusiveMinimum": 0,
++                            "maximum": 31536000000
++                          },
++                          {
++                            "type": "null"
++                          }
++                        ]
+                       }
+                     },
+                     "required": [
+                       "maxNodeVisits",
+-                      "runDeadlineSeconds"
++                      "runDeadlineSeconds",
++                      "structuredTimeoutMs"
+                     ],
+                     "additionalProperties": false
+                   },
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+index f6cb9edb..038ef925 100644
+--- a/packages/api-client/src/generated/schema.ts
++++ b/packages/api-client/src/generated/schema.ts
+@@ -2563,6 +2563,8 @@ export interface components {
+                 maxNodeVisits?: (number | null) | undefined;
+                 /** @default null */
+                 runDeadlineSeconds?: (number | null) | undefined;
++                /** @default null */
++                structuredTimeoutMs?: (number | null) | undefined;
+                 /** @default 8 */
+                 subloopDepthLimit?: number | undefined;
+             } | undefined;
+@@ -3633,7 +3635,7 @@ export interface components {
+         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
+         RunFailureInput: {
+             /** @enum {string} */
+-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
++            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+             message: string;
+             nodeId?: string | undefined;
+             resumable: boolean;
+@@ -3710,6 +3712,8 @@ export interface components {
+                     maxNodeVisits?: (number | null) | undefined;
+                     /** @default null */
+                     runDeadlineSeconds?: (number | null) | undefined;
++                    /** @default null */
++                    structuredTimeoutMs?: (number | null) | undefined;
+                 };
+                 classifiers: {
+                     [key: string]: {
+@@ -3964,6 +3968,8 @@ export interface components {
+                     maxNodeVisits?: (number | null) | undefined;
+                     /** @default null */
+                     runDeadlineSeconds?: (number | null) | undefined;
++                    /** @default null */
++                    structuredTimeoutMs?: (number | null) | undefined;
+                 };
+                 classifiers: {
+                     [key: string]: {
+@@ -4655,6 +4661,8 @@ export interface components {
+                 maxNodeVisits: number | null;
+                 /** @default null */
+                 runDeadlineSeconds: number | null;
++                /** @default null */
++                structuredTimeoutMs: number | null;
+                 /** @default 8 */
+                 subloopDepthLimit: number;
+             };
+@@ -5710,7 +5718,7 @@ export interface components {
+         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
+         RunFailure: {
+             /** @enum {string} */
+-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
++            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+             message: string;
+             nodeId?: string | undefined;
+             resumable: boolean;
+@@ -5787,6 +5795,8 @@ export interface components {
+                     maxNodeVisits: number | null;
+                     /** @default null */
+                     runDeadlineSeconds: number | null;
++                    /** @default null */
++                    structuredTimeoutMs: number | null;
+                 };
+                 classifiers: {
+                     [key: string]: {
+@@ -6041,6 +6051,8 @@ export interface components {
+                     maxNodeVisits: number | null;
+                     /** @default null */
+                     runDeadlineSeconds: number | null;
++                    /** @default null */
++                    structuredTimeoutMs: number | null;
+                 };
+                 classifiers: {
+                     [key: string]: {
+diff --git a/packages/contracts/src/__golden__/export-every-field.json b/packages/contracts/src/__golden__/export-every-field.json
+index cf7917d2..46e74eb0 100644
+--- a/packages/contracts/src/__golden__/export-every-field.json
++++ b/packages/contracts/src/__golden__/export-every-field.json
+@@ -21,6 +21,7 @@
+       },
+       "maxNodeVisits": 7,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 4
+     },
+     "variables": {
+diff --git a/packages/contracts/src/__golden__/loop-every-field.json b/packages/contracts/src/__golden__/loop-every-field.json
+index 5a82bf2d..75765587 100644
+--- a/packages/contracts/src/__golden__/loop-every-field.json
++++ b/packages/contracts/src/__golden__/loop-every-field.json
+@@ -17,6 +17,7 @@
+     },
+     "maxNodeVisits": 7,
+     "runDeadlineSeconds": null,
++    "structuredTimeoutMs": null,
+     "subloopDepthLimit": 4
+   },
+   "variables": {
+diff --git a/packages/contracts/src/__golden__/loop-kitchen-sink.json b/packages/contracts/src/__golden__/loop-kitchen-sink.json
+index ffcca63c..a2e7d132 100644
+--- a/packages/contracts/src/__golden__/loop-kitchen-sink.json
++++ b/packages/contracts/src/__golden__/loop-kitchen-sink.json
+@@ -17,6 +17,7 @@
+     },
+     "maxNodeVisits": 3,
+     "runDeadlineSeconds": null,
++    "structuredTimeoutMs": null,
+     "subloopDepthLimit": 8
+   },
+   "variables": {
+diff --git a/packages/contracts/src/__golden__/loop-minimal.json b/packages/contracts/src/__golden__/loop-minimal.json
+index 5394008b..ce629366 100644
+--- a/packages/contracts/src/__golden__/loop-minimal.json
++++ b/packages/contracts/src/__golden__/loop-minimal.json
+@@ -10,6 +10,7 @@
+     },
+     "maxNodeVisits": 10,
+     "runDeadlineSeconds": null,
++    "structuredTimeoutMs": null,
+     "subloopDepthLimit": 8
+   },
+   "variables": {},
+diff --git a/packages/contracts/src/loop.ts b/packages/contracts/src/loop.ts
+index e2054543..2fbc53e1 100644
+--- a/packages/contracts/src/loop.ts
++++ b/packages/contracts/src/loop.ts
+@@ -43,6 +43,19 @@ export const ExecutionLimitsSchema = z.strictObject({
+         { control: 'execution-limit' },
+       ),
+     ),
++  structuredTimeoutMs: z
++    .number()
++    .int()
++    .positive()
++    .max(31_536_000_000)
++    .nullable()
++    .default(null)
++    .meta(
++      field(
++        'Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.',
++        { control: 'execution-limit' },
++      ),
++    ),
+ });
+ export type ExecutionLimits = z.infer<typeof ExecutionLimitsSchema>;
+ 
+diff --git a/packages/contracts/src/run.ts b/packages/contracts/src/run.ts
+index 53486c46..aad3f163 100644
+--- a/packages/contracts/src/run.ts
++++ b/packages/contracts/src/run.ts
+@@ -44,6 +44,7 @@ export const RunErrorCodeSchema = z.enum([
+   'HARNESS_TRANSPORT_FAILED',
+   'HARNESS_OUTPUT_LIMIT',
+   'RUN_DEADLINE_EXCEEDED',
++  'STRUCTURED_COMPLETION_TIMEOUT',
+   'HARNESS_DELIVERY_UNCERTAIN',
+   'HARNESS_SESSION_MISSING',
+   'HARNESS_TERMINATION_UNCONFIRMED',
+diff --git a/packages/contracts/src/testing/index.ts b/packages/contracts/src/testing/index.ts
+index 40b6ee87..183ee860 100644
+--- a/packages/contracts/src/testing/index.ts
++++ b/packages/contracts/src/testing/index.ts
+@@ -69,7 +69,7 @@ export function samplePin(overrides: Partial<RunPin> = {}): RunPin {
+     label: 'Minimal v1',
+     defaults: { owner: { byHarness: {} }, process: { byHarness: {} } },
+     classifiers: {},
+-    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
++    limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
+     ...overrides,
+   };
+ }
+diff --git a/packages/domain/src/__golden__/export-every-field.json b/packages/domain/src/__golden__/export-every-field.json
+index cf7917d2..46e74eb0 100644
+--- a/packages/domain/src/__golden__/export-every-field.json
++++ b/packages/domain/src/__golden__/export-every-field.json
+@@ -21,6 +21,7 @@
+       },
+       "maxNodeVisits": 7,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 4
+     },
+     "variables": {
+diff --git a/packages/domain/src/__golden__/export-kitchen-sink.json b/packages/domain/src/__golden__/export-kitchen-sink.json
+index efb8fa8c..113fc526 100644
+--- a/packages/domain/src/__golden__/export-kitchen-sink.json
++++ b/packages/domain/src/__golden__/export-kitchen-sink.json
+@@ -21,6 +21,7 @@
+       },
+       "maxNodeVisits": 3,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8
+     },
+     "variables": {
+diff --git a/packages/domain/src/__snapshots__/upgrade-composed.test.ts.snap b/packages/domain/src/__snapshots__/upgrade-composed.test.ts.snap
+index 15fad647..f1e145f2 100644
+--- a/packages/domain/src/__snapshots__/upgrade-composed.test.ts.snap
++++ b/packages/domain/src/__snapshots__/upgrade-composed.test.ts.snap
+@@ -64,6 +64,7 @@ exports[`composed format-4 definition and export conversion > matches the frozen
+       },
+       "maxNodeVisits": 10,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -138,6 +139,7 @@ exports[`composed format-4 definition and export conversion > matches the frozen
+       },
+       "maxNodeVisits": 10,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -212,6 +214,7 @@ exports[`composed format-4 definition and export conversion > matches the frozen
+       },
+       "maxNodeVisits": 10,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -387,6 +390,7 @@ Use only the supplied context and accessible working directory. Missing reposito
+       },
+       "maxNodeVisits": 10,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+diff --git a/packages/domain/src/convert-v3-v4/__snapshots__/conversion.test.ts.snap b/packages/domain/src/convert-v3-v4/__snapshots__/conversion.test.ts.snap
+index 0ab0fab8..61189458 100644
+--- a/packages/domain/src/convert-v3-v4/__snapshots__/conversion.test.ts.snap
++++ b/packages/domain/src/convert-v3-v4/__snapshots__/conversion.test.ts.snap
+@@ -368,6 +368,7 @@ exports[`E2 review regressions > F1 automatically maps a sole gate expression, t
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -996,6 +997,7 @@ exports[`E2 review regressions > F1 requires an owner source resolution with two
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -1164,6 +1166,7 @@ exports[`E2 review regressions > F1 requires an owner source resolution with zer
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -1487,6 +1490,7 @@ exports[`E2 review regressions > F1 reviews counters even with one gate and does
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -2145,6 +2149,7 @@ exports[`E2 review regressions > F1 uses the actual provider comparison gate ID
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -2271,6 +2276,7 @@ exports[`E2 review regressions > F2 accepts an authored duration exit graph and
+         },
+         "maxNodeVisits": 5,
+         "runDeadlineSeconds": null,
++        "structuredTimeoutMs": null,
+         "subloopDepthLimit": 8,
+         "workingDirectory": {
+           "kind": "temp",
+@@ -2454,6 +2460,7 @@ exports[`E2 review regressions > F2 accepts an authored iterations exit graph an
+         },
+         "maxNodeVisits": 5,
+         "runDeadlineSeconds": null,
++        "structuredTimeoutMs": null,
+         "subloopDepthLimit": 8,
+         "workingDirectory": {
+           "kind": "temp",
+@@ -2637,6 +2644,7 @@ exports[`E2 review regressions > F2 accepts an authored schema exit graph and re
+         },
+         "maxNodeVisits": 5,
+         "runDeadlineSeconds": null,
++        "structuredTimeoutMs": null,
+         "subloopDepthLimit": 8,
+         "workingDirectory": {
+           "kind": "temp",
+@@ -3063,6 +3071,7 @@ exports[`E2 review regressions > F4 names max-duration changing from before a pr
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -3430,6 +3439,7 @@ exports[`E2 review regressions > F4 names max-iterations changing from before a
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -3760,6 +3770,7 @@ exports[`E2 review regressions > F5 reports ignored continuation with a conditio
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -3937,6 +3948,7 @@ exports[`E2 review regressions > F5 reports ignored continuation with a constant
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -4064,6 +4076,7 @@ exports[`E2 review regressions > F5 reports ignored continuation with a none ter
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -5254,6 +5267,7 @@ Inspect the resulting files or proposed patch and any supplied evidence. Return
+       },
+       "maxNodeVisits": 3,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -6534,6 +6548,7 @@ Challenge unsupported conclusions, missing evidence, and invalid test reasoning.
+       },
+       "maxNodeVisits": 2,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -7551,6 +7566,7 @@ Address only these actionable findings. Edit accessible source in the configured
+       },
+       "maxNodeVisits": 3,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -7718,6 +7734,7 @@ Use only the supplied context and accessible working directory. Missing reposito
+       },
+       "maxNodeVisits": 10,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -8346,6 +8363,7 @@ no (No): Needs work",
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -8958,6 +8976,7 @@ false (No): Needs work",
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -9556,6 +9575,7 @@ false (No): Needs work",
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -9873,6 +9893,7 @@ exports[`definition conversion golden rules > matches the ceiling loop-back gold
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -10461,6 +10482,7 @@ exports[`definition conversion golden rules > matches the classifier Choice loop
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -11034,6 +11056,7 @@ exports[`definition conversion golden rules > matches the classifier Noul false
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -11582,6 +11605,7 @@ exports[`definition conversion golden rules > matches the classifier Score loop-
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -11786,6 +11810,7 @@ no (No): Needs work",
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -11980,6 +12005,7 @@ exports[`definition conversion golden rules > matches the complete Choice classi
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -12136,6 +12162,7 @@ exports[`definition conversion golden rules > matches the complete Choice expres
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -12336,6 +12363,7 @@ no (No): Needs work",
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -12527,6 +12555,7 @@ exports[`definition conversion golden rules > matches the complete Noul classifi
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -12681,6 +12710,7 @@ exports[`definition conversion golden rules > matches the complete Noul expressi
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -12864,6 +12894,7 @@ exports[`definition conversion golden rules > matches the complete Score classif
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -13183,6 +13214,7 @@ exports[`definition conversion golden rules > matches the duration loop-back gol
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -13522,6 +13554,7 @@ exports[`definition conversion golden rules > matches the expression false loop-
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -13861,6 +13894,7 @@ exports[`definition conversion golden rules > matches the expression true loop-b
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+@@ -14637,6 +14671,7 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
+       },
+       "maxNodeVisits": 5,
+       "runDeadlineSeconds": null,
++      "structuredTimeoutMs": null,
+       "subloopDepthLimit": 8,
+       "workingDirectory": {
+         "kind": "temp",
+diff --git a/packages/engine/src/completion-deadline.test.ts b/packages/engine/src/completion-deadline.test.ts
+new file mode 100644
+index 00000000..28602ed1
+--- /dev/null
++++ b/packages/engine/src/completion-deadline.test.ts
+@@ -0,0 +1,36 @@
++import { expect, it, vi } from 'vitest';
++import { completeWithDeadline } from './completion-deadline.js';
++import { CapturingLogger } from './testing/index.js';
++
++it('treats an undefined runtime completion limit as Unlimited', async () => {
++  vi.useFakeTimers();
++  let finish!: () => void;
++  let signal: AbortSignal | undefined;
++  const call = completeWithDeadline(
++    (supplied) => {
++      signal = supplied;
++      return new Promise<number>((resolve) => {
++        finish = () => resolve(7);
++      });
++    },
++    new AbortController().signal,
++    undefined,
++    new CapturingLogger(),
++    { runId: 'run', nodeId: 'repair' },
++  );
++  // Observe rejection immediately so the pre-fix regression is an ordinary assertion failure.
++  const outcome = call.then(
++    (value) => ({ value }),
++    (error: unknown) => ({ error }),
++  );
++  try {
++    await vi.advanceTimersByTimeAsync(120_001);
++    expect(signal?.aborted).toBe(false);
++    finish();
++    expect(await outcome).toEqual({ value: 7 });
++  } finally {
++    finish?.();
++    await outcome;
++    vi.useRealTimers();
++  }
++});
+diff --git a/packages/engine/src/completion-deadline.ts b/packages/engine/src/completion-deadline.ts
+new file mode 100644
+index 00000000..bb916c40
+--- /dev/null
++++ b/packages/engine/src/completion-deadline.ts
+@@ -0,0 +1,81 @@
++import { isAbortError, RunCancelledError, RunFailureError } from './errors.js';
++import type { Logger } from './ports.js';
++
++/** One engine boundary for route and repair completions, including adapters that ignore abort. */
++export async function completeWithDeadline<T>(
++  call: (signal: AbortSignal) => Promise<T>,
++  signal: AbortSignal,
++  timeoutMs: number | null | undefined,
++  logger: Logger,
++  identity: { runId?: string; nodeId: string },
++): Promise<T> {
++  signal.throwIfAborted();
++  const controller = new AbortController();
++  const deadline = timeoutMs == null ? Infinity : Date.now() + timeoutMs;
++  let aborted = false;
++  let timer: ReturnType<typeof setTimeout> | undefined;
++  let rejectInterruption!: (reason: Error) => void;
++  const interruption = new Promise<never>((_resolve, reject) => {
++    rejectInterruption = reject;
++  });
++  const dispose = () => {
++    clearTimeout(timer);
++    signal.removeEventListener('abort', cancel);
++  };
++  const abort = (reason: Error) => {
++    if (aborted) return;
++    aborted = true;
++    dispose();
++    controller.abort(reason);
++    rejectInterruption(reason);
++  };
++  const cancel = () =>
++    abort(signal.reason instanceof Error ? signal.reason : new RunCancelledError());
++  const expire = () => {
++    const remaining = deadline - Date.now();
++    if (remaining > 0) {
++      // Node timers overflow after about 24.8 days; support the full authored range.
++      timer = setTimeout(expire, Math.min(remaining, 2_147_483_647));
++      return;
++    }
++    abort(
++      new RunFailureError(
++        'STRUCTURED_COMPLETION_TIMEOUT',
++        `Structured completion exceeded its configured deadline of ${timeoutMs} ms`,
++        { details: { timeoutMs }, nodeId: identity.nodeId },
++      ),
++    );
++  };
++  signal.addEventListener('abort', cancel, { once: true });
++  if (timeoutMs != null) expire();
++  const observe = () => {
++    // Enforce wall time even when a busy event loop delayed the timer callback. Observe every
++    // late settlement once, without retaining provider values or diagnostics in the log.
++    if (!aborted && Date.now() >= deadline) expire();
++    return aborted;
++  };
++  const warnLate = () => logger.warn(identity, 'late structured completion discarded');
++  const work = Promise.resolve()
++    .then(() => {
++      controller.signal.throwIfAborted();
++      return call(controller.signal);
++    })
++    .then(
++      (value) => {
++        if (observe()) warnLate();
++        return value;
++      },
++      (error: unknown) => {
++        // An adapter acknowledging abort (including the forwarded typed timeout reason)
++        // has no late answer to discard. Still observe any other rejection exactly once.
++        if (observe() && !isAbortError(error) && error !== controller.signal.reason) warnLate();
++        // Preserve provider failure identity/categories; only interruption is manufactured here.
++        throw error;
++      },
++    );
++  try {
++    return await Promise.race([interruption, work]);
++  } finally {
++    dispose();
++  }
++}
+diff --git a/packages/engine/src/definition-pin.test.ts b/packages/engine/src/definition-pin.test.ts
+index f0f9bf63..52aa95f9 100644
+--- a/packages/engine/src/definition-pin.test.ts
++++ b/packages/engine/src/definition-pin.test.ts
+@@ -122,7 +122,7 @@ describe('draft runs pin a snapshot of the draft', () => {
+       label: 'Pinned draft v1',
+       defaults: { owner: { byHarness: {} }, process: engine.settings.defaults },
+       classifiers: {},
+-      limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
++      limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
+     });
+     const thread = await engine.manager.getThread(run.id);
+     expect(thread?.run.versionId).toBe(run.versionId);
+diff --git a/packages/engine/src/definition-pin.ts b/packages/engine/src/definition-pin.ts
+index dd0094c2..b4359db5 100644
+--- a/packages/engine/src/definition-pin.ts
++++ b/packages/engine/src/definition-pin.ts
+@@ -35,6 +35,7 @@ export function pinOf(record: LoopVersionRecord, selections: PinnedSelections):
+     label: pinLabel(source, name, record.version),
+     defaults: selections.defaults,
+     limits: {
++      structuredTimeoutMs: record.definition.settings.structuredTimeoutMs,
+       maxNodeVisits: record.definition.settings.maxNodeVisits,
+       runDeadlineSeconds: record.definition.settings.runDeadlineSeconds,
+     },
+diff --git a/packages/engine/src/handlers/common.ts b/packages/engine/src/handlers/common.ts
+index 61d0f7ac..9374005b 100644
+--- a/packages/engine/src/handlers/common.ts
++++ b/packages/engine/src/handlers/common.ts
+@@ -25,6 +25,7 @@ import { applyMutations, completeRepair, applyPatch } from '@graphgoblin/domain'
+ import type { MutationOperation, NodeKind } from '@graphgoblin/contracts';
+ import { RunFailureError } from '../errors.js';
+ import type { NodeContext } from '../handler.js';
++import { completeWithDeadline } from '../completion-deadline.js';
+ 
+ export function toJson(value: unknown): JsonValue {
+   if (value === undefined) return null;
+@@ -217,10 +218,23 @@ export async function repairValue<K extends NodeKind>(
+         errors,
+         attempt,
+       });
+-      const completion = await structured.complete(
+-        { prompt, schema: input.schema, model, effort },
++      const completion = await completeWithDeadline(
++        (signal) => structured.complete({ prompt, schema: input.schema, model, effort }, signal),
+         ctx.signal,
+-      );
++        ctx.run.pinned.limits.structuredTimeoutMs,
++        ctx.ports.logger,
++        { runId: ctx.run.id, nodeId: ctx.node.id },
++      ).catch((error: unknown) => {
++        if (error instanceof RunFailureError && error.code === 'STRUCTURED_COMPLETION_TIMEOUT')
++          throw new RunFailureError(error.code, error.message, {
++            ...error.options,
++            details: {
++              timeoutMs: ctx.run.pinned.limits.structuredTimeoutMs,
++              provenance: { kind: 'llm', provider: 'codex', classifierId: null, model, effort },
++            },
++          });
++        throw error;
++      });
+       const validation = validateJson(input.schema, completion.value);
+       if (validation.ok) return { value: toJson(completion.value), repaired: true };
+       errors = validation.errors;
+diff --git a/packages/engine/src/handlers/decision.ts b/packages/engine/src/handlers/decision.ts
+index b2a2c886..176a5603 100644
+--- a/packages/engine/src/handlers/decision.ts
++++ b/packages/engine/src/handlers/decision.ts
+@@ -43,6 +43,8 @@ export const decisionHandler: NodeHandler<'decision'> = {
+       ports: ctx.ports,
+       resolveModel: (...args: Parameters<typeof ctx.services.resolveModel>) =>
+         ctx.services.resolveModel(...args),
++      structuredTimeoutMs: ctx.run.pinned.limits.structuredTimeoutMs,
++      runId: ctx.run.id,
+     };
+     let payload: DecisionPayload;
+     switch (config.kind) {
+diff --git a/packages/engine/src/ports.ts b/packages/engine/src/ports.ts
+index 697b8c7d..1ea029e5 100644
+--- a/packages/engine/src/ports.ts
++++ b/packages/engine/src/ports.ts
+@@ -331,7 +331,9 @@ export interface ClassifierRegistryPort {
+   ): Promise<ClassifierResolution>;
+ }
+ 
+-/** A single structured completion: prompt in, schema-shaped value out. Used for repair and Codex decisions. */
++/** A single structured completion. Honour abort by cancelling provider work and cleaning resources.
++ * The engine owns the deadline; adapters must not add a hidden completion cutoff.
++ */
+ export interface StructuredPort {
+   complete(
+     request: {
+@@ -464,8 +466,6 @@ export interface EngineSettings {
+    */
+   ownerDefaults?: (ownerId: string) => Promise<HarnessDefaults>;
+   maxConcurrentRuns: number;
+-  /** Max wall-clock for a single structured completion used in decisions and repair. */
+-  structuredTimeoutMs: number;
+ }
+ 
+ export interface EnginePorts {
+diff --git a/packages/engine/src/primitive-evaluator.test.ts b/packages/engine/src/primitive-evaluator.test.ts
+index 2f0e51cc..52f009a8 100644
+--- a/packages/engine/src/primitive-evaluator.test.ts
++++ b/packages/engine/src/primitive-evaluator.test.ts
+@@ -17,6 +17,8 @@ const sides = {
+ };
+ function request(): ClassifierEvaluationRequest {
+   return {
++    structuredTimeoutMs: null,
++    runId: 'run',
+     nodeId: 'evaluate',
+     ownerId: 'owner',
+     config: ClassifierDecisionConfigSchema.parse({
+@@ -174,7 +176,7 @@ describe('separate typed evaluation operations', () => {
+         model: 'gpt-6-luna',
+         effort: 'low',
+       },
+-      input.signal,
++      expect.any(AbortSignal),
+     );
+   });
+   it.each(['route'] as const)(
+diff --git a/packages/engine/src/primitive-evaluator.ts b/packages/engine/src/primitive-evaluator.ts
+index 56ca86de..aa9c22c5 100644
+--- a/packages/engine/src/primitive-evaluator.ts
++++ b/packages/engine/src/primitive-evaluator.ts
+@@ -13,10 +13,13 @@ import {
+ } from '@graphgoblin/contracts';
+ import { evaluateExpression, validatePrimitiveAnswer } from '@graphgoblin/domain';
+ import { summarizeDeciderError } from './decider-errors.js';
++import { completeWithDeadline } from './completion-deadline.js';
+ import { isAbortError, RunFailureError } from './errors.js';
+ import type { HandlerServices } from './handler.js';
+ import type { ClassifierUnavailableReason, EnginePorts } from './ports.js';
+ interface EvaluationRequest {
++  structuredTimeoutMs: number | null;
++  runId: string;
+   nodeId: string;
+   ownerId: string;
+   config: { kind: 'expression' | 'llm' | 'classifier' };
+@@ -309,9 +312,23 @@ async function evaluateLlm(
+   let raw: unknown;
+   try {
+     const prepared = { instructions, context, ...resolved };
+-    raw = await decider.route({ ...prepared, routes: config.routes }, request.signal);
++    raw = await completeWithDeadline(
++      (signal) => decider.route({ ...prepared, routes: config.routes }, signal),
++      request.signal,
++      request.structuredTimeoutMs,
++      request.ports.logger,
++      { nodeId: request.nodeId, runId: request.runId },
++    );
+     request.signal.throwIfAborted();
+   } catch (error) {
++    if (error instanceof RunFailureError) {
++      if (error.code === 'STRUCTURED_COMPLETION_TIMEOUT')
++        fail(request, error.code, error.message, error.options.resumable ?? true, {
++          timeoutMs: request.structuredTimeoutMs,
++          provenance,
++        });
++      throw error;
++    }
+     providerFailure(request, error, provenance);
+   }
+   if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+diff --git a/packages/engine/src/repair-deadline.test.ts b/packages/engine/src/repair-deadline.test.ts
+new file mode 100644
+index 00000000..097fe640
+--- /dev/null
++++ b/packages/engine/src/repair-deadline.test.ts
+@@ -0,0 +1,148 @@
++import { afterEach, expect, it, vi } from 'vitest';
++import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/index.js';
++
++let e: TestEngine | undefined;
++afterEach(async () => {
++  vi.useRealTimers();
++  e?.manager.stop();
++  if (e) {
++    for (const row of await e.ports.runs.listRecoveryCandidates()) await e.manager.cancel(row.id);
++    await e.manager.waitForIdle();
++  }
++});
++
++it('retains the structured repair provider, resolved model and effort on an inference transform timeout', async () => {
++  e = await createTestEngine();
++  e.ports.harness.script([{ finalText: 'bad' }]);
++  let completionRequest: unknown;
++  e.ports.structured = {
++    complete: (request, signal) => {
++      completionRequest = request;
++      return new Promise((_resolve, reject) =>
++        signal.addEventListener(
++          'abort',
++          () =>
++            reject(
++              signal.reason instanceof Error ? signal.reason : new Error('completion aborted'),
++            ),
++          { once: true },
++        ),
++      );
++    },
++  };
++  const definition = singleNodeLoop('Transform deadline provenance', {
++    id: 'infer',
++    kind: 'inference',
++    label: 'Infer',
++    config: {
++      prompt: { template: 'Answer' },
++      effort: 'low',
++      output: {
++        transforms: [
++          {
++            op: 'coerce',
++            source: '/lastOutput/value',
++            target: '/vars/value',
++            jsonSchema: { type: 'number' },
++            repair: { enabled: true, maxAttempts: 1 },
++          },
++        ],
++      },
++    },
++  });
++  definition.settings = {
++    structuredTimeoutMs: 50,
++    defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'high' } } },
++  };
++  const run = await e.runToIdle(e.publish(definition).loopId);
++  expect(e.ports.harness.started[0]?.effort).toBe('low');
++  expect(completionRequest).toMatchObject({ model: 'gpt-6-luna', effort: 'high' });
++  process.stdout.write(JSON.stringify({ kind: 'output-transform', failure: run.failure }) + '\n');
++  expect(run.status).toBe('failed');
++  expect(run.failure).toMatchObject({
++    code: 'STRUCTURED_COMPLETION_TIMEOUT',
++    nodeId: 'infer',
++    details: {
++      timeoutMs: 50,
++      provenance: {
++        kind: 'llm',
++        provider: 'codex',
++        classifierId: null,
++        model: 'gpt-6-luna',
++        effort: 'high',
++      },
++    },
++  });
++});
++
++it.each([false, true])(
++  'same-session schema repair follows node timeout (configured: %s), independently of the structured-port deadline',
++  async (bounded) => {
++    e = await createTestEngine();
++    let inferenceStartedAt = Number.NaN;
++    e.ports.harness.script([
++      {
++        finalText: 'bad',
++        match: () => {
++          inferenceStartedAt = Date.now();
++          return true;
++        },
++      },
++      { finalText: '7', delayMs: 2000 },
++    ]);
++    let structuredCalls = 0;
++    e.ports.structured = {
++      complete: () => {
++        structuredCalls += 1;
++        return Promise.resolve({ value: 7 });
++      },
++    };
++    const definition = singleNodeLoop('Same-session repair boundary', {
++      id: 'infer',
++      kind: 'inference',
++      label: 'Infer',
++      config: {
++        prompt: { template: 'Answer' },
++        ...(bounded ? { timeoutSeconds: 1 } : {}),
++        output: {
++          schema: { jsonSchema: { type: 'number' }, repair: { enabled: true, maxAttempts: 1 } },
++        },
++      },
++    });
++    definition.settings = { structuredTimeoutMs: 50 };
++    vi.useFakeTimers();
++    const started = await e.start(e.publish(definition).loopId);
++    // The manager yields between nodes. Record the public harness invocation's clock,
++    // then let waitFor advance those scheduler turns before checking the deadline itself.
++    await vi.waitFor(() => expect(e!.ports.harness.resumed).toHaveLength(1));
++    expect(Number.isFinite(inferenceStartedAt)).toBe(true);
++    await vi.advanceTimersByTimeAsync(Math.max(0, inferenceStartedAt + 51 - Date.now()));
++    expect((await e.ports.runs.get(started.id))?.status).toBe('running');
++    if (bounded) {
++      const remaining = inferenceStartedAt + 999 - Date.now();
++      expect(remaining).toBeGreaterThanOrEqual(0);
++      await vi.advanceTimersByTimeAsync(remaining);
++      expect((await e.ports.runs.get(started.id))?.status).toBe('running');
++      await vi.advanceTimersByTimeAsync(1);
++    } else await vi.runAllTimersAsync();
++    const run = await e.settle(started.id);
++    expect(structuredCalls).toBe(0);
++    process.stdout.write(
++      JSON.stringify({
++        kind: 'same-session-schema',
++        bounded,
++        elapsedMs: Date.now() - inferenceStartedAt,
++        status: run.status,
++        failure: run.failure,
++      }) + '\n',
++    );
++    expect(run.status).toBe(bounded ? 'failed' : 'succeeded');
++    if (bounded) {
++      expect(run.failure).toMatchObject({
++        code: 'INFERENCE_TIMEOUT',
++        inference: { promptKind: 'repair' },
++      });
++      expect(e.ports.harness.cancelled).toHaveLength(1);
++    } else expect((await e.manager.getThread(run.id))?.lastOutput?.value).toBe(7);
++  },
++);
+diff --git a/packages/engine/src/structured-cancel.test.ts b/packages/engine/src/structured-cancel.test.ts
+new file mode 100644
+index 00000000..6dca5b55
+--- /dev/null
++++ b/packages/engine/src/structured-cancel.test.ts
+@@ -0,0 +1,61 @@
++import { expect, it, vi } from 'vitest';
++import { createTestEngine, singleNodeLoop } from './testing/index.js';
++
++it('explicit cancellation wins before an enabled completion deadline and discards its late value', async () => {
++  vi.useFakeTimers();
++  const e = await createTestEngine();
++  let signal: AbortSignal | undefined;
++  let late: (() => void) | undefined;
++  e.ports.structured = {
++    complete: (_request, supplied) => {
++      signal = supplied;
++      return new Promise((resolve) => {
++        late = () => resolve({ value: 99 });
++      });
++    },
++  };
++  try {
++    const def = singleNodeLoop('Cancel before deadline', {
++      id: 'repair',
++      kind: 'mutate',
++      label: 'Repair',
++      config: {
++        operations: [
++          {
++            op: 'coerce',
++            source: '/vars/value',
++            target: '/vars/value',
++            jsonSchema: { type: 'number' },
++            repair: { enabled: true, maxAttempts: 1 },
++          },
++        ],
++      },
++    });
++    def.settings = { structuredTimeoutMs: 1000 };
++    const run = await e.start(e.publish(def).loopId);
++    await vi.advanceTimersByTimeAsync(20);
++    expect(signal).toBeDefined();
++    expect(signal?.aborted).toBe(false);
++    await e.manager.cancel(run.id);
++    await e.manager.waitForIdle();
++    expect((await e.ports.runs.get(run.id))?.status).toBe('cancelled');
++    expect((await e.ports.runs.get(run.id))?.failure).toBeUndefined();
++    expect(signal?.aborted).toBe(true);
++    await vi.advanceTimersByTimeAsync(2000);
++    late!();
++    await vi.advanceTimersByTimeAsync(0);
++    expect(e.events(run.id).filter((event) => event.type === 'run.cancelled')).toHaveLength(1);
++    expect(e.eventTypes(run.id)).not.toContain('run.failed');
++    expect((await e.manager.getThread(run.id))?.vars.value).toBeUndefined();
++  } finally {
++    e.manager.stop();
++    vi.useRealTimers();
++    late?.();
++    for (const row of await e.ports.runs.listRecoveryCandidates()) {
++      const run = await e.ports.runs.get(row.id);
++      if (run && ['running', 'queued', 'waiting', 'paused'].includes(run.status))
++        await e.manager.cancel(run.id);
++    }
++    await e.manager.waitForIdle();
++  }
++});
+diff --git a/packages/engine/src/structured-deadline.test.ts b/packages/engine/src/structured-deadline.test.ts
+new file mode 100644
+index 00000000..cbf5291e
+--- /dev/null
++++ b/packages/engine/src/structured-deadline.test.ts
+@@ -0,0 +1,394 @@
++import { afterEach, expect, it, vi } from 'vitest';
++import { RunManager } from './run-manager.js';
++import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/index.js';
++
++let e: TestEngine | undefined;
++let release: (() => void) | undefined;
++afterEach(async () => {
++  vi.useRealTimers();
++  release?.();
++  e?.manager.stop();
++  if (e) {
++    for (const row of await e.ports.runs.listRecoveryCandidates()) {
++      const run = await e.ports.runs.get(row.id);
++      if (run && ['running', 'queued', 'waiting', 'paused'].includes(run.status))
++        await e.manager.cancel(run.id);
++    }
++    await e.manager.waitForIdle();
++  }
++});
++
++function repairLoop() {
++  return singleNodeLoop('Structured deadline', {
++    id: 'repair',
++    kind: 'mutate',
++    label: 'Repair',
++    config: {
++      operations: [
++        {
++          op: 'coerce',
++          source: '/vars/value',
++          target: '/vars/value',
++          jsonSchema: { type: 'number' },
++          repair: { enabled: true, maxAttempts: 1 },
++        },
++      ],
++    },
++  });
++}
++
++it('releases stalled structured work at the visible run deadline and admits the queued run', async () => {
++  e = await createTestEngine({ maxConcurrentRuns: 1 });
++  let signal: AbortSignal | undefined;
++  e.ports.structured = {
++    complete: (_request, supplied) => {
++      signal = supplied;
++      return new Promise((resolve) => {
++        release = () => resolve({ value: 1 });
++      });
++    },
++  };
++  const def = repairLoop();
++  def.settings = { runDeadlineSeconds: 1 };
++  const loop = e.publish(def);
++  const stalled = await e.start(loop.loopId);
++  await expect.poll(() => signal !== undefined).toBe(true);
++  const queued = await e.start(
++    e.publish(
++      singleNodeLoop('Next', {
++        id: 'work',
++        kind: 'mutate',
++        label: 'Work',
++        config: { operations: [{ op: 'delete', path: '/vars/missing' }] },
++      }),
++    ).loopId,
++  );
++  e.ports.clock.advance(1001);
++  await expect
++    .poll(async () => (await e!.ports.runs.get(stalled.id))?.status, { timeout: 2000 })
++    .toBe('failed');
++  expect(signal?.aborted).toBe(true);
++  expect((await e.ports.runs.get(stalled.id))?.failure?.code).toBe('RUN_DEADLINE_EXCEEDED');
++  await expect.poll(async () => (await e!.ports.runs.get(queued.id))?.status).toBe('succeeded');
++  expect(
++    e
++      .events(stalled.id)
++      .filter((event) => event.type === 'node.finished' && event.nodeId === 'repair'),
++  ).toHaveLength(0);
++});
++
++it.each([null, 1000])(
++  'finishes fast repair with completion limit %s',
++  async (structuredTimeoutMs) => {
++    e = await createTestEngine();
++    e.ports.structured = { complete: () => Promise.resolve({ value: 7 }) };
++    const def = repairLoop();
++    def.settings = { structuredTimeoutMs };
++    const run = await e.runToIdle(e.publish(def).loopId);
++    expect(run.status).toBe('succeeded');
++    expect((await e.manager.getThread(run.id))?.vars.value).toBe(7);
++    expect(run.pinned.limits.structuredTimeoutMs).toBe(structuredTimeoutMs);
++  },
++);
++
++it.each(['resolve', 'reject'] as const)(
++  'times out stalled repair, frees capacity and discards late %s',
++  async (outcome) => {
++    e = await createTestEngine({ maxConcurrentRuns: 1 });
++    let signal: AbortSignal | undefined;
++    e.ports.structured = {
++      complete: (_request, supplied) => {
++        signal = supplied;
++        return new Promise((resolve, reject) => {
++          release = () =>
++            outcome === 'resolve'
++              ? resolve({ value: 99 })
++              : reject(new Error('private provider diagnostics'));
++        });
++      },
++    };
++    const def = repairLoop();
++    def.settings = { structuredTimeoutMs: 50 };
++    const record = e.publish(def);
++    const run = await e.start(record.loopId);
++    await expect.poll(() => signal !== undefined).toBe(true);
++    const next = await e.start(
++      e.publish(
++        singleNodeLoop('Capacity', {
++          id: 'work',
++          kind: 'script',
++          label: 'Work',
++          config: { command: 'fake' },
++        }),
++      ).loopId,
++    );
++    await expect.poll(async () => (await e!.ports.runs.get(run.id))?.status).toBe('failed');
++    const failed = await e.ports.runs.get(run.id);
++    expect(failed?.failure).toMatchObject({
++      code: 'STRUCTURED_COMPLETION_TIMEOUT',
++      nodeId: 'repair',
++      details: { timeoutMs: 50 },
++    });
++    expect(failed?.failure?.message).toContain('50 ms');
++    expect(signal?.aborted).toBe(true);
++    await expect.poll(async () => (await e!.ports.runs.get(next.id))?.status).toBe('succeeded');
++    const before = await e.manager.getThread(run.id);
++    release!();
++    await new Promise((resolve) => setTimeout(resolve, 0));
++    expect(await e.manager.getThread(run.id)).toEqual(before);
++    expect(e.events(run.id).filter((event) => event.type === 'run.failed')).toHaveLength(1);
++    expect(
++      e
++        .events(run.id)
++        .filter((event) => event.type === 'node.finished' && event.nodeId === 'repair'),
++    ).toHaveLength(0);
++    expect(
++      e.ports.logger.lines.filter((entry) => entry.msg === 'late structured completion discarded'),
++    ).toHaveLength(1);
++  },
++);
++
++it('Unlimited keeps stalled work running until explicit cancellation, with no timeout failure', async () => {
++  vi.useFakeTimers();
++  e = await createTestEngine();
++  let signal: AbortSignal | undefined;
++  e.ports.structured = {
++    complete: (_request, supplied) => {
++      signal = supplied;
++      return new Promise((resolve) => {
++        release = () => resolve({ value: 99 });
++      });
++    },
++  };
++  const def = repairLoop();
++  def.settings = { structuredTimeoutMs: null, runDeadlineSeconds: null, maxNodeVisits: null };
++  const run = await e.start(e.publish(def).loopId);
++  await vi.advanceTimersByTimeAsync(20);
++  expect(signal).toBeDefined();
++  e.manager.stop();
++  await vi.advanceTimersByTimeAsync(120_001);
++  e.ports.clock.advance(24 * 60 * 60 * 1000);
++  expect((await e.ports.runs.get(run.id))?.status).toBe('running');
++  await e.manager.cancel(run.id);
++  expect((await e.settle(run.id)).status).toBe('cancelled');
++  expect(signal?.aborted).toBe(true);
++  release!();
++  await vi.advanceTimersByTimeAsync(0);
++  expect((await e.ports.runs.get(run.id))?.failure).toBeUndefined();
++  expect((await e.manager.getThread(run.id))?.vars.value).toBeUndefined();
++});
++
++it('keeps the timeout when cancellation arrives during failure persistence', async () => {
++  vi.useFakeTimers();
++  e = await createTestEngine();
++  let signal: AbortSignal | undefined;
++  let finishPersistence!: () => void;
++  let failureWritten!: () => void;
++  const persistence = new Promise<void>((resolve) => {
++    finishPersistence = resolve;
++  });
++  const written = new Promise<void>((resolve) => {
++    failureWritten = resolve;
++  });
++  // Fault-inject the event-store port: the terminal event is durable, but its append
++  // acknowledgement (and therefore the run snapshot update) remains in flight.
++  const append = e.ports.events.append.bind(e.ports.events);
++  e.ports.events.append = async (...args) => {
++    const stored = await append(...args);
++    if (args[1].some((event) => event.type === 'run.failed')) {
++      failureWritten();
++      await persistence;
++    }
++    return stored;
++  };
++  e.ports.structured = {
++    complete: (_request, supplied) => {
++      signal = supplied;
++      return new Promise((resolve) => {
++        release = () => {
++          finishPersistence();
++          resolve({ value: 99 });
++        };
++      });
++    },
++  };
++  const def = repairLoop();
++  def.settings = { structuredTimeoutMs: 100 };
++  const run = await e.start(e.publish(def).loopId);
++  await vi.advanceTimersByTimeAsync(20);
++  expect(signal).toBeDefined();
++  await vi.advanceTimersByTimeAsync(101);
++  await written;
++  expect(signal?.aborted).toBe(true);
++  expect((await e.ports.runs.get(run.id))?.status).toBe('running');
++  await e.manager.cancel(run.id);
++  expect(e.eventTypes(run.id)).toContain('run.cancel_requested');
++  finishPersistence();
++  const final = await e.settle(run.id);
++  expect(final.status).toBe('failed');
++  expect(final.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
++  release!();
++  await vi.advanceTimersByTimeAsync(1000);
++  expect(
++    e
++      .events(run.id)
++      .filter((event) => ['run.failed', 'run.cancelled', 'run.finished'].includes(event.type)),
++  ).toMatchObject([{ type: 'run.failed', failure: { code: 'STRUCTURED_COMPLETION_TIMEOUT' } }]);
++  expect((await e.ports.runs.get(run.id))?.failure).toEqual(final.failure);
++  expect((await e.manager.getThread(run.id))?.vars.value).toBeUndefined();
++});
++
++it.each(['AbortError', 'forwarded reason'] as const)(
++  'does not warn about an adapter cancellation acknowledgement: %s',
++  async (acknowledgement) => {
++    vi.useFakeTimers();
++    e = await createTestEngine();
++    e.ports.structured = {
++      complete: (_request, signal) =>
++        new Promise((_resolve, reject) => {
++          release = () => {
++            if (acknowledgement === 'AbortError')
++              reject(new DOMException('The operation was aborted', 'AbortError'));
++            else if (signal.reason instanceof Error) reject(signal.reason);
++            else throw new Error('Forwarded cancellation reason must be an Error');
++          };
++        }),
++    };
++    const def = repairLoop();
++    def.settings = { structuredTimeoutMs: 100 };
++    const run = await e.start(e.publish(def).loopId);
++    await vi.advanceTimersByTimeAsync(101);
++    await e.manager.waitForIdle();
++    expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
++    release!();
++    await vi.advanceTimersByTimeAsync(0);
++    expect(
++      e.ports.logger.lines.filter((line) => line.msg === 'late structured completion discarded'),
++    ).toHaveLength(0);
++  },
++);
++
++it('applies the same deadline to LLM routing without replacing it with a generic provider failure', async () => {
++  e = await createTestEngine();
++  let signal: AbortSignal | undefined;
++  e.ports.deciders = [
++    {
++      id: 'codex',
++      available: () => true,
++      route: (_request, supplied) => {
++        signal = supplied;
++        return new Promise((resolve) => {
++          release = () => resolve({ route: 'yes', confidence: 1, reasoning: 'late' });
++        });
++      },
++    },
++  ];
++  const def = singleNodeLoop('Route timeout', {
++    id: 'route',
++    kind: 'decision',
++    label: 'Route',
++    config: {
++      kind: 'llm',
++      harness: 'codex',
++      model: { mode: 'inherit' },
++      effort: { mode: 'inherit' },
++      instructions: 'Choose',
++      routes: [
++        { id: 'yes', label: 'Yes' },
++        { id: 'no', label: 'No' },
++      ],
++    },
++  });
++  def.settings = { structuredTimeoutMs: 50 };
++  def.edges.push(
++    ...['yes', 'no'].map((port) => ({
++      id: port,
++      from: { node: 'route', port },
++      to: { node: 'done' },
++    })),
++  );
++  const run = await e.runToIdle(e.publish(def).loopId);
++  expect(run.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
++  expect(run.failure?.details).toMatchObject({
++    timeoutMs: 50,
++    provenance: { kind: 'llm', provider: 'codex', model: 'gpt-6-luna', effort: 'low' },
++  });
++  expect(signal?.aborted).toBe(true);
++  release!();
++  await new Promise((resolve) => setTimeout(resolve, 0));
++  expect(e.eventTypes(run.id)).not.toContain('decision.made');
++  expect((await e.manager.getThread(run.id))?.outputs.route).toBeUndefined();
++});
++
++it.each(['resolve', 'reject'] as const)(
++  'enforces elapsed time on %s even before the delayed timer callback runs',
++  async (outcome) => {
++    vi.useFakeTimers({ toFake: ['Date'] });
++    e = await createTestEngine();
++    let signal: AbortSignal | undefined;
++    e.ports.structured = {
++      complete: (_request, supplied) => {
++        signal = supplied;
++        return new Promise((resolve, reject) => {
++          release = () =>
++            outcome === 'resolve' ? resolve({ value: 9 }) : reject(new Error('late'));
++        });
++      },
++    };
++    const def = repairLoop();
++    def.settings = { structuredTimeoutMs: 1000 };
++    const run = await e.start(e.publish(def).loopId);
++    await expect.poll(() => signal !== undefined).toBe(true);
++    vi.setSystemTime(Date.now() + 1001);
++    release!();
++    await e.manager.waitForIdle();
++    expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
++    expect(
++      e.ports.logger.lines.filter((line) => line.msg === 'late structured completion discarded'),
++    ).toHaveLength(1);
++  },
++);
++
++it('rearms long completion timers without Node timer overflow', async () => {
++  vi.useFakeTimers();
++  e = await createTestEngine();
++  let signal: AbortSignal | undefined;
++  e.ports.structured = {
++    complete: (_request, supplied) => {
++      signal = supplied;
++      return new Promise((resolve) => {
++        release = () => resolve({ value: 9 });
++      });
++    },
++  };
++  const def = repairLoop();
++  def.settings = { structuredTimeoutMs: 2_147_483_650 };
++  const run = await e.start(e.publish(def).loopId);
++  await vi.advanceTimersByTimeAsync(20);
++  expect(signal).toBeDefined();
++  e.manager.stop(); // Stop the unrelated periodic admission sweep before advancing days.
++  await vi.advanceTimersByTimeAsync(2_147_483_647 - 20);
++  expect((await e.ports.runs.get(run.id))?.status).toBe('running');
++  await vi.advanceTimersByTimeAsync(25);
++  expect((await e.ports.runs.get(run.id))?.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
++});
++
++it('retains the completion pin when a failed run resumes after manager restart and a new publication', async () => {
++  e = await createTestEngine();
++  e.ports.structured = { complete: () => new Promise(() => {}) };
++  const def = repairLoop();
++  def.settings = { structuredTimeoutMs: 20 };
++  const record = e.publish(def);
++  const run = await e.runToIdle(record.loopId);
++  expect(run.failure?.code).toBe('STRUCTURED_COMPLETION_TIMEOUT');
++  e.manager.stop();
++  def.settings = { structuredTimeoutMs: null };
++  e.publish(def, { version: 2 });
++  const restarted = new RunManager(e.ports, e.settings);
++  e.manager = restarted;
++  await restarted.start();
++  await restarted.resume(run.id);
++  await restarted.waitForIdle();
++  expect((await e.ports.runs.get(run.id))?.pinned.limits.structuredTimeoutMs).toBe(20);
++  expect(e.events(run.id).filter((event) => event.type === 'run.failed')).toHaveLength(2);
++});
+diff --git a/packages/engine/src/testing/admission-contract.ts b/packages/engine/src/testing/admission-contract.ts
+index 6dfa702a..ada10730 100644
+--- a/packages/engine/src/testing/admission-contract.ts
++++ b/packages/engine/src/testing/admission-contract.ts
+@@ -103,7 +103,7 @@ function inputs() {
+       label: 'Contract v1',
+       defaults: NO_DEFAULTS,
+       classifiers: {},
+-      limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
++      limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
+     },
+     invocationId: ids.next(),
+     status: 'queued',
+diff --git a/packages/engine/src/testing/fakes.ts b/packages/engine/src/testing/fakes.ts
+index 46fdf792..2f748900 100644
+--- a/packages/engine/src/testing/fakes.ts
++++ b/packages/engine/src/testing/fakes.ts
+@@ -839,7 +839,6 @@ export class InMemorySecrets implements SecretsPort {
+ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
+   defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
+   maxConcurrentRuns: 4,
+-  structuredTimeoutMs: 5000,
+ };
+ 
+ export class FakeClassifierRegistry implements ClassifierRegistryPort {
+diff --git a/packages/infrastructure/drizzle/0020_completion_deadline_defaults.sql b/packages/infrastructure/drizzle/0020_completion_deadline_defaults.sql
+new file mode 100644
+index 00000000..d166b226
+--- /dev/null
++++ b/packages/infrastructure/drizzle/0020_completion_deadline_defaults.sql
+@@ -0,0 +1,57 @@
++-- ADR-0051 / #270: materialize additive null deadline defaults once.
++-- 0018 and 0019 are reserved for WP-D4 and WP-C7; this data-only migration uses 0020.
++-- Preserve authored finite/null/invalid values and malformed JSON for existing diagnostics.
++-- The migrator transaction restores snapshot protection atomically with the rewrite.
++DROP TRIGGER loop_versions_snapshot_immutable;
++--> statement-breakpoint
++UPDATE loop_versions SET definition = json_set(definition, '$.settings.structuredTimeoutMs', NULL)
++WHERE CASE WHEN json_valid(definition) THEN json_extract(definition, '$.schemaVersion') = 4 AND json_type(definition, '$.settings') = 'object'
++  AND json_type(definition, '$.settings.structuredTimeoutMs') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE loop_versions SET definition = json_set(definition, '$.settings.runDeadlineSeconds', NULL)
++WHERE CASE WHEN json_valid(definition) THEN json_extract(definition, '$.schemaVersion') = 4 AND json_type(definition, '$.settings') = 'object'
++  AND json_type(definition, '$.settings.runDeadlineSeconds') IS NULL ELSE 0 END;
++--> statement-breakpoint
++CREATE TRIGGER `loop_versions_snapshot_immutable` BEFORE UPDATE ON `loop_versions`
++WHEN OLD.status = 'snapshot'
++BEGIN SELECT RAISE(ABORT, 'LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes'); END;
++--> statement-breakpoint
++UPDATE runs SET pinned = json_set(pinned, '$.limits.structuredTimeoutMs', NULL)
++WHERE CASE WHEN json_valid(pinned) THEN json_type(pinned, '$.limits') = 'object'
++  AND json_type(pinned, '$.limits.structuredTimeoutMs') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE run_events SET payload = json_set(payload, '$.pinned.limits.structuredTimeoutMs', NULL)
++WHERE CASE WHEN json_valid(payload) THEN type = 'run.queued' AND json_type(payload, '$.pinned.limits') = 'object'
++  AND json_type(payload, '$.pinned.limits.structuredTimeoutMs') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE webhook_receipts SET intent = json_set(intent, '$.run.pinned.limits.structuredTimeoutMs', NULL)
++WHERE CASE WHEN json_valid(intent) THEN json_type(intent, '$.run.pinned.limits') = 'object'
++  AND json_type(intent, '$.run.pinned.limits.structuredTimeoutMs') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE webhook_receipts SET intent = json_set(intent, '$.queued.pinned.limits.structuredTimeoutMs', NULL)
++WHERE CASE WHEN json_valid(intent) THEN json_type(intent, '$.queued.pinned.limits') = 'object'
++  AND json_type(intent, '$.queued.pinned.limits.structuredTimeoutMs') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE webhook_receipts SET intent = json_set(intent, '$.snapshot.definition.settings.structuredTimeoutMs', NULL)
++WHERE CASE WHEN json_valid(intent) THEN json_extract(intent, '$.snapshot.definition.schemaVersion') = 4 AND json_type(intent, '$.snapshot.definition.settings') = 'object'
++  AND json_type(intent, '$.snapshot.definition.settings.structuredTimeoutMs') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE runs SET pinned = json_set(pinned, '$.limits.runDeadlineSeconds', NULL)
++WHERE CASE WHEN json_valid(pinned) THEN json_type(pinned, '$.limits') = 'object'
++  AND json_type(pinned, '$.limits.runDeadlineSeconds') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE run_events SET payload = json_set(payload, '$.pinned.limits.runDeadlineSeconds', NULL)
++WHERE CASE WHEN json_valid(payload) THEN type = 'run.queued' AND json_type(payload, '$.pinned.limits') = 'object'
++  AND json_type(payload, '$.pinned.limits.runDeadlineSeconds') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE webhook_receipts SET intent = json_set(intent, '$.run.pinned.limits.runDeadlineSeconds', NULL)
++WHERE CASE WHEN json_valid(intent) THEN json_type(intent, '$.run.pinned.limits') = 'object'
++  AND json_type(intent, '$.run.pinned.limits.runDeadlineSeconds') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE webhook_receipts SET intent = json_set(intent, '$.queued.pinned.limits.runDeadlineSeconds', NULL)
++WHERE CASE WHEN json_valid(intent) THEN json_type(intent, '$.queued.pinned.limits') = 'object'
++  AND json_type(intent, '$.queued.pinned.limits.runDeadlineSeconds') IS NULL ELSE 0 END;
++--> statement-breakpoint
++UPDATE webhook_receipts SET intent = json_set(intent, '$.snapshot.definition.settings.runDeadlineSeconds', NULL)
++WHERE CASE WHEN json_valid(intent) THEN json_extract(intent, '$.snapshot.definition.schemaVersion') = 4 AND json_type(intent, '$.snapshot.definition.settings') = 'object'
++  AND json_type(intent, '$.snapshot.definition.settings.runDeadlineSeconds') IS NULL ELSE 0 END;
+diff --git a/packages/infrastructure/drizzle/meta/0020_snapshot.json b/packages/infrastructure/drizzle/meta/0020_snapshot.json
+new file mode 100644
+index 00000000..09f7cfab
+--- /dev/null
++++ b/packages/infrastructure/drizzle/meta/0020_snapshot.json
+@@ -0,0 +1,1310 @@
++{
++  "version": "6",
++  "dialect": "sqlite",
++  "id": "a0814dc2-4c7d-41f8-92a5-0ed264f5fa73",
++  "prevId": "3620a69d-d7e9-44d9-badb-64a098680fe4",
++  "tables": {
++    "api_keys": {
++      "name": "api_keys",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "label": {
++          "name": "label",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "hash": {
++          "name": "hash",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "scopes": {
++          "name": "scopes",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "last_used_at": {
++          "name": "last_used_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "revoked_at": {
++          "name": "revoked_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "api_keys_hash_idx": {
++          "name": "api_keys_hash_idx",
++          "columns": ["hash"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "classifier_models": {
++      "name": "classifier_models",
++      "columns": {
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "display_name": {
++          "name": "display_name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "source": {
++          "name": "source",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "provider": {
++          "name": "provider",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "provider_model": {
++          "name": "provider_model",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "primitives": {
++          "name": "primitives",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "endpoint": {
++          "name": "endpoint",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "secret_ref": {
++          "name": "secret_ref",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": false
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "classifier_models_owner_id_id_pk": {
++          "columns": ["owner_id", "id"],
++          "name": "classifier_models_owner_id_id_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "harness_sessions": {
++      "name": "harness_sessions",
++      "columns": {
++        "run_id": {
++          "name": "run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "node_id": {
++          "name": "node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "attempt": {
++          "name": "attempt",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "harness": {
++          "name": "harness",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "session_id": {
++          "name": "session_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "model": {
++          "name": "model",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "effort": {
++          "name": "effort",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "scope_key": {
++          "name": "scope_key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "harness_sessions_scope_idx": {
++          "name": "harness_sessions_scope_idx",
++          "columns": ["scope_key"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "harness_sessions_run_id_node_id_attempt_pk": {
++          "columns": ["run_id", "node_id", "attempt"],
++          "name": "harness_sessions_run_id_node_id_attempt_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "inbound_events": {
++      "name": "inbound_events",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "type": {
++          "name": "type",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "payload": {
++          "name": "payload",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "dedupe_key": {
++          "name": "dedupe_key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "source": {
++          "name": "source",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "received_at": {
++          "name": "received_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "run_ids": {
++          "name": "run_ids",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "inbound_events_owner_idx": {
++          "name": "inbound_events_owner_idx",
++          "columns": ["owner_id", "received_at"],
++          "isUnique": false
++        },
++        "inbound_events_type_dedupe_idx": {
++          "name": "inbound_events_type_dedupe_idx",
++          "columns": ["owner_id", "type", "dedupe_key"],
++          "isUnique": false
++        },
++        "inbound_events_source_dedupe_idx": {
++          "name": "inbound_events_source_dedupe_idx",
++          "columns": ["owner_id", "source", "dedupe_key"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "loop_versions": {
++      "name": "loop_versions",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version": {
++          "name": "version",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "definition": {
++          "name": "definition",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "published_at": {
++          "name": "published_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "loop_versions_loop_idx": {
++          "name": "loop_versions_loop_idx",
++          "columns": ["loop_id", "version"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "loops": {
++      "name": "loops",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "name": {
++          "name": "name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "description": {
++          "name": "description",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "current_version_id": {
++          "name": "current_version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "draft_version_id": {
++          "name": "draft_version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "loops_owner_idx": {
++          "name": "loops_owner_idx",
++          "columns": ["owner_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "model_catalog": {
++      "name": "model_catalog",
++      "columns": {
++        "harness": {
++          "name": "harness",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "model": {
++          "name": "model",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "source": {
++          "name": "source",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": "'harness'"
++        },
++        "display_name": {
++          "name": "display_name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "efforts": {
++          "name": "efforts",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "default_effort": {
++          "name": "default_effort",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": true
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "model_catalog_harness_model_pk": {
++          "columns": ["harness", "model"],
++          "name": "model_catalog_harness_model_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "run_events": {
++      "name": "run_events",
++      "columns": {
++        "run_id": {
++          "name": "run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "seq": {
++          "name": "seq",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "ts": {
++          "name": "ts",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "type": {
++          "name": "type",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "node_id": {
++          "name": "node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "payload": {
++          "name": "payload",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "run_events_delivery_idx": {
++          "name": "run_events_delivery_idx",
++          "columns": ["run_id", "type", "seq"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "run_events_run_id_seq_pk": {
++          "columns": ["run_id", "seq"],
++          "name": "run_events_run_id_seq_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "runs": {
++      "name": "runs",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version_id": {
++          "name": "version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "parent_run_id": {
++          "name": "parent_run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "invocation_id": {
++          "name": "invocation_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "current_node_id": {
++          "name": "current_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "iteration": {
++          "name": "iteration",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "waiting": {
++          "name": "waiting",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "cancel_requested_at": {
++          "name": "cancel_requested_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "paused_at": {
++          "name": "paused_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "failure": {
++          "name": "failure",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "outcome": {
++          "name": "outcome",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "result": {
++          "name": "result",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "started_at": {
++          "name": "started_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "finished_at": {
++          "name": "finished_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "last_event_seq": {
++          "name": "last_event_seq",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": 0
++        },
++        "initial_thread": {
++          "name": "initial_thread",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "thread_snapshot": {
++          "name": "thread_snapshot",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "thread_snapshot_seq": {
++          "name": "thread_snapshot_seq",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "finalized_at": {
++          "name": "finalized_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "pinned": {
++          "name": "pinned",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "runs_owner_status_idx": {
++          "name": "runs_owner_status_idx",
++          "columns": ["owner_id", "status"],
++          "isUnique": false
++        },
++        "runs_loop_idx": {
++          "name": "runs_loop_idx",
++          "columns": ["loop_id", "created_at"],
++          "isUnique": false
++        },
++        "runs_loop_owner_history_idx": {
++          "name": "runs_loop_owner_history_idx",
++          "columns": ["loop_id", "owner_id", "created_at", "id"],
++          "isUnique": false
++        },
++        "runs_trigger_dedupe_idx": {
++          "name": "runs_trigger_dedupe_idx",
++          "columns": [
++            "loop_id",
++            "json_extract(\"initial_thread\", '$.invocation.trigger.nodeId')",
++            "json_extract(\"initial_thread\", '$.invocation.trigger.dedupeKey')"
++          ],
++          "isUnique": false
++        },
++        "runs_parent_idx": {
++          "name": "runs_parent_idx",
++          "columns": ["parent_run_id"],
++          "isUnique": false
++        },
++        "runs_version_idx": {
++          "name": "runs_version_idx",
++          "columns": ["version_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "schedules": {
++      "name": "schedules",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version_id": {
++          "name": "version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "trigger_node_id": {
++          "name": "trigger_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "expression": {
++          "name": "expression",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "timezone": {
++          "name": "timezone",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "missed_fire_policy": {
++          "name": "missed_fire_policy",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "next_fire_at": {
++          "name": "next_fire_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "last_fired_at": {
++          "name": "last_fired_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "schedules_due_idx": {
++          "name": "schedules_due_idx",
++          "columns": ["enabled", "next_fire_at"],
++          "isUnique": false
++        },
++        "schedules_loop_idx": {
++          "name": "schedules_loop_idx",
++          "columns": ["loop_id", "version_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "secrets": {
++      "name": "secrets",
++      "columns": {
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "name": {
++          "name": "name",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "ciphertext": {
++          "name": "ciphertext",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "secrets_owner_id_name_pk": {
++          "columns": ["owner_id", "name"],
++          "name": "secrets_owner_id_name_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "settings": {
++      "name": "settings",
++      "columns": {
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "key": {
++          "name": "key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "value": {
++          "name": "value",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "updated_at": {
++          "name": "updated_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {},
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "settings_owner_id_key_pk": {
++          "columns": ["owner_id", "key"],
++          "name": "settings_owner_id_key_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "timers": {
++      "name": "timers",
++      "columns": {
++        "run_id": {
++          "name": "run_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "key": {
++          "name": "key",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "at": {
++          "name": "at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "timers_at_idx": {
++          "name": "timers_at_idx",
++          "columns": ["at"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {
++        "timers_run_id_key_pk": {
++          "columns": ["run_id", "key"],
++          "name": "timers_run_id_key_pk"
++        }
++      },
++      "uniqueConstraints": {},
++      "checkConstraints": {}
++    },
++    "webhook_endpoints": {
++      "name": "webhook_endpoints",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "version_id": {
++          "name": "version_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "trigger_node_id": {
++          "name": "trigger_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "token": {
++          "name": "token",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "auth_type": {
++          "name": "auth_type",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "signature_message": {
++          "name": "signature_message",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "signature_header": {
++          "name": "signature_header",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "secret_ref": {
++          "name": "secret_ref",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "window_seconds": {
++          "name": "window_seconds",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "enabled": {
++          "name": "enabled",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "created_at": {
++          "name": "created_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "webhook_endpoints_token_idx": {
++          "name": "webhook_endpoints_token_idx",
++          "columns": ["token"],
++          "isUnique": false
++        },
++        "webhook_endpoints_loop_idx": {
++          "name": "webhook_endpoints_loop_idx",
++          "columns": ["loop_id", "version_id"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {
++        "webhook_endpoint_signing_check": {
++          "name": "webhook_endpoint_signing_check",
++          "value": "(\"webhook_endpoints\".\"auth_type\" = 'none' AND \"webhook_endpoints\".\"signature_message\" IS NULL AND \"webhook_endpoints\".\"signature_header\" IS NULL AND \"webhook_endpoints\".\"secret_ref\" IS NULL AND \"webhook_endpoints\".\"window_seconds\" IS NULL) OR (\"webhook_endpoints\".\"auth_type\" = 'hmac-sha256' AND \"webhook_endpoints\".\"signature_header\" IS NOT NULL AND \"webhook_endpoints\".\"secret_ref\" IS NOT NULL AND ((\"webhook_endpoints\".\"signature_message\" IS NOT NULL AND \"webhook_endpoints\".\"signature_message\" = 'body' AND \"webhook_endpoints\".\"window_seconds\" IS NULL) OR (\"webhook_endpoints\".\"signature_message\" IS NOT NULL AND \"webhook_endpoints\".\"signature_message\" = 'timestamp-body' AND \"webhook_endpoints\".\"window_seconds\" IS NOT NULL AND typeof(\"webhook_endpoints\".\"window_seconds\") = 'integer' AND \"webhook_endpoints\".\"window_seconds\" BETWEEN 1 AND 86400)))"
++        }
++      }
++    },
++    "webhook_receipts": {
++      "name": "webhook_receipts",
++      "columns": {
++        "id": {
++          "name": "id",
++          "type": "text",
++          "primaryKey": true,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "owner_id": {
++          "name": "owner_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "loop_id": {
++          "name": "loop_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "trigger_node_id": {
++          "name": "trigger_node_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "content_hash": {
++          "name": "content_hash",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "inbound_id": {
++          "name": "inbound_id",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "status": {
++          "name": "status",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false
++        },
++        "intent": {
++          "name": "intent",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "attempts": {
++          "name": "attempts",
++          "type": "integer",
++          "primaryKey": false,
++          "notNull": true,
++          "autoincrement": false,
++          "default": 0
++        },
++        "next_attempt_at": {
++          "name": "next_attempt_at",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        },
++        "failure_code": {
++          "name": "failure_code",
++          "type": "text",
++          "primaryKey": false,
++          "notNull": false,
++          "autoincrement": false
++        }
++      },
++      "indexes": {
++        "webhook_receipts_content_idx": {
++          "name": "webhook_receipts_content_idx",
++          "columns": ["owner_id", "loop_id", "trigger_node_id", "content_hash"],
++          "isUnique": false
++        },
++        "webhook_receipts_inbound_idx": {
++          "name": "webhook_receipts_inbound_idx",
++          "columns": ["inbound_id"],
++          "isUnique": true
++        },
++        "webhook_receipts_due_idx": {
++          "name": "webhook_receipts_due_idx",
++          "columns": ["status", "next_attempt_at"],
++          "isUnique": false
++        }
++      },
++      "foreignKeys": {},
++      "compositePrimaryKeys": {},
++      "uniqueConstraints": {},
++      "checkConstraints": {
++        "webhook_receipt_status_check": {
++          "name": "webhook_receipt_status_check",
++          "value": "\"webhook_receipts\".\"status\" IN ('filtered','deduplicated','pending','admitted','failed')"
++        },
++        "webhook_receipt_intent_check": {
++          "name": "webhook_receipt_intent_check",
++          "value": "(\"webhook_receipts\".\"status\" IN ('filtered','deduplicated') AND \"webhook_receipts\".\"intent\" IS NULL) OR (\"webhook_receipts\".\"status\" NOT IN ('filtered','deduplicated') AND \"webhook_receipts\".\"intent\" IS NOT NULL)"
++        }
++      }
++    }
++  },
++  "views": {},
++  "enums": {},
++  "_meta": {
++    "schemas": {},
++    "tables": {},
++    "columns": {}
++  },
++  "internal": {
++    "indexes": {
++      "runs_trigger_dedupe_idx": {
++        "columns": {
++          "json_extract(\"initial_thread\", '$.invocation.trigger.nodeId')": {
++            "isExpression": true
++          },
++          "json_extract(\"initial_thread\", '$.invocation.trigger.dedupeKey')": {
++            "isExpression": true
++          }
++        }
++      }
++    }
++  }
++}
+diff --git a/packages/infrastructure/drizzle/meta/_journal.json b/packages/infrastructure/drizzle/meta/_journal.json
+index 8efc9520..0ab29b96 100644
+--- a/packages/infrastructure/drizzle/meta/_journal.json
++++ b/packages/infrastructure/drizzle/meta/_journal.json
+@@ -127,6 +127,13 @@
+       "when": 1792600000000,
+       "tag": "0017_run_execution_limits",
+       "breakpoints": true
++    },
++    {
++      "idx": 18,
++      "version": "6",
++      "when": 1792818000000,
++      "tag": "0020_completion_deadline_defaults",
++      "breakpoints": true
+     }
+   ]
+ }
+diff --git a/packages/infrastructure/src/sqlite/definition-pins.test.ts b/packages/infrastructure/src/sqlite/definition-pins.test.ts
+index f2d12c42..1ceffad6 100644
+--- a/packages/infrastructure/src/sqlite/definition-pins.test.ts
++++ b/packages/infrastructure/src/sqlite/definition-pins.test.ts
+@@ -42,7 +42,7 @@ function admissionFor(record: LoopVersionRecord, seed: string): RunAdmission {
+     label: `${record.definition.name} ${source === 'draft' ? 'draft ' : ''}v${record.version}`,
+     defaults: NO_DEFAULTS,
+     classifiers: {},
+-    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
++    limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
+   };
+   const run: RunRecord = {
+     id: fakeUlid(`run:${seed}`),
+@@ -102,6 +102,154 @@ describe('draft snapshots', () => {
+     return { loop, draft, snapshot, run };
+   }
+ 
++  it.each([null, 250])(
++    'materializes omitted deadline fields in every stored copy, preserving authored %s',
++    async (authored) => {
++      const definition = named('Additive defaults');
++      definition.settings.structuredTimeoutMs = authored;
++      definition.settings.runDeadlineSeconds = authored === null ? null : 5;
++      const { loop, draft } = await loops.create('local', definition);
++      await loops.publish(loop.id);
++      const snapshot: LoopVersionRecord = {
++        ...draft,
++        id: fakeUlid('default-snapshot'),
++        status: 'snapshot',
++      };
++      const intent = admissionFor(snapshot, 'default-copies');
++      intent.run.pinned.limits.structuredTimeoutMs = authored;
++      intent.run.pinned.limits.runDeadlineSeconds = definition.settings.runDeadlineSeconds;
++      // The pinned definition is inserted with pre-field bytes, before its immutability guard applies.
++      const oldDefinition = JSON.stringify(definition);
++      const remove =
++        authored === null
++          ? "json_remove(?, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds')"
++          : '?';
++      await handle.client.execute({
++        sql: `INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at) VALUES (?, ?, 1, 'snapshot', ${remove}, ?)`,
++        args: [snapshot.id, loop.id, oldDefinition, FIXTURE_TS],
++      });
++      if (authored === null)
++        await handle.client.execute({
++          sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
++          args: [draft.id],
++        });
++      await runs.create(intent.run, intent.initialThread);
++      const events = new SqliteEventStore(handle.db, new FakeClock());
++      await events.append(intent.run.id, [intent.queued]);
++      await handle.client.execute({
++        sql: "INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts) VALUES (?, 'local', ?, 'start', ?, ?, 'pending', ?, 0)",
++        args: [
++          fakeUlid('default-receipt'),
++          loop.id,
++          'a'.repeat(64),
++          fakeUlid('default-inbound'),
++          JSON.stringify(intent),
++        ],
++      });
++      if (authored === null) {
++        await handle.client.execute(
++          "UPDATE runs SET pinned = json_remove(pinned, '$.limits.structuredTimeoutMs', '$.limits.runDeadlineSeconds')",
++        );
++        await handle.client.execute(
++          "UPDATE run_events SET payload = json_remove(payload, '$.pinned.limits.structuredTimeoutMs', '$.pinned.limits.runDeadlineSeconds')",
++        );
++        await handle.client.execute(
++          "UPDATE webhook_receipts SET intent = json_remove(intent, '$.run.pinned.limits.structuredTimeoutMs', '$.run.pinned.limits.runDeadlineSeconds', '$.queued.pinned.limits.structuredTimeoutMs', '$.queued.pinned.limits.runDeadlineSeconds', '$.snapshot.definition.settings.structuredTimeoutMs', '$.snapshot.definition.settings.runDeadlineSeconds')",
++        );
++      }
++      const beforeTrigger = (
++        await handle.client.execute(
++          "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
++        )
++      ).rows;
++      await handle.client.execute(
++        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
++      );
++      await handle.migrate();
++      expect(await handle.pendingMigrations()).toBe(0);
++      const expected = {
++        structuredTimeoutMs: authored,
++        runDeadlineSeconds: authored === null ? null : 5,
++      };
++      for (const version of [
++        await loops.getVersion(draft.id),
++        await loops.getVersion(snapshot.id),
++        await loops.getLatestPublished(loop.id),
++        await loops.getPublished(loop.id, 1),
++        ...(await loops.listVersions(loop.id)),
++      ])
++        expect(version?.definition.settings).toMatchObject(expected);
++      expect((await runs.get(intent.run.id))?.pinned.limits).toMatchObject(expected);
++      expect((await events.read(intent.run.id))[0]).toMatchObject({ pinned: { limits: expected } });
++      const saved = (await admission.get(fakeUlid('default-receipt')))?.intent;
++      expect(saved?.run.pinned.limits).toMatchObject(expected);
++      expect(saved?.queued.pinned.limits).toMatchObject(expected);
++      expect(saved?.snapshot?.definition.settings).toMatchObject(expected);
++      if (!saved) throw new Error('expected saved admission');
++      expect((await admission.create(saved)).id).toBe(intent.run.id);
++      expect(
++        (await events.read(intent.run.id)).filter((event) => event.type === 'run.queued'),
++      ).toHaveLength(1);
++      // Each persisted JSON spelling now contains the default; readers need no compatibility path.
++      for (const [table, column, path] of [
++        ['loop_versions', 'definition', '$.settings.structuredTimeoutMs'],
++        ['runs', 'pinned', '$.limits.structuredTimeoutMs'],
++        ['run_events', 'payload', '$.pinned.limits.structuredTimeoutMs'],
++        ['webhook_receipts', 'intent', '$.snapshot.definition.settings.structuredTimeoutMs'],
++      ] as const)
++        expect(
++          (
++            await handle.client.execute(
++              `SELECT json_type(${column}, '${path}') AS type FROM ${table}`,
++            )
++          ).rows.every((row) => row['type'] === (authored === null ? 'null' : 'integer')),
++        ).toBe(true);
++      expect(
++        (
++          await handle.client.execute(
++            "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
++          )
++        ).rows,
++      ).toEqual(beforeTrigger);
++      await expect(
++        handle.client.execute({
++          sql: "UPDATE loop_versions SET definition = '{}' WHERE id = ?",
++          args: [snapshot.id],
++        }),
++      ).rejects.toThrow(/LOOP_VERSION_SNAPSHOT_IMMUTABLE/);
++      await handle.migrate();
++      expect((await loops.getVersion(snapshot.id))?.definition.settings).toMatchObject(expected);
++    },
++  );
++
++  it('leaves malformed and invalid values untouched during the additive-default migration', async () => {
++    const { draft } = await loops.create('local', named('Damaged defaults'));
++    for (const stored of [
++      '{broken',
++      JSON.stringify({
++        ...named('Invalid'),
++        settings: { ...named('Invalid').settings, structuredTimeoutMs: -1 },
++      }),
++    ]) {
++      await handle.client.execute({
++        sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
++        args: [stored, draft.id],
++      });
++      await handle.client.execute(
++        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
++      );
++      await applyShippedSqlToHistoricalTestFixture(handle);
++      expect(
++        (
++          await handle.client.execute({
++            sql: 'SELECT definition FROM loop_versions WHERE id = ?',
++            args: [draft.id],
++          })
++        ).rows[0]?.['definition'],
++      ).toBe(stored);
++    }
++  });
++
+   it.each([null, 5])(
+     'migrates authored deadline %s once and preserves damaged JSON',
+     async (deadline) => {
+@@ -149,17 +297,23 @@ describe('draft snapshots', () => {
+       await apply();
+       await apply();
+       expect((await runs.get(created.id))?.pinned.limits).toEqual({
++        structuredTimeoutMs: null,
+         maxNodeVisits: 4,
+         runDeadlineSeconds: deadline,
+       });
+       expect(
+         (await new SqliteEventStore(handle.db, new FakeClock()).read(created.id))[0],
+-      ).toMatchObject({ pinned: { limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline } } });
++      ).toMatchObject({
++        pinned: {
++          limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline },
++        },
++      });
+       const saved = (await handle.client.execute('SELECT intent FROM webhook_receipts')).rows[0]?.[
+         'intent'
+       ];
+       if (typeof saved !== 'string') throw new Error('Expected saved admission JSON');
+       expect(parseRunAdmission(JSON.parse(saved)).run.pinned.limits).toEqual({
++        structuredTimeoutMs: null,
+         maxNodeVisits: 4,
+         runDeadlineSeconds: deadline,
+       });
+@@ -413,7 +567,7 @@ describe('migration 0014 pins existing runs', () => {
+           label: 'Release v1',
+           defaults: { owner, process: { byHarness: {} } },
+           classifiers: {},
+-          limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
++          limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
+         },
+       });
+       // The draft run now pins a frozen copy named by its own id, everywhere it is recorded.

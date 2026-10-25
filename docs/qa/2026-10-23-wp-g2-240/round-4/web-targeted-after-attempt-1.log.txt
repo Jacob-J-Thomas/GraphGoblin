@@ -1,0 +1,55 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-240/apps/web
+
+ ❯ src/events/EventsPage.test.tsx (7 tests | 2 failed) 15050ms
+   ❯ EventsPage delivery dispositions (5)
+     × refreshes a pending receipt when it becomes admitted and stops polling 2689ms
+     × refreshes a pending receipt when it becomes failed and stops polling 2178ms
+pnpm.cmd : 
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/events/EventsP ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events/EventsPage.test.tsx > EventsPage delivery dispositions > refreshes a pending receipt when it becomes 
+admitted and stops polling
+ FAIL  src/events/EventsPage.test.tsx > EventsPage delivery dispositions > refreshes a pending receipt when it becomes 
+failed and stops polling
+AssertionError: expected [ { method: 'GET', …(5) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/events/EventsPage.test.tsx:211:9
+    209|       expect(
+    210|         api.callsTo('GET', '/events').filter((call) => call.search.get…
+    211|       ).toHaveLength(2);
+       |         ^
+    212|
+    213|       await new Promise((resolve) => setTimeout(resolve, 2_200));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 18 passed (20)
+   Start at  06:08:17
+   Duration  268.32s (environment 28%, transform 26%, import 18%, tests 16%, setup 12%)
+
+Environment  jsdom was created 4 times · 72.16s total, 28% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\web
+
+EXIT_CODE=1

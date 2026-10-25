@@ -1,0 +1,52 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/web", "test:coverage", "--coverage.reportOnFailure", "--maxWorkers=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+$ vitest run --coverage --coverage.reportOnFailure --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/routing-review.test.ts (23 tests | 1 failed) 136395ms
+   ❯ routing review regressions (23)
+     × seeded sparse graphs preserve geometry and keep detours below twelve bends 81688ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/routing-review.test.ts > routing review regressions > seeded sparse graphs preserve geometry and keep detours below twelve bends
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/routing-review.test.ts:662:3
+    660|   });
+    661|
+    662|   it('seeded sparse graphs preserve geometry and keep detours below tw…
+       |   ^
+    663|     let seed = 0x182026;
+    664|     const random = () => (seed = (Math.imul(seed, 1664525) + 101390422…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 128 passed (129)
+      Tests  1 failed | 1635 passed (1636)
+   Start at  01:45:22
+   Duration  2782.44s (tests 49%, environment 28%, import 10%, setup 10%, transform 3%, worker 1%)
+
+Environment  jsdom was created 129 times · 744.12s total, 28% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98.03% ( 8527/8698 )
+Branches     : 94.96% ( 7739/8149 )
+Functions    : 98.48% ( 2269/2304 )
+Lines        : 98.92% ( 7434/7515 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\web
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/web", "test:coverage", "--coverage.reportOnFailure", "--maxWorkers=1"], "exitCode": 1, "seconds": 2799.016}

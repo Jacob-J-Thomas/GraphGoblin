@@ -1,0 +1,141 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {join} from 'node:path';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-e1-186-qa');
+const read=async name=>JSON.parse(await readFile(join(out,name),'utf8'));
+const runtime=await read('runtime-results.json'),follow=await read('followup-results.json'),rate=await read('rate-results.json'),browser=await read('browser-results.json'),restart=await read('restart-results.json'),perf=await read('perf-results.json');
+const focused=await read('focused-results.json'); const gates=await read('gates.json');let coverage=await read('coverage-results.json');if(!Array.isArray(coverage))coverage=[coverage];
+const num=(n,d=2)=>typeof n==='number'?n.toLocaleString('en-US',{maximumFractionDigits:d}):'not recorded';
+const first=perf.replays.first,slow=runtime.cases.find(x=>x.name==='paced slow reader and recoverable stalled socket'),fast=runtime.cases[0],terminal=runtime.cases[1],r=rate.cases[0];
+const observations=browser.observations??[],desktop=observations.find(x=>x.width===1440),mobile=observations.find(x=>x.width===390);
+const coverageRows=[];
+for(const name of ['api-client','web','api']){const command=coverage.find(x=>x.command.includes('@graphgoblin/'+name+' '));let summary;try{summary=await read('coverage-'+name+'-summary.json');}catch{}coverageRows.push('| '+name+' | '+(command?(command.exitCode===0?'PASS':'FAIL'):'not completed')+' | '+(summary?num(summary.total.lines.pct)+'%':'see log')+' | '+(summary?num(summary.total.branches.pct)+'%':'see log')+' | ['+'log'+'](coverage-'+name+'.log.txt) |');}
+const checks=[
+ ['Admission','Read binding briefs, issue #186, #303, #287, #278 and ADR-0050; compare HEAD and dependencies.','Exact pinned revision; installed local dependencies.','HEAD 8b760b6b1250bd64ab541cbfd53af83c04e140e2; branch codex-qa-wp-e1-186; dependencies present; initially clean.','PASS','[environment](environment.json), [requirements](inputs/issue-186.md)'],
+ ['Built product','Node 22 first on PATH; pnpm.cmd build; import built package entry points.','Build succeeds; no development-source substitution.','11/11 build tasks passed; six cache hits; cache-write IO warnings. Runtime workers use built exports.','PASS','[build](build.log.txt), [worker](worker.mjs.txt)'],
+ ['Heavy append / zero cursor','Seed 40,000 durable events, run fetch and API client plus Edge, append for 15 s.','Every event exactly once and ordered, no slow control for fast transport readers.','Measured '+num(r.producer.perSecond)+' events/s; '+r.storedLastSeq+' events; both full readers had zero gaps/duplicates/controls/errors; Edge '+r.inspector.count+' ordered rows.','PASS','[rate result](rate-results.json), [script](rate-probe.mjs.txt), [Edge](rate-200-inspector-1440.png)'],
+ ['Heavy append / mid cursor','Same run; two additional readers start after 20,000.','Exact suffix, no duplicate/gap/control.','Both readers received '+(r.storedLastSeq-20000)+' events through '+r.storedLastSeq+'.','PASS','[rate result](rate-results.json)'],
+ ['Earlier host-contention workload','Four readers, 40k log, timer-paced producer.','Record actual rate rather than assuming configured rate.','139.73 events/s; all readers complete; superseded for the requested rate by the measured 199.79 events/s run.','PASS at measured rate','[runtime](runtime-results.json)'],
+ ['Server paging','Observe injected public EventStorePort while real sockets read SQLite.','Every replay read limited to 128 events.','Recorded limits are 128; maximum returned page 128. Notifications remain backed by the durable repository.','PASS','[runtime](runtime-results.json), [rate](rate-results.json)'],
+ ['Stored history / timestamps','Read all events through REST pages and compare complete-event serialization hashes.','No truncation, exactly matching full-reader payloads, ordering by seq despite equal timestamps.','42,102 events in 329 pages; zero gaps; 41,484 identical adjacent timestamp pairs; both full-reader SHA-256 values equal durable history.','PASS','[follow-up](followup-results.json), [script](followup.mjs.txt)'],
+ ['Socket pause / bounded queue','Pause a raw HTTP reader 5.6 s while replay writes. Sample ServerResponse and socket writableLength every 5 ms.','Bounded pending bytes; explicit failure only after drain timeout/ceiling.','17,193-byte sampled peak for stalled socket; longest need-drain interval '+num(slow.stats.connections[1].longestNeedDrainMs)+' ms; received 503 SSE_SLOW_CONSUMER at '+num(slow.stalled.controls[0].atMs)+' ms.','PASS','[runtime](runtime-results.json), [worker sampler](worker.mjs.txt)'],
+ ['Stalled cursor recovery','Reconnect after last complete event '+slow.stalled.last+'.','Exact remaining suffix, no loss or duplicates.','268 + 39,734 = 40,002 events, zero gaps/duplicates; no control on resumed connection.','PASS','[follow-up](followup-results.json)'],
+ ['Paced reader / actual timeout','Hold 1 s, then pause 5 ms per HTTP data callback.','Respect measured drain deadline; resume any explicit failure.','This pace actually stalled drain '+num(slow.stats.connections[0].longestNeedDrainMs)+' ms and correctly received SSE_SLOW_CONSUMER; 4,108 + 35,894 = 40,002 complete events after resume.','PASS with harness qualification','[runtime](runtime-results.json), [follow-up](followup-results.json)'],
+ ['Realistic slow benchmark','Built perf replay: initial 1 s socket hold, 50 ms paced reads.','Complete durable payload and reconnect hashes.','41,008 events, replayOk true; full, slow, late and interrupted/reconnected checks passed.','PASS','[perf result](perf-results.json), [measurement log](measurement.log.txt)'],
+ ['Terminal replay from zero / middle','Open finished run after 0 and 21,051.','End at terminal event with exact count.','42,102 and 21,051 events respectively; both end at seq 42,102; no gaps, duplicates or controls.','PASS','[runtime](runtime-results.json)'],
+ ['Terminal replay from previous event','Open after 42,101.','One terminal event, then EOF.','One event; 19.78 ms total.','PASS','[runtime](runtime-results.json)'],
+ ['At / past terminal cursor','Open at 42,102 and past at 42,202; repeat separately.','Zero events and prompt EOF.','Zero events, but 1,533.89 / 2,643.72 ms initially and 3,028.24 / 2,052.40 ms in follow-up. Full-history validation precedes the empty response.','FAIL: D1 (minor latency)','[runtime](runtime-results.json), [follow-up](followup-results.json)'],
+ ['Transient later-page storage fault','Public EventStorePort decorator temporarily renames SQLite run_events when read cursor >=128, performs real failing read, restores table, throws actual query error.','SSE_REPLAY_FAILED retry resumes at cursor and finishes without gap.','Client reported retryable control, reopened and completed all >600 events without a gap.','PASS','[runtime](runtime-results.json), [fault implementation](worker.mjs.txt)'],
+ ['Corrupt later-page storage','Change seq129 payload to invalid JSON through real SQLite client, read raw and API-client streams, repair disposable row.','Fatal STORED_EVENT_INVALID control has no id; cursor stays128.','128 healthy events; id-less fatal control; client done rejected with STORED_EVENT_INVALID and lastSeq128.','PASS','[runtime](runtime-results.json)'],
+ ['Count overflow and oversized notification','After live handoff append 600 events synchronously, then one 1,100,000-character value.','Paged catch-up rather than slow-consumer failure; exact delivery.','Client completed with no gap, duplicate, error or control.','PASS','[runtime](runtime-results.json)'],
+ ['REST page boundary','GET events?after=20000&limit=128.','Exact 128-event suffix and next cursor.','First20001, last20128, nextAfter20128, hasMore true.','PASS','[runtime](runtime-results.json)'],
+ ['Bad query / missing run','Request negative after, limit1001, missing valid-format run id.','400,400,404 problem responses.','400 VALIDATION_FAILED; 400 VALIDATION_FAILED; 404 RUN_NOT_FOUND.','PASS','[runtime](runtime-results.json)'],
+ ['Route named in brief','Request /runs/{id}/events/stream.','Reconcile actual supported public API.','404 NOT_FOUND. The documented route is /events with Accept:text/event-stream; all transport checks used that route.','BRIEF MISMATCH','[runtime](runtime-results.json), [API reference](../../reference/api.md)'],
+ ['Inspector desktop','Open long terminal history in Edge at1440x900; verify every DOM seq.','Complete ordered timeline; measure heap and long tasks.','42,102 ordered rows; '+num(browser.longLoad?.navigationToCompleteMs)+' ms navigation-to-check completion; '+num(browser.longLoad?.peakHeap)+' byte sampled peak heap; '+desktop.longTasks.count+' long tasks, maximum '+num(desktop.longTasks.maxMs)+' ms.','PASS correctness; responsiveness observation','[browser result](browser-results.json), [desktop screenshot](long-terminal-1440.png)'],
+ ['Inspector live narrow','Open 40k live run at390x900 while more events append; inspect complete sequence.','Complete ordered live timeline without horizontal document overflow.','41,472 rows while loading, then41,710 caught up; zero gaps/duplicates; document width390.','PASS','[browser result](browser-results.json), [narrow screenshot](live-caught-up-390.png)'],
+ ['Inspector keyboard','Focus first timeline control with CSS locator; press Tab.','Keyboard focus advances to an inspector button.','Focus state retained in browser results. Two earlier broad accessibility selectors were too costly and replaced with scoped public DOM operations.','PASS at observed control','[browser result](browser-results.json), [browser script](browser.mjs.txt)'],
+ ['Native restart / reload','Keep narrow inspector open; kill actual built fake-only API worker, boot new PID on same disposable store, append100, cancel, reload.','Cursor-based ordered recovery and complete terminal/reloaded timeline.','See final direct-IPC restart result; benign signal history avoids waking the input-wait fixture.',restart.pass?'PASS':'FAIL','[restart result](restart-results.json), [script](restart-probe.mjs.txt)'],
+];
+const table='| System / case | Steps | Expected | Actual | Result | Kept evidence |\n| --- | --- | --- | --- | --- | --- |\n'+checks.map(row=>'| '+row.join(' | ')+' |').join('\n');
+let files=[];async function list(dir,prefix=''){for(const e of await readdir(dir,{withFileTypes:true})){if(e.isDirectory())await list(join(dir,e.name),prefix+e.name+'/');else if(e.name!=='README.md')files.push(prefix+e.name);}}await list(out);files.sort();
+const evidenceIndex=files.map(file=>'- ['+file+']('+file+')').join('\n');
+const md=`# Independent QA: WP-E1 bolt #186, server and transport
+
+## Verdict
+
+**${restart.pass&&r.pass?'Pass with minor defects':'Fail / incomplete qualification'}** for revision \`8b760b6b1250bd64ab541cbfd53af83c04e140e2\`. D1 is a terminal-cursor latency defect. Interpret the native-restart verdict with the final direct-IPC evidence below, not the discarded fixture attempts. This report qualifies only the server/transport half; it does not close #186, UoW #303 or intent #287.
+
+Branch \`codex-qa-wp-e1-186\`; worktree \`%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-186\`. No production code, production tests, Git index, commits, other checkouts, owner stores, provider turns or owner ports were changed. Only this QA evidence folder is untracked. Work was performed alone. No commits.
+
+## Environment and method
+
+Node22.14.0 on Windows; built API public exports, real file-backed SQLite, real TCP/HTTP sockets; fake harnesses only. Edge ${browser.browserVersion??'see browser JSON'}, headless, 1440x900 and390x900. Ports5950,5952,5954 (and the preserved first restart attempt5953); benchmark5955. Disposable runtime/data/output directories are under the \`gg-qa-e1-186-\` temp prefix. Exact paths and process IDs are in the result JSONs, with local user paths normalized to \`%USERPROFILE%\`.
+
+Seeded event histories exercise the real append/read/subscribe ports. They are transport fixtures, not proof of live-provider work or integrated sustained-loop acceptance. The perf benchmark additionally executes1,000 passes through the real manager using a fake producer. The restart fixture uses neutral \`signal.received\` history so it does not falsely wake an input wait during recovery. Public dependency injection decorates the event-store port for measurement and real query-fault injection; no production method was monkey-patched.
+
+Touched systems enumerated: SQLite event persistence and paging; REST event negotiation, query validation and ownership lookup; SSE replay, live handoff, notification pressure, terminal completion and writable backpressure; typed API-client controls, parsing, retry and cursor recovery; inspector batching, stored cursor, timeline rendering, reachability/reconnect and native restart. Generated API docs and design-token gates were checked. MCP/external providers were not exercised because no independent changed MCP transport path or live-provider authorization is in this half.
+
+## Checks
+
+${table}
+
+### Final native restart evidence
+
+- Pass flag: \`${restart.pass??false}\`; error: ${restart.error??'none'}.
+- Native exit: \`${JSON.stringify(restart.nativeExit??{})}\`; boots: \`${JSON.stringify(restart.boots??[])}\`.
+- Timeline checks: ${(restart.cases??[]).map(x=>x.name+': '+x.count+'/'+x.expected+', gaps='+x.gaps+', duplicates='+x.duplicates+', pass='+x.pass).join('; ')}.
+- API-client result: cursor ${restart.client?.last??'not recorded'}, gaps ${restart.client?.gaps??'not recorded'}, rejection ${restart.client?.rejected?.message??'none recorded'}. Reconnect URLs, errors and failures are retained in [restart-results.json](restart-results.json).
+
+## Defects
+
+### D1 — Minor: empty terminal-cursor request scans the complete history
+
+Reproduce by opening the built API stream for a terminal42,102-event run with \`after=42102\` or\`after=42202\`. Expected: immediate empty completion. Actual: no events are delivered, but EOF takes1.53–3.03seconds in retained runs; the past-end request took2.64seconds initially and2.05seconds in the follow-up. Full replay in the follow-up took2.78seconds. The terminal confirmation path in [sse.ts](../../../apps/api/src/sse.ts) walks the history from zero,128 events per read, before starting the empty response. No data loss or ordering defect was observed. The probe's2second flag is an engineering diagnostic, not an owner-approved SLA; the recorded O(history) work is the reason for the finding. Evidence: [runtime-results.json](runtime-results.json), [followup-results.json](followup-results.json).
+
+## Coverage of acceptance criteria
+
+| #186 server/transport criterion | Result | Evidence / limit |
+| --- | --- | --- |
+| Replay is paged; server buffers bounded | Passed on real sockets and SQLite |128-event reads; sampled queue maximum17,221bytes across paced/stalled readers; perf memory samples. A5ms sampler can miss short peaks. |
+| Fast readers preserve every event during replay and active appends | Passed at199.79 events/s | Four independent fetch/client readers from0/20000 and Edge timeline through43,006. Browser raw control-frame absence was not independently captured; UI completion and page errors were observed. |
+| Slow/stalled explicit failure and gapless cursor recovery | Passed | Measured >5s drain intervals; SSE_SLOW_CONSUMER; both complete suffix recoveries. Permanently unreadable peers cannot guarantee receipt of their own control. |
+| Exactly-once in-order delivery and stored history complete | Passed | Durable full-log hashes equal both full-reader hashes; prefix/suffix recovery counts; equal timestamps covered. |
+| Terminal runs from start/middle/end/past end | Correct counts passed; prompt past-end completion has D1 | Zero-event cursors scan complete history. |
+| Read faults recover; corruption stays fatal without cursor advance | Passed | Actual SQLite query fault after first page; malformed stored JSON at129; typed client assertions. |
+| Live overflow / oversized notification returns to catch-up | Passed |600-event burst plus1.1MB payload, no control/error/gap. |
+| Inspector long/live/restart, widths1440/390 | Long/live passed; native restart per final result | DOM sequence checks and screenshots. Full browsing retention and Timeline windowing remain explicitly deferred. |
+| Memory and long-task measurement, same replay workload | Measured | Server profiler and browser CDP/PerformanceObserver. Shared host contention limits timing generalization. |
+
+Not independently isolated in the custom probes: forced writable-ceiling breach with an artificially raised Node high-water mark; deliberate live-notification sequence loss; a permanently stalled peer held beyond the forced-destroy grace; first-page read failure; malformed SSE field/partial-frame parser boundary permutations; direct observer access to the private temporary inspector batch. Maintained focused tests and package coverage, where completed below, are supplementary evidence rather than custom native evidence for those branches. No production internals were exposed to test them.
+
+## Measurements and comparison
+
+Exact workload: \`node tooling/perf/measure.mjs replay --passes=1000 --profile=inspector --port=5955 --store-prefix=gg-qa-e1-186- --out=<disposable output>\`. No profiler/workload settings were changed. The complete invocation is in [perf/invocation.json](perf/invocation.json). Host: AMD Ryzen53600,12 logical CPUs, ${num(perf.environment.hostBusyFraction*100)}% measured busy; other users/processes uncontrolled. Static and coverage QA work also ran on this shared host at other points. Comparison values below come from the retained [reference-after snapshot](inputs/reference-after.md), not a new baseline checkout.
+
+| Measurement | Earlier after report | Independent QA |
+| --- | ---: | ---: |
+| Durable events |41,008|41,008|
+| Full replay first event ms |21.69|${num(first.firstMs)}|
+| Full replay total ms |7,077.82|${num(first.totalMs)}|
+| Maximum event-loop delay ms |569.38|${num(first.eventLoopDelayMs.max)}|
+| Paused outstanding wire bytes |538,592|${num(perf.pausedOutstandingBytes,0)}|
+| Full replay sampled peak heap bytes |55,625,912|${num(perf.firstReplaySampledPeakHeap,0)}|
+| Full replay baseline heap bytes |39,803,824|${num(first.before.heapUsed,0)}|
+| Host busy |98.62%|${num(perf.environment.hostBusyFraction*100)}%|
+
+All41,008-event full/slow/late/reconnect hash checks passed. Outstanding wire bytes include buffers outside Node's writable queue; do not compare that figure directly with the256KiB JavaScript ceiling. Evidence: [perf-results.json](perf-results.json), [measurement.log.txt](measurement.log.txt), [small raw summaries](perf/summary.json), and the [large-capture manifest](NOT-KEPT.md).
+
+Desktop inspector: sampled peak JS heap ${num(browser.longLoad?.peakHeap,0)}bytes, ${num(browser.longLoad?.navigationToCompleteMs)}ms through the full verification/capture, ${desktop.longTasks.count} observed long tasks totaling${num(desktop.longTasks.totalMs)}ms, maximum${num(desktop.longTasks.maxMs)}ms. DOM row creation remains expensive. This is an observation for the deferred windowing work; temporary SSE batching does not bound the retained full DOM/history. CDP samples and individual long tasks are in [browser-results.json](browser-results.json).
+
+## Gates and maintained tests
+
+${gates.map(x=>'- \`'+x.command+'\`: '+(x.exitCode===0?'PASS':'FAIL')+', '+num(x.elapsedMs/1000)+'s; ['+x.log+']('+x.log+').').join('\n')}
+
+| Package | Coverage run | Lines | Branches | Evidence |
+| --- | --- | ---: | ---: | --- |
+${coverageRows.join('\n')}
+
+Focused tests:14 server tests in2 files and15 inspector-hook tests passed. Exact commands and results are in[focused-results.json](focused-results.json); verbose logs record live-gap catch-up, a paused real high-water-mark writable-ceiling failure and reconnect cleanup. No focused assertion failed. Full-web coverage was deliberately interrupted after24/127 coverage parts and more than20minutes; full API coverage did not start. These two package coverage gates remain unqualified in this QA run; see[coverage-interruption.json](coverage-interruption.json).\n\nExact coverage commands and exit codes: [coverage-results.json](coverage-results.json). No threshold or exclusion was changed. New/changed production tests: none. Custom QA probes are archived as\`.mjs.txt\`; execute disposable\`.mjs\` copies with Node22 and \`--experimental-import-meta-resolve\` from the worktree root. No pnpm store-lock fallback was used unless explicitly recorded in a gate log. Cache-write warnings are distinct from command exit status. Licenses were not rerun: no dependency changed. No behavior docs/ADRs/CHANGELOG/generated references were edited by QA.
+
+## Harness failures and evidence provenance
+
+- First transport attempt expected\`GET /runs/{id}\` to return\`{run}\`; corrected to the actual direct record. See\`probe-attempt-1\` artifacts. It is not product evidence.
+- Full40000-row accessibility snapshot and broad role-based selection were too expensive for the harness; kept desktop capture and source attempts, then used scoped DOM selectors and a small nav snapshot. No product behavior was changed to accommodate the harness.
+- The file-based control channel read partially written JSON and stopped the first browser/restart attempt. Its long/live observations remain valid; its native-restart stage does not qualify the criterion.
+- The first direct-restart fixture contained\`run.woken\` events, so actual engine recovery finished the wait/run before a manually appended burst. The resulting timeline timeout is a fixture error, not loss of post-terminal events. [Diagnosis](restart-attempt-1-diagnosis.json). The final direct-IPC probe uses a fresh neutral-event fixture.
+- The original paced-reader boolean also assumed a fixed callback delay could never cause a5second drain stall and compared combined recovery against the interrupted paced prefix. Its raw false flag is retained. Measured timeout validity and complete40002-event recovery are established by the separately kept follow-up; no production retry-to-green was performed.
+- Source/provider claims from the implementation/review were not used as independent runtime evidence. The earlier measurement document is used only for the requested numeric comparison.
+
+## Observations outside scope and open items
+
+- The brief's\`/events/stream\` path returns404; the current documented negotiation route is\`/events\`. Reconcile the brief, rather than infer an unrequested new route.
+- Full history/windowing remains later work. The desktop measured up to${num(desktop.longTasks.maxMs)}ms in one long task and about${num((browser.longLoad?.peakHeap??0)/1048576)}MiB sampled heap; complete transport delivery does not establish responsive full-history rendering.
+- No claim of whole-I05 integrated acceptance, owner acceptance, live harness behavior, mobile product acceptance or post-merge human QA is made.
+- No directories were deleted. The [NOT-KEPT manifest](NOT-KEPT.md) inventories large disposable stores/profiles; the orchestrator owns final temp/build/coverage cleanup. Local paths are portable placeholders; disposable API credentials are not copied.
+
+## Evidence index
+
+Every kept artifact in this QA folder is linked below. Files exceeding1000000bytes are outside the evidence folder and inventoried by original size and SHA-256 in[NOT-KEPT.md](NOT-KEPT.md). The [artifact manifest](artifact-manifest.json) hashes retained bytes after path/encoding normalization; no raw JSON/script reformatting is required for provenance.
+
+${evidenceIndex}
+`;
+await writeFile(join(out,'README.md'),md);console.log('QA_REPORT_WRITTEN '+files.length+' linked artifacts');

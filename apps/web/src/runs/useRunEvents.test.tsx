@@ -58,7 +58,86 @@ function options(index = 0): SubscribeRunEventsOptions {
   return subscribe.mock.calls[index]![0];
 }
 
+function emit(index: number, value: Parameters<SubscribeRunEventsOptions['onEvent']>[0]) {
+  return options(index).onEvent(value, JSON.stringify(value).length * 2);
+}
 describe('run stream reachability', () => {
+  it('confirms cached terminal history with the server before reporting completion', async () => {
+    useRunEventStore.getState().append(runId, event(runId, 1, 'run.cancelled', {}));
+    let finish!: () => void;
+    subscribe.mockImplementation(() => ({
+      lastSeq: 1,
+      done: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+      close: vi.fn(),
+    }));
+    const { result } = mountStream();
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    expect(options().after).toBe(1);
+    expect(result.current.status).toBe('connecting');
+    await act(async () => {
+      await emit(0, event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
+      await emit(0, event(runId, 3, 'run.cancelled', {}));
+      await emit(
+        0,
+        event(runId, 4, 'return.delivered', { channel: { kind: 'caller' }, target: 'run.result' }),
+      );
+      finish();
+    });
+    expect(result.current.events.map((event) => event.seq)).toEqual([1, 2, 3, 4]);
+    expect(result.current.status).toBe('finished');
+  });
+  it('flushes an oversized single event immediately without dropping its payload', async () => {
+    vi.useFakeTimers();
+    mountStream();
+    await act(async () => {
+      await emit(
+        0,
+        event(runId, 1, 'run.woken', {
+          nodeId: 'wait',
+          reason: 'manual',
+          payload: 'x'.repeat(600_000),
+        }),
+      );
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(1);
+  });
+  it.each(['SSE_SLOW_CONSUMER', 'SSE_REPLAY_FAILED'])(
+    'shows a %s reason during retry and clears it when the stream reopens',
+    (code) => {
+      const { result } = mountStream();
+      act(() =>
+        options().onError?.(
+          new GraphGoblinApiError({
+            status: code === 'SSE_SLOW_CONSUMER' ? 503 : 500,
+            code,
+            detail: 'The reader fell behind; reconnecting from the last received event.',
+          }),
+          1,
+        ),
+      );
+      expect(result.current.status).toBe('error');
+      expect(result.current.error).toContain('The reader fell behind');
+      act(() => options().onOpen?.());
+      expect(result.current.status).toBe('live');
+      expect(result.current.error).toBeUndefined();
+    },
+  );
+
+  it('flushes a burst in bounded batches before the batching timer runs', async () => {
+    vi.useFakeTimers();
+    mountStream();
+    await act(async () => {
+      for (let seq = 1; seq <= 600; seq++)
+        await emit(0, event(runId, seq, 'run.started', { attempt: 1 }));
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events.length).toBeGreaterThanOrEqual(512);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(600);
+  });
   it('leaves an accepted clean close on the stream backoff without reporting an outage', () => {
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries');
@@ -93,7 +172,7 @@ describe('run stream reachability', () => {
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
     await act(async () => {
-      await options().onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(0, event(runId, 5, 'run.started', { attempt: 1 }));
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
     });
     act(() => options().onError?.(GraphGoblinApiError.network('refused'), 1));
@@ -104,7 +183,7 @@ describe('run stream reachability', () => {
     expect(subscribe).toHaveBeenCalledTimes(2);
     act(() => options(1).onOpen?.());
     await act(async () => {
-      await options(1).onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(1, event(runId, 5, 'run.started', { attempt: 1 }));
     });
     act(() => options(1).onError?.(new TypeError('reader failed'), 2));
     expect(reads).toHaveBeenCalledTimes(1);
@@ -112,7 +191,8 @@ describe('run stream reachability', () => {
     act(() => markApiReachable());
     expect(subscribe).toHaveBeenCalledTimes(2);
     await act(async () => {
-      await options(1).onEvent(
+      await emit(
+        1,
         event(runId, 6, 'node.started', {
           nodeId: 'wait',
           attempt: 1,
@@ -276,7 +356,7 @@ describe('run stream reachability', () => {
     vi.useFakeTimers();
     const view = mountStream();
     await act(async () => {
-      await options().onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(0, event(runId, 5, 'run.started', { attempt: 1 }));
     });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);

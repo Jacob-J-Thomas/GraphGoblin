@@ -1,0 +1,110 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import assert from 'node:assert/strict';
+const root=process.cwd(), out=path.dirname(process.argv[1]);
+const require=createRequire(path.join(root,'apps/web/package.json'));
+const {chromium,expect}=require('@playwright/test');
+const base='http://127.0.0.1:5920';
+const data=fs.mkdtempSync(path.join(os.tmpdir(),'gg-wp-g2-240-r4-proof-'));
+const results={head:'400bfdb0663247453121818eebad788f9c664a31',data,checks:[]};
+const save=()=>fs.writeFileSync(path.join(out,'blocker-proof.json'),JSON.stringify(results,null,2));
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const note=(name,pass,details={})=>{results.checks.push({name,pass,details});save();console.log(JSON.stringify({name,pass}));};
+const wait=async(fn,limit=20000)=>{const start=Date.now();while(Date.now()-start<limit){if(await fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Condition timed out');};
+let child,browser,page;
+const env={...process.env,GG_HOST:'127.0.0.1',GG_PORT:'5920',GG_DATA_DIR:data,GG_DB_URL:'file:'+path.join(data,'graphgoblin.db').replaceAll('\\','/'),GG_REQUIRE_API_KEY:'false',GG_LOG_LEVEL:'silent',GG_WEB_DIST:path.join(root,'apps/web/dist')};
+delete env.GG_MASTER_KEY;delete env.GG_JEV_API_KEY;delete env.JEV_API_KEY;
+async function start(){
+ let ready=false;
+ child=spawn(process.execPath,[path.join(out,'server.mjs'),root],{cwd:root,env,stdio:['ignore','pipe','pipe','ipc'],windowsHide:true});
+ for(const pipe of [child.stdout,child.stderr])pipe.on('data',b=>{fs.appendFileSync(path.join(out,'server.log'),b);if(String(b).includes('"ready":true'))ready=true;});
+ child.on('exit',code=>console.log('SERVER_EXIT '+code));
+ await wait(()=>{if(child.exitCode!==null)throw new Error('Server exited '+child.exitCode);return ready;},60000);
+ results.pids??=[];results.pids.push(child.pid);save();
+}
+async function stop(){if(!child||child.exitCode!==null)return;const done=once(child,'exit');child.send('stop');await done;}
+async function api(url,body){
+ const response=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
+ const json=await response.json();if(!response.ok)throw new Error(JSON.stringify({url,status:response.status,json}));return json;
+}
+let posted=0;
+const send=async(type,index)=>{const x=await api('/events',{type,payload:{index}});posted++;return x;};
+async function seed(type,count){for(let s=0;s<count;s+=20)await Promise.all(Array.from({length:Math.min(20,count-s)},(_,i)=>send(type,s+i)));}
+const ids=()=>page.locator('[data-testid^="payload-"]').evaluateAll(a=>a.map(x=>x.getAttribute('data-testid').slice(8)));
+const rows=()=>page.locator('tbody tr').count();
+const refresh=()=>page.getByRole('button',{name:'Refresh',exact:true});
+const status=()=>page.locator('[role="status"]').allTextContents();
+async function ready(){await expect(refresh()).toHaveAttribute('aria-busy','false',{timeout:20000});}
+async function goto(query=''){await page.goto(base+'/app/events'+query);await ready();}
+async function more(count){await page.getByRole('button',{name:'Load more',exact:true}).click();await expect(page.locator('tbody tr')).toHaveCount(count);}
+async function truth(query='',pages=1){const collected=[];let cursor;for(let i=0;i<pages;i++){const q=new URLSearchParams(query);q.delete('keep');if(cursor)q.set('cursor',cursor);const p=await api('/events?'+q);collected.push(...p.items.map(x=>x.id));cursor=p.nextCursor;if(!cursor)break;}return collected;}
+async function holdFirst(match){
+ let release,delivered,held=false,count=0,captured; const deliveredPromise=new Promise(r=>delivered=r);
+ const latch=new Promise(r=>release=r);
+ const handler=async route=>{
+  const u=new URL(route.request().url());
+  if(u.pathname!=='/events'||u.searchParams.has('limit')||u.searchParams.has('cursor')||!match(u)){await route.continue();return;}
+  count++;
+  if(count!==1){await route.continue();return;}
+  const response=await route.fetch();captured=await response.json();held=true;
+  await latch;try{await route.fulfill({response});}finally{delivered();}
+ };
+ await page.route('**/events?**',handler);
+ return {wait:()=>wait(()=>held),release:async()=>{release();await deliveredPromise;await page.unroute('**/events?**',handler);},info:()=>({count,ids:captured?.items.map(x=>x.id)})};
+}
+try{
+ await start();
+ browser=await chromium.launch({channel:'msedge',headless:true});
+ results.browser=browser.version();
+ const ctx=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+ page=await ctx.newPage();
+
+ await seed('race-proof',201);
+ await goto('?type=race-proof');await more(200);
+ const hold=await holdFirst(u=>u.searchParams.get('type')==='race-proof');
+ await refresh().click();await hold.wait();
+ await page.getByRole('button',{name:'Clear type filter'}).click();await ready();
+ await page.goBack();await ready();
+ await send('race-proof','newer-refresh-winner');
+ await refresh().click();await ready();await expect(page.locator('tbody tr')).toHaveCount(100);
+ const winner=await ids();await more(200);const before=await ids();
+ await hold.release();
+ await wait(async()=>await rows()===100,5000).catch(()=>{});
+ const after=await ids();
+ note('B1_obsolete_refresh_must_not_replace_newer_read',same(before,after),{winnerFirst:winner[0],beforeCount:before.length,afterCount:after.length,afterFirst:after[0],obsoleteFirst:hold.info().ids[0],status:await status(),before,after});
+ await page.screenshot({path:path.join(out,'B1.png')});
+ await seed('receipt-proof',101);
+ const first=await api('/events?type=receipt-proof');const receiptId=first.items[99].id;
+ let state='pending',polls=[];
+ const fixture=async route=>{
+   const u=new URL(route.request().url());
+   if(u.pathname!=='/events'||u.searchParams.get('type')!=='receipt-proof'){await route.continue();return;}
+   const response=await route.fetch(),json=await response.json();
+   json.items=json.items.map(x=>x.id===receiptId?{...x,delivery:{state,attempts:0}}:x);
+   polls.push({query:u.search,count:json.items.length,containsReceipt:json.items.some(x=>x.id===receiptId),state});
+   try{await route.fulfill({response,json});}catch(error){console.log('ROUTE_TEARDOWN '+String(error));}
+ };
+ await page.route('**/events?**',fixture);
+ await goto('?type=receipt-proof');await expect(page.getByText('Pending admission',{exact:true})).toBeVisible();
+ await send('receipt-proof','one-new-arrival');state='admitted';
+ await expect(page.getByText('New events available',{exact:true})).toBeVisible();
+ await more(101);await expect(page.locator('tbody tr').filter({has:page.getByTestId('payload-'+receiptId)}).getByText('Admitted',{exact:true})).toBeVisible({timeout:15000}).catch(()=>{});
+ const receipt=()=>page.locator('tbody tr').filter({has:page.getByTestId('payload-'+receiptId)});
+ const stale=await receipt().innerText();
+ await ready();await refresh().click();await expect(page.locator('tbody tr')).toHaveCount(100);await more(102);
+ const recovered=await receipt().innerText();
+ note('B2_loaded_receipt_must_update_at_page_boundary',!stale.includes('Pending admission'),{receiptId,stale,recovered,polls});
+ await page.screenshot({path:path.join(out,'B2-after-manual-refresh.png')});
+ await page.unrouteAll({behavior:'wait'});
+ process.exitCode=results.checks.some(x=>!x.pass)?1:0;
+}catch(error){results.failurePage=page ? {url:page.url(),body:await page.locator('body').innerText()} : null;results.fatal=String(error.stack??error);save();console.error(results.fatal);process.exitCode=1;}
+finally{await browser?.close();await stop();save();}
+
+
+
+
+

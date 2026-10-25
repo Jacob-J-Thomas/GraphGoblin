@@ -1,0 +1,13 @@
+﻿import{readFile,writeFile}from'node:fs/promises';import{resolve}from'node:path';import{createRequire}from'node:module';import{pathToFileURL}from'node:url';import assert from'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa'),base='http://127.0.0.1:5880';
+const before=JSON.parse(await readFile(resolve(out,'restart-before.json'),'utf8')),legacyStorage=JSON.parse(await readFile(resolve(out,'legacy-storage.json'),'utf8')),metadata=JSON.parse(await readFile(resolve(out,'instance.json'),'utf8'));
+async function response(path){const r=await fetch(base+path);return{status:r.status,body:await r.json()};}
+const run=(await response('/runs/'+before.run.id)).body,events=(await response('/runs/'+before.run.id+'/events?limit=1000')).body,thread=(await response('/runs/'+before.run.id+'/thread')).body;
+assert.notEqual(metadata.pid,before.original.pid);assert.deepEqual(events.items.slice(0,before.events.items.length),before.events.items);assert.equal(run.pinned.limits.structuredTimeoutMs,500);assert.equal(run.status,'succeeded');
+await writeFile(resolve(out,'restart-after.json'),JSON.stringify({status:'PASS',oldPid:before.original.pid,newPid:metadata.pid,preservedEvents:true,run,events,thread},null,2));
+const {LoopDefinitionSchema}=await import(pathToFileURL(resolve(root,'packages/contracts/dist/index.js')).href);const parsed=LoopDefinitionSchema.parse(legacyStorage.after);assert.equal(parsed.settings.structuredTimeoutMs,null);
+const actual=await response('/loops/'+before.legacy.loop.id);const obs=(await response('/qa/observations')).body;
+const {chromium}=createRequire(resolve(root,'apps/web/package.json'))('@playwright/test');const browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:390,height:1000}});let browserText;
+try{await page.goto(base+'/app/loops/'+before.legacy.loop.id+'/edit');await page.getByRole('button',{name:'Retry',exact:true}).waitFor({timeout:10000}).catch(()=>{});await page.screenshot({path:resolve(out,'legacy-reopen-failure-390.png'),fullPage:true});browserText=await page.locator('body').innerText();}finally{await browser.close()}
+const record={status:actual.status===500?'FAIL':'PASS',expected:'200, opens with Unlimited',actual,contractDefault:parsed.settings.structuredTimeoutMs,browserText,logs:obs.logs.filter(x=>x.level==='error'),legacyId:before.legacy.loop.id};
+await writeFile(resolve(out,'legacy-reopen.json'),JSON.stringify(record,null,2));console.log(JSON.stringify(record));

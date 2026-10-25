@@ -1,0 +1,63 @@
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+const out='docs/qa/2026-10-22-wp-e1-186/round-4';
+const hash=value=>createHash('sha256').update(value).digest('hex');
+const git=args=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const initial=JSON.parse(readFileSync('.tmp/r4-initial-state.json'));
+const frozen=JSON.parse(readFileSync('.tmp/r4-source-frozen.json'));
+const errors=[];
+const profileName=process.env.USERPROFILE.split(/[\\/]/).at(-1);
+const profileNamePattern=new RegExp(`\\b${profileName}\\b`,'i');
+const check=(condition,label)=>{if(!condition) errors.push(label);};
+const walk=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(join(dir,entry.name)):[join(dir,entry.name)]);
+check(git(['rev-parse','HEAD'])===initial.head,'HEAD drift');
+check(git(['diff','--cached','--name-only'])==='','index contents changed');
+for(const item of initial.qa) check(hash(readFileSync(item.path))===item.sha256,`QA drift: ${item.path}`);
+check(walk('docs/qa/2026-10-24-wp-e1-186-qa').length===initial.qa.length,'QA file inventory changed');
+for(const [path,sha256] of Object.entries(frozen)) check(hash(readFileSync(path))===sha256,`tested source drift: ${path}`);
+for(const path of git(['diff','--name-only']).split(/\r?\n/).filter(Boolean)) check(path in frozen,`unexpected tracked diff: ${path}`);
+check(git(['diff','--name-only','--diff-filter=D'])==='','tracked file deleted');
+if(process.argv.includes('--snapshot-only')) {
+  console.log(JSON.stringify({head:initial.head,protectedQaFiles:initial.qa.length,testedSources:Object.keys(frozen).length,errors},null,2));
+  process.exit(errors.length?1:0);
+}
+for(const phase of ['before','after']) check(JSON.parse(readFileSync(`${out}/${phase}-verification.json`)).verified===true,`${phase} probes not verified`);
+check(JSON.parse(readFileSync(`${out}/gate-source-integrity.json`)).drift.length===0,'gate/source hash drift');
+check(JSON.parse(readFileSync(`${out}/final-web-source-integrity.json`)).drift.length===0,'final web/source hash drift');
+const proof=JSON.parse(readFileSync(`${out}/regression-baseline-proof.json`));
+check(proof.restored && proof.results.length===3 && proof.results.every(item=>item.code===1 && item.intended),'historical regression proof/restore');
+const files=walk(out);
+for(const path of files) {
+  const bytes=readFileSync(path),text=bytes.toString('utf8');
+  check(bytes.length<=1_000_000,`oversized retained artifact: ${path}`);
+  check(!profileNamePattern.test(text),`unredacted profile: ${path}`);
+  check(!text.includes('\r\n'),`noncanonical EOL: ${path}`);
+  if(path.endsWith('.json')) {try {JSON.parse(text);} catch {check(false,`invalid JSON: ${path}`);}}
+}
+const report=readFileSync(`${out}/REPORT.md`,'utf8');
+check(!report.includes('is being assembled'),'placeholder report');
+check((report.match(/^## \d\./gm)??[]).length===8,'report sections');
+for(const match of report.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+  if(/^(https?:|#)/.test(match[1])) continue;
+  const path=match[1].split('#')[0];
+  if(['artifact-manifest.json','validation.json'].includes(path)) continue;
+  check(existsSync(resolve(out,path)),`missing report citation: ${path}`);
+}
+for(const entry of JSON.parse(readFileSync(`${out}/copy-provenance.json`))) check(hash(readFileSync(`${out}/${entry.target}`))===entry.retainedSha256,`copy provenance drift: ${entry.target}`);
+if(process.argv.includes('--write')) {
+  writeFileSync(`${out}/validation.json`,JSON.stringify({head:initial.head,protectedQaFiles:initial.qa.length,testedSources:Object.keys(frozen).length,errors},null,2)+'\n');
+  if(errors.length===0) {
+    const manifest=walk(out).filter(path=>!path.endsWith('artifact-manifest.json')).map(path=>{
+      const bytes=readFileSync(path);return {path:path.slice(out.length+1).replaceAll('\\','/'),bytes:bytes.length,sha256:hash(bytes)};
+    });
+    writeFileSync(`${out}/artifact-manifest.json`,JSON.stringify(manifest,null,2)+'\n');
+  }
+} else {
+  for(const item of JSON.parse(readFileSync(`${out}/artifact-manifest.json`))) {
+    const bytes=readFileSync(`${out}/${item.path}`);check(bytes.length===item.bytes && hash(bytes)===item.sha256,`manifest drift: ${item.path}`);
+  }
+}
+console.log(JSON.stringify({head:initial.head,artifacts:walk(out).length,protectedQaFiles:initial.qa.length,errors},null,2));
+if(errors.length) process.exitCode=1;
