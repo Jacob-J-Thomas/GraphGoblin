@@ -1,0 +1,51 @@
+Command: pnpm.cmd exec playwright test e2e/earlier-node-outputs.spec.ts --retries=0 --workers=1
+Working directory: apps/web
+Node: v22.14.0
+Started: 2026-10-25T03:33:58.341Z
+
+Running 2 tests using 1 worker
+
+  ok 1 [chromium] › e2e\earlier-node-outputs.spec.ts:8:3 › copied output references drive scripts and expression routes at 1440px (7.3s)
+  x  2 [chromium] › e2e\earlier-node-outputs.spec.ts:8:3 › copied output references drive scripts and expression routes at 390px (13.5s)
+
+
+  1) [chromium] › e2e\earlier-node-outputs.spec.ts:8:3 › copied output references drive scripts and expression routes at 390px 
+
+    Error: expect(locator).toBeInViewport() failed
+
+    Locator:  getByTestId('node-check')
+    Expected: in viewport
+    Received: viewport ratio 0.9999997615814209
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toBeInViewport" getByTestId('node-check') with timeout 10000ms
+      - waiting for getByTestId('node-check')
+        22 × locator resolved to <div data-testid="node-check" class="rounded-lg border bg-surface-raised text-xs text-default border-default shadow-2">…</div>
+           - unexpected value "viewport ratio 0.9999997615814209"
+
+
+      86 |     // Initial zoom preserves readability; explicitly fit this wide graph before authoring.
+      87 |     await page.getByRole('button', { name: 'Fit View', exact: true }).click();
+    > 88 |     await expect(page.getByTestId('node-check')).toBeInViewport({ ratio: 1 });
+         |                                                  ^
+      89 |     await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+      90 |       origin: new URL(page.url()).origin,
+      91 |     });
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\earlier-node-outputs.spec.ts:88:50
+
+    Error Context: test-results\earlier-node-outputs-copie-ab7a4--expression-routes-at-390px-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\earlier-node-outputs-copie-ab7a4--expression-routes-at-390px-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\earlier-node-outputs-copie-ab7a4--expression-routes-at-390px-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\earlier-node-outputs.spec.ts:8:3 › copied output references drive scripts and expression routes at 390px 
+  1 passed (46.8s)
+
+{"label":"focused-header","command":"pnpm.cmd exec playwright test e2e/earlier-node-outputs.spec.ts --retries=0 --workers=1","cwd":"apps/web","node":"v22.14.0","head":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","endHead":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","applicationPatchSha256":"016598e4cd70e6bf86ab03af309217b80a892966e13297337a60cf1d20ef98d9","applicationPatchSha256After":"016598e4cd70e6bf86ab03af309217b80a892966e13297337a60cf1d20ef98d9","inputsUnchanged":true,"webDist":"apps/web/dist","started":"2026-10-25T03:33:58.341Z","finished":"2026-10-25T03:34:51.158Z","durationSeconds":52.817,"exitCode":1}

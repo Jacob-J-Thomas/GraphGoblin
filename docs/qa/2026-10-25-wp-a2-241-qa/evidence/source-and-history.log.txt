@@ -1,0 +1,3431 @@
+FILE apps/web/e2e/pwa.spec.ts
+import { observeSkipWaiting, showWaitingWorker } from './pwa-helpers.js';
+import { approvalLoop, control, expect, publishLoop, showLoopPanel, test } from './fixtures.js';
+
+declare global {
+  interface Window {
+    pwaChecks: {
+      calls: number;
+      found: number;
+      pending: number;
+      activity: number;
+      pageShown: boolean;
+    };
+  }
+}
+
+for (const [index, screen] of ['Loops', 'Runs', 'Events', 'Settings', 'run inspector'].entries()) {
+  test(`${screen} recovers after the API listener restarts with the browser online`, async ({
+    page,
+    request,
+  }) => {
+    const name = `API recovery ${index}`;
+    const loopId = await publishLoop(request, approvalLoop(name));
+    const started = await request.post(`/loops/${loopId}/runs`, {
+      data: { triggerNodeId: 'start', input: {} },
+    });
+    expect(started.ok()).toBe(true);
+    const { run } = (await started.json()) as { run: { id: string } };
+    const path =
+      screen === 'run inspector' ? `/app/runs/${run.id}` : `/app/${screen.toLowerCase()}`;
+    const endpoint =
+      screen === 'run inspector'
+        ? `/runs/${run.id}`
+        : screen === 'Settings'
+          ? '/settings'
+          : `/${screen.toLowerCase()}`;
+    await page.goto(path);
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await page.reload();
+    await expect
+      .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+      .toBe(true);
+    await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('visible');
+    await control(request, '/api/listener', { listening: false });
+    try {
+      // The shell comes from the worker, but API requests now see a genuinely refused socket.
+      await page.reload();
+      const offline = page.getByText(/needs the GraphGoblin API, which cannot be reached/);
+      await expect(offline.first()).toBeVisible();
+      await expect(
+        page.getByText('Cannot reach the GraphGoblin API', { exact: true }),
+      ).toBeVisible();
+      expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+      const back = page.waitForResponse(
+        (response) => new URL(response.url()).pathname === endpoint && response.status() === 200,
+        { timeout: 6_000 },
+      );
+      const start = Date.now();
+      await control(request, '/api/listener', { listening: true });
+      await back;
+      expect(Date.now() - start).toBeLessThan(6_000);
+      await expect(offline).toHaveCount(0);
+      await expect(
+        page.getByText('Cannot reach the GraphGoblin API', { exact: true }),
+      ).toBeHidden();
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+    } finally {
+      await control(request, '/api/listener', { listening: true });
+    }
+  });
+}
+
+test('a loaded run inspector reports a stream outage and resumes without navigation', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('Loaded stream recovery'));
+  const response = await request.post(`/loops/${loopId}/runs`, {
+    data: { triggerNodeId: 'start', input: {} },
+  });
+  expect(response.ok()).toBe(true);
+  const { run } = (await response.json()) as { run: { id: string } };
+  await page.goto(`/app/runs/${run.id}`);
+  const live = page.getByRole('heading', { name: /Timeline .* live\)/ });
+  await expect(live).toBeVisible();
+  await page.waitForTimeout(1_000); // The initial event batch's reads settle before the socket drops.
+  const navigation: string[] = [];
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigation.push(frame.url());
+  });
+  await control(request, '/api/listener', { listening: false });
+  try {
+    const banner = page.getByText('Cannot reach the GraphGoblin API', { exact: true });
+    await expect(banner).toBeVisible();
+    expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+    const resumed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/runs/${run.id}/events` && response.status() === 200,
+      { timeout: 6_000 },
+    );
+    await control(request, '/api/listener', { listening: true });
+    await resumed;
+    await expect(live).toBeVisible({ timeout: 6_000 });
+    await expect(banner).toBeHidden();
+    expect(navigation).toHaveLength(0);
+  } finally {
+    await control(request, '/api/listener', { listening: true });
+  }
+});
+
+test('an offline editor draft saves after the API listener returns without navigation', async ({
+  page,
+  request,
+}) => {
+  const name = 'API draft recovery';
+  const loopId = await publishLoop(request, approvalLoop(name));
+  const loaded = (await (await request.get(`/loops/${loopId}`)).json()) as { draftToken: string };
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await showLoopPanel(page);
+  const navigation: string[] = [];
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigation.push(frame.url());
+  });
+  await control(request, '/api/listener', { listening: false });
+  try {
+    await page.getByLabel('Description').fill('draft kept through an API outage');
+    await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+    await expect(page.getByLabel('Description')).toHaveValue('draft kept through an API outage');
+    expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+    const saved = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/loops/${loopId}/draft` &&
+        response.request().method() === 'PUT' &&
+        response.status() === 200,
+      { timeout: 6_000 },
+    );
+    await control(request, '/api/listener', { listening: true });
+    const response = await saved;
+    expect(response.request().headers()['if-match']).toBe(`"${loaded.draftToken}"`);
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved', {
+      timeout: 6_000,
+    });
+    await expect(page.getByLabel('Description')).toHaveValue('draft kept through an API outage');
+    const server = (await (await request.get(`/loops/${loopId}`)).json()) as {
+      draft: { definition: { description: string } };
+    };
+    expect(server.draft.definition.description).toBe('draft kept through an API outage');
+    expect(navigation).toHaveLength(0);
+  } finally {
+    await control(request, '/api/listener', { listening: true });
+  }
+});
+
+test('clean event-stream closes retain backoff without refetch or worker-update churn', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('Clean stream backoff'));
+  const response = await request.post(`/loops/${loopId}/runs`, {
+    data: { triggerNodeId: 'start', input: {} },
+  });
+  expect(response.ok()).toBe(true);
+  const { run } = (await response.json()) as { run: { id: string } };
+  await page.addInitScript(() => {
+    const stats = (window.pwaChecks = {
+      calls: 0,
+      found: 0,
+      pending: 0,
+      activity: Date.now(),
+      pageShown: false,
+    });
+    const update = ServiceWorkerRegistration.prototype.update;
+    ServiceWorkerRegistration.prototype.update = function () {
+      stats.calls++;
+      return update.call(this);
+    };
+  });
+  let streams = 0;
+  let reads = 0;
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === `/runs/${run.id}`) reads++;
+  });
+  await page.route(`**/runs/${run.id}/events**`, async (route) => {
+    streams++;
+    await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' });
+  });
+  await page.goto(`/app/runs/${run.id}`);
+  await expect(page.getByRole('heading', { name: /^Timeline/ })).toBeVisible();
+  const baselineStreams = streams;
+  const baselineReads = reads;
+  const baselineUpdates = await page.evaluate(() => window.pwaChecks.calls);
+  await page.waitForTimeout(4_000);
+  expect(streams).toBeGreaterThanOrEqual(2);
+  expect(streams - baselineStreams).toBeLessThanOrEqual(4);
+  expect(reads - baselineReads).toBeLessThanOrEqual(1);
+  expect((await page.evaluate(() => window.pwaChecks.calls)) - baselineUpdates).toBeLessThanOrEqual(
+    1,
+  );
+  await expect(page.getByText('Cannot reach the GraphGoblin API', { exact: true })).toBeHidden();
+});
+
+test('an open window detects a changed worker on focus, prompts, and updates only on confirmation', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(100_000);
+  const messages = await observeSkipWaiting(page);
+  page.on('console', (message) => {
+    const content = message.text();
+    if (content.startsWith('PWA lifecycle:')) console.log(content);
+  });
+  await page.addInitScript(() => {
+    const stats: Window['pwaChecks'] = (window.pwaChecks = {
+      calls: 0,
+      found: 0,
+      pending: 0,
+      activity: Date.now(),
+      pageShown: false,
+    });
+    const record = (kind: string, event?: Event) =>
+      console.log(
+        'PWA lifecycle:' +
+          JSON.stringify({
+            kind,
+            at: Date.now(),
+            documentId: performance.timeOrigin,
+            ...stats,
+            visibility: document.visibilityState,
+            focused: document.hasFocus(),
+            trusted: event?.isTrusted ?? null,
+          }),
+      );
+    window.addEventListener('pageshow', (event) => {
+      stats.pageShown = event.isTrusted;
+      record('pageshow', event);
+    });
+    window.addEventListener('focus', (event) => record('focus', event));
+    window.addEventListener('pagehide', (event) => record('pagehide', event));
+    document.addEventListener('visibilitychange', (event) => record('visibilitychange', event));
+    record('document-created');
+    const watched = new WeakSet<ServiceWorkerRegistration>();
+    const watch = (registration: ServiceWorkerRegistration) => {
+      if (!watched.has(registration)) {
+        watched.add(registration);
+        registration.addEventListener('updatefound', () => {
+          stats.found++;
+          stats.activity = Date.now();
+          record('updatefound');
+        });
+      }
+      return registration;
+    };
+    const register = ServiceWorkerContainer.prototype.register;
+    ServiceWorkerContainer.prototype.register = function (...args) {
+      stats.pending++;
+      stats.activity = Date.now();
+      record('register-start');
+      return register
+        .apply(this, args)
+        .then(watch)
+        .finally(() => {
+          stats.pending--;
+          stats.activity = Date.now();
+          record('register-complete');
+        });
+    };
+    const update = ServiceWorkerRegistration.prototype.update;
+    ServiceWorkerRegistration.prototype.update = function () {
+      watch(this);
+      stats.calls++;
+      stats.pending++;
+      stats.activity = Date.now();
+      record('update-start');
+      return update.call(this).finally(() => {
+        stats.pending--;
+        stats.activity = Date.now();
+        record('update-complete');
+      });
+    };
+  });
+  const initialCheckFinished = () =>
+    page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration('/app/');
+      return (
+        window.pwaChecks.pageShown &&
+        document.visibilityState === 'visible' &&
+        document.hasFocus() &&
+        registration?.active?.state === 'activated' &&
+        !registration.installing &&
+        window.pwaChecks.calls > 0 &&
+        window.pwaChecks.pending === 0
+      );
+    });
+  await page.bringToFront();
+  await page.goto('/app/loops');
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  // Observe native pageshow and registration/update completion in each document. The app also
+  // checks on pageshow, which can follow load and an earlier registration-triggered check.
+  await expect.poll(initialCheckFinished).toBe(true);
+  await page.bringToFront();
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+  // Finish the navigation check before publishing; only the subsequent app check may detect it.
+  await expect.poll(initialCheckFinished).toBe(true);
+  const baseline = await page.evaluate(() => ({ ...window.pwaChecks }));
+  console.log('PWA baseline: ' + JSON.stringify(baseline));
+  const initialWorker = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL);
+  const navigation = [] as string[];
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigation.push(frame.url());
+  });
+  try {
+    await control(request, '/worker/build');
+    await page.waitForTimeout(1_000);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found);
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls);
+    // Drive the window event the app listens to; there is no navigation or registration.update in the test.
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
+    await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 1);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 1);
+    expect(navigation).toHaveLength(0);
+    expect(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL)).toBe(
+      initialWorker,
+    );
+    expect(messages).toHaveLength(0);
+    expect(
+      await page.evaluate(async () =>
+        Boolean((await navigator.serviceWorker.getRegistration('/app/'))?.waiting),
+      ),
+    ).toBe(true);
+    await toast.getByRole('button', { name: 'Later' }).click();
+    await expect(toast).toBeHidden();
+    expect(navigation).toHaveLength(0);
+
+    // Workbox also classifies the second updatefound as external and drops its listener.
+    // Visibility checks exercise that path immediately, without waiting for the time heuristic.
+    await control(request, '/worker/build');
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 2);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 2);
+    expect(navigation).toHaveLength(0);
+    expect(messages).toHaveLength(0);
+
+    await toast.getByRole('button', { name: 'Later' }).click();
+    // The previous external update makes Workbox detach its own updatefound listener.
+    // Visibility is an independent check trigger, so another build does not wait on focus throttling.
+    await control(request, '/worker/build');
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 3);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 3);
+    expect(navigation).toHaveLength(0);
+
+    // Fresh registration sees the existing waiting worker immediately, without a second interaction.
+    await page.reload();
+    await expect(toast).toBeVisible();
+    const beforeConfirm = navigation.length;
+    const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
+    await toast.getByRole('button', { name: 'Update', exact: true }).click();
+    await reloaded;
+    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+    await expect(toast).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          async () => (await navigator.serviceWorker.getRegistration('/app/'))?.waiting === null,
+        ),
+      )
+      .toBe(true);
+    await expect.poll(() => messages.length).toBe(1);
+    expect(messages).toEqual([{ type: 'SKIP_WAITING' }]);
+    expect(navigation).toHaveLength(beforeConfirm + 1);
+  } finally {
+    await control(request, '/worker/reset');
+  }
+});
+
+test('registers the service worker and asks before applying an update', async ({
+  page,
+  request,
+}) => {
+  const messages = await observeSkipWaiting(page);
+  await page.goto('/app/');
+  await expect(page.getByRole('heading', { name: 'Loops' })).toBeVisible();
+
+  // The production build registers the worker for the /app/ scope.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        async () => (await navigator.serviceWorker.getRegistration('/app/'))?.scope ?? null,
+      ),
+    )
+    .toMatch(/\/app\/$/);
+
+  // The manifest is installable: name, scope, and icons are served.
+  const manifest = await page.request.get('/app/manifest.webmanifest');
+  expect(manifest.ok()).toBe(true);
+  const body = (await manifest.json()) as { scope: string; icons: { src: string }[] };
+  expect(body.scope).toBe('/app/');
+  for (const icon of body.icons)
+    expect((await page.request.get(`/app/${icon.src}`)).ok()).toBe(true);
+
+  try {
+    const toast = await showWaitingWorker(page, request);
+    expect(messages).toHaveLength(0);
+    const navigation: string[] = [];
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) navigation.push(frame.url());
+    });
+    const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
+    await toast.getByRole('button', { name: 'Update', exact: true }).click();
+    await reloaded;
+    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+    await expect(toast).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          async () => (await navigator.serviceWorker.getRegistration('/app/'))?.waiting === null,
+        ),
+      )
+      .toBe(true);
+    await expect.poll(() => messages.length).toBe(1);
+    expect(messages).toEqual([{ type: 'SKIP_WAITING' }]);
+    expect(navigation).toHaveLength(1);
+  } finally {
+    await control(request, '/worker/reset');
+  }
+});
+
+test('cold offline Loops reload recovers on reconnect without navigating', async ({
+  page,
+  context,
+  request,
+}) => {
+  const name = `cold offline reconnect ${test.info().repeatEachIndex}-${test.info().retry}`;
+  await publishLoop(request, approvalLoop(name));
+  await page.goto('/app/loops');
+  const row = page.getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) });
+  await expect(row).toBeVisible();
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  // The worker deliberately does not claim existing clients; the next navigation uses it.
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+
+  await context.setOffline(true);
+  try {
+    await page.reload();
+    const offline = page.getByText(/Loops needs the GraphGoblin API/);
+    await expect(offline).toBeVisible();
+    await expect(page.getByText('You are offline', { exact: true })).toBeVisible();
+    await expect(row).toBeHidden();
+
+    const recovered = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/loops' && response.status() === 200,
+      { timeout: 5_000 },
+    );
+    await context.setOffline(false);
+    await recovered;
+    await expect(row).toBeVisible({ timeout: 5_000 });
+    await expect(offline).toBeHidden();
+    await expect(page.getByText('You are offline', { exact: true })).toBeHidden();
+    await expect(page).toHaveURL(/\/app\/loops$/);
+  } finally {
+    await context.setOffline(false);
+  }
+});
+FILE apps/web/e2e/routing.spec.ts
+/**
+ * #18 against the built app and an isolated in-memory API on an ephemeral port (global-setup).
+ * Windows uses Edge; set GG_E2E_BROWSER_CHANNEL=msedge explicitly on other installed runners.
+ * GG_ROUTING_SCREENSHOTS=1 writes the owner-review images into docs/qa; normal CI keeps
+ * them in test-results. Performance runs three real pointer drags of five seconds each.
+ */
+import { mkdir, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import type { APIRequestContext, Page, TestInfo } from '@playwright/test';
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import {
+  decisionBackRoute,
+  denseGraph,
+  forwardLoopBack,
+  nestedLoops,
+  simpleLoop,
+  sixReturnDecision,
+  tightGap,
+} from '../src/__fixtures__/routing.js';
+import { expect, test } from './fixtures.js';
+
+// Trace snapshots of 300 canvas elements distort the frame budget; these specs capture PNGs.
+test.use({ actionTimeout: 15_000, trace: 'off' });
+
+const ratio = (a: string, b: string) => {
+  const luminance = (value: string) => {
+    const rgb = value
+      .match(/[\d.]+/g)!
+      .slice(0, 3)
+      .map((n) => Number(n) / 255)
+      .map((n) => (n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4));
+    return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
+  };
+  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (light! + 0.05) / (dark! + 0.05);
+};
+
+const qaDirectory = resolve('..', '..', 'docs', 'qa', '2026-10-05-issue-18-routing');
+const edge = (page: Page, id: string) => page.locator(`.react-flow__edge[data-id="${id}"]`);
+
+async function openGraph(
+  page: Page,
+  request: APIRequestContext,
+  definition: LoopDefinitionInput,
+  theme = 'dark',
+) {
+  await page.addInitScript((value) => {
+    localStorage.setItem('graphgoblin-theme', value);
+    // Both panels start collapsed, so the editor's opening fit (never below 50%) uses the whole
+    // canvas: the viewport every routing test was written for.
+    localStorage.setItem('graphgoblin-palette', 'collapsed');
+    localStorage.setItem('graphgoblin-loop-panel', 'collapsed');
+  }, theme);
+  const response = await request.post('/loops', { data: { definition } });
+  expect(response.status(), await response.text()).toBe(201);
+  const { loop } = (await response.json()) as { loop: { id: string } };
+  await page.goto(`/app/loops/${loop.id}/edit`);
+  await expect(page.locator('.react-flow__node')).toHaveCount(definition.nodes.length);
+  for (const name of ['Hide palette', 'Hide loop settings']) {
+    const button = page.getByRole('button', { name, exact: true });
+    if (await button.isVisible()) await button.click();
+  }
+  await expect(page.locator('.react-flow__edge-orthogonal title').first()).toBeAttached();
+  await page.evaluate(() => document.fonts.ready);
+  return loop.id;
+}
+
+async function screenshot(page: Page, info: TestInfo, name: string) {
+  const path =
+    process.env['GG_ROUTING_SCREENSHOTS'] === '1'
+      ? resolve(qaDirectory, `${name}.png`)
+      : info.outputPath(`${name}.png`);
+  if (process.env['GG_ROUTING_SCREENSHOTS'] === '1') await mkdir(qaDirectory, { recursive: true });
+  await page.screenshot({ path, animations: 'disabled' });
+  await info.attach(name, { path, contentType: 'image/png' });
+}
+
+for (const theme of ['dark', 'light']) {
+  for (const [name, fixture] of Object.entries({
+    'simple-loop': simpleLoop,
+    'nested-loops': nestedLoops,
+    'decision-back-route': decisionBackRoute,
+    'dense-100-nodes': denseGraph,
+    'six-return-decision': sixReturnDecision,
+    'eight-pixel-gap': tightGap,
+    'forward-loop-back-detour': forwardLoopBack,
+  })) {
+    test(`${theme}: ${name} routes and labels, owner screenshot`, async ({
+      page,
+      request,
+    }, info) => {
+      if (name === 'dense-100-nodes') await page.setViewportSize({ width: 1920, height: 1800 });
+      const definition = fixture();
+      await openGraph(page, request, definition, theme);
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      const backwards = page.locator('.react-flow__edge-orthogonal');
+      expect(await backwards.count()).toBeGreaterThan(0);
+      for (const path of await backwards.locator('.react-flow__edge-path').all()) {
+        await expect(path).toHaveAttribute('d', /^M.*Q/);
+      }
+      for (const label of await backwards.locator('.react-flow__edge-text').all())
+        await expect(label).toBeVisible();
+      const collisions = await backwards
+        .locator('.react-flow__edge-textbg')
+        .evaluateAll((elements) => {
+          const labels = elements.map((el) => el.getBoundingClientRect());
+          const cards = [...document.querySelectorAll('.react-flow__node')].map((el) =>
+            el.getBoundingClientRect(),
+          );
+          let hits = 0;
+          for (const [i, a] of labels.entries())
+            for (const b of [...labels.slice(0, i), ...cards])
+              if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top)
+                hits += 1;
+          return hits;
+        });
+      expect(collisions).toBe(0);
+      if (name === 'six-return-decision') await expect(backwards).toHaveCount(6);
+      if (name === 'eight-pixel-gap') {
+        const source = (await page.getByTestId('node-done').boundingBox())!;
+        const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+        const scale = source.width / 184;
+        expect((neighbour.x - source.x - source.width) / scale).toBeCloseTo(8, 1);
+        const pill = (await edge(page, 'return')
+          .locator('.react-flow__edge-textbg')
+          .boundingBox())!;
+        expect(pill.y > source.y + source.height || pill.y + pill.height < source.y).toBe(true);
+      }
+      await screenshot(page, info, `${name}-${theme}`);
+    });
+  }
+
+  test(`${theme}: animated loop-back, click and keyboard selection, Delete and undo`, async ({
+    page,
+    request,
+  }) => {
+    // Keep deletion schema-valid so the cleared config can also be read back from the API.
+    const definition = simpleLoop();
+
+    const loopId = await openGraph(page, request, definition, theme);
+    const back = edge(page, 'return');
+    const path = back.locator('.react-flow__edge-path');
+    await expect(back).toHaveClass(/animated/);
+    expect(await path.evaluate((el) => getComputedStyle(el).animationName)).toBe('dashdraw');
+    await back.locator('.react-flow__edge-textwrapper').click();
+    await expect(back).toHaveClass(/selected/);
+    // Tab reaches the focusable SVG wrapper; Enter selects it with xyflow's normal semantics.
+    await back.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(back).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(back).toHaveClass(/selected/);
+    const colors = await back.evaluate((el) => {
+      const style = (selector: string) => getComputedStyle(el.querySelector(selector)!);
+      const flow = getComputedStyle(el.closest('.react-flow')!);
+      return {
+        stroke: style('.react-flow__edge-path').stroke,
+        width: style('.react-flow__edge-path').strokeWidth,
+        text: style('.react-flow__edge-text').fill,
+        canvas: flow.backgroundColor,
+        pill: style('.react-flow__edge-textbg').fill,
+      };
+    });
+    expect(colors.width).toBe('3px');
+    expect(ratio(colors.stroke, colors.canvas)).toBeGreaterThanOrEqual(3);
+    expect(ratio(colors.text, colors.pill)).toBeGreaterThanOrEqual(4.5);
+    await page.keyboard.press('Delete');
+    await expect(back).toHaveCount(0);
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+    const saved = (await (await request.get(`/loops/${loopId}`)).json()) as {
+      draft: { definition: LoopDefinitionInput };
+    };
+    expect(saved.draft.definition.nodes.find((n) => n.id === 'done')!.config).toHaveProperty(
+      'maxPasses',
+      3,
+    );
+    await page.keyboard.press('Control+z');
+    await expect(back).toHaveCount(1);
+    await expect(path).toHaveAttribute('d', /^M.*Q/);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await path.evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+  });
+}
+
+test('forced colours retain paths, labels, keyboard focus and selection', async ({
+  page,
+  request,
+}) => {
+  await page.emulateMedia({ forcedColors: 'active' });
+  await openGraph(page, request, simpleLoop());
+  const back = edge(page, 'return');
+  const before = await back
+    .locator('.react-flow__edge-path')
+    .evaluate((el) => getComputedStyle(el).stroke);
+  await back.focus();
+  await page.keyboard.press('Enter');
+  const after = await back
+    .locator('.react-flow__edge-path')
+    .evaluate((el) => getComputedStyle(el).stroke);
+  expect(before).not.toBe(after);
+  const colors = await back.evaluate((el) => ({
+    canvas: getComputedStyle(el.closest('.react-flow')!).backgroundColor,
+    text: getComputedStyle(el.querySelector('.react-flow__edge-text')!).fill,
+    pill: getComputedStyle(el.querySelector('.react-flow__edge-textbg')!).fill,
+  }));
+  expect(ratio(before, colors.canvas)).toBeGreaterThanOrEqual(3);
+  expect(ratio(after, colors.canvas)).toBeGreaterThanOrEqual(3);
+  expect(ratio(colors.text, colors.pill)).toBeGreaterThanOrEqual(4.5);
+  await expect(back.locator('.react-flow__edge-text')).toBeVisible();
+  expect(await back.evaluate((el) => getComputedStyle(el).forcedColorAdjust)).toBe('none');
+  await page.keyboard.press('Delete');
+  await expect(back).toHaveCount(0);
+});
+
+test('dragging a card across a return path reroutes clear of its measured box in one undo step', async ({
+  page,
+  request,
+}) => {
+  await openGraph(page, request, simpleLoop());
+  const path = edge(page, 'return').locator('.react-flow__edge-path');
+  const before = await path.getAttribute('d');
+  const card = page.getByTestId('node-check');
+  const rect = (await card.boundingBox())!;
+  // Gate return ports moved the automatic lane above the cards. Put the obstacle on
+  // the measured path instead of dragging down toward an obsolete exit return lane.
+  const onPath = await path.evaluate(
+    (element, x) => {
+      const curve = element as SVGPathElement;
+      const matrix = curve.getScreenCTM()!;
+      let nearest = { x: Infinity, y: 0 };
+      for (let at = 0; at <= curve.getTotalLength(); at += 2) {
+        const point = curve.getPointAtLength(at).matrixTransform(matrix);
+        if (Math.abs(point.x - x) < Math.abs(nearest.x - x)) nearest = { x: point.x, y: point.y };
+      }
+      return nearest;
+    },
+    rect.x + rect.width / 2,
+  );
+  const dx = onPath.x - (rect.x + rect.width / 2);
+  const dy = onPath.y - (rect.y + rect.height / 2);
+  await page.mouse.move(rect.x + 60, rect.y + 14);
+  await page.mouse.down();
+  await page.mouse.move(rect.x + 60 + dx, rect.y + 14 + dy, { steps: 16 });
+  await page.mouse.up();
+  await expect
+    .poll(async () => {
+      const moved = (await card.boundingBox())!;
+      return (
+        onPath.x > moved.x &&
+        onPath.x < moved.x + moved.width &&
+        onPath.y > moved.y &&
+        onPath.y < moved.y + moved.height
+      );
+    })
+    .toBe(true);
+  await expect(path).not.toHaveAttribute('d', before!);
+  const collisions = await path.evaluate((element) => {
+    const curve = element as SVGPathElement;
+    const matrix = curve.getScreenCTM()!;
+    const scale = Math.hypot(matrix.a, matrix.b);
+    const boxes = [...document.querySelectorAll('.react-flow__node')]
+      .filter((node) => !['done', 'work'].includes(node.getAttribute('data-id')!))
+      .map((node) => node.getBoundingClientRect());
+    let hits = 0;
+    for (let at = 0; at <= curve.getTotalLength(); at += 3) {
+      const p = curve.getPointAtLength(at).matrixTransform(matrix);
+      if (
+        boxes.some(
+          (b) =>
+            p.x > b.left - 24 * scale &&
+            p.x < b.right + 24 * scale &&
+            p.y > b.top - 24 * scale &&
+            p.y < b.bottom + 24 * scale,
+        )
+      )
+        hits += 1;
+    }
+    return hits;
+  });
+  expect(collisions).toBe(0);
+  await page.getByRole('button', { name: 'Undo move check', exact: true }).click();
+  await expect(path).toHaveAttribute('d', before!);
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+});
+
+test('vertical targets, long script route, overlapping cards and zoom', async ({
+  page,
+  request,
+}) => {
+  const definition = simpleLoop();
+  const work = definition.nodes.find((n) => n.id === 'work')!;
+  work.ui = { x: 900, y: -220 };
+  const long = 'retry-this-script-after-reviewing-the-previous-output';
+  const script = definition.nodes.find((n) => n.id === 'check')!;
+  script.config = { command: 'node', exitCodeRoutes: { '1': long } };
+  definition.edges.push({
+    id: 'script-return',
+    from: { node: 'check', port: long },
+    to: { node: 'check' },
+  });
+  await openGraph(page, request, definition);
+  await expect(edge(page, 'return').locator('.react-flow__edge-path')).toHaveAttribute(
+    'd',
+    /^M.*Q/,
+  );
+  await expect(edge(page, 'script-return')).toHaveAttribute('aria-label', `check ${long} to check`);
+  await expect(edge(page, 'script-return').locator('.react-flow__edge-text')).toHaveText(/â€¦$/);
+  for (const name of [/^zoom in$/i, /^zoom out$/i, /^fit view$/i])
+    await page.getByRole('button', { name, exact: true }).click();
+  await expect(edge(page, 'script-return').locator('.react-flow__edge-text')).toBeVisible();
+
+  // Cover the loop-back port. The connection stays keyboard-selectable, with no unsafe path.
+  const covered = simpleLoop();
+  covered.nodes.find((n) => n.id === 'check')!.ui = { x: 1000, y: 100 };
+  await openGraph(page, request, covered);
+  const blocked = edge(page, 'return');
+  await expect(blocked).toHaveAttribute('aria-label', /Port covered by a card/);
+  await expect(blocked.locator('.react-flow__edge-path')).toHaveAttribute('d', '');
+  await expect(blocked.locator('.react-flow__edge-text')).toBeVisible();
+  // toBeVisible ignores occlusion, and cards paint over edges: the warning pill must clear every
+  // card's box, and the topmost element at its centre must be the pill itself.
+  const pill = (await blocked.locator('.react-flow__edge-textbg').boundingBox())!;
+  for (const card of await page.locator('.react-flow__node').all()) {
+    const box = (await card.boundingBox())!;
+    expect(
+      pill.x < box.x + box.width &&
+        pill.x + pill.width > box.x &&
+        pill.y < box.y + box.height &&
+        pill.y + pill.height > box.y,
+      JSON.stringify({ pill, box }),
+    ).toBe(false);
+  }
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        !!document.elementFromPoint(x, y)?.closest('.react-flow__edge[data-id="return"]'),
+      { x: pill.x + pill.width / 2, y: pill.y + pill.height / 2 },
+    ),
+  ).toBe(true);
+  await blocked.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Delete');
+  await expect(blocked).toHaveCount(0);
+});
+
+/** Observe both painted frames and intermediate DOM states, not just the eventual path. */
+function watchReturnPath(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<{ frames: number; missingFrames: number; missingStates: number }>(
+        (resolveSample) => {
+          const selector = '.react-flow__edge[data-id="return"] .react-flow__edge-path';
+          const original = document.querySelector(selector)!;
+          let frames = 0;
+          let missingFrames = 0;
+          let missingStates = 0;
+          let active = true;
+          const missing = () => !document.querySelector(selector)?.getAttribute('d');
+          const observer = new MutationObserver((records) => {
+            if (
+              missing() ||
+              records.some(
+                (r) =>
+                  (r.target === original && r.type === 'attributes' && r.oldValue === '') ||
+                  [...r.removedNodes].some((n) => n === original || n.contains(original)),
+              )
+            )
+              missingStates += 1;
+          });
+          observer.observe(document.querySelector('.react-flow')!, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['d'],
+            attributeOldValue: true,
+          });
+          const sample = () => {
+            frames += 1;
+            if (missing()) missingFrames += 1;
+            if (active) requestAnimationFrame(sample);
+          };
+          requestAnimationFrame(sample);
+          document.addEventListener(
+            'routing-sample-stop',
+            () => {
+              active = false;
+              observer.disconnect();
+              resolveSample({ frames, missingFrames, missingStates });
+            },
+            { once: true },
+          );
+        },
+      ),
+  );
+}
+
+test('no missing path frames while dragging past a neighbour through 8 px gaps', async ({
+  page,
+  request,
+}) => {
+  const definition = simpleLoop();
+  definition.nodes.find((n) => n.id === 'done')!.ui = { x: 400, y: 100 };
+  definition.nodes.find((n) => n.id === 'check')!.ui = { x: 700, y: 100 };
+  definition.nodes.find((n) => n.id === 'work')!.ui = { x: 100, y: 100 };
+  definition.nodes.find((n) => n.id === 'start')!.ui = { x: -200, y: 100 };
+  await openGraph(page, request, definition);
+  const card = (await page.getByTestId('node-done').boundingBox())!;
+  const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+  const scale = card.width / 184;
+  const origin = { x: card.x + 20 * scale, y: card.y + 14 * scale };
+  const left = neighbour.x - card.width - 8 * scale + 20 * scale;
+  const right = neighbour.x + neighbour.width + 8 * scale + 20 * scale;
+  const above = neighbour.y - card.height - 8 * scale + 14 * scale;
+  const watching = watchReturnPath(page);
+  await page.mouse.move(origin.x, origin.y);
+  await page.mouse.down();
+  for (const [x, y] of [
+    [left, origin.y],
+    [left, above],
+    [right, above],
+    [right, origin.y],
+  ])
+    await page.mouse.move(x!, y!, { steps: 32 });
+  await page.mouse.up();
+  await page.evaluate(() => document.dispatchEvent(new Event('routing-sample-stop')));
+  const sample = await watching;
+  expect(sample.frames).toBeGreaterThan(30);
+  expect(sample.missingFrames).toBe(0);
+  expect(sample.missingStates).toBe(0);
+  await expect(edge(page, 'return').locator('.react-flow__edge-path')).toHaveAttribute('d', /^M/);
+});
+
+test('adding a card and undoing its deletion never erase an existing backward path', async ({
+  page,
+  request,
+}) => {
+  await openGraph(page, request, simpleLoop());
+  const watching = watchReturnPath(page);
+  await page.getByRole('button', { name: 'Add Wait node', exact: true }).click();
+  await page.getByTestId('node-wait').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete node', exact: true }).click();
+  await expect(page.getByTestId('node-wait')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo delete wait', exact: true }).click();
+  await expect(page.getByTestId('node-wait')).toBeVisible();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolveFrame) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())),
+      ),
+  );
+  await page.evaluate(() => document.dispatchEvent(new Event('routing-sample-stop')));
+  const sample = await watching;
+  expect(sample.frames).toBeGreaterThan(10);
+  expect(sample.missingFrames).toBe(0);
+  expect(sample.missingStates).toBe(0);
+});
+
+interface Samples {
+  frames: number[];
+  routing: number[];
+  duration: number;
+  rerouted: number[];
+  pointerMoves: number;
+  samplerStartedAt: number;
+  firstPointerMs: number | null;
+  lastPointerMs: number | null;
+}
+const p95 = (samples: number[]) =>
+  [...samples].sort((a, b) => a - b)[Math.ceil(samples.length * 0.95) - 1]!;
+
+for (const count of [100, 300])
+  test(`performance: ${count} nodes / ${count * 2} edges, three five-second pointer drags`, async ({
+    page,
+    request,
+    browser,
+  }, info) => {
+    test.setTimeout(90_000);
+    const definition = denseGraph(count);
+    expect(definition.nodes).toHaveLength(count);
+    expect(definition.edges).toHaveLength(count * 2);
+    await openGraph(page, request, definition);
+    await expect(page.locator('.react-flow__edge')).toHaveCount(count * 2);
+    // The opening view contains this middle card; the drag starts at its centre.
+    const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
+    await expect(card).toBeVisible();
+    // Fonts and the initial routes are ready; wait for a stable, hittable drag target as well.
+    await card.click({ trial: true });
+    // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
+    // Added frame time (drag p95 minus this idle p95) is reported only; the strict assertion
+    // below uses the absolute 60 Hz budget.
+    const idleFrames = await page.evaluate(
+      () =>
+        new Promise<number[]>((resolveFrames) => {
+          const frames: number[] = [];
+          const start = performance.now();
+          let previous: number | undefined;
+          const frame = (now: number) => {
+            if (previous !== undefined) frames.push(now - previous);
+            previous = now;
+            if (now - start < 3000) requestAnimationFrame(frame);
+            else resolveFrames(frames);
+          };
+          requestAnimationFrame(frame);
+        }),
+    );
+    const profile =
+      process.env['GG_ROUTING_PROFILE'] === '1'
+        ? await page.context().newCDPSession(page)
+        : undefined;
+    if (profile) {
+      await profile.send('Profiler.enable');
+      await profile.send('Profiler.start');
+    }
+    const repetitions = [];
+    // mouse.move installs/cleans up HTML5 drag interception for every held-button move.
+    // Those extra page evaluations and overlapping interception polluted the measurement.
+    // Use the public CDP session for the same native mouse events, without that machinery.
+    const nativeInput = await page.context().newCDPSession(page);
+    const pointerEvent = async (
+      type: 'mouseMoved' | 'mousePressed' | 'mouseReleased',
+      x: number,
+      y: number,
+      held: boolean,
+    ) => {
+      await nativeInput.send('Input.dispatchMouseEvent', {
+        type,
+        x,
+        y,
+        button: type === 'mouseMoved' && !held ? 'none' : 'left',
+        buttons: held ? 1 : 0,
+        modifiers: 0,
+        clickCount: type === 'mouseMoved' ? 0 : 1,
+        force: held ? 0.5 : 0,
+      });
+    };
+    // Pace native input independently at 60 Hz.
+    // A 64-command credit bounds the queue to about one second of that input cadence.
+    const inputFrequencyHz = 60;
+    const inputPeriodMs = 1000 / inputFrequencyHz;
+    const maxInFlightMoves = 64;
+    // Advance the original 0.1-radian step at a nominal 60 Hz using elapsed time.
+    // Acknowledgement/coalescing rates must not shrink the five-second gesture's travel.
+    // The circuit's bounds stay the same, and both graph sizes receive the same motion.
+    const radiansPerMillisecond = (0.1 * inputFrequencyHz) / 1000;
+    for (let repetition = 0; repetition < 3; repetition += 1) {
+      const rect = (await card.boundingBox())!;
+      const origin = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      await pointerEvent('mouseMoved', origin.x, origin.y, false);
+      await pointerEvent('mousePressed', origin.x, origin.y, true);
+      await pointerEvent('mouseMoved', origin.x + 5, origin.y, true);
+      await expect(card).toHaveClass(/\bdragging\b/);
+      const measuring = page.evaluate(
+        (count) =>
+          new Promise<Samples>((resolveSamples) => {
+            const frames: number[] = [];
+            const routing: number[] = [];
+            const rerouted: number[] = [];
+            const observer = new PerformanceObserver((list) => {
+              for (const entry of list.getEntries()) {
+                const measure = entry as PerformanceMeasure;
+                if (
+                  measure.name === 'gg:backward-routing' &&
+                  measure.detail.nodes === count &&
+                  measure.detail.edges === count * 2
+                ) {
+                  routing.push(measure.duration);
+                  rerouted.push(measure.detail.rerouted);
+                }
+              }
+            });
+            observer.observe({ type: 'measure' });
+            const start = performance.now();
+            const samplerStartedAt = Date.now();
+            let pointerMoves = 0;
+            let firstPointerMs: number | null = null;
+            let lastPointerMs: number | null = null;
+            // Read-only workload evidence distinguishes under-driven input from slow routing.
+            const onPointerMove = () => {
+              const at = performance.now() - start;
+              firstPointerMs ??= at;
+              lastPointerMs = at;
+              pointerMoves += 1;
+            };
+            document.addEventListener('pointermove', onPointerMove, true);
+            let previous: number | undefined;
+            const frame = (now: number) => {
+              if (previous !== undefined) frames.push(now - previous);
+              previous = now;
+              if (now - start < 5000) requestAnimationFrame(frame);
+              else {
+                observer.disconnect();
+                document.removeEventListener('pointermove', onPointerMove, true);
+                resolveSamples({
+                  frames,
+                  routing,
+                  rerouted,
+                  duration: now - start,
+                  pointerMoves,
+                  samplerStartedAt,
+                  firstPointerMs,
+                  lastPointerMs,
+                });
+              }
+            };
+            requestAnimationFrame(frame);
+          }),
+        count,
+      );
+      const started = Date.now();
+      let step = 0;
+      let lastInput = { x: origin.x + 5, y: origin.y };
+      const moves = new Set<Promise<void>>();
+      const acknowledgementMs: number[] = [];
+      let peakInFlightMoves = 0;
+      let inputFailure: Error | undefined;
+      while (Date.now() - started < 5100) {
+        // Native CDP input; a small circuit stays within the row's clear corridor.
+        if (inputFailure) throw inputFailure;
+        if (moves.size >= maxInFlightMoves) {
+          await Promise.race(moves);
+          if (Date.now() - started >= 5100) break;
+        }
+        const phase = (Date.now() - started) * radiansPerMillisecond;
+        step += 1;
+        const sentAt = Date.now();
+        lastInput = {
+          x: origin.x + 12 + Math.sin(phase) * 10,
+          y: origin.y + Math.cos(phase) * 8,
+        };
+        const move = pointerEvent('mouseMoved', lastInput.x, lastInput.y, true);
+        moves.add(move);
+        peakInFlightMoves = Math.max(peakInFlightMoves, moves.size);
+        void move.then(
+          () => {
+            acknowledgementMs.push(Date.now() - sentAt);
+            moves.delete(move);
+          },
+          (error: unknown) => {
+            inputFailure =
+              error instanceof Error
+                ? error
+                : new Error('Native pointer input failed', { cause: error });
+            moves.delete(move);
+          },
+        );
+        // Use absolute deadlines: a relative timer accumulates host timer/dispatch delay and
+        // under-drives the gesture. Catch up within the same window and bounded native queue.
+        const remainingMs = started + step * inputPeriodMs - Date.now();
+        if (remainingMs > 0) {
+          await new Promise<void>((resolve) => setTimeout(resolve, remainingMs));
+        }
+      }
+      await Promise.all(moves);
+      if (inputFailure) throw inputFailure;
+      const inputDurationMs = Date.now() - started;
+      await pointerEvent('mouseReleased', lastInput.x, lastInput.y, false);
+      await expect(card).not.toHaveClass(/\bdragging\b/);
+      const samples = await measuring;
+      console.log(
+        `${count} nodes, drag ${repetition + 1}: routing ${p95(samples.routing).toFixed(3)} ms / frame ${p95(samples.frames).toFixed(3)} ms p95; ${samples.routing.length} routes, ${samples.frames.length} frames`,
+      );
+      repetitions.push({
+        repetition: repetition + 1,
+        routingP95Ms: p95(samples.routing),
+        frameP95Ms: p95(samples.frames),
+        addedFrameP95Ms: p95(samples.frames) - p95(idleFrames),
+        reroutedEdgesP95: p95(samples.rerouted),
+        routingSamples: samples.routing.length,
+        frameSamples: samples.frames.length,
+        durationMs: samples.duration,
+        pointerMovesSent: step,
+        pointerMovesObserved: samples.pointerMoves,
+        inputRadiansPerSecond: radiansPerMillisecond * 1000,
+        inputBackend: 'cdp-dispatchMouseEvent',
+        inputFrequencyHz,
+        maxInFlightMoves,
+        peakInFlightMoves,
+        acknowledgementP95Ms: p95(acknowledgementMs),
+        samplerStartOffsetMs: samples.samplerStartedAt - started,
+        firstPointerMs: samples.firstPointerMs,
+        lastPointerMs: samples.lastPointerMs,
+        inputDurationMs,
+      });
+    }
+    await nativeInput.detach();
+    if (profile) {
+      const result = await profile.send('Profiler.stop');
+      await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));
+      await profile.detach();
+    }
+    // Shared two-core PR runners measured 0.8-5.2 ms for the same code, so their median
+    // bound is 8 ms. Strict runs (local, or a manual dispatch with Strict set) enforce the
+    // issue's 4 ms routing criterion.
+    const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
+    const medianRoutingLimitMs = strictPerf ? 4 : 8;
+    const medianRoutingP95Ms = [...repetitions].sort((a, b) => a.routingP95Ms - b.routingP95Ms)[1]!
+      .routingP95Ms;
+    const report = {
+      nodes: count,
+      edges: count * 2,
+      repeat: info.repeatEachIndex + 1,
+      channel:
+        process.env['GG_E2E_BROWSER_CHANNEL'] ??
+        (process.platform === 'win32' ? 'msedge' : 'chromium'),
+      browser: browser.version(),
+      userAgent: await page.evaluate(() => navigator.userAgent),
+      viewport: page.viewportSize(),
+      targets: {
+        medianRoutingP95Ms: medianRoutingLimitMs,
+        perDragRoutingP95Ms: 16,
+        frameP95Ms: 17,
+      },
+      medianRoutingP95Ms,
+      idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
+      repetitions,
+    };
+    console.log(`Routing performance: ${JSON.stringify(report)}`);
+    const json = JSON.stringify(report, null, 2);
+    await info.attach('routing-performance', { body: json, contentType: 'application/json' });
+    const reportDirectory =
+      process.env['GG_ROUTING_REPORT_DIR'] ??
+      (process.env['GG_ROUTING_SCREENSHOTS'] === '1'
+        ? qaDirectory
+        : info.outputPath('measurements'));
+    await mkdir(reportDirectory, { recursive: true });
+    await writeFile(
+      resolve(
+        reportDirectory,
+        `performance-review-${count}-repeat-${info.repeatEachIndex + 1}.json`,
+      ),
+      json + '\n',
+    );
+    // Every run reports all three routing p95s and keeps each drag below 16 ms. Strict
+    // runs enforce median routing p95 <4 ms and absolute frame p95 <17 ms; otherwise
+    // the median bound is 8 ms. Added frame time is reported only:
+    // idle and drag can use different refresh cadences (for example 120 Hz and 60 Hz).
+    expect(medianRoutingP95Ms).toBeLessThan(medianRoutingLimitMs);
+    for (const result of repetitions) {
+      // A loose ceiling beside the median: no single drag may spike far past it.
+      expect(result.routingP95Ms).toBeLessThan(16);
+      expect(result.routingSamples).toBeGreaterThan(60);
+      expect(result.frameSamples).toBeGreaterThan(120);
+      expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+      if (strictPerf) {
+        // The issue's frame criterion is the 60 Hz budget (16.67 ms) at p95. RAF timestamps
+        // land a tenth of a millisecond past one vsync (local runs and the shared runner
+        // have both reported 16.8 ms), so the bound is 17 ms: a p95 that misses the budget,
+        // such as every-other-vsync at 33 ms or three 120 Hz periods at 25 ms, still fails.
+        expect(result.frameP95Ms).toBeLessThan(17);
+      }
+    }
+  });
+FILE apps/web/e2e/trigger-types.spec.ts
+import { approvalLoop, expect, openNode, test } from './fixtures.js';
+
+for (const theme of ['light', 'dark']) {
+  test(`trigger types and optional preset keyboard review in ${theme}`, async ({
+    page,
+    request,
+  }, testInfo) => {
+    await page.addInitScript(
+      (selected) => localStorage.setItem('graphgoblin-theme', selected),
+      theme,
+    );
+    const response = await request.post('/loops', {
+      data: { definition: approvalLoop(`trigger types ${theme}`) },
+    });
+    expect(response.status()).toBe(201);
+    const id = ((await response.json()) as { loop: { id: string } }).loop.id;
+    await page.goto(`/app/loops/${id}/edit`);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    const dialog = await openNode(page, 'start');
+    const type = dialog.getByLabel('Trigger type', { exact: true });
+    await expect(type.locator('option')).toHaveText(['Manual', 'Cron', 'Poll', 'Event', 'Webhook']);
+    await expect(dialog.getByRole('form', { name: 'GitHub preset setup' })).toHaveCount(0);
+    await expect(dialog.locator('[data-field="inputSchema"]')).toBeVisible();
+    await expect(dialog.locator('[data-field="exposeTo"]')).toBeVisible();
+
+    // The native select remains the keyboard entry point; one undo returns to Manual.
+    await type.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(type).toHaveValue('cron');
+    await expect(dialog.getByLabel('Repeat')).toBeVisible();
+    await expect(dialog.getByLabel('Timezone')).toBeVisible();
+    await page.keyboard.press('Control+z');
+    await expect(type).toHaveValue('manual');
+    await expect(type).toBeFocused();
+    await page.keyboard.press('Control+y');
+    await expect(type).toHaveValue('cron');
+
+    await type.selectOption('poll');
+    await expect(dialog.getByLabel('Interval seconds')).toBeVisible();
+    await expect(dialog.getByLabel('Fire when')).toBeVisible();
+    await expect(dialog.locator('[data-field="items"]')).toBeVisible();
+    await expect(dialog.getByLabel('Repeat')).toHaveCount(0);
+    await type.selectOption('event');
+    await expect(dialog.getByLabel('Event type')).toBeVisible();
+    await expect(dialog.getByLabel('Filter', { exact: true })).toHaveCount(0);
+    await expect(dialog.getByText(/Use a downstream decision for payload checks/)).toBeVisible();
+    await type.selectOption('webhook');
+    await expect(dialog.getByLabel('Filter', { exact: true })).toHaveCount(0);
+    const signing = dialog.getByLabel('Authentication recipe');
+    await expect(signing.locator('option:checked')).toHaveText('None');
+    await signing.selectOption({ label: 'Timestamp and body HMAC' });
+    await expect(dialog.getByLabel('Timestamp window (seconds)')).toBeVisible();
+    await signing.selectOption({ label: 'Body HMAC' });
+    await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
+    await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
+    const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
+    await modes.getByText('text', { exact: true }).click();
+    await expect(modes.getByRole('radio', { name: 'text', exact: true })).toBeChecked();
+    await page.keyboard.press('Control+z');
+    await expect(modes.getByRole('radio', { name: 'json', exact: true })).toBeChecked();
+    await page.keyboard.press('Control+y');
+    await dialog.getByLabel('Event type source').selectOption('header');
+    await dialog.getByLabel('Event header').fill('x-provider-event');
+    await expect(dialog.getByLabel('Fallback event type')).toHaveAttribute(
+      'placeholder',
+      'webhook',
+    );
+
+    const optional = dialog.getByRole('button', { name: 'Start from a preset' });
+    await optional.focus();
+    await page.keyboard.press('Enter');
+    await expect(optional).toHaveAttribute('aria-expanded', 'true');
+    const setup = dialog.getByRole('form', { name: 'GitHub preset setup' });
+    await setup.getByLabel('Preset', { exact: true }).selectOption('issues-poll');
+    await setup.getByLabel('Repository owner', { exact: true }).fill('octo-team');
+    await setup.getByLabel('Repository', { exact: true }).fill('fixture-repo');
+    await setup.getByLabel('Issue label').fill('ready');
+    const previewButton = setup.getByRole('button', { name: 'Preview GitHub preset' });
+    await previewButton.focus();
+    await page.keyboard.press('Enter');
+    const preview = dialog.getByRole('region', { name: 'Preset preview' });
+    await expect(preview).toBeFocused();
+    await expect(preview).toContainText('synthetic-hook');
+    await expect(preview).toContainText('intervalSeconds');
+    await expect(type).toHaveValue('webhook');
+    await page.screenshot({ path: testInfo.outputPath(`preset-preview-${theme}.png`) });
+    // JSON blocks are explicit tab stops, including when their content does not overflow.
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('button', { name: 'Cancel preview' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(previewButton).toBeFocused();
+    await expect(type).toHaveValue('webhook');
+    await page.keyboard.press('Enter');
+    await expect(preview).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('button', { name: 'Apply GitHub preset' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(type).toHaveValue('poll');
+    await expect(type).toBeFocused();
+    await expect(dialog.getByLabel('Interval seconds')).toHaveValue('60');
+    await page.keyboard.press('Control+z');
+    await expect(type).toHaveValue('webhook');
+    await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveValue('synthetic-hook');
+    await expect(signing.locator('option:checked')).toHaveText('Body HMAC');
+    await page.keyboard.press('Control+y');
+    await expect(type).toHaveValue('poll');
+    await expect(dialog.getByLabel('Max runs per poll')).toHaveValue('5');
+    await page.screenshot({ path: testInfo.outputPath(`poll-fields-${theme}.png`) });
+  });
+}
+
+for (const width of [360, 1440]) {
+  test(`general webhook configuration persists and validates at ${width}px`, async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const created = await request.post('/loops', {
+      data: { definition: approvalLoop(`general webhook ${width}`) },
+    });
+    expect(created.status()).toBe(201);
+    const id = ((await created.json()) as { loop: { id: string } }).loop.id;
+    await page.goto(`/app/loops/${id}/edit`);
+    const dialog = await openNode(page, 'start');
+    await dialog.getByLabel('Trigger type').selectOption('webhook');
+    const auth = dialog.getByLabel('Authentication recipe');
+    await expect(auth.locator('option:checked')).toHaveText('None');
+    await auth.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
+    await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
+    await expect(dialog.getByLabel('Signing header')).toHaveAttribute(
+      'placeholder',
+      'x-hub-signature-256',
+    );
+    await auth.focus();
+    await auth.selectOption({ label: 'Timestamp and body HMAC' });
+    await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveAttribute(
+      'placeholder',
+      '300',
+    );
+    await page.keyboard.press('Control+z');
+    await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
+    await expect(auth).toBeFocused();
+    await auth.selectOption({ label: 'None' });
+    await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveCount(0);
+    const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
+    await modes.getByText('bytes', { exact: true }).click();
+    await dialog.getByLabel('Event type source').selectOption('json-pointer');
+    await dialog.getByLabel('JSON pointer').fill('/event~1type/0');
+    await expect(
+      dialog.getByText('JSON pointers require JSON body mode', { exact: true }).first(),
+    ).toBeVisible();
+    await modes.getByText('json', { exact: true }).click();
+    await expect(
+      dialog.getByText('JSON pointers require JSON body mode', { exact: true }),
+    ).toHaveCount(0);
+    const savedConfig = async () => {
+      const exported = await request.get(`/loops/${id}/export?draft=true`);
+      expect(exported.ok()).toBe(true);
+      const value = (await exported.json()) as {
+        loop: { nodes: { id: string; config: unknown }[] };
+      };
+      return value.loop.nodes.find((node) => node.id === 'start')?.config;
+    };
+    const implicitDefault = {
+      type: 'webhook',
+      authentication: { type: 'none' },
+      body: { type: 'json' },
+      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
+    };
+    // An omitted default may be drawn as a placeholder in the device copy. Check its
+    // durable meaning, then author a distinct value whose exact persistence is observable.
+    await expect.poll(savedConfig).toMatchObject(implicitDefault);
+    const fallback = dialog.getByLabel('Fallback event type');
+    await expect(fallback).toHaveAttribute('placeholder', 'webhook');
+    await fallback.fill('fixture-webhook-type');
+    const explicitFallback = {
+      ...implicitDefault,
+      eventType: { ...implicitDefault.eventType, fallback: 'fixture-webhook-type' },
+    };
+    await expect.poll(savedConfig).toMatchObject(explicitFallback);
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+    await page.reload();
+    const reopened = await openNode(page, 'start');
+    await expect(reopened.getByLabel('Authentication recipe').locator('option:checked')).toHaveText(
+      'None',
+    );
+    await expect(reopened.getByLabel('JSON pointer')).toHaveValue('/event~1type/0');
+    await expect(reopened.getByLabel('Fallback event type')).toHaveValue('fixture-webhook-type');
+    expect(await savedConfig()).toMatchObject(explicitFallback);
+  });
+}
+FILE apps/web/e2e/actions.spec.ts
+import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
+import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
+import type { Locator, Page } from '@playwright/test';
+
+async function tabTo(page: Page, target: Locator) {
+  for (
+    let i = 0;
+    i < 40 && !(await target.evaluate((element) => element === document.activeElement));
+    i++
+  )
+    await page.keyboard.press('Tab');
+  await expect(target).toBeFocused();
+}
+
+test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on confirmation', async ({
+  page,
+  request,
+}) => {
+  const id = await publishLoop(request, approvalLoop('actions loop'));
+  await page.goto('/app/loops');
+  const trigger = page.getByRole('button', { name: 'Delete actions loop', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('alertdialog', { name: 'Delete â€œactions loopâ€?' });
+  await expect(dialog).toContainText('all its versions, its triggers and all its runs (0)');
+  await expect(dialog).toContainText('including run history and artifact references');
+  await expect(dialog.getByRole('button', { name: 'Keep' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Confirm delete actions loop' })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Keep' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  expect((await request.get(`/loops/${id}`)).status()).toBe(200);
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export actions loop' }).click();
+  expect((await download).suggestedFilename()).toBe('actions-loop.graphgoblin.json');
+  await trigger.click();
+  await page.getByRole('button', { name: 'Confirm delete actions loop' }).click();
+  await expect(trigger).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).not.toHaveAttribute(
+    'tabindex',
+  );
+  expect((await request.get(`/loops/${id}`)).status()).toBe(404);
+});
+
+test('Keep followed by a runs poll leaves body focus and Space opens no confirmation', async ({
+  page,
+  request,
+}) => {
+  const name = `cancel-poll-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
+  await page.goto('/app/loops');
+  // Check this Edge version's removal events; the microtask must distinguish them from blur.
+  const removalEvents = await page.evaluate(async () => {
+    const probe = document.createElement('button');
+    document.body.append(probe);
+    const events: { duringEvent: boolean; afterMicrotask: boolean }[] = [];
+    probe.addEventListener('focusout', () => {
+      const event = { duringEvent: probe.isConnected, afterMicrotask: true };
+      events.push(event);
+      queueMicrotask(() => {
+        event.afterMicrotask = probe.isConnected;
+      });
+    });
+    probe.focus();
+    probe.remove();
+    await Promise.resolve();
+    return events;
+  });
+  console.log(`Focused-element removal focusout events: ${JSON.stringify(removalEvents)}`);
+  for (const event of removalEvents) expect(event.afterMicrotask).toBe(false);
+  const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
+  await trigger.click();
+  await page.getByRole('button', { name: 'Keep', exact: true }).click();
+  await expect(trigger).toBeFocused();
+  await page.getByRole('heading', { name: 'Loops', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  const response = await request.post(`/loops/${id}/runs`, { data: {} });
+  expect(response.status()).toBe(202);
+  const { run } = (await response.json()) as { run: { id: string } };
+  try {
+    // The regular five-second runs poll must commit the new badge before checking focus.
+    const row = page.getByRole('row').filter({ has: trigger });
+    await expect(row.getByRole('link', { name: 'waiting', exact: true })).toHaveAttribute(
+      'href',
+      `/app/runs/${run.id}`,
+    );
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  } finally {
+    await request.post(`/runs/${run.id}/cancel`);
+    await expect
+      .poll(
+        async () =>
+          ((await (await request.get(`/runs/${run.id}`)).json()) as { status: string }).status,
+      )
+      .toBe('cancelled');
+    await request.delete(`/loops/${id}`);
+  }
+});
+
+test('Settings keeps on cancel and deletes a secret after explicit confirmation', async ({
+  page,
+  request,
+}) => {
+  expect(
+    (await request.put('/secrets/actions-secret', { data: { value: 'fixture-only' } })).status(),
+  ).toBe(200);
+  await page.goto('/app/settings');
+  const trigger = page.getByRole('button', { name: 'Delete secret actions-secret' });
+  await trigger.click();
+  let dialog = page.getByRole('alertdialog');
+  await expect(dialog).toContainText('503 HOOK_NOT_READY');
+  await expect(dialog).toContainText('secret:actions-secret');
+  await dialog.getByRole('button', { name: 'Keep' }).click();
+  await expect(trigger).toBeFocused();
+  await expect(dialog).toHaveCount(0);
+  const secrets = await request.get('/secrets');
+  expect(await secrets.json()).toMatchObject({
+    items: expect.arrayContaining([expect.objectContaining({ name: 'actions-secret' })]),
+  });
+  await trigger.click();
+  dialog = page.getByRole('alertdialog');
+  await dialog.getByRole('button', { name: 'Confirm delete actions-secret' }).click();
+  await expect(trigger).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Secrets', exact: true })).toBeFocused();
+});
+
+test('Settings catalog edits LiteLLM models, refuses Add, and reports a second-delete error', async ({
+  page,
+  request,
+}) => {
+  await control(request, '/catalog/upsert', {
+    harness: 'codex',
+    model: 'actions-model',
+    source: 'litellm',
+    displayName: 'Actions model',
+    efforts: ['low'],
+    defaultEffort: 'low',
+    enabled: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/app/settings');
+  await expect(page.getByRole('button', { name: 'Add model', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit actions-model', exact: true })).toBeVisible();
+  const harnessRow = page
+    .getByRole('switch', { name: 'Enable GPT-6 Luna' })
+    .locator('xpath=ancestor::tr');
+  await expect(harnessRow.getByRole('button')).toHaveCount(0);
+  const localSwitch = page.getByRole('switch', { name: 'Enable Actions model', exact: true });
+  await localSwitch.click();
+  await expect(localSwitch).toHaveAttribute('aria-busy', 'false');
+  await expect(localSwitch).not.toBeChecked();
+  await page.getByRole('button', { name: 'Edit actions-model', exact: true }).click();
+  const edit = page.getByRole('form', { name: 'Edit actions-model' });
+  await edit.getByLabel('Display name').fill('Edited actions model');
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      response.url().endsWith('/model-catalog/codex/actions-model'),
+  );
+  await edit.getByRole('button', { name: 'Save model' }).click();
+  const put = await saved;
+  expect(put.status()).toBe(200);
+  expect(put.request().postDataJSON()).toEqual({
+    displayName: 'Edited actions model',
+    efforts: ['low'],
+    defaultEffort: 'low',
+  });
+  expect(ModelCatalogEntrySchema.parse(await put.json())).toMatchObject({
+    displayName: 'Edited actions model',
+    source: 'litellm',
+    enabled: false,
+  });
+  await expect(edit).toHaveCount(0);
+  await page.getByRole('button', { name: 'Add model', exact: true }).click();
+  const add = page.getByRole('form', { name: 'Add model' });
+  await add.getByLabel('Model id').fill('local-unconfigured');
+  const refused = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      response.url().endsWith('/model-catalog/codex/local-unconfigured'),
+  );
+  await add.getByRole('button', { name: 'Save model' }).click();
+  const refusal = await refused;
+  expect(refusal.status()).toBe(409);
+  expect(refusal.request().postDataJSON()).toMatchObject({ source: 'litellm', enabled: true });
+  expect(await refusal.json()).toMatchObject({ code: 'LITELLM_NOT_CONFIGURED' });
+  await expect(add.getByRole('alert')).toHaveText(
+    'LiteLLM is not configured. Adding local models is not available yet.',
+  );
+  await add.getByRole('button', { name: 'Cancel' }).click();
+  await page.getByRole('button', { name: 'Delete actions-model', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).toContainText(
+    'Removing a LiteLLM model leaves its loops referencing it.',
+  );
+  expect(
+    await page.getByRole('alertdialog').evaluate((element) => ({
+      fits: element.scrollWidth <= element.clientWidth,
+      alignment: getComputedStyle(element).textAlign,
+      wraps: getComputedStyle(element).whiteSpace,
+    })),
+  ).toEqual({ fits: true, alignment: 'left', wraps: 'normal' });
+  expect((await request.delete('/model-catalog/codex/actions-model')).status()).toBe(204);
+  await page.getByRole('button', { name: 'Confirm delete actions-model' }).click();
+  await expect(page.getByRole('alert')).toContainText('MODEL_NOT_FOUND');
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Keep' }).click();
+  // Recovery follows the committed row removal, which can lag query settlement.
+  await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Delete actions-model', exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+});
+
+test('Settings harness switches follow keyboard toggles and update Default model', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const before = ModelCatalogEntrySchema.array()
+    .parse(((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items)
+    .find((entry) => entry.model === 'gpt-6-luna');
+  await page.goto(`${url}/app/settings`);
+  const catalog = page.getByRole('region', { name: 'Model catalog' });
+  await expect(catalog.getByRole('button')).toHaveCount(0);
+  await expect(catalog.getByRole('columnheader', { name: 'Actions' })).toHaveCount(0);
+  await expect(catalog).toContainText(
+    'Local models served through LiteLLM will appear here once the LiteLLM adapter is configured; see the Settings guide, Choose a model and effort.',
+  );
+  await expect(catalog.getByRole('link')).toHaveCount(0);
+  const enabled = catalog.getByRole('switch', {
+    name: `Enable ${before!.displayName}`,
+    exact: true,
+  });
+  await tabTo(page, enabled);
+  await expect(enabled).toBeChecked();
+  const defaults = page.getByLabel('Default model', { exact: true });
+  await expect(
+    defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  ).toHaveCount(1);
+  const patch = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PATCH' &&
+      response.url().endsWith('/model-catalog/codex/gpt-6-luna'),
+  );
+  await page.keyboard.press('Space');
+  expect((await patch).status()).toBe(200);
+  await expect(enabled).not.toBeChecked();
+  await expect(enabled).toBeEnabled();
+  await expect(
+    defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  ).toHaveCount(0);
+  await expect(enabled.locator('xpath=ancestor::tr').getByRole('status')).toContainText('Disabled');
+  const disabled = ModelCatalogEntrySchema.array()
+    .parse(((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items)
+    .find((entry) => entry.model === 'gpt-6-luna');
+  expect(disabled).toEqual({ ...before, enabled: false });
+  await expect(enabled).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(enabled).toBeChecked();
+  await expect(enabled).toBeEnabled();
+  await expect(
+    defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  ).toHaveCount(1);
+  await expect(enabled.locator('xpath=ancestor::tr').getByRole('status')).toContainText('Enabled');
+});
+
+test('Settings catalog preserves a disabled saved default until the owner changes it', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  expect(
+    (
+      await request.put(`${url}/settings`, {
+        data: { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } },
+      })
+    ).status(),
+  ).toBe(200);
+  await page.goto(`${url}/app/settings`);
+  const enabled = page.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+  await tabTo(page, enabled);
+  await page.keyboard.press('Space');
+  await expect(enabled).toHaveAttribute('aria-busy', 'false');
+  const defaults = page.getByLabel('Default model', { exact: true });
+  await expect(defaults).toHaveValue('gpt-6-luna');
+  await expect(defaults.locator('option:checked')).toHaveText('GPT-6 Luna (disabled)');
+  await expect(defaults).toHaveAccessibleDescription(
+    'Disabled in the model catalog. Enable it or choose another default.',
+  );
+  expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
+    defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
+  });
+  // The truthful selection makes choosing the preceding server-default option fire a change.
+  await defaults.press('ArrowUp');
+  await defaults.press('Enter');
+  await expect(defaults).toHaveValue('');
+  await expect
+    .poll(async () => {
+      const values: unknown = await (await request.get(`${url}/settings`)).json();
+      return values;
+    })
+    .not.toHaveProperty('defaults');
+  await expect(
+    page.getByText('Disabled in the model catalog. Enable it or choose another default.', {
+      exact: true,
+    }),
+  ).toHaveCount(0);
+});
+
+test('Settings catalog refreshes a vanished toggle and announces the reason at the heading', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const entries = ModelCatalogEntrySchema.array().parse(
+    ((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items,
+  );
+  let vanished = false;
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`${url}/model-catalog`, async (route) => {
+    await route.fulfill({
+      json: { items: vanished ? entries.filter((entry) => entry.model !== 'gpt-6-luna') : entries },
+    });
+  });
+  await page.route(`${url}/model-catalog/codex/gpt-6-luna`, async (route) => {
+    await held;
+    vanished = true;
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ status: 404, code: 'MODEL_NOT_FOUND' }),
+    });
+  });
+  try {
+    await page.goto(`${url}/app/settings`);
+    const catalog = page.getByRole('region', { name: 'Model catalog' });
+    const enabled = catalog.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+    await tabTo(page, enabled);
+    const patch = page.waitForRequest(
+      (req) => req.method() === 'PATCH' && req.url().endsWith('/model-catalog/codex/gpt-6-luna'),
+    );
+    await page.keyboard.press('Space');
+    const submitted = await patch;
+    expect(submitted.postDataJSON()).toEqual({ enabled: false });
+    await expect(enabled).toHaveAttribute('aria-disabled', 'true');
+    await expect(enabled).toHaveAttribute('aria-busy', 'true');
+    await expect(enabled).not.toBeChecked();
+    await expect(enabled).toBeFocused();
+    release();
+    // A GET starting does not mean React committed the removal and recovered focus.
+    await expect(
+      catalog.getByRole('heading', { name: 'Model catalog', exact: true }),
+    ).toBeFocused();
+    await expect(enabled).toHaveCount(0);
+    await expect(
+      catalog.getByRole('status').filter({ hasText: 'no longer in the catalog' }),
+    ).toHaveText('GPT-6 Luna: This model is no longer in the catalog.');
+    await expect(catalog).not.toContainText('Refresh Settings');
+    await expect(
+      page.getByLabel('Default model').getByRole('option', { name: 'GPT-6 Luna', exact: true }),
+    ).toHaveCount(0);
+  } finally {
+    release();
+  }
+});
+
+for (const theme of ['dark', 'light'] as const) {
+  test(`Settings catalog has visible keyboard focus, pending and refused states in ${theme}`, async ({
+    page,
+    request,
+  }, testInfo) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    await page.addInitScript((choice) => localStorage.setItem('graphgoblin-theme', choice), theme);
+    await request.patch(`${url}/model-catalog/codex/gpt-6-sol`, { data: { enabled: false } });
+    await page.goto(`${url}/app/settings`);
+    const catalog = page.getByRole('region', { name: 'Model catalog' });
+    const enabled = catalog.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+    await tabTo(page, enabled);
+    const appearance = await enabled.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const bounds = element.getBoundingClientRect();
+      return {
+        width: bounds.width,
+        height: bounds.height,
+        outline: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        theme: document.documentElement.dataset['theme'],
+      };
+    });
+    expect(appearance).toEqual({
+      width: 44,
+      height: 24,
+      outline: 'solid',
+      outlineWidth: '2px',
+      theme,
+    });
+    await catalog.screenshot({ path: testInfo.outputPath(`model-catalog-${theme}.png`) });
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let patches = 0;
+    await page.route(`${url}/model-catalog/codex/gpt-6-luna`, async (route) => {
+      patches += 1;
+      await held;
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          status: 403,
+          code: 'FORBIDDEN',
+          detail: 'This API key cannot change model settings.',
+        }),
+      });
+    });
+    try {
+      const patch = page.waitForRequest(
+        (req) => req.method() === 'PATCH' && req.url().endsWith('/model-catalog/codex/gpt-6-luna'),
+      );
+      await page.keyboard.press('Space');
+      expect((await patch).postDataJSON()).toEqual({ enabled: false });
+      await expect(enabled).toHaveAttribute('aria-disabled', 'true');
+      await expect(enabled).toHaveAttribute('aria-busy', 'true');
+      await expect(enabled).not.toHaveAttribute('disabled');
+      await expect(enabled).not.toBeChecked();
+      await expect(enabled).toBeFocused();
+      const row = enabled.locator('xpath=ancestor::tr');
+      await expect(row.getByRole('status')).toContainText('Disablingâ€¦');
+      await expect(row.locator('svg')).toHaveCount(1);
+      await catalog.screenshot({ path: testInfo.outputPath(`model-catalog-${theme}-pending.png`) });
+      // aria-disabled keeps focus and blocks duplicate keyboard activation.
+      await page.keyboard.press('Enter');
+      release();
+      await expect(row.getByRole('alert')).toHaveText(
+        'This API key cannot change model settings. (FORBIDDEN)',
+      );
+      expect(patches).toBe(1);
+      await expect(enabled).toBeChecked();
+      await expect(enabled).toHaveAttribute('aria-disabled', 'false');
+      await expect(enabled).toHaveAttribute('aria-busy', 'false');
+      await expect(enabled).toBeFocused();
+      await expect(row.getByRole('status')).toContainText('Enabled');
+      await expect(
+        page.getByLabel('Default model').getByRole('option', { name: 'GPT-6 Luna', exact: true }),
+      ).toHaveCount(1);
+      await catalog.screenshot({ path: testInfo.outputPath(`model-catalog-${theme}-refused.png`) });
+    } finally {
+      release();
+    }
+  });
+}
+
+test('revoking this browser key warns and brings up the API key panel', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps', { requireApiKey: true });
+  const url = String(instance['url']);
+  const token = String(instance['token']);
+  await page.goto(`${url}/app/settings`);
+  await page.getByLabel('API key', { exact: true }).fill(token);
+  await page.getByRole('button', { name: 'Use key' }).click();
+  const trigger = page.getByRole('button', { name: 'Revoke e2e', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog).toContainText('401 immediately');
+  await expect(dialog).toContainText(
+    'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
+  );
+  await dialog.getByRole('button', { name: 'Confirm revoke e2e' }).click();
+  await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+  await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
+});
+
+for (const confirmWith of ['mouse', 'keyboard'] as const) {
+  for (const outcome of ['409', 'success'] as const) {
+    for (const escapeCount of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 20]) {
+      test(`busy Escape: ${confirmWith}, ${outcome}, ${escapeCount} presses`, async ({
+        page,
+        request,
+      }) => {
+        // Refused deletions keep their loop; repeated specs must not match its old action too.
+        const name = `escape-${confirmWith}-${outcome}-${escapeCount}-${test.info().repeatEachIndex}`;
+        const id = await publishLoop(request, approvalLoop(name));
+        let release!: () => void;
+        const held = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        let arrived!: () => void;
+        const started = new Promise<void>((resolve) => {
+          arrived = resolve;
+        });
+        await page.route(`**/loops/${id}`, async (route) => {
+          if (route.request().method() !== 'DELETE') {
+            await route.continue();
+            return;
+          }
+          arrived();
+          await held;
+          if (outcome === 'success') {
+            await route.continue();
+            return;
+          }
+          await route.fulfill({
+            status: 409,
+            contentType: 'application/problem+json',
+            body: JSON.stringify({
+              type: 'about:blank',
+              title: 'LOOP_IN_USE',
+              status: 409,
+              code: 'LOOP_IN_USE',
+              detail: 'The loop has active runs; finish them first.',
+            }),
+          });
+        });
+        try {
+          await page.goto('/app/loops');
+          const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
+          await trigger.click();
+          const confirmation = page.getByRole('button', { name: `Confirm delete ${name}` });
+          if (confirmWith === 'mouse') await confirmation.click();
+          else {
+            await confirmation.focus();
+            await page.keyboard.press('Enter');
+          }
+          await started;
+          const modal = page.locator('dialog:modal');
+          await modal.evaluate((element) => {
+            const root = document.documentElement;
+            root.dataset['busyCloses'] = '0';
+            root.dataset['busyFocusChanges'] = '0';
+            element.addEventListener('close', () => {
+              root.dataset['busyCloses'] = String(Number(root.dataset['busyCloses']) + 1);
+            });
+            document.addEventListener('focusin', () => {
+              root.dataset['busyFocusChanges'] = String(
+                Number(root.dataset['busyFocusChanges']) + 1,
+              );
+            });
+          });
+          for (let i = 0; i < escapeCount; i++) await page.keyboard.press('Escape');
+          await expect(modal).toHaveCount(1);
+          await expect(modal).toHaveAttribute('aria-busy', 'true');
+          expect(
+            await page.evaluate(() => ({
+              closes: Number(document.documentElement.dataset['busyCloses']),
+              focusChanges: Number(document.documentElement.dataset['busyFocusChanges']),
+            })),
+          ).toEqual({ closes: 0, focusChanges: 0 });
+          await expect(modal).toBeFocused();
+          release();
+          if (outcome === 'success') {
+            await expect(trigger).toHaveCount(0);
+            await expect(modal).toHaveCount(0);
+            await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeFocused();
+            expect((await request.get(`/loops/${id}`)).status()).toBe(404);
+          } else {
+            await expect(modal.getByRole('alert')).toContainText(
+              'The loop has active runs; finish them first.',
+            );
+            await modal.getByRole('button', { name: 'Keep' }).click();
+            await expect(modal).toHaveCount(0);
+            await trigger.click();
+            await expect(page.locator('dialog:modal')).toHaveCount(1);
+            await page.keyboard.press('Escape');
+            await expect(modal).toHaveCount(0);
+            await expect(trigger).toBeFocused();
+          }
+        } finally {
+          release();
+        }
+      });
+    }
+  }
+}
+
+test('revocation closes before a held key-list refresh removes the action later', async ({
+  page,
+  request,
+}) => {
+  const response = await request.post('/api-keys', {
+    data: { label: 'late-refresh', scopes: ['*'] },
+  });
+  expect(response.status()).toBe(201);
+  await page.goto('/app/settings');
+  const trigger = page.getByRole('button', { name: 'Revoke late-refresh', exact: true });
+  await trigger.click();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let arrived!: () => void;
+  const started = new Promise<void>((resolve) => {
+    arrived = resolve;
+  });
+  await page.route('**/api-keys', async (route) => {
+    if (route.request().method() === 'GET') {
+      arrived();
+      await held;
+    }
+    await route.continue();
+  });
+  try {
+    await page.getByRole('button', { name: 'Confirm revoke late-refresh' }).click();
+    await started;
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    release();
+    // The removal watch focuses the heading once React commits the refreshed row's removal.
+    await expect(page.getByRole('heading', { name: 'API keys', exact: true })).toBeFocused();
+    await expect(trigger).toHaveCount(0);
+  } finally {
+    release();
+  }
+});
+
+test('own-key revocation closes before the held 401 refetch and focuses the key panel without waiting for retry', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps', { requireApiKey: true });
+  const url = String(instance['url']);
+  await page.goto(`${url}/app/settings`);
+  await page.getByLabel('API key', { exact: true }).fill(String(instance['token']));
+  await page.getByRole('button', { name: 'Use key' }).click();
+  await page.getByRole('button', { name: 'Revoke e2e', exact: true }).click();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let releaseRetry!: () => void;
+  const heldRetry = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+  let arrived!: () => void;
+  const started = new Promise<void>((resolve) => {
+    arrived = resolve;
+  });
+  let retried!: () => void;
+  const retryStarted = new Promise<void>((resolve) => {
+    retried = resolve;
+  });
+  let requests = 0;
+  await page.route(`${url}/api-keys`, async (route) => {
+    requests++;
+    arrived();
+    if (requests === 1) await held;
+    else {
+      retried();
+      await heldRetry;
+    }
+    await route.continue();
+  });
+  try {
+    await page.getByRole('button', { name: 'Confirm revoke e2e' }).click();
+    await started;
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    release();
+    await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+    await retryStarted;
+    // Focus must reach the key panel while the retry cannot complete.
+    await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
+    releaseRetry();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Could not load api keys' }),
+    ).toBeVisible();
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
+  } finally {
+    release();
+    releaseRetry();
+  }
+});
+
+test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
+  const name = `focus-export-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`**/loops/${id}/export*`, async (route) => {
+    await held;
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({
+        type: 'about:blank',
+        title: 'VERSION_NOT_FOUND',
+        status: 404,
+        code: 'VERSION_NOT_FOUND',
+        detail: 'No version.',
+      }),
+    });
+  });
+  try {
+    await page.goto('/app/loops');
+    const button = page.getByRole('button', { name: `Export ${name}` });
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await expect(button).toContainText('Exporting');
+    await expect(button).toBeFocused();
+    await expect(page.getByRole('status').filter({ hasText: `Exporting ${name}` })).toBeVisible();
+    await page.keyboard.press('Enter');
+    release();
+    await expect(page.getByRole('alert')).toContainText('No version.');
+    await expect(button).toBeFocused();
+  } finally {
+    release();
+  }
+});
+
+test('review: pending double clicks cannot select status text', async ({ page, request }) => {
+  const name = `selection-guard-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`**/loops/${id}`, async (route) => {
+    if (route.request().method() !== 'DELETE') {
+      await route.continue();
+      return;
+    }
+    await held;
+    await route.fulfill({
+      status: 409,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({
+        type: 'about:blank',
+        title: 'LOOP_IN_USE',
+        status: 409,
+        code: 'LOOP_IN_USE',
+        detail: 'Still in use.',
+      }),
+    });
+  });
+  try {
+    await page.goto('/app/loops');
+    await page.getByRole('button', { name: `Delete ${name}`, exact: true }).click();
+    const button = page.getByRole('button', { name: `Confirm delete ${name}` });
+    const box = await button.boundingBox();
+    if (!box) throw new Error('Confirm is not visible');
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+    const dialog = page.locator('dialog:modal');
+    await expect(dialog).toHaveAttribute('aria-busy', 'true');
+    expect(await dialog.evaluate((element) => getComputedStyle(element).userSelect)).toBe('none');
+    await dialog.getByRole('status').dblclick();
+    expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('');
+    release();
+    await expect(dialog.getByRole('alert')).toContainText('Still in use.');
+    await dialog.getByRole('button', { name: 'Keep' }).click();
+  } finally {
+    release();
+  }
+});
+FILE apps/web/e2e/qa.spec.ts
+import { CURRENT_DEFINITION_FORMAT, RunRecordSchema } from '@graphgoblin/contracts';
+/**
+ * Regression specs for the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md). They drive
+ * the built app against the in-process API; `control()` scripts the fake harness through the E2E
+ * server's control port.
+ */
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import {
+  approvalLoop,
+  closeNode,
+  control,
+  expect,
+  openNode,
+  publishLoop,
+  showLoopPanel,
+  test,
+} from './fixtures.js';
+
+const start = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
+const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
+function chain(name: string, middle: Record<string, unknown> & { id: string }) {
+  return {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name,
+    nodes: [start, middle, done],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: middle.id } },
+      { id: 'e2', from: { node: middle.id, port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+const ask = (prompt: string) => ({
+  id: 'ask',
+  kind: 'inference',
+  label: 'Ask',
+  config: { prompt: { template: prompt } },
+});
+
+async function startRun(request: APIRequestContext, loopId: string): Promise<string> {
+  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  expect(res.status()).toBe(202);
+  return ((await res.json()) as { run: { id: string } }).run.id;
+}
+
+async function timelineSeqs(page: Page): Promise<number[]> {
+  return page
+    .getByRole('list', { name: 'Timeline' })
+    .getByRole('button')
+    .evaluateAll((buttons) =>
+      buttons.map((b) => Number(/#(\d+)/.exec(b.textContent ?? '')?.[1] ?? NaN)),
+    );
+}
+
+test('a subloop child run opens in the inspector and replays from its seeded thread', async ({
+  page,
+  request,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  // Define this test's turn explicitly; the control server's harness is shared across specs.
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'child turn', finalText: 'OK' }],
+  });
+  const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+  const parentId = await publishLoop(request, {
+    ...chain('qa parent', {
+      id: 'sub',
+      kind: 'subloop',
+      label: 'Sub',
+      config: { loopRef: { loopId: childId } },
+    }),
+  });
+  const parentRun = await startRun(request, parentId);
+  await expect
+    .poll(async () => {
+      const res = await request.get(`/runs?parent=${parentRun}`);
+      return ((await res.json()) as { items: unknown[] }).items.length;
+    })
+    .toBe(1);
+  const children = (await (await request.get(`/runs?parent=${parentRun}`)).json()) as {
+    items: { id: string }[];
+  };
+  await page.goto(`/app/runs/${children.items[0]!.id}`);
+  await expect(page.getByText(/events, complete/)).toBeVisible();
+  await expect(page.getByLabel('Messages')).toContainText('OK');
+  // The first event: the seeded thread, before any node ran.
+  await page.getByRole('list', { name: 'Timeline' }).getByRole('button').first().click();
+  await expect(page.getByText('Thread at event 1')).toBeVisible();
+  await expect(page.getByText('This screen failed to render')).toHaveCount(0);
+  await expect(page.getByText(/cannot be reconstructed/)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event', async ({
+  page,
+  request,
+}) => {
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'MANY ITEMS', items: 1200, delayMs: 1500 }],
+  });
+  const loopId = await publishLoop(request, chain('qa many', ask('MANY ITEMS')));
+  let runGets = 0;
+  page.on('request', (r) => {
+    if (/\/runs\/[0-9A-Z]{26}$/.test(new URL(r.url()).pathname)) runGets += 1;
+  });
+  const runId = await startRun(request, loopId);
+  const started = Date.now();
+  await page.goto(`/app/runs/${runId}`);
+  await expect(page.getByText(/^Timeline \(\d+ events, complete\)$/)).toBeVisible({
+    timeout: 30_000,
+  });
+  const live = Date.now() - started;
+  const completedRun = RunRecordSchema.parse(await (await request.get(`/runs/${runId}`)).json());
+  expect(completedRun.status).toBe('succeeded');
+  // Derive the full durable sequence rather than hard-coding its lifecycle/evidence overhead.
+  const eventCount = completedRun.lastEventSeq;
+  const completeTimeline = `Timeline (${eventCount} events, complete)`;
+  await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
+    1200,
+  );
+  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.session ask$/ })).toHaveCount(
+    1,
+  );
+  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
+  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.turn ask$/ })).toHaveCount(1);
+  await expect(
+    timeline.getByRole('button', { name: /^#\d+ harness\.submission ask$/ }),
+  ).toHaveCount(1);
+  await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
+  const seqs = await timelineSeqs(page);
+  expect(seqs).toEqual(Array.from({ length: eventCount }, (_, i) => i + 1));
+  // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
+  // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
+  const liveRunGets = runGets;
+  expect(liveRunGets).toBeLessThanOrEqual(5 + Math.ceil(live / 100));
+  expect(liveRunGets).toBeLessThan(1200);
+
+  // Opening the finished run fresh, then selecting an event deep in the log.
+  await page.evaluate(() => sessionStorage.clear());
+  const fresh = Date.now();
+  await page.reload();
+  await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
+  const freshMs = Date.now() - fresh;
+  const click = Date.now();
+  await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
+  await expect(page.getByText('Thread at event 601')).toBeVisible();
+  const clickMs = Date.now() - click;
+  console.log(
+    `${eventCount}-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
+  );
+  expect(freshMs).toBeLessThan(5_000);
+  expect(clickMs).toBeLessThan(2_000);
+});
+
+test('failure reasons are typed and visible: harness failure and decider unavailable', async ({
+  page,
+  request,
+}) => {
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'FAIL THIS', error: { code: 'TURN_FAILED', message: 'scripted' } }],
+  });
+  const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+  await page.goto(`/app/runs/${await startRun(request, failing)}`);
+  await expect(page.getByText('Failed: HARNESS_DELIVERY_UNCERTAIN')).toBeVisible();
+
+  await control(request, '/deciders', { jev: true, codex: true });
+  try {
+    const decide = {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: 'qa decider',
+      nodes: [
+        start,
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            instructions: 'which?',
+            routes: [
+              {
+                id: 'a',
+                label: 'A',
+              },
+              {
+                id: 'b',
+                label: 'B',
+              },
+            ],
+          },
+        },
+        done,
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        { id: 'e2', from: { node: 'pick', port: 'a' }, to: { node: 'done' } },
+        { id: 'e3', from: { node: 'pick', port: 'b' }, to: { node: 'done' } },
+      ],
+    };
+    const loopId = await publishLoop(request, decide);
+    // Publication admits a ready evaluator; losing it later is a typed runtime failure.
+    await control(request, '/deciders', { jev: true, codex: false });
+    await page.goto(`/app/runs/${await startRun(request, loopId)}`);
+    await expect(page.getByText('Failed: EVALUATION_UNAVAILABLE')).toBeVisible();
+  } finally {
+    await control(request, '/deciders', { jev: true, codex: true });
+  }
+});
+
+test('the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('qa syntax'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await showLoopPanel(page);
+  await openNode(page, 'approve');
+  const prompt = page.locator('[data-field="prompt"] .cm-content');
+  await prompt.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('Approve {% if x %}');
+  // The node editor's badge, beside its title, counts the node's issues; its popover names them.
+  const editor = page.getByRole('dialog', { name: 'Edit wait approve' });
+  const issues = editor.getByRole('button', { name: /issues? on approve$/ });
+  await expect(issues).toHaveAccessibleName('1 issue on approve');
+  await issues.click();
+  await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
+    'TEMPLATE_INVALID',
+  );
+  // Esc closes the popover, not the editor.
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toBeHidden();
+  await expect(editor).toBeVisible();
+  // The page behind the node editor is inert: close it to reach Publish.
+  await closeNode(page);
+  await expect(page.getByRole('button', { name: '1 error' })).toBeVisible();
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText('Publish failed')).toBeVisible();
+  await expect(page.getByText(/TEMPLATE_INVALID|template at node/).first()).toBeVisible();
+
+  await openNode(page, 'approve');
+  await prompt.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('Approve?');
+  await expect(issues).toHaveCount(0);
+
+  // Input schema text that is not JSON blocks publishing until fixed, after the editor closes.
+  const schema = page.locator('[data-field="inputSchema"] .cm-content');
+  await schema.click();
+  await page.keyboard.type('{"type": ');
+  await expect(issues).toHaveAccessibleName('1 issue on approve');
+  await issues.click();
+  await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
+    'FIELD_INPUT_INVALID',
+  );
+  await page.keyboard.press('Escape');
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(
+    page.getByText(
+      'Some fields hold input that is not a valid value yet; complete or discard it first.',
+    ),
+  ).toBeVisible();
+  // Delete with focus on the Publish button must not delete the selected node.
+  await page.keyboard.press('Delete');
+  await expect(page.getByTestId('node-approve')).toBeVisible();
+  await openNode(page, 'approve');
+  await schema.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.press('Delete');
+  await expect(issues).toHaveCount(0);
+  // Delete and Backspace inside the editor edit the field, never the graph.
+  await expect(page.getByTestId('node-approve')).toBeVisible();
+  await closeNode(page);
+  await expect(page.getByText('Ready to publish')).toBeVisible();
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText(/Published version 2\.|Nothing to publish/)).toBeVisible();
+});
+
+/**
+ * Press Tab (or Shift+Tab) until `target` has focus, as a keyboard user would, failing after
+ * `limit` presses.
+ */
+async function tabTo(page: Page, target: Locator, { back = false, limit = 80 } = {}) {
+  for (
+    let i = 0;
+    i < limit && !(await target.evaluate((el) => el === document.activeElement));
+    i += 1
+  )
+    await page.keyboard.press(back ? 'Shift+Tab' : 'Tab');
+  await expect(target).toBeFocused();
+}
+
+test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
+  await page.goto('/app/loops');
+  await page.getByLabel('New loop name').fill('qa keyboard');
+  await page.getByLabel('New loop name').press('Enter');
+  await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
+
+  // Every step from here is a key press: Tab and Shift+Tab move, Enter acts, the arrow keys change a
+  // focused select (closed, as Edge and Chromium do on Windows and Linux), Esc closes.
+  await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('node-wait')).toBeInViewport();
+  // Rewire start -> wait -> done with the Connect forms.
+  // Canvas nodes are focusable; Enter opens the focused node's editor and Esc closes it.
+  const startNode = page.locator('.react-flow__node[data-id="start"]');
+  await tabTo(page, startNode);
+  await page.keyboard.press('Enter');
+  const startDialog = page.getByRole('dialog', { name: 'Edit trigger start' });
+  await expect(startDialog).toBeVisible();
+  await expect(startDialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
+  // Tab walks the dialog in visual order: close, id, label, the config form, connections.
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByLabel('Node id')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByLabel('Label')).toBeFocused();
+  await tabTo(page, startDialog.getByRole('button', { name: 'Remove edge e1' }));
+  await page.keyboard.press('Enter');
+  const startForm = page.getByRole('form', { name: 'Connect start' });
+  await tabTo(page, startForm.getByLabel('To'));
+  await expect(startForm.getByLabel('To')).toHaveValue('done');
+  await page.keyboard.press('ArrowDown');
+  await expect(startForm.getByLabel('To')).toHaveValue('wait');
+  await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+  await expect(startDialog).toHaveCount(0);
+  await expect(startNode).toBeFocused();
+
+  const waitNode = page.locator('.react-flow__node[data-id="wait"]');
+  await tabTo(page, waitNode);
+  await page.keyboard.press('Enter');
+  const waitDialog = page.getByRole('dialog', { name: 'Edit wait wait' });
+  await expect(waitDialog).toBeVisible();
+  const waitForm = page.getByRole('form', { name: 'Connect wait' });
+  await tabTo(page, waitForm.getByLabel('To'));
+  await page.keyboard.press('ArrowDown');
+  await expect(waitForm.getByLabel('To')).toHaveValue('wait');
+  await page.keyboard.press('ArrowUp');
+  await expect(waitForm.getByLabel('To')).toHaveValue('done');
+  await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
+  await page.keyboard.press('Enter');
+  // Past the last control, Tab comes back round to the first: focus stays in the dialog.
+  await tabTo(page, waitDialog.getByRole('button', { name: 'Done' }));
+  await page.keyboard.press('Tab');
+  await expect(waitDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(waitDialog).toHaveCount(0);
+  await expect(waitNode).toBeFocused();
+  await expect(page.getByText('Ready to publish')).toBeVisible();
+  await tabTo(page, page.getByRole('button', { name: 'Publish' }), { back: true });
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+});
+
+test('an edit made right before leaving the editor is kept', async ({ page, request }) => {
+  const loopId = await publishLoop(request, approvalLoop('qa leave'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await showLoopPanel(page);
+  await page.getByLabel('Description').fill('typed just before leaving');
+  // Leave inside the 600 ms autosave window.
+  await page.getByRole('link', { name: 'Runs', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Runs' })).toBeVisible();
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await showLoopPanel(page);
+  await expect(page.getByLabel('Description')).toHaveValue('typed just before leaving');
+  await expect
+    .poll(async () => {
+      const res = await request.get(`/loops/${loopId}`);
+      return ((await res.json()) as { draft?: { definition: { description?: string } } }).draft
+        ?.definition.description;
+    })
+    .toBe('typed just before leaving');
+});
+
+test('Settings defaults reach the next run without a restart', async ({ page, request }) => {
+  const loopId = await publishLoop(request, chain('qa defaults', ask('defaults check')));
+  await page.goto('/app/settings');
+  const saved = page.waitForResponse(
+    (response) => response.request().method() === 'PUT' && response.url().endsWith('/settings'),
+  );
+  const refreshed = page.waitForResponse(
+    async (response) =>
+      response.request().method() === 'GET' &&
+      response.url().endsWith('/settings') &&
+      ((await response.json()) as { defaults?: { byHarness?: { codex?: { effort?: string } } } })
+        .defaults?.byHarness?.codex?.effort === 'high',
+  );
+  await page.getByLabel('Default effort', { exact: true }).selectOption('high');
+  expect((await saved).status()).toBe(200);
+  // Observe the UI's refetch rather than repeatedly reading Settings while its save is pending.
+  await refreshed;
+  await expect(page.getByLabel('Default effort', { exact: true })).toHaveValue('high');
+  const previous = (await control(request, '/harness/requests')) as { started: unknown[] };
+  const previousTurns = previous.started.length;
+  await startRun(request, loopId);
+  await expect
+    .poll(
+      async () => {
+        const { started } = (await control(request, '/harness/requests')) as {
+          started: { effort?: string }[];
+        };
+        return started[previousTurns]?.effort;
+      },
+      { timeout: 30_000, intervals: [250, 500, 1000] },
+    )
+    .toBe('high');
+  const removed = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'DELETE' && response.url().endsWith('/settings/defaults'),
+  );
+  await page.getByLabel('Default effort', { exact: true }).selectOption('');
+  expect((await removed).status()).toBe(204);
+  expect(await (await request.get('/settings')).json()).not.toHaveProperty('defaults');
+});
+
+test('with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it', async ({
+  browser,
+}) => {
+  const extra = (await (
+    await fetch(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps`, {
+      method: 'POST',
+      body: JSON.stringify({ requireApiKey: true }),
+    })
+  ).json()) as { url: string; token: string };
+  const context = await browser.newContext({ baseURL: extra.url, serviceWorkers: 'block' });
+  const page = await context.newPage();
+  await page.goto('/app/loops');
+  await expect(page.getByText('API key required')).toBeVisible();
+  await page.getByRole('textbox', { name: 'API key' }).fill('gg_not_a_key');
+  await page.getByRole('button', { name: 'Use key' }).click();
+  await expect(page.getByText(/refused the key stored in this browser/)).toBeVisible();
+  await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+  await page.getByRole('button', { name: 'Use key' }).click();
+  await expect(page.getByText('API key required')).toHaveCount(0);
+  await expect(page.getByText('No loops yet.')).toBeVisible();
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Forget key' }).click();
+  await page.reload();
+  await expect(page.getByText('API key required')).toBeVisible();
+  await context.close();
+});
+
+test('with GG_REQUIRE_API_KEY, editor and inspector deep links go live once the key is entered', async ({
+  browser,
+  playwright,
+}) => {
+  const extra = (await (
+    await fetch(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps`, {
+      method: 'POST',
+      body: JSON.stringify({ requireApiKey: true }),
+    })
+  ).json()) as { url: string; token: string };
+  const api = await playwright.request.newContext({
+    baseURL: extra.url,
+    extraHTTPHeaders: { authorization: `Bearer ${extra.token}` },
+  });
+  const loopId = await publishLoop(api, approvalLoop('qa key deep links'));
+  const run = await api.post(`/loops/${loopId}/runs`, { data: {} });
+  const runId = ((await run.json()) as { run: { id: string } }).run.id;
+  await api.dispose();
+
+  for (const [path, live] of [
+    [`/app/loops/${loopId}/edit`, 'heading'],
+    [`/app/runs/${runId}`, 'timeline'],
+  ] as const) {
+    const context = await browser.newContext({ baseURL: extra.url, serviceWorkers: 'block' });
+    const page = await context.newPage();
+    await page.goto(path);
+    await expect(page.getByText('API key required')).toBeVisible();
+    await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+    await page.getByRole('button', { name: 'Use key' }).click();
+    if (live === 'heading') {
+      await expect(page.getByRole('heading', { name: 'qa key deep links' })).toBeVisible();
+    } else {
+      await expect(page.getByText('Input requested')).toBeVisible();
+      await expect(page.getByText(/events, live/)).toBeVisible();
+    }
+    await context.close();
+  }
+});
+
+test('main screens fit 1024x768 without horizontal scrolling, and deep links load cold', async ({
+  browser,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('qa viewport'));
+  const runId = await startRun(request, loopId);
+  const context = await browser.newContext({
+    baseURL: process.env['GG_E2E_BASE_URL'] ?? '',
+    viewport: { width: 1024, height: 768 },
+  });
+  const page = await context.newPage();
+  for (const path of [
+    '/app/loops',
+    `/app/loops/${loopId}/edit`,
+    '/app/runs',
+    `/app/runs/new?loop=${loopId}`,
+    `/app/runs/${runId}`,
+    '/app/events',
+    '/app/settings',
+  ]) {
+    await page.goto(path);
+    await expect(page.locator('header').first()).toBeVisible();
+    await page.waitForTimeout(500);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(overflow, path).toBe(false);
+  }
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  expect((await page.request.get('/app/assets/missing-123.js')).status()).toBe(404);
+  const root = await page.request.get('/', { maxRedirects: 0 });
+  expect(root.status()).toBe(302);
+  expect(root.headers()['location']).toBe('/app/');
+  await context.close();
+});
+FILE apps/web/e2e/inspector-large-values.spec.ts
+import { RunRecordSchema } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { approvalLoop, control, expect, test } from './fixtures.js';
+
+/** One unbroken 20,000-character line: the shape that widened the inspector page (#380). */
+const LONG = 'v'.repeat(20_000);
+/** A wait prompt at most 10,000 characters long is what the run contract accepts. */
+const PROMPT = 'v'.repeat(9_000);
+/** A value that alone puts the run's recorded history above the large-history threshold. */
+const HUGE = 'v'.repeat(2_100_000);
+
+function inferenceLoop(name: string, waitBeforeExit = false) {
+  const source = minimalLoop();
+  const nodes = [
+    source.nodes[0]!,
+    {
+      id: 'work',
+      kind: 'inference',
+      label: 'Work',
+      config: { prompt: { template: 'Produce one long single-line value.' } },
+    },
+    ...(waitBeforeExit
+      ? [
+          {
+            id: 'approve',
+            kind: 'wait',
+            label: 'Approve',
+            config: { mode: 'input', prompt: 'Approve?' },
+          },
+        ]
+      : []),
+    { ...source.nodes[1]!, config: { returns: 'outputs.work.value' } },
+  ];
+  return {
+    ...source,
+    name,
+    nodes: nodes.map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
+    edges: nodes.slice(1).map((node, index) => ({
+      id: `e${index + 1}`,
+      from: { node: nodes[index]!.id, port: 'out' },
+      to: { node: node.id },
+    })),
+  };
+}
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`large values stay bounded and the page keeps its width at ${viewport.width} px (#259, #380)`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const instanceId = instance['instanceId'];
+    const created = await request.post(url + '/loops', {
+      data: { definition: inferenceLoop(`Large values ${viewport.width}`) },
+    });
+    expect(created.status(), await created.text()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+    await control(request, '/harness/script', { instanceId, turns: [{ finalText: LONG }] });
+    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+      data: { input: {} },
+    });
+    expect(started.status()).toBe(202);
+    const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+    await expect
+      .poll(
+        async () =>
+          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+        { timeout: 30_000, intervals: [250, 500, 1000] },
+      )
+      .toBe('succeeded');
+
+    await page.setViewportSize(viewport);
+    await page.goto(url + '/app/runs/' + runId);
+
+    // The result shows its first 4,096 characters (the opening quote and 4,095 of the value);
+    // the whole value and an exact download are one click away.
+    const result = page.getByTestId('run-result');
+    await expect(result).toHaveText(/^"v{4095}â€¦$/);
+    await expect(
+      page.getByText('Showing the first 4,096 characters of a larger value.', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download Result as JSON' })).toBeVisible();
+    await page.getByRole('button', { name: 'Show all of Result' }).click();
+    await expect(result).toHaveText(`"${LONG}"`);
+    // Once it scrolls, the text is a named region the keyboard can reach.
+    await expect(result).toHaveAttribute('role', 'region');
+    await expect(result).toHaveAttribute('tabindex', '0');
+
+    // The finished inference node's patch and the full thread carry the long value too, and the
+    // progress drawer shows the harness items: with everything open, nothing widens the document.
+    const timeline = page.getByRole('list', { name: 'Timeline' });
+    await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+    const diff = page.getByRole('list', { name: 'Patch diff' });
+    await expect(diff).toBeVisible();
+    await expect(
+      diff.getByText('Showing the first 1,024 characters of a larger value.').first(),
+    ).toBeVisible();
+    await page.getByText('Full thread JSON', { exact: true }).click();
+    await expect(page.getByTestId('thread-json')).toHaveText(/â€¦$/);
+    await page.getByRole('button', { name: /^Node progress/ }).click();
+    await expect(page.getByRole('button', { name: /^Node progress/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    const widths = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth,
+      window: window.innerWidth,
+    }));
+    expect(widths.document).toBeLessThanOrEqual(widths.window);
+  });
+
+  test(`a long wait prompt stays bounded and keeps the page width at ${viewport.width} px (#259)`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const loopDefinition = approvalLoop(`Long prompt ${viewport.width}`);
+    const wait = loopDefinition.nodes.find((node) => node.id === 'approve')!;
+    wait.config = { mode: 'input', prompt: PROMPT };
+    const created = await request.post(url + '/loops', { data: { definition: loopDefinition } });
+    expect(created.status(), await created.text()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+      data: { input: {} },
+    });
+    expect(started.status()).toBe(202);
+    const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+    await expect
+      .poll(
+        async () =>
+          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+        { timeout: 30_000, intervals: [250, 500, 1000] },
+      )
+      .toBe('waiting');
+
+    await page.setViewportSize(viewport);
+    await page.goto(url + '/app/runs/' + runId);
+    const prompt = page.getByLabel('Prompt', { exact: true });
+    await expect(prompt).toHaveText(/^v{4096}â€¦$/);
+    await expect(
+      page.getByText('Showing the first 4,096 of 9,000 characters.', { exact: true }),
+    ).toBeVisible();
+    const before = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth,
+      window: window.innerWidth,
+    }));
+    expect(before.document).toBeLessThanOrEqual(before.window);
+    await page.getByRole('button', { name: 'Show all of Prompt' }).click();
+    await expect(page.getByRole('region', { name: 'Prompt' })).toHaveText(PROMPT);
+    const after = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth,
+      window: window.innerWidth,
+    }));
+    expect(after.document).toBeLessThanOrEqual(after.window);
+  });
+}
+
+test('the keyboard stays inside an expanded value that a live event replaces (#259)', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = instance['instanceId'];
+  const created = await request.post(url + '/loops', {
+    data: { definition: inferenceLoop('Live replacement', true) },
+  });
+  expect(created.status(), await created.text()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  await control(request, '/harness/script', { instanceId, turns: [{ finalText: LONG }] });
+  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  expect(started.status()).toBe(202);
+  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  const run = async () =>
+    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  await expect
+    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+    .toBe('waiting');
+
+  await page.goto(url + '/app/runs/' + runId);
+  // The thread at the wait carries the long value; read it whole, with the keyboard on it.
+  await page.getByText('Full thread JSON', { exact: true }).click();
+  await page.getByRole('button', { name: 'Show all of Full thread JSON' }).click();
+  const region = page.getByRole('region', { name: 'Full thread JSON' });
+  await region.focus();
+  await expect(region).toBeFocused();
+
+  // Input arrives from elsewhere: the run finishes, the thread at the latest event is a new
+  // value, the region collapses, and the keyboard lands on its Show all, never on the body.
+  const waiting = (await run()).waiting;
+  expect(waiting).toBeDefined();
+  const answered = await request.post(url + '/runs/' + runId + '/input', {
+    data: { waitId: waiting!.waitId, input: { approved: true } },
+  });
+  expect(answered.status(), await answered.text()).toBe(200);
+  await expect(
+    page.getByRole('list', { name: 'Timeline' }).getByText('run.finished'),
+  ).toBeVisible();
+  const showAll = page.getByRole('button', { name: 'Show all of Full thread JSON' });
+  await expect(showAll).toBeVisible();
+  await expect(showAll).toBeFocused();
+  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
+  // Tab moves on from the control; nothing is left focusable behind it.
+  await page.keyboard.press('Tab');
+  await expect(showAll).not.toBeFocused();
+  await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
+});
+
+test('a run with a large history reconstructs the thread at an event on request (#259)', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = instance['instanceId'];
+  const created = await request.post(url + '/loops', {
+    data: { definition: inferenceLoop('Large history', true) },
+  });
+  expect(created.status(), await created.text()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  await control(request, '/harness/script', { instanceId, turns: [{ finalText: HUGE }] });
+  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  expect(started.status()).toBe(202);
+  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  const run = async () =>
+    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  await expect
+    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+    .toBe('waiting');
+
+  await page.goto(url + '/app/runs/' + runId);
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await expect(timeline.getByText('run.waiting')).toBeVisible();
+  // The history is above the threshold: the latest event asks before anything is replayed.
+  const reconstruct = page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ });
+  await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
+  await expect(reconstruct).toBeVisible();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
+  await expect(reconstruct).toHaveText(
+    `Reconstruct the thread at event ${(await run()).lastEventSeq}`,
+  );
+  const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+  expect(waitSeq).toBeDefined();
+  await reconstruct.click();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  await expect(reconstruct).toHaveCount(0);
+
+  // A live event that becomes the selection (the inspector follows the latest event until one is
+  // selected by hand) asks again.
+  const waiting = (await run()).waiting;
+  expect(waiting).toBeDefined();
+  const answered = await request.post(url + '/runs/' + runId + '/input', {
+    data: { waitId: waiting!.waitId, input: { approved: true } },
+  });
+  expect(answered.status(), await answered.text()).toBe(200);
+  await expect(timeline.getByText('run.finished')).toBeVisible();
+  // Caller delivery follows run.finished. Observe that durable fact before freezing the latest
+  // selection; otherwise the later last-button click can select a different, unreplayed event.
+  await expect(timeline.getByText('return.delivered', { exact: true })).toBeVisible();
+  const completed = await run();
+  expect(completed.status).toBe('succeeded');
+  await expect(
+    page.getByRole('heading', {
+      name: `Timeline (${completed.lastEventSeq} events, complete)`,
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(reconstruct).toBeVisible();
+  await expect(reconstruct).toHaveText(`Reconstruct the thread at event ${completed.lastEventSeq}`);
+  const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+  expect(finishedSeq).toBeDefined();
+  expect(finishedSeq).not.toBe(waitSeq);
+
+  // The first event asks too; the events reconstructed earlier stay shown on return.
+  await timeline.getByRole('button').first().click();
+  await expect(page.getByRole('heading', { name: 'Thread at event 1', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Reconstruct the thread at event 1' }).click();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  await timeline.getByRole('button').filter({ hasText: 'run.waiting' }).click();
+  await expect(
+    page.getByRole('heading', { name: `Thread at event ${waitSeq}`, exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  await expect(reconstruct).toHaveCount(0);
+  await timeline.getByRole('button').last().click();
+  await expect(
+    page.getByRole('button', { name: `Reconstruct the thread at event ${finishedSeq}` }),
+  ).toBeVisible();
+
+  // The log of such a run is not stored: a reload replays it from the first event and asks again.
+  await page.reload();
+  await expect(page.getByRole('list', { name: 'Timeline' }).getByText('run.finished')).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(
+    page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ }),
+  ).toBeVisible();
+});
+FILE apps/web/vitest.config.ts
+import react from '@vitejs/plugin-react';
+import { createVitestConfig } from '@graphgoblin/tooling/vitest';
+
+// Component tests run in jsdom with Testing Library. `main.tsx` is the browser entry and is covered
+// by a test that mocks the bootstrap module; everything else is exercised through components.
+// Fake-engine integration tests live in scripts so browser source never imports the engine.
+export default createVitestConfig({
+  plugins: [react()],
+  test: {
+    // Keep per-file isolation without a separate Windows process startup for every file.
+    pool: 'threads',
+    isolate: true,
+    // Bound simultaneous jsdom/V8 work; deadlines and coverage thresholds stay configured below.
+    maxWorkers: 2,
+    environment: 'jsdom',
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
+    setupFiles: ['src/__fixtures__/setup.ts'],
+    css: false,
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
+  },
+});
+FILE apps/web/playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * E2E against the built app served by the API (see e2e/server.ts). Not part of `test:coverage`;
+ * run `pnpm build` first, then `pnpm --filter @graphgoblin/web test:e2e`.
+ *
+ * Browser: Playwright's bundled Chromium by default. Set GG_E2E_BROWSER_CHANNEL (for example
+ * `msedge` or `chrome`) to use an installed browser instead; on Windows it defaults to `msedge`,
+ * which every Windows 11 machine has, so no browser download is needed there.
+ */
+const channel =
+  process.env['GG_E2E_BROWSER_CHANNEL'] ?? (process.platform === 'win32' ? 'msedge' : undefined);
+
+export default defineConfig({
+  testDir: 'e2e',
+  testMatch: '**/*.spec.ts',
+  globalSetup: './e2e/global-setup.ts',
+  fullyParallel: false,
+  workers: 1,
+  // A pass only after retry is a flaky failure, locally and in the mandatory browser job.
+  retries: 0,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']],
+  outputDir: 'test-results',
+  use: {
+    trace: 'retain-on-failure',
+    serviceWorkers: 'allow',
+    viewport: { width: 1440, height: 900 },
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        ...(channel ? { channel } : {}),
+      },
+    },
+  ],
+});
+FILE .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Recovery process acceptance
+        run: pnpm test:recovery-process
+
+      - name: Wait restart acceptance
+        run: pnpm test:wait-restart
+
+      - name: Prompt restart acceptance
+        run: pnpm test:prompt-restart
+      - name: Webhook retry acceptance
+        run: pnpm test:webhook-retry
+
+      - name: Offline upgrade acceptance
+        run: pnpm test:upgrade
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Layer rules
+        run: pnpm check:layers
+
+      - name: Migration generation is a no-op
+        run: pnpm check:migrations
+
+      - name: Design token rules
+        run: pnpm check:tokens
+
+      - name: Dependency graph rules
+        run: pnpm check:deps
+
+      - name: Shipped templates and deliberate-invalid refusal
+        run: pnpm check:templates
+
+      - name: Unit tests with coverage thresholds
+        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
+        run: pnpm exec turbo run test:coverage --concurrency=1
+
+      - name: Licence allowlist
+        run: pnpm check:licenses
+
+      - name: Generated docs are current
+        run: pnpm check:docs
+
+      - name: Design token contrast table is current and passing
+        run: pnpm check:contrast
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            packages/*/coverage/coverage-summary.json
+            apps/*/coverage/coverage-summary.json
+          if-no-files-found: ignore
+
+  browser:
+    name: Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      # Match Windows development and the existing Linux routing-performance job.
+      GG_E2E_BROWSER_CHANNEL: msedge
+      # Live checks spend subscription quota and require an installed, signed-in CLI.
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # issue-170-qa reads frozen golden definitions from an earlier commit with git ls-tree.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Edge
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
+
+      - name: Build
+        run: pnpm build
+
+      - name: Functional browser suite (no retries)
+        timeout-minutes: 60
+        working-directory: apps/web
+        run: pnpm exec playwright test --retries=0 --workers=1
+
+      - name: Browser coverage and exclusions
+        if: always()
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Functional browser gate
+
+          Selected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.
+          The test step and report record the executed result, including any setup failure.
+          The real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.
+
+          Skipped: `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI`.
+          It requires `LIVE=1`, an installed Codex CLI and a provider login, and spends subscription quota. CI sets `LIVE=0`.
+          No other functional spec or test is skipped or gated on a provider login or installed CLI.
+
+          Optional modes are off: `GG_FORMS_QA_PHASE` (historical before/after captures),
+          `GG_ROUTING_SCREENSHOTS` (captures), `GG_ROUTING_PROFILE` (profiling), and
+          `GG_ROUTING_STRICT_PERF` (stricter manual performance bounds). Their ordinary tests still run.
+          `screens.capture.ts` is a manual screenshot utility, outside the `*.spec.ts` suite.
+          Live/paid checks remain separate, manually authorized checks; this job schedules none.
+          SUMMARY
+
+      - name: Upload browser failure evidence
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          if-no-files-found: warn
+
+  template-image:
+    name: Template image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the distributed image
+        run: docker build --tag graphgoblin-template-check .
+
+      - name: Load installed templates without network or writable storage
+        run: |
+          docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { existsSync, readdirSync } from 'node:fs';
+          import { TemplateCatalog } from '/app/apps/api/dist/templates/catalog.js';
+          const catalog = new TemplateCatalog('/app/apps/api/dist/catalog');
+          const entries = await catalog.list();
+          assert.deepEqual(entries.map(({ manifest }) => manifest.id).sort(),
+            ['implementation', 'qa', 'review', 'starter']);
+          const assetFiles = (root) => readdirSync(root, { withFileTypes: true }).flatMap((entry) =>
+            entry.isDirectory() ? assetFiles(`${root}/${entry.name}`).map((file) => `${entry.name}/${file}`)
+              : [entry.name]).sort();
+          const keptFiles = ['catalog.json', ...entries.flatMap(({ manifest }) =>
+            [`${manifest.id}/manifest.json`, `${manifest.id}/draft.json`])].sort();
+          for (const root of ['/app/apps/api/templates', '/app/apps/api/dist/catalog']) {
+            assert.deepEqual(assetFiles(root), keptFiles,
+              'Only the index, manifests and independent drafts may ship; no configured graphs or support assets');
+          }
+          const supportDir = '/app/apps/api/dist/templates/github';
+          assert.deepEqual(existsSync(supportDir) ? readdirSync(supportDir, { recursive: true }) : [], []);
+          for (const name of ['runtime', 'binding', 'scripts', 'authority', 'prerequisites',
+            'subjects', 'failures', 'support-result', 'instances']) {
+            assert.equal(existsSync(`/app/apps/api/dist/templates/${name}.js`), false);
+          }
+          for (const { manifest, draft } of entries) {
+            assert.ok(draft.nodes.length > 0);
+            const first = await catalog.draft(manifest.id);
+            const second = await catalog.draft(manifest.id);
+            assert.deepEqual(first, draft);
+            assert.notEqual(first, second);
+            first.nodes[0].label = 'Changed copy';
+            assert.deepEqual(second, draft);
+            assert.deepEqual(await catalog.draft(manifest.id), draft);
+            console.log(JSON.stringify({ template: manifest.id, version: manifest.version,
+              draftNodes: draft.nodes.length }));
+          }
+          JS
+FILE apps/web/src/__fixtures__/setup.ts
+import '@testing-library/jest-dom/vitest';
+import 'fake-indexeddb/auto';
+import { cleanup, configure } from '@testing-library/react';
+import { afterEach } from 'vitest';
+import { useApiKeyStore } from '../api/api-key.js';
+import { dialogClose } from './dialog.js';
+
+// Whole-app renders under a busy parallel run can take longer than the 1 s default.
+configure({ asyncUtilTimeout: 5000 });
+
+// jsdom lacks the layout APIs that @xyflow/react and CodeMirror call; give them inert versions.
+class ResizeObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+
+const emptyRects = (): DOMRectList => Object.assign([], { item: () => null });
+const zeroRect = (): DOMRect => ({
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  toJSON: () => ({}),
+});
+Range.prototype.getClientRects ??= emptyRects;
+Range.prototype.getBoundingClientRect ??= zeroRect;
+Element.prototype.scrollIntoView ??= function scrollIntoView() {};
+
+// jsdom has HTMLDialogElement but not showModal or close. A minimal stand-in: showModal sets the
+// open attribute, close removes it and fires `close` as a queued task, as browsers do (or at once,
+// see __fixtures__/dialog.ts), and Esc fires a cancelable `cancel` at the open dialog, closing it
+// unless a handler prevents that. There is no top layer or inertness; tests of those run in the
+// browser (e2e).
+const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> = HTMLDialogElement.prototype;
+const dialogOpeners = new WeakMap<HTMLDialogElement, Element | null>();
+if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
+  dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
+    dialogOpeners.set(this, document.activeElement);
+    this.setAttribute('open', '');
+  };
+  dialogPrototype.close = function close(this: HTMLDialogElement, value?: string) {
+    if (!this.hasAttribute('open')) return;
+    this.removeAttribute('open');
+    const opener = dialogOpeners.get(this);
+    if (
+      opener instanceof HTMLElement &&
+      opener.isConnected &&
+      this.contains(document.activeElement)
+    )
+      opener.focus();
+    if (value !== undefined) this.returnValue = value;
+    if (dialogClose.delivery === 'sync') this.dispatchEvent(new Event('close'));
+    else setTimeout(() => this.dispatchEvent(new Event('close')), 0);
+  };
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+    if (!(dialog instanceof HTMLDialogElement)) return;
+    if (dialog.dispatchEvent(new Event('cancel', { cancelable: true }))) dialog.close();
+  });
+}
+
+class DOMMatrixStub {
+  m22 = 1;
+  constructor(_init?: string) {}
+}
+globalThis.DOMMatrixReadOnly ??= DOMMatrixStub as unknown as typeof DOMMatrixReadOnly;
+
+afterEach(() => {
+  cleanup();
+  // The API key store is module state that outlives each test's app. Reset it only after the
+  // unmount: changing the key while the app is mounted refetches every query, and a refetch
+  // answered 401 without a key marks the store rejected again, so the next test would render the
+  // API key panel, which takes focus as soon as no dialog is open.
+  useApiKeyStore.getState().forget();
+  dialogClose.delivery = 'task';
+  sessionStorage.clear();
+  localStorage.clear();
+});
+apps/web/src\editor\TriggerPresets.test.tsx:64:          if (specifier !== 'node:child_process')
+tooling\vitest.shared.d.mts:4: * Shared Vitest configuration with the repository coverage thresholds applied.
+tooling\vitest.shared.mjs:6: * Coverage thresholds are the repository policy (docs/10-testing-and-quality.md):
+tooling\vitest.shared.mjs:26:      coverage: {
+tooling\vitest.shared.mjs:29:        reportsDirectory: './coverage',
+tooling\vitest.shared.mjs:32:        exclude: [
+tooling\vitest.shared.mjs:39:        thresholds: {
+e41008db Report typed harness readiness precisely, probe once per operation and never on draft saves (#179)
+a78e12a3 Classify failed inference turns by submission evidence and resubmit only prompts that were never sent (#244) (#372)
+456fcd61 Page the event-stream replay and bound slow consumers: drain-aware writes, a bounded live handoff and a typed stream failure with cursor recovery (#186) (#391)
+744c2d82 feat(web): editor, run inspector, settings, and PWA shell (M5)
+a78e12a3 Classify failed inference turns by submission evidence and resubmit only prompts that were never sent (#244) (#372)
+d32aa382 Reconcile the thread from durable events when the snapshot lags: one domain owner used by the engine, REST, MCP and the inspector (#116) (#397)
+67a05a79 fix(web): count only transport failures as stream outages, defer throttled focus checks, keep the claim across route changes (#55, #56; #67)
+40f96400 fix(web): apply the #55 and #56 review: confirm recovery only after reads clear, own the worker update listener, report stream failures

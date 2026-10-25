@@ -464,6 +464,10 @@ interface Samples {
   routing: number[];
   duration: number;
   rerouted: number[];
+  pointerMoves: number;
+  samplerStartedAt: number;
+  firstPointerMs: number | null;
+  lastPointerMs: number | null;
 }
 const p95 = (samples: number[]) =>
   [...samples].sort((a, b) => a - b)[Math.ceil(samples.length * 0.95) - 1]!;
@@ -483,7 +487,8 @@ for (const count of [100, 300])
     // The opening view contains this middle card; the drag starts at its centre.
     const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
     await expect(card).toBeVisible();
-    await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
+    // Fonts and the initial routes are ready; wait for a stable, hittable drag target as well.
+    await card.click({ trial: true });
     // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
     // Added frame time (drag p95 minus this idle p95) is reported only; the strict assertion
     // below uses the absolute 60 Hz budget.
@@ -511,12 +516,43 @@ for (const count of [100, 300])
       await profile.send('Profiler.start');
     }
     const repetitions = [];
+    // mouse.move installs/cleans up HTML5 drag interception for every held-button move.
+    // Those extra page evaluations and overlapping interception polluted the measurement.
+    // Use the public CDP session for the same native mouse events, without that machinery.
+    const nativeInput = await page.context().newCDPSession(page);
+    const pointerEvent = async (
+      type: 'mouseMoved' | 'mousePressed' | 'mouseReleased',
+      x: number,
+      y: number,
+      held: boolean,
+    ) => {
+      await nativeInput.send('Input.dispatchMouseEvent', {
+        type,
+        x,
+        y,
+        button: type === 'mouseMoved' && !held ? 'none' : 'left',
+        buttons: held ? 1 : 0,
+        modifiers: 0,
+        clickCount: type === 'mouseMoved' ? 0 : 1,
+        force: held ? 0.5 : 0,
+      });
+    };
+    // Pace native input independently at 60 Hz.
+    // A 64-command credit bounds the queue to about one second of that input cadence.
+    const inputFrequencyHz = 60;
+    const inputPeriodMs = 1000 / inputFrequencyHz;
+    const maxInFlightMoves = 64;
+    // Advance the original 0.1-radian step at a nominal 60 Hz using elapsed time.
+    // Acknowledgement/coalescing rates must not shrink the five-second gesture's travel.
+    // The circuit's bounds stay the same, and both graph sizes receive the same motion.
+    const radiansPerMillisecond = (0.1 * inputFrequencyHz) / 1000;
     for (let repetition = 0; repetition < 3; repetition += 1) {
       const rect = (await card.boundingBox())!;
       const origin = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-      await page.mouse.move(origin.x, origin.y);
-      await page.mouse.down();
-      await page.mouse.move(origin.x + 5, origin.y);
+      await pointerEvent('mouseMoved', origin.x, origin.y, false);
+      await pointerEvent('mousePressed', origin.x, origin.y, true);
+      await pointerEvent('mouseMoved', origin.x + 5, origin.y, true);
+      await expect(card).toHaveClass(/\bdragging\b/);
       const measuring = page.evaluate(
         (count) =>
           new Promise<Samples>((resolveSamples) => {
@@ -538,6 +574,18 @@ for (const count of [100, 300])
             });
             observer.observe({ type: 'measure' });
             const start = performance.now();
+            const samplerStartedAt = Date.now();
+            let pointerMoves = 0;
+            let firstPointerMs: number | null = null;
+            let lastPointerMs: number | null = null;
+            // Read-only workload evidence distinguishes under-driven input from slow routing.
+            const onPointerMove = () => {
+              const at = performance.now() - start;
+              firstPointerMs ??= at;
+              lastPointerMs = at;
+              pointerMoves += 1;
+            };
+            document.addEventListener('pointermove', onPointerMove, true);
             let previous: number | undefined;
             const frame = (now: number) => {
               if (previous !== undefined) frames.push(now - previous);
@@ -545,7 +593,17 @@ for (const count of [100, 300])
               if (now - start < 5000) requestAnimationFrame(frame);
               else {
                 observer.disconnect();
-                resolveSamples({ frames, routing, rerouted, duration: now - start });
+                document.removeEventListener('pointermove', onPointerMove, true);
+                resolveSamples({
+                  frames,
+                  routing,
+                  rerouted,
+                  duration: now - start,
+                  pointerMoves,
+                  samplerStartedAt,
+                  firstPointerMs,
+                  lastPointerMs,
+                });
               }
             };
             requestAnimationFrame(frame);
@@ -554,12 +612,53 @@ for (const count of [100, 300])
       );
       const started = Date.now();
       let step = 0;
+      let lastInput = { x: origin.x + 5, y: origin.y };
+      const moves = new Set<Promise<void>>();
+      const acknowledgementMs: number[] = [];
+      let peakInFlightMoves = 0;
+      let inputFailure: Error | undefined;
       while (Date.now() - started < 5100) {
-        // Native Playwright input; a small circuit stays within the row's clear corridor.
-        const phase = step++ / 10;
-        await page.mouse.move(origin.x + 12 + Math.sin(phase) * 10, origin.y + Math.cos(phase) * 8);
+        // Native CDP input; a small circuit stays within the row's clear corridor.
+        if (inputFailure) throw inputFailure;
+        if (moves.size >= maxInFlightMoves) {
+          await Promise.race(moves);
+          if (Date.now() - started >= 5100) break;
+        }
+        const phase = (Date.now() - started) * radiansPerMillisecond;
+        step += 1;
+        const sentAt = Date.now();
+        lastInput = {
+          x: origin.x + 12 + Math.sin(phase) * 10,
+          y: origin.y + Math.cos(phase) * 8,
+        };
+        const move = pointerEvent('mouseMoved', lastInput.x, lastInput.y, true);
+        moves.add(move);
+        peakInFlightMoves = Math.max(peakInFlightMoves, moves.size);
+        void move.then(
+          () => {
+            acknowledgementMs.push(Date.now() - sentAt);
+            moves.delete(move);
+          },
+          (error: unknown) => {
+            inputFailure =
+              error instanceof Error
+                ? error
+                : new Error('Native pointer input failed', { cause: error });
+            moves.delete(move);
+          },
+        );
+        // Use absolute deadlines: a relative timer accumulates host timer/dispatch delay and
+        // under-drives the gesture. Catch up within the same window and bounded native queue.
+        const remainingMs = started + step * inputPeriodMs - Date.now();
+        if (remainingMs > 0) {
+          await new Promise<void>((resolve) => setTimeout(resolve, remainingMs));
+        }
       }
-      await page.mouse.up();
+      await Promise.all(moves);
+      if (inputFailure) throw inputFailure;
+      const inputDurationMs = Date.now() - started;
+      await pointerEvent('mouseReleased', lastInput.x, lastInput.y, false);
+      await expect(card).not.toHaveClass(/\bdragging\b/);
       const samples = await measuring;
       console.log(
         `${count} nodes, drag ${repetition + 1}: routing ${p95(samples.routing).toFixed(3)} ms / frame ${p95(samples.frames).toFixed(3)} ms p95; ${samples.routing.length} routes, ${samples.frames.length} frames`,
@@ -573,8 +672,21 @@ for (const count of [100, 300])
         routingSamples: samples.routing.length,
         frameSamples: samples.frames.length,
         durationMs: samples.duration,
+        pointerMovesSent: step,
+        pointerMovesObserved: samples.pointerMoves,
+        inputRadiansPerSecond: radiansPerMillisecond * 1000,
+        inputBackend: 'cdp-dispatchMouseEvent',
+        inputFrequencyHz,
+        maxInFlightMoves,
+        peakInFlightMoves,
+        acknowledgementP95Ms: p95(acknowledgementMs),
+        samplerStartOffsetMs: samples.samplerStartedAt - started,
+        firstPointerMs: samples.firstPointerMs,
+        lastPointerMs: samples.lastPointerMs,
+        inputDurationMs,
       });
     }
+    await nativeInput.detach();
     if (profile) {
       const result = await profile.send('Profiler.stop');
       await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));

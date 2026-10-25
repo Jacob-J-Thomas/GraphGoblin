@@ -94,6 +94,74 @@ jobs:
             apps/*/coverage/coverage-summary.json
           if-no-files-found: ignore
 
+  browser:
+    name: Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      # Match Windows development and the existing Linux routing-performance job.
+      GG_E2E_BROWSER_CHANNEL: msedge
+      # Live checks spend subscription quota and require an installed, signed-in CLI.
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # issue-170-qa reads frozen golden definitions from an earlier commit with git ls-tree.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Edge
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
+
+      - name: Build
+        run: pnpm build
+
+      - name: Functional browser suite (no retries)
+        timeout-minutes: 60
+        working-directory: apps/web
+        run: pnpm exec playwright test --retries=0 --workers=1
+
+      - name: Browser coverage and exclusions
+        if: always()
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Functional browser gate
+
+          Selected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.
+          The test step and report record the executed result, including any setup failure.
+          The real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.
+
+          Skipped: `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI`.
+          It requires `LIVE=1`, an installed Codex CLI and a provider login, and spends subscription quota. CI sets `LIVE=0`.
+          No other functional spec or test is skipped or gated on a provider login or installed CLI.
+
+          Optional modes are off: `GG_FORMS_QA_PHASE` (historical before/after captures),
+          `GG_ROUTING_SCREENSHOTS` (captures), `GG_ROUTING_PROFILE` (profiling), and
+          `GG_ROUTING_STRICT_PERF` (stricter manual performance bounds). Their ordinary tests still run.
+          `screens.capture.ts` is a manual screenshot utility, outside the `*.spec.ts` suite.
+          Live/paid checks remain separate, manually authorized checks; this job schedules none.
+          SUMMARY
+
+      - name: Upload browser failure evidence
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          if-no-files-found: warn
+
   template-image:
     name: Template image
     runs-on: ubuntu-latest

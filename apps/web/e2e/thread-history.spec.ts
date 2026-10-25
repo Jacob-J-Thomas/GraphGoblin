@@ -61,6 +61,9 @@ test('open and reloaded inspectors follow persisted failure, resume and success 
       );
       await expect.poll(() => browserThread(open)).toEqual(api);
       const existing = await browserThread(open);
+      // Drive the active renderer, as the two-tab draft fixture does: background reloads can
+      // finish navigation while leaving the following UI wait stalled until activation.
+      await reloaded.bringToFront();
       await reloaded.reload();
       await reloaded.getByRole('button', { name: 'Full thread JSON' }).click();
       await expect.poll(() => browserThread(reloaded)).toEqual(api);

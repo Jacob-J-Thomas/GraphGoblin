@@ -94,7 +94,7 @@ for (const viewport of [
     // The finished inference node's patch and the full thread carry the long value too, and the
     // progress drawer shows the harness items: with everything open, nothing widens the document.
     const timeline = page.getByRole('list', { name: 'Timeline' });
-    await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+    await timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }).click();
     const diff = page.getByRole('list', { name: 'Patch diff' });
     await expect(diff).toBeVisible();
     await expect(
@@ -245,6 +245,9 @@ test('a run with a large history reconstructs the thread at an event on request 
   await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
   await expect(reconstruct).toBeVisible();
   await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
+  await expect(reconstruct).toHaveText(
+    `Reconstruct the thread at event ${(await run()).lastEventSeq}`,
+  );
   const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
   expect(waitSeq).toBeDefined();
   await reconstruct.click();
@@ -260,7 +263,19 @@ test('a run with a large history reconstructs the thread at an event on request 
   });
   expect(answered.status(), await answered.text()).toBe(200);
   await expect(timeline.getByText('run.finished')).toBeVisible();
+  // Caller delivery follows run.finished. Observe that durable fact before freezing the latest
+  // selection; otherwise the later last-button click can select a different, unreplayed event.
+  await expect(timeline.getByText('return.delivered', { exact: true })).toBeVisible();
+  const completed = await run();
+  expect(completed.status).toBe('succeeded');
+  await expect(
+    page.getByRole('heading', {
+      name: `Timeline (${completed.lastEventSeq} events, complete)`,
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(reconstruct).toBeVisible();
+  await expect(reconstruct).toHaveText(`Reconstruct the thread at event ${completed.lastEventSeq}`);
   const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
   expect(finishedSeq).toBeDefined();
   expect(finishedSeq).not.toBe(waitSeq);

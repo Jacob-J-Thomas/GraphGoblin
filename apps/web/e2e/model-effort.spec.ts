@@ -274,7 +274,7 @@ for (const kind of ['inference', 'llm'] as const) {
       if (level === 'loop') {
         await effort.scrollIntoViewIfNeeded();
         await page.screenshot({
-          path: `../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-${kind}.png`,
+          path: test.info().outputPath(`after-${kind}.png`),
         });
       }
       await closeNode(page);
@@ -378,7 +378,7 @@ test('classifier keeps Question, Model, Answer visible and has no effort', async
   ).toEqual(['question', 'model', 'answer']);
   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
   await page.screenshot({
-    path: '../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-classifier.png',
+    path: test.info().outputPath('after-classifier.png'),
   });
 });
 

@@ -3,7 +3,13 @@ import { approvalLoop, control, expect, publishLoop, showLoopPanel, test } from 
 
 declare global {
   interface Window {
-    pwaChecks: { calls: number; found: number; pending: number; activity: number };
+    pwaChecks: {
+      calls: number;
+      found: number;
+      pending: number;
+      activity: number;
+      pageShown: boolean;
+    };
   }
 }
 
@@ -158,7 +164,13 @@ test('clean event-stream closes retain backoff without refetch or worker-update 
   expect(response.ok()).toBe(true);
   const { run } = (await response.json()) as { run: { id: string } };
   await page.addInitScript(() => {
-    const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+    const stats = (window.pwaChecks = {
+      calls: 0,
+      found: 0,
+      pending: 0,
+      activity: Date.now(),
+      pageShown: false,
+    });
     const update = ServiceWorkerRegistration.prototype.update;
     ServiceWorkerRegistration.prototype.update = function () {
       stats.calls++;
@@ -195,8 +207,39 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
 }) => {
   test.setTimeout(100_000);
   const messages = await observeSkipWaiting(page);
+  page.on('console', (message) => {
+    const content = message.text();
+    if (content.startsWith('PWA lifecycle:')) console.log(content);
+  });
   await page.addInitScript(() => {
-    const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+    const stats: Window['pwaChecks'] = (window.pwaChecks = {
+      calls: 0,
+      found: 0,
+      pending: 0,
+      activity: Date.now(),
+      pageShown: false,
+    });
+    const record = (kind: string, event?: Event) =>
+      console.log(
+        'PWA lifecycle:' +
+          JSON.stringify({
+            kind,
+            at: Date.now(),
+            documentId: performance.timeOrigin,
+            ...stats,
+            visibility: document.visibilityState,
+            focused: document.hasFocus(),
+            trusted: event?.isTrusted ?? null,
+          }),
+      );
+    window.addEventListener('pageshow', (event) => {
+      stats.pageShown = event.isTrusted;
+      record('pageshow', event);
+    });
+    window.addEventListener('focus', (event) => record('focus', event));
+    window.addEventListener('pagehide', (event) => record('pagehide', event));
+    document.addEventListener('visibilitychange', (event) => record('visibilitychange', event));
+    record('document-created');
     const watched = new WeakSet<ServiceWorkerRegistration>();
     const watch = (registration: ServiceWorkerRegistration) => {
       if (!watched.has(registration)) {
@@ -204,13 +247,24 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
         registration.addEventListener('updatefound', () => {
           stats.found++;
           stats.activity = Date.now();
+          record('updatefound');
         });
       }
       return registration;
     };
     const register = ServiceWorkerContainer.prototype.register;
     ServiceWorkerContainer.prototype.register = function (...args) {
-      return register.apply(this, args).then(watch);
+      stats.pending++;
+      stats.activity = Date.now();
+      record('register-start');
+      return register
+        .apply(this, args)
+        .then(watch)
+        .finally(() => {
+          stats.pending--;
+          stats.activity = Date.now();
+          record('register-complete');
+        });
     };
     const update = ServiceWorkerRegistration.prototype.update;
     ServiceWorkerRegistration.prototype.update = function () {
@@ -218,35 +272,45 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
       stats.calls++;
       stats.pending++;
       stats.activity = Date.now();
+      record('update-start');
       return update.call(this).finally(() => {
         stats.pending--;
         stats.activity = Date.now();
+        record('update-complete');
       });
     };
   });
+  const initialCheckFinished = () =>
+    page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration('/app/');
+      return (
+        window.pwaChecks.pageShown &&
+        document.visibilityState === 'visible' &&
+        document.hasFocus() &&
+        registration?.active?.state === 'activated' &&
+        !registration.installing &&
+        window.pwaChecks.calls > 0 &&
+        window.pwaChecks.pending === 0
+      );
+    });
+  await page.bringToFront();
   await page.goto('/app/loops');
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
+  // Observe native pageshow and registration/update completion in each document. The app also
+  // checks on pageshow, which can follow load and an earlier registration-triggered check.
+  await expect.poll(initialCheckFinished).toBe(true);
+  await page.bringToFront();
   await page.reload();
   await expect
     .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
     .toBe(true);
   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
   // Finish the navigation check before publishing; only the subsequent app check may detect it.
-  await expect
-    .poll(() =>
-      page.evaluate(async () => {
-        const registration = await navigator.serviceWorker.getRegistration('/app/');
-        return (
-          !registration?.installing &&
-          window.pwaChecks.pending === 0 &&
-          Date.now() - window.pwaChecks.activity >= 2_000
-        );
-      }),
-    )
-    .toBe(true);
+  await expect.poll(initialCheckFinished).toBe(true);
   const baseline = await page.evaluate(() => ({ ...window.pwaChecks }));
+  console.log('PWA baseline: ' + JSON.stringify(baseline));
   const initialWorker = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL);
   const navigation = [] as string[];
   page.on('framenavigated', (frame) => {

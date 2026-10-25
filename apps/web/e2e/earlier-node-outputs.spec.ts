@@ -81,6 +81,14 @@ for (const viewport of [
     expect(created.status()).toBe(201);
     const { loop } = (await created.json()) as { loop: { id: string } };
     await page.goto(`/app/loops/${loop.id}/edit`);
+    await expect(page.locator('.react-flow__node')).toHaveCount(definition.nodes.length);
+    await page.evaluate(() => document.fonts.ready);
+    // Initial zoom preserves readability; explicitly fit this wide graph before authoring.
+    await page.getByRole('button', { name: 'Fit View', exact: true }).click();
+    await page
+      .getByTestId('node-check')
+      .locator(':scope > div:has([data-kind])')
+      .click({ trial: true });
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
       origin: new URL(page.url()).origin,
     });

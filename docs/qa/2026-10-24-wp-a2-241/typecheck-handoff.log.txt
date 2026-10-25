@@ -1,0 +1,80 @@
+Command: pnpm.cmd typecheck
+Working directory: .
+Node: v22.14.0
+Started: 2026-10-25T03:40:32.986Z
+$ turbo run typecheck
+
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 8c6104b741cefce3
+@graphgoblin/contracts:typecheck: cache miss, executing 02156338d3d5d34d
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing 478723b94c8077bb
+@graphgoblin/domain:typecheck: cache miss, executing eb03e54dd6e2d4a0
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 2e9fd122ea20cf92
+@graphgoblin/engine:typecheck: cache miss, executing 6852a01ba2aa447f
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:typecheck: cache miss, executing ee52f8360ec8eeae
+@graphgoblin/infrastructure:build: cache miss, executing 16452651cc83734b
+@graphgoblin/infrastructure:typecheck: cache miss, executing 4a3a621143b37d37
+@graphgoblin/adapter-codex:build: cache miss, executing 0fa44f11eca2a686
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 8752fb8cb1bf53f9
+@graphgoblin/adapter-jev:build: cache miss, executing 396b1c0dfa495ed6
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing bfcbccd229693ba1
+@graphgoblin/api:typecheck: cache miss, executing b1d6a5e3dc2a23d9
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:typecheck: cache miss, executing ad1bdba55c74932b
+@graphgoblin/api-client:build: cache miss, executing 5e50a032e29d9bec
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: cache miss, executing 845826c8791d7ec3
+@graphgoblin/web:typecheck: cache miss, executing b6a82dc942145154
+@graphgoblin/mcp:build: cache miss, executing 64fca266a3fa6966
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 7c6e898d4f047681
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: [96me2e/pwa.spec.ts[0m:[93m167[0m:[93m20[0m - [91merror[0m[90m TS2741: [0mProperty 'pageShown' is missing in type '{ calls: number; found: number; pending: number; activity: number; }' but required in type '{ calls: number; found: number; pending: number; activity: number; pageShown: boolean; }'.
+@graphgoblin/web:typecheck: 
+@graphgoblin/web:typecheck: [7m167[0m     const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+@graphgoblin/web:typecheck: [7m   [0m [91m                   ~~~~~~~~~~~~~~~~[0m
+@graphgoblin/web:typecheck: 
+@graphgoblin/web:typecheck:   [96me2e/pwa.spec.ts[0m:[93m11[0m:[93m7[0m
+@graphgoblin/web:typecheck:     [7m11[0m       pageShown: boolean;
+@graphgoblin/web:typecheck:     [7m  [0m [96m      ~~~~~~~~~[0m
+@graphgoblin/web:typecheck:     'pageShown' is declared here.
+@graphgoblin/web:typecheck: 
+@graphgoblin/web:typecheck: 
+@graphgoblin/web:typecheck: Found 1 error in e2e/pwa.spec.ts[90m:167[0m
+@graphgoblin/web:typecheck: 
+@graphgoblin/web:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/web#typecheck:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web) C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    18 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    3m40.578s 
+Failed:    @graphgoblin/web#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.
+
+{"label":"typecheck-handoff","command":"pnpm.cmd typecheck","cwd":".","node":"v22.14.0","head":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","endHead":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","applicationPatchSha256":"e654bc1cf8737ce497589e887229810efd04f88415ae0450c695396d81da2583","applicationPatchSha256After":"e654bc1cf8737ce497589e887229810efd04f88415ae0450c695396d81da2583","inputsUnchanged":true,"webDist":"apps/web/dist","started":"2026-10-25T03:40:32.986Z","finished":"2026-10-25T03:44:19.755Z","durationSeconds":226.769,"exitCode":2}

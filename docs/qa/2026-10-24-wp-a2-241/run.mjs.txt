@@ -1,0 +1,82 @@
+// Run from the repository root: node --input-type=module - < this-file label gate
+import { execFileSync, spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+const [label, gate] = process.argv.slice(2);
+const commands = {
+  browser: ['apps/web', 'pnpm.cmd exec playwright test --retries=0 --workers=1'],
+  conflict: ['apps/web', 'pnpm.cmd exec playwright test e2e/drafts.spec.ts --grep "two tabs editing" --retries=0 --workers=1'],
+  focused: ['apps/web', 'pnpm.cmd exec playwright test e2e/actions.spec.ts e2e/drafts.spec.ts e2e/forms.spec.ts e2e/issue-170-qa.spec.ts e2e/issue-7-qa.spec.ts e2e/qa.spec.ts e2e/thread-history.spec.ts e2e/webhook-delivery.spec.ts --grep "Settings catalog preserves|older version|format-3 device draft|#14: inference|inference Claude and Codex|I7-QA-02|streams 1,200|failure reasons|open and reloaded inspectors|inspector retains" --retries=0 --workers=1'],
+  routing: ['apps/web', 'pnpm.cmd exec playwright test e2e/routing.spec.ts --grep "performance:" --retries=0 --workers=1'],
+  pwa_routing: ['apps/web', 'pnpm.cmd exec playwright test e2e/pwa.spec.ts e2e/routing.spec.ts --grep "an open window detects|performance:" --retries=0 --workers=1'],
+  candidate_focus: ['apps/web', 'pnpm.cmd exec playwright test e2e/pwa.spec.ts e2e/trigger-types.spec.ts e2e/routing.spec.ts --grep "an open window detects|general webhook configuration|performance:" --retries=0 --workers=1'],
+  stability_focus: ['apps/web', 'pnpm.cmd exec playwright test e2e/pwa.spec.ts e2e/earlier-node-outputs.spec.ts e2e/inspector-large-values.spec.ts e2e/routing.spec.ts --grep "an open window detects|copied output references|a run with a large history|performance:" --retries=0 --workers=1'],
+  header_focus: ['apps/web', 'pnpm.cmd exec playwright test e2e/earlier-node-outputs.spec.ts --retries=0 --workers=1'],
+  typecheck: ['.', 'pnpm.cmd typecheck'],
+  lint: ['.', 'pnpm.cmd lint'],
+  format: ['.', 'pnpm.cmd format:check'],
+  report_format: ['.', 'pnpm.cmd exec prettier --check docs/qa/2026-10-24-wp-a2-241/README.md'],
+  docs: ['.', 'pnpm.cmd check:docs'],
+  layers: ['.', 'pnpm.cmd check:layers'],
+  tokens: ['.', 'pnpm.cmd check:tokens'],
+  deps: ['.', 'pnpm.cmd check:deps'],
+  build: ['.', 'pnpm.cmd build'],
+  coverage: ['.', 'pnpm.cmd --filter @graphgoblin/web test:coverage'],
+};
+if (!/^[a-z0-9-]+$/.test(label ?? '') || !commands[gate]) throw new Error('Unknown run');
+if (process.versions.node.split('.')[0] !== '22') throw new Error('Select Node 22 first');
+const root = process.cwd();
+const head = () => execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+const patchHash = () => createHash('sha256').update(execFileSync('git', ['diff', '--no-ext-diff', 'HEAD', '--', 'apps', 'packages'], { cwd: root })).digest('hex');
+const startHead = head();
+const startPatch = patchHash();
+const evidence = join(root, 'docs/qa/2026-10-24-wp-a2-241');
+const temp = join(tmpdir(), 'gg-wp-a2-241-' + label);
+await mkdir(temp, { recursive: true });
+const [cwd, command] = commands[gate];
+const env = {
+  ...process.env,
+  CI: 'true',
+  LIVE: '0',
+  GG_E2E_BROWSER_CHANNEL: 'msedge',
+  GG_E2E_MAIN_PORT: '6020',
+  GG_E2E_CONTROL_PORT: '6021',
+  TEMP: temp,
+  TMP: temp,
+  FORCE_COLOR: '0',
+  PLAYWRIGHT_HTML_OPEN: 'never',
+};
+for (const key of ['NO_COLOR', 'GG_FORMS_QA_PHASE', 'GG_ROUTING_SCREENSHOTS', 'GG_ROUTING_PROFILE', 'GG_ROUTING_STRICT_PERF', 'GG_ROUTING_REPORT_DIR', 'GG_THREAD_EVIDENCE', 'GG_E2E_KEEP_STDIN']) delete env[key];
+const normalize = (value) => value.replaceAll(process.env.USERPROFILE, '%USERPROFILE%')
+  .replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%');
+const started = new Date();
+const logPath = join(evidence, label + '.log.txt');
+let log = `Command: ${command}\nWorking directory: ${cwd}\nNode: ${process.version}\nStarted: ${started.toISOString()}\n`;
+await writeFile(logPath, log);
+const child = spawn('cmd.exe', ['/d', '/s', '/c', command], {
+  cwd: join(root, cwd), env, windowsHide: true, windowsVerbatimArguments: true, stdio: ['ignore', 'pipe', 'pipe'],
+});
+let pending = Promise.resolve();
+const capture = (chunk) => {
+  log += chunk.toString();
+  pending = pending.then(() => writeFile(logPath, normalize(log)));
+};
+child.stdout.on('data', capture);
+child.stderr.on('data', capture);
+const exitCode = await new Promise((resolve, reject) => {
+  child.once('error', reject);
+  child.once('close', resolve);
+});
+await pending;
+const finished = new Date();
+const endHead = head();
+const endPatch = patchHash();
+const inputsUnchanged = startHead === endHead && startPatch === endPatch;
+const result = { label, command, cwd, node: process.version, head: startHead, endHead, applicationPatchSha256: startPatch, applicationPatchSha256After: endPatch, inputsUnchanged, webDist: normalize(env.GG_E2E_WEB_DIST ?? 'apps/web/dist'), started: started.toISOString(), finished: finished.toISOString(), durationSeconds: (finished - started) / 1000, exitCode };
+await writeFile(logPath, normalize(log) + '\n' + JSON.stringify(result) + '\n');
+await writeFile(join(evidence, label + '.json'), JSON.stringify(result, null, 2) + '\n');
+console.log(JSON.stringify(result));
+process.exitCode = inputsUnchanged ? (exitCode ?? 1) : 1;
