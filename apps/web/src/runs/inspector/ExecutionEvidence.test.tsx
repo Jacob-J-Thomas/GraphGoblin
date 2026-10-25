@@ -2,7 +2,7 @@ import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { minimalLoop, samplePin } from '@graphgoblin/contracts/testing';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { event, runRecord } from '../../__fixtures__/fake-api.js';
 import { ExecutionContext, RecordedEvent } from './ExecutionEvidence.js';
 
@@ -98,6 +98,34 @@ describe('execution evidence (#255)', () => {
       screen.getByRole('button', { name: 'Download Exact recorded event as JSON' }),
     ).toBeInTheDocument();
   });
+});
+
+it('downloads every number GraphGoblin records with its stored token (#255)', async () => {
+  const user = userEvent.setup();
+  const values = [0.12345678901234566, 5e-324, 1e-308, 0.5000000000000001, 9007199254740991];
+  const recorded = event('run', 9, 'node.finished', {
+    nodeId: 'n',
+    durationMs: 1,
+    patch: [{ op: 'add', path: '/vars/values', value: values }],
+  });
+  // The store holds the event as serialized from JavaScript values.
+  const stored = JSON.stringify(recorded);
+  let blob: Blob | undefined;
+  const create = vi.spyOn(URL, 'createObjectURL').mockImplementation((value) => {
+    blob = value as Blob;
+    return 'blob:recorded';
+  });
+  const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+  try {
+    render(<RecordedEvent event={JSON.parse(stored) as RunEvent} />);
+    await user.click(screen.getByRole('button', { name: 'Exact recorded event #9' }));
+    await user.click(screen.getByRole('button', { name: 'Download Exact recorded event as JSON' }));
+    const tokens = (text: string) => text.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi);
+    expect(tokens(await blob!.text())).toEqual(tokens(stored));
+  } finally {
+    create.mockRestore();
+    revoke.mockRestore();
+  }
 });
 
 it('distinguishes incomplete cancellation history from an unrecorded actor (#255)', () => {
