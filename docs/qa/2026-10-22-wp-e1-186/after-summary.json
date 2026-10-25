@@ -1,0 +1,770 @@
+{
+  "schema": 2,
+  "columns": {
+    "specification": [
+      "passes",
+      "items",
+      "itemBytes",
+      "contextBytes",
+      "inference",
+      "grow",
+      "artifacts",
+      "delayMs"
+    ],
+    "correctness": [
+      "ok",
+      "succeeded",
+      "nodeCountsOk",
+      "unexpectedAttempts",
+      "storedEvents",
+      "progress",
+      "expectedProgress",
+      "gates",
+      "passes",
+      "history",
+      "historyValuesOk",
+      "terminal",
+      "replayOk",
+      "browserOk"
+    ],
+    "portTimings": [
+      "portIndex",
+      "count",
+      "totalMs",
+      "meanMs",
+      "p95UpperMs",
+      "maxMs"
+    ],
+    "checkpoints": [
+      "pass",
+      "elapsedMs",
+      "snapshotBytes",
+      "getThreadMs",
+      "snapshotSerializeMs",
+      "heapUsed"
+    ],
+    "browserSamples": [
+      "elapsedMs",
+      "nodes",
+      "sessionStorageBytes",
+      "heapUsed",
+      "longTasks",
+      "longTaskMs"
+    ],
+    "flightSamples": [
+      "replayElapsedMs",
+      "socketBytesWritten",
+      "wireBytesConsumed",
+      "bytesInFlight"
+    ],
+    "topCpuFrames": [
+      "cpuLocationIndex",
+      "samples"
+    ]
+  },
+  "ports": [
+    "runs.get",
+    "events.read",
+    "runs.transition",
+    "events.append",
+    "runs.update",
+    "runs.saveThread",
+    "sessions.upsert"
+  ],
+  "cpuLocations": [
+    ":0 libsql_js::statement::Statement::js_safe_integers",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+    ":0 (idle)"
+  ],
+  "measurements": [
+    {
+      "workload": "replay",
+      "aged": 0,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 115485,
+      "environment": {
+        "timestamp": "2026-10-23T23:47:06.124Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "fbd48d3da5f162539964516a34d5de7e387d63c6",
+        "hostBusyFraction": 0.999,
+        "freeRamBefore": 24381386752,
+        "freeRamAfter": 21961228288
+      },
+      "failed": false,
+      "cases": [
+        0
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "specification": [
+        1000,
+        32,
+        256,
+        128,
+        true,
+        false,
+        false,
+        0
+      ],
+      "wallMs": 190250.606,
+      "msPerPass": 190.251,
+      "cpu": {
+        "user": 70782000,
+        "system": 19875000
+      },
+      "durableAdmissionToStartMs": 43,
+      "awaitedPortMs": 179405.101,
+      "observationMs": 6.822,
+      "residualMs": 10838.684,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 20.012,
+        "max": 18723.373,
+        "p99": 92.406
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1567,
+        "wallMs": 78.889
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [
+          0,
+          6008,
+          8306.239,
+          1.383,
+          1.693,
+          18.981
+        ],
+        [
+          1,
+          2,
+          18713.657,
+          9356.829,
+          19280.247,
+          18712.345
+        ],
+        [
+          2,
+          2,
+          7.981,
+          3.991,
+          4.83,
+          4.452
+        ],
+        [
+          3,
+          40005,
+          128913.786,
+          3.222,
+          3.992,
+          2461.707
+        ],
+        [
+          4,
+          4003,
+          10827.177,
+          2.705,
+          3.629,
+          259.815
+        ],
+        [
+          5,
+          2002,
+          4954.954,
+          2.475,
+          2.726,
+          1197.939
+        ],
+        [
+          6,
+          3000,
+          6658.586,
+          2.22,
+          2.726,
+          224.29
+        ]
+      ],
+      "otherPorts": {
+        "calls": 1023,
+        "totalMs": 1022.72
+      },
+      "checkpoints": [
+        [
+          100,
+          12300.012,
+          1200,
+          0.818,
+          0.082,
+          57807768
+        ],
+        [
+          300,
+          34348.231,
+          1202,
+          0.583,
+          0.028,
+          50729016
+        ],
+        [
+          500,
+          58482.93,
+          1202,
+          0.76,
+          0.029,
+          65624104
+        ],
+        [
+          600,
+          124374.52,
+          1203,
+          0.551,
+          0.027,
+          70236008
+        ],
+        [
+          800,
+          147635.28,
+          1203,
+          0.587,
+          0.031,
+          66565968
+        ],
+        [
+          1000,
+          171404.001,
+          1205,
+          0.625,
+          0.033,
+          65372984
+        ]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        41008,
+        32000,
+        32000,
+        1000,
+        1000,
+        0,
+        true,
+        1,
+        true,
+        null
+      ],
+      "eventSerialization": {
+        "totalMs": 125.809,
+        "bytes": 17799419,
+        "sha256": "2ca79e1a8059d4af4a462353fd160d6f05c6625602d129c64d9334283a7fb653",
+        "lateAfter": 36907,
+        "lateSha256": "1ed4e120ed25241b713fc51a9eb5ee4bb318b4c57d3cd926d31065ae49efb4c6"
+      },
+      "cpuSamples": 96815,
+      "topCpuFrames": [
+        [
+          0,
+          68403
+        ],
+        [
+          1,
+          4434
+        ],
+        [
+          2,
+          2501
+        ]
+      ],
+      "replays": {
+        "first": 0,
+        "late": 1,
+        "slow": 2,
+        "reconnect": {
+          "ok": true,
+          "interrupted": 3,
+          "reconnected": 4
+        }
+      },
+      "storeGrowthBytes": 25957784,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    }
+  ],
+  "browserPages": [],
+  "replays": [
+    {
+      "case": 0,
+      "variant": "first",
+      "after": 0,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 41008,
+      "lastSeq": 41008,
+      "gaps": 0,
+      "sha256": "2ca79e1a8059d4af4a462353fd160d6f05c6625602d129c64d9334283a7fb653",
+      "firstMs": 55.605,
+      "totalMs": 17559.605,
+      "reads": 1027,
+      "receivedBytes": 19391631,
+      "wireBytesConsumed": 19675908,
+      "socketBytesWritten": 19675908,
+      "maxBytesInFlight": 0,
+      "eventLoopDelayMs": {
+        "mean": 92.652,
+        "p99": 1468.006,
+        "max": 5788.14
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 38879232,
+      "heapUsedSampledMax": 54861232,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [
+        [
+          67.248,
+          0,
+          120664,
+          0
+        ],
+        [
+          2630.941,
+          1769111,
+          1830316,
+          0
+        ],
+        [
+          8767.245,
+          4034439,
+          4095661,
+          0
+        ],
+        [
+          12362.078,
+          9566382,
+          9627822,
+          0
+        ],
+        [
+          12574.696,
+          11288218,
+          11349816,
+          0
+        ],
+        [
+          15477.171,
+          12887533,
+          12949134,
+          0
+        ],
+        [
+          15723.467,
+          14671329,
+          14732510,
+          0
+        ],
+        [
+          15931.063,
+          16024604,
+          16086205,
+          0
+        ],
+        [
+          17291.804,
+          17500726,
+          17562327,
+          0
+        ],
+        [
+          17551.216,
+          19530504,
+          19592102,
+          0
+        ]
+      ],
+      "readMs": 15661.559
+    },
+    {
+      "case": 0,
+      "variant": "late",
+      "after": 36907,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 4101,
+      "lastSeq": 41008,
+      "gaps": 0,
+      "sha256": "1ed4e120ed25241b713fc51a9eb5ee4bb318b4c57d3cd926d31065ae49efb4c6",
+      "firstMs": 46.182,
+      "totalMs": 1562.427,
+      "reads": 103,
+      "receivedBytes": 1941840,
+      "wireBytesConsumed": 1970472,
+      "socketBytesWritten": 1970472,
+      "maxBytesInFlight": 0,
+      "eventLoopDelayMs": {
+        "mean": 51.823,
+        "p99": 1011.352,
+        "max": 1011.352
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39280168,
+      "heapUsedSampledMax": 54181520,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [
+        [
+          58.068,
+          61644,
+          123241,
+          0
+        ],
+        [
+          74.162,
+          184841,
+          246443,
+          0
+        ],
+        [
+          105.908,
+          369645,
+          431065,
+          0
+        ],
+        [
+          143.404,
+          615288,
+          676887,
+          0
+        ],
+        [
+          188.551,
+          738488,
+          800077,
+          0
+        ],
+        [
+          233.138,
+          923037,
+          984722,
+          0
+        ],
+        [
+          260.334,
+          1168923,
+          1230521,
+          0
+        ],
+        [
+          288.762,
+          1292122,
+          1415321,
+          0
+        ],
+        [
+          317.595,
+          1599371,
+          1660968,
+          0
+        ],
+        [
+          1528.502,
+          1722566,
+          1784167,
+          0
+        ]
+      ],
+      "readMs": 390.423
+    },
+    {
+      "case": 0,
+      "variant": "slow",
+      "after": 0,
+      "pauseMs": 50,
+      "initialPauseMs": 1000,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 41008,
+      "lastSeq": 41008,
+      "gaps": 0,
+      "sha256": "2ca79e1a8059d4af4a462353fd160d6f05c6625602d129c64d9334283a7fb653",
+      "firstMs": 1015.112,
+      "totalMs": 23206.283,
+      "reads": 301,
+      "receivedBytes": 19391631,
+      "wireBytesConsumed": 19675908,
+      "socketBytesWritten": 19675908,
+      "maxBytesInFlight": 522486,
+      "eventLoopDelayMs": {
+        "mean": 11.89,
+        "p99": 29.999,
+        "max": 57.541
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39155616,
+      "heapUsedSampledMax": 54593856,
+      "writableBytesSampledMax": 17076,
+      "flightSamples": [
+        [
+          37.942,
+          231322,
+          0,
+          231322
+        ],
+        [
+          2355.651,
+          1757967,
+          1310720,
+          447247
+        ],
+        [
+          5890.441,
+          4112117,
+          3604480,
+          507637
+        ],
+        [
+          7986.856,
+          6200244,
+          5767168,
+          433076
+        ],
+        [
+          11585.467,
+          8816515,
+          8323072,
+          493443
+        ],
+        [
+          14061.145,
+          11170508,
+          10682368,
+          488140
+        ],
+        [
+          16438.742,
+          13396274,
+          13041664,
+          354610
+        ],
+        [
+          18426.198,
+          15627575,
+          15138816,
+          488759
+        ],
+        [
+          20901.661,
+          17841196,
+          17432576,
+          408620
+        ],
+        [
+          23176.684,
+          19675908,
+          19660800,
+          15108
+        ]
+      ],
+      "readMs": 1958.918
+    },
+    {
+      "case": 0,
+      "variant": "interrupted",
+      "after": 0,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 13673,
+      "lastSeq": 13673,
+      "gaps": 0,
+      "sha256": "1c6739ed53893a1556b1c9c8cd4bcb6aef225be5d14812b20384e69a710273d2",
+      "firstMs": 18.723,
+      "totalMs": 6619.593,
+      "reads": 354,
+      "receivedBytes": 6446748,
+      "wireBytesConsumed": 6541679,
+      "socketBytesWritten": 6569362,
+      "maxBytesInFlight": 27683,
+      "eventLoopDelayMs": {
+        "mean": 117.943,
+        "p99": 1260.388,
+        "max": 5481.955
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39414312,
+      "heapUsedSampledMax": 54119936,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [
+        [
+          49.133,
+          181479,
+          242413,
+          0
+        ],
+        [
+          191.913,
+          547510,
+          607845,
+          0
+        ],
+        [
+          311.009,
+          1463846,
+          1585686,
+          0
+        ],
+        [
+          399.863,
+          2135979,
+          2258632,
+          0
+        ],
+        [
+          463.496,
+          2503707,
+          2625855,
+          0
+        ],
+        [
+          6069.479,
+          3238377,
+          3361037,
+          0
+        ],
+        [
+          6169.208,
+          4156797,
+          4218122,
+          0
+        ],
+        [
+          6231.363,
+          4646665,
+          4769318,
+          0
+        ],
+        [
+          6350.887,
+          5507627,
+          5691645,
+          0
+        ],
+        [
+          6595.128,
+          6122028,
+          6491566,
+          0
+        ]
+      ],
+      "readMs": 6310.318
+    },
+    {
+      "case": 0,
+      "variant": "reconnected",
+      "after": 13673,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 27335,
+      "lastSeq": 41008,
+      "gaps": 0,
+      "sha256": "2ca79e1a8059d4af4a462353fd160d6f05c6625602d129c64d9334283a7fb653",
+      "firstMs": 13.459,
+      "totalMs": 23281.377,
+      "reads": 732,
+      "receivedBytes": 12944896,
+      "wireBytesConsumed": 13134465,
+      "socketBytesWritten": 13134465,
+      "maxBytesInFlight": 0,
+      "eventLoopDelayMs": {
+        "mean": 182.225,
+        "p99": 6757.024,
+        "max": 8631.878
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39398632,
+      "heapUsedSampledMax": 55145792,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [
+        [
+          46.207,
+          185012,
+          308310,
+          0
+        ],
+        [
+          294.213,
+          1906529,
+          2029703,
+          0
+        ],
+        [
+          525.553,
+          3628786,
+          3751976,
+          0
+        ],
+        [
+          2255.622,
+          4674457,
+          4920106,
+          0
+        ],
+        [
+          9127.762,
+          6150567,
+          6212168,
+          0
+        ],
+        [
+          10010.657,
+          7565093,
+          7688295,
+          0
+        ],
+        [
+          10194.592,
+          8856736,
+          8918234,
+          0
+        ],
+        [
+          11718.978,
+          9963731,
+          10086925,
+          0
+        ],
+        [
+          11946.026,
+          11686258,
+          11809460,
+          0
+        ],
+        [
+          23277.31,
+          12977593,
+          13100783,
+          0
+        ]
+      ],
+      "readMs": 9956.656
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+START typecheck: pnpm.cmd typecheck
+END typecheck: 2
+START lint: pnpm.cmd lint
+END lint: 1
+START layers: pnpm.cmd check:layers
+END layers: 0
+START deps: pnpm.cmd check:deps
+END deps: 0
+START docs: pnpm.cmd check:docs
+END docs: 0
+START prettier: pnpm.cmd exec prettier --check CHANGELOG.md apps/api/src/edges.test.ts apps/api/src/sse-bounds.test.ts apps/api/src/sse-catchup.test.ts apps/api/src/sse.test.ts apps/api/src/sse.ts apps/web/src/__fixtures__/fake-api.ts apps/web/src/runs/useRunEvents.test.tsx apps/web/src/runs/useRunEvents.ts docs/07-api-and-streaming.md docs/09-frontend-and-pwa.md docs/10-testing-and-quality.md docs/decisions/ADR-0050-bounded-sse-replay.md docs/qa/2026-10-22-wp-e1-186/README.md packages/api-client/src/sse.test.ts packages/api-client/src/sse.ts apps/api/src/sse-completion.test.ts packages/api-client/src/sse-completion.test.ts
+END prettier: 0
+node : file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/.tmp/r4-gates.mjs:37
+At line:3 char:1
++ node .tmp/r4-gates.mjs *> .tmp/r4-gate-driver.log.txt
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/User...r4-gates.mjs:37:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+if(results.some(result => result.code !== 0)) throw new Error('static gates failed; full suites not started');
+                                                    ^
+
+Error: static gates failed; full suites not started
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/.tmp/r4-gates.mjs:37:53
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+Node.js v22.14.0

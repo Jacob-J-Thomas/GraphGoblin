@@ -1,0 +1,93 @@
+{
+  "head": "389dc14f24fcab33f6c22b0ba14428596fdda539",
+  "transport": "Fastify public HTTP injection with a configured client fetch adapter; no listener or real socket",
+  "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-e1-186-corruption-tbiga1",
+  "cases": [
+    {
+      "location": "first page",
+      "after": 0,
+      "corruptSeq": 1,
+      "raw": {
+        "status": 500,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+          "title": "stored event invalid",
+          "status": 500,
+          "code": "STORED_EVENT_INVALID",
+          "detail": "Stored run event does not conform: run 01M3Y7RKG0CHVXAFZXQEQN9J68, seq 1, type run.queued"
+        }
+      },
+      "requests": [
+        {
+          "status": 500,
+          "code": "STORED_EVENT_INVALID"
+        },
+        {
+          "status": 500,
+          "code": "STORED_EVENT_INVALID"
+        }
+      ],
+      "errors": [
+        {
+          "name": "GraphGoblinApiError",
+          "code": "STORED_EVENT_INVALID",
+          "attempt": 1
+        },
+        {
+          "name": "GraphGoblinApiError",
+          "code": "STORED_EVENT_INVALID",
+          "attempt": 2
+        }
+      ],
+      "seen": [],
+      "lastSeq": 0,
+      "rejection": {
+        "name": "Error",
+        "message": "gave up on the event stream for run 01M3Y7RKG0CHVXAFZXQEQN9J68 after 2 attempts"
+      }
+    },
+    {
+      "location": "consumed terminal lookup",
+      "after": 8,
+      "corruptSeq": 8,
+      "raw": {
+        "status": 500,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+          "title": "stored event invalid",
+          "status": 500,
+          "code": "STORED_EVENT_INVALID",
+          "detail": "Stored run event does not conform: run 01M3Y7RKG0CHVXAFZXQEQN9J6C, seq 8, type run.cancelled"
+        }
+      },
+      "requests": [
+        {
+          "status": 500,
+          "code": "STORED_EVENT_INVALID"
+        },
+        {
+          "status": 500,
+          "code": "STORED_EVENT_INVALID"
+        }
+      ],
+      "errors": [
+        {
+          "name": "GraphGoblinApiError",
+          "code": "STORED_EVENT_INVALID",
+          "attempt": 1
+        },
+        {
+          "name": "GraphGoblinApiError",
+          "code": "STORED_EVENT_INVALID",
+          "attempt": 2
+        }
+      ],
+      "seen": [],
+      "lastSeq": 8,
+      "rejection": {
+        "name": "Error",
+        "message": "gave up on the event stream for run 01M3Y7RKG0CHVXAFZXQEQN9J6C after 2 attempts"
+      }
+    }
+  ]
+}

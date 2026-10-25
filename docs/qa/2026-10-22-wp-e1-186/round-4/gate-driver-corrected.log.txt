@@ -1,0 +1,19 @@
+START typecheck-corrected: pnpm.cmd typecheck
+END typecheck-corrected: 0
+START lint-corrected: pnpm.cmd lint
+END lint-corrected: 0
+START prettier-corrected: pnpm.cmd exec prettier --check CHANGELOG.md apps/api/src/edges.test.ts apps/api/src/sse-bounds.test.ts apps/api/src/sse-catchup.test.ts apps/api/src/sse.test.ts apps/api/src/sse.ts apps/web/src/__fixtures__/fake-api.ts apps/web/src/runs/useRunEvents.test.tsx apps/web/src/runs/useRunEvents.ts docs/07-api-and-streaming.md docs/09-frontend-and-pwa.md docs/10-testing-and-quality.md docs/decisions/ADR-0050-bounded-sse-replay.md docs/qa/2026-10-22-wp-e1-186/README.md packages/api-client/src/sse.test.ts packages/api-client/src/sse.ts apps/api/src/sse-completion.test.ts packages/api-client/src/sse-completion.test.ts
+END prettier-corrected: 0
+START coverage-api: pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure=true
+END coverage-api: 0
+START coverage-client: pnpm.cmd --filter @graphgoblin/api-client test:coverage --coverage.reportOnFailure=true
+END coverage-client: 0
+START coverage-web: pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 --coverage.reportOnFailure=true
+END coverage-web: 1
+START build: pnpm.cmd build
+END build: 0
+START transport-after: node --experimental-import-meta-resolve .tmp/r4-transport-probe.mjs .tmp/r4-after
+END transport-after: 0
+START corruption-after: node --experimental-import-meta-resolve .tmp/r4-initial-corruption-probe.mjs .tmp/r4-after
+END corruption-after: 0
+GATES FINISHED

@@ -1,0 +1,82 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id
+ × src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 0 past the end 1365ms
+   → expected 26 to be less than or equal to 2
+ × src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 100 past the end 122ms
+   → expected 26 to be less than or equal to 2
+ × src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 0 past the end 115ms
+   → expected 49 to be less than or equal to 2
+ × src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 100 past the end 202ms
+   → expected 49 to be less than or equal to 2
+ × src/sse-catchup.test.ts > durable SSE catch-up > bounds confirmation after catching up through post-terminal delivery audit events 141ms
+   → expected 30 to be less than or equal to 4
+ ↓ src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling on a paused real high-water-mark transport
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-catchup.te ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 0 past the end
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 3000 events, 100 past the end
+AssertionError: expected 26 to be less than or equal to 2
+ ❯ src/sse-catchup.test.ts:184:28
+    182|       expect(ids(response.body)).toEqual([]);
+    183|       expect(response.body).toContain(': connected');
+    184|       expect(reads.length).toBeLessThanOrEqual(2);
+       |                            ^
+    185|       expect(reads.every((read) => read.after === count + past && read…
+    186|       expect(reads.reduce((sum, read) => sum + read.rows, 0)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 0 past the end
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > bounds terminal confirmation for 6000 events, 100 past the end
+AssertionError: expected 49 to be less than or equal to 2
+ ❯ src/sse-catchup.test.ts:184:28
+    182|       expect(ids(response.body)).toEqual([]);
+    183|       expect(response.body).toContain(': connected');
+    184|       expect(reads.length).toBeLessThanOrEqual(2);
+       |                            ^
+    185|       expect(reads.every((read) => read.after === count + past && read…
+    186|       expect(reads.reduce((sum, read) => sum + read.rows, 0)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > bounds confirmation after catching up through post-terminal 
+delivery audit events
+AssertionError: expected 30 to be less than or equal to 4
+ ❯ src/sse-catchup.test.ts:221:21
+    219|       expect(ids(response.body)).toEqual(audit.map((event) => event.se…
+    220|       expect(response.body).not.toContain('stream.error');
+    221|       expect(reads).toBeLessThanOrEqual(4);
+       |                     ^
+    222|       expect(rows).toBe(300);
+    223|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 skipped (11)
+   Start at  06:27:41
+   Duration  87.04s (transform 80%, import 17%, tests 2%)
+
+  Transform  transforming modules took 66.88s · 80% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

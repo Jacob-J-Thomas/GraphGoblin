@@ -1,0 +1,70 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ × src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader 367ms
+   → expected true to be false // Object.is equality
+ ↓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once
+ ↓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once
+ ↓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once
+ × src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure 44ms
+   → expected true to be false // Object.is equality
+ × src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure 25ms
+   → expected true to be false // Object.is equality
+ ↓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/sse-bounds.test.ts:38:52
+     36|       await events.append(runId, [draft, draft, { type: 'run.cancelled…
+     37|       const text = await response.text();
+     38|       expect(text.includes('event: stream.error')).toBe(false);
+       |                                                    ^
+     39|       expect(ids(text)).toEqual((await events.read(runId)).map((e) => …
+     40|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/sse-bounds.test.ts:104:54
+    102|         await events.append(runId, [...burst, { type: 'run.cancelled' …
+    103|         const body = await response.text();
+    104|         expect(body.includes('event: stream.error')).toBe(false);
+       |                                                      ^
+    105|         const stored = await events.read(runId);
+    106|         expect(stored).toHaveLength(kind === 'count' ? 302 : 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 skipped (7)
+   Start at  02:25:39
+   Duration  26.09s (transform 64%, import 34%, tests 2%)
+
+  Transform  transforming modules took 15.97s · 64% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

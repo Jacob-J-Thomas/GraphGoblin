@@ -116,6 +116,37 @@ export class SqliteEventStore implements EventStorePort {
     return (await this.readRows(runId, afterSeq, limit)).map(toEvent);
   }
 
+  /**
+   * Latest lifecycle marker, including the started/resumed markers that invalidate an older
+   * terminal outcome (RunManager's terminalEvent rule). Finalization can append delivery audit
+   * rows after a terminal event, so the last row alone is insufficient. One statement performs
+   * five MAX seeks using run_events_delivery_idx (run_id, type, seq), then one primary-key
+   * lookup/decoding: bounded work even with arbitrarily much history or delivery bookkeeping.
+   */
+  async lastLifecycleEvent(runId: string): Promise<RunEvent | undefined> {
+    const types = ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'];
+    const latestSeq = sql<number>`max(${sql.join(
+      types.map(
+        (type) => sql`coalesce((select max(${runEvents.seq}) from ${runEvents}
+        where ${runEvents.runId} = ${runId} and ${runEvents.type} = ${type}), 0)`,
+      ),
+      sql`, `,
+    )})`;
+    const [row] = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(and(eq(runEvents.runId, runId), eq(runEvents.seq, latestSeq)))
+      .limit(1);
+    return row ? toEvent(row) : undefined;
+  }
+
   /** Decode only the requested page: corruption in lookahead must not hide healthy history. */
   async page(
     runId: string,

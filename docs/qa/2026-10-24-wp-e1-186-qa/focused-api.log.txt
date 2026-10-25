@@ -1,0 +1,41 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186/apps/api
+
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > catches up a live sequence gap from durable history without failing the reader 915ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 180ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 203ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once 305ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live count queue by catching up from the log without a stream failure 221ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > bounds the held-live bytes queue by catching up from the log without a stream failure 151ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 6389ms
+pnpm.cmd : stderr | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete 
+while every replay page appends more events
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/ss ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | src/ss...nds more events:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+{"probe":"memory","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket memory reader complete while every replay page appends more events 2381ms
+stderr | src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every 
+replay page appends more events
+{"probe":"sqlite","appended":306,"delivered":19507,"slowConsumer":false}
+
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > keeps a fast real-socket sqlite reader complete while every replay page appends more events 6184ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite corrupt beyond the replay cursor without consuming a control id 272ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite query beyond the replay cursor without consuming a control id 166ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > handles a SQLite gap beyond the replay cursor without consuming a control id 210ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > scans multiple terminal pages before closing an already consumed cursor 7ms
+ ✓ src/sse-catchup.test.ts > durable SSE catch-up > reports the writable ceiling on a paused real high-water-mark transport 143ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  05:28:28
+   Duration  92.05s (transform 50%, import 29%, tests 20%)
+
+  Transform  transforming modules took 43.30s · 50% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

@@ -1,0 +1,57 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure=true
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+      Coverage enabled with v8
+
+ ❯ src/runs/RunInspectorPage.test.tsx (24 tests | 2 failed) 8958ms
+   ❯ RunInspectorPage (19)
+     × does not reopen a finished succeeded stream and retains the result 154ms
+     × does not reopen a finished exhausted stream and retains the result 155ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished succeeded stream and retains the result
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished exhausted stream and retains the result
+AssertionError: expected [ { method: 'GET', …(5) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/runs/RunInspectorPage.test.tsx:643:60
+    641|       api.pushEvent(
+    642|         run.id,
+    643|         event(run.id, 8, 'return.delivered', { channel: { kind: 'calle…
+       |                                                            ^
+    644|       );
+    645|       renderApp(`/runs/${run.id}`, api);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 129 passed (130)
+      Tests  2 failed | 1638 passed (1640)
+   Start at  10:38:09
+   Duration  2041.60s (tests 44%, environment 31%, setup 11%, import 11%, transform 1%, worker 1%)
+
+Environment  jsdom was created 130 times · 609.35s total, 31% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98.01% ( 8538/8711 )
+Branches     : 94.93% ( 7735/8148 )
+Functions    : 98.48% ( 2268/2303 )
+Lines        : 98.92% ( 7447/7528 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+

@@ -1,0 +1,126 @@
+// TEMPORARY review probe for #186 (not product code; deleted after the review).
+import Fastify from 'fastify';
+import { mkdtemp } from 'node:fs/promises';
+import { appendFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import type { EventStorePort } from '@graphgoblin/engine';
+import { FakeClock, InMemoryEventStore } from '@graphgoblin/engine/testing';
+import { FIXTURE_IDS } from '@graphgoblin/contracts/testing';
+import { streamRunEvents } from './sse.js';
+import { createTestApp } from './testing/test-app.js';
+
+const runId = FIXTURE_IDS.run;
+const draft = { type: 'run.woken', nodeId: 'wait', reason: 'manual' } as const;
+const ids = (text: string) => [...text.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
+
+describe('review probe: held live buffer during a long replay', () => {
+  it('fast in-memory reader, 2 live appends per 128-event page over a 19,200-event replay', async () => {
+    const events = new InMemoryEventStore(new FakeClock());
+    for (let i = 0; i < 150; i++)
+      await events.append(
+        runId,
+        Array.from({ length: 128 }, () => draft),
+      );
+    let live = 0;
+    let replayDone = false;
+    const store: EventStorePort = {
+      append: (...args) => events.append(...args),
+      subscribe: (...args) => events.subscribe(...args),
+      read: async (id, after, limit) => {
+        const page = await events.read(id, after, limit);
+        if (!replayDone && limit !== undefined) {
+          live += 2;
+          await events.append(id, [draft, draft]);
+          if (page.length < limit) replayDone = true;
+        }
+        return page;
+      },
+    };
+    const app = Fastify();
+    app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
+    const base = await app.listen({ host: '127.0.0.1', port: 0 });
+    const stopper = setTimeout(() => {
+      void events.append(runId, [{ type: 'run.cancelled' }]);
+    }, 10_000);
+    try {
+      const body = await (await fetch(base)).text();
+      clearTimeout(stopper);
+      const delivered = ids(body);
+      const stored = (await events.read(runId)).length;
+      console.log(
+        JSON.stringify({
+          probe: 'in-memory-real-socket',
+          stored,
+          liveAppendedDuringReplay: live,
+          delivered: delivered.length,
+          lastDelivered: delivered.at(-1),
+          slowConsumer: body.includes('SSE_SLOW_CONSUMER'),
+        }),
+      );
+      expect(body.includes('SSE_SLOW_CONSUMER')).toBe(false);
+    } finally {
+      clearTimeout(stopper);
+      await app.close();
+    }
+  }, 60_000);
+
+  it('fast real-socket reader on SQLite while the run appends ~100 events/s', async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-e1-186-'));
+    const t = await createTestApp({ env: { GG_DB_URL: `file:${join(dataDir, 'events.db')}` } });
+    const events = t.container.repos.events;
+    const big = { ...draft, payload: 'x'.repeat(330) };
+    for (let i = 0; i < 41; i++)
+      await events.append(
+        runId,
+        Array.from({ length: 1000 }, () => big),
+      );
+    const app = Fastify();
+    app.get('/', (request, reply) => streamRunEvents(request, reply, events, runId, 0));
+    const base = await app.listen({ host: '127.0.0.1', port: 0 });
+    let appended = 0;
+    const timer = setInterval(() => {
+      appended += 3;
+      void events.append(runId, [big, big, big]);
+    }, 15);
+    // End the run after 15 s so a stream that never fails still closes on its terminal event.
+    const stopper = setTimeout(() => {
+      clearInterval(timer);
+      void events.append(runId, [{ type: 'run.cancelled' }]);
+    }, 15_000);
+    const started = performance.now();
+    try {
+      const text = await (await fetch(base)).text();
+      clearInterval(timer);
+      clearTimeout(stopper);
+      const delivered = ids(text);
+      console.log(
+        JSON.stringify({
+          probe: 'sqlite-real-socket',
+          replayMs: Math.round(performance.now() - started),
+          appendedWhileOpen: appended,
+          delivered: delivered.length,
+          lastDelivered: delivered.at(-1),
+          slowConsumer: text.includes('SSE_SLOW_CONSUMER'),
+        }),
+      );
+      appendFileSync(
+        join(process.cwd(), '../../.tmp/gg-wp-e1-186-review-probe.json'),
+        JSON.stringify({
+          replayMs: Math.round(performance.now() - started),
+          appended,
+          delivered: delivered.length,
+          lastDelivered: delivered.at(-1),
+          slowConsumer: text.includes('SSE_SLOW_CONSUMER'),
+        }) + '\n',
+      );
+      expect(text.includes('SSE_SLOW_CONSUMER')).toBe(false);
+    } finally {
+      clearInterval(timer);
+      clearTimeout(stopper);
+      await app.close();
+      await t.close();
+    }
+  }, 120_000);
+});

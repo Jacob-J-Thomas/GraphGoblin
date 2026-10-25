@@ -1,0 +1,32 @@
+pnpm.cmd : $ vitest run --coverage
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/web test:coverage *> .tmp/coverage-web ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/routing-review.test.ts (23 tests | 1 failed) 190480ms
+   ❯ routing review regressions (23)
+     × seeded sparse graphs preserve geometry and keep detours below twelve bends 103105ms
+ ❯ src/settings/sections/ClassifierModelsSection.test.tsx (31 tests | 1 failed) 175802ms
+   ❯ ClassifierModelsSection (31)
+     × review: keeps Add unavailable until the list has loaded, then creates only 21197ms
+ ❯ src/editor/NodeEditorDialog.test.tsx (32 tests | 1 failed) 256913ms
+   ❯ NodeEditorDialog evaluator-specific decisions (14)
+     × selects each kind with only its applicable fields and keeps source issue focus 20952ms
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 4 failed) 135486ms
+   × keeps type through editor save, device draft, reopen and export: {"type":"manual","exposeTo":["ui","mcp"],"inputSchema":{"type":"object"}} 12301ms
+   ❯ trigger authoring (4)
+     × previews, cancels and applies issues-poll as one undo step including graph and held input 20617ms
+     × previews, cancels and applies issues-labeled as one undo step including graph and held input 20137ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20234ms
+ ❯ src/runs/inspector/ThreadViewer.test.tsx (9 tests | 3 failed) 81105ms
+   ❯ ThreadViewer messages (3)
+     × lays out the latest fifty messages, the rest on request, and starts bounded for another thread 21578ms
+   ❯ ThreadViewer with a large history (6)
+     × asks again for an event whose reconstruction the viewer no longer remembers 20631ms
+     × reconstructs a patch diff whose other half was let go in one activation 20250ms

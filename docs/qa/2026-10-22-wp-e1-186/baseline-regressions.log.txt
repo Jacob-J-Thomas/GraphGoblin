@@ -1,0 +1,29 @@
+api baseline red run
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages and merges a durable live append between 
+AssertionError: expected false to be true // Object.is equality
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > reports a held-live overflow explicitly instead of silently 
+AssertionError: expected ': connected\n\nid: 1\nevent: run.woke…' to contain 'event: stream.error'
+ FAIL  src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite 
+AssertionError: expected ': connected\n\nid: 1\nevent: run.queu…' to contain 'event: stream.error'
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  18:36:43
+   Duration  21.13s (transform 36%, tests 32%, import 31%)
+
+client baseline red run
+ FAIL  src/sse.test.ts > subscribeRunEvents > reports a typed slow-consumer problem and resumes from the last 
+AssertionError: expected [ …(2) ] to have a length of 1 but got 2
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  18:36:34
+   Duration  4.41s (transform 53%, import 33%, tests 14%)
+
+web baseline red run
+ FAIL  src/runs/useRunEvents.test.tsx > run stream reachability > shows a slow-consumer reason during retry and clears 
+AssertionError: expected 'connecting' to be 'error' // Object.is equality
+ FAIL  src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the 
+TypeError: actual value must be number or bigint, received "undefined"
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  18:36:42
+   Duration  13.25s (environment 38%, transform 29%, import 21%, setup 11%, tests 2%)

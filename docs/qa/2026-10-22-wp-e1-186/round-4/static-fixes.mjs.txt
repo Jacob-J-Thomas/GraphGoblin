@@ -1,0 +1,19 @@
+import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+for (const name of ['gates','source-frozen','gate-driver.log']) {
+  const extension=name.endsWith('.log')?'txt':'json';
+  copyFileSync(`.tmp/r4-${name}.${extension}`,`.tmp/r4-initial-${name}.${extension}`);
+}
+let source=readFileSync('packages/api-client/src/sse-completion.test.ts','utf8');
+source=source.replaceAll('fetch: async ', 'fetch: ').replaceAll('new Response(', 'response(');
+source=source.replace('const runId = FIXTURE_IDS.run;', 'const runId = FIXTURE_IDS.run;\nconst response = (body: string, init?: ResponseInit) => Promise.resolve(new Response(body, init));');
+writeFileSync('packages/api-client/src/sse-completion.test.ts',source);
+const hook='apps/web/src/runs/useRunEvents.test.tsx';
+source=readFileSync(hook,'utf8').replace("event(runId, 1, 'run.cancelled')", "event(runId, 1, 'run.cancelled', {})").replace("event(runId, 3, 'run.cancelled')", "event(runId, 3, 'run.cancelled', {})");
+writeFileSync(hook,source);
+// Retain the exact configured baseline probe; correct only the auxiliary fixture that
+// the audit report explicitly records as requiring a nonexistent fourth read after handoff.
+copyFileSync('.tmp/r4-transport-probe.mjs','.tmp/r4-transport-probe-before.mjs');
+source=readFileSync('.tmp/r4-transport-probe.mjs','utf8')
+ .replace('const handoff=await makeRun(127)', 'const handoff=await makeRun(257)')
+ .replace('appended<4','appended<3').replace('appended===4','appended===3');
+writeFileSync('.tmp/r4-transport-probe.mjs',source);

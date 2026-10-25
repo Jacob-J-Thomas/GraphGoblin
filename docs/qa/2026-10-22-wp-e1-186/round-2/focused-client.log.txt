@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/packages/api-client
+
+ ✓ src/sse.test.ts > SseParser > parses id, event, and multi-line data; ignores comments and unknown fields 4ms
+ ✓ src/sse.test.ts > SseParser > handles CRLF and CR endings, including a CRLF split across chunks 1ms
+ ✓ src/sse.test.ts > SseParser > buffers partial lines and drops frames without data 0ms
+ ✓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at data-newline without advancing the resume cursor 22ms
+ ✓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at id-prefix without advancing the resume cursor 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control STORED_EVENT_INVALID without advancing the cursor or retrying 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects malformed stream controls without consuming their id 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports partial data without an id, then retries a slow control from the complete cursor 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_SLOW_CONSUMER problem and retries from the last delivered id 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_REPLAY_FAILED problem and retries from the last delivered id 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > provides the received JSON size to batch consumers without another serialization 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > accepts exhausted completion and closes without reconnecting 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > delivers validated events in order, skips replays, and stops after a terminal event 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports each accepted connection through onOpen, before and without any event 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports invalid frames, advances past their id, and keeps going 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > retries refused connections and retryable statuses with capped exponential backoff 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > gives up after maxAttempts consecutive failures 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects without retrying on non-retryable statuses and on a missing body 5ms
+ ✓ src/sse.test.ts > subscribeRunEvents > tolerates an unreadable error body 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects when onEvent throws 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects after a stream error mid-read and resets backoff after progress 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops quietly when closed or aborted, including before it starts 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops when closed from inside onEvent or while waiting to retry 6ms
+ ✓ src/sse.test.ts > subscribeRunEvents > ends quietly when the stream finishes after close() aborts the read 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting headers without cancelling the run 74ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting body without cancelling the run 27ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects over real HTTP after the server drops the connection 62ms
+ ✓ src/sse.test.ts > defaultSleep > waits, and resolves early on abort 21ms
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  02:16:39
+   Duration  3.30s (transform 48%, import 42%, tests 10%)
+

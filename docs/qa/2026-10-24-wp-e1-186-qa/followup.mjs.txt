@@ -1,0 +1,23 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-e1-186-qa');
+const runtime=(await readFile(join(out,'runtime-location.log.txt'),'utf8')).replaceAll('%USERPROFILE%',process.env.USERPROFILE).trim();
+const {base,token,longRunId}=JSON.parse(await readFile(join(runtime,'connection.json'),'utf8'));
+const prior=JSON.parse(await readFile(join(out,'runtime-results.json'),'utf8'));
+const {SseParser}=await import(import.meta.resolve('@graphgoblin/api-client',pathToFileURL(join(process.cwd(),'apps/web/package.json'))));
+const {RunEventSchema}=await import(import.meta.resolve('@graphgoblin/contracts',pathToFileURL(join(process.cwd(),'apps/web/package.json'))));
+const result={started:new Date().toISOString(),durable:{},recovery:[],terminalRepeat:[]};
+async function api(path){const res=await fetch(base+path,{headers:{authorization:'Bearer '+token},signal:AbortSignal.timeout(120000)});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
+async function stream(runId,after){const start=performance.now(),p=new SseParser(),h=createHash('sha256');let count=0,last=after,gaps=0,duplicates=0;const controls=[];const res=await fetch(base+'/runs/'+runId+'/events?after='+after,{headers:{authorization:'Bearer '+token,accept:'text/event-stream'},signal:AbortSignal.timeout(120000)});const reader=res.body.getReader(),d=new TextDecoder();for(;;){const {value,done}=await reader.read();if(done)break;for(const f of p.push(d.decode(value,{stream:true}))){if(f.event==='stream.error'){controls.push(JSON.parse(f.data));continue;}const e=RunEventSchema.parse(JSON.parse(f.data));if(e.seq!==last+1)gaps++;if(e.seq<=last)duplicates++;last=e.seq;count++;h.update(JSON.stringify(e)+'\n');}}return {after,count,last,gaps,duplicates,controls,elapsedMs:performance.now()-start,sha256:h.digest('hex')};}
+try{
+ let cursor=0,count=0,gaps=0,pages=0,previousTs,identicalTimestampPairs=0;const h=createHash('sha256');
+ for(;;){const page=await api('/runs/'+longRunId+'/events?after='+cursor+'&limit=128');pages++;for(const item of page.items){const e=RunEventSchema.parse(item);if(e.seq!==cursor+1)gaps++;if(e.ts===previousTs)identicalTimestampPairs++;previousTs=e.ts;cursor=e.seq;count++;h.update(JSON.stringify(e)+'\n');}if(!page.hasMore)break;}
+ const sha256=h.digest('hex');result.durable={count,last:cursor,gaps,pages,identicalTimestampPairs,sha256,fastReaderHashes:prior.cases[0].readers.filter(x=>x.after===0).map(x=>x.sha256),pass:prior.cases[0].readers.filter(x=>x.after===0).every(x=>x.sha256===sha256)&&gaps===0};
+ const slow=prior.cases.find(x=>x.name==='paced slow reader and recoverable stalled socket');
+ for(const source of ['paced','stalled']){const r=await stream(slow.runId,slow[source].last);result.recovery.push({source,prefix:slow[source].count,suffix:r,combined:slow[source].count+r.count,pass:r.gaps===0&&r.duplicates===0&&r.controls.length===0&&slow[source].count+r.count===40002});}
+ result.heldOneSecond=await stream(longRunId,0);
+ for(const after of [cursor,cursor+100])result.terminalRepeat.push(await stream(longRunId,after));
+}catch(e){result.error=e.stack;}
+result.finished=new Date().toISOString();await writeFile(join(out,'followup-results.json'),JSON.stringify(result,null,2).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));console.log(JSON.stringify(result));
