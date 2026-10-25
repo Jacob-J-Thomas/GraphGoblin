@@ -30,6 +30,8 @@ export interface SseOptions {
   isTerminal?: () => Promise<boolean>;
   /** Bounded lookup of the latest terminal/started/resumed marker; absent marker uses grace. */
   lastLifecycleEvent?: () => Promise<RunEvent | undefined>;
+  /** Existing durable finalizer acknowledgement; terminal execution alone is insufficient. */
+  isFinalized: () => Promise<boolean>;
   /** Defensive close for a terminal status with no terminal event. Default 2 s. */
   terminalGraceMs?: number;
   /** Maximum time without drain before explicit slow-consumer failure. Default 5 s. */
@@ -58,7 +60,7 @@ export async function streamRunEvents(
   store: EventStorePort,
   runId: string,
   after: number,
-  options: SseOptions = {},
+  options: SseOptions,
 ): Promise<void> {
   const res = reply.raw;
   let closed = false;
@@ -80,6 +82,7 @@ export async function streamRunEvents(
   let failure: StreamProblem | undefined;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let grace: ReturnType<typeof setTimeout> | undefined;
+  let confirmation: ReturnType<typeof setTimeout> | undefined;
   let forceClose: ReturnType<typeof setTimeout> | undefined;
   let releaseDrain: (() => void) | undefined;
   let unsubscribe = () => {};
@@ -87,6 +90,7 @@ export async function streamRunEvents(
   const cleanup = (): void => {
     clearInterval(heartbeat);
     clearTimeout(grace);
+    clearTimeout(confirmation);
     const stop = unsubscribe;
     unsubscribe = () => {};
     stop();
@@ -240,6 +244,20 @@ export async function streamRunEvents(
             needsConfirmation = false;
             break;
           }
+          // The existing marker is written after every return receipt and terminal cleanup.
+          // It has no event of its own, so a quiet pending finalizer gets one bounded recheck
+          // per 250 ms. This is observation latency, not a delivery or execution deadline.
+          if (!(await options.isFinalized())) {
+            // Only the timer or a lifecycle notification asks again: a heartbeat or another
+            // write in between must not turn this recheck into a tighter loop.
+            needsConfirmation = false;
+            confirmation ??= setTimeout(() => {
+              confirmation = undefined;
+              needsConfirmation = true;
+              void flushLive();
+            }, 250);
+            break;
+          }
           // The lifecycle lookup can race a resume or a delivery audit. Read AFTER it and
           // keep the writer locked through this confirmation and the completion control.
           // Nothing already durable at this read may be omitted, even after a terminal row.
@@ -357,7 +375,10 @@ export async function streamRunEvents(
     await flushLive();
     if (closed || !terminal) return;
     // Grace is deliberately unconfirmed EOF, never authoritative stream.complete.
-    if (!closed) grace = setTimeout(() => end(), options.terminalGraceMs ?? 2_000);
+    // A known outcome with outstanding finalization is a live stream, not an inconsistent log.
+    // Only a missing/currently active lifecycle retains the pre-existing defensive grace.
+    if (!closed && confirmation === undefined)
+      grace = setTimeout(() => end(), options.terminalGraceMs ?? 2_000);
   } catch (error) {
     if (closed) return;
     if (!started) {

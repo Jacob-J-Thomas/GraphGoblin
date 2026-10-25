@@ -94,7 +94,7 @@ for (const viewport of [
     // The finished inference node's patch and the full thread carry the long value too, and the
     // progress drawer shows the harness items: with everything open, nothing widens the document.
     const timeline = page.getByRole('list', { name: 'Timeline' });
-    await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+    await timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }).click();
     const diff = page.getByRole('list', { name: 'Patch diff' });
     await expect(diff).toBeVisible();
     await expect(
@@ -246,7 +246,7 @@ test('oversized history keeps bounded cached rows and loads exact event and thre
   const cacheBytes = () =>
     page.evaluate(() => (sessionStorage.getItem('graphgoblin-run-events-v4')?.length ?? 0) * 2);
   expect(await cacheBytes()).toBeLessThan(1_100_000);
-  await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+  await timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }).click();
   await expect(page.getByRole('list', { name: 'Patch diff' })).toBeVisible();
   await page.getByRole('button', { name: 'Full thread JSON' }).click();
   await page.getByRole('button', { name: 'Show all of Full thread JSON' }).click();
@@ -256,7 +256,9 @@ test('oversized history keeps bounded cached rows and loads exact event and thre
   expect(thread.outputs.work.value).toBe(HUGE);
   expect(await cacheBytes()).toBeLessThan(1_100_000);
   await page.reload();
-  await expect(timeline.getByRole('button', { name: /node\.finished work\b/ })).toBeVisible();
+  await expect(
+    timeline.getByRole('button', { name: /node\.finished Work \(work\)[ ,]/ }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Follow live' })).toBeEnabled();
   await page.getByRole('button', { name: 'Follow live' }).click();
   await expect(timeline.getByText('run.waiting')).toBeVisible();

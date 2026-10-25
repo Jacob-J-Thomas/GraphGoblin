@@ -559,6 +559,8 @@ describe('adversarial API invariants', () => {
       { type: 'run.finished', status: 'succeeded', outcome: 'success' },
     ]);
     await t.container.repos.runs.update(r.id, { status: 'succeeded' });
+    // This fabricated completed-history fixture also acknowledges terminal cleanup.
+    await t.container.repos.runs.markFinalized(r.id);
     const res = await t.app.inject({
       url: `/runs/${r.id}/events`,
       headers: { accept: 'text/event-stream' },

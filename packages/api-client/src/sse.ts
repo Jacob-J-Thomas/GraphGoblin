@@ -232,7 +232,8 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
             } catch (cause) {
               throw new Fatal(new RunEventParseError(frame, cause));
             }
-            // An id-less control confirms the delivered cursor; it never advances it.
+            // The server confirms terminal execution, durable finalization and the delivered tail.
+            // This also settles an already-consumed cursor; EOF cannot substitute for the control.
             return true;
           }
           if (frame.event === 'stream.error') {

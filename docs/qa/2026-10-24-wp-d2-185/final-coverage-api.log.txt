@@ -1,0 +1,139 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/api
+      Coverage enabled with v8
+
+ ❯ src/shutdown-process.test.ts (11 tests | 1 failed | 3 skipped) 305237ms
+   × native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work 31658ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 196358ms
+   ❯ awaited subloops across process death (#242) (3)
+     × the built API recovers a child finished while down with one continuation per parent 69575ms
+{"level":30,"time":1792894363777,"pid":21868,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5639"}
+{"level":30,"time":1792894363777,"pid":21868,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5639,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-Tkfc3X","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792894363850,"pid":21868,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792894363867,"pid":21868,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.311899999999696,"msg":"request completed"}
+ ❯ src/routes/templates.test.ts (13 tests | 1 failed) 54928ms
+   ❯ template API without runtime authority (13)
+     × reads only manifests without provider, script or credential probes 20537ms
+ ❯ src/readiness-evidence.test.ts (9 tests | 1 failed) 318966ms
+   ❯ CLI evidence through Settings preflight and draft validation (9)
+     × auth-network preserves auth for both harnesses 61134ms
+[vitest-pool]: Timeout terminating forks worker for test files %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/api/src/model-issues-draft.test.ts.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network preserves auth for both harnesses
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/readiness-evidence.test.ts:29:14
+     27|     ['ready', 'ready'],
+     28|     ['auth', 'auth'],
+     29|   ] as const)(
+       |              ^
+     30|     '%s preserves %s for both harnesses',
+     31|     async (scenario, state) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/shutdown-process.test.ts > native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use 127.0.0.1:5764
+    at Server.setupListenHandle [as _listen2] (node:net:1937:16)
+    at listenInCluster (node:net:1994:12)
+    at node:net:2203:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 5764
+}
+
+ ❯ src/testing/api-subprocess.ts:109:27
+    107|       await eventually(() => {
+    108|         if (stdout.includes(message)) return true;
+    109|         if (exited) throw new Error(`API child exited before ${message…
+       |                           ^
+    110|         return false;
+    111|       }, timeoutMs);
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:186:7
+ ❯ boot src/shutdown-process.test.ts:26:3
+ ❯ src/shutdown-process.test.ts:282:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+AssertionError: expected 'queued' to be 'waiting' // Object.is equality
+
+Expected: "waiting"
+Received: "queued"
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/routes/templates.test.ts > template API without runtime authority > reads only manifests without provider, script or credential probes
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/routes/templates.test.ts:19:3
+     17|
+     18| describe('template API without runtime authority', () => {
+     19|   it('reads only manifests without provider, script or credential prob…
+       |   ^
+     20|     app = await createTestApp();
+     21|     const preflight = vi.spyOn(app.harness, 'preflight');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  4 failed | 73 passed | 2 skipped (79)
+      Tests  4 failed | 1388 passed | 11 skipped (1403)
+   Start at  21:02:55
+   Duration  1882.43s (tests 80%, import 18%, transform 1%)
+
+    Isolate  79 workers spawned · ~1.73s startup each (spawn + environment, per file)
+             at least ~66.74s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.64% ( 2348/2455 )
+Branches     : 92.17% ( 1519/1648 )
+Functions    : 93.64% ( 457/488 )
+Lines        : 97.36% ( 2142/2200 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ 185\apps\api
+

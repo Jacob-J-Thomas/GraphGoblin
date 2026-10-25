@@ -37,7 +37,9 @@ Stored history and the loop's intended context must remain complete.
   marker, and delivery audits can follow the current outcome. Deliver every replay page and
   held notification first. With the writer still locked, look up the current lifecycle, then
   make another bounded cursor read. More rows/notifications re-enter catch-up before another
-  confirmation. A terminal lifecycle plus an empty confirmed tail emits id-less
+  confirmation. As amended by ADR-0057 (#185), require the existing durable finalization acknowledgement
+  after terminal lifecycle confirmation; pending delivery remains live and its marker is rechecked
+  by one 250 ms timer. A terminal lifecycle, finalization acknowledgement and an empty confirmed tail emit id-less
   `event: stream.complete` with `data: {"after":<written cursor>}`, then closes. Completion
   acknowledges the tail-read snapshot, not the immutability of future history. Later appends
   require a new subscription. Port-only compositions can track the newest lifecycle marker

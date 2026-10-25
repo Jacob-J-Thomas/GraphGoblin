@@ -98,6 +98,16 @@ acceptance marker and submission classification are available through REST; the 
 does not display them as event details today.
 The provenance detail view is coordinated with #379.
 
+The inspector displays finalization separately from execution (#185, ADR-0057).
+A terminal run without finalizedAt says "Execution ended; finalization pending."
+Its timeline remains live until authoritative stream.complete. Once the marker is
+present and no webhook is pending it says "Fully finalized."; failed webhook delivery remains visibly failed
+beside the unchanged execution outcome. Terminal snapshots poll once per second
+while the marker is absent, and stream completion refreshes the snapshot. EOF never
+marks the timeline complete. After completion, any new history discovered by the
+remote-resume watcher opens a fresh SSE subscription, even if that attempt has already
+ended, so pending delivery cannot be finalized by JSON polling alone.
+
 ## PWA behaviour (Decided)
 
 - `vite-plugin-pwa` with Workbox, `registerType: 'prompt'`.

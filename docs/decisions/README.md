@@ -57,3 +57,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0048: Targeted durable Event admission](ADR-0048-targeted-event-admission.md) records a single explicit recipient, receipt-before-acknowledgement, recipient-scoped keys and bounded payload nesting.
 
 [ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.
+
+[ADR-0057: Observe execution outcome and durable finalization separately](ADR-0057-execution-and-delivery-finalization.md) exposes the existing finalization marker as `finalizedAt` and extends the stream completion rule to wait for it, so readers tell execution end apart from delivery pending, delivered and failed.

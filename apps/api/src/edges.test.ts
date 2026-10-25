@@ -337,7 +337,10 @@ describe('SSE framing', () => {
     } as unknown as EventStorePort;
     const app = await buildApp(t.container, { logger: false });
     app.get('/probe/sse', (request, reply) =>
-      streamRunEvents(request, reply, store, 'r1', 0, { heartbeatMs: 5 }),
+      streamRunEvents(request, reply, store, 'r1', 0, {
+        heartbeatMs: 5,
+        isFinalized: () => Promise.resolve(true),
+      }),
     );
     try {
       const pending = app.inject('/probe/sse');
@@ -389,11 +392,14 @@ describe('SSE terminal runs', () => {
   async function probe(
     store: EventStorePort,
     after: number,
-    options: Parameters<typeof streamRunEvents>[5],
+    options: Omit<Parameters<typeof streamRunEvents>[5], 'isFinalized'>,
   ) {
     const app = await buildApp(t.container, { logger: false });
     app.get('/probe/sse', (request, reply) =>
-      streamRunEvents(request, reply, store, 'r1', after, options),
+      streamRunEvents(request, reply, store, 'r1', after, {
+        ...options,
+        isFinalized: () => Promise.resolve(true),
+      }),
     );
     return app;
   }

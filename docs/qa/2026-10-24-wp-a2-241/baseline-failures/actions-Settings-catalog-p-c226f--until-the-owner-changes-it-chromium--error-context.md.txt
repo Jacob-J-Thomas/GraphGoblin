@@ -1,0 +1,248 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: actions.spec.ts >> Settings catalog preserves a disabled saved default until the owner changes it
+- Location: e2e\actions.spec.ts:276:1
+
+# Error details
+
+```
+Error: expect(locator).toHaveAccessibleDescription(expected) failed
+
+Locator:  getByLabel('Default model', { exact: true })
+Expected: "This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running."
+Received: "Disabled in the model catalog. Enable it or choose another default."
+Timeout:  10000ms
+
+Call log:
+  - Expect "toHaveAccessibleDescription" getByLabel('Default model', { exact: true }) with timeout 10000ms
+  - waiting for getByLabel('Default model', { exact: true })
+    21 × locator resolved to <select id="default-model-codex" aria-describedby="default-model-codex-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:te…>…</select>
+       - unexpected value "Disabled in the model catalog. Enable it or choose another default."
+
+```
+
+```yaml
+- combobox "Default model":
+  - option "(server default)"
+  - option "GPT-6 Luna (disabled)" [selected]
+  - option "GPT-5.5"
+  - option "GPT-5.6 Luna"
+  - option "GPT-5.6 Sol"
+  - option "GPT-5.6 Terra"
+  - option "GPT-6 Astra"
+  - option "GPT-6 Sol"
+  - option "GPT-6.1 Sol"
+```
+
+# Test source
+
+```ts
+  197 |   await add.getByRole('button', { name: 'Cancel' }).click();
+  198 |   await page.getByRole('button', { name: 'Delete actions-model', exact: true }).click();
+  199 |   await expect(page.getByRole('alertdialog')).toContainText(
+  200 |     'Removing a LiteLLM model leaves its loops referencing it.',
+  201 |   );
+  202 |   expect(
+  203 |     await page.getByRole('alertdialog').evaluate((element) => ({
+  204 |       fits: element.scrollWidth <= element.clientWidth,
+  205 |       alignment: getComputedStyle(element).textAlign,
+  206 |       wraps: getComputedStyle(element).whiteSpace,
+  207 |     })),
+  208 |   ).toEqual({ fits: true, alignment: 'left', wraps: 'normal' });
+  209 |   expect((await request.delete('/model-catalog/codex/actions-model')).status()).toBe(204);
+  210 |   await page.getByRole('button', { name: 'Confirm delete actions-model' }).click();
+  211 |   await expect(page.getByRole('alert')).toContainText('MODEL_NOT_FOUND');
+  212 |   await expect(page.getByRole('alertdialog')).toBeVisible();
+  213 |   await page.getByRole('button', { name: 'Keep' }).click();
+  214 |   // Recovery follows the committed row removal, which can lag query settlement.
+  215 |   await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
+  216 |   await expect(page.getByRole('button', { name: 'Delete actions-model', exact: true })).toHaveCount(
+  217 |     0,
+  218 |   );
+  219 |   await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  220 | });
+  221 | 
+  222 | test('Settings harness switches follow keyboard toggles and update Default model', async ({
+  223 |   page,
+  224 |   request,
+  225 | }) => {
+  226 |   const instance = await control(request, '/apps');
+  227 |   const url = String(instance['url']);
+  228 |   const before = ModelCatalogEntrySchema.array()
+  229 |     .parse(((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items)
+  230 |     .find((entry) => entry.model === 'gpt-6-luna');
+  231 |   await page.goto(`${url}/app/settings`);
+  232 |   const catalog = page.getByRole('region', { name: 'Model catalog' });
+  233 |   await expect(catalog.getByRole('button')).toHaveCount(0);
+  234 |   await expect(catalog.getByRole('columnheader', { name: 'Actions' })).toHaveCount(0);
+  235 |   await expect(catalog).toContainText(
+  236 |     'Local models served through LiteLLM will appear here once the LiteLLM adapter is configured; see the Settings guide, Choose a model and effort.',
+  237 |   );
+  238 |   await expect(catalog.getByRole('link')).toHaveCount(0);
+  239 |   const enabled = catalog.getByRole('switch', {
+  240 |     name: `Enable ${before!.displayName}`,
+  241 |     exact: true,
+  242 |   });
+  243 |   await tabTo(page, enabled);
+  244 |   await expect(enabled).toBeChecked();
+  245 |   const defaults = page.getByLabel('Default model', { exact: true });
+  246 |   await expect(
+  247 |     defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  248 |   ).toHaveCount(1);
+  249 |   const patch = page.waitForResponse(
+  250 |     (response) =>
+  251 |       response.request().method() === 'PATCH' &&
+  252 |       response.url().endsWith('/model-catalog/codex/gpt-6-luna'),
+  253 |   );
+  254 |   await page.keyboard.press('Space');
+  255 |   expect((await patch).status()).toBe(200);
+  256 |   await expect(enabled).not.toBeChecked();
+  257 |   await expect(enabled).toBeEnabled();
+  258 |   await expect(
+  259 |     defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  260 |   ).toHaveCount(0);
+  261 |   await expect(enabled.locator('xpath=ancestor::tr').getByRole('status')).toContainText('Disabled');
+  262 |   const disabled = ModelCatalogEntrySchema.array()
+  263 |     .parse(((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items)
+  264 |     .find((entry) => entry.model === 'gpt-6-luna');
+  265 |   expect(disabled).toEqual({ ...before, enabled: false });
+  266 |   await expect(enabled).toBeFocused();
+  267 |   await page.keyboard.press('Enter');
+  268 |   await expect(enabled).toBeChecked();
+  269 |   await expect(enabled).toBeEnabled();
+  270 |   await expect(
+  271 |     defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  272 |   ).toHaveCount(1);
+  273 |   await expect(enabled.locator('xpath=ancestor::tr').getByRole('status')).toContainText('Enabled');
+  274 | });
+  275 | 
+  276 | test('Settings catalog preserves a disabled saved default until the owner changes it', async ({
+  277 |   page,
+  278 |   request,
+  279 | }) => {
+  280 |   const instance = await control(request, '/apps');
+  281 |   const url = String(instance['url']);
+  282 |   expect(
+  283 |     (
+  284 |       await request.put(`${url}/settings`, {
+  285 |         data: { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } },
+  286 |       })
+  287 |     ).status(),
+  288 |   ).toBe(200);
+  289 |   await page.goto(`${url}/app/settings`);
+  290 |   const enabled = page.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+  291 |   await tabTo(page, enabled);
+  292 |   await page.keyboard.press('Space');
+  293 |   await expect(enabled).toHaveAttribute('aria-busy', 'false');
+  294 |   const defaults = page.getByLabel('Default model', { exact: true });
+  295 |   await expect(defaults).toHaveValue('gpt-6-luna');
+  296 |   await expect(defaults.locator('option:checked')).toHaveText('GPT-6 Luna (disabled)');
+> 297 |   await expect(defaults).toHaveAccessibleDescription(
+      |                          ^ Error: expect(locator).toHaveAccessibleDescription(expected) failed
+  298 |     'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
+  299 |   );
+  300 |   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
+  301 |     defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
+  302 |   });
+  303 |   // The truthful selection makes choosing the preceding server-default option fire a change.
+  304 |   await defaults.press('ArrowUp');
+  305 |   await defaults.press('Enter');
+  306 |   await expect(defaults).toHaveValue('');
+  307 |   await expect
+  308 |     .poll(async () => {
+  309 |       const values: unknown = await (await request.get(`${url}/settings`)).json();
+  310 |       return values;
+  311 |     })
+  312 |     .not.toHaveProperty('defaults');
+  313 |   await expect(page.getByText(/This saved model is unavailable/)).toHaveCount(0);
+  314 | });
+  315 | 
+  316 | test('Settings catalog refreshes a vanished toggle and announces the reason at the heading', async ({
+  317 |   page,
+  318 |   request,
+  319 | }) => {
+  320 |   const instance = await control(request, '/apps');
+  321 |   const url = String(instance['url']);
+  322 |   const entries = ModelCatalogEntrySchema.array().parse(
+  323 |     ((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items,
+  324 |   );
+  325 |   let vanished = false;
+  326 |   let release!: () => void;
+  327 |   const held = new Promise<void>((resolve) => {
+  328 |     release = resolve;
+  329 |   });
+  330 |   await page.route(`${url}/model-catalog`, async (route) => {
+  331 |     await route.fulfill({
+  332 |       json: { items: vanished ? entries.filter((entry) => entry.model !== 'gpt-6-luna') : entries },
+  333 |     });
+  334 |   });
+  335 |   await page.route(`${url}/model-catalog/codex/gpt-6-luna`, async (route) => {
+  336 |     await held;
+  337 |     vanished = true;
+  338 |     await route.fulfill({
+  339 |       status: 404,
+  340 |       contentType: 'application/problem+json',
+  341 |       body: JSON.stringify({ status: 404, code: 'MODEL_NOT_FOUND' }),
+  342 |     });
+  343 |   });
+  344 |   try {
+  345 |     await page.goto(`${url}/app/settings`);
+  346 |     const catalog = page.getByRole('region', { name: 'Model catalog' });
+  347 |     const enabled = catalog.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+  348 |     await tabTo(page, enabled);
+  349 |     const patch = page.waitForRequest(
+  350 |       (req) => req.method() === 'PATCH' && req.url().endsWith('/model-catalog/codex/gpt-6-luna'),
+  351 |     );
+  352 |     await page.keyboard.press('Space');
+  353 |     const submitted = await patch;
+  354 |     expect(submitted.postDataJSON()).toEqual({ enabled: false });
+  355 |     await expect(enabled).toHaveAttribute('aria-disabled', 'true');
+  356 |     await expect(enabled).toHaveAttribute('aria-busy', 'true');
+  357 |     await expect(enabled).not.toBeChecked();
+  358 |     await expect(enabled).toBeFocused();
+  359 |     release();
+  360 |     // A GET starting does not mean React committed the removal and recovered focus.
+  361 |     await expect(
+  362 |       catalog.getByRole('heading', { name: 'Model catalog', exact: true }),
+  363 |     ).toBeFocused();
+  364 |     await expect(enabled).toHaveCount(0);
+  365 |     await expect(
+  366 |       catalog.getByRole('status').filter({ hasText: 'no longer in the catalog' }),
+  367 |     ).toHaveText('GPT-6 Luna: This model is no longer in the catalog.');
+  368 |     await expect(catalog).not.toContainText('Refresh Settings');
+  369 |     await expect(
+  370 |       page.getByLabel('Default model').getByRole('option', { name: 'GPT-6 Luna', exact: true }),
+  371 |     ).toHaveCount(0);
+  372 |   } finally {
+  373 |     release();
+  374 |   }
+  375 | });
+  376 | 
+  377 | for (const theme of ['dark', 'light'] as const) {
+  378 |   test(`Settings catalog has visible keyboard focus, pending and refused states in ${theme}`, async ({
+  379 |     page,
+  380 |     request,
+  381 |   }, testInfo) => {
+  382 |     const instance = await control(request, '/apps');
+  383 |     const url = String(instance['url']);
+  384 |     await page.addInitScript((choice) => localStorage.setItem('graphgoblin-theme', choice), theme);
+  385 |     await request.patch(`${url}/model-catalog/codex/gpt-6-sol`, { data: { enabled: false } });
+  386 |     await page.goto(`${url}/app/settings`);
+  387 |     const catalog = page.getByRole('region', { name: 'Model catalog' });
+  388 |     const enabled = catalog.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+  389 |     await tabTo(page, enabled);
+  390 |     const appearance = await enabled.evaluate((element) => {
+  391 |       const style = getComputedStyle(element);
+  392 |       const bounds = element.getBoundingClientRect();
+  393 |       return {
+  394 |         width: bounds.width,
+  395 |         height: bounds.height,
+  396 |         outline: style.outlineStyle,
+  397 |         outlineWidth: style.outlineWidth,
+```

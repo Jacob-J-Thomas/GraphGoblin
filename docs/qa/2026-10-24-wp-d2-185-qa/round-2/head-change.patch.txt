@@ -1,0 +1,77 @@
+diff --git a/apps/api/src/sse-completion.test.ts b/apps/api/src/sse-completion.test.ts
+index 2ce4c62d..7cfb7682 100644
+--- a/apps/api/src/sse-completion.test.ts
++++ b/apps/api/src/sse-completion.test.ts
+@@ -289,4 +289,32 @@ describe('authoritative SSE completion', () => {
+       }
+     },
+   );
++  it('rechecks a pending finalization at most every 250 ms, even with frequent heartbeats', async () => {
++    const store = new InMemoryEventStore(new FakeClock());
++    const runId = FIXTURE_IDS.run;
++    await store.append(runId, [{ type: 'run.cancelled' }]);
++    const checks: number[] = [];
++    const app = Fastify();
++    app.get('/', (request, reply) =>
++      streamRunEvents(request, reply, store, runId, 1, {
++        lastLifecycleEvent: async () => (await store.read(runId)).at(-1),
++        isFinalized: () => {
++          checks.push(performance.now());
++          return Promise.resolve(false);
++        },
++        heartbeatMs: 20,
++        closeSignal: AbortSignal.timeout(1_200),
++      }),
++    );
++    try {
++      const response = await app.inject('/');
++      expect(response.body).not.toContain('stream.complete');
++      expect(response.body).toContain(': heartbeat');
++      const gaps = checks.slice(1).map((at, i) => at - checks[i]!);
++      expect(gaps.length).toBeGreaterThan(1);
++      expect(Math.min(...gaps)).toBeGreaterThanOrEqual(245);
++    } finally {
++      await app.close();
++    }
++  });
+ });
+diff --git a/apps/api/src/sse.ts b/apps/api/src/sse.ts
+index 3ea98fe0..9eadb2b0 100644
+--- a/apps/api/src/sse.ts
++++ b/apps/api/src/sse.ts
+@@ -248,6 +248,9 @@ export async function streamRunEvents(
+           // It has no event of its own, so a quiet pending finalizer gets one bounded recheck
+           // per 250 ms. This is observation latency, not a delivery or execution deadline.
+           if (!(await options.isFinalized())) {
++            // Only the timer or a lifecycle notification asks again: a heartbeat or another
++            // write in between must not turn this recheck into a tighter loop.
++            needsConfirmation = false;
+             confirmation ??= setTimeout(() => {
+               confirmation = undefined;
+               needsConfirmation = true;
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index ce2cf8d8..478d5a3c 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -202,7 +202,7 @@ Historical round-2 samples remain in `docs/qa/2026-10-23-wp-g1-116/measure-befor
+ - `node.progress` is validated against the strict `RunEventSchema` payload contract. Inference item variants expose only the bounded summary and allowlisted command/status fields; script progress has its own `{ exitCode, stderr, stdoutBytes }` shape. Invalid progress fields are rejected by clients and are absent from the OpenAPI schema.
+ - A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.
+ - A terminal event is history, not a completion signal: an earlier `run.failed`, `run.finished`, or `run.cancelled` can be superseded by `run.started` or `run.resumed`. Replay continues through those markers and through already-durable delivery audits after the final outcome.
+-- After catching up, confirm that the current lifecycle is terminal and the existing durable finalizedAt acknowledgement is present (#185, ADR-0057). Pending finalization keeps the stream live; a single 250 ms timer rechecks its eventless marker write and is cancelled on disconnect. This check runs whatever the run's status said when the stream opened, because the status write can lag a durable outcome the cursor already holds; replay that delivers a started or resumed marker skips it until a later terminal event arrives. A lifecycle notification at or below the cursor (a cursor past the durable tail) is not delivered but still starts a confirmation, and any lifecycle notification that arrives while a confirmation is in progress makes it start over, so such a cursor neither waits forever after a later outcome nor completes while a resume is active. Then read the durable tail again while retaining the single writer. If more rows or held notifications exist, deliver them and repeat confirmation. Once caught up to that read's snapshot, send id-less `event: stream.complete` with `data: {"after":<written cursor>}` and close. This control also completes an empty response opened at or past the terminal cursor; it confirms the cursor without advancing it. Future appends after the completion snapshot require another subscription from that cursor.
++- After catching up, confirm that the current lifecycle is terminal and the existing durable finalizedAt acknowledgement is present (#185, ADR-0057). Pending finalization keeps the stream live; a single 250 ms timer rechecks its eventless marker write (heartbeats do not recheck sooner) and is cancelled on disconnect. This check runs whatever the run's status said when the stream opened, because the status write can lag a durable outcome the cursor already holds; replay that delivers a started or resumed marker skips it until a later terminal event arrives. A lifecycle notification at or below the cursor (a cursor past the durable tail) is not delivered but still starts a confirmation, and any lifecycle notification that arrives while a confirmation is in progress makes it start over, so such a cursor neither waits forever after a later outcome nor completes while a resume is active. Then read the durable tail again while retaining the single writer. If more rows or held notifications exist, deliver them and repeat confirmation. Once caught up to that read's snapshot, send id-less `event: stream.complete` with `data: {"after":<written cursor>}` and close. This control also completes an empty response opened at or past the terminal cursor; it confirms the cursor without advancing it. Future appends after the completion snapshot require another subscription from that cursor.
+ - Confirmation uses the indexed lifecycle tail, with five fixed type seeks and one row read, including the pre-header check for an empty terminal replay; it never scans the history. The terminal event precedes its status write, including crash recovery, but delivery audits may follow it. If no current terminal marker is visible, the stream allows up to 2 seconds for late subscription delivery, then closes without `stream.complete`. This defensive grace remains for inconsistent logs and is unconfirmed EOF, so clients retry it.
+ - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
+ - Replay reads at most 128 events per repository page, writes that page before reading the next,
+diff --git a/docs/decisions/ADR-0057-execution-and-delivery-finalization.md b/docs/decisions/ADR-0057-execution-and-delivery-finalization.md
+index f688b5c2..926f053a 100644
+--- a/docs/decisions/ADR-0057-execution-and-delivery-finalization.md
++++ b/docs/decisions/ADR-0057-execution-and-delivery-finalization.md
+@@ -38,7 +38,7 @@ acknowledgement, then confirm the durable tail under the existing single writer.
+ Lifecycle changes invalidate the confirmation, including notifications below an
+ ahead-of-tail cursor. Pending finalization stays live beyond the inconsistent-log
+ grace. Because the existing marker write has no journal event, schedule at most one
+-250 ms confirmation timer per pending connection. Delivery events also wake the writer.
++250 ms confirmation timer per pending connection; heartbeats and other writes do not ask again before it fires. Delivery events also wake the writer.
+ This engineering parameter bounds observation latency and quiet-store reads; it
+ does not alter request deadlines, retry policy or execution limits. Cancel it on close.
+ Standalone stream compositions must supply the same finalization callback;

@@ -1,0 +1,31 @@
+// Node 22, repository root. Derive report tables from real command metadata; never count failures as acceptance.
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+const dir='docs/qa/2026-10-24-wp-a2-241/';
+const read=(name)=>{try{return JSON.parse(readFileSync(dir+name+'.json','utf8').replace(/^\uFEFF/,''));}catch{return undefined;}};
+const tableFile=dir+'baseline-failure-table.md.txt';
+if(!existsSync(tableFile)){const old=readFileSync(dir+'README.md','utf8');const start=old.indexOf('| Spec / case');const end=old.indexOf('\n\nThe non-routing repairs',start);if(start<0||end<0)throw new Error('Baseline table boundaries changed');writeFileSync(tableFile,old.slice(start,end)+'\n');}
+let report=readFileSync(dir+'report-template.md.txt','utf8');
+const gates=[['typecheck','pnpm.cmd typecheck'],['lint','pnpm.cmd lint'],['layers','pnpm.cmd check:layers'],['tokens','pnpm.cmd check:tokens'],['deps','pnpm.cmd check:deps'],['docs','pnpm.cmd check:docs'],['build','pnpm.cmd build']];
+const rows=gates.map(([gate,command])=>{const label=gate+'-handoff-ready';const r=read(label);return '| `'+command+'` | '+(r?r.exitCode===0?'Passed':'Failed (exit '+r.exitCode+')':'Pending')+' | '+(r?r.durationSeconds.toFixed(3)+' s':'—')+' | '+(r?'[log]('+label+'.log.txt), [metadata]('+label+'.json)':'—')+' |';});
+rows.push('| `pnpm.cmd --filter @graphgoblin/web test:coverage` | Passed; identical unit inputs retained | 1584.428 s | [log](coverage-qualified.log.txt), [input proof](unit-inputs-reused.json) |');
+const format=read('format-initial-report');
+rows.push('| `pnpm.cmd format:check` | '+(format?format.exitCode===0?'Passed':'Failed':'Pending final report formatting')+' | '+(format?format.durationSeconds.toFixed(3)+' s':'—')+' | '+(format?'[log](format-initial-report.log.txt), [metadata](format-initial-report.json)':'—')+' |');
+const reg=read('seed-final-regression'),control=read('seed-final-control'),seed=read('seed-final');
+const seeded=reg?.exitCode===1&&control?.exitCode===0&&seed?.scratchFilesRemoved&&seed?.normalBuildUnchangedAfter;
+const allGates=gates.every(([g])=>read(g+'-handoff-ready')?.exitCode===0);
+const data={
+ BASELINE_TABLE:readFileSync(tableFile,'utf8').trimEnd(),
+ OWNED_STATUS:allGates&&seeded&&format?.exitCode===0?'All non-browser gates and the final-build fault/control proof passed; complete browser acceptance remains blocked.':'Owned final checks/proof are recorded below; remaining entries are explicitly pending.',
+ SEED_STATUS:seeded?'Complete: seeded UI test fails and unchanged normal-build control passes; hashes/cleanup and snapshots are recorded below.':'Final-build pair is finishing; no result is assumed.',
+ GATES:'| Command from root | Result | Wall duration | Evidence |\n| --- | --- | --- | --- |\n'+rows.join('\n'),
+ FORMAT_NOTE:format?.exitCode===0?'After the root format pass, only this formatted Markdown report was updated. Its separate final check is recorded in `format-final.json` / `format-final.log.txt`; the root pass covers the remaining unchanged formatted files.':'Final report/capture formatting and the root format gate remain pending.',
+};
+let full='| Run | Passed | Failed | Live skipped | Command wall time | Evidence |\n| --- | --- | --- | --- | --- | --- |\n';
+for(const [label,pass,fail,skip] of [['baseline',397,12,1],['clean-1',407,2,1],['acceptance-1',407,2,1],['qualified-1',406,3,1]]){const r=read(label);full+='| '+label+' | '+pass+' | '+fail+' | '+skip+' | '+r.durationSeconds.toFixed(3)+' s | [log]('+label+'.log.txt), [metadata]('+label+'.json) |\n';}
+data.FULL_RUNS=full.trimEnd();
+data.SEED_RUNS='| Build | Result | Wall duration | Evidence |\n| --- | --- | --- | --- |\n'+(reg?'| Scratch, one changed literal | 1 failed, exit '+reg.exitCode+' | '+reg.durationSeconds.toFixed(3)+' s | [log](seed-final-regression.log.txt), [metadata](seed-final-regression.json), [captures](seed-final-regression-artifacts.json) |':'| Scratch | Pending | — | — |')+'\n'+(control?'| Normal build, same unchanged test | 1 passed, exit '+control.exitCode+' | '+control.durationSeconds.toFixed(3)+' s | [log](seed-final-control.log.txt), [metadata](seed-final-control.json) |':'| Normal control | Pending | — | — |');
+data.SEED_DETAILS=seeded?'[Final seed manifest](seed-final.json) records '+seed.replacements+' literal replacement and both asset hashes, confirms the normal build unchanged before/after, and confirms scratch files removed. [Discarded-file inventory](seed-final-discarded-files.json). Empty directories remain for orchestrator cleanup. The failure snapshot shows the actual seeded notice; the controller verifies that the failure was not setup-only.':'Final-build manifest and cleanup verification are pending.';
+for(const [key,value] of Object.entries(data))report=report.replaceAll('{{'+key+'}}',value);
+if(/\{\{[A-Z_]+\}\}/.test(report))throw new Error('Unresolved report placeholder');
+writeFileSync(dir+'README.md',report);
+console.log(JSON.stringify({reportUpdated:true,allGates,seeded,formatPassed:format?.exitCode===0,acceptance:'blocked'}));

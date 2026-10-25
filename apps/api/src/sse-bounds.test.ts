@@ -29,7 +29,11 @@ describe('bounded SSE transport', () => {
         }),
     };
     const app = Fastify();
-    app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
+    app.get('/', (request, reply) =>
+      streamRunEvents(request, reply, store, runId, 0, {
+        isFinalized: () => Promise.resolve(true),
+      }),
+    );
     const base = await app.listen({ host: '127.0.0.1', port: 0 });
     try {
       const response = await fetch(base);
@@ -63,7 +67,11 @@ describe('bounded SSE transport', () => {
         },
       };
       const app = Fastify();
-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, after));
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, store, runId, after, {
+          isFinalized: () => Promise.resolve(true),
+        }),
+      );
       try {
         const response = await app.inject('/');
         expect(reads.every(({ limit }) => limit !== undefined && limit <= 128)).toBe(true);
@@ -92,7 +100,11 @@ describe('bounded SSE transport', () => {
         },
       };
       const app = Fastify();
-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, store, runId, 0, {
+          isFinalized: () => Promise.resolve(true),
+        }),
+      );
       const base = await app.listen({ host: '127.0.0.1', port: 0 });
       try {
         const response = await fetch(base);
@@ -177,7 +189,10 @@ describe('bounded SSE transport', () => {
         };
       },
     };
-    const options: SseOptions & { drainTimeoutMs: number } = { drainTimeoutMs: 100 };
+    const options: SseOptions & { drainTimeoutMs: number } = {
+      drainTimeoutMs: 100,
+      isFinalized: () => Promise.resolve(true),
+    };
     app.get<{ Querystring: { after?: string } }>('/', (request, reply) =>
       streamRunEvents(
         request,
@@ -185,7 +200,9 @@ describe('bounded SSE transport', () => {
         transportStore,
         run.id,
         Number(request.query.after ?? 0),
-        request.query.after ? { drainTimeoutMs: 5_000 } : options,
+        request.query.after
+          ? { drainTimeoutMs: 5_000, isFinalized: () => Promise.resolve(true) }
+          : options,
       ),
     );
     const base = await app.listen({ host: '127.0.0.1', port: 0 });

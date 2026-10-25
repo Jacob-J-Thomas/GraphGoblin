@@ -66,7 +66,7 @@ function observer(start = 0) {
     error: vi.fn(),
   };
 }
-it('catches up across historical terminals in pages and stops at the captured boundary', async () => {
+it('catches up across historical terminals in pages and reconnects for authoritative completion', async () => {
   vi.useFakeTimers();
   const read = vi.fn((request: Request) => {
     const url = new URL(request.url);
@@ -88,7 +88,8 @@ it('catches up across historical terminals in pages and stops at the captured bo
   await vi.advanceTimersByTimeAsync(0);
   expect(o.cursor()).toBe(4);
   expect(read).toHaveBeenCalledTimes(4);
-  expect(o.finished).toHaveBeenCalledOnce();
+  expect(o.finished).not.toHaveBeenCalled();
+  expect(o.running).toHaveBeenCalledOnce();
   expect(o.error).not.toHaveBeenCalled();
   stop();
 });
@@ -242,7 +243,7 @@ it('exposes a permanent HTTP refusal without retrying it', async () => {
   stop();
 });
 
-it('settles completion that overtakes the captured run snapshot and refreshes the lagging snapshot', async () => {
+it('delegates completion that overtakes the captured run snapshot to SSE', async () => {
   vi.useFakeTimers();
   const active = runRecord({ id, status: 'running', currentNodeId: 'done', lastEventSeq: 2 });
   let current = active;
@@ -270,12 +271,12 @@ it('settles completion that overtakes the captured run snapshot and refreshes th
   const stop = followRunAttempts(createAppClient('http://test', read), id, o);
   try {
     await vi.advanceTimersByTimeAsync(0);
-    expect(o.finished).toHaveBeenCalledOnce();
-    expect(o.running).not.toHaveBeenCalled();
+    expect(o.finished).not.toHaveBeenCalled();
+    expect(o.running).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(2_000);
-    expect(o.changed).toHaveBeenCalledOnce();
+    expect(o.changed).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(read).toHaveBeenCalledTimes(3);
+    expect(read).toHaveBeenCalledTimes(2);
   } finally {
     stop();
   }

@@ -1,0 +1,535 @@
+[
+  {
+    "case": "15 s stream 1",
+    "pass": true,
+    "actual": {
+      "minMs": 249.27869999999893,
+      "finalizationChecks": 229
+    }
+  },
+  {
+    "case": "15 s stream 2",
+    "pass": true,
+    "actual": {
+      "minMs": 249.27219999999943,
+      "finalizationChecks": 229
+    }
+  },
+  {
+    "case": "15 s stream 3",
+    "pass": true,
+    "actual": {
+      "minMs": 249.2592999999979,
+      "finalizationChecks": 229
+    }
+  },
+  {
+    "case": "15 s pending and close cleanup",
+    "pass": true,
+    "actual": {
+      "pending": true,
+      "active": 0,
+      "noReadsAfterClose": true
+    }
+  },
+  {
+    "case": "20 ms stream 1",
+    "pass": true,
+    "actual": {
+      "minMs": 249.46659999999974,
+      "finalizationChecks": 224
+    }
+  },
+  {
+    "case": "20 ms stream 2",
+    "pass": true,
+    "actual": {
+      "minMs": 249.46770000000015,
+      "finalizationChecks": 224
+    }
+  },
+  {
+    "case": "20 ms stream 3",
+    "pass": true,
+    "actual": {
+      "minMs": 249.46690000000035,
+      "finalizationChecks": 224
+    }
+  },
+  {
+    "case": "20 ms pending and close cleanup",
+    "pass": true,
+    "actual": {
+      "pending": true,
+      "active": 0,
+      "noReadsAfterClose": true
+    }
+  },
+  {
+    "name": "delayed-success pending remains unfinished",
+    "pass": true,
+    "actual": {
+      "pending": {
+        "id": "01M5RTNB2M269MABTT3RMX2EGF",
+        "ownerId": "local",
+        "loopId": "01M5RTNB0VCSVQ8SGCMY54RXBF",
+        "versionId": "01M5RTNB0VCSVQ8SGCMY54RXBG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Round 2 delayed-success",
+          "label": "Round 2 delayed-success v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5RTNB2M269MABTT3RMX2EGG",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": {
+          "answer": 42
+        },
+        "deliveries": [
+          {
+            "id": "01M5RTNB5J0TWA6BAXBDGBBDF7",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6131/delayed-success"
+            },
+            "status": "pending",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "nextAttemptAt": "2026-10-25T06:06:30.484Z",
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 503.",
+              "retryable": true,
+              "acknowledgement": "unknown",
+              "httpStatus": 503
+            }
+          }
+        ],
+        "createdAt": "2026-10-25T06:06:13.076Z",
+        "startedAt": "2026-10-25T06:06:13.106Z",
+        "finishedAt": "2026-10-25T06:06:13.180Z",
+        "lastEventSeq": 12
+      },
+      "waitFinished": false,
+      "rawEnded": [
+        false,
+        false,
+        false
+      ],
+      "clientEnded": false
+    }
+  },
+  {
+    "name": "delayed-success execution unchanged and delivery final",
+    "pass": true,
+    "actual": {
+      "status": "succeeded",
+      "finalizedAt": "2026-10-25T06:06:16.140Z",
+      "delivery": {
+        "id": "01M5RTNB5J0TWA6BAXBDGBBDF7",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:6131/delayed-success"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    }
+  },
+  {
+    "name": "delayed-success stream.complete follows marker promptly",
+    "pass": true,
+    "actual": [
+      {
+        "after": 0,
+        "fromRecordedMarkerMs": 197,
+        "fromMarkerObservedMs": 190.79039999999986,
+        "fromReleaseMs": 217.36160000000018
+      },
+      {
+        "after": 8,
+        "fromRecordedMarkerMs": 197,
+        "fromMarkerObservedMs": 191.35639999999876,
+        "fromReleaseMs": 217.92759999999907
+      },
+      {
+        "after": 10008,
+        "fromRecordedMarkerMs": 198,
+        "fromMarkerObservedMs": 191.61699999999837,
+        "fromReleaseMs": 218.1881999999987
+      }
+    ]
+  },
+  {
+    "name": "delayed-success client settles on final tail",
+    "pass": true,
+    "actual": {
+      "clientLatencyMs": 108,
+      "events": 5
+    }
+  },
+  {
+    "name": "delayed-success consumed final cursor reconnect prompt",
+    "pass": true,
+    "actual": {
+      "after": 13,
+      "reconnectMs": 11.054599999999482
+    }
+  },
+  {
+    "name": "delayed-success stable request identity",
+    "pass": true,
+    "actual": [
+      {
+        "path": "/delayed-success",
+        "key": "01M5RTNB5J0TWA6BAXBDGBBDF7",
+        "at": 1792908373239
+      },
+      {
+        "path": "/delayed-success",
+        "key": "01M5RTNB5J0TWA6BAXBDGBBDF7",
+        "at": 1792908375495
+      }
+    ]
+  },
+  {
+    "name": "permanent-failure pending remains unfinished",
+    "pass": true,
+    "actual": {
+      "pending": {
+        "id": "01M5RTNE9Y6BGD76R86Q30JBFC",
+        "ownerId": "local",
+        "loopId": "01M5RTNE94F5GEZQA0P6JW7ASY",
+        "versionId": "01M5RTNE94F5GEZQA0P6JW7ASZ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Round 2 permanent-failure",
+          "label": "Round 2 permanent-failure v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5RTNE9Y6BGD76R86Q30JBFD",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": {
+          "answer": 42
+        },
+        "deliveries": [
+          {
+            "id": "01M5RTNEC7WSX941FKK9SB989S",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:6131/permanent-failure"
+            },
+            "status": "pending",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": true,
+            "acknowledgement": "unknown",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false,
+            "nextAttemptAt": "2026-10-25T06:06:28.468Z"
+          }
+        ],
+        "createdAt": "2026-10-25T06:06:16.382Z",
+        "startedAt": "2026-10-25T06:06:16.394Z",
+        "finishedAt": "2026-10-25T06:06:16.459Z",
+        "lastEventSeq": 10
+      },
+      "waitFinished": false,
+      "rawEnded": [
+        false,
+        false,
+        false
+      ],
+      "clientEnded": false
+    }
+  },
+  {
+    "name": "permanent-failure execution unchanged and delivery final",
+    "pass": true,
+    "actual": {
+      "status": "succeeded",
+      "finalizedAt": "2026-10-25T06:06:17.140Z",
+      "delivery": {
+        "id": "01M5RTNEC7WSX941FKK9SB989S",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:6131/permanent-failure"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 400.",
+          "retryable": false,
+          "acknowledgement": "rejected",
+          "httpStatus": 400
+        }
+      }
+    }
+  },
+  {
+    "name": "permanent-failure stream.complete follows marker promptly",
+    "pass": true,
+    "actual": [
+      {
+        "after": 0,
+        "fromRecordedMarkerMs": 143,
+        "fromMarkerObservedMs": 135.99979999999778,
+        "fromReleaseMs": 154.67540000000008
+      },
+      {
+        "after": 8,
+        "fromRecordedMarkerMs": 143,
+        "fromMarkerObservedMs": 136.5056999999979,
+        "fromReleaseMs": 155.1813000000002
+      },
+      {
+        "after": 10008,
+        "fromRecordedMarkerMs": 212,
+        "fromMarkerObservedMs": 204.80329999999958,
+        "fromReleaseMs": 223.4789000000019
+      }
+    ]
+  },
+  {
+    "name": "permanent-failure client settles on final tail",
+    "pass": true,
+    "actual": {
+      "clientLatencyMs": 212,
+      "events": 3
+    }
+  },
+  {
+    "name": "permanent-failure consumed final cursor reconnect prompt",
+    "pass": true,
+    "actual": {
+      "after": 11,
+      "reconnectMs": 9.975600000001577
+    }
+  },
+  {
+    "name": "permanent-failure stable request identity",
+    "pass": true,
+    "actual": [
+      {
+        "path": "/permanent-failure",
+        "key": "01M5RTNEC7WSX941FKK9SB989S",
+        "at": 1792908376479
+      }
+    ]
+  },
+  {
+    "name": "lifecycle 1 resume invalidates old finality",
+    "pass": true,
+    "actual": {
+      "resumedAt": 19404.1313,
+      "finalizedOldMarker": true,
+      "streamEnded": false,
+      "lifecycle": [
+        {
+          "at": 19366.5388,
+          "type": "run.cancelled",
+          "seq": 1
+        },
+        {
+          "at": 19367.6209,
+          "type": "run.cancelled",
+          "seq": 1
+        },
+        {
+          "at": 19618.1606,
+          "type": "run.resumed",
+          "seq": 2
+        },
+        {
+          "at": 20034.5955,
+          "type": "run.cancelled",
+          "seq": 3
+        },
+        {
+          "at": 20291.1684,
+          "type": "run.cancelled",
+          "seq": 3
+        }
+      ]
+    }
+  },
+  {
+    "name": "lifecycle 1 notification triggers prompt confirmation",
+    "pass": true,
+    "actual": {
+      "notificationLatencyMs": 4.792600000000675
+    }
+  },
+  {
+    "name": "lifecycle 1 new marker settles promptly",
+    "pass": true,
+    "actual": {
+      "completionLatencyMs": 191.09019999999873,
+      "control": {
+        "after": 3
+      }
+    }
+  },
+  {
+    "name": "lifecycle 1000 resume invalidates old finality",
+    "pass": true,
+    "actual": {
+      "resumedAt": 20346.7401,
+      "finalizedOldMarker": true,
+      "streamEnded": false,
+      "lifecycle": [
+        {
+          "at": 20301.3253,
+          "type": "run.cancelled",
+          "seq": 1
+        },
+        {
+          "at": 20301.5861,
+          "type": "run.cancelled",
+          "seq": 1
+        },
+        {
+          "at": 20346.9263,
+          "type": "run.resumed",
+          "seq": 2
+        },
+        {
+          "at": 20553.3039,
+          "type": "run.resumed",
+          "seq": 2
+        },
+        {
+          "at": 20698.1054,
+          "type": "run.cancelled",
+          "seq": 3
+        },
+        {
+          "at": 20971.6196,
+          "type": "run.cancelled",
+          "seq": 3
+        }
+      ]
+    }
+  },
+  {
+    "name": "lifecycle 1000 notification triggers prompt confirmation",
+    "pass": true,
+    "actual": {
+      "notificationLatencyMs": 0.5666999999994005
+    }
+  },
+  {
+    "name": "lifecycle 1000 new marker settles promptly",
+    "pass": true,
+    "actual": {
+      "completionLatencyMs": 210.5694999999978,
+      "control": {
+        "after": 1000
+      }
+    }
+  },
+  {
+    "case": "build command",
+    "pass": true,
+    "actual": {
+      "exit": 0,
+      "command": "pnpm.cmd build"
+    }
+  },
+  {
+    "case": "targeted command",
+    "pass": true,
+    "actual": {
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse src/finalization --maxWorkers=1"
+    }
+  },
+  {
+    "case": "standard command",
+    "pass": true,
+    "actual": {
+      "exit": 0,
+      "heartbeatMs": 15000
+    }
+  },
+  {
+    "case": "short command",
+    "pass": true,
+    "actual": {
+      "exit": 0,
+      "heartbeatMs": 20
+    }
+  },
+  {
+    "case": "completion command",
+    "pass": true,
+    "actual": {
+      "exit": 0,
+      "command": "node %TEMP%/gg-qa-d2-185-round2-completion.mjs"
+    }
+  }
+]

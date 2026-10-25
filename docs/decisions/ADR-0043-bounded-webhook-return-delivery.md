@@ -129,7 +129,9 @@ previous build refuses a migrated store with `DATA_UPGRADE_REQUIRED`; restoring 
 restores the previous build's ability to boot.
 
 REST detail/list snapshots, generated api-client types, MCP `get_run` / `wait_for_run` and the
-inspector expose `deliveries`. `wait_for_run.finished` and SSE terminal closure still refer to
-execution. Poll the snapshot or read later JSON event pages for delivery; the inspector polls
-once per second while a delivery is pending. Targeted Event admission (#343), non-webhook
+inspector expose `deliveries`. Amendment #185 (ADR-0057): `wait_for_run.finished` and SSE
+completion now require the existing durable `finalizedAt` acknowledgement as well as terminal
+execution. Pending delivery stays live, including after a consumed terminal cursor;
+final delivery failure settles observation with its failed snapshot. The inspector polls
+once per second while terminal finalization is pending. Targeted Event admission (#343), non-webhook
 effect retry and missing configured signing secrets (#345) remain separate scopes.

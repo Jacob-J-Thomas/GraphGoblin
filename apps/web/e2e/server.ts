@@ -32,7 +32,10 @@ import {
 } from '@graphgoblin/contracts';
 import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
 
-const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+// A disposable build copy allows regression seeding without changing the normal build.
+const dist = resolve(
+  process.env['GG_E2E_WEB_DIST'] ?? resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist'),
+);
 if (!existsSync(join(dist, 'index.html'))) {
   console.error(
     `No web build at ${dist}. Run \`pnpm build\` (or \`pnpm --filter @graphgoblin/web build\`) first.`,
