@@ -1,0 +1,6 @@
+# Orchestrator review of the #255 implementation (2026-10-24)
+
+The orchestrator (Claude Opus 5.5) reviewed Sol's change before committing it. Accepted as designed: append patches show the inserted value, labels and routes come from the run's pinned definition (the version is now always read), probabilities are formatted with the exact recorded number reachable, cancellation is described as cancellation and the failure alert appears only for failed runs, and missing history is labelled. Changed in review:
+
+- **`execution-evidence.spec.ts` is now `apps/web/e2e/execution-evidence.capture.ts`.** It needs its own global setup's environment (five prepared runs) and writes captures into this folder, so under the default Playwright configuration (`**/*.spec.ts`) it would fail and write evidence on every run of the functional suite, which #241 makes a CI gate. Like `screens.capture.ts`, it is now a capture run only through `playwright.evidence.config.ts`. `REPORT.md` keeps its original name as written. The capture's JSON reads are typed, since it now lints as non-test code.
+- **Byte-order marks removed** from ten new or changed files (`tsconfig.json`, three browser specs, the evidence setup and config, two component files and two test files).

@@ -1,0 +1,246 @@
+{
+  "run": {
+    "id": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+    "ownerId": "local",
+    "loopId": "01M5PWGDG08JMHRYYN75EY7M8R",
+    "versionId": "01M5PWGDG08JMHRYYN75EY7M8S",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Pinned user cancellation",
+      "label": "Pinned user cancellation v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PWGDG0D4ZG8DW4BD5C9EDG",
+    "status": "cancelled",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "cancelRequestedAt": "2026-10-24T12:00:00.000Z",
+    "createdAt": "2026-10-24T12:00:00.000Z",
+    "startedAt": "2026-10-24T12:00:00.000Z",
+    "finishedAt": "2026-10-24T12:00:00.000Z",
+    "lastEventSeq": 12
+  },
+  "events": [
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 1,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "run.queued",
+      "versionId": "01M5PWGDG08JMHRYYN75EY7M8S",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Pinned user cancellation",
+        "label": "Pinned user cancellation v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+          "loopId": "01M5PWGDG08JMHRYYN75EY7M8R",
+          "versionId": "01M5PWGDG08JMHRYYN75EY7M8S",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PWGDG0D4ZG8DW4BD5C9EDG",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 2,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 3,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 4,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 3
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 5,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.started",
+      "nodeId": "work",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "c486183a2c1928c6"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 6,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "harness.turn",
+      "nodeId": "work",
+      "visitId": "01M5PWGDG0D4ZG8DW4BD5C9EDF:5",
+      "turnId": "01M5PWGDG0D4ZG8DW4BD5C9EDH",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Independent QA fake provider only"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 7,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "harness.session",
+      "nodeId": "work",
+      "harness": "codex",
+      "sessionId": "fake-session-1",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 8,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "harness.submission",
+      "nodeId": "work",
+      "visitId": "01M5PWGDG0D4ZG8DW4BD5C9EDF:5",
+      "turnId": "01M5PWGDG0D4ZG8DW4BD5C9EDH",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 9,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.progress",
+      "nodeId": "work",
+      "progress": {
+        "item": {
+          "id": "i1",
+          "summary": "Must cancel",
+          "type": "message"
+        }
+      }
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 10,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "harness.usage",
+      "nodeId": "work",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 11,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "harness.submission",
+      "nodeId": "work",
+      "visitId": "01M5PWGDG0D4ZG8DW4BD5C9EDF:5",
+      "turnId": "01M5PWGDG0D4ZG8DW4BD5C9EDH",
+      "submission": "delivery-uncertain"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "seq": 12,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "run.cancelled"
+    }
+  ],
+  "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGDG0D4ZG8DW4BD5C9EDF\ncancelled\nat Pinned provider work (work)\nloop\nchild runs\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned user cancellation v1 · version ID 01M5PWGDG08JMHRYYN75EY7M8S\n\nCancelled; actor not recorded. Recorded node position: Pinned provider work (work).\n\nExact run record\nPinned definition JSON\nTimeline (12 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 3 ms\n#5\nnode.started\nPinned provider work (work) (inference) attempt 1\n#6\nharness.turn\nPinned provider work (work)\n#7\nharness.session\nPinned provider work (work)\n#8\nharness.submission\nPinned provider work (work)\n#9\nnode.progress\nPinned provider work (work)\n#10\nharness.usage\nPinned provider work (work)\n#11\nharness.submission\nPinned provider work (work)\n#12\nrun.cancelled\nCancelled\nExact recorded event #12\nThread at event 12\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)"
+}

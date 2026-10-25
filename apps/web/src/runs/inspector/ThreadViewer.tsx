@@ -11,7 +11,13 @@ import {
 } from '../../components/ui/index.js';
 import { downloadJson } from '../../lib/utils.js';
 import { LARGE_HISTORY_BYTES } from '../event-store.js';
-import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
+import {
+  createThreadCache,
+  initialThreadFrom,
+  nodeName,
+  patchDiff,
+  type PatchLine,
+} from '../projections.js';
 
 /**
  * Messages laid out at once: the latest ones, which is where a reader looks at an event; the
@@ -25,7 +31,7 @@ const megabytes = (n: number) => `${(n / 1_000_000).toFixed(1)} MB`;
 /** A finished node's patch: each operation with the value before and after it. */
 function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
   return (
-    <Card title={`Patch from ${nodeId}`}>
+    <Card title={<span className="min-w-0 wrap-anywhere">Patch from {nodeId}</span>}>
       {lines.length === 0 ? <p className="text-xs text-muted">No changes.</p> : null}
       <ul className="grid gap-3" aria-label="Patch diff">
         {lines.map((line, i) => (
@@ -52,7 +58,9 @@ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
                 />
               </div>
               <div className="grid min-w-0 content-start bg-status-good-bg">
-                <span className="px-3 pt-2 text-xs font-semibold text-status-good-fg">After</span>
+                <span className="px-3 pt-2 text-xs font-semibold text-status-good-fg">
+                  {line.op === 'add' ? 'Added value' : 'After'}
+                </span>
                 <BoundedValue
                   value={line.after}
                   label={`Value after ${line.path}`}
@@ -231,7 +239,7 @@ export function ThreadViewer({
     <div className="grid gap-section" {...viewerFocus}>
       {diff ? (
         <PatchDiff
-          nodeId={selected?.type === 'node.finished' ? selected.nodeId : ''}
+          nodeId={selected?.type === 'node.finished' ? nodeName(definition, selected.nodeId) : ''}
           lines={diff}
         />
       ) : null}
@@ -293,7 +301,9 @@ export function ThreadViewer({
                 <li key={m.id} className="grid min-w-0 gap-1 rounded-md border border-default p-3">
                   <div className="flex items-center gap-2">
                     <Badge size="sm">{m.role}</Badge>{' '}
-                    <code className="text-xs text-muted">{m.nodeId}</code>
+                    <code className="min-w-0 text-xs wrap-anywhere text-muted">
+                      {m.nodeId ? nodeName(definition, m.nodeId) : 'Node not recorded'}
+                    </code>
                   </div>
                   <BoundedValue
                     value={m.content}

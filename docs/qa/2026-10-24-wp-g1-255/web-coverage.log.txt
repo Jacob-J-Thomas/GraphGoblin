@@ -1,0 +1,738 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-255/apps/web
+      Coverage enabled with v8
+
+ ❯ src/forms/json-sections.test.tsx (39 tests | 1 failed) 167217ms
+   ❯ section JSON mode (29)
+     × retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step 26224ms
+ ❯ src/editor/EditorPage.test.tsx (37 tests | 2 failed) 281547ms
+   ❯ EditorPage (37)
+     × edits loop settings, variables, node ids, and edges 20310ms
+     × applies an id typed in the dialog when it closes, and stops once for an id that cannot apply 20534ms
+ ❯ src/forms/cron/control.test.tsx (28 tests | 2 failed) 115655ms
+   ❯ cron schedule control (28)
+     × debounces edits, suppresses invalid zones locally, and displays the server CRON_INVALID before save 8121ms
+     × does not show stale results from an earlier in-flight request 9121ms
+ ❯ src/editor/DecisionAuthoring.test.tsx (23 tests | 6 failed) 287470ms
+   ❯ decision authoring checkpoint (13)
+     × restores set-aside device ownership across reload with unfinished ID "" 20593ms
+     × restores set-aside device ownership across reload with unfinished ID "review" 20569ms
+     × invalidates a connection-removal review when connections change, and keeps compatible held context on kind change 21715ms
+     × leaves new source unsaved, focuses its validation issue, then saves and reloads with edges 18666ms
+     × keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit 20919ms
+     × refuses a many-route Noul conversion, then preserves ids in an incomplete Score form 20990ms
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 1 failed) 106678ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20131ms
+stderr | src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes and redoes from the toolbar and the keyboard, not from inside text fields
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ❯ src/editor/EditorPage.undo.test.tsx (8 tests | 3 failed) 116473ms
+   ❯ EditorPage undo and redo (8)
+     × undoes and redoes from the toolbar and the keyboard, not from inside text fields 20248ms
+     × shows restored values in the node’s config form and the loop panel’s forms 17363ms
+     × undoes a Discard the unparsed text made right after the typing, from the field or the badge 20764ms
+ ❯ src/editor/EditorPage.device.test.tsx (2 tests | 1 failed) 31901ms
+   ❯ device storage blocked by an older tab (2)
+     × says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes 20123ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forms/json-sections.test.tsx > section JSON mode > retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/forms/json-sections.test.tsx:657:3
+    655|   );
+    656|
+    657|   it('retains held text through Advanced, tabs, history and dialog-ses…
+       |   ^
+    658|     const definition = newLoopDefinition('json');
+    659|     definition.nodes.push({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID ""
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID "review"
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:371:5
+    369|     { copy: 'set-aside', unfinished: '' },
+    370|     { copy: 'set-aside', unfinished: 'review' },
+    371|   ])(
+       |     ^
+    372|     'restores $copy device ownership across reload with unfinished ID …
+    373|     async ({ copy, unfinished }) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > invalidates a connection-removal review when connections change, and keeps compatible held context on kind change
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:427:3
+    425|   );
+    426|
+    427|   it('invalidates a connection-removal review when connections change,…
+       |   ^
+    428|     const user = userEvent.setup();
+    429|     const context = { messages: 'all', includeLastOutput: false };
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > leaves new source unsaved, focuses its validation issue, then saves and reloads with edges
+AssertionError: expected 'saving' to be 'saved' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mviewBox[39m=[32m"0 0 32 32"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-shade"[39m
+                [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+              [36m/>[39m
+              [36m<rect[39m
+                [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+                [33mheight[39m=[32m"17.4"[39m
+                [33mrx[39m=[32m"6.2"[39m
+                [33mwidth[39m=[32m"22"[39m
+                [33mx[39m=[32m"5"[39m
+                [33my[39m=[32m"8.8"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"5"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+                [33mcx[39m=[32m"27"[39m
+                [33mcy[39m=[32m"20.2"[39m
+                [33mr[39m=[32m"2.2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-ink"[39m
+                [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"13.3"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"fill-mascot-glint"[39m
+                [33mcx[39m=[32m"18.7"[39m
+                [33mcy[39m=[32m"17.2"[39m
+                [33mr[39m=[32m".7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+                [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mGraph[0m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-accent"[39m
+              [36m>[39m
+                [0mGoblin[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</span>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_20l_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"menu"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mMenu[0m
+          [36m</button>[39m
+          [36m<nav[39m
+            [33maria-label[39m=[32m"Main"[39m
+            [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+            [33mid[39m=[32m"_r_20l_"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33maria-current[39m=[32m"page"[39m
+              [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+              [33mdata-discover[39m=[32m"true"[39...
+
+Expected: "saved"
+Received: "saving"
+
+ ❯ timeout src/editor/DecisionAuthoring.test.tsx:520:51
+    518|       'Choose Ship if the work is complete; otherwise choose Review or…
+    519|     );
+    520|     await waitFor(() => expect(store().saveState).toBe('saved'), { tim…
+       |                                                   ^
+    521|     const saved = structuredClone(api.loops.get(loop.id)!.draft!.defin…
+    522|     rendered.unmount();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ MutationObserver.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ ❯ MutationObserver.invokeTheCallbackFunction ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MutationCallback.js:19:26
+ ❯ notifyMutationObservers ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/helpers/mutation-observers.js:194:22
+ ❯ ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/helpers/mutation-observers.js:165:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:533:3
+    531|   });
+    532|
+    533|   it('keeps row ownership through invalid ids, reorders and labels, an…
+       |   ^
+    534|     const user = userEvent.setup();
+    535|     const { dialog } = await setup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > refuses a many-route Noul conversion, then preserves ids in an incomplete Score form
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:571:3
+    569|   });
+    570|
+    571|   it('refuses a many-route Noul conversion, then preserves ids in an i…
+       |   ^
+    572|     const user = userEvent.setup();
+    573|     const { dialog } = await setup({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  src/editor/EditorPage.device.test.tsx > device storage blocked by an older tab > says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/editor/EditorPage.device.test.tsx:26:1
+     24| let oldDatabase: IDBDatabase;
+     25|
+     26| beforeEach(async () => {
+       | ^
+     27|   vi.resetModules();
+     28|   vi.stubGlobal('indexedDB', new IDBFactory());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > edits loop settings, variables, node ids, and edges
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:1174:3
+    1172|   });
+    1173|
+    1174|   it('edits loop settings, variables, node ids, and edges', async () =…
+       |   ^
+    1175|     const user = userEvent.setup();
+    1176|     const api = new FakeApi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > applies an id typed in the dialog when it closes, and stops once for an id that cannot apply
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:1232:3
+    1230|   });
+    1231|
+    1232|   it('applies an id typed in the dialog when it closes, and stops once…
+       |   ^
+    1233|     const user = userEvent.setup();
+    1234|     const api = new FakeApi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes and redoes from the toolbar and the keyboard, not from inside text fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.undo.test.tsx:40:3
+     38|   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expan…
+     39|
+     40|   it('undoes and redoes from the toolbar and the keyboard, not from in…
+       |   ^
+     41|     const user = userEvent.setup();
+     42|     await openEditor();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > shows restored values in the node’s config form and the loop panel’s forms
+AssertionError: expected { …(4) } to be { …(5) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -1,10 +1,9 @@
+  {
+    "defaults": {
+      "byHarness": {},
+    },
+-   "maxNodeVisits": 10,
+    "runDeadlineSeconds": null,
+    "subloopDepthLimit": 8,
+    "workingDirectory": {
+      "kind": "temp",
+    },
+
+ ❯ src/editor/EditorPage.undo.test.tsx:128:42
+    126|     act(() => screen.getByRole('heading', { name: 'Loop settings' }).f…
+    127|     await user.keyboard(UNDO);
+    128|     expect(store().definition!.settings).toBe(settings);
+       |                                          ^
+    129|     expect(screen.getByLabelText('Maximum node visits')).toHaveValue(1…
+    130|     await user.keyboard(REDO);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes a Discard the unparsed text made right after the typing, from the field or the badge
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.undo.test.tsx:177:3
+    175|   });
+    176|
+    177|   it('undoes a Discard the unparsed text made right after the typing, …
+       |   ^
+    178|     const user = userEvent.setup();
+    179|     await openEditor();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > edits authentication, body and extraction by keyboard with one-step undo and field validation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:245:1
+    243| });
+    244|
+    245| it('edits authentication, body and extraction by keyboard with one-ste…
+       | ^
+    246|   const user = userEvent.setup();
+    247|   const dialog = await openTrigger();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  src/forms/cron/control.test.tsx > cron schedule control > debounces edits, suppresses invalid zones locally, and displays the server CRON_INVALID before save
+AssertionError: expected [ { method: 'POST', …(5) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/forms/cron/control.test.tsx:169:24
+    167|     await user.clear(raw());
+    168|     await user.type(raw(), 'broken');
+    169|     expect(calls(api)).toHaveLength(1);
+       |                        ^
+    170|     await waitFor(() => expect(screen.getByText('Invalid schedule: bad…
+    171|     expect(raw()).toHaveAccessibleDescription(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+ FAIL  src/forms/cron/control.test.tsx > cron schedule control > does not show stale results from an earlier in-flight request
+TestingLibraryElementError: Unable to find an element with the text: No upcoming runs for this expression.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<form[39m
+      [33maria-label[39m=[32m"cron"[39m
+      [33mclass[39m=[32m"grid gap-field"[39m
+      [33mnovalidate[39m=[32m""[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+          [33mfor[39m=[32m"_r_2r_"[39m
+        [36m>[39m
+          [0mType[0m
+        [36m</label>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"relative block min-w-0"[39m
+        [36m>[39m
+          [36m<select[39m
+            [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+            [33mid[39m=[32m"_r_2r_"[39m
+          [36m>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"0"[39m
+            [36m>[39m
+              [0mmanual[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"1"[39m
+            [36m>[39m
+              [0mcron[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"2"[39m
+            [36m>[39m
+              [0mwebhook[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"3"[39m
+            [36m>[39m
+              [0mevent[0m
+            [36m</option>[39m
+            [36m<option[39m
+              [33mvalue[39m=[32m"4"[39m
+            [36m>[39m
+              [0mpoll[0m
+            [36m</option>[39m
+          [36m</select>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"[39m
+            [33mdata-icon[39m=[32m"chevron"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m6 9 6 6 6-6"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+          [33mdata-tab-panel[39m=[32m"main"[39m
+          [33mid[39m=[32m"_r_2s_-panel-main"[39m
+        [36m>[39m
+          [36m<fieldset[39m
+            [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+            [33mdata-field[39m=[32m"expression.schedule"[39m
+          [36m>[39m
+            [36m<legend[39m
+              [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+            [36m>[39m
+              [0mSchedule[0m
+            [36m</legend>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                [33mfor[39m=[32m"_r_2t_-preset"[39m
+              [36m>[39m
+                [0mRepeat[0m
+              [36m</label>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"relative block min-w-0"[39m
+              [36m>[39m
+                [36m<select[39m
+                  [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+                  [33mid[39m=[32m"_r_2t_-preset"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mdisabled[39m=[32m""[39m
+                    [33mvalue[39m=[32m"empty"[39m
+                  [36m>[39m
+                    [0mChoose a schedule…[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"minutes"[39m
+                  [36m>[39m
+                    [0mEvery N minutes[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"hours"[39m
+                  [36m>[39m
+                    [0mEvery N hours[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"daily"[39m
+                  [36m>[39m
+                    [0mDaily at a time[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"weekdays"[39m
+                  [36m>[39m
+                    [0mWeekdays at a time[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"weekly"[39m
+                  [36m>[39m
+                    [0mWeekly on chosen days[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"monthly"[39m
+                  [36m>[39m
+                    [0mMonthly on day N[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"custom"[39m
+                  [36m>[39m
+                    [0mCustom expression[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"[39m
+                  [33mdata-icon[39m=[32m"chevron"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"cron"[39m
+        [33mclass[39m=[32m"grid gap-field"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+            [33mfor[39m=[32m"_r_2r_"[39m
+          [36m>[39m
+            [0mType[0m
+          [36m</label>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"relative block min-w-0"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+              [33mid[39m=[32m"_r_2r_"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"0"[39m
+              [36m>[39m
+                [0mmanual[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"1"[39m
+              [36m>[39m
+                [0mcron[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"2"[39m
+              [36m>[39m
+                [0mwebhook[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"3"[39m
+              [36m>[39m
+                [0mevent[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"4"[39m
+              [36m>[39m
+                [0mpoll[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"[39m
+              [33mdata-icon[39m=[32m"chevron"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m6 9 6 6 6-6"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+            [33mdata-tab-panel[39m=[32m"main"[39m
+            [33mid[39m=[32m"_r_2s_-panel-main"[39m
+          [36m>[39m
+            [36m<fieldset[39m
+              [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+              [33mdata-field[39m=[32m"expression.schedule"[39m
+            [36m>[39m
+              [36m<legend[39m
+                [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+              [36m>[39m
+                [0mSchedule[0m
+              [36m</legend>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                  [33mfor[39m=[32m"_r_2t_-preset"[39m
+                [36m>[39m
+                  [0mRepeat[0m
+                [36m</label>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"relative block min-w-0"[39m
+                [36m>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+                    [33mid[39m=[32m"_r_2t_-preset"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mdisabled[39m=[32m""[39m
+                      [33mvalue[39m=[32m"empty"[39m
+                    [36m>[39m
+                      [0mChoose a schedule…[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"minutes"[39m
+                    [36m>[39m
+                      [0mEvery N minutes[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"hours"[39m
+                    [36m>[39m
+                      [0mEvery N hours[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"daily"[39m
+                    [36m>[39m
+                      [0mDaily at a time[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"weekdays"[39m
+                    [36m>[39m
+                      [0mWeekdays at a time[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"weekly"[39m
+                    [36m>[39m
+                      [0mWeekly on chosen days[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"monthly"[39m
+                    [36m>[39m
+                      [0mMonthly on day N[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"custom"[39m
+                    [36m>[39m
+                      [0mCustom expression[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/forms/cron/control.test.tsx:213:11
+    211|     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
+    212|     api.override('POST /triggers/cron/preview', () => json([]));
+    213|     await waitFor(() =>
+       |           ^
+    214|       expect(screen.getByText('No upcoming runs for this expression.')…
+    215|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-255/apps/web/src/editor/useUndoShortcuts.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  7 failed | 126 passed (133)
+      Tests  16 failed | 1644 passed (1660)
+     Errors  1 error
+   Start at  15:14:08
+   Duration  919.05s (tests 38%, environment 33%, setup 13%, import 10%, transform 5%, worker 1%)
+
+Environment  jsdom was created 133 times · 3045.99s total, 33% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 255\apps\web
+
