@@ -146,6 +146,23 @@ describe('gateway shutdown notice', () => {
     expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
   });
 
+  it('keeps keyboard focus on the notice when a newer state replaces an open confirmation', async () => {
+    const user = userEvent.setup();
+    const { api, change } = fixture();
+    const view = renderWith(<ShutdownNotice />, '/', api);
+    await user.click(await screen.findByRole('button', { name: 'Force stop' }));
+    change({ ...state('draining'), controlToken: 'after-another-wait' });
+    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(document.activeElement).toBe(
+      screen.getByRole('heading', { name: 'Gateway is draining' }),
+    );
+    // Ordinary dismissal still returns focus to the opener.
+    await user.click(screen.getByRole('button', { name: 'Force stop' }));
+    await user.click(screen.getByRole('button', { name: 'Go back' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Force stop' }));
+  });
+
   it('refuses malformed shutdown snapshots rather than sending an unguarded choice', async () => {
     const { api } = fixture();
     const malformed: Partial<State> = state();

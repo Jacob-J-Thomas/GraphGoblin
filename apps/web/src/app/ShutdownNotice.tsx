@@ -1,6 +1,6 @@
 import { GraphGoblinApiError, unwrap, type ResponseBody } from '@graphgoblin/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useApi } from '../api/context.js';
 import { Button, Dialog } from '../components/ui/index.js';
@@ -65,11 +65,15 @@ function Work({ ids }: { ids: string[] }) {
 function ShutdownChoices({
   state,
   choose,
+  fallbackFocusId,
 }: {
   state: ShutdownState;
   choose: (choice: 'wait' | 'force', token: string) => void;
+  /** Takes focus when the confirmation closes because this whole choice set was replaced. */
+  fallbackFocusId: string;
 }) {
   const [confirm, setConfirm] = useState(false);
+  const openerRef = useRef<HTMLButtonElement>(null);
   const canForce = state.choices.includes('force');
   const canWait = state.choices.includes('wait');
   const failedForce = state.phase === 'force-failed';
@@ -86,7 +90,7 @@ function ShutdownChoices({
         </Button>
       ) : null}
       {canForce ? (
-        <Button size="sm" variant="destructive" onClick={() => setConfirm(true)}>
+        <Button size="sm" variant="destructive" ref={openerRef} onClick={() => setConfirm(true)}>
           {failedForce ? 'Force exit' : 'Force stop'}
         </Button>
       ) : null}
@@ -94,6 +98,8 @@ function ShutdownChoices({
         <Dialog
           open
           onClose={() => setConfirm(false)}
+          // The opener is gone when a new token replaced these choices: keep focus on the notice.
+          returnFocus={() => openerRef.current ?? document.getElementById(fallbackFocusId)}
           title={failedForce ? 'Force exit after failed cleanup?' : 'Force stop active work?'}
           footer={
             <>
@@ -128,6 +134,7 @@ export function ShutdownNotice() {
   const client = useApi();
   const cache = useQueryClient();
   const [message, setMessage] = useState('');
+  const headingId = useId();
   const action = useMutation({
     retry: false,
     mutationFn: async ({ choice, token }: { choice: 'wait' | 'force'; token: string }) => {
@@ -209,7 +216,12 @@ export function ShutdownNotice() {
       aria-label="Gateway shutdown"
       className="grid gap-2 border-b border-status-warn-border bg-status-warn-bg px-6 py-3 text-sm wrap-anywhere"
     >
-      <h2 aria-live="polite" className="font-semibold text-status-warn-fg">
+      <h2
+        id={headingId}
+        tabIndex={-1}
+        aria-live="polite"
+        className="font-semibold text-status-warn-fg"
+      >
         {title}
       </h2>
       {closing || terminal ? (
@@ -269,7 +281,12 @@ export function ShutdownNotice() {
       {message ? <p role="status">{message}</p> : null}
       <div className="flex flex-wrap gap-2">
         {state && available ? (
-          <ShutdownChoices key={state.controlToken} state={state} choose={send} />
+          <ShutdownChoices
+            key={state.controlToken}
+            state={state}
+            choose={send}
+            fallbackFocusId={headingId}
+          />
         ) : null}
         {status.error ? (
           <Button

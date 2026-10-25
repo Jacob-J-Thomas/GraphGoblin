@@ -137,16 +137,22 @@ The application shell now observes the existing controller through its typed rou
 It offers only advertised wait/force choices, with an explicit force confirmation
 and a separate failed-cleanup exit confirmation. Existing run snapshots supply pinned
 loop names. Shutdown snapshots include an opaque concurrency token, and browser
-choices send it as `x-graphgoblin-shutdown-token`. A synchronous comparison before
-dispatch rejects stale phase/incarnation choices with the current 409 snapshot. This
-prevents a delayed force from acknowledging cleanup failure caused by another tab.
-A token change also resets confirmation. Unconditional API/operator requests retain
-the existing semantics; the controller and engine are unchanged. A stale action's 409 is a current-state
-snapshot. Tab lifecycle only observes, and network failures never resend actions.
-The UI does not initiate drain or change D-038, force, seal or recovery semantics.
-Two-second observation polling is an engineering choice to bound idle request cost;
-it stops on the stopped phase or errors and requires an explicit check after errors.
-Ready/exiting continue observing until HTTP closes, so the last notice does not stay
+choices send it as `x-graphgoblin-shutdown-token`. The token names the gateway
+incarnation, a revision and the phase: the controller's only addition is that revision,
+which advances on every phase entry and every accepted wait, so a phase that recurs
+does not revive an earlier token. A synchronous comparison before dispatch rejects a
+stale choice with the current 409 snapshot. This prevents a delayed force from
+acknowledging cleanup failure caused by another tab or overriding a later choice to
+keep waiting. A token change also resets confirmation, and keyboard focus moves to the
+notice heading when the confirmation it replaced is gone. Unconditional API/operator
+requests retain the existing semantics; drain, force and engine behaviour are unchanged.
+A stale action's 409 is a current-state snapshot. Tab lifecycle only observes, and
+network failures never resend actions. The UI does not initiate drain or change D-038,
+force, seal or recovery semantics. Observation polls every 10 seconds while the gateway
+runs and every 2 seconds during shutdown (engineering choices bounding idle request
+cost); it stops on the stopped phase or an error, and after a transport failure the
+application's reachability probe refetches it once the API answers again, besides the
+explicit check. Ready/exiting continue observing until HTTP closes, so the last notice does not stay
 permanently at stopping after a confirmed control response.
 A disconnected gateway is labelled stopped or disconnected, not fabricated as an
 observed `stopped` response. No new architecture decision is introduced.
