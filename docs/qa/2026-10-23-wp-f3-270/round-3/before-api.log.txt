@@ -1,0 +1,54 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "exec", "vitest", "run", "src/stored-loop-defaults.test.ts", "--maxWorkers=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+
+stdout | src/stored-loop-defaults.test.ts > reopens and exports a stored draft missing additive deadline defaults
+{"status":"draft","removed":"structuredTimeoutMs","http":500,"body":{"type":"https://graphgoblin.dev/problems/response-invalid","title":"response invalid","status":500,"code":"RESPONSE_INVALID","detail":"the server produced a response that does not match its schema"}}
+
+stdout | src/stored-loop-defaults.test.ts > reopens and exports a stored published missing additive deadline defaults
+{"status":"published","removed":"structuredTimeoutMs","http":500,"body":{"type":"https://graphgoblin.dev/problems/response-invalid","title":"response invalid","status":500,"code":"RESPONSE_INVALID","detail":"the server produced a response that does not match its schema"}}
+
+ ❯ src/stored-loop-defaults.test.ts (2 tests | 2 failed) 3199ms
+   × reopens and exports a stored draft missing additive deadline defaults 2417ms
+   × reopens and exports a stored published missing additive deadline defaults 779ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/stored-loop-defaults.test.ts > reopens and exports a stored draft missing additive deadline defaults
+ FAIL  src/stored-loop-defaults.test.ts > reopens and exports a stored published missing additive deadline defaults
+AssertionError: {"type":"https://graphgoblin.dev/problems/response-invalid","title":"response invalid","status":500,"code":"RESPONSE_INVALID","detail":"the server produced a response that does not match its schema"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ src/stored-loop-defaults.test.ts:39:46
+     37|       const opened = await t.app.inject({ method: 'GET', url: `/loops/…
+     38|       console.log(JSON.stringify({ status, removed: field, http: opene…
+     39|       expect(opened.statusCode, opened.body).toBe(200);
+       |                                              ^
+     40|       expect(opened.json()).toMatchObject({ [status === 'draft' ? 'dra…
+     41|       const version = await t.app.inject({ method: 'GET', url: `/loops…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  04:42:48
+   Duration  25.91s (transform 55%, import 33%, tests 13%)
+
+  Transform  transforming modules took 13.76s · 55% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\api
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "exec", "vitest", "run", "src/stored-loop-defaults.test.ts", "--maxWorkers=1"], "exitCode": 1, "seconds": 28.797}

@@ -1,0 +1,98 @@
+GraphGoblin
+Loops
+Runs
+Events
+Settings
+Loops
+/
+QA Edge v2 1440
+draft only
+All changes saved
+Undo
+Redo
+Open in Runs
+Publish the loop first: runs start from a published version.
+Ready to publish
+Publish
+Palette
+Trigger
+Starts a run
+Decision
+Chooses a route and can limit repeats
+Inference
+Hands work to a harness
+Script
+Runs a program
+Mutate
+Changes the context thread
+Subloop
+Runs another loop
+Wait
+Parks until input, time, or a signal
+Heartbeat
+Polls on an interval
+Exit
+Finishes with an outcome and return value
+TRIGGER
+Start
+start
+out
+WAIT
+Wait
+wait
+out
+EXIT
+Done
+done
+React Flow
+Loop settings
+
+Required fields are marked *
+
+Name
+*
+Description
+SETTINGS
+
+Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision or structured repair call when Limited; it defaults to Unlimited. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+
+Working directory
+Kind
+fixed
+template
+temp
+Defaults
+By harness
+
+Defaults keyed by their harness; omitted fields inherit only within that harness.
+
+Add entry
+Maximum node visits
+Limited
+Unlimited
+
+Fresh entries per node. Default 10; unlimited removes this cutoff.
+
+Run deadline seconds
+Limited
+No run deadline
+
+Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+
+No deadline; set one to stop a forgotten run.
+
+Structured completion milliseconds
+Limited
+Unlimited
+
+Milliseconds per LLM decision or structured repair completion. No deadline by default; Unlimited removes this cutoff.
+
+No completion deadline; LLM decisions and repairs remain cancellable.
+
+Subloop depth limit
+VARIABLES
+
+Each variable maps a name to a JSON Schema.
+
+Variables *
+Add entry

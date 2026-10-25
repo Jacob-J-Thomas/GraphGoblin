@@ -1,0 +1,65 @@
+import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+import { performance } from 'node:perf_hooks';
+const root = process.cwd();
+const dep = (name) => import(import.meta.resolve(name, pathToFileURL(join(root, 'apps/api/package.json'))));
+const {createContainer, loadConfig, buildApp} = await dep('@graphgoblin/api');
+const {FakeHarness} = await dep('@graphgoblin/engine/testing');
+const {CURRENT_DEFINITION_FORMAT} = await dep('@graphgoblin/contracts');
+const options = JSON.parse(process.env.GG_QA_OPTIONS);
+const c = await createContainer(loadConfig({GG_DATA_DIR:options.dataDir,GG_REQUIRE_API_KEY:'true',GG_MASTER_KEY:Buffer.alloc(32,7).toString('base64'),GG_SWAGGER_UI:'false',GG_WEB_DIST:join(root,'apps/web/dist')}),{harnesses:{codex:new FakeHarness()},startTimers:false});
+await c.start();
+const stats = {reads:0, limits:{}, maxPage:0, requests:[], connections:[], maxWritableBytes:0, faultEvents:[]};
+let fault, producing, producerPromise;
+const events = c.repos.events;
+// A new EventStorePort passed to the public composition root; the production objects are not patched.
+const store = {
+ append:(...a)=>events.append(...a), page:(...a)=>events.page(...a), subscribe:(...a)=>events.subscribe(...a),
+ async read(...a) {
+  stats.reads++; stats.limits[String(a[2])]=(stats.limits[String(a[2])]??0)+1;
+  if(fault && a[0]===fault.runId && a[1]>=128 && !fault.used) {
+   fault.used=true;
+   await c.handle.client.execute('ALTER TABLE run_events RENAME TO qa_held_run_events');
+   try { return await events.read(...a); }
+   catch(e) {stats.faultEvents.push({kind:'real-sql-query-error',after:a[1],limit:a[2],message:String(e)});throw e;}
+   finally {await c.handle.client.execute('ALTER TABLE qa_held_run_events RENAME TO run_events');}
+  }
+  const result=await events.read(...a);stats.maxPage=Math.max(stats.maxPage,result.length);return result;
+ }
+};
+const app=await buildApp({...c,repos:{...c.repos,events:store}},{logger:false});
+const active=new Map();
+app.addHook('onRequest',async(req,reply)=>{
+ if(!req.url.includes('/events') || !String(req.headers.accept).includes('text/event-stream'))return;
+ const res=reply.raw, at=performance.now();
+ const record={url:req.url,at,peakWritableBytes:0,peakSocketWritableBytes:0,drains:0,longestNeedDrainMs:0};
+ stats.connections.push(record);active.set(res,{record,blockedAt:undefined});
+ res.on('drain',()=>{record.drains++;const item=active.get(res);if(item?.blockedAt){record.longestNeedDrainMs=Math.max(record.longestNeedDrainMs,performance.now()-item.blockedAt);item.blockedAt=undefined;}});
+ res.once('close',()=>{const item=active.get(res);if(item?.blockedAt)record.longestNeedDrainMs=Math.max(record.longestNeedDrainMs,performance.now()-item.blockedAt);record.closedMs=performance.now()-at;record.finished=res.writableFinished;active.delete(res);});
+});
+const timer=setInterval(()=>{
+ for(const [res,item] of active){const {record}=item;record.peakWritableBytes=Math.max(record.peakWritableBytes,res.writableLength);record.peakSocketWritableBytes=Math.max(record.peakSocketWritableBytes,res.socket?.writableLength??0);stats.maxWritableBytes=Math.max(stats.maxWritableBytes,res.writableLength);if(res.writableNeedDrain && !item.blockedAt)item.blockedAt=performance.now();}
+},5);
+const base=await app.listen({host:'127.0.0.1',port:options.port});
+const {token}=await c.repos.apiKeys.create('local','independent QA',['*']);
+const definition={schemaVersion:CURRENT_DEFINITION_FORMAT,name:'Independent bounded SSE QA',nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},{id:'wait',kind:'wait',label:'Wait',config:{mode:'input',prompt:'QA hold'}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'wait'}},{id:'b',from:{node:'wait',port:'out'},to:{node:'done'}}]};
+async function seed({runId,count,payloadBytes=256}){let n=(await c.repos.runs.get(runId)).lastEventSeq;while(n<count){const size=Math.min(100,count-n);await events.append(runId,Array.from({length:size},()=>({type:'signal.received',name:'qa-measurement',payload:'q'.repeat(payloadBytes)})));n+=size;}return {lastSeq:n};}
+async function command(name,args={}){
+ if(name==='seed')return seed(args);
+ if(name==='stats')return {...stats,memory:process.memoryUsage(),activeResponses:active.size};
+ if(name==='resetStats'){stats.reads=0;stats.limits={};stats.maxPage=0;stats.connections=[];stats.maxWritableBytes=0;return {};}
+ if(name==='fault'){fault={...args,used:false};return {};}
+ if(name==='corrupt'){await c.handle.client.execute({sql:'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = ?',args:['{',args.runId,args.seq]});return {};}
+ if(name==='repair'){await c.handle.client.execute({sql:'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = ?',args:[JSON.stringify({reason:'manual',payload:'q'.repeat(256)}),args.runId,args.seq]});return {};}
+ if(name==='burst'){await events.append(args.runId,Array.from({length:args.count},()=>({type:'signal.received',name:'qa-measurement',payload:'b'.repeat(args.payloadBytes??256)})));return {lastSeq:(await c.repos.runs.get(args.runId)).lastEventSeq};}
+ if(name==='produce'){
+  producing=true;const started=performance.now();let appended=0;
+  producerPromise=(async()=>{while(producing && performance.now()-started<(args.durationMs??10000)){const before=performance.now();await events.append(args.runId,Array.from({length:10},()=>({type:'signal.received',name:'qa-measurement',payload:'live'})));appended+=10;await new Promise(r=>setTimeout(r,Math.max(0,50-(performance.now()-before))));}return {appended,elapsedMs:performance.now()-started,perSecond:appended/((performance.now()-started)/1000)};})();
+  return {started:true};
+ }
+ if(name==='stopProducer'){producing=false;return producerPromise?await producerPromise:{};}
+ if(name==='close'){producing=false;await producerPromise;clearInterval(timer);for(const res of active.keys())res.destroy();await app.close();await c.stop();return {closed:true};}
+ throw new Error('Unknown command '+name);
+}
+process.on('message',async({id,name,args})=>{try{const result=await command(name,args);process.send({id,result});if(name==='close'){process.disconnect();}}catch(e){process.send({id,error:e.stack});}});
+process.send({ready:true,base,token,definition,pid:process.pid});

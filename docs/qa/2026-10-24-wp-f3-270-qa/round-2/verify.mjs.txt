@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const out=resolve('docs/qa/2026-10-24-wp-f3-270-qa/round-2');
+async function files(dir='',acc=[]){for(const e of await readdir(join(out,dir),{withFileTypes:true})){const p=(dir?dir+'/':'')+e.name;if(e.isDirectory())await files(p,acc);else acc.push(p)}return acc}
+const report=await readFile(join(out,'README.md'),'utf8'),paths=await files(),problems=[];
+for(const p of paths){if(p==='README.md'||p==='artifact-manifest.json'||p==='verification.json')continue;const b=await readFile(join(out,p));if(b.length>1000000)problems.push('Oversize capture: '+p);if(!report.includes(']('+p+')'))problems.push('Unlinked retained artifact: '+p);if(p.endsWith('.json'))try{JSON.parse(b.toString('utf8').replace(/^\uFEFF/,''))}catch(e){problems.push('Invalid JSON '+p+': '+e)}
+if(/\.(json|txt|md)$/.test(p)){const s=b.toString('utf8');if(s.toLowerCase().includes(process.env.USERPROFILE.toLowerCase())||s.toLowerCase().includes(process.env.USERPROFILE.replaceAll('\\','/').toLowerCase())||s.toLowerCase().includes(process.env.USERPROFILE.slice(2).toLowerCase()))problems.push('Unredacted profile: '+p)}}
+for(const match of report.matchAll(/\]\(([^)]+)\)/g)){if(/^https?:/.test(match[1]))continue;try{await stat(resolve(out,decodeURIComponent(match[1].split('#')[0])))}catch{problems.push('Broken link '+match[1])}}
+const git=args=>execFileSync('git',args,{encoding:'utf8',windowsHide:true}).trim();
+const head=git(['rev-parse','HEAD']);assert.equal(head,'827c4f39eb906a0df0bfe6acc07c613e8fda5ae4');assert.equal(git(['diff','--name-only']),'');assert.equal(git(['diff','--cached','--name-only']),'');
+const result={head,artifacts:paths.length,problems,trackedChanges:[],indexChanges:[],gitStatus:git(['status','--short']),status:problems.length?'FAIL':'PASS'};await writeFile(join(out,'verification.json'),JSON.stringify(result,null,2));
+const inventory=[];for(const p of await files()){if(p==='artifact-manifest.json')continue;const b=await readFile(join(out,p));inventory.push({path:p,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')})}await writeFile(join(out,'artifact-manifest.json'),JSON.stringify(inventory,null,2));
+console.log(JSON.stringify(result,null,2));assert.equal(problems.length,0,'Evidence validation failed');

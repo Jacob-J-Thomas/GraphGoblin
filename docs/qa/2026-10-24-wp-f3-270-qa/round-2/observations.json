@@ -1,0 +1,321 @@
+{
+  "calls": [
+    {
+      "id": 0,
+      "at": 1792845424836,
+      "request": {
+        "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "reasoning": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "confidence",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": 1792845425248,
+      "reason": "RunFailureError: Structured completion exceeded its configured deadline of 400 ms",
+      "releasedAt": 1792845425378,
+      "aborted": true
+    },
+    {
+      "id": 1,
+      "at": 1792845425665,
+      "request": {
+        "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n{\n  \"nodeId\": \"work\",\n  \"value\": \"bad\",\n  \"at\": \"2026-10-24T12:37:05.620Z\"\n}\n\nValidation errors:\n- / must be number\n",
+        "schema": {
+          "type": "number"
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": 1792845426027,
+      "reason": "RunFailureError: Structured completion exceeded its configured deadline of 350 ms",
+      "releasedAt": 1792845426065,
+      "aborted": true
+    },
+    {
+      "id": 2,
+      "at": 1792845426237,
+      "request": {
+        "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n{\n  \"nodeId\": \"work\",\n  \"value\": \"bad\",\n  \"at\": \"2026-10-24T12:37:06.235Z\"\n}\n\nValidation errors:\n- / must be number\n",
+        "schema": {
+          "type": "number"
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": null,
+      "releasedAt": 1792845426262,
+      "aborted": false
+    },
+    {
+      "id": 3,
+      "at": 1792845428557,
+      "request": {
+        "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "reasoning": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "confidence",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": 1792845430592,
+      "reason": "Error: run cancelled",
+      "releasedAt": 1792845430623,
+      "aborted": true
+    },
+    {
+      "id": 4,
+      "at": 1792845430822,
+      "request": {
+        "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "reasoning": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "route",
+            "confidence",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "abortedAt": null,
+      "releasedAt": 1792845430848,
+      "aborted": false
+    }
+  ],
+  "logs": [
+    {
+      "level": "error",
+      "at": 1792845425249,
+      "data": {
+        "runId": "01M5PYMA3F434M9TQJ664XS8DJ",
+        "nodeId": "work",
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 400 ms",
+          "resumable": true,
+          "nodeId": "work",
+          "details": {
+            "timeoutMs": 400,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "msg": "node failed"
+    },
+    {
+      "level": "error",
+      "at": 1792845426032,
+      "data": {
+        "runId": "01M5PYMAW33VPKTMNBCK816292",
+        "nodeId": "work",
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 350 ms",
+          "resumable": true,
+          "nodeId": "work",
+          "inference": {
+            "visitId": "01M5PYMAW33VPKTMNBCK816292:5",
+            "turnId": "01M5PYMAXZH7G73JNN0RKYWX4Z",
+            "promptKind": "authored",
+            "submission": "delivery-uncertain",
+            "sessionId": "fake-session-1"
+          },
+          "details": {
+            "timeoutMs": 350,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "msg": "node failed"
+    },
+    {
+      "level": "warn",
+      "at": 1792845426065,
+      "data": {
+        "runId": "01M5PYMAW33VPKTMNBCK816292",
+        "nodeId": "work"
+      },
+      "msg": "late structured completion discarded"
+    },
+    {
+      "level": "error",
+      "at": 1792845428430,
+      "data": {
+        "runId": "01M5PYMBNRQKMFJ92H5T2BPHVX",
+        "nodeId": "work",
+        "failure": {
+          "code": "INFERENCE_TIMEOUT",
+          "message": "inference exceeded 2s",
+          "resumable": true,
+          "nodeId": "work",
+          "inference": {
+            "visitId": "01M5PYMBNRQKMFJ92H5T2BPHVX:5",
+            "turnId": "01M5PYMBR478RAT0PS5Q0P3564",
+            "promptKind": "repair",
+            "submission": "delivery-uncertain",
+            "sessionId": "fake-session-2"
+          }
+        }
+      },
+      "msg": "node failed"
+    }
+  ],
+  "timers": [
+    {
+      "id": 10544,
+      "at": 1792845424836,
+      "stack": "Error\n    at AsyncHook.init (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-runtime-krNjWE/server.mjs:13:71)\n    at emitInitNative (node:internal/async_hooks:202:43)\n    at emitInitScript (node:internal/async_hooks:505:3)\n    at initAsyncResource (node:internal/timers:170:5)\n    at new Timeout (node:internal/timers:204:5)\n    at setTimeout (node:timers:163:19)\n    at expire (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:30:21)\n    at completeWithDeadline (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:37:9)\n    at evaluateLlm (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/primitive-evaluator.js:173:21)\n    at async Object.execute (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/handlers/decision.js:43:23)"
+    },
+    {
+      "id": 18710,
+      "at": 1792845425665,
+      "stack": "Error\n    at AsyncHook.init (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-runtime-krNjWE/server.mjs:13:71)\n    at emitInitNative (node:internal/async_hooks:202:43)\n    at emitInitScript (node:internal/async_hooks:505:3)\n    at initAsyncResource (node:internal/timers:170:5)\n    at new Timeout (node:internal/timers:204:5)\n    at setTimeout (node:timers:163:19)\n    at expire (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:30:21)\n    at completeWithDeadline (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:37:9)\n    at repairValue (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/handlers/common.js:156:38)\n    at async runMutations (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/handlers/common.js:193:26)"
+    },
+    {
+      "id": 22167,
+      "at": 1792845426237,
+      "stack": "Error\n    at AsyncHook.init (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-runtime-krNjWE/server.mjs:13:71)\n    at emitInitNative (node:internal/async_hooks:202:43)\n    at emitInitScript (node:internal/async_hooks:505:3)\n    at initAsyncResource (node:internal/timers:170:5)\n    at new Timeout (node:internal/timers:204:5)\n    at setTimeout (node:timers:163:19)\n    at expire (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:30:21)\n    at completeWithDeadline (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:37:9)\n    at repairValue (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/handlers/common.js:156:38)\n    at async runMutations (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/handlers/common.js:193:26)"
+    },
+    {
+      "id": 36424,
+      "at": 1792845430822,
+      "stack": "Error\n    at AsyncHook.init (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-runtime-krNjWE/server.mjs:13:71)\n    at emitInitNative (node:internal/async_hooks:202:43)\n    at emitInitScript (node:internal/async_hooks:505:3)\n    at initAsyncResource (node:internal/timers:170:5)\n    at new Timeout (node:internal/timers:204:5)\n    at setTimeout (node:timers:163:19)\n    at expire (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:30:21)\n    at completeWithDeadline (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/completion-deadline.js:37:9)\n    at evaluateLlm (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/primitive-evaluator.js:173:21)\n    at async Object.execute (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/engine/dist/handlers/decision.js:43:23)"
+    }
+  ],
+  "started": [
+    {
+      "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-2-healthy-B8bHdB\\workspaces\\01M5PYMAW33VPKTMNBCK816292",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "options": {
+        "sandbox": "workspace-write",
+        "approval": "never"
+      },
+      "turn": {
+        "prompt": "Answer"
+      }
+    },
+    {
+      "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-2-healthy-B8bHdB\\workspaces\\01M5PYMBNRQKMFJ92H5T2BPHVX",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "options": {
+        "sandbox": "workspace-write",
+        "approval": "never"
+      },
+      "turn": {
+        "prompt": "Answer",
+        "outputSchema": {
+          "type": "number"
+        }
+      }
+    }
+  ],
+  "resumed": [
+    {
+      "sessionId": "fake-session-1",
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-2-healthy-B8bHdB\\workspaces\\01M5PYMAW33VPKTMNBCK816292",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "options": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."
+        }
+      }
+    },
+    {
+      "sessionId": "fake-session-2",
+      "request": {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-2-healthy-B8bHdB\\workspaces\\01M5PYMBNRQKMFJ92H5T2BPHVX",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "options": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n\"bad\"\n\nValidation errors:\n- / must be number\n",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  ]
+}

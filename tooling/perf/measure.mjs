@@ -51,6 +51,8 @@ for (const name of Object.keys(flags))
       'profile',
       'load-conditions',
       'out',
+      'port',
+      'store-prefix',
     ].includes(name)
   )
     throw new Error('Unknown flag: ' + name);
@@ -86,8 +88,16 @@ try {
 } catch (error) {
   if (error.code !== 'ENOENT') throw error;
 }
-const dataDir = await mkdtemp(join(output, 'store-'));
-const options = { dataDir, output, profileMode, webDist: join(root, 'apps/web/dist') };
+const storePrefix = flags['store-prefix'] ?? 'store-';
+if (!/^[a-zA-Z0-9-]+$/.test(storePrefix)) throw new Error('Invalid store-prefix');
+const dataDir = await mkdtemp(join(output, storePrefix));
+const options = {
+  dataDir,
+  output,
+  profileMode,
+  port: integer('port', 0, 0, 65535),
+  webDist: join(root, 'apps/web/dist'),
+};
 const hostBefore = cpus().map((cpu) => cpu.times);
 const summary = {
   schema: 2,

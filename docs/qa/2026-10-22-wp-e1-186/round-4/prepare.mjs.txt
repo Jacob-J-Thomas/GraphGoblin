@@ -1,0 +1,18 @@
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+const evidence = 'docs/qa/2026-10-22-wp-e1-186/round-4';
+const hash = value => createHash('sha256').update(value).digest('hex');
+for (const name of ['transport', 'initial-corruption']) {
+  let source = readFileSync(`${evidence}/audit-${name}-probe.mjs.txt`, 'utf8');
+  source = source.replace('port:5950', 'port:5745').replaceAll('gg-audit-e1-186-', 'gg-wp-e1-186-');
+  if (name === 'transport') {
+    source = source.replace("f.event!=='stream.error'", "f.event!=='stream.error'&&f.event!=='stream.complete'");
+    source = source.replace('ids:data.map(e=>e.seq)', "completions:frames.filter(f=>f.event==='stream.complete').map(f=>({id:f.id,data:JSON.parse(f.data)})),ids:data.map(e=>e.seq)");
+  }
+  writeFileSync(`.tmp/r4-${name}-probe.mjs`, source);
+}
+const walk = dir => readdirSync(dir, {withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(join(dir,e.name)):[join(dir,e.name)]);
+const qa = walk('docs/qa/2026-10-24-wp-e1-186-qa').map(path=>({path:path.replaceAll('\\','/'),bytes:readFileSync(path).length,sha256:hash(readFileSync(path))}));
+writeFileSync('.tmp/r4-initial-state.json', JSON.stringify({head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),status:execFileSync('git',['status','--short'],{encoding:'utf8'}),qa},null,2));

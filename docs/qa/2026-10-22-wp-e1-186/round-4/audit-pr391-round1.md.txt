@@ -1,0 +1,122 @@
+CHANGES REQUIRED: PR #391 at 389dc14f24fcab33f6c22b0ba14428596fdda539 must not merge.
+
+## Blocking findings
+
+Audit round 1 of at most 3. Target: main at 74e78bb212a58af15d5c1792fa599ec8a6f4bbad. The admitted worktree matched the requested head, had installed dependencies, and was clean; the final head/status recheck remained identical and clean (`final-state.log.txt`). Node 22.14.0. Work performed alone; no production, maintained test, Git index, commit, owner-store, or owner-port changes. This report covers the server and transport half only.
+
+1. **P1 — Replay reports completion at an obsolete terminal event and omits durable suffixes.** `apps/api/src/sse.ts:155` calls `end()` on every terminal event; `packages/api-client/src/sse.ts:257` independently returns success on the same event. The new lifecycle-tail check at `apps/api/src/sse.ts:245` is never reached when replay hits that earlier marker. Through the real manager and REST API with a fake harness, a run failed at seq 12, resumed at 13, and succeeded at 24. Both raw SSE and the typed client delivered only 1–12, closed successfully, and reported no error. A separate page-boundary fixture had failed/resumed/finished/audit rows at 128/129/131/132: opening at 126 stopped at 128; opening after 128 stopped at 131 and omitted the already-durable `return.delivered` row 132. This violates the requested complete, ordered replay and truthful completion for resumed runs. The unconditional-stop rule predates this PR but is retained in its rewritten replay path and is explicitly inside the audit brief's lifecycle cases.
+
+   Smallest fix: make completion depend on the current lifecycle outcome after catching up through the currently durable suffix. Continue past superseded terminal markers; make the client follow the server's authoritative completion rather than stopping on any historical terminal event. Preserve bounded reads and update the contradictory terminal-close sentence in docs/07. Add regressions for a real failed/resumed/succeeded run and for a terminal marker followed by durable delivery audits.
+
+   Reproduction: after `pnpm.cmd build`, run `node --experimental-import-meta-resolve <auditRoot>/transport-probe.mjs <auditRoot>` from this worktree. Cases: `real manager failure then resume through REST`, `failed then resumed then finished with audit`, and `cursor after former failure`. Inspect `transport-results.json`.
+
+2. **P2 — A successful terminal-cursor response becomes an endless retry or a false client failure.** `packages/api-client/src/sse.ts:214` returns false on every clean EOF; the retry loop consequently labels a correctly completed empty response as “the event stream closed before the run finished.” At a cancelled run's final seq 387 and at 487, raw SSE returned HTTP 200 with only `: connected`, while the typed client reopened twice and rejected `done` after `maxAttempts: 2`. Its default has no attempt ceiling, so it keeps reconnecting. After the terminal seq 131 followed by audit seq 132, the client delivered 132, then exhibited the same failure. No network or store fault was involved.
+
+   Smallest fix: provide an unambiguous completion signal for a consumed terminal cursor and have the helper resolve on that signal. Do not equate arbitrary EOF with success, since the same EOF can represent a disconnected active run. Test the helper against the real route at, past, and after a terminal marker with trailing rows.
+
+   Reproduction: the same script, cases `terminal cursor 387`, `terminal cursor 487`, and `cursor after current terminal with trailing audits`. Raw replies and helper errors are retained together.
+
+3. **P2 — Corruption is retried when it is detected before streaming starts.** `packages/api-client/src/sse.ts:196` classifies HTTP failures by status alone, whereas line 237 treats an in-stream `STORED_EVENT_INVALID` control as fatal. A corrupt row on the first page, or a corrupt terminal marker found by the new consumed-cursor lookup, returns HTTP 500 `STORED_EVENT_INVALID` from the real route. The helper requested it twice and rejected with a generic “gave up” error when limited to two attempts; its default retries indefinitely. No event was delivered and the cursor stayed unchanged (0 and 8 respectively), but the promised fatal handling depends incorrectly on whether headers have already been sent.
+
+   Smallest fix: apply the same fatal stored-event error classification to initial HTTP Problem Details and in-stream controls, preserving the typed error and the cursor. Add route/client regressions for first-page corruption and a corrupt lifecycle marker at a consumed cursor.
+
+   Reproduction: `node --experimental-import-meta-resolve <auditRoot>/initial-corruption-probe.mjs <auditRoot>`. This uses built exports, a disposable real SQLite store, the public route via Fastify HTTP injection, and the client's supported fetch adapter; no network listener is involved. `initial-corruption-results.json` records both HTTP 500 responses per case, the code, unchanged cursor, and generic rejection.
+
+## Non-blocking findings
+
+1. **Unchanged test failures require separate qualification.** `packages/api-client/src/templates.test.ts:19` timed out in the full coverage run (5-second test and 10-second teardown deadlines). Infrastructure also failed in unchanged native-control and upgrade files, and API coverage failed in the unchanged subprocess-restart file. These are not established regressions from #186 and are not reasons to expand this PR. Exact full-run and single-file outcomes are recorded below. Keep failed invocations failed; qualify native cases in the environment required by D-015 and investigate unexplained timing failures separately without weakening timeouts or coverage.
+2. **Minor test logging:** `apps/api/src/sse-catchup.test.ts:69` adds unconditional `console.warn` probe JSON. The surrounding assertions already establish complete delivery and the append count. Remove routine diagnostic output after retaining the evidence. Reproduce by running the file normally; each memory/SQLite case prints its probe object.
+
+## Requirement matrix
+
+| Bolt / criterion | Status | Production and evidence |
+| --- | --- | --- |
+| #186 AC1: paged replay; bounded buffers; explicit or cursor-recoverable slow readers; ordered visible reconnect | Partially satisfied | `sse.ts` uses 128-row pages, capped handoff/writable queues, drain handling, and cursor catch-up. Maintained `sse-bounds.test.ts` asserts bounded read limits and full stored-payload equality; `sse-catchup.test.ts` exercises more than 256 appends while replaying. Fresh real-socket fault/pressure probes passed. B1, B2, and B3 prevent complete acceptance of replay/completion and fatal-error handling. |
+| #186 AC2: bounded temporary server/browser buffers, preserved history/context, no silent gaps | Partially satisfied | Server bounds above; `useRunEvents.ts:27` bounds transient batches by count/received-JSON size. `useRunEvents.test.tsx` tests early burst flush, oversized event flush, and typed failure/reopen behavior. Raw corruption stops at 128 with a fatal id-less control. B1 silently omits durable suffixes. Retained browser history, older-history browsing, and timeline windowing are explicitly deferred to the next half, not additional blockers for this PR. |
+| Bounded current-terminal lookup and defensive grace from the audit brief | Server lookup satisfied; client completion not satisfied | `SqliteEventStore.lastLifecycleEvent` performs five indexed MAX seeks and one row decode using the existing `(run_id,type,seq)` index. At the consumed cursor, each observed connection used two empty bounded reads and one lookup. Real missing-marker grace took about 2.10 s. New-process lost-status recovery passed. B2 and B3 remain. |
+
+The finite read-limit/count assertions would fail on unbounded or whole-history replay. Public storage/port fixtures and real sockets exercise the pressure and corruption regressions without replacing the component under test. No lowered thresholds, new coverage exclusions, `any` casts, suppressed diagnostics, or skipped/only tests were introduced by this diff. The full large cyclic benchmark and quiet-host before/after performance comparison were not repeated; no new speed or whole-intent acceptance claim is made.
+
+## Verification you ran beyond the gates
+
+Audit artifact directory: `%USERPROFILE%\AppData\Local\Temp\gg-audit-e1-186-round1-20261024` (`<auditRoot>` in the commands). All scripts/results below are retained there. The transport, pressure, and restart probes used built package exports, real file-backed SQLite, and real HTTP sockets; providers were fake. The additional initial-corruption probe used the same built route and real store through public HTTP injection with a configured client fetch adapter. No live-provider evidence is claimed.
+
+| Scenario | Observed result |
+| --- | --- |
+| Equal timestamps and page boundaries | 387 events with one timestamp, 387 unique ids, exactly 1–387, no control. |
+| Appends during page reads and handoff | Corrected fixture delivered all 263 rows including six concurrent appends, ordered and without controls. Initial fixture incorrectly required a fourth read after live handoff before producing a terminal event; its 15-second timeout is retained and is not product evidence. |
+| Live notification overflow / oversized notification | 600-row burst plus a 1,100,000-character event: all 731 rows, ordered, no client error. |
+| Stalled reader and helper recovery | Reader held for 5.6 s received `SSE_SLOW_CONSUMER` without an id after 44 complete events; the helper recovered 1,958 more, exactly 2,002 total. Sampled writable peak 17,007 bytes; this sample is not a formal peak-memory bound. |
+| Abrupt reader close | 58 complete events before cancellation plus 1,144 recovered events, exactly 1,202 in order, no helper error. |
+| Real later-page SQLite query fault | Renamed/restored the disposable event table; helper received `SSE_REPLAY_FAILED`, reopened from its cursor, and delivered all 602 rows in order. |
+| Corruption at row 129 | Raw and typed readers delivered exactly 128 healthy rows; fatal `STORED_EVENT_INVALID` control had no id; helper cursor remained 128. |
+| Corruption before stream headers | First-page row 1 and consumed terminal row 8 both returned HTTP 500 `STORED_EVENT_INVALID`; helper retried both and produced a generic rejection after two attempts (B3). |
+| Terminal before / at / past end | One event before the end delivered the terminal normally. At/past end the bounded raw route completed, but the helper failed as B2. |
+| Failed/resumed/succeeded and trailing audit histories | B1 reproduced through normal REST lifecycle execution and a separate boundary fixture. |
+| Terminal status without current terminal event | Raw defensive close after about 2.10 s; helper treated it as a retryable unexpected EOF. |
+| Ownership / cursor validation | Other-owner token: 404. Negative, fractional, NaN query cursors and limit 1001: 400. |
+| Native stop/start with lost terminal status write | Two distinct processes (1912 and 48364), normal exit 0, same disposable store. Durable terminal seq 7 with status still waiting recovered as succeeded with `durable result`; zero harness calls; empty terminal-cursor response in 18 ms. This is controlled stop/start plus a stored-write fault fixture, not forced-process-kill evidence. |
+| Inspector in Edge | Existing cancellation/reload and replay-seed specs both passed. Initial global setup failed on a URL-object cloning error before tests; string module resolution fixed the audit adapter. Both attempts are retained. |
+| Resource cleanup | Both transport probe suites ended with zero active subscriptions. |
+| Evidence integrity | 87 independent-QA and 80 round-3 artifacts matched their recorded bytes/hashes. All 266 checked relative links across the three principal reports resolved. |
+
+Replay scripts: `transport-probe.mjs`, `pressure-probe.mjs`, `restart-probe.mjs`, `initial-corruption-probe.mjs`. Results: corresponding `*-results.json` and `*-probe.log.txt`. Browser adapter/config and logs are retained. `check-evidence.mjs` and `evidence-integrity.json` record provenance checks.
+
+## Gates
+
+Node 22.14.0 was selected for every pnpm invocation. Gates retained their existing assertions, deadlines, coverage thresholds, and exclusions. Tests used disposable stores beneath the assigned temp prefix.
+
+| Command | Result |
+| --- | --- |
+| `pnpm.cmd typecheck` | PASS |
+| `pnpm.cmd lint` | PASS |
+| `pnpm.cmd format:check` | PASS |
+| `pnpm.cmd check:layers` | PASS |
+| `pnpm.cmd check:deps` | PASS |
+| `pnpm.cmd check:docs` | PASS |
+| `pnpm.cmd check:tokens` | PASS |
+| `pnpm.cmd build` | PASS; a prior `pnpm.cmd build --concurrency=2` also passed before runtime probes. |
+| `pnpm.cmd --filter @graphgoblin/api-client test:coverage --maxWorkers=2 --coverage.reportOnFailure=true` | FAIL: 79 passed, 1 failed; 7 files passed, 1 failed. Lines **100%**, branches **98.30%**. |
+| `pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2 --coverage.reportOnFailure=true` | FAIL: 759 passed, 20 failed; 47 files passed, 5 failed. Lines **98.38%**, branches **94.84%**. |
+| `pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --coverage.reportOnFailure=true` | PASS: 1,639 tests, 130 files. Lines **98.92%**, branches **94.96%**. |
+| `pnpm.cmd --filter @graphgoblin/tooling test:coverage` | PASS: 84 Node tests. The existing tooling script emits no numeric coverage report. |
+| `pnpm.cmd --filter @graphgoblin/api test:coverage --config <auditRoot>/api-allocation.config.mts --configLoader runner --maxWorkers=1 --coverage.reportOnFailure=true` | FAIL: 1,339 passed, 2 failed, 8 skipped; 65 files passed, 1 failed, 2 skipped. Lines **97.92%**, branches **92.95%**. Both failures are in unchanged `src/subloop-restart.test.ts`; the changed SSE test files passed. |
+
+The external API config changes only the subprocess fixture's allocation from 5600–5699 to 5950–5959. It does not alter production code or assertions. Earlier audit setup attempts failed before executing tests: the default Vite config loader tried to write outside the writable roots, and a queued invocation supplied duplicate `maxWorkers` values. These are retained as invalid audit invocations, separately from the valid allocated API coverage run.
+
+Each failing file was rerun once, serially after all full suites ended, using `pnpm.cmd --filter @graphgoblin/<package> exec vitest run <file> --maxWorkers=1 --reporter=verbose`. The API rerun also used the same allocation config and `--configLoader runner`. No timeout was raised.
+
+| File | Full coverage invocation | One isolated rerun |
+| --- | --- | --- |
+| `packages/api-client/src/templates.test.ts:19` | One test timed out at 5 s; teardown also exceeded 10 s. | PASS, 2/2. Timing-sensitive failure retained as a finding. |
+| `packages/infrastructure/src/adversarial.test.ts:225` | The child/grandchild abort test timed out at 30 s. | FAIL, 19 passed / 1 failed; same timeout. |
+| `packages/infrastructure/src/claude/process.test.ts:69` | 3 failed: deadline/overflow and running cancellation had EBUSY cleanup; descendant marker kept growing after cancellation (plus EBUSY). | FAIL, 2 passed / 3 failed; same failure classes. |
+| `packages/infrastructure/src/claude/readiness.test.ts:13` | The `hang reports unknown without exposing CLI bodies` case reported that the check process did not confirm it stopped. | FAIL, 20 passed / 1 failed; same assertion. |
+| `packages/infrastructure/src/process/scripts.test.ts:154` | 3 failed: incomplete-UTF-8 cancellation did not finish; process-tree timeout and signal-abort cases timed out at 15 s. | FAIL, 36 passed / 3 failed; same failure classes. |
+| `packages/infrastructure/src/sqlite/upgrade.test.ts` | 12 of 26 tests exceeded 20 s. | PASS, 26/26. Timing-sensitive failures retained as findings. |
+| `apps/api/src/subloop-restart.test.ts:133` | Hard-kill case exceeded 180 s; `child finished while down` exceeded the 60 s fixture-cleanup hook. | PASS, 3/3. The hard-kill case covered eight recorded timing windows; both constructed restart cases passed. Original full-run timeouts remain findings, not a passing gate. |
+
+D-015 qualification applies to the native termination checks, not the entire infrastructure suite: `6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild`; `kills the descendant that a long-lived child started`; `hang reports unknown without exposing CLI bodies`; `kills and closes a real process cancelled with incomplete UTF-8 pending on both streams`; `kills the process tree on timeout`; and `kills the process when the signal aborts, including when already aborted`. The two additional Claude cases, `kills on deadline and output overflow` and `does not spawn for an already aborted signal and cancels a running process`, failed at EBUSY fixture cleanup; that alone is insufficient to independently waive them as proven termination assertions. These eight failures need qualification outside this sandbox. The template, upgrade, and API restart timing failures remain separate follow-ups; passing only on retry does not make their original gate invocations pass.
+
+Raw commands, exit codes, durations, logs, and coverage summaries are retained in `gates.jsonl`, `coverage-gates.jsonl`, `api-coverage-gate.json`, `isolated-reruns.jsonl`, and the named log/summary files. All four instrumented changed packages exceeded 90% for both lines and branches. Coverage figures describe instrumentation even when a test invocation failed; they do not turn that invocation into a pass.
+
+No dependencies, migrations, node schemas, or OpenAPI shapes changed. The generated-doc gate was nevertheless run. `check:licenses` was not required. Commit messages had no assistant attribution. Source/package/tooling `git diff --check` passed; the unrestricted check reports whitespace preserved in raw QA logs, which were intentionally not rewritten. The required `git grep -n "<profile-name>" HEAD -- docs` finds one pre-existing path-detector regex in the unrelated F2b round-5 evidence, also present at the target commit; it is set aside under D-035.
+
+## Dispositions checked
+
+- **Register #186 / reviewer B1 (fast readers failed while appends accumulated during replay): agree with the fix.** Replay ignores notification copies and the short-page confirmation closes the handoff race. The current functional probe and maintained long-replay cases exercise the correction.
+- **B2 (fixed test ports): agree.** Committed SSE test listeners use port 0. This audit's manual instances used 5950–5952; its subprocess helper is allocated to 5950–5959 by an external test config.
+- **N1 (read-fault retry): agree.** A real SQLite query failure caused one retry and complete cursor recovery.
+- **N3 (later-page errors / writable ceiling): agree with the retained regression design.** Current row-129 corruption and real stalled-socket probes independently confirm later-page fatal control and recovery behavior; a blanket fatal-corruption claim is not satisfied because B3 retries initial HTTP errors; maintained tests additionally exercise the writable ceiling through a public high-water-mark transport.
+- **N4 (durable gaps): agree with the scope distinction.** Durable repository order remains authoritative; only notification gaps trigger catch-up. The maintained SQLite deleted-row case checks this.
+- **N6 (duplicate serialization): agree.** The helper passes received JSON size; the inspector reuses it. No second hook serialization remains.
+- **N2 (host-contended timing interpretation): limited historical evidence, not a new benchmark result.** The retained A/B data and scripts exist; no quiet-host speed claim is accepted from this audit.
+- **N7/N8 (ADR index / portable browser evidence): agree.** ADR-0050 is indexed, the upgrade note covers coordinated rebuilds, and evidence provenance is intact.
+- **QA D1 / earlier N5 (whole-history terminal confirmation): agree that the server cost was fixed.** Current lookup and bounded-count regressions replace the scan. This does not resolve B1, B2, or B3.
+- **QA route correction: agree.** The route is `/runs/{id}/events` negotiated with `Accept: text/event-stream`.
+- **QA timeline/history deferral: agree.** Retained history and timeline windowing are the next half; no whole-bolt or I05 completion is claimed.
+- **D-028/D-030/D-034 evidence handling: agree for the checked records.** Required retained artifacts and report links are present; raw bytes were preserved. No repository evidence was edited by this audit.
+
+## Residual risks
+
+B1, B2, and B3 prevent merge. Full native-process qualification and the template/upgrade/API timing failures remain distinct from transport correctness; do not count a single-file rerun as a retroactive passing full gate. Current CI could not be read: `gh pr view 391` returned HTTP 401. No full benchmark rerun, live provider turn, forced OS process-tree termination proof, history-windowing acceptance, or integrated I05 acceptance is claimed. Temporary stores, logs, build and coverage outputs remain for the orchestrator; no directories were manually deleted. A changed head needs its own subsequent disposition under D-029/D-035.

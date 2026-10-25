@@ -55,3 +55,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0047: Visible execution limits and explicit unlimited mode](ADR-0047-visible-execution-limits.md) records pinned node-visit and run-deadline limits and their visible controls.
 
 [ADR-0048: Targeted durable Event admission](ADR-0048-targeted-event-admission.md) records a single explicit recipient, receipt-before-acknowledgement, recipient-scoped keys and bounded payload nesting.
+
+[ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.

@@ -165,7 +165,7 @@ Boot and the existing nonoverlapping 15-second admission sweep recover up to fiv
 
 Payloads use iterative JSON validation and the shared poll nesting budget, reserving two extra container levels for `intent.queued.initialThread`: maximum payload container depth 994, counting the payload root as zero. Deeper Events return 422 `EVENT_PAYLOAD_TOO_DEEP`, and deeper URL webhooks return 422 `WEBHOOK_PAYLOAD_TOO_DEEP`, before any receipt. Both log a bounded diagnostic without payload data and never enter recovery. Other webhook URL, authentication, Allow, permanent key and fixed acknowledgement contracts remain unchanged.
 
-`GET /events` and the Events page expose pending/admitted/failed/deduplicated delivery states, attempts, retry time and safe failure codes. Migration `0019_targeted_event_admission` adds a separate `event_receipts` ledger; it does not reinterpret or rewrite historical inbound/webhook rows. Old Events continue to show their original run links and "not tracked" admission state, with no fabricated target. Invalid stored history remains untouched.
+`GET /events` and the Events page expose pending/admitted/failed/deduplicated delivery states, attempts, retry time and safe failure codes. Migration `0020_targeted_event_admission` adds a separate `event_receipts` ledger; it does not reinterpret or rewrite historical inbound/webhook rows. Old Events continue to show their original run links and "not tracked" admission state, with no fabricated target. Invalid stored history remains untouched.
 
 Events come only from outside the engine. Exit-to-Event chaining remains retired (ADR-0044); use an awaited Subloop for loop composition.
 

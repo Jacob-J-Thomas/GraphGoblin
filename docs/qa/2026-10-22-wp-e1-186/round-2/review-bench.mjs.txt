@@ -1,0 +1,182 @@
+// Review probe (not product code). Interleaved A/B of sse.ts variants on one SQLite store.
+// Run: node --experimental-import-meta-resolve --expose-gc .tmp/gg-review-186/bench.mjs
+import { spawn, execFileSync } from 'node:child_process';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { monitorEventLoopDelay, performance } from 'node:perf_hooks';
+import { dependency, root } from '../../tooling/perf/common.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const ts = (await dependency('typescript')).default;
+const Fastify = (await dependency('fastify')).default;
+const { createContainer, loadConfig } = await dependency('@graphgoblin/api');
+
+const N = Number(process.env.N ?? 41_000);
+const ROUNDS = Number(process.env.ROUNDS ?? 3);
+const PORT = Number(process.env.PORT ?? 5981);
+const runId = '01M5NRFJR3EYE9W0G01T30Q8CK';
+
+const norm = (s) => s.replace(/\r\n/g, '\n');
+const headSrc = norm(await readFile(join(root, 'apps/api/src/sse.ts'), 'utf8'));
+const baseSrc = norm(
+  execFileSync('git', ['show', 'fbd48d3d:apps/api/src/sse.ts'], { cwd: root, encoding: 'utf8' }),
+);
+function must(src, from, to) {
+  if (!src.includes(from)) throw new Error('variant anchor missing: ' + from.slice(0, 60));
+  return src.replace(from, to);
+}
+const yieldAnchor =
+  '      await yieldToLoop();\n      if (closed) return;\n      page = await store.read(runId, last, REPLAY_PAGE_SIZE);';
+const perEventAnchor =
+  '      for (const event of page) {\n        await write(event);\n        if (closed) return;\n      }';
+const pageWrite = `      {
+        const ok = [];
+        let text = '';
+        for (const event of page) {
+          if (event.seq <= last) continue;
+          if (event.seq !== last + 1 + ok.length) { fail(slowConsumer()); return; }
+          ok.push(event);
+          text += encode(event);
+          if (TERMINAL_EVENTS.has(event.type)) break;
+        }
+        if (ok.length) {
+          await writeText(text, true);
+          if (closed) return;
+          last = ok.at(-1).seq;
+          if (TERMINAL_EVENTS.has(ok.at(-1).type)) { end(); return; }
+        }
+      }`;
+const variants = {
+  base: baseSrc,
+  head: headSrc,
+  head_page1024: must(headSrc, 'const REPLAY_PAGE_SIZE = 128;', 'const REPLAY_PAGE_SIZE = 1024;'),
+  head_noYield: must(headSrc, yieldAnchor, '      page = await store.read(runId, last, REPLAY_PAGE_SIZE);'),
+  head_pageWrite: must(headSrc, perEventAnchor, pageWrite),
+};
+const modules = {};
+for (const [name, src] of Object.entries(variants)) {
+  let js = ts.transpileModule(src, {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  // The engine import only supplies an instanceof class for the read-failure path.
+  js = js.replace(
+    /import \{ UnreadableRunHistoryError \} from '@graphgoblin\/engine';/,
+    'class UnreadableRunHistoryError extends Error {}',
+  );
+  const file = join(here, `variant-${name}.mjs`);
+  await writeFile(file, js);
+  modules[name] = await import(pathToFileURL(file).href);
+}
+
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-review-186-'));
+const container = await createContainer(
+  loadConfig({
+    GG_DATA_DIR: dataDir,
+    GG_SWAGGER_UI: 'false',
+    GG_REQUIRE_API_KEY: 'false',
+    GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
+    GG_CODEX_BINARY: join(dataDir, 'absent-codex'),
+    GG_CLAUDE_BINARY: join(dataDir, 'absent-claude'),
+  }),
+  { startTimers: false },
+);
+await container.start();
+container.manager.stop();
+await container.manager.waitForIdle();
+const events = container.repos.events;
+const draft = { type: 'run.woken', nodeId: 'wait', reason: 'manual', payload: 'x'.repeat(330) };
+for (let done = 0; done < N; done += 1000)
+  await events.append(runId, Array.from({ length: Math.min(1000, N - done) }, () => draft));
+await events.append(runId, [{ type: 'run.cancelled' }]);
+const stored = N + 1;
+
+let reads = [];
+const timed = {
+  append: (...a) => events.append(...a),
+  subscribe: (...a) => events.subscribe(...a),
+  read: async (...a) => {
+    const t = performance.now();
+    try {
+      return await events.read(...a);
+    } finally {
+      reads.push(performance.now() - t);
+    }
+  },
+};
+let current;
+let serverDone;
+let drains = 0;
+const app = Fastify();
+app.get('/runs/:id/events', (request, reply) => {
+  const t0 = performance.now();
+  reply.raw.on('drain', () => drains++);
+  reply.raw.once('close', () => serverDone?.(performance.now() - t0));
+  return current.streamRunEvents(
+    request,
+    reply,
+    timed,
+    request.params.id,
+    Number(request.headers['last-event-id'] ?? 0),
+    { isTerminal: async () => false },
+  );
+});
+const base = await app.listen({ host: '127.0.0.1', port: PORT });
+const lag = monitorEventLoopDelay({ resolution: 10 });
+
+function readOnce(after = 0) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [join(here, 'reader.mjs'), base, runId, String(after)], {
+      stdio: ['ignore', 'pipe', 'inherit'],
+      windowsHide: true,
+    });
+    let out = '';
+    child.stdout.on('data', (d) => (out += d));
+    child.on('exit', (code) => (code === 0 ? resolve(JSON.parse(out)) : reject(new Error('reader ' + code))));
+  });
+}
+const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+const results = {};
+for (let round = 0; round < ROUNDS; round++) {
+  for (const name of Object.keys(modules)) {
+    current = modules[name];
+    global.gc?.();
+    reads = [];
+    drains = 0;
+    const serverWall = new Promise((r) => (serverDone = r));
+    lag.reset();
+    lag.enable();
+    const cpu0 = process.cpuUsage();
+    const reader = await readOnce(0);
+    const wall = await serverWall;
+    const cpu = process.cpuUsage(cpu0);
+    lag.disable();
+    if (reader.events !== stored || reader.gaps !== 0) throw new Error(name + ' incomplete');
+    const sorted = [...reads].sort((a, b) => a - b);
+    const row = {
+      firstMs: reader.firstMs,
+      totalMs: reader.totalMs,
+      serverWallMs: wall,
+      serverCpuMs: (cpu.user + cpu.system) / 1000,
+      readCount: reads.length,
+      readSumMs: reads.reduce((s, x) => s + x, 0),
+      readP50Ms: sorted[Math.floor(sorted.length / 2)],
+      readMaxMs: sorted.at(-1),
+      loopMaxMs: lag.max / 1e6,
+      loopP99Ms: lag.percentile(99) / 1e6,
+      drains,
+    };
+    (results[name] ??= []).push(row);
+    process.stderr.write(`${round} ${name} ${JSON.stringify(row)}\n`);
+  }
+}
+const summary = {};
+for (const [name, rows] of Object.entries(results)) {
+  summary[name] = Object.fromEntries(
+    Object.keys(rows[0]).map((k) => [k, Math.round(median(rows.map((r) => r[k])) * 100) / 100]),
+  );
+}
+process.stdout.write(JSON.stringify({ N: stored, rounds: ROUNDS, dataDir, summary }, null, 1) + '\n');
+await app.close();
+await container.stop();

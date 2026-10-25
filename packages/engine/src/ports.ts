@@ -344,7 +344,9 @@ export interface ClassifierRegistryPort {
   ): Promise<ClassifierResolution>;
 }
 
-/** A single structured completion: prompt in, schema-shaped value out. Used for repair and Codex decisions. */
+/** A single structured completion. Honour abort by cancelling provider work and cleaning resources.
+ * The engine owns the deadline; adapters must not add a hidden completion cutoff.
+ */
 export interface StructuredPort {
   complete(
     request: {
@@ -479,8 +481,6 @@ export interface EngineSettings {
    */
   ownerDefaults?: (ownerId: string) => Promise<HarnessDefaults>;
   maxConcurrentRuns: number;
-  /** Max wall-clock for a single structured completion used in decisions and repair. */
-  structuredTimeoutMs: number;
 }
 
 export interface EnginePorts {

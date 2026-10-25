@@ -103,7 +103,7 @@ function inputs() {
       label: 'Contract v1',
       defaults: NO_DEFAULTS,
       classifiers: {},
-      limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+      limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
     },
     invocationId: ids.next(),
     status: 'queued',

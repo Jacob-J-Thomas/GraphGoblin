@@ -1,0 +1,37 @@
+﻿import { spawn, execFileSync } from 'node:child_process';
+import { openSync, closeSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const dir='docs/qa/2026-10-22-wp-e1-186/round-3';
+const qa='docs/qa/2026-10-24-wp-e1-186-qa';
+const hash=b=>createHash('sha256').update(b).digest('hex');
+function walk(p){return readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(`${p}/${e.name}`):[`${p}/${e.name}`]);}
+const protectedFiles=Object.fromEntries(walk(qa).map(p=>[p,hash(readFileSync(p))]));
+writeFileSync('.r3-prettierignore',`${qa}/\n`,{flag:'wx'});
+const records=JSON.parse(readFileSync('.tmp/r3-gates-attempt-1.json','utf8')).filter(g=>['typecheck','lint'].includes(g.name)&&g.exitCode===0);
+const changed=new Set(execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split(/\r?\n/));
+async function run(name,args,exe='pnpm.cmd'){
+ const log=`.tmp/r3-${name}.log.txt`,fd=openSync(log,'w');
+ const c=spawn(exe==='node'?process.execPath:exe,args,{shell:exe==='pnpm.cmd',windowsHide:true,stdio:['ignore',fd,fd]});
+ console.log(`START ${name} pid=${c.pid}`);
+ const entry=await new Promise(resolve=>{c.once('error',error=>resolve({name,command:exe+' '+args.join(' '),exitCode:null,error:error.message,log}));c.once('close',exitCode=>resolve({name,command:exe+' '+args.join(' '),exitCode,log}));});
+ closeSync(fd);records.push(entry);writeFileSync('.tmp/r3-gates.json',JSON.stringify(records,null,2)+'\n');console.log(JSON.stringify(entry));return entry;
+}
+const ignores=['--ignore-path','.gitignore','--ignore-path','.prettierignore','--ignore-path','.r3-prettierignore'];
+for(const [name,args] of [['format',['format',...ignores]],['format-check',['format:check',...ignores]],['layers',['check:layers']],['deps',['check:deps']],['docs',['check:docs']],['pretest-build',['build']]]){
+ if((await run(name,args)).exitCode!==0)process.exit(1);
+}
+for(const [pkg,path] of [['api','apps/api'],['api-client','packages/api-client'],['infrastructure','packages/infrastructure']]){
+ const result=await run(`coverage-${pkg}`,['--filter',`@graphgoblin/${pkg}`,'test:coverage','--coverage.reportOnFailure=true']);
+ if(result.exitCode!==0){
+  const log=readFileSync(result.log,'utf8').replace(/\u001b\[[0-?]*[ -/]*[@-~]/g,'');
+  const files=new Set([...log.matchAll(/^\s*FAIL\s+([a-zA-Z0-9_./-]+\.test\.tsx?)\b/gm)].map(m=>m[1]));
+  for(const file of files){if(changed.has(`${path}/${file}`)||file==='src/sqlite/lifecycle-tail.test.ts')continue;await run(`alone-${pkg}-${file.replaceAll('/','-')}`,['--filter',`@graphgoblin/${pkg}`,'exec','vitest','run',file,'--maxWorkers=1','--reporter=verbose']);}
+ }
+ try{writeFileSync(`${dir}/coverage-${pkg}-summary.json`,readFileSync(`${path}/coverage/coverage-summary.json`));}catch(error){console.log(`No coverage summary: ${pkg} ${error.code}`);}
+}
+if((await run('build',['build'])).exitCode!==0)process.exit(1);
+await run('terminal-after',['--experimental-import-meta-resolve','.tmp/gg-wp-e1-186-r3-terminal-probe.mjs','after'],'node');
+const altered=Object.entries(protectedFiles).filter(([p,h])=>hash(readFileSync(p))!==h).map(([p])=>p);
+writeFileSync(`${dir}/independent-qa-integrity.json`,JSON.stringify({files:Object.keys(protectedFiles).length,unchanged:altered.length===0,altered},null,2)+'\n');
+if(altered.length)throw new Error('Independent QA evidence changed');
+console.log('GATES FINISHED; independent QA unchanged.');

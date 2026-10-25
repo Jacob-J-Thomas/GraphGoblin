@@ -1,0 +1,105 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/adapter-codex", "test:coverage", "--coverage.reportOnFailure"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/adapter-codex
+      Coverage enabled with v8
+
+ ❯ src/probe-directory.test.ts (4 tests | 3 failed) 10433ms
+   ❯ Codex readiness probe directory (4)
+     × runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 5027ms
+     × preserves 1 existing collision directories and bounds retries 5004ms
+     × preserves 4 existing collision directories and bounds retries 357ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:33:3
+     31|
+     32| describe('Codex readiness probe directory', () => {
+     33|   it('runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and…
+       |   ^
+     34|     const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-codex-long-'…
+     35|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:59:18
+     57|   });
+     58|
+     59|   it.each([1, 4])(
+       |                  ^
+     60|     'preserves %i existing collision directories and bounds retries',
+     61|     async (collisions) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 4 existing collision directories and bounds retries
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 2 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "%USERPROFILE%\AppData\Local\Temp\gg-codex-long-G2v90u\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\xxxxxxxxxxxxxxxxxxx\gg-codex-probe-962e159a",
+      Object {
+        "force": true,
+        "recursive": true,
+      },
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      "%USERPROFILE%\AppData\Local\Temp\gg-codex-long-G2v90u",
+      Object {
+        "force": true,
+        "recursive": true,
+      },
+    ]
+
+
+Number of calls: 2
+
+ ❯ src/probe-directory.test.ts:106:30
+    104|         } else {
+    105|           expect(runner).not.toHaveBeenCalled();
+    106|           expect(remove).not.toHaveBeenCalled();
+       |                              ^
+    107|         }
+    108|       } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  3 failed | 497 passed | 5 skipped (505)
+   Start at  01:15:02
+   Duration  229.18s (transform 45%, tests 32%, import 21%, worker 1%)
+
+  Transform  transforming modules took 295.86s · 45% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.73% ( 389/398 )
+Branches     : 94.66% ( 337/356 )
+Functions    : 97.84% ( 91/93 )
+Lines        : 98.88% ( 355/359 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\adapter-codex
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/adapter-codex", "test:coverage", "--coverage.reportOnFailure"], "exitCode": 1, "seconds": 248.671}

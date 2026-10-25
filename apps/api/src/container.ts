@@ -4,7 +4,7 @@ import { validateHarnessDefaults } from '@graphgoblin/domain';
 import { mkdir, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, isAbsolute, relative, sep } from 'node:path';
-import { createCodexAdapters } from '@graphgoblin/adapter-codex';
+import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
   HttpProbes,
@@ -288,7 +288,7 @@ export async function createContainer(
       },
       modelCatalog: catalog,
       // LLM evaluation uses Codex; all classifier primitives use the owner registry.
-      deciders: overrides.deciders ?? [codex.decider],
+      deciders: overrides.deciders ?? [new CodexDecider(structured)],
       classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
       scripts: overrides.scripts ?? new ProcessScripts(),
@@ -312,7 +312,6 @@ export async function createContainer(
     const settings: EngineSettings = {
       defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,
-      structuredTimeoutMs: 120_000,
       // Harness-scoped Settings defaults are read at run start; GG_DEFAULTS are the fallback.
       ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
     };

@@ -1,0 +1,93 @@
+{"name":"nested-intent-defaults-and-damaged-bytes","status":"PASS"}
+{"name":"due-webhook-intent-cold-migration-recovery","status":"FAIL","error":"LibsqlError: URL_INVALID: URL component has invalid percent encoding: URIError: URI malformed"}
+node : %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac80/supp
+lemental.mjs:18
+At line:2 char:374
++ ... ntal.mjs'); node (Join-Path $qaSupplementDir 'supplemental.mjs') *> d ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/User...lemental.mjs:18:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+async function start(dataDir,label){let ready;const chunks=[];child=spawn(process.execPath,[join(dir,'server.mjs')],{cw
+d:root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,GG_DATA_DIR:dataDir,GG_DB_URL:'file:'+join(dat
+aDir,'graphgoblin.db').replaceAll('\\','/'),GG_PORT:'5880'}});const owned=child;for(const s 
+of[child.stdout,child.stderr])s.on('data',b=>{const 
+text=b.toString();chunks.push(text);save(label+'.log.txt',chunks.join(''));for(const line of 
+text.split('\n'))try{const v=JSON.parse(line);if(v.ready)ready=v}catch{}});await 
+poll(async()=>{if(owned.exitCode!==null)throw Error(chunks.join(''));return ready},Boolean,90000);return ready}
+                                                                                                                       
+                                                                                                                       
+                                                                                                                       
+                                                                                                                       
+                                                                                                                       
+       ^
+
+Error: %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/.pnpm/@libsq
+l+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:85
+
+            throw new LibsqlError(`URL component has invalid percent encoding: ${e}`, "URL_INVALID", undefined, 
+undefined, e);
+
+                  ^
+
+
+
+LibsqlError: URL_INVALID: URL component has invalid percent encoding: URIError: URI malformed
+
+    at percentDecode (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modul
+es/.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:85:19)
+
+    at parseUri (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/.p
+npm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:16:18)
+
+    ... 4 lines matching cause stack trace ...
+
+    at async %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-vel9g5/server.mjs:21:17 {
+
+  code: 'URL_INVALID',
+
+  extendedCode: undefined,
+
+  rawCode: undefined,
+
+  [cause]: URIError: URI malformed
+
+      at decodeURIComponent (<anonymous>)
+
+      at percentDecode (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_mod
+ules/.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:81:16)
+
+      at parseUri (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modules/
+.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/uri.js:16:18)
+
+      at expandConfig (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modu
+les/.pnpm/@libsql+core@0.18.0/node_modules/@libsql/core/lib-esm/config.js:25:17)
+
+      at createClient (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/node_modu
+les/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/node.js:11:26)
+
+      at openDatabase (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/packages/
+infrastructure/dist/sqlite/db.js:160:36)
+
+      at createContainer (%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270-2/apps/a
+pi/dist/container.js:82:24)
+
+      at async %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-vel9g5/server.mjs:21:17
+
+}
+
+
+
+Node.js v22.14.0
+
+
+    at %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac80/supp
+lemental.mjs:18:603
+    at poll (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac8
+0/supplemental.mjs:16:82)
+    at async start (%USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe83
+1426ac80/supplemental.mjs:18:551)
+    at async %USERPROFILE%/AppData/Local/Temp/gg-qa-f3-270-2-supplement-launch-505e507521a742099eeabe831426ac8
+0/supplemental.mjs:35:14
+
+Node.js v22.14.0
