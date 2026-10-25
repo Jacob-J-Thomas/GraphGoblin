@@ -202,12 +202,23 @@ export function ShutdownNotice() {
     (status.error.status === 401 || status.error.status === 403);
   const hidden = (!state || state.phase === 'running') && (!status.error || forbidden) && !message;
   // The notice leaving the page (the gateway is running again) drops focus held inside it;
-  // give it to the page's heading rather than leaving it on BODY.
-  const shownRef = useRef(false);
+  // give it to the page's heading rather than leaving it on BODY. Only focus the notice held
+  // moves: the last element to take focus must have been inside it (its dialog included).
+  const sectionRef = useRef<HTMLElement>(null);
+  const heldFocusRef = useRef(false);
   useEffect(() => {
-    if (hidden && shownRef.current && document.activeElement === document.body)
+    const track = (event: FocusEvent) => {
+      heldFocusRef.current =
+        event.target instanceof Node && (sectionRef.current?.contains(event.target) ?? false);
+    };
+    document.addEventListener('focusin', track);
+    return () => document.removeEventListener('focusin', track);
+  }, []);
+  useEffect(() => {
+    if (!hidden) return;
+    if (heldFocusRef.current && document.activeElement === document.body)
       focusFallback(document.querySelector('main h1') ?? document.querySelector('h1'));
-    shownRef.current = !hidden;
+    heldFocusRef.current = false;
   }, [hidden]);
   if (hidden) return null;
   const closing = state !== undefined && networkFailure;
@@ -229,6 +240,7 @@ export function ShutdownNotice() {
   };
   return (
     <section
+      ref={sectionRef}
       aria-label="Gateway shutdown"
       className="grid gap-2 border-b border-status-warn-border bg-status-warn-bg px-6 py-3 text-sm wrap-anywhere"
     >

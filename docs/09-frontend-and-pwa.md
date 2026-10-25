@@ -827,6 +827,6 @@ navigation, reload and tab closure send no shutdown action. Each response includ
 A phase change, another control's accepted choice or another gateway incarnation makes a
 stale choice return 409 instead of turning it into a different force operation; a phase
 that recurs gets a new token, so a confirmation opened before it stays stale. Changing the token unmounts any open
-confirmation, requiring a fresh deliberate choice; keyboard focus then moves to the notice heading, as it does after a sent choice, and to the page heading when the notice leaves because the gateway is running again. A missing token is an invalid
+confirmation, requiring a fresh deliberate choice; keyboard focus then moves to the notice heading, as it does after a sent choice, and to the page heading when the notice leaves because the gateway is running again while it held focus (focus elsewhere is left alone). A missing token is an invalid
 snapshot and never permits an unguarded browser choice. These choices preserve engine
 drain, seal, force and recovery semantics (ADR-0049).

@@ -176,6 +176,26 @@ describe('gateway shutdown notice', () => {
     expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Loops' }));
   });
 
+  it('leaves focus alone when the notice leaves without having held it', async () => {
+    const { api, change } = fixture();
+    const view = renderWith(
+      <>
+        <h1>Loops</h1>
+        <ShutdownNotice />
+      </>,
+      '/',
+      api,
+    );
+    await screen.findByRole('button', { name: 'Force stop' });
+    expect(document.activeElement).toBe(document.body);
+    change(state('running'));
+    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'Gateway shutdown' })).not.toBeInTheDocument(),
+    );
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it('keeps keyboard focus on the notice when a newer state replaces an open confirmation', async () => {
     const user = userEvent.setup();
     const { api, change } = fixture();
