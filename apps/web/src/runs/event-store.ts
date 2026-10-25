@@ -11,7 +11,34 @@ export interface UncachedEvent {
   seq: number;
   type: RunEvent['type'];
   uncached: true;
+  /** The row's description from its recorded IDs, for when no outline fits. */
   description: string;
+  /**
+   * The event with long text shortened and patch values dropped (see `outline`): enough to
+   * describe the row with the pinned version's labels, never a source of its values.
+   */
+  outline?: RunEvent | undefined;
+}
+
+/** An outline above this estimated size is not kept; the row keeps its recorded description. */
+const OUTLINE_BYTES = 16_384;
+const OUTLINE_TEXT = 256;
+
+function outline(event: RunEvent): RunEvent | undefined {
+  const shorten = (value: unknown): unknown =>
+    typeof value === 'string'
+      ? value.slice(0, OUTLINE_TEXT)
+      : Array.isArray(value)
+        ? value.map(shorten)
+        : value !== null && typeof value === 'object'
+          ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, shorten(item)]))
+          : value;
+  const light =
+    event.type === 'node.finished'
+      ? { ...event, patch: event.patch.map(({ op, path }) => ({ op, path })) }
+      : event;
+  const result = shorten(light) as RunEvent;
+  return JSON.stringify(result).length * 2 <= OUTLINE_BYTES ? result : undefined;
 }
 export type TimelineEvent = RunEvent | UncachedEvent;
 export interface RunEventLog {
@@ -88,11 +115,13 @@ function bounded(items: TimelineEvent[], older: boolean) {
       // Preserve the row's ordinary accessible name even when its payload stays on the server.
       // Pathological free-text summaries use the same 4,096-character preview budget as #259.
       const description = 'uncached' in item ? item.description : describeEvent(item);
+      const kept = 'uncached' in item ? item.outline : outline(item);
       row = {
         seq: item.seq,
         type: item.type,
         uncached: true,
         description: description.slice(0, 4096),
+        ...(kept ? { outline: kept } : {}),
       };
       size = JSON.stringify(row).length * 2;
     }

@@ -49,7 +49,9 @@ export async function historicalThread(
     }
   }
   while (after < at) {
-    const page = await repos.events.read(runId, after, 128);
+    // Sequences are contiguous, so a page never reaches past `at`: a damaged later event must
+    // not block an earlier thread (D-016).
+    const page = await repos.events.read(runId, after, Math.min(128, at - after));
     if (!page.length) break;
     thread = replayThread(thread, page, at, state);
     state = replayStateAt(page, at, state);

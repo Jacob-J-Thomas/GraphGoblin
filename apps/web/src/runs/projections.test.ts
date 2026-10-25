@@ -467,7 +467,14 @@ describe('initial thread and replay failures', () => {
     append('wide', wide);
     expect(useRunEventStore.getState().runs['wide']?.bytes).toBeLessThan(MAX_HISTORY_BYTES);
     expect(useRunEventStore.getState().runs['wide']?.uncached).toEqual([
-      { seq: 1, type: 'node.finished', uncached: true, description: 'a, 1 change, 1 ms' },
+      {
+        seq: 1,
+        type: 'node.finished',
+        uncached: true,
+        description: 'a, 1 change, 1 ms',
+        // The outline keeps the patch's shape for the row's description, never its values.
+        outline: { ...wide, patch: [{ op: 'add', path: '/vars/wide' }] },
+      },
     ]);
     const stored = JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4') ?? '{}') as {
       state: { runs: Record<string, unknown> };

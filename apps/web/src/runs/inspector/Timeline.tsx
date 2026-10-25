@@ -260,7 +260,7 @@ export function Timeline({
               <span className="min-w-0 break-words text-muted">
                 {'uncached' in event ? (
                   <>
-                    {event.description}
+                    {event.outline ? describeEvent(event.outline, definition) : event.description}
                     <span aria-hidden="true"> - Load exact event payload</span>
                   </>
                 ) : (

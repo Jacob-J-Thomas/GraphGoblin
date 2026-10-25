@@ -38,9 +38,31 @@ it('enforces the byte budget independently of count and retains an oversized eve
       payload: 'x'.repeat(MAX_HISTORY_BYTES),
     }),
   );
-  expect(useRunEventStore.getState().runs['long']!.uncached).toEqual([
-    { seq: 51, type: 'run.woken', uncached: true, description: 'wait woken by manual' },
-  ]);
+  // The row keeps a short outline for labels; the oversized payload itself stays on the server.
+  const [marker] = useRunEventStore.getState().runs['long']!.uncached;
+  expect(marker).toMatchObject({
+    seq: 51,
+    type: 'run.woken',
+    uncached: true,
+    description: 'wait woken by manual',
+    outline: { type: 'run.woken', nodeId: 'wait', reason: 'manual', payload: 'x'.repeat(256) },
+  });
+  // An outline that would itself be large is not kept: the row keeps its recorded description.
+  useRunEventStore.getState().append(
+    'long',
+    event('long', 52, 'run.woken', {
+      nodeId: 'wait',
+      reason: 'manual',
+      payload: Array.from({ length: 200_000 }, (_, i) => i),
+    }),
+  );
+  const crowded = useRunEventStore.getState().runs['long']!.uncached.find((row) => row.seq === 52);
+  expect(crowded).toEqual({
+    seq: 52,
+    type: 'run.woken',
+    uncached: true,
+    description: 'wait woken by manual',
+  });
   expect(useRunEventStore.getState().runs['long']!.bytes).toBeLessThanOrEqual(MAX_HISTORY_BYTES);
 });
 it('merges older and newer pages at an identical timestamp boundary without gaps or duplicates while live advances', async () => {

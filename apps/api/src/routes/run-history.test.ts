@@ -201,3 +201,52 @@ it('reads the latest cancellation and the request that led to it, whatever histo
     await t.close();
   }
 });
+
+it('resolves a historical thread without decoding events past the requested boundary', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-e1-186r2-boundary-'));
+  const t = await createTestApp({
+    env: {
+      GG_DATA_DIR: dataDir,
+      GG_DB_URL: `file:${join(dataDir, 'history.db').replaceAll('\\', '/')}`,
+    },
+  });
+  try {
+    const loopId = await t.publishLoop(minimalLoop());
+    const started = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${loopId}/runs`,
+      payload: {},
+    });
+    const { run } = started.json<{ run: RunRecord }>();
+    await t.idle();
+    const original = await t.container.repos.events.read(run.id);
+    const seed = await t.container.repos.runs.getInitialThread(run.id);
+    if (!seed) throw new Error('Missing seed');
+    for (let i = 0; i < 150; i++)
+      await t.container.repos.events.append(run.id, [
+        { type: 'node.started', nodeId: 'work', kind: 'mutate', attempt: 1, configHash: 'h' },
+        {
+          type: 'node.finished',
+          nodeId: 'work',
+          patch: [{ op: 'add', path: '/vars/count', value: i + 1 }],
+          durationMs: 1,
+        },
+      ]);
+    const all = await t.container.repos.events.read(run.id);
+    const damaged = original.length + 100;
+    await t.container.handle.client.execute({
+      sql: 'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = ?',
+      args: ['{invalid-json', run.id, damaged],
+    });
+    const thread = (at: number) => t.app.inject({ url: `/runs/${run.id}/thread?at=${at}` });
+    // Before the run's checkpoint, and after it, with the damaged event inside the next 128.
+    for (const at of [1, original.length + 5, damaged - 1]) {
+      const response = await thread(at);
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json<ContextThread>()).toEqual(reconcileThread(seed, all, undefined, at));
+    }
+    expect((await thread(damaged)).json()).toMatchObject({ code: 'STORED_EVENT_INVALID' });
+  } finally {
+    await t.close();
+  }
+});

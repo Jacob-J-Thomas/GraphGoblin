@@ -2,7 +2,10 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { expect, it, vi } from 'vitest';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { event } from '../../__fixtures__/fake-api.js';
+import { timelineEvents, useRunEventStore } from '../event-store.js';
 import { Timeline, TIMELINE_ROWS } from './Timeline.js';
 const events = Array.from({ length: 512 }, (_, i) =>
   event('run', i + 1, 'run.started', { attempt: 1 }),
@@ -28,6 +31,35 @@ it('preserves the ordinary accessible event name for an oversized payload marker
     'aria-description',
     'Select to load the exact event payload from the server.',
   );
+});
+it('names an oversized marker with the pinned labels, not only its recorded IDs (#255)', () => {
+  const definition = LoopDefinitionSchema.parse(minimalLoop());
+  const node = definition.nodes.find((candidate) => candidate.kind !== 'exit')!;
+  const huge = event('run-oversized', 1, 'node.finished', {
+    nodeId: node.id,
+    patch: [{ op: 'add', path: '/vars/text', value: 'x'.repeat(600_000) }],
+    durationMs: 3,
+  });
+  act(() => useRunEventStore.getState().append('run-oversized', huge));
+  const rows = timelineEvents(useRunEventStore.getState().runs['run-oversized']!);
+  expect(rows).toHaveLength(1);
+  expect('uncached' in rows[0]!).toBe(true);
+  expect(JSON.stringify(rows[0]).length).toBeLessThan(20_000);
+  render(
+    <Timeline
+      events={rows}
+      definition={definition}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      onSelect={vi.fn()}
+    />,
+  );
+  expect(
+    within(screen.getByRole('list', { name: 'Timeline' })).getByRole('button', {
+      name: new RegExp(`node\\.finished\\s*${node.label} \\(${node.id}\\), 1 change, 3 ms`),
+    }),
+  ).toBeInTheDocument();
 });
 function Harness() {
   const [following, setFollowing] = useState(true);
