@@ -18,7 +18,7 @@ beforeEach(async () => {
   store = new SqliteTriggerAdmission(h.db, new SqliteEventStore(h.db, new FakeClock()));
 });
 afterEach(() => h.close());
-function fixture(seed: string, key?: string, nodeKey?: string) {
+function fixture(seed: string, key?: string, nodeKey?: string, node = 'start') {
   const run = {
     id: fakeUlid('run:' + seed),
     ownerId: 'local',
@@ -39,7 +39,7 @@ function fixture(seed: string, key?: string, nodeKey?: string) {
       id: run.invocationId,
       source: 'event',
       trigger: {
-        nodeId: 'start',
+        nodeId: node,
         kind: 'event',
         eventType: 'ready',
         payload: null,
@@ -59,7 +59,7 @@ function fixture(seed: string, key?: string, nodeKey?: string) {
     ownerId: 'local',
     loopId: run.loopId,
     versionId: run.versionId,
-    triggerNodeId: 'start',
+    triggerNodeId: node,
     inbound: {
       id: fakeUlid('inbound:' + seed),
       ownerId: 'local',
@@ -98,6 +98,42 @@ it('atomically reserves request keys, returns the original receipt, commits once
   });
   expect(await store.events.hasPendingPin(claim.loopId)).toBe(false);
   expect((await h.client.execute('SELECT * FROM run_events')).rows).toHaveLength(1);
+});
+it('matches a retry that named no entry across entries, so a replaced entry opens no second delivery', async () => {
+  const first = fixture('implicit-old', 'race', undefined, 'old-entry');
+  await store.events.claim({ ...first.claim, implicitEntry: true }, first.intent);
+  // Publication replaced the entry before the identical retry resolved it.
+  const replaced = fixture('implicit-new', 'race', undefined, 'new-entry');
+  expect(
+    await store.events.claim({ ...replaced.claim, implicitEntry: true }, replaced.intent),
+  ).toMatchObject({ duplicate: true, receipt: { id: first.claim.id, triggerNodeId: 'old-entry' } });
+  expect(await store.events.get(replaced.claim.id)).toBeUndefined();
+  // A request that names its entry keeps that entry's own scope.
+  const named = fixture('named-new', 'race', undefined, 'new-entry');
+  expect(await store.events.claim(named.claim, named.intent)).toMatchObject({
+    duplicate: false,
+    receipt: { id: named.claim.id },
+  });
+  // Two entries now hold the key: an unnamed retry saves nothing and must name one.
+  const unnamed = fixture('implicit-third', 'race', undefined, 'old-entry');
+  await expect(
+    store.events.claim({ ...unnamed.claim, implicitEntry: true }, unnamed.intent),
+  ).rejects.toBeInstanceOf(AdmissionConflictError);
+  expect(await store.events.get(unnamed.claim.id)).toBeUndefined();
+});
+it('pages due receipts after a cursor in id order, so recovery can pass a stuck head', async () => {
+  const ids: string[] = [];
+  for (const seed of ['d1', 'd2', 'd3', 'd4', 'd5', 'd6']) {
+    const f = fixture(seed);
+    await store.events.claim(f.claim, f.intent);
+    ids.push(f.claim.id);
+  }
+  ids.sort();
+  const first = await store.events.due(FIXTURE_TS, 5);
+  expect(first.map((receipt) => receipt.id)).toEqual(ids.slice(0, 5));
+  expect((await store.events.due(FIXTURE_TS, 5, first.at(-1)?.id)).map((r) => r.id)).toEqual(
+    ids.slice(5),
+  );
 });
 it('does not hash-suppress unkeyed inputs and reserves authored node keys before run admission', async () => {
   for (const seed of ['one', 'two']) {

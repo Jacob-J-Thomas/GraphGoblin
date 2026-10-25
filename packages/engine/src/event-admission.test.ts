@@ -222,6 +222,75 @@ it.each([
   },
 );
 
+it('reaches a healthy receipt behind five whose failure metadata can never be written', async () => {
+  const { claim, input, store } = await setup();
+  const blocked = vi.spyOn(store, 'create').mockRejectedValue(Error('disk fault'));
+  const stuck: string[] = [];
+  for (const key of ['s1', 's2', 's3', 's4', 's5', 'healthy']) {
+    const next = {
+      ...claim,
+      id: engine.ports.ids.next(),
+      inbound: { ...claim.inbound, id: engine.ports.ids.next(), dedupeKey: key },
+    };
+    await engine.manager.receiveEvent(next, { ...input, dedupeKey: key });
+    if (key !== 'healthy') stuck.push(next.id);
+  }
+  await engine.manager.waitForWebhookRecovery();
+  blocked.mockRestore();
+  const create = store.create.bind(store);
+  vi.spyOn(store, 'create').mockImplementation((intent, receiptId) =>
+    stuck.includes(receiptId) ? Promise.reject(Error('disk fault')) : create(intent, receiptId),
+  );
+  const failed = store.failed.bind(store);
+  vi.spyOn(store, 'failed').mockImplementation((id, code, retryAt) =>
+    stuck.includes(id) ? Promise.reject(Error('metadata fault')) : failed(id, code, retryAt),
+  );
+  // The first sweep fills its page with the stuck five; the next continues past them.
+  for (let i = 0; i < 2; i++) {
+    engine.ports.clock.advance(300_001);
+    await engine.manager.retryPendingWebhooks();
+    await engine.manager.waitForIdle();
+  }
+  const healthy = [...store.receipts.values()].find((r) => r.inbound.dedupeKey === 'healthy');
+  expect(healthy).toMatchObject({ status: 'admitted' });
+  for (const id of stuck) expect(await store.get(id)).toMatchObject({ status: 'pending' });
+  // A short page wraps to the start, so the stuck receipts are still revisited.
+  const revisits = vi.mocked(store.create).mock.calls.length;
+  engine.ports.clock.advance(300_001);
+  await engine.manager.retryPendingWebhooks();
+  await engine.manager.waitForIdle();
+  expect(vi.mocked(store.create).mock.calls.length).toBe(revisits + 5);
+});
+
+it('fake matches an unnamed retry across entries and refuses an ambiguous one', async () => {
+  const { claim, input, store } = await setup();
+  await engine.manager.receiveEvent({ ...claim, implicitEntry: true }, input);
+  expect(
+    (
+      await store.claim(
+        { ...claim, id: engine.ports.ids.next(), implicitEntry: true },
+        (await store.get(claim.id))!.intent!,
+      )
+    ).duplicate,
+  ).toBe(true);
+  store.receipts.set('other-entry', {
+    ...(await store.get(claim.id))!,
+    id: 'other-entry',
+    triggerNodeId: 'other',
+  });
+  await expect(
+    engine.manager.receiveEvent(
+      {
+        ...claim,
+        id: engine.ports.ids.next(),
+        inbound: { ...claim.inbound, id: engine.ports.ids.next() },
+        implicitEntry: true,
+      },
+      input,
+    ),
+  ).rejects.toBeInstanceOf(AdmissionConflictError);
+});
+
 it('continues the Event sweep past a persistently broken receipt metadata write', async () => {
   const { claim, input, store } = await setup();
   const blocked = vi.spyOn(store, 'create').mockRejectedValue(Error('disk fault'));

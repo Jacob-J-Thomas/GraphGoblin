@@ -31,20 +31,23 @@ export class InMemoryEventAdmission implements EventAdmissionPort {
         .map((r) => structuredClone(r)),
     );
   }
-  claim(input: EventClaim, authored: RunAdmission) {
+  claim(claim: EventClaim, authored: RunAdmission) {
     const intent = parseRunAdmission(authored);
-    assertEventClaim(input, intent);
-    const prior =
+    assertEventClaim(claim, intent);
+    const { implicitEntry, ...input } = claim;
+    const priors =
       input.inbound.dedupeKey !== undefined
-        ? [...this.receipts.values()].find(
+        ? [...this.receipts.values()].filter(
             (r) =>
               r.ownerId === input.ownerId &&
               r.loopId === input.loopId &&
-              r.triggerNodeId === input.triggerNodeId &&
+              (implicitEntry || r.triggerNodeId === input.triggerNodeId) &&
               r.inbound.type === input.inbound.type &&
               r.inbound.dedupeKey === input.inbound.dedupeKey,
           )
-        : undefined;
+        : [];
+    if (priors.length > 1) return Promise.reject(new AdmissionConflictError());
+    const [prior] = priors;
     if (prior) return Promise.resolve({ receipt: structuredClone(prior), duplicate: true });
     const key = intent.initialThread.invocation.trigger.dedupeKey;
     const seen =
@@ -87,15 +90,17 @@ export class InMemoryEventAdmission implements EventAdmissionPort {
       delete receipt.nextAttemptAt;
     });
   }
-  due(now: string, limit: number) {
+  due(now: string, limit: number, afterId?: string) {
     return Promise.resolve(
       [...this.receipts.values()]
-        .filter((r) => r.status === 'pending' && r.nextAttemptAt && r.nextAttemptAt <= now)
-        .sort(
-          (a, b) =>
-            (a.nextAttemptAt ?? '').localeCompare(b.nextAttemptAt ?? '') ||
-            a.id.localeCompare(b.id),
+        .filter(
+          (r) =>
+            r.status === 'pending' &&
+            r.nextAttemptAt &&
+            r.nextAttemptAt <= now &&
+            (afterId === undefined || r.id > afterId),
         )
+        .sort((a, b) => a.id.localeCompare(b.id))
         .slice(0, Math.max(0, Math.min(5, limit)))
         .map(({ id, attempts }) => ({ id, attempts })),
     );

@@ -1,4 +1,4 @@
-import { and, asc, eq, getTableColumns, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, gt, inArray, lte, sql } from 'drizzle-orm';
 import { isJsonValue } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
@@ -94,7 +94,9 @@ export class SqliteEventAdmission implements EventAdmissionPort {
     assertEventClaim(input, intent);
     const result = await this.db.transaction(async (tx) => {
       const key = input.inbound.dedupeKey;
-      const [prior] =
+      // A request that named no entry is retried across entries here, under the claim, so an
+      // entry replaced between two identical requests cannot open a second delivery.
+      const priors =
         key !== undefined
           ? await tx
               .select({ receipt: columns, inbound: getTableColumns(inboundEvents) })
@@ -104,13 +106,18 @@ export class SqliteEventAdmission implements EventAdmissionPort {
                 and(
                   eq(eventReceipts.ownerId, input.ownerId),
                   eq(eventReceipts.loopId, input.loopId),
-                  eq(eventReceipts.triggerNodeId, input.triggerNodeId),
+                  ...(input.implicitEntry
+                    ? []
+                    : [eq(eventReceipts.triggerNodeId, input.triggerNodeId)]),
                   eq(eventReceipts.eventType, input.inbound.type),
                   eq(eventReceipts.requestKey, key),
                 ),
               )
-              .limit(1)
+              .limit(2)
           : [];
+      // Several named entries hold this key: nothing is saved, and the retry is told to name one.
+      if (priors.length > 1) throw new AdmissionConflictError();
+      const [prior] = priors;
       if (prior) return { receipt: this.decode(prior.receipt, prior.inbound), duplicate: true };
       const nodeKey = intent.initialThread.invocation.trigger.dedupeKey;
       const [reserved] = input.nodeDedupeKey
@@ -201,12 +208,18 @@ export class SqliteEventAdmission implements EventAdmissionPort {
       .where(eq(eventReceipts.id, id));
     return row ? this.decode(row.receipt, row.inbound) : undefined;
   }
-  async due(now: string, limit: number) {
+  async due(now: string, limit: number, afterId?: string) {
     return this.db
       .select({ id: eventReceipts.id, attempts: eventReceipts.attempts })
       .from(eventReceipts)
-      .where(and(eq(eventReceipts.status, 'pending'), lte(eventReceipts.nextAttemptAt, now)))
-      .orderBy(asc(eventReceipts.nextAttemptAt), asc(eventReceipts.id))
+      .where(
+        and(
+          eq(eventReceipts.status, 'pending'),
+          lte(eventReceipts.nextAttemptAt, now),
+          ...(afterId !== undefined ? [gt(eventReceipts.id, afterId)] : []),
+        ),
+      )
+      .orderBy(asc(eventReceipts.id))
       .limit(Math.max(0, Math.min(5, limit)));
   }
   async failed(id: string, code: EventFailureCode, nextAttemptAt?: string) {

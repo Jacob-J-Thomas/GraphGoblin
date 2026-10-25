@@ -328,6 +328,8 @@ export class RunManager {
   private readonly stopCleanupFailures = new Set<string>();
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
+  /** Where the next Event recovery sweep continues (round robin over due receipts). */
+  private eventRecoveryAfter: string | undefined;
   private readonly webhookDispatches = new Set<Promise<void>>();
 
   constructor(
@@ -1013,7 +1015,14 @@ export class RunManager {
       // A failed ledger read or retry-metadata write must not block the other intake path or boot.
       // A drain stops starting recovered work (#224); the receipts stay due for the next start.
       try {
-        const eventDue = await this.ports.admission.events.due(this.now(), 5);
+        const eventDue = await this.ports.admission.events.due(
+          this.now(),
+          5,
+          this.eventRecoveryAfter,
+        );
+        // Round robin: the next sweep continues after this page and a short page wraps to the
+        // start, so receipts whose failure metadata cannot be written never fill every batch.
+        this.eventRecoveryAfter = eventDue.length === 5 ? eventDue.at(-1)?.id : undefined;
         for (const receipt of eventDue) {
           if (this.stopped || this.draining) break;
           try {

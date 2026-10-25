@@ -651,6 +651,8 @@ export class TriggerService {
           triggerNodeId: node.id,
           inbound: record,
           ...(nodeKey ? { nodeDedupeKey: nodeKey } : {}),
+          // The keyed retry above ran before the claim; the claim repeats it in the same scope.
+          ...(input.triggerNodeId === undefined ? { implicitEntry: true as const } : {}),
         },
         {
           ownerId: input.ownerId,

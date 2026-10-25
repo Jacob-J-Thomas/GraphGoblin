@@ -207,6 +207,51 @@ it('reuses one original delivery across concurrent keyed retries and admits unke
   expect(await t.container.repos.runs.list({ loopId })).toHaveLength(3);
 });
 
+it('keeps one delivery for identical unnamed-entry retries when publication replaces the entry', async () => {
+  const withEntry = (id: string) => {
+    const definition = eventLoop();
+    definition.nodes[0]!.id = id;
+    definition.edges[0]!.from.node = id;
+    return definition;
+  };
+  const loopId = await t.publishLoop(withEntry('old-entry'));
+  const manager = t.container.manager;
+  const reached = vi.spyOn(manager, 'receiveEvent');
+  // Hold admission through the public deletion path, without deleting anything.
+  let release: (() => void) | undefined;
+  const held = manager.deleteLoopUnlessInUse(
+    '00000000000000000000000000',
+    () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+  );
+  await vi.waitFor(() => expect(release).toBeDefined());
+  const first = post(loopId, { dedupeKey: 'race', payload: { original: true } });
+  await vi.waitFor(() => expect(reached).toHaveBeenCalledTimes(1));
+  const replaced = await t.app.inject({
+    method: 'PUT',
+    url: `/loops/${loopId}/draft`,
+    payload: { definition: withEntry('new-entry') },
+  });
+  expect(replaced.statusCode).toBe(200);
+  expect((await t.app.inject({ method: 'POST', url: `/loops/${loopId}/publish` })).statusCode).toBe(
+    200,
+  );
+  const second = post(loopId, { dedupeKey: 'race', payload: { original: true } });
+  await vi.waitFor(() => expect(reached).toHaveBeenCalledTimes(2));
+  release?.();
+  await held;
+  const [a, b] = await Promise.all([first, second]);
+  expect([a.statusCode, b.statusCode]).toEqual([202, 202]);
+  expect(b.json()).toMatchObject({ id: a.json<{ id: string }>().id, duplicate: true });
+  await settle();
+  expect(await t.container.repos.runs.list({ loopId })).toHaveLength(1);
+  expect(
+    (await post(loopId, { dedupeKey: 'race', payload: { original: true } })).json(),
+  ).toMatchObject({ id: a.json<{ id: string }>().id, duplicate: true });
+});
+
 it.each(['BEFORE INSERT ON inbound_events', 'BEFORE INSERT ON event_receipts'])(
   'never acknowledges an unsaved receipt: %s',
   async (on) => {

@@ -215,6 +215,11 @@ export interface EventClaim {
   inbound: WebhookInbound;
   /** Only an authored node expression adds cross-request payload dedupe. */
   nodeDedupeKey?: string;
+  /**
+   * The request named no entry. Its keyed retry then matches this loop and type on any entry,
+   * inside the claim, so a publication that replaces the entry ID cannot open a second delivery.
+   */
+  implicitEntry?: true;
 }
 export type EventFailureCode =
   | 'EVENT_INTENT_CONFLICT'
@@ -242,7 +247,12 @@ export interface EventAdmissionPort {
   ): Promise<EventReceipt[]>;
   get(id: string): Promise<EventReceipt | undefined>;
   create(intent: RunAdmission, receiptId: string): Promise<RunRecord>;
-  due(now: string, limit: number): Promise<Pick<EventReceipt, 'id' | 'attempts'>[]>;
+  /** Due receipts in id order, after `afterId` when given, so recovery can page past a stuck head. */
+  due(
+    now: string,
+    limit: number,
+    afterId?: string,
+  ): Promise<Pick<EventReceipt, 'id' | 'attempts'>[]>;
   failed(id: string, code: EventFailureCode, nextAttemptAt?: string): Promise<void>;
   hasPendingPin(loopId: string): Promise<boolean>;
 }
