@@ -208,6 +208,11 @@ export const RunRecordSchema = z.strictObject({
   createdAt: TimestampSchema,
   startedAt: TimestampSchema.optional(),
   finishedAt: TimestampSchema.optional(),
+  /** Existing durable finalization marker: absent until returns and terminal cleanup finish.
+   * A failed delivery is final too; inspect deliveries and return.failed for its outcome.
+   * Exposing the existing marker avoids a second stored completion state (ADR-0057).
+   */
+  finalizedAt: TimestampSchema.optional(),
   lastEventSeq: z.number().int().nonnegative(),
 });
 export type RunRecord = z.infer<typeof RunRecordSchema>;

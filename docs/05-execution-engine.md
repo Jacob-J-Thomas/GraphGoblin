@@ -128,6 +128,17 @@ outcome is not a resumable node failure. A run paused while parked (or while par
 to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
 keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
 
+## Observing finalization (#185, ADR-0057)
+
+RunRecord.finalizedAt exposes the existing durable finalization acknowledgement.
+Terminal status, finishedAt and run.finished describe execution; none proves that
+returns or terminal cleanup are finished. A current terminal lifecycle plus finalizedAt, with no pending webhook in the snapshot,
+means fully finalized, including when delivery failed. Webhook deliveries still
+report pending/delivered/failed independently; other sinks retain return.delivered
+and return.failed. The finalizer sets the marker only after its receipt reconciliation
+and cleanup, and clears it before a failed-run resume. No new stored state is added.
+Pending delivery survives restart with the same identity and remaining retry budget.
+
 ## Thread reads and delayed snapshots (#116, ADR-0053)
 
 The durable event log determines the thread for both execution and observation. Domain

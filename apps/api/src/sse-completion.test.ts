@@ -106,6 +106,8 @@ describe('authoritative SSE completion', () => {
           sql: 'UPDATE runs SET status = ? WHERE id = ?',
           args: ['succeeded', run.id],
         });
+        // The completed-history fixture includes the durable finalizer acknowledgement.
+        await t.container.repos.runs.markFinalized(run.id);
         const log = await store.read(run.id);
         const response = await t.app.inject({
           url: `/runs/${run.id}/events?after=${after}`,
@@ -139,6 +141,7 @@ describe('authoritative SSE completion', () => {
     const app = Fastify();
     app.get('/', (request, reply) =>
       streamRunEvents(request, reply, store, runId, 106, {
+        isFinalized: () => Promise.resolve(true),
         isTerminal: () => Promise.resolve(false),
         lastLifecycleEvent: async () => {
           const marker = await latestLifecycle(store, runId);
@@ -174,6 +177,7 @@ describe('authoritative SSE completion', () => {
     const app = Fastify();
     app.get('/', (request, reply) =>
       streamRunEvents(request, reply, store, runId, 112, {
+        isFinalized: () => Promise.resolve(true),
         // Status lags, so the first lookup is the post-catch-up confirmation itself.
         isTerminal: () => Promise.resolve(false),
         lastLifecycleEvent: async () => {
@@ -215,6 +219,7 @@ describe('authoritative SSE completion', () => {
       const app = Fastify();
       app.get('/', (request, reply) =>
         streamRunEvents(request, reply, store, runId, 1, {
+          isFinalized: () => Promise.resolve(true),
           // The outcome is durable, but the status write has not landed yet.
           isTerminal: () => Promise.resolve(false),
           lastLifecycleEvent: async () =>
@@ -246,6 +251,7 @@ describe('authoritative SSE completion', () => {
       const app = Fastify();
       app.get('/', (request, reply) =>
         streamRunEvents(request, reply, store, runId, 0, {
+          isFinalized: () => Promise.resolve(true),
           lastLifecycleEvent: async () => {
             const log = await store.read(runId);
             const marker = log.findLast((event) =>

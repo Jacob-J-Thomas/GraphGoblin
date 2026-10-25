@@ -61,7 +61,9 @@ export function followRunAttempts(
       if (controller.signal.aborted) return;
       const events = observer.events();
       const status = events.length ? summarizeRun(events).status : run.status;
-      if (!isTerminal(status)) {
+      // New history needs a fresh stream.complete, even if a fast resumed attempt already
+      // ended: its result delivery may still be pending after the terminal execution event.
+      if (appended || !isTerminal(status)) {
         observer.running();
         return;
       }

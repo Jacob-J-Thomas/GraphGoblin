@@ -214,6 +214,10 @@ describe('describe helpers', () => {
       createdAt: '2026-10-02T00:00:00.000Z',
       lastEventSeq: 3,
     } as const;
+    expect(summarizeRun({ ...run, finalizedAt: run.createdAt })).toHaveProperty(
+      'finalizedAt',
+      run.createdAt,
+    );
     expect(summarizeRun(run)).toEqual({
       id: run.id,
       loopId: run.loopId,
