@@ -1,0 +1,157 @@
+- banner:
+  - text: GraphGoblin
+  - button "Menu"
+- banner:
+  - heading "Run 01M5QZ795XKKEWXMA5MAVBE7NS" [level=1]
+  - text: failed at worker
+  - link "loop":
+    - /url: /app/loops/01M5QZ78XR50D1Z80C4C3S6TH9/edit
+  - link "child runs":
+    - /url: /app/runs?parent=01M5QZ795XKKEWXMA5MAVBE7NS
+- alert:
+  - paragraph: "Failed: HARNESS_SESSION_MISSING"
+  - text: The claude session "4465d1a5-c22c-4cb9-a468-b13e66f15ea5" from resume-own is missing. Choose Start fresh session for node "worker" to continue without its prior provider conversation.
+- paragraph: Start a fresh session for node worker. Its prior provider conversation will not be carried over. The configured context mode, selected loop inputs, model claude-opus-5-5 and effort low stay the same. Earlier provider actions are not undone. Leave this choice untouched to keep the run failed.
+- button "Start fresh session for worker"
+- region "Execution limits":
+  - heading "Execution limits" [level=2]
+  - paragraph: "Maximum node visits: 10. Run deadline: none."
+  - paragraph: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+- region "Timeline (24 events, complete)":
+  - heading "Timeline (24 events, complete)" [level=2]
+  - list "Timeline":
+    - listitem:
+      - button "#1 run.queued":
+        - text: "#1"
+        - code: run.queued
+    - listitem:
+      - button "#2 run.started attempt 1":
+        - text: "#2"
+        - code: run.started
+        - text: attempt 1
+    - listitem:
+      - button "#3 node.started start (trigger) attempt 1":
+        - text: "#3"
+        - code: node.started
+        - text: start (trigger) attempt 1
+    - listitem:
+      - button "#4 node.finished start → out, 2 changes, 2 ms":
+        - text: "#4"
+        - code: node.finished
+        - text: start → out, 2 changes, 2 ms
+    - listitem:
+      - button "#5 node.started worker (inference) attempt 1":
+        - text: "#5"
+        - code: node.started
+        - text: worker (inference) attempt 1
+    - listitem:
+      - button "#6 harness.turn worker":
+        - text: "#6"
+        - code: harness.turn
+        - text: worker
+    - listitem:
+      - button "#7 harness.session worker":
+        - text: "#7"
+        - code: harness.session
+        - text: worker
+    - listitem:
+      - button "#8 harness.submission worker":
+        - text: "#8"
+        - code: harness.submission
+        - text: worker
+    - listitem:
+      - button "#9 harness.usage worker":
+        - text: "#9"
+        - code: harness.usage
+        - text: worker
+    - listitem:
+      - button "#10 node.finished worker → out, 5 changes, 102 ms":
+        - text: "#10"
+        - code: node.finished
+        - text: worker → out, 5 changes, 102 ms
+    - listitem:
+      - button "#11 node.started again (decision) attempt 1":
+        - text: "#11"
+        - code: node.started
+        - text: again (decision) attempt 1
+    - listitem:
+      - button "#12 decision.made Chose repeat with expression; passes 1 → 2 of 2":
+        - text: "#12"
+        - code: decision.made
+        - text: Chose repeat with expression; passes 1 → 2 of 2
+    - listitem:
+      - button "#13 node.finished again → repeat, 2 changes, 12 ms":
+        - text: "#13"
+        - code: node.finished
+        - text: again → repeat, 2 changes, 12 ms
+    - listitem:
+      - button "#14 node.started hold (wait) attempt 1":
+        - text: "#14"
+        - code: node.started
+        - text: hold (wait) attempt 1
+    - listitem:
+      - button "#15 run.waiting hold waits for input":
+        - text: "#15"
+        - code: run.waiting
+        - text: hold waits for input
+    - listitem:
+      - button "#16 input.received hold":
+        - text: "#16"
+        - code: input.received
+        - text: hold
+    - listitem:
+      - button "#17 run.woken hold woken by input":
+        - text: "#17"
+        - code: run.woken
+        - text: hold woken by input
+    - listitem:
+      - button "#18 node.started hold (wait) attempt 2":
+        - text: "#18"
+        - code: node.started
+        - text: hold (wait) attempt 2
+    - listitem:
+      - button "#19 node.finished hold → out, 3 changes, 2 ms":
+        - text: "#19"
+        - code: node.finished
+        - text: hold → out, 3 changes, 2 ms
+    - listitem:
+      - button "#20 node.started worker (inference) attempt 1":
+        - text: "#20"
+        - code: node.started
+        - text: worker (inference) attempt 1
+    - listitem:
+      - button "#21 harness.turn worker":
+        - text: "#21"
+        - code: harness.turn
+        - text: worker
+    - listitem:
+      - button "#22 harness.submission worker":
+        - text: "#22"
+        - code: harness.submission
+        - text: worker
+    - listitem:
+      - button "#23 harness.submission worker":
+        - text: "#23"
+        - code: harness.submission
+        - text: worker
+    - listitem:
+      - 'button "#24 run.failed HARNESS_SESSION_MISSING: The claude session \"4465d1a5-c22c-4cb9-a468-b13e66f15ea5\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation."':
+        - text: "#24"
+        - code: run.failed
+        - text: "HARNESS_SESSION_MISSING: The claude session \"4465d1a5-c22c-4cb9-a468-b13e66f15ea5\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation."
+- region "Thread at event 24":
+  - heading "Thread at event 24" [level=2]
+  - heading "Messages (2)" [level=3]
+  - list "Messages":
+    - listitem:
+      - text: assistant
+      - code: worker
+      - text: OK
+    - listitem:
+      - text: user
+      - code: hold
+      - text: continue
+  - heading "Variables" [level=3]
+  - text: "{}"
+  - button "Full thread JSON"
+- button "Node progress (2 nodes)"

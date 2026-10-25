@@ -7,7 +7,12 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import { createTestApp } from '@graphgoblin/api/testing';
-import { createGraphGoblinClient, runs, waitForRun } from '@graphgoblin/api-client';
+import {
+  createGraphGoblinClient,
+  runs,
+  waitForRun,
+  subscribeRunEvents,
+} from '@graphgoblin/api-client';
 import { createMcpServer } from './server.js';
 
 let response: ServerResponse | undefined;
@@ -53,7 +58,7 @@ it.each([200, 400])(
   { timeout: 30_000 },
   async (status) => {
     response = undefined;
-    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-interfaces-'));
+    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-185-interfaces-'));
     const api = await createTestApp({ env: { GG_DATA_DIR: dataDir } });
     const baseUrl = await api.app.listen({ host: '127.0.0.1', port: 0 });
     const client = createGraphGoblinClient({ baseUrl });
@@ -63,7 +68,12 @@ it.each([200, 400])(
     const mcp = new Client({ name: 'delivery-test', version: '1' });
     await mcp.connect(clientTransport);
     const call = async (name: string, runId: string) =>
-      payload(await mcp.callTool({ name, arguments: { runId } }));
+      payload(
+        await mcp.callTool({
+          name,
+          arguments: { runId, ...(name === 'wait_for_run' ? { timeoutSeconds: 1 } : {}) },
+        }),
+      );
     try {
       const loopId = await api.publishLoop({
         schemaVersion: 4,
@@ -94,16 +104,50 @@ it.each([200, 400])(
         deliveries: pending.deliveries,
       });
       expect(await call('wait_for_run', started.id)).toMatchObject({
-        finished: true,
-        run: { status: 'succeeded', deliveries: pending.deliveries },
+        finished: false,
+        status: 'succeeded',
+        deliveries: pending.deliveries,
       });
-      expect(await waitForRun(client, started.id, { timeoutMs: 1000 })).toMatchObject({
-        finished: true,
+      expect(await waitForRun(client, started.id, { timeoutMs: 100 })).toMatchObject({
+        finished: false,
         run: { deliveries: pending.deliveries },
       });
-      acknowledge(status);
+      const terminal = (await runs.events(client, started.id)).items.find(
+        (event) => event.type === 'run.finished',
+      )!;
+      const subscriptions = [0, terminal.seq, pending.lastEventSeq + 100].map((after) => {
+        let settled = false;
+        const events: string[] = [];
+        const sub = subscribeRunEvents({
+          client,
+          runId: started.id,
+          after,
+          onEvent: (event) => {
+            events.push(event.type);
+          },
+        });
+        void sub.done.then(
+          () => {
+            settled = true;
+          },
+          () => undefined,
+        );
+        return { sub, events, settled: () => settled };
+      });
+      try {
+        await new Promise((ok) => setTimeout(ok, 100));
+        expect(subscriptions.map((s) => s.settled())).toEqual([false, false, false]);
+        acknowledge(status);
+        await Promise.all(subscriptions.map((s) => s.sub.done));
+        expect(subscriptions[0]?.events).toContain('delivery.finished');
+        expect(subscriptions[1]?.events).toContain('delivery.finished');
+      } finally {
+        subscriptions.forEach((s) => s.sub.close());
+      }
+
       await api.idle();
       const final = await runs.get(client, started.id);
+      expect(final.finalizedAt).toEqual(expect.any(String));
       expect(final).toMatchObject({
         status: 'succeeded',
         result: { answer: 42 },
@@ -122,7 +166,7 @@ it.each([200, 400])(
       await server.close();
       await api.close();
       expect(dirname(dataDir)).toBe(resolve(tmpdir()));
-      expect(basename(dataDir).startsWith('gg-wp-d2-interfaces-')).toBe(true);
+      expect(basename(dataDir).startsWith('gg-wp-d2-185-interfaces-')).toBe(true);
       await rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }
   },

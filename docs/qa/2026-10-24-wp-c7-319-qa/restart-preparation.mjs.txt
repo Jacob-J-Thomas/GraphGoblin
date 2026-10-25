@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+const q='docs/qa/2026-10-24-wp-c7-319-qa/';
+fs.copyFileSync(q+'restart-tab.mjs.txt',q+'restart-tab-initial.mjs.txt');
+if(fs.existsSync(q+'restart-tab.log.txt'))fs.renameSync(q+'restart-tab.log.txt',q+'restart-tab-initial.log.txt');
+let source=fs.readFileSync(q+'restart-tab.mjs.txt','utf8');
+source=source.replaceAll('port:6076','port:6078').replaceAll("'stale-restart'","'stale-restart-recheck'").replaceAll("'stale-restart-new'","'stale-restart-recheck-new'");
+source=source.replace("const response=p.waitForResponse(r=>r.url().endsWith('/system/shutdown')&&r.request().method()==='POST');","const response=p.waitForResponse(r=>r.url().endsWith('/system/shutdown')&&r.request().method()==='POST',{timeout:120000});response.catch(()=>{});console.log('Response observer started, 120000 ms');");
+source=source.replace("await until(()=>captured===1);","await until(()=>captured===1);console.log('POST held before delivery');");
+source=source.replace("await until(()=>g.closed);await g.flush();","await until(()=>g.closed);console.log('Old process exited '+g.exit.code);await g.flush();");
+source=source.replace("port:6078});release();","port:6078});console.log('New process listening; releasing held POST');release();");
+fs.writeFileSync(q+'restart-tab.mjs.txt',source);
+const cleanup=[];
+for(const name of fs.readdirSync(os.tmpdir()).filter(n=>n.startsWith('gg-qa-c7-319-stale-restart-'))){
+ const dir=path.join(os.tmpdir(),name);try{
+  const key=fs.readFileSync(path.join(dir,'qa-key'),'utf8').trim();
+  const r=await fetch('http://127.0.0.1:6076/system/shutdown',{headers:{authorization:'Bearer '+key},signal:AbortSignal.timeout(2000)});
+  if(r.ok){const state=await r.json();const stop=await fetch('http://127.0.0.1:6076/system/shutdown',{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({action:'drain'}),signal:AbortSignal.timeout(5000)});cleanup.push({directory:name,before:state,stopStatus:stop.status});}
+  else cleanup.push({directory:name,status:r.status});
+ }catch(e){cleanup.push({directory:name,observation:e.message});}
+}
+fs.writeFileSync(q+'restart-initial-cleanup.json',JSON.stringify(cleanup,null,2));

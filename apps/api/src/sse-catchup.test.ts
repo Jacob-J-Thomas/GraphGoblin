@@ -54,7 +54,11 @@ describe('durable SSE catch-up', () => {
         },
       };
       const app = Fastify();
-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, store, runId, 0, {
+          isFinalized: () => Promise.resolve(true),
+        }),
+      );
       const base = await app.listen({ host: '127.0.0.1', port: 0 });
       try {
         const text = await (await fetch(base)).text();
@@ -115,7 +119,11 @@ describe('durable SSE catch-up', () => {
         },
       };
       const app = Fastify();
-      app.get('/', (request, reply) => streamRunEvents(request, reply, store, runId, 0));
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, store, runId, 0, {
+          isFinalized: () => Promise.resolve(true),
+        }),
+      );
       try {
         const response = await app.inject('/');
         expect(response.statusCode).toBe(200);
@@ -169,7 +177,10 @@ describe('durable SSE catch-up', () => {
         lastLifecycleEvent: () => Promise.resolve(log.at(-1)),
       };
       app.get('/', (request, reply) =>
-        streamRunEvents(request, reply, store, runId, count + past, options),
+        streamRunEvents(request, reply, store, runId, count + past, {
+          ...options,
+          isFinalized: () => Promise.resolve(true),
+        }),
       );
       try {
         const response = await app.inject('/');
@@ -225,7 +236,10 @@ describe('durable SSE catch-up', () => {
       lastLifecycleEvent: () => Promise.resolve(terminal),
     };
     app.get('/', (request, reply) =>
-      streamRunEvents(request, reply, store, runId, terminal!.seq, options),
+      streamRunEvents(request, reply, store, runId, terminal!.seq, {
+        ...options,
+        isFinalized: () => Promise.resolve(true),
+      }),
     );
     try {
       const response = await app.inject('/');
@@ -265,7 +279,10 @@ describe('durable SSE catch-up', () => {
       };
       const app = Fastify();
       app.get('/', (request, reply) =>
-        streamRunEvents(request, reply, events, runId, log.at(-1)!.seq, options),
+        streamRunEvents(request, reply, events, runId, log.at(-1)!.seq, {
+          ...options,
+          isFinalized: () => Promise.resolve(true),
+        }),
       );
       try {
         const response = await app.inject('/');
@@ -307,7 +324,9 @@ describe('durable SSE catch-up', () => {
     };
     app.get('/', (request, reply) => {
       expect(reply.raw.writableHighWaterMark).toBe(1_048_576);
-      return streamRunEvents(request, reply, store, runId, 0);
+      return streamRunEvents(request, reply, store, runId, 0, {
+        isFinalized: () => Promise.resolve(true),
+      });
     });
     const base = await app.listen({ host: '127.0.0.1', port: 0 });
     try {

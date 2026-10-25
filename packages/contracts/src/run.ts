@@ -7,6 +7,7 @@ import {
   SlugSchema,
   TimestampSchema,
   UlidSchema,
+  EffortSchema,
 } from './common.js';
 import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
@@ -113,6 +114,25 @@ export const PromptProvenanceSchema = z.strictObject({
 });
 export type PromptProvenance = z.infer<typeof PromptProvenanceSchema>;
 
+/** A missing conversation's identity and the exact selection that must be retained. */
+export const MissingSessionSchema = z.strictObject({
+  visitId: z.string().min(1).max(64),
+  harness: HarnessIdSchema,
+  sessionId: z.string().min(1).max(256).optional(),
+  origin: z.enum(['resume-previous', 'resume-named', 'resume-own', 'current-visit']),
+  model: z.string().min(1),
+  effort: EffortSchema,
+});
+export type MissingSession = z.infer<typeof MissingSessionSchema>;
+
+export const FreshSessionChoiceSchema = MissingSessionSchema.extend({
+  nodeId: SlugSchema,
+  failureSeq: z.number().int().positive(),
+  priorContextCarried: z.literal(false),
+  /** Original authored task, when this visit had already recorded one. */
+  prompt: z.string().optional(),
+});
+
 export const RunFailureSchema = z.strictObject({
   code: RunErrorCodeSchema,
   message: z.string().max(10_000),
@@ -120,6 +140,7 @@ export const RunFailureSchema = z.strictObject({
   resumable: z.boolean(),
   details: JsonValueSchema.optional(),
   inference: PromptProvenanceSchema.optional(),
+  missingSession: MissingSessionSchema.optional(),
 });
 export type RunFailure = z.infer<typeof RunFailureSchema>;
 
@@ -209,6 +230,11 @@ export const RunRecordSchema = z.strictObject({
   createdAt: TimestampSchema,
   startedAt: TimestampSchema.optional(),
   finishedAt: TimestampSchema.optional(),
+  /** Existing durable finalization marker: absent until returns and terminal cleanup finish.
+   * A failed delivery is final too; inspect deliveries and return.failed for its outcome.
+   * Exposing the existing marker avoids a second stored completion state (ADR-0057).
+   */
+  finalizedAt: TimestampSchema.optional(),
   lastEventSeq: z.number().int().nonnegative(),
 });
 export type RunRecord = z.infer<typeof RunRecordSchema>;

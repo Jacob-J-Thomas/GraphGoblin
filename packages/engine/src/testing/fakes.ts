@@ -295,10 +295,14 @@ export class InMemoryRunRepository implements RunRepository {
   }
   markFinalized(runId: string): Promise<void> {
     this.finalized.add(runId);
+    const run = this.runs.get(runId);
+    if (run) run.finalizedAt = new Date().toISOString();
     return Promise.resolve();
   }
   clearFinalized(runId: string): Promise<void> {
     this.finalized.delete(runId);
+    const run = this.runs.get(runId);
+    if (run) delete run.finalizedAt;
     return Promise.resolve();
   }
   listRunReferences(

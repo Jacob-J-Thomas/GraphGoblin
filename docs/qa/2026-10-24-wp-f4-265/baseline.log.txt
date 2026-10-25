@@ -1,0 +1,49 @@
+Baseline at d32aa382cfc5578632e8b2b2cfd11813df9f8c44, Node v22.14.0.
+Controlled evidence through public RunManager and adapter constructors; no native provider turns.
+
+pnpm --filter @graphgoblin/engine exec vitest run src/missing-session.test.ts
+4 passed: fresh and resume-own resetAfterVisits=1, for Codex and Claude.
+4 failed: resume-previous and resume-own, for Codex and Claude.
+Failure quote:
+  Expected: "fake-session-1" (Claude: "fake-claude-session-1")
+  Received: "The recorded provider session is missing or refused. An explicit fresh-session choice is required."
+Both modes already produced HARNESS_SESSION_MISSING, resumable=false, rejected plain Resume,
+and made no replacement start. The port fixture did not announce reuse on refusal.
+An earlier invalid fixture had one decision route; corrected to the contract's two-route minimum
+before this reproduction. That setup error is not evidence of a product defect.
+
+pnpm --filter @graphgoblin/adapter-codex exec vitest run src/harness.test.ts -t "preserves typed missing-session"
+4 failed, 2 passed, 24 skipped.
+Failure quote:
+  Expected: []
+  Received: [{ mode: "resumed", sessionId: "missing-id", type: "session" }]
+Failures were promise/iterator refusal boundaries, with retriable=false/true. Synchronous
+constructor refusal already threw the typed cause without a session announcement.
+
+pnpm --filter @graphgoblin/api exec vitest run src/missing-session.test.ts -t "records the choice"
+1 failed, 2 skipped, before adding the route (engine changes already present).
+Failure quote: AssertionError: expected 404 to be 200.
+This establishes the absent API surface; it is not an unchanged-main full-package result.
+
+Original terminal output was not kept. This file is a transcribed result and quoted assertions,
+not a raw capture. Subsequent gate outputs are retained separately with local paths redacted.
+D-005 delegates real unknown-session CLI/provider verification to the orchestrator. Not run here.
+
+Additional narrow integration regression, before the child-aware Resume fix:
+pnpm --filter @graphgoblin/api exec vitest run src/missing-session.test.ts -t "explicit parent Resume"
+1 failed, 3 skipped. AssertionError: expected 409 to be 200.
+The child fresh-session action had succeeded and its run completed, but the parent
+retained its original non-resumable missing-session failure and could not continue.
+
+Additional controlled SDK regression before the successful-turn reuse guard:
+pnpm --filter @graphgoblin/adapter-codex exec vitest run src/harness.test.ts -t "native initialization precedes"
+1 failed, 30 skipped. Expected [], received mode=resumed/sessionId=removed-handle.
+Native thread.started alone had preceded a later HARNESS_SESSION_MISSING refusal.
+This fixture does not claim that a particular installed CLI emits this sequence.
+
+A late integration check explicitly covered child exit outcomes Success, Failure
+and Exhausted. The initial child-aware guard wrongly rejected Resume after a valid
+authored Failure exit (409 instead of 200), because it treated status=failed as a
+runtime failure. The public regression is in parent-negative-before.log.txt. The
+guard now checks runtime failure metadata; authored negative outcomes remain data
+under #251. The initial helper source is preserved byte-for-byte separately.

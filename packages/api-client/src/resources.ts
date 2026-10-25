@@ -142,6 +142,12 @@ export const runs = {
     unwrap(await client.POST('/runs/{id}/pause', id(runId))),
   resume: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/resume', id(runId))),
+  /** Deliberately abandon the missing provider context for this observed failed node. */
+  recoverSession: async (
+    client: GraphGoblinClient,
+    runId: string,
+    body: RequestBody<'/runs/{id}/recover-session', 'post'>,
+  ) => unwrap(await client.POST('/runs/{id}/recover-session', { ...id(runId), body })),
   /** Answer the observed input wait; take waitId from runs.get(...).waiting.waitId. */
   provideInput: async (
     client: GraphGoblinClient,

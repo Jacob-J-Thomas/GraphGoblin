@@ -133,6 +133,17 @@ the complete log before interpreting terminal and return-delivery evidence, pres
 same validation and recovery rules. This bounds each read's event count, not individual event
 bytes or total retained history. Other recovery, resume and cancellation reads remain separate.
 
+## Observing finalization (#185, ADR-0057)
+
+RunRecord.finalizedAt exposes the existing durable finalization acknowledgement.
+Terminal status, finishedAt and run.finished describe execution; none proves that
+returns or terminal cleanup are finished. A current terminal lifecycle plus finalizedAt, with no pending webhook in the snapshot,
+means fully finalized, including when delivery failed. Webhook deliveries still
+report pending/delivered/failed independently; other sinks retain return.delivered
+and return.failed. The finalizer sets the marker only after its receipt reconciliation
+and cleanup, and clears it before a failed-run resume. No new stored state is added.
+Pending delivery survives restart with the same identity and remaining retry budget.
+
 ## Thread reads and delayed snapshots (#116, ADR-0053)
 
 The durable event log determines the thread for both execution and observation. Domain
@@ -333,7 +344,7 @@ A restart retains the reference in SQLite and reconstructs counts/provenance fro
 the durable log. Forks and child runs have distinct run IDs and logs, so they start
 their own conversations and reset counts even when their initial graph thread carries
 messages, gates or counters from the source/parent. Native provider expiry still
-fails explicitly; #265 owns the future explicit fresh-session recovery action.
+fails explicitly; #265 provides the explicit fresh-session recovery action below.
 
 Fresh provider sessions can deliberately receive current main-loop context via
 existing prompt/input/context-file controls. Own continuity adds provider history;
@@ -391,7 +402,7 @@ size limit or automatic artifact offloading; large prompts therefore enlarge the
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                                                                                                           |
 | `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | When eligible under the harness rule below, continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
-| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                                                                                                             |
+| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Use the explicit fresh-session recovery action below (#265).                                                                                                                     |
 
 `failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
 known. `harness.submission` records `submitted` on positive acceptance, with its marker, or
@@ -423,7 +434,7 @@ cause; durable intent still governs subsequent recovery.
 Each repeated visit starts new provenance. Replay forks and child runs have their own logs and
 inherit no pending turn or submission state; an explicitly authored named-session policy keeps
 its existing lookup semantics. Own-session lookup is also limited to the new run; explicit fresh-session
-recovery remains deferred to #265. Other turn failures stop the run; the existing #243 positively unsubmitted transient
+recovery is available through #265 below. Other turn failures stop the run; the existing #243 positively unsubmitted transient
 transport failure can retry once in-process without creating another visit. Explicit Resume and automatic startup recovery apply the saved provenance: resend
 proven refused tasks, continue accepted/otherwise usable unfinished sessions, and fail
 uncertain work without a usable session. Recovery can therefore invoke the provider again.
@@ -688,3 +699,33 @@ pending deliveries and webhook admissions recover on the next start. After runna
 and finalization settle, SSE closes, HTTP closes, timers/manager stop, SQLite closes and
 ownership is released. See [API controls](07-api-and-streaming.md) and
 [signals and Compose](11-security-and-distribution.md). #319 supplies the interactive UI.
+
+## Explicit missing-session recovery (#265)
+
+A missing provider conversation fails with `HARNESS_SESSION_MISSING` and typed
+`failure.missingSession`: harness, native handle when known, selection origin,
+logical visit, model and effort. Plain Resume remains ineligible. An absent
+completed own-session row fails the same way without inventing a handle.
+
+`RunManager.recoverSession(runId, nodeId, failureSeq, actor)` validates the exact
+current failed event and inference node under the existing run/finalization lock.
+One `run.resumed` event atomically records the fresh-session choice and resume intent:
+actor, timestamp, node/visit, failed sequence, old handle/origin, original model/effort,
+`priorContextCarried: false` and the original authored prompt when available.
+Concurrent or repeated/stale choices reject. No choice means no status change or call.
+
+The next attempt starts fresh for that visit and reruns its authored task, rather
+than continuing or repairing work in a blank conversation. Selected graph context
+and files still apply. The configured policy, working directory, shared thread,
+other nodes and visit/reset counts remain intact. Future visits select normally.
+Earlier provider side effects are not undone. Both failed cause and choice are durable;
+startup completes a resume whose event committed before its status write. Later
+interruption still obeys #244; this choice does not authorize repeated fresh calls.
+The event schema changes but SQL storage does not; see ADR-0055 and the upgrade note.
+
+Nested recovery: open the failed-child link and make the fresh-session choice on
+the actual failed inference run. After that same child has a durable later resume
+and has no runtime failure, an explicit API Resume of its containing failed run is
+eligible. Before the child recovery it still refuses. Parent/child ownership and
+identity are checked; plain Resume never creates a fresh provider conversation.
+The recorded failure's original resumability remains factual history.

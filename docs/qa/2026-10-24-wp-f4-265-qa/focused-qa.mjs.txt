@@ -1,0 +1,35 @@
+import {readFile as readSource} from 'node:fs/promises';
+const source=await readSource('docs/qa/2026-10-24-wp-f4-265-qa/api-qa.mjs.txt','utf8');
+const helpers=source.split('let g;')[0].replaceAll('api-results.json','focused-results.json').replaceAll('api-traffic.json','focused-traffic.json');
+const scenarios=String.raw`
+let g;
+try{
+  g=new Gateway(await mkdtemp(join(tmpdir(),'gg-qa-f4-265-focused-')),6045);await g.start();
+  await save('focused-store.json',{port:g.port,dataDir:g.data,pid:g.child.pid});
+  await check('ordinary-accepted-failure-resume','Accepted fresh task returns recoverable transport failure; recover-session refuses; plain Resume','Existing accepted session continues and succeeds without a fresh-session choice',async()=>{
+    await g.control('plans',{plans:[{error:'HARNESS_TRANSPORT_FAILED',submission:'submitted',retriable:true,afterAccept:true}]});
+    const before=g.calls.length,run=await g.launch(singleNodeLoop('Ordinary accepted '+Math.random(),{id:'worker',kind:'inference',label:'Worker',config:config('codex','fresh')}));
+    const failed=await g.status(run.id,'failed');assert.equal(failed.failure.resumable,true);
+    const events=await g.events(run.id);await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq:events.findLast(x=>x.type==='run.failed').seq},409);
+    await g.api('/runs/'+run.id+'/resume',{});await g.status(run.id,'succeeded');const snap=await g.snapshot(run.id,'ordinary-accepted');
+    assert.equal(snap.events.filter(x=>x.type==='run.resumed'&&x.freshSession).length,0);
+    assert.deepEqual(g.calls.slice(before).map(x=>x.mode),['fresh','resume']);assert.equal(g.calls[before].id,g.calls.at(-1).id);
+    assert.notEqual(g.calls[before].prompt,g.calls.at(-1).prompt);return {runId:run.id,calls:g.calls.slice(before),modes:snap.events.filter(x=>x.type==='harness.session').map(x=>x.mode)};
+  });
+  await check('own-policy-after-choice','Recover own visit two; enter visit three in same execution','Visit three resumes newly chosen private conversation and original own policy remains',async()=>{
+    const before=g.calls.length,def=graph('codex','resume-own');def.nodes.find(x=>x.id==='again').config.maxPasses=3;
+    const run=await g.launch(def);let waiting=await g.status(run.id,'waiting');
+    const old=g.calls[before].id;await unlink(join(g.data,'fake-provider',old));
+    await g.api('/runs/'+run.id+'/input',{waitId:waiting.waiting.waitId,input:'go'});await g.status(run.id,'failed');
+    const failureSeq=(await g.events(run.id)).findLast(x=>x.type==='run.failed').seq;
+    await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq});waiting=await g.status(run.id,'waiting');
+    const fresh=g.calls.at(-1).id;await g.api('/runs/'+run.id+'/input',{waitId:waiting.waiting.waitId,input:'go'});await g.status(run.id,'succeeded');
+    assert.deepEqual(g.calls.slice(before).map(x=>x.mode),['fresh','resume','fresh','resume']);assert.equal(g.calls.at(-1).id,fresh);
+    const version=(await g.api('/loops/'+run.loopId+'/versions/'+run.versionId)).data;
+    assert.equal(version.definition.nodes.find(x=>x.id==='worker').config.session.policy,'resume-own');
+    return {runId:run.id,calls:g.calls.slice(before),snapshot:await g.snapshot(run.id,'own-policy-after-choice')};
+  });
+  await save('focused-provider-calls.json',g.calls);
+}finally{if(g)await g.stop()}
+`;
+await import('data:text/javascript;base64,'+Buffer.from(helpers+scenarios).toString('base64'));

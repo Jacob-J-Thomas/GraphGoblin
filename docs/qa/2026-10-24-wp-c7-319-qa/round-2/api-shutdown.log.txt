@@ -1,0 +1,118 @@
+$ vitest run -- src/shutdown
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-319/apps/api
+
+{"level":30,"time":1792889236516,"pid":40600,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5680"}
+{"level":30,"time":1792889236517,"pid":40600,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5680,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-2BHjEb","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792889236951,"pid":40600,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792889236982,"pid":40600,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":29.998900000002322,"msg":"request completed"}
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 55255ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × observes only current state and cannot reconstruct a label transition between snapshots 20027ms
+ ❯ src/templates/catalog-package.test.ts (4 tests | 1 failed) 22980ms
+   × ships only declared starting-point assets and removes stale files on rebuild 20168ms
+ ❯ src/main.test.ts (9 tests | 2 failed | 4 skipped) 224629ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 62030ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60321ms
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 360259ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180621ms
+     × the built API recovers a child finished while down with one continuation per parent 142057ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:51:3
+     49|   }, 60_000);
+     50|
+     51|   it('serves authenticated requests using a binary-created key and ref…
+       |   ^
+     52|     const f = await fixture();
+     53|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:69:3
+     67|   }, 60_000);
+     68|
+     69|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     70|     const f = await fixture();
+     71|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates/catalog-package.test.ts:49:1
+     47| }
+     48|
+     49| it('ships only declared starting-point assets and removes stale files …
+       | ^
+     50|   const root = await temporaryRoot();
+     51|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > observes only current state and cannot reconstruct a label transition between snapshots
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/triggers/github-recipe.test.ts:236:3
+    234|     },
+    235|   );
+    236|   it('observes only current state and cannot reconstruct a label trans…
+       |   ^
+    237|     const { first, clock, id, pages } = await fixture();
+    238|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  4 failed | 70 passed | 2 skipped (76)
+      Tests  6 failed | 1357 passed | 11 skipped (1374)
+   Start at  19:44:39
+   Duration  513.28s (tests 71%, import 23%, transform 5%)
+
+    Isolate  76 workers spawned · ~2.67s startup each (spawn + environment, per file)
+             at least ~15.77s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-c7-
+  │ 319\apps\api
+

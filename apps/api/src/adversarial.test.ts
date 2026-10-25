@@ -147,6 +147,7 @@ describe('adversarial API invariants', () => {
     'POST /runs/{id}/cancel': 'runs:write',
     'POST /runs/{id}/pause': 'runs:write',
     'POST /runs/{id}/resume': 'runs:write',
+    'POST /runs/{id}/recover-session': 'runs:write',
     'POST /runs/{id}/input': 'runs:write',
     'POST /runs/{id}/signals/{name}': 'runs:write',
     'POST /runs/{id}/replay': 'runs:write',
@@ -557,6 +558,8 @@ describe('adversarial API invariants', () => {
       { type: 'run.finished', status: 'succeeded', outcome: 'success' },
     ]);
     await t.container.repos.runs.update(r.id, { status: 'succeeded' });
+    // This fabricated completed-history fixture also acknowledges terminal cleanup.
+    await t.container.repos.runs.markFinalized(r.id);
     const res = await t.app.inject({
       url: `/runs/${r.id}/events`,
       headers: { accept: 'text/event-stream' },

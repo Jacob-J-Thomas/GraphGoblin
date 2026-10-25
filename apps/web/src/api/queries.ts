@@ -18,7 +18,11 @@ import type {
   LoopDefinitionInput,
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
-import { HarnessDefaultsSchema, HarnessPreflightSchema } from '@graphgoblin/contracts';
+import {
+  TERMINAL_RUN_STATUSES,
+  HarnessDefaultsSchema,
+  HarnessPreflightSchema,
+} from '@graphgoblin/contracts';
 import {
   useInfiniteQuery,
   useMutation,
@@ -131,7 +135,10 @@ export function useRun(id: string) {
     queryKey: keys.run(id),
     queryFn: () => runs.get(client, id),
     refetchInterval: (query) =>
-      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending')
+      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending') ||
+      (query.state.data !== undefined &&
+        TERMINAL_RUN_STATUSES.includes(query.state.data.status) &&
+        query.state.data.finalizedAt === undefined)
         ? 1000
         : false,
   });

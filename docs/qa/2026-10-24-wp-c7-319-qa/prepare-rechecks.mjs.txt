@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+const q='docs/qa/2026-10-24-wp-c7-319-qa/';
+const bad=JSON.parse(fs.readFileSync(q+'matrix-results.json','utf8')).filter(x=>x.status==='FAIL');
+fs.writeFileSync(q+'matrix-recheck-selection.json',JSON.stringify(bad.map(x=>x.name),null,2));
+let s=fs.readFileSync(q+'matrix.mjs.txt','utf8')
+ .replaceAll("page.locator('header').waitFor()","page.locator('header').first().waitFor()")
+ .replaceAll('port:6072','port:6075')
+ .replace("'matrix-results.json'","'matrix-recheck-results.json'")
+ .replace("'matrix-cells.json'","'matrix-recheck-cells.json'");
+s=s.replace('const cells=[];',"const cells=[];const selected=new Set(JSON.parse(await readFile(H.join(H.out,'matrix-recheck-selection.json'),'utf8')));");
+s=s.replace('for(const [route,path] of Object.entries(routes)){',"for(const [route,path] of Object.entries(routes)){\n if(!selected.has('matrix '+[phase,width,theme,route].join('/')))continue;");
+fs.writeFileSync(q+'matrix-recheck.mjs.txt',s);
+const native=fs.readFileSync(q+'native.mjs.txt','utf8');
+const prefix=native.slice(0,native.indexOf('try{'));
+let body=native.slice(native.indexOf(' // Compile a controlled CLI'),native.indexOf(' // D-038:'));
+body=body.replace(' const cg=await boot'," await (await import('node:fs/promises')).unlink(join(dir,'fake-release')).catch(()=>{});\n const cg=await boot");
+body=body.replaceAll("'cli-seed'","'cli-recheck-seed'").replaceAll("'controlled-cli'","'controlled-cli-held'").replaceAll("'controlled-cli-restart'","'controlled-cli-held-restart'").replaceAll('controlled-cli-source.log.txt','controlled-cli-held-source.log.txt').replaceAll('controlled-cli-compile.log.txt','controlled-cli-held-compile.log.txt');
+body=body.replace("const pid=Number(await readFile(join(dir,'cli.pid'),'utf8'));ok((await run(cg,cr)).status==='running');","await sleep(1200);const pid=Number(await readFile(join(dir,'cli.pid'),'utf8'));ok((await run(cg,cr)).status==='running');");
+fs.writeFileSync(q+'cli-recheck.mjs.txt',prefix.replace("'native-results.json'","'cli-recheck-results.json'")+'try{\n'+body+native.slice(native.lastIndexOf('}finally')));
+console.log('Prepared '+bad.length+' route cells and held CLI check.');

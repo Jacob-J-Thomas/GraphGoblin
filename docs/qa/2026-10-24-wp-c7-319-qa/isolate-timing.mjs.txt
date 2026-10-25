@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import {spawn,execFileSync} from 'node:child_process';
+import path from 'node:path';
+import crypto from 'node:crypto';
+const q=path.resolve('docs/qa/2026-10-24-wp-c7-319-qa');
+const read=n=>{try{return JSON.parse(fs.readFileSync(path.join(q,n),'utf8').replace(/^\uFEFF/,''));}catch{return null;}};
+// Wait for the full suite and the other QA scenarios to finish before running each file alone.
+while(!read('final-gates.json')||read('cli-recheck-results.json')?.length!==2||read('restart-tab-results.json')?.length!==1)await new Promise(r=>setTimeout(r,1000));
+await new Promise(r=>setTimeout(r,3000));
+const logBytes=fs.readFileSync(path.join(q,'web-coverage.log.txt'));
+const log=(logBytes[0]===255?logBytes.subarray(2).toString('utf16le'):logBytes.toString('utf8')).replace(/\x1b\[[0-9;]*m/g,'');
+const files=[...new Set([...log.matchAll(/(?:\u276F|FAIL)\s+(src\/[^\s]+\.test\.tsx?)/g)].map(m=>m[1]))];
+const baseline='c63db24590d23263a3f7253eda13249f9252ec16';
+const results=[];
+for(const file of files){
+ const repoFile='apps/web/'+file;
+ const now=fs.readFileSync(repoFile),old=execFileSync('git',['show',baseline+':'+repoFile]);
+ const unchanged=now.equals(old);
+ if(!unchanged){results.push({file,unchanged:false,notRun:'Touched file; this isolation driver is for unchanged timing failures.'});continue;}
+ const name='isolated-'+path.basename(file).replace(/\.test\.tsx?$/,'')+'.log.txt';
+ const command=`pnpm.cmd --filter @graphgoblin/web exec vitest run ${file} --maxWorkers=1`;
+ const started=Date.now();
+ const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ const output=fs.createWriteStream(path.join(q,name));child.stdout.pipe(output,{end:false});child.stderr.pipe(output,{end:false});
+ const exit=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',resolve);});
+ await new Promise(r=>output.end(r));
+ results.push({file,unchanged,sha256:crypto.createHash('sha256').update(now).digest('hex'),command,exit,seconds:(Date.now()-started)/1000,log:name});
+ fs.writeFileSync(path.join(q,'isolated-results.json'),JSON.stringify(results,null,2));
+ console.log(file+': '+exit);
+}

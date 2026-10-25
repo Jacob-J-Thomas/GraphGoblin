@@ -1,0 +1,52 @@
+import {readFile as readSource} from 'node:fs/promises';
+const source=await readSource('docs/qa/2026-10-24-wp-f4-265-qa/api-qa.mjs.txt','utf8');
+const helpers=source.split('let g;')[0].replaceAll('api-results.json','extra-results.json').replaceAll('api-traffic.json','extra-traffic.json');
+const scenarios=String.raw`
+let g;
+try {
+  g=new Gateway(await mkdtemp(join(tmpdir(),'gg-qa-f4-265-extra-')),6044);await g.start();
+  await save('extra-store.json',{port:g.port,dataDir:g.data,pid:g.child.pid});
+  for(const family of ['codex','claude'])await check(family+'-fresh-current-visit-missing','Fresh turn accepted then transient failure; remove its provider file; Resume discovers missing handle; explicitly choose fresh','Origin current-visit, original authored task restored',async()=>{
+    const before=g.calls.length;
+    await g.control('plans',{plans:[{error:'HARNESS_TRANSPORT_FAILED',submission:'submitted',retriable:true,afterAccept:true}]});
+    const run=await g.launch(singleNodeLoop('Current visit '+Math.random(),{id:'worker',kind:'inference',label:'Worker',config:config(family,'fresh')}));
+    await g.status(run.id,'failed');const old=g.calls[before].id;
+    await unlink(join(g.data,'fake-provider',old));await g.api('/runs/'+run.id+'/resume',{});await g.status(run.id,'failed');
+    const failed=await g.run(run.id);assert.equal(failed.failure.missingSession.origin,'current-visit');
+    const failureSeq=(await g.events(run.id)).findLast(x=>x.type==='run.failed').seq;
+    await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq});await g.status(run.id,'succeeded');
+    const snap=await g.snapshot(run.id,'current-visit-'+family);
+    assert.equal(snap.events.filter(x=>x.type==='run.resumed'&&x.freshSession).length,1);
+    assert.deepEqual(g.calls.slice(before).map(x=>x.mode),['fresh','resume','fresh']);
+    assert.equal(g.calls.at(-1).prompt,'Authored task: preserve exactly [QA-265]');
+    return {runId:run.id,missing:failed.failure.missingSession,calls:g.calls.slice(before)};
+  });
+  await check('own-policy-after-choice','Recover own visit two; enter visit three in same execution','Visit three resumes newly chosen private conversation; configured mode and reset count retained',async()=>{
+    const before=g.calls.length,def=graph('codex','resume-own');def.nodes.find(x=>x.id==='again').config.maxPasses=3;
+    def.limits={...def.limits,maxNodeVisits:100};
+    const run=await g.launch(def);let waiting=await g.status(run.id,'waiting');
+    const old=g.calls[before].id;await unlink(join(g.data,'fake-provider',old));
+    await g.api('/runs/'+run.id+'/input',{waitId:waiting.waiting.waitId,input:'go'});await g.status(run.id,'failed');
+    const failureSeq=(await g.events(run.id)).findLast(x=>x.type==='run.failed').seq;
+    await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq});waiting=await g.status(run.id,'waiting');
+    const fresh=g.calls.at(-1).id;await g.api('/runs/'+run.id+'/input',{waitId:waiting.waiting.waitId,input:'go'});await g.status(run.id,'succeeded');
+    assert.deepEqual(g.calls.slice(before).map(x=>x.mode),['fresh','resume','fresh','resume']);assert.equal(g.calls.at(-1).id,fresh);
+    return {runId:run.id,calls:g.calls.slice(before),snapshot:await g.snapshot(run.id,'own-policy-after-choice')};
+  });
+  await check('repair-missing-restarts-authored-task','Successful authored turn returns invalid schema; repair refuses missing handle; choose fresh','New conversation receives original authored task, then validates successfully',async()=>{
+    const before=g.calls.length;
+    await g.control('plans',{plans:[{finalText:'invalid'},{error:'HARNESS_SESSION_MISSING',submission:'session-missing'}]});
+    const cfg=config('codex','fresh');cfg.output={schema:{jsonSchema:{type:'number'},repair:{enabled:true,maxAttempts:1,prompt:'Repair exactly: {{ value }}'}}};
+    const run=await g.launch(singleNodeLoop('Repair missing '+Math.random(),{id:'worker',kind:'inference',label:'Worker',config:cfg}));await g.status(run.id,'failed');
+    const failed=await g.snapshot(run.id,'repair-before');assert.equal(failed.run.failure.code,'HARNESS_SESSION_MISSING');
+    assert.equal(failed.run.failure.missingSession.origin,'current-visit');
+    await g.control('plans',{plans:[{finalText:'42'}]});
+    await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq:failed.events.findLast(x=>x.type==='run.failed').seq});await g.status(run.id,'succeeded');
+    const snap=await g.snapshot(run.id,'repair-after');
+    assert.equal(g.calls.at(-1).prompt,'Authored task: preserve exactly [QA-265]');assert.notEqual(g.calls.at(-1).prompt,g.calls[before+1].prompt);
+    return {runId:run.id,calls:g.calls.slice(before),choice:snap.events.find(x=>x.type==='run.resumed').freshSession,status:snap.run.status};
+  });
+  await save('extra-provider-calls.json',g.calls);
+}finally{if(g)await g.stop()}
+`;
+await import('data:text/javascript;base64,'+Buffer.from(helpers+scenarios).toString('base64'));

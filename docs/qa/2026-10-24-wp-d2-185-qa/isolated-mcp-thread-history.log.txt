@@ -1,0 +1,57 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d2-185/apps/mcp
+
+ ❯ src/thread-history.test.ts (2 tests | 2 failed) 10078ms
+   × MCP reads agree through persisted failure and resume with stale snapshots 5028ms
+   × MCP preserves a different open visit at a persisted delayed-duplicate checkpoint 5046ms
+pnpm.cmd : 
+At line:14 char:2
++  & pnpm.cmd --filter ('@graphgoblin/'+$check.package) exec vitest run ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/thread-history.test.ts > MCP reads agree through persisted failure and resume with stale snapshots
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/thread-history.test.ts:10:1
+      8| import { createMcpServer } from './server.js';
+      9|
+     10| it('MCP reads agree through persisted failure and resume with stale sn…
+       | ^
+     11|   const t = await createThreadHistoryFixture();
+     12|   const apiUrl = await t.app.listen({ port: 0, host: '127.0.0.1' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/thread-history.test.ts > MCP preserves a different open visit at a persisted delayed-duplicate checkpoint
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/thread-history.test.ts:61:1
+     59| });
+     60|
+     61| it('MCP preserves a different open visit at a persisted delayed-duplic…
+       | ^
+     62|   const t = await createThreadHistoryFixture();
+     63|   t.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  00:03:59
+   Duration  24.73s (tests 42%, transform 29%, import 29%)
+
+  Transform  transforming modules took 7.08s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d2-
+  │ 185\apps\mcp
+
