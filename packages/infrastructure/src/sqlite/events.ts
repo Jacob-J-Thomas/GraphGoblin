@@ -181,9 +181,29 @@ export class SqliteEventStore implements EventStorePort {
     if (direction === 'older') rows.reverse();
     const items = rows.map(toEvent);
     // The exclusive bounds of the neighbouring pages. An empty page still splits the log at its
-    // seek position, so the event at that position belongs to the side the page did not read.
-    const olderThan = items[0]?.seq ?? (direction === 'older' ? seq : seq + 1);
-    const newerThan = items.at(-1)?.seq ?? (direction === 'older' ? Math.max(seq - 1, 0) : seq);
+    // seek position, and the side it did not read is bounded by the log's own first or last event,
+    // never by a position outside it, so every continuation it offers is a valid cursor.
+    const edge = async (side: 'first' | 'last') =>
+      (
+        await this.db
+          .select({ seq: runEvents.seq })
+          .from(runEvents)
+          .where(eq(runEvents.runId, runId))
+          .orderBy(side === 'first' ? asc(runEvents.seq) : desc(runEvents.seq))
+          .limit(1)
+      )[0]?.seq;
+    let olderThan: number;
+    let newerThan: number;
+    if (items.length > 0) {
+      olderThan = items[0]!.seq;
+      newerThan = items.at(-1)!.seq;
+    } else if (direction === 'older') {
+      olderThan = seq;
+      newerThan = ((await edge('first')) ?? 1) - 1;
+    } else {
+      olderThan = ((await edge('last')) ?? 0) + 1;
+      newerThan = seq;
+    }
     const exists = async (bound: number, side: 'older' | 'newer') =>
       (
         await this.db

@@ -112,6 +112,66 @@ it('browses opaque run-scoped history in both directions and resolves threads be
         ).statusCode,
       ).toBe(404);
     expect(await t.container.repos.events.read(run.id)).toEqual(all);
+    // A cursor at the largest safe position still yields a continuation the API accepts.
+    const largest = historyCursor({
+      runId: run.id,
+      seq: Number.MAX_SAFE_INTEGER,
+      direction: 'newer',
+    });
+    const beyond = (await get(`cursor=${largest}&limit=1`)).json<Page>();
+    expect(beyond).toMatchObject({ items: [], newerCursor: null });
+    const back = await get(`cursor=${beyond.olderCursor}&limit=1`);
+    expect(back.statusCode, back.body).toBe(200);
+    expect(back.json<Page>().items).toEqual(all.slice(-1));
+  } finally {
+    await t.close();
+  }
+});
+
+it('reads the latest cancellation and the request that led to it, whatever history the browser holds', async () => {
+  const t = await createTestApp();
+  try {
+    const loopId = await t.publishLoop(minimalLoop());
+    const started = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${loopId}/runs`,
+      payload: {},
+    });
+    const { run } = started.json<{ run: RunRecord }>();
+    await t.idle();
+    const observe = async () =>
+      (await t.app.inject({ url: `/runs/${run.id}/observation` })).json<{
+        cancelled?: RunEvent;
+        cancelRequested?: RunEvent;
+      }>();
+    expect(await observe()).not.toHaveProperty('cancelled');
+    // A request that a resume answered does not explain a later cancellation.
+    await t.container.repos.events.append(run.id, [
+      { type: 'run.cancel_requested', actor: { kind: 'user', id: 'first' } },
+      { type: 'run.resumed', actor: { kind: 'user', id: 'first' } },
+      { type: 'run.cancelled' },
+    ]);
+    const unexplained = await observe();
+    expect(unexplained.cancelled?.type).toBe('run.cancelled');
+    expect(unexplained).not.toHaveProperty('cancelRequested');
+    await t.container.repos.events.append(run.id, [
+      { type: 'run.resumed', actor: { kind: 'user', id: 'first' } },
+      { type: 'run.cancel_requested', actor: { kind: 'api-key', id: 'second' } },
+      ...Array.from({ length: 600 }, () => ({
+        type: 'node.started' as const,
+        nodeId: 'work',
+        kind: 'mutate' as const,
+        attempt: 1,
+        configHash: 'h',
+      })),
+      { type: 'run.cancelled' },
+    ]);
+    const explained = await observe();
+    expect(explained.cancelRequested).toMatchObject({
+      type: 'run.cancel_requested',
+      actor: { kind: 'api-key', id: 'second' },
+    });
+    expect(explained.cancelled!.seq).toBe(explained.cancelRequested!.seq + 601);
   } finally {
     await t.close();
   }

@@ -844,6 +844,10 @@ export class FakeApi {
       (_call, [runId]) => {
         if (!this.runs.has(runId!)) return problem(404, 'RUN_NOT_FOUND');
         const all = this.events.get(runId!) ?? [];
+        const cancelled = all.findLast((event) => event.type === 'run.cancelled');
+        const before = cancelled ? all.filter((event) => event.seq < cancelled.seq) : [];
+        const requested = before.findLast((event) => event.type === 'run.cancel_requested');
+        const resumed = before.findLast((event) => event.type === 'run.resumed');
         return json({
           lifecycle: all.findLast((event) =>
             ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'].includes(
@@ -853,6 +857,9 @@ export class FakeApi {
           exit: all.findLast((event) => event.type === 'exit.evaluated'),
           gate: all.findLast((event) => event.type === 'decision.made' && event.gate !== undefined),
           finished: all.findLast((event) => event.type === 'run.finished'),
+          cancelled,
+          cancelRequested:
+            requested && (!resumed || requested.seq > resumed.seq) ? requested : undefined,
         });
       },
     ],

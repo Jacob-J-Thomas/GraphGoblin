@@ -1106,6 +1106,8 @@ export interface paths {
                             exit?: components["schemas"]["RunEvent"] | undefined;
                             gate?: components["schemas"]["RunEvent"] | undefined;
                             finished?: components["schemas"]["RunEvent"] | undefined;
+                            cancelled?: components["schemas"]["RunEvent"] | undefined;
+                            cancelRequested?: components["schemas"]["RunEvent"] | undefined;
                         };
                     };
                 };

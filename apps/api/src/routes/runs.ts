@@ -293,6 +293,8 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             exit: RunEventSchema.optional(),
             gate: RunEventSchema.optional(),
             finished: RunEventSchema.optional(),
+            cancelled: RunEventSchema.optional(),
+            cancelRequested: RunEventSchema.optional(),
           }),
         },
       },
@@ -301,11 +303,24 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const runId = request.params.id;
       await ownedRun(request, runId);
       const gate = await repos.events.latestGate(runId);
+      const cancelled = await repos.events.latest(runId, 'run.cancelled');
+      // The request that led to the latest cancellation: one a later resume answered does not.
+      const requested = cancelled
+        ? await repos.events.latest(runId, 'run.cancel_requested', cancelled.seq)
+        : undefined;
+      const resumed = requested
+        ? await repos.events.latest(runId, 'run.resumed', cancelled!.seq)
+        : undefined;
       return {
         lifecycle: await repos.events.lastLifecycleEvent(runId),
         exit: await repos.events.latest(runId, 'exit.evaluated'),
         gate,
         finished: await repos.events.latest(runId, 'run.finished'),
+        cancelled,
+        cancelRequested:
+          requested && (resumed === undefined || requested.seq > resumed.seq)
+            ? requested
+            : undefined,
       };
     },
   );

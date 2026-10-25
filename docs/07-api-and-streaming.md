@@ -201,7 +201,7 @@ The existing JSON `GET /runs/{id}/events?after=N&limit=L` remains a forward read
 
 `GET /runs/{id}/thread?at=N` resolves the exact context after boundary N (zero is the admitted seed). The current read without `at` keeps #116's behavior. Historical reconstruction uses 128-event pages and carries the domain open-visit/strict replay state across pages, retaining only the thread and one page, and yields between reads. It uses a verified preceding checkpoint when available and never writes execution state. Work is proportional to the prefix after that checkpoint; the requested thread's intrinsic size remains supported.
 
-`GET /runs/{id}/observation` returns the latest durable lifecycle, exit, gate decision and finish evidence (each optional) independently of browser retention. Type-indexed latest reads select exact events; the last gate uses one descending type-index scan with a JSON gate predicate, without materializing the log or making a round trip for each ungated decision. Run status/result/delivery authority remains the run record, and this read does not change stream completion or delivery finality.
+`GET /runs/{id}/observation` returns the latest durable lifecycle, exit, gate decision and finish evidence, the latest `run.cancelled` and the `run.cancel_requested` that led to it (one a later `run.resumed` answered does not; each field optional) independently of browser retention. Type-indexed latest reads select exact events; the last gate uses one descending type-index scan with a JSON gate predicate, without materializing the log or making a round trip for each ungated decision. Run status/result/delivery authority remains the run record, and this read does not change stream completion or delivery finality.
 
 ## SSE protocol (Decided)
 

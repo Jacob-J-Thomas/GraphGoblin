@@ -92,6 +92,12 @@ export function RunInspectorPage() {
   );
   const latestExit = observation.data?.exit;
   const finished = observation.data?.finished;
+  // Whole-run cancellation evidence, whatever window the Timeline is browsing.
+  const cancellation = observation.data
+    ? [observation.data.cancelRequested, observation.data.cancelled].filter(
+        (event): event is RunEvent => event !== undefined,
+      )
+    : undefined;
   const resolveSeq = selectedSeq ?? (selectedEvent?.type === 'node.finished' ? seq : undefined);
   const selectedThread = useQuery({
     queryKey: ['run-thread-at', runId, resolveSeq],
@@ -201,7 +207,8 @@ export function RunInspectorPage() {
             <RunLimits run={run} />
             <ExecutionContext
               run={run}
-              events={log.events}
+              cancellation={cancellation}
+              cancellationUnavailable={observation.isError}
               definition={definition}
               definitionLoading={versionQuery.isPending}
             />

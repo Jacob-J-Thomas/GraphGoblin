@@ -15,7 +15,7 @@ describe('execution evidence (#255)', () => {
     const view = (loading: boolean) => (
       <ExecutionContext
         run={run}
-        events={[event(run.id, 2, 'run.cancelled', {})]}
+        cancellation={[event(run.id, 2, 'run.cancelled', {})]}
         definition={undefined}
         definitionLoading={loading}
       />
@@ -39,7 +39,7 @@ describe('execution evidence (#255)', () => {
     render(
       <ExecutionContext
         run={run}
-        events={[
+        cancellation={[
           event(run.id, 1, 'run.cancel_requested', { actor: { kind: 'run', id: 'child-run' } }),
           event(run.id, 2, 'run.cancelled', {}),
         ]}
@@ -130,18 +130,24 @@ it('downloads every number GraphGoblin records with its stored token (#255)', as
   }
 });
 
-it('distinguishes incomplete cancellation history from an unrecorded actor (#255)', () => {
+it('waits for the cancellation record rather than guessing an actor (#255, #186)', () => {
   const run = runRecord({ status: 'cancelled', lastEventSeq: 3 });
-  const partial = [event(run.id, 1, 'run.started', { attempt: 1 })];
-  const view = (events: RunEvent[]) => (
-    <ExecutionContext run={run} events={events} definition={undefined} definitionLoading={false} />
+  const view = (cancellation: RunEvent[] | undefined, unavailable = false) => (
+    <ExecutionContext
+      run={run}
+      cancellation={cancellation}
+      cancellationUnavailable={unavailable}
+      definition={undefined}
+      definitionLoading={false}
+    />
   );
-  const { rerender } = render(view(partial));
-  expect(screen.getByText(/Cancellation history is incomplete/)).toBeInTheDocument();
+  const { rerender } = render(view(undefined));
+  expect(screen.getByText(/Reading the cancellation record/)).toBeInTheDocument();
   expect(screen.queryByText(/actor not recorded/)).not.toBeInTheDocument();
+  rerender(view(undefined, true));
+  expect(screen.getByText(/cancellation record could not be read/)).toBeInTheDocument();
   rerender(
     view([
-      ...partial,
       event(run.id, 2, 'run.cancel_requested', { actor: { kind: 'user', id: 'local' } }),
       event(run.id, 3, 'run.cancelled', {}),
     ]),
@@ -153,7 +159,9 @@ it('names the missing terminal event without denying a request that was recorded
   render(
     <ExecutionContext
       run={run}
-      events={[event(run.id, 1, 'run.cancel_requested', { actor: { kind: 'user', id: 'local' } })]}
+      cancellation={[
+        event(run.id, 1, 'run.cancel_requested', { actor: { kind: 'user', id: 'local' } }),
+      ]}
       definition={undefined}
       definitionLoading={false}
     />,

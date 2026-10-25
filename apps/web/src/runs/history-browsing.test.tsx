@@ -163,3 +163,32 @@ it('browses older history during execution, reloads at the live acknowledgement 
   expect(log().events.at(-1)?.seq).toBe(906);
   reloaded.unmount();
 });
+
+it('keeps the recorded cancellation actor while older history is browsed', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const loop = api.addLoop(minimalLoop(), { published: true });
+  const run = api.addRun({
+    loopId: loop.id,
+    versionId: loop.currentVersionId!,
+    status: 'cancelled',
+  });
+  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
+  for (let seq = 2; seq <= 720; seq++)
+    api.pushEvent(run.id, event(run.id, seq, 'run.started', { attempt: 1 }));
+  api.pushEvent(
+    run.id,
+    event(run.id, 721, 'run.cancel_requested', { actor: { kind: 'api-key', id: 'key-1' } }),
+  );
+  api.pushEvent(run.id, event(run.id, 722, 'run.cancelled', {}));
+  const view = renderApp(`/runs/${run.id}`, api);
+  const log = () => useRunEventStore.getState().runs[run.id]!;
+  await waitFor(() => expect(log()?.lastSeq).toBe(722));
+  expect(await screen.findByText(/Cancelled by api-key key-1/)).toBeInTheDocument();
+  await user.type(screen.getByRole('spinbutton', { name: 'Event sequence' }), '50');
+  await user.click(screen.getByRole('button', { name: 'Go to event' }));
+  await waitFor(() => expect(log().events.some((e) => e.seq === 50)).toBe(true));
+  expect(log().events.some((e) => e.seq === 721)).toBe(false);
+  expect(screen.getByText(/Cancelled by api-key key-1/)).toBeInTheDocument();
+  view.unmount();
+});

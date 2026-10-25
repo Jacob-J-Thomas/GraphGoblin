@@ -173,6 +173,14 @@ it('reads bounded history windows in both directions and latest evidence without
     olderThan: 6,
     newerThan: 5,
   });
+  // Past the tail, the older side ends at the last event, not one past the seek position.
+  expect(await store.window(runId, Number.MAX_SAFE_INTEGER, 'newer', 2)).toEqual({
+    items: [],
+    hasOlder: true,
+    hasNewer: false,
+    olderThan: 6,
+    newerThan: Number.MAX_SAFE_INTEGER,
+  });
   expect(await store.latest(runId, 'run.cancelled')).toEqual(all[4]);
   expect(await store.latest(runId, 'run.cancelled', 5)).toEqual(all[2]);
   expect(await store.latest(runId, 'run.failed')).toBeUndefined();
