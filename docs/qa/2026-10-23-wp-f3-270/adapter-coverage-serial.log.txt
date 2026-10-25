@@ -1,0 +1,55 @@
+$ vitest run --coverage --maxWorkers=2
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/adapter-codex
+      Coverage enabled with v8
+
+ ❯ src/probe-directory.test.ts (4 tests | 2 failed) 10099ms
+   ❯ Codex readiness probe directory (4)
+     × runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 5011ms
+     × preserves 1 existing collision directories and bounds retries 5014ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:33:3
+     31|
+     32| describe('Codex readiness probe directory', () => {
+     33|   it('runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and…
+       |   ^
+     34|     const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-codex-long-'…
+     35|     try {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:59:18
+     57|   });
+     58|
+     59|   it.each([1, 4])(
+       |                  ^
+     60|     'preserves %i existing collision directories and bounds retries',
+     61|     async (collisions) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 498 passed | 5 skipped (505)
+   Start at  19:18:03
+   Duration  245.55s (transform 48%, tests 37%, import 14%, worker 1%)
+
+  Transform  transforming modules took 182.54s · 48% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\adapter-codex
+System.Management.Automation.RemoteException

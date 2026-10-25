@@ -1,0 +1,909 @@
+{
+  "commands": [
+    {
+      "name": "before-api",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/stored-loop-defaults.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 28.797
+    },
+    {
+      "name": "before-repair",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 12.015
+    },
+    {
+      "name": "before-pre243",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/stored-loop-defaults.test.ts",
+        "-t",
+        "runDeadlineSeconds",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 39.094
+    },
+    {
+      "name": "before-editor",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "playwright",
+        "test",
+        "e2e/stored-loop-defaults.spec.ts",
+        "--retries=0"
+      ],
+      "exitCode": 1,
+      "seconds": 142.218
+    },
+    {
+      "name": "after-api",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/stored-loop-defaults.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 31.204
+    },
+    {
+      "name": "after-repair",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 12.328
+    },
+    {
+      "name": "docs-generate",
+      "command": [
+        "pnpm.cmd",
+        "docs:generate"
+      ],
+      "exitCode": 0,
+      "seconds": 16.344
+    },
+    {
+      "name": "after-storage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/sqlite/definition-pins.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 34.5
+    },
+    {
+      "name": "client-generate",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api-client",
+        "generate"
+      ],
+      "exitCode": 0,
+      "seconds": 24.406
+    },
+    {
+      "name": "decode-retired-regression",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/retired-event-destination.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 58.234
+    },
+    {
+      "name": "migrated-storage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/sqlite/definition-pins.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 72.5
+    },
+    {
+      "name": "migrated-api",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/stored-loop-defaults.test.ts",
+        "src/retired-event-destination.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 98.766
+    },
+    {
+      "name": "format",
+      "command": [
+        "pnpm.cmd",
+        "format"
+      ],
+      "exitCode": 0,
+      "seconds": 1003.719
+    },
+    {
+      "name": "domain-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/domain",
+        "test:coverage",
+        "--coverage.reportOnFailure"
+      ],
+      "exitCode": 0,
+      "seconds": 58.141
+    },
+    {
+      "name": "contracts-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/contracts",
+        "test:coverage",
+        "--coverage.reportOnFailure"
+      ],
+      "exitCode": 0,
+      "seconds": 22.515
+    },
+    {
+      "name": "engine-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "test:coverage",
+        "--coverage.reportOnFailure"
+      ],
+      "exitCode": 0,
+      "seconds": 63.875
+    },
+    {
+      "name": "final-repair-evidence",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--silent=false",
+        "--reporter=verbose",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 19.891
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "pnpm.cmd",
+        "typecheck",
+        "--concurrency=1"
+      ],
+      "exitCode": 0,
+      "seconds": 429.718
+    },
+    {
+      "name": "lint",
+      "command": [
+        "pnpm.cmd",
+        "lint",
+        "--concurrency=1"
+      ],
+      "exitCode": 1,
+      "seconds": 149.906
+    },
+    {
+      "name": "check-docs",
+      "command": [
+        "pnpm.cmd",
+        "check:docs"
+      ],
+      "exitCode": 0,
+      "seconds": 4.625
+    },
+    {
+      "name": "check-migrations",
+      "command": [
+        "pnpm.cmd",
+        "check:migrations"
+      ],
+      "exitCode": 0,
+      "seconds": 14.266
+    },
+    {
+      "name": "check-layers",
+      "command": [
+        "pnpm.cmd",
+        "check:layers"
+      ],
+      "exitCode": 0,
+      "seconds": 1.547
+    },
+    {
+      "name": "check-deps",
+      "command": [
+        "pnpm.cmd",
+        "check:deps"
+      ],
+      "exitCode": 0,
+      "seconds": 21.359
+    },
+    {
+      "name": "check-tokens",
+      "command": [
+        "pnpm.cmd",
+        "check:tokens"
+      ],
+      "exitCode": 0,
+      "seconds": 2.265
+    },
+    {
+      "name": "build",
+      "command": [
+        "pnpm.cmd",
+        "build",
+        "--concurrency=1"
+      ],
+      "exitCode": 0,
+      "seconds": 61.687
+    },
+    {
+      "name": "format-fix",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--write",
+        "packages/engine/src/repair-deadline.test.ts",
+        "apps/api/src/stored-loop-defaults.test.ts",
+        "apps/web/e2e/stored-loop-defaults.spec.ts",
+        "packages/infrastructure/src/sqlite/definition-pins.test.ts"
+      ],
+      "exitCode": 0,
+      "seconds": 23.906
+    },
+    {
+      "name": "format-lint-fix",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--write",
+        "packages/engine/src/repair-deadline.test.ts",
+        "apps/api/src/stored-loop-defaults.test.ts",
+        "apps/web/e2e/stored-loop-defaults.spec.ts"
+      ],
+      "exitCode": 0,
+      "seconds": 8.204
+    },
+    {
+      "name": "infrastructure-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "test:coverage",
+        "--coverage.reportOnFailure",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 920.953
+    },
+    {
+      "name": "infrastructure-isolated-src-adversarial-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/adversarial.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 49.25
+    },
+    {
+      "name": "infrastructure-isolated-src-claude-process-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/claude/process.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 51.578
+    },
+    {
+      "name": "upgrade",
+      "command": [
+        "pnpm.cmd",
+        "test:upgrade"
+      ],
+      "exitCode": 0,
+      "seconds": 515.39
+    },
+    {
+      "name": "infrastructure-isolated-src-claude-readiness-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/claude/readiness.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 47.562
+    },
+    {
+      "name": "typecheck-final",
+      "command": [
+        "pnpm.cmd",
+        "typecheck",
+        "--concurrency=1"
+      ],
+      "exitCode": 0,
+      "seconds": 363.5
+    },
+    {
+      "name": "e2e",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "playwright",
+        "test",
+        "e2e/unlimited-mode.spec.ts",
+        "e2e/stored-loop-defaults.spec.ts",
+        "--retries=0"
+      ],
+      "exitCode": 0,
+      "seconds": 137.015
+    },
+    {
+      "name": "infrastructure-isolated-src-process-scripts-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/process/scripts.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 163.797
+    },
+    {
+      "name": "infrastructure-isolated-src-sqlite-upgrade-scan-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/sqlite/upgrade-scan.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 9.875
+    },
+    {
+      "name": "infrastructure-isolated-src-sqlite-upgrade-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/sqlite/upgrade.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 44.078
+    },
+    {
+      "name": "repair-after-lint",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--silent=false",
+        "--reporter=verbose",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 33.453
+    },
+    {
+      "name": "lint-final",
+      "command": [
+        "pnpm.cmd",
+        "lint",
+        "--concurrency=1"
+      ],
+      "exitCode": 0,
+      "seconds": 366.64
+    },
+    {
+      "name": "api-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api",
+        "test:coverage",
+        "--coverage.reportOnFailure"
+      ],
+      "exitCode": 0,
+      "seconds": 281.875
+    },
+    {
+      "name": "cold-reopen",
+      "command": [
+        "node",
+        "docs/qa/2026-10-23-wp-f3-270/round-3/stored-reopen-check.mjs"
+      ],
+      "exitCode": 1,
+      "seconds": 0.094
+    },
+    {
+      "name": "cold-reopen-final",
+      "command": [
+        "node",
+        "--experimental-import-meta-resolve",
+        "docs/qa/2026-10-23-wp-f3-270/round-3/stored-reopen-check.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 17.562
+    },
+    {
+      "name": "format-exact-timeout",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--write",
+        "packages/engine/src/repair-deadline.test.ts"
+      ],
+      "exitCode": 0,
+      "seconds": 2.735
+    },
+    {
+      "name": "repair-exact-timeout",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--silent=false",
+        "--reporter=verbose",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 57.485
+    },
+    {
+      "name": "format-exact-final",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--write",
+        "packages/engine/src/repair-deadline.test.ts"
+      ],
+      "exitCode": 0,
+      "seconds": 3.015
+    },
+    {
+      "name": "repair-exact-final",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--silent=false",
+        "--reporter=verbose",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 45.11
+    },
+    {
+      "name": "format-invocation-clock",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--write",
+        "packages/engine/src/repair-deadline.test.ts"
+      ],
+      "exitCode": 0,
+      "seconds": 15.828
+    },
+    {
+      "name": "repair-invocation-clock",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "exec",
+        "vitest",
+        "run",
+        "src/repair-deadline.test.ts",
+        "--silent=false",
+        "--reporter=verbose",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 52.906
+    },
+    {
+      "name": "engine-coverage-final",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/engine",
+        "test:coverage",
+        "--coverage.reportOnFailure"
+      ],
+      "exitCode": 0,
+      "seconds": 103.453
+    },
+    {
+      "name": "typecheck-exact-timeout",
+      "command": [
+        "pnpm.cmd",
+        "typecheck",
+        "--concurrency=1"
+      ],
+      "exitCode": 0,
+      "seconds": 448.016
+    },
+    {
+      "name": "lint-exact-timeout",
+      "command": [
+        "pnpm.cmd",
+        "lint",
+        "--concurrency=1"
+      ],
+      "exitCode": 0,
+      "seconds": 406.859
+    },
+    {
+      "name": "web-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/web",
+        "test:coverage",
+        "--coverage.reportOnFailure",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 3646.032
+    },
+    {
+      "name": "api-client-coverage",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api-client",
+        "test:coverage",
+        "--coverage.reportOnFailure"
+      ],
+      "exitCode": 1,
+      "seconds": 79.016
+    },
+    {
+      "name": "api-client-isolated-src-templates-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api-client",
+        "exec",
+        "vitest",
+        "run",
+        "src/templates.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 104.735
+    },
+    {
+      "name": "format-changed-check",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--check",
+        "CHANGELOG.md",
+        "apps/api/src/stored-loop-defaults.test.ts",
+        "apps/web/e2e/stored-loop-defaults.spec.ts",
+        "apps/web/src/editor/LoopSettingsPanel.tsx",
+        "docs/03-domain-model.md",
+        "docs/05-execution-engine.md",
+        "docs/06-harness-integration.md",
+        "docs/decisions/ADR-0051-structured-completion-deadlines.md",
+        "docs/guide/02-build-a-loop.md",
+        "docs/guide/06-settings-and-secrets.md",
+        "docs/guide/07-troubleshooting.md",
+        "packages/contracts/src/loop.ts",
+        "packages/engine/src/handlers/common.ts",
+        "packages/engine/src/repair-deadline.test.ts",
+        "packages/infrastructure/drizzle/meta/0020_snapshot.json",
+        "packages/infrastructure/drizzle/meta/_journal.json",
+        "packages/infrastructure/src/sqlite/definition-pins.test.ts"
+      ],
+      "exitCode": 0,
+      "seconds": 17.593
+    },
+    {
+      "name": "format-evidence",
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--write",
+        "docs/qa/2026-10-23-wp-f3-270/round-3/REPORT.md",
+        "docs/qa/2026-10-23-wp-f3-270/round-3/FILES.md",
+        "docs/qa/2026-10-23-wp-f3-270/round-3/NOT-KEPT.md"
+      ],
+      "exitCode": 0,
+      "seconds": 15.438
+    }
+  ],
+  "coverage": [
+    {
+      "package": "domain",
+      "name": "domain-coverage",
+      "tests": "593 passed (593)",
+      "lines": 98.47,
+      "branches": 95.78,
+      "exitCode": 0
+    },
+    {
+      "package": "contracts",
+      "name": "contracts-coverage",
+      "tests": "266 passed (266)",
+      "lines": 99.74,
+      "branches": 95.0,
+      "exitCode": 0
+    },
+    {
+      "package": "engine",
+      "name": "engine-coverage-final",
+      "tests": "1600 passed (1600)",
+      "lines": 98.05,
+      "branches": 93.03,
+      "exitCode": 0
+    },
+    {
+      "package": "infrastructure",
+      "name": "infrastructure-coverage",
+      "tests": "16 failed | 759 passed (775)",
+      "lines": 98.56,
+      "branches": 94.93,
+      "exitCode": 1
+    },
+    {
+      "package": "api",
+      "name": "api-coverage",
+      "tests": "1332 passed | 8 skipped (1340)",
+      "lines": 97.94,
+      "branches": 93.16,
+      "exitCode": 0
+    },
+    {
+      "package": "web",
+      "name": "web-coverage",
+      "tests": "1636 passed (1636)",
+      "lines": 98.92,
+      "branches": 94.98,
+      "exitCode": 0
+    },
+    {
+      "package": "api-client",
+      "name": "api-client-coverage",
+      "tests": "2 failed | 70 passed (72)",
+      "lines": 100.0,
+      "branches": 99.37,
+      "exitCode": 1
+    }
+  ],
+  "isolatedRuns": [
+    {
+      "name": "infrastructure-isolated-src-adversarial-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/adversarial.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 49.25,
+      "tests": "1 failed | 19 passed (20)"
+    },
+    {
+      "name": "infrastructure-isolated-src-claude-process-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/claude/process.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 51.578,
+      "tests": "3 failed | 2 passed (5)"
+    },
+    {
+      "name": "infrastructure-isolated-src-claude-readiness-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/claude/readiness.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 47.562,
+      "tests": "1 failed | 20 passed (21)"
+    },
+    {
+      "name": "infrastructure-isolated-src-process-scripts-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/process/scripts.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 163.797,
+      "tests": "3 failed | 36 passed (39)"
+    },
+    {
+      "name": "infrastructure-isolated-src-sqlite-upgrade-scan-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/sqlite/upgrade-scan.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 9.875,
+      "tests": "10 passed (10)"
+    },
+    {
+      "name": "infrastructure-isolated-src-sqlite-upgrade-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/infrastructure",
+        "exec",
+        "vitest",
+        "run",
+        "src/sqlite/upgrade.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 0,
+      "seconds": 44.078,
+      "tests": "26 passed (26)"
+    },
+    {
+      "name": "api-client-isolated-src-templates-test-ts",
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/api-client",
+        "exec",
+        "vitest",
+        "run",
+        "src/templates.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exitCode": 1,
+      "seconds": 104.735,
+      "tests": "2 failed (2)"
+    }
+  ],
+  "interpretation": "A failed full suite remains failed after an isolated rerun. All original captures are retained. Coverage denominators are unchanged."
+}

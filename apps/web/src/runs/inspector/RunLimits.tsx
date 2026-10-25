@@ -10,6 +10,13 @@ export function RunLimits({ run }: { run: RunRecord }) {
         Maximum node visits: {limits.maxNodeVisits ?? 'Unlimited'}. Run deadline:{' '}
         {deadline === null ? 'none' : `${deadline} seconds`}.
       </p>
+      <p>
+        Structured completion:{' '}
+        {limits.structuredTimeoutMs === null
+          ? 'Unlimited'
+          : `${limits.structuredTimeoutMs} ms per call`}
+        .
+      </p>
       {deadline !== null && run.startedAt ? (
         <p>Deadline at: {new Date(Date.parse(run.startedAt) + deadline * 1000).toISOString()}</p>
       ) : null}

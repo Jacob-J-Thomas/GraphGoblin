@@ -1,0 +1,102 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 4,
+  "exportedAt": "2026-10-24T12:42:32.345Z",
+  "loop": {
+    "schemaVersion": 4,
+    "name": "Edge controls final 390",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": 650,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "work",
+        "label": "Input",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "wait",
+        "config": {
+          "mode": "input",
+          "prompt": "Continue",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ],
+          "onTimeout": "continue"
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "a",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "work",
+          "port": "in"
+        }
+      },
+      {
+        "id": "b",
+        "from": {
+          "node": "work",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}

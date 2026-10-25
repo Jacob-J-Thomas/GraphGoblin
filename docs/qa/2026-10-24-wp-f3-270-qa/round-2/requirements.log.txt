@@ -1,0 +1,310 @@
+# Common brief for the 2026-10-18 GraphGoblin batch (intents I01 to I07)
+
+Every work-package brief in this folder starts by pointing you here. Read this file completely, then the package brief, then the orientation material in the order the brief lists. You are one worker among several running at the same time in separate git worktrees of the same repository.
+
+## 1. Orientation (read in this order)
+
+1. `AGENTS.md` at the worktree root. Its rules are binding.
+2. `docs/README.md`, then `docs/15-issue-workflow.md`.
+3. `docs/architecture/README.md`: the structural map of the code (packages, data, storage, API, web, adapters, triggers, one traced loop).
+4. The roadmap decision ledger: `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues\278.md`, sections "Owner decision ledger", "Shared completion standard" and "Engineering parameters". The owner's latest explicit decisions govern; historical comments are evidence, not a competing specification.
+5. The issue bodies your brief names, in `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues\<number>.md` (bolt, its UoW parent, and its intent). The "Acceptance criteria", "Verification", "Scope limits" and "Specific owner feedback" sections are the requirements. "Evidence provenance" links describe an older baseline (`c379f80`): reproduce on the current code before relying on them.
+6. The numbered docs and source files the brief lists.
+
+## 2. Hard rules (from AGENTS.md and the owner)
+
+- **Coverage:** every package stays above 90% lines and 90% branches. `pnpm test:coverage` fails otherwise. Never lower a threshold or add an exclusion beyond generated code. Keep denominators truthful.
+- **Types:** `pnpm typecheck` type-checks test files and fixtures too. Fix types; do not cast to `any`, do not add `@ts-expect-error` to hide a real problem.
+- **Imports:** relative imports use explicit `.js` extensions (NodeNext). Reach other packages only through their `@graphgoblin/*` entry points. Zod 4: `.prefault({})` for object defaults whose fields have defaults.
+- **Dependencies:** permissive licences only (MIT, Apache-2.0, BSD, ISC); `pnpm check:licenses` enforces `tooling/license-allowlist.json`; every new dependency gets a line in `docs/research/licenses.md`. Prefer no new dependency.
+- **Docs in sync:** a behaviour change updates the relevant numbered doc under `docs/`; a decision change adds an ADR under `docs/decisions/` (next free number); a node-schema or route change requires `pnpm docs:generate` and the regenerated `docs/reference/*` committed; every user-visible or contract change gets a bullet under `## Unreleased` in `CHANGELOG.md` ending with the issue number in parentheses, for example `(#263)`. Upgrade notes for the owner's instance go in that bullet as **Upgrade:**.
+- **Clean design over backward compatibility (ADR-0020):** no compatibility schemas, deprecated input paths, tolerant parsing of old data shapes, or dual code paths. Change the contract to its clean shape. When stored data must change, the owner resets by hand; say so in the CHANGELOG upgrade note.
+- **Test quality (owner decision, #278 "Test quality"):** test through supported public or component interfaces. Private-method access, reflection, invasive casts, monkey-patching the component under test, and test-only production exports are defects, not tests. Legitimate dependency injection through public constructors or ports, fake clocks, malformed external inputs, and real storage/process/network fault injection are valid. A regression test must demonstrably fail on the current code before your fix and pass after it; say so in the report. No retry-to-green: a test that passes only on retry is a failure to resolve. Do not rerun whole suites repeatedly without a new reason.
+- **Evidence first:** for a bolt marked "Evidence-dependent admission" or any human-reported defect, reproduce or measure on the current code before writing a corrective change. If you cannot reproduce, preserve the report, write down exactly what you tested and stop at a documented negative result. Do not manufacture a change to satisfy an old report, and never call the report disproven.
+- **Native and live claims:** process shutdown, restart, signal and subprocess behaviour require disposable real-process evidence (spawn the built app or a script in a temp data directory), not invocations of captured callbacks. Fake-harness results never establish live-provider behaviour. Live provider turns are out of scope for Codex workers unless the brief says otherwise.
+- **Engineering parameters:** unsettled numbers (grace periods, retry counts, byte bounds, thresholds) are yours to choose and justify in code comments and docs. Never describe one as owner-approved.
+- **Owner environment:** never touch the owner's running app on ports 4747/4748, its store under the user's home (`~/.graphgoblin` or any `GG_DATA_DIR` outside your worktree), or the main checkout at `%USERPROFILE%\source\repos\GraphGoblin` outside your own worktree. Use disposable data directories inside your worktree or the system temp directory, and alternate ports (the e2e server and the API tests pick free ports; for manual runs use 5600 to 5699). Never upgrade or reconfigure the owner's runtime, Node, pnpm, Codex or Claude installation.
+- **Scope:** implement only the bolts in your brief. Something outside scope that looks wrong goes into your report under "Observed outside scope", with file and line; do not fix it.
+- **Git and attribution:** commits carry no assistant attribution of any kind (no Co-Authored-By, no "Generated with", no model names). Never push. Never merge, rebase, stash or switch branches. Codex workers do not commit at all (the sandbox keeps `.git` read-only); leave changes in the worktree and the orchestrator commits after review. Claude workers commit on their worktree branch with clear messages that name the issue, for example `Pin draft run definitions at start (#247)`.
+- **Codex sandbox specifics:** work only in the current worktree and branch; never create symbolic links or junctions to any directory outside the worktree; if dependencies are missing, stop and report instead of linking another checkout's `node_modules`; do not try to delete directories (report `coverage/` or report folders for the orchestrator to remove); work alone in your thread (no sub-agents); in Windows PowerShell call `pnpm.cmd`, in Git Bash call `pnpm`.
+- **GitHub:** workers never post comments, edit issues, open PRs or change labels. The orchestrator does. Everything you want recorded goes into your report.
+
+## 3. Environment
+
+- Windows 11, PowerShell is the default shell; Git Bash is available. The default `node` is v23.10.0. The supported gate runtime is Node 22 at `%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node.exe` (dependency-cruiser refuses Node 23). Run every gate with Node 22 first on PATH:
+  - PowerShell: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` then `pnpm.cmd ...`
+  - Git Bash: `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` then `pnpm ...`
+- Tests, lint and typecheck need no prior build (the `development` export condition resolves TypeScript source). Node at runtime loads `dist/`, so `pnpm build` before starting an app or the browser suite.
+- Browser suite: `pnpm build`, then from `apps/web`: `pnpm exec playwright test` (Microsoft Edge channel by default on Windows; no browser download). Run a single spec with `pnpm exec playwright test e2e/<name>.spec.ts`. The suite takes 10 to 15 minutes; run only the specs relevant to your change unless the brief says otherwise. Six tests in `claude-harness.spec.ts`, `model-picker.spec.ts` and related model-picker flows are known to fail on current main (tracked under #205/#241); do not fix them unless your brief owns them, and list them separately in your report.
+- Turbo caches `typecheck`, `lint` and `test:coverage` results. Because `test:coverage` has no dependency inputs (#127), a cache hit can hide a regression in a dependency. When you need certainty for a package, run `pnpm exec turbo run test:coverage --force --filter=@graphgoblin/<name>` or `pnpm --filter @graphgoblin/<name> test:coverage` directly.
+- Other workers are editing the repository at the same time. `WAVE.md` in this folder lists who owns which files right now. Keep edits to files owned by another package small and additive, and name every such edit in your report.
+
+## 4. Gates before you report
+
+Run with Node 22 on PATH, from the worktree root:
+
+```
+pnpm typecheck
+pnpm lint
+pnpm format:check          # fix with: pnpm format
+pnpm check:layers
+pnpm check:deps
+pnpm --filter @graphgoblin/<each changed package> test:coverage
+pnpm check:docs            # only if a node schema or route changed; regenerate with pnpm docs:generate
+pnpm check:licenses        # only if dependencies changed
+pnpm check:tokens          # only if apps/web source changed
+```
+
+Then the browser specs relevant to any `apps/web` change (after `pnpm build`). Report every gate with its exact command and result. A gate you could not run is reported as not run, with the reason.
+
+## 5. Report shape (end your run with exactly these sections)
+
+1. **Branch and worktree:** branch name, worktree path, base commit, and either the commit list (Claude workers) or "uncommitted; ready for orchestrator commit" (Codex workers).
+2. **Per bolt:** for each issue number, each acceptance criterion with the evidence that satisfies it (test name and file, command output, or measurement), or "unresolved" with the reason. Research bolts end with a clearly labelled "confirmed", "not reproduced" or "measured" result.
+3. **Files changed:** grouped by package; every edit to a file owned by another package in `WAVE.md` called out.
+4. **Tests:** names of new or changed tests; which regression tests failed before the fix (quote the failure); coverage summary for each changed package.
+5. **Gates:** each command and its result.
+6. **Docs:** numbered docs, ADRs, CHANGELOG lines and generated references updated.
+7. **Decisions and parameters:** every engineering choice with its justification.
+8. **Caveats and open items:** what is left undone, what needs the orchestrator or the owner, anything observed outside scope.
+
+
+# Common instructions for independent QA (2026-10-18 batch)
+
+You test a reviewed work package against the running product and its public interfaces. You are not the implementer or the reviewer. You change no production code; you may add failing regression tests as `test.todo` or clearly skipped tests with the exact reason, and you write a QA report. Read `COMMON.md` first, then the package brief, then the bolt issue bodies (the `qa:touched-systems` scope applies: enumerate every system the change touches and test each with positive and negative cases).
+
+## Setup
+
+- Work in the worktree and branch you are given. With Node 22 first on PATH: `pnpm install --frozen-lockfile` if needed, `pnpm build`, then start a disposable instance: a temporary data directory (inside the worktree or the system temp folder), a free port in 5600 to 5699, an API key created by the binary, the fake harness unless the brief authorises live turns. Never touch ports 4747/4748, the owner's store or the main checkout.
+- Browser testing uses Playwright on Microsoft Edge (`GG_E2E_BROWSER_CHANNEL=msedge`), either through the repository's e2e server (`apps/web/e2e/server.ts`) or a Playwright script against your disposable instance.
+
+## What to test
+
+1. Every acceptance criterion of every bolt in the package, through the UI, the REST API, the MCP tools or the CLI as appropriate: positive case, negative case, and the failure, concurrency, cancellation and restart cases the criterion implies. Restart means stopping the process and starting a new one on the same data directory.
+2. The systems the change touches beyond the bolts' own surface: adjacent routes, inspector views, settings, MCP tools, exports, the CHANGELOG's upgrade note (does it describe what an operator must do?).
+3. Adversarial inputs: boundary sizes, malformed payloads, rapid repeated actions, stale clients, reloads mid-flow, two tabs, narrow viewport, keyboard-only navigation for any UI change.
+4. Native claims (shutdown, restart, subprocess): verify with the real built process, never by reading the code.
+
+## Record
+
+Write `docs/qa/2026-10-18-<package>.md` in the worktree with: build revision, environment (data directory, port, browser), the systems enumerated, a table of every check (system, case, steps, expected, actual, pass/fail, evidence such as a response body, a screenshot path under `docs/qa/2026-10-18-<package>/`, or a log excerpt), every defect with severity (blocker, major, minor) and reproduction steps, and the list of criteria you could not test with the reason. Fake-only evidence is labelled fake-only. Do not call a human-reported defect disproven if you could not reproduce it; record what you tested.
+
+## Report shape
+
+1. **Verdict:** pass, pass with minor defects, or fail, with the revision tested.
+2. **Defects:** numbered, severity, steps, expected, actual, evidence.
+3. **Coverage of criteria:** per bolt, per criterion: tested and passed, tested and failed, or not testable (why).
+4. **Report path and evidence folder.**
+5. **Observations outside scope.**
+
+Codex QA workers: work alone in your thread, never commit, never delete directories (list them for the orchestrator), and finish with this report.
+
+
+# #270 [I06/U17/B46] Enforce structured-completion deadlines
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:bug, area:engine, area:harness, backlog, kind:bolt, status:approved-held
+parent: #306 [I06/U17] Honor visible limits and cancellation
+sub-issues: -
+created: 2026-10-17T00:02:39Z updated: 2026-10-18T23:36:44Z
+
+## Body
+
+Part of #306
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B46 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Enforce structured-completion deadlines
+
+## Acceptance criteria
+
+- [ ] A configured deadline cancels overdue work and releases capacity with a typed timeout; late results cannot overwrite it and explicit cancellation remains distinguishable.
+
+## Verification
+
+Fast/stalled/late provider boundary cases plus a real adapter check.
+
+## Dependencies
+
+- #243 — B45
+- #279 — implementation dispatch remains held.
+
+## Scope limits
+
+Use the supported completion-deadline contract; do not reintroduce hidden limits into explicitly unlimited inference.
+
+Deadline enforcement applies to an explicitly configured execution/completion deadline, not a cost/token/usage budget. It must not reintroduce a hidden deadline when the relevant guardrail is disabled; late results cannot overwrite timeout/cancellation.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#270
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #270 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L426), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L464), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L425), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/primitive-evaluator.ts#L319), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/common.ts#L220)
+
+
+## Comments (0)
+
+
+# #306 [I06/U17] Honor visible limits and cancellation
+
+state: OPEN | milestone: Later | labels: type:epic, area:engine, area:harness, backlog, kind:uow, status:approved-held
+parent: #288 [I06] Make repeated model work predictable
+sub-issues: #243(OPEN), #270(OPEN)
+created: 2026-10-17T19:58:58Z updated: 2026-10-18T23:37:36Z
+
+## Body
+
+Part of #288
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:U17 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome and acceptance
+
+Limits in the UI, persisted configuration and actual execution agree.
+
+## Touched components
+
+- harness options
+- configuration
+- structured completion
+
+## Bolts
+
+- #243 **[I06/U17/B45] Apply visible defaults and genuine unlimited mode** — Visible defaults apply to loop-execution guardrails, such as iterations/node visits and an optional elapsed execution deadline. Explicit disabling removes the corresponding GraphGoblin cutoff; cancellation remains available.
+- #270 **[I06/U17/B46] Enforce structured-completion deadlines** — A configured deadline cancels overdue work and releases capacity with a typed timeout; late results cannot overwrite it and explicit cancellation remains distinguishable.
+
+Each nondeferred bolt is the sole implementation record for its scope. Current UoW completion requires their evidence and applicable owner acceptance; parked children do not block current completion. Publication is not dispatch.
+
+## Specific owner feedback
+
+Apply visible, disableable loop-execution guardrails only. No GraphGoblin cost, token, subscription-usage or substitute provider-turn budgets. Provider quota exhaustion currently fails with its real cause; post-1.0 same-model waiting/resumption is #335. Users can author script/decision nodes for usage-aware behavior. Explicit deadlines cancel overdue work and reject late overwrites without adding hidden limits.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #243 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/harness.ts#L265), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/errors.ts#L14), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L204), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/05-execution-engine.md#L128)
+
+### Source #270 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L426), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L464), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L425), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/primitive-evaluator.ts#L319), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/common.ts#L220)
+
+
+## Comments (0)
+
+
+# #288 [I06] Make repeated model work predictable
+
+state: OPEN | milestone: Later | labels: type:epic, area:editor, area:engine, area:contracts, area:harness, backlog, kind:intent, status:approved-held
+parent: #278 GraphGoblin roadmap — owner-approved intents, UoWs and bolts
+sub-issues: #305(OPEN), #306(OPEN), #307(OPEN)
+created: 2026-10-17T19:58:18Z updated: 2026-10-18T23:38:11Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:I06 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome
+
+Model choices, limits and conversation continuity behave explicitly across repeated node visits.
+
+## Priority
+
+6 in the approved next-intent order.
+
+## Units of work
+
+- #305 **U16: Make model configuration truthful** — Visible selections and readiness accurately describe what can execute.
+- #306 **U17: Honor visible limits and cancellation** — Limits in the UI, persisted configuration and actual execution agree.
+- #307 **U18: Preserve deliberate session continuity** — Repeated model work preserves intended context without cross-run leakage or duplicate uncertain submission.
+
+## Intent acceptance
+
+Subscription-backed tests and deterministic tests jointly demonstrate selection, limit, cancellation and session semantics; no new direct API integration is required.
+
+## Source issue coverage
+
+Current delivery: #33, #102, #179, #204, #205, #206, #243, #244, #265, #270.
+
+Deferred model lifecycle: #262 (including consolidated #271), excluded from current completion. Future usage-exhaustion recovery: #335.
+
+## Specific owner feedback
+
+- Separate #206 Sonnet/Haiku support from #204 provider-switch defaults and #205 model/effort visibility; no dependency on deferred model lifecycle/recovery.
+- #262 is post-1.0: unavailable means user-disabled or removed from support; warn before disabling referenced models and unpublish affected loops; retire models only with tested compatible successor upgrades for future executions.
+- #335 is post-1.0 allowance recovery with the same provider/model/session. Current usage exhaustion fails explicitly; retry only positively identified transient failures that are safe to repeat, otherwise fail. No runtime substitution.
+- Loop guardrails are visible, disableable execution controls, not cost/token/subscription budgets. Preserve physical/provider failure truth without silently truncating results.
+- Context modes are fresh/isolated with authored task and selected inputs; current main-loop context supplied deliberately; or an independent conversation owned by this node within this execution. A fresh provider session can still receive selected loop context.
+- Persistent memory means previous visits during one execution, not separate executions. Isolate node/run/harness identities, replay forks and children. Outputs enter the main thread only through the normal configured output behavior.
+- An explicitly chosen reset-after-N-visits policy is valid. It must be visible and optional, never an imposed hidden ten-visit reset, and must not erase the main-loop context.
+- Preserve prompt-delivery provenance: definitely unsubmitted work retains its authored prompt; uncertain accepted work is not blindly resent; a missing provider conversation requires an explicit fresh-session recovery choice.
+
+## Approved review refinements
+
+Keep provider selection/UI fixes and standalone high-priority #206 small. #262 lifecycle/validation is post-1.0 and excluded from this intent completion. #335 is post-1.0 same-model usage-exhaustion recovery. Current quota failures are explicit failures, not model unavailability or fallback. Built-in guardrails concern loop execution only. The three context modes and optional explicit reset policy are within one execution, with per-node isolation and truthful prompt/session recovery.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #243 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/harness.ts#L265), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/errors.ts#L14), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L204), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/05-execution-engine.md#L128)
+
+### Source #244 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/sessions.ts#L40), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/claude/harness.ts#L241)
+
+### Source #262 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/model-issues.ts#L149), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/07-api-and-streaming.md#L273)
+
+### Source #265 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/adapter-codex/src/harness.ts#L168), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/inference.ts#L261)
+
+### Source #270 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L426), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L464), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/ports.ts#L425), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/primitive-evaluator.ts#L319), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/common.ts#L220)
+
+### Source #271 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/settings.ts#L242), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1246), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L217)
+
+
+## Comments (0)

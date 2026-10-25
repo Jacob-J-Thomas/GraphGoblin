@@ -43,6 +43,19 @@ export const ExecutionLimitsSchema = z.strictObject({
         { control: 'execution-limit' },
       ),
     ),
+  structuredTimeoutMs: z
+    .number()
+    .int()
+    .positive()
+    .max(31_536_000_000)
+    .nullable()
+    .default(null)
+    .meta(
+      field(
+        'Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.',
+        { control: 'execution-limit' },
+      ),
+    ),
 });
 export type ExecutionLimits = z.infer<typeof ExecutionLimitsSchema>;
 

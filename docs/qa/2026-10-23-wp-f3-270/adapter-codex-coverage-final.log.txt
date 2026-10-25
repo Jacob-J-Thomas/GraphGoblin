@@ -1,0 +1,62 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/packages/adapter-codex
+      Coverage enabled with v8
+
+ ❯ src/probe-directory.test.ts (4 tests | 2 failed) 10265ms
+   ❯ Codex readiness probe directory (4)
+     × runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 5087ms
+     × preserves 1 existing collision directories and bounds retries 5015ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:33:3
+     31|
+     32| describe('Codex readiness probe directory', () => {
+     33|   it('runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and…
+       |   ^
+     34|     const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-codex-long-'…
+     35|     try {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:59:18
+     57|   });
+     58|
+     59|   it.each([1, 4])(
+       |                  ^
+     60|     'preserves %i existing collision directories and bounds retries',
+     61|     async (collisions) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 498 passed | 5 skipped (505)
+   Start at  19:41:26
+   Duration  106.20s (tests 66%, import 18%, transform 15%, worker 1%)
+
+    Isolate  10 workers spawned · ~1.82s startup each (spawn + environment, per file)
+             at least ~7.27s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.73% ( 389/398 )
+Branches     : 94.66% ( 337/356 )
+Functions    : 97.84% ( 91/93 )
+Lines        : 98.88% ( 355/359 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\packages\adapter-codex
+System.Management.Automation.RemoteException

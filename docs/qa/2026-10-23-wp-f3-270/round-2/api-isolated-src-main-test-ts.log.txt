@@ -1,0 +1,55 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "exec", "vitest", "run", "src/main.test.ts", "--maxWorkers=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+
+{"level":30,"time":1792823603868,"pid":33000,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5659"}
+{"level":30,"time":1792823603910,"pid":33000,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5659,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-GquCAo","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792823604233,"pid":33000,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792823604239,"pid":33000,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":5.447399999990012,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 2 failed | 4 skipped) 188291ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 60686ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60556ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:49:3
+     47|   }, 60_000);
+     48|
+     49|   it('serves authenticated requests using a binary-created key and ref…
+       |   ^
+     50|     const f = await fixture();
+     51|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed | 4 skipped (9)
+   Start at  01:32:14
+   Duration  256.06s (tests 75%, transform 21%, import 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\api
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "exec", "vitest", "run", "src/main.test.ts", "--maxWorkers=1"], "exitCode": 1, "seconds": 267.125}
