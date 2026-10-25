@@ -1,0 +1,20 @@
+pnpm.cmd : $ vitest run --coverage --exclude src/main.test.ts --exclude src/readiness-evidence.test.ts --exclude 
+src/nested-readiness.test.ts --exclude src/subloop-restart.test.ts --exclude src/targeted-events-restart.test.ts 
+--exclude src/retired-event-startup.test.ts
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api test:coverage --exclud ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...startup.test.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d4-343/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 99959ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20060ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 2 failed) 62228ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20013ms
+     × observes only current state and cannot reconstruct a label transition between snapshots 20220ms

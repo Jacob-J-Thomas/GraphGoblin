@@ -1,0 +1,16 @@
+let s;
+try{
+ s=await instance('isolated-boot',6018);
+ const x=await loop(s,definition('Boot failing Event')),y=await loop(s,definition('Boot healthy Event')),h=await loop(s,definition('Boot healthy webhook',{type:'webhook'}));
+ const path=(await s.call('GET','/loops/'+h+'/triggers')).body.webhooks[0].path;
+ await fault(s,'qa_boot_runs','INSERT ON runs');const bad=await ev(s,x,{dedupeKey:'bad'}),good=await ev(s,y,{dedupeKey:'good'}),wh=await s.call('POST',path,{key:'boot'});await s.settle();await drop(s,'qa_boot_runs');
+ await fault(s,'qa_boot_bad_run','INSERT ON runs',`WHEN NEW.loop_id='${x}'`);await fault(s,'qa_boot_bad_meta','UPDATE ON event_receipts',`WHEN OLD.inbound_id='${bad.body.id}'`);
+ await s.sql("UPDATE event_receipts SET next_attempt_at='2000-01-01'");await s.sql("UPDATE webhook_receipts SET next_attempt_at='2000-01-01'");const before={events:await s.events(),webhooks:await s.sql('SELECT * FROM webhook_receipts')};
+ const stopped=await s.stop();
+ await test('isolated-boot-per-receipt-isolation','bad Event metadata write does not prevent boot, following due Event, or webhook',async()=>{await s.start();await s.settle();const health=await s.call('GET','/healthz');assert.equal(health.status,200);const b=await s.item(bad.body.id),g=await s.item(good.body.id),ws=await s.sql('SELECT id,status,attempts FROM webhook_receipts');assert.equal(b.delivery.state,'pending');assert.equal(g.delivery.state,'admitted');assert.equal(g.runIds.length,1);assert.equal(ws.length,1);assert.equal(ws[0].status,'admitted');return {before,stopped,health,bad:b,good:g,webhooks:ws}});
+ await drop(s,'qa_boot_bad_run');await drop(s,'qa_boot_bad_meta');
+}finally{if(s)await s.stop();await save()}
+// Diagnose the inherited broad assertion without changing its recorded failure.
+const ready=JSON.parse(await readFile(join(evidence,'browser-ready.json'),'utf8'));const auth=JSON.parse(await readFile(ready.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const response=await fetch(auth.url+'/__qa',{method:'POST',headers:{authorization:'Bearer '+auth.key,'content-type':'application/json'},body:JSON.stringify({op:'sql',sql:'SELECT status,count(*) n FROM webhook_receipts GROUP BY status'})});
+results.inheritedBootDiagnostic={status:response.status,states:await response.json(),explanation:'Original assertion required every historical webhook to be admitted, including intentional deduplicated receipts.'};await save();

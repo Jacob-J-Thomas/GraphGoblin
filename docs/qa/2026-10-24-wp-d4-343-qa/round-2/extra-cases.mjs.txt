@@ -1,0 +1,35 @@
+ // Round-2 independent probes for the reported fixes.
+ for (const [label,key] of [['empty',''],['513','x'.repeat(513)],['lone-high','\ud800'],['lone-low','\udfff']]) {
+  await test('request-key-refuse-'+label,'400 VALIDATION_FAILED at /dedupeKey; two attempts create no inbound, receipt or run',async()=>{
+   await s.settle();const before=await counts(s);const rs=[];
+   for(let i=0;i<2;i++)rs.push(await ev(s,a,{dedupeKey:key,payload:{i}}));
+   for(const r of rs){assert.equal(r.status,400);assert.equal(r.body.code,'VALIDATION_FAILED');assert.ok(r.body.errors.some(e=>e.path==='/dedupeKey'));}
+   const after=await counts(s);assert.deepEqual(after,before);return {rs,before,after};
+  });
+ }
+ for(const [label,key] of [['space',' '],['one','x'],['512','z'.repeat(512)],['nul','left\u0000right']]) {
+  await test('request-key-preserved-'+label,'one delivery/admission/run; exact request key survives changed-payload retry and run envelope',async()=>{
+   const first=await ev(s,a,{dedupeKey:key,payload:{label,original:true}});assert.equal(first.status,202);assert.equal(first.body.dedupeKey,key);assert.equal(first.body.duplicate,false);
+   await s.settle();const retry=await ev(s,a,{dedupeKey:key,payload:{label,changed:true}});assert.equal(retry.status,202);assert.equal(retry.body.duplicate,true);assert.equal(retry.body.id,first.body.id);assert.equal(retry.body.admissionId,first.body.admissionId);assert.equal(retry.body.dedupeKey,key);assert.deepEqual(retry.body.payload,first.body.payload);
+   const item=await s.item(first.body.id);assert.equal(item.runIds.length,1);
+   const rows=await s.sql('SELECT id,initial_thread FROM runs WHERE id=?',[item.runIds[0]]);const envelope=JSON.parse(rows[0].initial_thread).invocation.trigger;assert.equal(envelope.dedupeKey,key);
+   const receipts=await s.sql('SELECT id,status,run_id FROM event_receipts WHERE inbound_id=?',[item.id]);assert.equal(receipts.length,1);assert.equal(receipts[0].run_id,item.runIds[0]);
+   return {first,retry,item,envelope,receipts};
+  });
+ }
+ await test('webhook-expression-keys','empty expression result 422 KEY_INVALID without rows; nonempty key exact ack and one run after retry',async()=>{
+  const id=await loop(s,definition('Webhook keys',{type:'webhook',dedupeKey:'key'}));const path=(await s.call('GET','/loops/'+id+'/triggers')).body.webhooks[0].path;
+  const before=await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM webhook_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs');
+  const empty=await s.call('POST',path,{key:''});assert.equal(empty.status,422);assert.equal(empty.body.code,'KEY_INVALID');
+  assert.deepEqual(await s.sql('SELECT (SELECT count(*) FROM inbound_events) AS inbound,(SELECT count(*) FROM webhook_receipts) AS receipts,(SELECT count(*) FROM runs) AS runs'),before);
+  const rs=[];for(let i=0;i<2;i++)rs.push(await s.call('POST',path,{key:'stable-webhook',i}));for(const r of rs){assert.equal(r.status,202);assert.deepEqual(r.body,{accepted:true});}await s.settle();const runs=await s.runs(id);assert.equal(runs.length,1);return {empty,before,rs,runs};
+ });
+ await test('recovery-past-failing-event','retry metadata failure on first Event does not prevent next due Event receipt admission',async()=>{
+  const x=await loop(s,definition('Failing sweep receipt')),y=await loop(s,definition('Healthy sweep receipt'));
+  await fault(s,'qa_pair','INSERT ON runs',`WHEN NEW.loop_id IN ('${x}','${y}')`);
+  const rx=await ev(s,x,{dedupeKey:'pair-x'}),ry=await ev(s,y,{dedupeKey:'pair-y'});await s.settle();await drop(s,'qa_pair');
+  await fault(s,'qa_pair_x','INSERT ON runs',`WHEN NEW.loop_id='${x}'`);
+  await fault(s,'qa_pair_meta','UPDATE ON event_receipts',`WHEN OLD.inbound_id='${rx.body.id}'`);
+  await s.sweep();const bad=await s.item(rx.body.id),good=await s.item(ry.body.id);assert.equal(bad.delivery.state,'pending');assert.equal(good.delivery.state,'admitted');assert.equal(good.runIds.length,1);
+  await drop(s,'qa_pair_x');await drop(s,'qa_pair_meta');return {bad,good};
+ });

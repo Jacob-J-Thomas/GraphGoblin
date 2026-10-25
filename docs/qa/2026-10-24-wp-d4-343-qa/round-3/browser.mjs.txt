@@ -1,0 +1,26 @@
+import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {pathToFileURL} from 'node:url';import assert from 'node:assert/strict';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-3');const ready=JSON.parse(await readFile(join(out,'browser-ready.json'),'utf8'));const auth=JSON.parse(await readFile(ready.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const {chromium}=await import(pathToFileURL(join(root,'node_modules/.pnpm/playwright@1.63.0/node_modules/playwright/index.mjs')).href);
+const browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});await context.addInitScript(key=>localStorage.setItem('graphgoblin-api-key',key),auth.key);
+const page=await context.newPage();const result={channel:'msedge',version:browser.version(),checks:[],errors:[]};page.on('pageerror',e=>result.errors.push(String(e)));
+const test=async(id,fn)=>{const c={id};try{c.actual=await fn();c.status='PASS'}catch(e){c.status='FAIL';c.error=e.stack}result.checks.push(c);await writeFile(join(out,'browser-results.json'),JSON.stringify(result,null,2));console.log(id,c.status,c.error??'')};
+const r=await fetch(auth.url+'/events?limit=500',{headers:{authorization:'Bearer '+auth.key}});assert.equal(r.status,200);const items=(await r.json()).items;
+const chosen=['pending','failed','admitted','deduplicated'].map(state=>{const item=items.find(i=>i.target&&i.admissionId&&i.delivery?.state===state);assert.ok(item,state+' fixture');return item});
+const legacy=items.find(i=>i.type==='qa-legacy');assert.ok(legacy);
+await page.goto(auth.url+'/app/events');await page.getByRole('heading',{name:'Events',exact:true}).waitFor();await page.locator('tbody tr').first().waitFor();
+for(const width of [1440,390]){
+ await page.setViewportSize({width,height:1000});await page.reload();await page.locator('tbody tr').first().waitFor();
+ await writeFile(join(out,`edge-${width}-snapshot.log.txt`),await page.locator('body').ariaSnapshot());await page.screenshot({path:join(out,`edge-${width}.png`)});
+ await test('width-'+width,async()=>{const dimensions=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,body:document.body.scrollWidth}));assert.equal(dimensions.document,width);return {dimensions,rows:await page.locator('tbody tr').count()}});
+ for(const item of chosen){await test(`target-${item.delivery.state}-${width}`,async()=>{
+  const row=page.locator('tbody tr').filter({hasText:item.admissionId});assert.equal(await row.count(),1);const text=await row.innerText();assert.ok(text.includes(item.target.loopId));assert.ok(text.includes('Entry '+item.target.triggerNodeId));assert.ok(text.includes('Admission '+item.admissionId));assert.ok(text.includes('Admission failures: '+item.delivery.attempts));if(item.delivery.state==='failed'&&item.delivery.failureCode)assert.ok(text.includes(item.delivery.failureCode));
+  if(item.delivery.state==='pending'||item.delivery.state==='failed')assert.equal(item.runIds.length,0);
+  await row.screenshot({path:join(out,`edge-${width}-${item.delivery.state}.png`)});
+  const link=row.getByRole('link',{name:item.target.loopId,exact:true});const href=await link.getAttribute('href');assert.ok(href.endsWith('/loops/'+item.target.loopId+'/edit'));await link.focus();await page.keyboard.press('Enter');await page.waitForURL('**/loops/'+item.target.loopId+'/edit');
+  await page.getByRole('button',{name:'Publish',exact:true}).waitFor();const url=page.url();const editorText=(await page.locator('body').innerText()).slice(0,1200);await page.goBack();await page.locator('tbody tr').first().waitFor();return {item,text,href,openedEditor:url,editorText};
+ });}
+ await test('legacy-'+width,async()=>{const row=page.locator('tbody tr').filter({hasText:'qa-legacy'});const text=await row.innerText();assert.ok(text.includes('not recorded'));assert.ok(text.includes('not tracked'));return {text,loopLinks:await row.locator('a[href*="/loops/"]').count()}});
+ await test('attempts-codes-'+width,async()=>{const text=await page.locator('body').innerText();assert.ok(text.includes('Admission failures: 8'));assert.ok(text.includes('EVENT_ADMISSION_EXHAUSTED'));return {attempt8:true,exhaustionCode:true}});
+}
+await test('second-tab-reload',async()=>{const second=await context.newPage();await second.goto(auth.url+'/app/events');await second.locator('tbody tr').first().waitFor();await second.reload();await second.locator('tbody tr').first().waitFor();return {rows:await second.locator('tbody tr').count(),errors:result.errors}});
+assert.equal(result.errors.length,0);await browser.close();await writeFile(join(out,'browser-results.json'),JSON.stringify(result,null,2));

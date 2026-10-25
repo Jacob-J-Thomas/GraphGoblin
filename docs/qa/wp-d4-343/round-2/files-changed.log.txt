@@ -1,0 +1,81 @@
+Base/head: feefbfddae9f9c343879ff4ad92bd792036589f0
+Uncommitted source/document edits; QA additions under docs/qa/wp-d4-343/round-2 are listed separately.
+
+CHANGELOG.md
+  current SHA-256: ed5391fd9dea14f51de7db3ae68aed37163462be943367c52704c1949adf970b
+  @@ -7 +7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+apps/api/src/targeted-events-restart.test.ts
+  current SHA-256: 916a8c179471fb15ff750eea1c802a7dacdacf50cd754e1c7e83d65c37b58be2
+  @@ -1 +1 @@
+  @@ -19,5 +19 @@ it.each(['before-receipt', 'pending-before-run', 'after-run'] as const)(
+  @@ -44 +40 @@ it.each(['before-receipt', 'pending-before-run', 'after-run'] as const)(
+  @@ -46,0 +43 @@ it.each(['before-receipt', 'pending-before-run', 'after-run'] as const)(
+apps/api/src/targeted-events.test.ts
+  current SHA-256: 0572315fbdbab49332db0f749346b3bf006457cc7e8af391881374459aa003ca
+  @@ -1 +1 @@
+  @@ -7 +7 @@ beforeEach(async () => {
+  @@ -191,0 +192,3 @@ it('reuses one original delivery across concurrent keyed retries and admits unke
+  @@ -312,0 +316,7 @@ it('preserves node expression dedupe and refuses expression failures before acce
+  @@ -338,27 +348,46 @@ it('bounds persistent admission failures and keeps failed keyed deliveries truth
+  @@ -481,0 +511,63 @@ it('refuses non-finite deeply nested JSON without entering a recursive validator
+apps/api/src/testing/api-subprocess.ts
+  current SHA-256: 0e4c64b9edb6a7ef3d1f3908980e2a4c1440b874f48f19443cc2795c92141f1a
+  @@ -36 +36,3 @@ export function listening(port: number): Promise<boolean> {
+  @@ -121,3 +123 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
+  @@ -131 +131 @@ export async function createApiProcessFixture(
+  @@ -134 +134 @@ export async function createApiProcessFixture(
+apps/api/src/testing/test-app.ts
+  current SHA-256: 71f8a23036af9d5d4919227da8ad8d24a33f0af8c4e40e0b8ecf6b382eac96a7
+  @@ -42 +41,0 @@ export interface TestAppOptions {
+  @@ -53 +52 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
+apps/api/src/triggers/trigger-service.ts
+  current SHA-256: d1888503ccf0c05c2e015e9464820e24ddf51a8308f04378454da0af8f7616d2
+  @@ -28 +28,5 @@ import type {
+  @@ -558,11 +562,24 @@ export class TriggerService {
+  @@ -570 +587 @@ export class TriggerService {
+docs/03-domain-model.md
+  current SHA-256: e87679c6686224ab9ceef383343eb553005825fe33f7da1bd6a610628e2402fb
+  @@ -282,11 +282,12 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and typed fields
+docs/07-api-and-streaming.md
+  current SHA-256: 8ade0f43b693bf7dd7a51b3b9eef9a73d288cf0ba4bdf46506183f03db95c382
+  @@ -37 +37 @@ Triggers and events
+  @@ -530 +530 @@ JSON event pages, SSE, generated clients and MCP use the same `exhausted` status
+docs/08-triggers-and-integrations.md
+  current SHA-256: 9ca242f33a6a71f05131320d753886d216235554ba59d0bf63541c30e1da9e84
+  @@ -90 +90 @@ Pointers allow 1,024 characters and 32 segments with valid RFC 6901 `~0`/`~1` es
+  @@ -154 +154,3 @@ Review explicitly accepts formerly ignored input creating quiet runs, expression
+  @@ -160 +162 @@ An explicit request key identifies one delivery in owner/loop/trigger/type scope
+  @@ -162 +164 @@ The existing node `dedupeKey` expression remains a separate payload-key rule: it
+  @@ -254,2 +255,0 @@ The generic GitHub poll-items recipe in the trigger guide remains available to o
+docs/decisions/README.md
+  current SHA-256: 56fc550a77b036c4726046b71f7096de8f10270beb714e97a8031a756a0bd882
+  @@ -53,0 +54,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
+packages/engine/src/event-admission.test.ts
+  current SHA-256: 19604a032c1f4d7923b0d753ea7baec77c0a6ae4735c510c19f5de55390fd9d1
+  @@ -1 +1 @@
+  @@ -4,0 +5 @@ import { AdmissionConflictError } from './admission.js';
+  @@ -129,0 +131,91 @@ it('classifies an immutable intent conflict and a removed version permanently',
+packages/engine/src/run-manager.ts
+  current SHA-256: 4da38477a2a03a47105b9c90c599a9fc3a3331f3b8675cfe1e96a7f963af5df8
+  @@ -741,4 +741,9 @@ export class RunManager {
+  @@ -746,4 +751,8 @@ export class RunManager {
+packages/engine/src/testing/event-admission.ts
+  current SHA-256: df50503efc246cab3cafeab06e27208a4ee716b3da125e8218cd0e470af66d39
+  @@ -1 +1 @@
+  @@ -56,0 +57 @@ export class InMemoryEventAdmission implements EventAdmissionPort {
+packages/infrastructure/src/sqlite/event-admission.ts
+  current SHA-256: 4022a1337e7123911400468aa71edff7fa8cf601d8b64b9b6dce011ba9be2a37
+  @@ -1 +1 @@
+  @@ -124,0 +125 @@ export class SqliteEventAdmission implements EventAdmissionPort {
+packages/infrastructure/src/sqlite/triggers.test.ts
+  current SHA-256: d3a15a431e3f1ac9d2707a2faf12efa57d85d10b46842c3d789a1e682bef2bc2
+  @@ -157 +157 @@ describe('SqliteInboundEvents', () => {
+  @@ -159 +159,3 @@ describe('SqliteInboundEvents', () => {
+  @@ -172 +173,0 @@ describe('SqliteInboundEvents', () => {
+  @@ -178,35 +178,0 @@ describe('SqliteInboundEvents', () => {
+packages/infrastructure/src/sqlite/triggers.ts
+  current SHA-256: 2055d11442ad90b4d108bf2f3942a192252955f7233a0c63af4cafe2dee87f52
+  @@ -13 +12,0 @@ import {
+  @@ -334,9 +332,0 @@ export interface InboundEventRecord {
+  @@ -380,7 +369,0 @@ export class SqliteInboundEvents {
+  @@ -502,45 +484,0 @@ export class SqliteInboundEvents {

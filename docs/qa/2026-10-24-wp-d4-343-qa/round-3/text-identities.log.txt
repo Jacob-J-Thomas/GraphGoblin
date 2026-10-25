@@ -1,0 +1,64 @@
+request-NUL-embedded PASS
+request-NUL-leading PASS
+request-NUL-trailing PASS
+event-authored-NUL PASS
+webhook-authored-NUL PASS
+API-type-NUL PASS
+API-trigger-NUL PASS
+API-type-surrogate PASS
+API-trigger-surrogate PASS
+API-type-LF PASS
+API-trigger-LF PASS
+API-type-CR PASS
+API-trigger-CR PASS
+API-type-astral PASS
+API-trigger-astral PASS
+API-loop-NUL PASS
+API-loop-surrogate PASS
+API-loop-newline PASS
+definition-node-id-NUL PASS
+definition-node-id-surrogate PASS
+definition-node-id-astral PASS
+definition-event-type-NUL PASS
+definition-event-type-surrogate PASS
+definition-event-type-astral PASS
+key-roundtrip-tab PASS
+key-roundtrip-CR PASS
+key-roundtrip-LF PASS
+key-roundtrip-SOH PASS
+key-roundtrip-DEL PASS
+key-roundtrip-astral PASS
+key-roundtrip-composed PASS
+key-roundtrip-decomposed PASS
+key-roundtrip-replacement PASS
+Unicode-distinct-keys FAIL AssertionError [ERR_ASSERTION]: {"status":202,"body":{"id":"01M5Q73ESQ266F9N10GRSNZHG1","ownerId":"local","type":"ready","payload":null,"dedupeKey":"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀","source":"api","receivedAt":"2026-10-24T15:05:09.687Z","runIds":[],"admissionId":"01M5Q73ESQ266F9N10GRSNZHG2","target":{"loopId":"01M5Q73ESQ266F9N10GRSNZHDT","versionId":"01M5Q73ESQ266F9N10GRSNZHDV","triggerNodeId":"start"},"delivery":{"state":"pending","attempts":0,"nextAttemptAt":"2026-10-24T15:05:09.687Z"},"duplicate":false},"ms":13}
+raw-SQLite-comparison-probe FAIL TypeError: fetch failed
+boot-isolation-fresh FAIL TypeError: fetch failed
+node : node:internal/modules/run_main:122
+At line:2 char:155
++ ... ype=module; node '%USERPROFILE%\AppData\Local\Temp\gg-qa-d4-343-3-sc ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/run_main:122:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    triggerUncaughtException(
+    ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async s.call (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-3-scripts-PKJrcy/text-identities.mjs:40:40)
+    at async s.qa (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-3-scripts-PKJrcy/text-identities.mjs:45:30)
+    at async s.stop (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-3-scripts-PKJrcy/text-identities.mjs:49:20)
+    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-3-scripts-PKJrcy/text-identities.mjs:129:1 {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:5858
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 5858
+  }
+}
+
+Node.js v22.14.0

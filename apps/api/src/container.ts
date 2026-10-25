@@ -334,6 +334,7 @@ export async function createContainer(
       endpoints,
       inbound,
       manager,
+      eventAdmission: ports.admission.events,
       cron,
       secretsFor,
       clock,

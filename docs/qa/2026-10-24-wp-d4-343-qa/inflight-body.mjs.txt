@@ -1,0 +1,18 @@
+const { pathToFileURL }=await import('node:url');
+const {openDatabase}=await import(pathToFileURL(join(root,'packages/infrastructure/dist/sqlite/index.js')).href);
+await test('in-flight-before-202','SQLite writer lock blocks in-flight request; hard kill returns no 202; restart/retry creates one delivery',async()=>{
+ const s=await instance('inflight',5855);const id=await loop(s,definition('In flight before 202'));
+ const h=openDatabase({url:'file:'+join(s.data,'graphgoblin.db').replaceAll('\\','/')});
+ const tx=await h.client.transaction('write');
+ await tx.execute({sql:'UPDATE loops SET name=name WHERE id=?',args:[id]});
+ let outcome,finished=false;
+ const request=ev(s,id,{dedupeKey:'inflight',payload:{original:true}}).then(r=>{outcome=r;finished=true},e=>{outcome={error:e.message,cause:e.cause?.code};finished=true});
+ await sleep(150);const hadResponded=finished;
+ const killed=s.proc.child.kill('SIGKILL');const termination=await s.proc.done;await s.proc.log();
+ await tx.rollback();tx.close();h.close();await request;
+ assert.equal(hadResponded,false);assert.equal(killed,true);assert.notEqual(outcome.status,202);
+ await s.start();const before=await counts(s);assert.deepEqual(before,{inbound:0,receipts:0,runs:0});
+ const retry=await ev(s,id,{dedupeKey:'inflight',payload:{original:true}});assert.equal(retry.status,202);await s.settle();const item=(await s.events())[0];assert.equal(item.runIds.length,1);const queued=await s.sql("SELECT run_id,count(*) AS n FROM run_events WHERE type='run.queued' GROUP BY run_id");assert.equal(queued.length,1);assert.equal(queued[0].n,1);
+ await s.stop();return {hadResponded,killed,termination,outcome,before,retry,item,queued};
+});
+await save();

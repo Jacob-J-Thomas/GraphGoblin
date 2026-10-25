@@ -1,0 +1,25 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$evidence = Join-Path (Get-Location) 'docs/qa/wp-d4-343/round-4'
+$results = @()
+$cases = @(
+  @('infrastructure', 'src/sqlite/upgrade.test.ts'),
+  @('infrastructure', 'src/process/scripts.test.ts'),
+  @('infrastructure', 'src/claude/readiness.test.ts'),
+  @('infrastructure', 'src/adversarial.test.ts'),
+  @('infrastructure', 'src/claude/process.test.ts'),
+  @('api', 'src/main.test.ts'),
+  @('api', 'src/subloop-restart.test.ts')
+)
+foreach ($case in $cases) {
+  $package = $case[0]
+  $file = $case[1]
+  $label = 'isolated-' + $package + '-' + $file.Replace('/', '-')
+  $arguments = @('--filter', "@graphgoblin/$package", 'exec', 'vitest', 'run', $file, '--maxWorkers=1')
+  $started = [DateTimeOffset]::UtcNow
+  & pnpm.cmd @arguments *> (Join-Path $evidence ($label + '.log.txt'))
+  $code = $LASTEXITCODE
+  $results += [pscustomobject]@{ command = 'pnpm.cmd ' + ($arguments -join ' '); exitCode = $code; started = $started.ToString('o'); finished = [DateTimeOffset]::UtcNow.ToString('o'); log = "$label.log.txt" }
+  $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $evidence 'isolated-diagnostics.json')
+  Write-Output "$package $file exit $code"
+}
+if ($results.Where({ $_.exitCode -ne 0 }).Count) { exit 1 }

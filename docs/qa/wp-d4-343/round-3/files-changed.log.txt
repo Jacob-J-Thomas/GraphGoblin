@@ -1,0 +1,61 @@
+CHANGELOG.md
+@@ -7 +7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+
+apps/api/src/routes/triggers.ts
+@@ -195,0 +196 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
+@@ -212 +213 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
+
+apps/api/src/targeted-events.test.ts
+@@ -573,0 +574,76 @@ it('returns a typed stored-history error for a corrupt keyed retry without rewri
+
+apps/api/src/triggers/trigger-service.ts
+@@ -479 +479 @@ export class TriggerService {
+@@ -494 +494 @@ export class TriggerService {
+@@ -561 +561 @@ export class TriggerService {
+@@ -631 +631 @@ export class TriggerService {
+@@ -657 +657,3 @@ export class TriggerService {
+
+apps/web/src/__fixtures__/fake-api.ts
+@@ -218,0 +219,2 @@ export class FakeApi {
+
+apps/web/src/events/EventsPage.test.tsx
+@@ -329,0 +330,36 @@ it('lays out a large payload within the cell bound and offers the exact value (#
+
+apps/web/src/events/EventsPage.tsx
+@@ -112,2 +112 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
+@@ -131,0 +131 @@ export function EventsPage() {
+@@ -150,0 +151,28 @@ export function EventsPage() {
+
+docs/07-api-and-streaming.md
+@@ -530 +530 @@ JSON event pages, SSE, generated clients and MCP use the same `exhausted` status
+@@ -532 +532 @@ The 202 response is the saved Event with `duplicate`, durable `admissionId`, pin
+
+docs/08-triggers-and-integrations.md
+@@ -156 +156 @@ Missing or malformed fields return 400 `VALIDATION_FAILED`; unknown or foreign l
+@@ -160 +160 @@ A transaction saves the inbound delivery, exact loop/version/trigger, complete f
+
+docs/decisions/ADR-0048-targeted-event-admission.md
+@@ -1 +1 @@
+@@ -23 +23 @@ Reuse the iterative `isJsonValue` and the shared `POLL_ITEM_MAX_NESTING_DEPTH` c
+@@ -27 +27 @@ Migration 0018 is additive and has a fresh journal timestamp. It does not repair
+
+docs/guide/04-triggers.md
+@@ -320,0 +321,2 @@ event.json
+
+packages/api-client/openapi.json
+@@ -20835,0 +20836 @@
+
+packages/engine/src/run-manager.ts
+@@ -424 +424 @@ export class RunManager {
+
+packages/engine/src/testing/event-admission.ts
+@@ -37,10 +37,11 @@ export class InMemoryEventAdmission implements EventAdmissionPort {
+
+packages/engine/src/testing/fakes.ts
+@@ -1061 +1061 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+
+packages/infrastructure/src/sqlite/admission.ts
+@@ -264 +264 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
+
+packages/infrastructure/src/sqlite/event-admission.ts
+@@ -97,16 +97,17 @@ export class SqliteEventAdmission implements EventAdmissionPort {

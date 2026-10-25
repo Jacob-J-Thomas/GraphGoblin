@@ -1,0 +1,10 @@
+$env:PATH="$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$qaOut=Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-d4-343-qa'
+$qaChecks=@(@{package='infrastructure';file='src/sqlite/upgrade-scan.test.ts';name='upgrade-scan'},@{package='infrastructure';file='src/sqlite/upgrade.test.ts';name='upgrade'},@{package='api';file='src/triggers/github-recipe.test.ts';name='github-recipe'},@{package='api';file='src/adversarial.test.ts';name='api-adversarial'})
+$qaResults=@()
+foreach($qaCheck in $qaChecks){
+  $qaStart=Get-Date
+  & pnpm.cmd --filter "@graphgoblin/$($qaCheck.package)" exec vitest run $qaCheck.file *> (Join-Path $qaOut "isolated-$($qaCheck.name).log.txt")
+  $qaResults += [pscustomobject]@{command="pnpm.cmd --filter @graphgoblin/$($qaCheck.package) exec vitest run $($qaCheck.file)";exit=$LASTEXITCODE;seconds=((Get-Date)-$qaStart).TotalSeconds;mode='one diagnostic run, sequential, no other QA suites active'}
+  $qaResults | ConvertTo-Json | Set-Content (Join-Path $qaOut 'isolated-results.json')
+}

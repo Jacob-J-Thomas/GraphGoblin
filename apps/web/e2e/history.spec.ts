@@ -1,5 +1,5 @@
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { control, expect, publishLoop, test } from './fixtures.js';
+import { control, expect, publishEventLoop, publishLoop, test } from './fixtures.js';
 
 test('Runs appends a second page and preserves loop, status and parent filters', async ({
   page,
@@ -53,18 +53,14 @@ test('Events appends beyond the first page with reading position and keyboard fo
 }) => {
   const instance = await control(request, '/apps');
   const url = String(instance['url']);
+  const send = await publishEventLoop(request, ['paging-events'], url);
   for (let i = 0; i < 101; i++) {
-    expect(
-      (
-        await request.post(url + '/events', {
-          data: { type: 'paging-events', payload: { index: i } },
-        })
-      ).status(),
-    ).toBe(202);
+    await send('paging-events', { index: i });
   }
   await page.goto(url + '/app/events');
   await expect(page.locator('tbody tr')).toHaveCount(100);
-  const firstText = await page.locator('tbody tr').first().innerText();
+  const firstPayload = page.locator('[data-testid^="payload-"]').first();
+  const firstText = await firstPayload.textContent();
   const more = page.getByRole('button', { name: 'Load more' });
   await expect(more).toBeVisible();
   await more.scrollIntoViewIfNeeded();
@@ -75,7 +71,7 @@ test('Events appends beyond the first page with reading position and keyboard fo
   await expect(more).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('tbody tr')).toHaveCount(101);
-  expect(await page.locator('tbody tr').first().innerText()).toBe(firstText);
+  expect(await firstPayload.textContent()).toBe(firstText);
   expect(Math.abs((await page.evaluate(() => window.scrollY)) - readingY)).toBeLessThanOrEqual(1);
   await expect(more).toBeHidden();
   await expect(page.getByText('All events loaded.', { exact: true })).toBeFocused();

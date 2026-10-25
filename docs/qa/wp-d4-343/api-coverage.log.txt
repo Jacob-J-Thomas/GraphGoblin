@@ -1,0 +1,38 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2
+At line:26 char:3
++   pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 *>  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=2:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 31608ms
+   ❯ adversarial API invariants (34)
+     × 14: exits cannot chain loops through Events; external Event intake still starts runs 292ms
+ ❯ src/api.test.ts (19 tests | 1 failed) 40581ms
+   ❯ settings, secrets, api keys, catalog, events (3)
+     × publishes and lists same-millisecond inbound events in reverse creation order 1643ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 51811ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × observes only current state and cannot reconstruct a label transition between snapshots 20140ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792801946969,"pid":41456,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5638"}
+{"level":30,"time":1792801946969,"pid":41456,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5638,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-UnLyou","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792801947800,"pid":41456,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792801947818,"pid":41456,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":16.48660000000018,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 3 failed | 4 skipped) 257351ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 60240ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60418ms
+     × releases ownership on a real corrupt-database startup fault before HTTP setup 60782ms
