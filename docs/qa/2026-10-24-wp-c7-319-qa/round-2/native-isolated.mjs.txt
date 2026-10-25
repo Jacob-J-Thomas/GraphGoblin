@@ -1,0 +1,16 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {createWriteStream} from 'node:fs';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {resolve,join} from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-c7-319-qa/round-2');
+const file='apps/api/src/shutdown-process.test.ts';const bytes=await readFile(file);
+const base=execFileSync('git',['show','c63db24590d23263a3f7253eda13249f9252ec16:'+file]);
+const command='pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts --maxWorkers=1';
+const log='native-isolated.log.txt',output=createWriteStream(join(out,log));
+const started=new Date().toISOString(),begin=Date.now();console.log('START '+command);
+const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+child.stdout.on('data',b=>output.write(b));child.stderr.on('data',b=>output.write(b));
+const exit=await new Promise((r,j)=>{child.on('error',j);child.on('close',(code,signal)=>r({code,signal}));});await new Promise(r=>output.end(r));
+await writeFile(join(out,'native-isolated-result.json'),JSON.stringify({file,command,started,elapsedMs:Date.now()-begin,...exit,unchanged:base.equals(bytes),sha256:createHash('sha256').update(bytes).digest('hex'),log,alone:true,reason:'One file-only isolated recheck after three newly observed timing/child-exit failures in the focused seven-file run. Original failures remain recorded.'},null,2));
+console.log('END '+JSON.stringify(exit));if(exit.code!==0)process.exitCode=1;

@@ -1,0 +1,13 @@
+import {readFile,writeFile,unlink} from 'node:fs/promises';
+import {resolve,dirname,basename,join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+const out=resolve('docs/qa/2026-10-24-wp-c7-319-qa/round-2');
+const env=JSON.parse(await readFile(join(out,'environment.json'),'utf8'));
+const target=resolve(env.helperPath.replaceAll('%USERPROFILE%',process.env.USERPROFILE));
+if(dirname(target).toLowerCase()!==resolve(tmpdir()).toLowerCase()||!/^gg-qa-c7-319-r2-helper-\d+\.mjs$/.test(basename(target)))throw new Error('Unexpected temporary helper target');
+const bytes=await readFile(target),kept=await readFile(join(out,'helpers.mjs.txt'));
+if(!bytes.equals(kept))throw new Error('Temporary helper differs from retained canonical source');
+await unlink(target);
+await writeFile(join(out,'temporary-helper-cleanup.json'),JSON.stringify({path:target.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),canonicalArtifact:'helpers.mjs.txt',removedSingleTemporaryFile:true,directoriesDeleted:0},null,2));
+console.log('Removed verified temporary helper copy; canonical .mjs.txt retained.');
