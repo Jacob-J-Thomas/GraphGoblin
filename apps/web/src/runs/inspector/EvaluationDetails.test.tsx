@@ -319,6 +319,7 @@ describe('EvaluationDetails', () => {
       expect(screen.getByRole('list', { name: 'Alternative probabilities' })).toHaveTextContent(
         'Review (review): 20%',
       );
+      expect(screen.getByText('Alternative probabilities', { selector: 'p' })).toBeVisible();
       rerender(
         <EvaluationDetails
           event={event('run', 2, 'decision.made', {
@@ -473,6 +474,7 @@ describe('EvaluationDetails', () => {
     expect(screen.getByRole('list', { name: 'Rubric index probabilities' })).toHaveTextContent(
       '1: 92%',
     );
+    expect(screen.getByText('Rubric index probabilities', { selector: 'p' })).toBeVisible();
   });
 
   it('shows a confidence-gate rejection as a proposed answer with no selected route', () => {

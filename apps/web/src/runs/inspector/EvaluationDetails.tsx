@@ -8,7 +8,7 @@ import {
   type RunEvent,
 } from '@graphgoblin/contracts';
 import { Card } from '../../components/ui/index.js';
-import { Fragment } from 'react';
+import { Fragment, useId } from 'react';
 import {
   answerDescription,
   describeEvent,
@@ -107,6 +107,7 @@ function ClassifierDetails({
   definition?: LoopDefinition | undefined;
   nodeId?: string | undefined;
 }) {
+  const probabilitiesId = useId();
   return (
     <>
       {answer.type === 'score' ? (
@@ -124,23 +125,24 @@ function ClassifierDetails({
         </ul>
       ) : null}
       {answer.type !== 'noul' && answer.probabilities ? (
-        <ul
-          aria-label={
-            answer.type === 'score'
+        <>
+          {/* A visible heading names the percentages as probabilities (#123) and labels the list. */}
+          <p id={probabilitiesId} className="mt-2 text-sm font-medium">
+            {answer.type === 'score'
               ? `${prefix}${prefix ? 'rubric' : 'Rubric'} index probabilities`
-              : `${prefix}Alternative probabilities`
-          }
-          className="mt-2 grid gap-1 text-sm"
-        >
-          {Object.entries(answer.probabilities).map(([key, value]) => (
-            <li key={key}>
-              <code>
-                {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
-              </code>
-              : <span title={String(value)}>{formatProbability(value)}</span>
-            </li>
-          ))}
-        </ul>
+              : `${prefix}Alternative probabilities`}
+          </p>
+          <ul aria-labelledby={probabilitiesId} className="mt-1 grid gap-1 text-sm">
+            {Object.entries(answer.probabilities).map(([key, value]) => (
+              <li key={key}>
+                <code>
+                  {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
+                </code>
+                : <span title={String(value)}>{formatProbability(value)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
       {answer.type !== 'noul' && answer.probabilities === null ? (
         <p className="mt-2 text-sm text-muted">Alternative probabilities: not recorded.</p>
