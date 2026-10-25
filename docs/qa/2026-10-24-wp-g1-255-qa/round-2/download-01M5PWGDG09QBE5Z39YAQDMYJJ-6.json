@@ -1,0 +1,42 @@
+{
+  "runId": "01M5PWGDG09QBE5Z39YAQDMYJJ",
+  "seq": 6,
+  "ts": "2026-10-24T12:00:00.000Z",
+  "type": "run.failed",
+  "failure": {
+    "code": "EVALUATION_RESULT_REJECTED",
+    "message": "Classifier confidence is below the authored minimum",
+    "nodeId": "decide",
+    "resumable": false,
+    "details": {
+      "observation": {
+        "kind": "classifier",
+        "answer": {
+          "type": "score",
+          "score": 0.7123456789012345,
+          "confidence": 0.12345678901234566,
+          "legend": {
+            "0": "Low anchor",
+            "1": "High anchor"
+          },
+          "probabilities": {
+            "0": 0.12345678901234566,
+            "1": 0.8765432109876543
+          }
+        }
+      },
+      "provenance": {
+        "kind": "classifier",
+        "provider": "typesafe",
+        "classifierId": "jev",
+        "model": "jev-latest",
+        "effort": null
+      },
+      "acceptance": {
+        "status": "rejected",
+        "code": "EVALUATION_RESULT_REJECTED",
+        "minConfidence": 0.9
+      }
+    }
+  }
+}

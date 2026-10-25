@@ -1,0 +1,277 @@
+{
+  "run": {
+    "id": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+    "ownerId": "local",
+    "loopId": "01M5PWGDG08JMHRYYN75EY7M7G",
+    "versionId": "01M5PWGDG08JMHRYYN75EY7M7H",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Pinned noul-0.5",
+      "label": "Pinned noul-0.5 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null
+      },
+      "classifiers": {
+        "jev": {
+          "provider": "typesafe",
+          "providerModel": "jev-latest",
+          "primitives": [
+            "choice",
+            "noul",
+            "score"
+          ],
+          "endpoint": "https://classifier.test"
+        }
+      }
+    },
+    "invocationId": "01M5PWGDG0D4ZG8DW4BD5C9EDK",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-24T12:00:00.000Z",
+    "startedAt": "2026-10-24T12:00:00.000Z",
+    "finishedAt": "2026-10-24T12:00:00.000Z",
+    "lastEventSeq": 11
+  },
+  "events": [
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 1,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "run.queued",
+      "versionId": "01M5PWGDG08JMHRYYN75EY7M7H",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Pinned noul-0.5",
+        "label": "Pinned noul-0.5 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {
+          "jev": {
+            "provider": "typesafe",
+            "providerModel": "jev-latest",
+            "primitives": [
+              "choice",
+              "noul",
+              "score"
+            ],
+            "endpoint": "https://classifier.test"
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 2,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 3,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 4,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 6
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 5,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.started",
+      "nodeId": "decide",
+      "kind": "decision",
+      "attempt": 1,
+      "configHash": "f46a45e1be6820ad"
+    },
+    {
+      "provenance": {
+        "kind": "classifier",
+        "provider": null,
+        "classifierId": null,
+        "model": null,
+        "effort": null
+      },
+      "observation": {
+        "kind": "classifier",
+        "answer": {
+          "type": "noul",
+          "holds": null,
+          "trueProbability": null,
+          "confidence": null
+        }
+      },
+      "portId": "accept",
+      "diagnostics": [],
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 6,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "decision.made",
+      "nodeId": "decide"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 7,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.finished",
+      "nodeId": "decide",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/decide",
+          "value": {
+            "nodeId": "decide",
+            "value": {
+              "observation": {
+                "kind": "classifier",
+                "answer": {
+                  "type": "noul",
+                  "holds": true,
+                  "trueProbability": 0.5000000000000001,
+                  "confidence": 0.5000000000000001
+                }
+              },
+              "provenance": {
+                "kind": "classifier",
+                "provider": "typesafe",
+                "classifierId": "jev",
+                "model": "jev-latest",
+                "effort": null
+              },
+              "portId": "accept"
+            },
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "decide",
+            "value": {
+              "observation": {
+                "kind": "classifier",
+                "answer": {
+                  "type": "noul",
+                  "holds": true,
+                  "trueProbability": 0.5000000000000001,
+                  "confidence": 0.5000000000000001
+                }
+              },
+              "provenance": {
+                "kind": "classifier",
+                "provider": "typesafe",
+                "classifierId": "jev",
+                "model": "jev-latest",
+                "effort": null
+              },
+              "portId": "accept"
+            },
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        }
+      ],
+      "route": "accept",
+      "durationMs": 8
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 8,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "caacd31f1376b30f"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 9,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 10,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 3
+    },
+    {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "seq": 11,
+      "ts": "2026-10-24T12:00:00.000Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success"
+    }
+  ],
+  "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5PWGDG0D4ZG8DW4BD5C9EDJ\nsucceeded\nloop\nchild runs\nExit evaluation\n\nPinned completion (done): Exited: success\n\nNo value was returned: Returns is None, so no destination received anything (caller from the exit). This is the exit’s configuration, not a failure.\n\nExecution limits\n\nMaximum node visits: 10. Run deadline: none.\n\nLimits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.\n\nExecution context\n\nPinned noul-0.5 v1 · version ID 01M5PWGDG08JMHRYYN75EY7M7H\n\nInitial thread not recorded. Historical reconstruction uses the documented fallback and may be incomplete.\n\nExact run record\nPinned definition JSON\nTimeline (11 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nPinned initial trigger (start) (trigger) attempt 1\n#4\nnode.finished\nPinned initial trigger (start) → out, 2 changes, 6 ms\n#5\nnode.started\nDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1\n#6\ndecision.made\nAnswered unknown (not recorded) (true probability not recorded) with classifier with confidence not recorded\n#7\nnode.finished\nDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept), 2 changes, 8 ms\n#8\nnode.started\nPinned completion (done) (exit) attempt 1\n#9\nexit.evaluated\nPinned completion (done): Exited: success\n#10\nnode.finished\nPinned completion (done), 0 changes, 3 ms\n#11\nrun.finished\nsucceeded (success)\nExact recorded event #6\nEvaluation details\n\nAnswered unknown (not recorded) (true probability not recorded) with classifier with confidence not recorded\n\nNode: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide)\n\nAnswer\nNoul unknown (not recorded)\nSide port\naccept\nLabel\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nCriterion\nholds\nEvaluator\nclassifier\nProvider\nNot recorded\nClassifier\nNot recorded\nModel\nNot recorded\nConfidence acceptance\nNo minimum configured in run version\nTrue probability\nNot recorded\nTrue-probability threshold\n50%\nConfidence\nNot recorded\nThread at event 6\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)"
+}

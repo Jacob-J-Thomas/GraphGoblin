@@ -1,0 +1,96 @@
+[
+  {
+    "id": "progress-appended-value",
+    "steps": "Open persisted inference history; expand Node progress; inspect only its aria-controls target",
+    "expected": "Exact appended provider message is readable inside progress panel",
+    "actual": "Lifecycle work (work)\nharness.session codex session fresh; model gpt-6-luna; requested effort low\nnode.progress\n{\n  \"item\": {\n    \"id\": \"i1\",\n    \"summary\": \"OK\",\n    \"type\": \"message\"\n  }\n}\nharness.session codex session fresh; model gpt-6-luna; requested effort low\nnode.progress\n{\n  \"item\": {\n    \"id\": \"progress\",\n    \"summary\": \"LIFECYCLE exact appended answer\",\n    \"type\": \"message\"\n  }\n}\nharness.usage { \"inputTokens\": 0, \"outputTokens\": 0, \"cachedInputTokens\": 0, \"reasoningOutputTokens\": 0 }\nLifecycle done (done)\nexit.evaluated Lifecycle done (done): Exited: success",
+    "result": "PASS"
+  },
+  {
+    "id": "replace-remove-existing-values",
+    "steps": "Create values in one completed node, replace/remove them in the next; inspect that node patch",
+    "expected": "Existing before values and correct after/absent values",
+    "actual": {
+      "runId": "01M5PWGDG0Q5BGRY9R4208J02G",
+      "event": {
+        "runId": "01M5PWGDG0Q5BGRY9R4208J02G",
+        "seq": 8,
+        "ts": "2026-10-24T12:00:00.000Z",
+        "type": "node.finished",
+        "nodeId": "change",
+        "patch": [
+          {
+            "op": "replace",
+            "path": "/vars/item/keep",
+            "value": "after-value"
+          },
+          {
+            "op": "remove",
+            "path": "/vars/item/remove"
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      "patchText": "replace\n/vars/item/keep\nBefore\n\"before-value\"\nAfter\n\"after-value\"\nremove\n/vars/item/remove\nBefore\n\"removed-before-value\"\nAfter\n(absent)",
+      "thread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5PWGDG0Q5BGRY9R4208J02G",
+          "loopId": "01M5PWGDG0Q5BGRY9R4208J02E",
+          "versionId": "01M5PWGDG0Q5BGRY9R4208J02F",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5PWGDG0Q5BGRY9R4208J02H",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        "messages": [],
+        "vars": {
+          "item": {
+            "keep": "after-value"
+          }
+        },
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T12:00:00.000Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-24T12:00:00.000Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "prepare": 1,
+            "change": 1,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    "result": "PASS"
+  }
+]

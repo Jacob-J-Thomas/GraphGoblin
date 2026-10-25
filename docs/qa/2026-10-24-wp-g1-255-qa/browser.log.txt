@@ -1,0 +1,113 @@
+PASS patch-browser
+PASS decision-browser-expression-null
+PASS decision-browser-llm-0
+PASS decision-browser-llm-1
+PASS decision-browser-llm-1e-12
+PASS decision-browser-llm-0.999999999999
+PASS decision-browser-llm-0.5
+PASS decision-browser-llm-0.5000000000000001
+PASS decision-browser-llm-0.12345678901234566
+PASS decision-browser-choice-0
+PASS decision-browser-choice-1
+PASS decision-browser-choice-1e-12
+PASS decision-browser-choice-0.999999999999
+PASS decision-browser-choice-0.5
+PASS decision-browser-choice-0.5000000000000001
+PASS decision-browser-choice-0.12345678901234566
+FAIL decision-browser-noul-0 expect(locator).toContainText(expected) failed
+
+Locator: getByRole('list', { name: 'Timeline' })
+Expected substring: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept)"
+Received string:    "#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 0%) with classifier via typesafe (jev-latest) with confidence 100%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 3 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 2 ms#11run.finishedsucceeded (success)"
+Timeout: 5000ms
+
+Call log:
+  - Expect "toContainText" getByRole('list', { name: 'Timeline' }) with timeout 5000ms
+  - waiting for getByRole('list', { name: 'Timeline' })
+    14 × locator resolved to <ol aria-label="Timeline" class="max-h-[60vh] overflow-auto p-2">…</ol>
+       - unexpected value "#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 0%) with classifier via typesafe (jev-latest) with confidence 100%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 3 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 2 ms#11run.finishedsucceeded (success)"
+
+PASS decision-browser-noul-1
+FAIL decision-browser-noul-1e-12 expect(locator).toContainText(expected) failed
+
+Locator: getByRole('list', { name: 'Timeline' })
+Expected substring: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept)"
+Received string:    "#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability <0.01%) with classifier via typesafe (jev-latest) with confidence >99.99%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 1 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)"
+Timeout: 5000ms
+
+Call log:
+  - Expect "toContainText" getByRole('list', { name: 'Timeline' }) with timeout 5000ms
+  - waiting for getByRole('list', { name: 'Timeline' })
+    14 × locator resolved to <ol aria-label="Timeline" class="max-h-[60vh] overflow-auto p-2">…</ol>
+       - unexpected value "#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 1 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability <0.01%) with classifier via typesafe (jev-latest) with confidence >99.99%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 1 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)"
+
+PASS decision-browser-noul-0.999999999999
+PASS decision-browser-noul-0.5
+PASS decision-browser-noul-0.5000000000000001
+FAIL decision-browser-noul-0.12345678901234566 expect(locator).toContainText(expected) failed
+
+Locator: getByRole('list', { name: 'Timeline' })
+Expected substring: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (accept)"
+Received string:    "#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 2 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 12.35%) with classifier via typesafe (jev-latest) with confidence 87.65%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 2 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)"
+Timeout: 5000ms
+
+Call log:
+  - Expect "toContainText" getByRole('list', { name: 'Timeline' }) with timeout 5000ms
+  - waiting for getByRole('list', { name: 'Timeline' })
+    14 × locator resolved to <ol aria-label="Timeline" class="max-h-[60vh] overflow-auto p-2">…</ol>
+       - unexpected value "#1run.queued#2run.startedattempt 1#3node.startedPinned initial trigger (start) (trigger) attempt 1#4node.finishedPinned initial trigger (start) → out, 2 changes, 2 ms#5node.startedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) (decision) attempt 1#6decision.madeAnswered false (true probability 12.35%) with classifier via typesafe (jev-latest) with confidence 87.65%#7node.finishedDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD (decide) → Pinned reject (reject), 2 changes, 2 ms#8node.startedPinned completion (done) (exit) attempt 1#9exit.evaluatedPinned completion (done): Exited: success#10node.finishedPinned completion (done), 0 changes, 1 ms#11run.finishedsucceeded (success)"
+
+PASS decision-browser-score-0
+PASS decision-browser-score-1
+PASS decision-browser-score-1e-12
+PASS decision-browser-score-0.999999999999
+PASS decision-browser-score-0.5
+PASS decision-browser-score-0.5000000000000001
+PASS decision-browser-score-0.12345678901234566
+FAIL cause-browser-cancelled locator.innerText: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+FAIL cause-browser-deadline locator.innerText: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+FAIL cause-browser-provider locator.innerText: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+FAIL cause-browser-parent locator.innerText: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+FAIL cause-browser-child locator.innerText: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+FAIL cause-browser-resumed-cancelled locator.innerText: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+PASS pinned-browser
+FAIL unavailable-definition locator.innerText: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('main')[22m
+
+FAIL historical-browser expect(locator).toContainText(expected) failed
+
+Locator: locator('main')
+Expected substring: "Not recorded"
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toContainText" locator('main') with timeout 5000ms
+  - waiting for locator('main')
+
+PASS replay-browser
+PASS layout-1440-dark
+PASS layout-1440-light
+PASS layout-390-dark
+PASS layout-390-light
+PASS large-browser
+BROWSER_COMPLETE 34 passed, 11 failed

@@ -1,0 +1,32 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-g1-255-qa');
+const read=async name=>{const b=await readFile(join(out,name));return (b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8')).replace(/^\uFEFF/,'');};
+const json=async name=>JSON.parse(await read(name));
+const report=await read('README.md');
+const artifacts=[];
+for(const name of await readdir(out)){const s=await stat(join(out,name));if(!s.isFile())continue;assert.ok(s.size<=1000000,name+' exceeds size policy');if(name!=='README.md')assert.ok(report.includes(']('+name+')'),name+' not linked');if(/\.(json|txt|md)$/.test(name)){const text=await read(name);assert.ok(!text.includes(process.env.USERPROFILE),name+' has unnormalized user path');assert.ok(!text.includes(JSON.stringify(process.env.USERPROFILE).slice(1,-1)),name+' has escaped unnormalized path');}artifacts.push({name,size:s.size});}
+for(const m of report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){if(!m[1].includes('://')&&!m[1].startsWith('#'))await stat(join(out,m[1]));}
+assert.ok(report.includes('**Fail**'));
+assert.equal((await json('api-checks.json')).filter(c=>c.result!=='PASS').length,0);
+assert.equal((await json('browser-results.json')).length,45);
+assert.equal((await json('browser-results.json')).filter(c=>c.result!=='PASS').length,0);
+assert.deepEqual((await json('supplement-results.json')).filter(c=>c.result==='FAIL').map(c=>c.id).sort(),['visible-probability-label-choice','visible-probability-label-score']);
+assert.deepEqual(await json('browser-page-errors.json'),[]);
+assert.equal((await json('isolated-result.json')).exit,0);
+assert.equal((await json('format-candidate-result.json')).exit,0);
+assert.equal((await json('final-markdown-format-result.json')).exit,0);
+assert.equal((await json('final-panel-results.json')).length,2);assert.ok((await json('final-panel-results.json')).every(c=>c.result==='PASS'));
+assert.equal((await json('restart-after.json')).run.status,'succeeded');
+assert.equal((await json('renamed-current-definitions.json')).length,2);
+assert.ok((await json('renamed-current-definitions.json')).every(c=>c.result==='PASS'));
+const exactOmission=(await json('browser-omitted.json')).find(c=>c.name==='large-exact-event.json');assert.equal((await json('browser-results.json')).find(c=>c.id==='large-browser').actual.hash,exactOmission.sha256);
+const git=args=>{const r=spawnSync('git',args,{cwd:root,encoding:'utf8',windowsHide:true});return {exit:r.status,output:r.stdout.trim()};};
+const head=git(['rev-parse','HEAD']);assert.equal(head.output,'373470f236bb1b7695c4ff0435968b2eb86d5516');
+const production=git(['diff','--exit-code','HEAD','--','.',':!docs/qa']);assert.equal(production.exit,0);
+const status=git(['status','--short']);assert.equal(status.output,'?? docs/qa/2026-10-24-wp-g1-255-qa/');
+const stopped=[];for(const port of [6080,6081]){let listening=false;try{await fetch('http://127.0.0.1:'+port+'/healthz',{signal:AbortSignal.timeout(2000)});listening=true;}catch{}assert.equal(listening,false,'QA gateway still listening');stopped.push(port);}
+const result={result:'PASS',revision:head.output,productionDiffClean:true,status:status.output,keptFiles:artifacts.length,allKeptFilesAtMost1000000:true,allArtifactsLinked:true,userPathsNormalized:true,browserChecks:45,apiChecks:(await json('api-checks.json')).length,supplementPasses:4,supplementMinorDefectChecks:2,isolatedTests:31,stoppedPorts:stopped,packageCoverageQualified:false,rootFormattingQualified:false};
+await writeFile(join(out,'final-check.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));

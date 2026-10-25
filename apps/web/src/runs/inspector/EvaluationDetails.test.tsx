@@ -261,7 +261,7 @@ describe('EvaluationDetails', () => {
         })}
       />,
     );
-    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.4');
+    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('40%');
     expect(screen.getByText('Reasoning excerpt').parentElement).toHaveTextContent(
       'Recorded historical explanation.',
     );
@@ -270,9 +270,9 @@ describe('EvaluationDetails', () => {
 
   it.each([
     [undefined, 0.8, 'No minimum configured in run version'],
-    [0.7, 0.8, 'Meets run-version minimum 0.7'],
-    [0.9, 0.8, 'Below run-version minimum 0.9'],
-    [0.7, null, 'Not recorded; run-version minimum 0.7'],
+    [0.7, 0.8, 'Meets run-version minimum 70%'],
+    [0.9, 0.8, 'Below run-version minimum 90%'],
+    [0.7, null, 'Not recorded; run-version minimum 70%'],
   ] as const)(
     'shows recorded Choice evidence and factual confidence comparison %#',
     (minimum, confidence, expected) => {
@@ -317,8 +317,9 @@ describe('EvaluationDetails', () => {
       expect(screen.getByText('Option ID').parentElement).toHaveTextContent('ship');
       expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(expected);
       expect(screen.getByRole('list', { name: 'Alternative probabilities' })).toHaveTextContent(
-        'review: 0.2',
+        'Review (review): 20%',
       );
+      expect(screen.getByText('Alternative probabilities', { selector: 'p' })).toBeVisible();
       rerender(
         <EvaluationDetails
           event={event('run', 2, 'decision.made', {
@@ -407,7 +408,7 @@ describe('EvaluationDetails', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText('Not recorded')).toHaveLength(3);
-    expect(screen.getByText('0.7')).toBeInTheDocument();
+    expect(screen.getByText('70%')).toBeInTheDocument();
   });
 
   it('shows typed Noul and fractional Score evidence with stable ports and rubric anchors', () => {
@@ -471,8 +472,9 @@ describe('EvaluationDetails', () => {
       'Anchor 2: Fully meets',
     ]);
     expect(screen.getByRole('list', { name: 'Rubric index probabilities' })).toHaveTextContent(
-      '1: 0.92',
+      '1: 92%',
     );
+    expect(screen.getByText('Rubric index probabilities', { selector: 'p' })).toBeVisible();
   });
 
   it('shows a confidence-gate rejection as a proposed answer with no selected route', () => {
@@ -516,10 +518,10 @@ describe('EvaluationDetails', () => {
       screen.getByRole('region', { name: 'Rejected classifier evaluation' }),
     ).toHaveTextContent('No decision was accepted and no route was selected.');
     expect(screen.getByText('Proposed answer').parentElement).toHaveTextContent('Noul false');
-    expect(screen.getByText('True probability').parentElement).toHaveTextContent('0.3');
-    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.42');
-    expect(screen.getByText('Minimum confidence').parentElement).toHaveTextContent('0.8');
-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2');
+    expect(screen.getByText('True probability').parentElement).toHaveTextContent('30%');
+    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('42%');
+    expect(screen.getByText('Minimum confidence').parentElement).toHaveTextContent('80%');
+    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('20%');
     expect(screen.getByText('Provider').parentElement).toHaveTextContent('typesafe');
     expect(screen.getByText('Classifier').parentElement).toHaveTextContent('jev');
     expect(screen.getByText('Model').parentElement).toHaveTextContent('jev-latest');
@@ -552,7 +554,7 @@ describe('EvaluationDetails', () => {
         definition={noulDefinition()}
       />,
     );
-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.5');
+    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('50%');
   });
 
   it('keeps the rejected Score rubric and classifier identity when alternatives are absent', () => {

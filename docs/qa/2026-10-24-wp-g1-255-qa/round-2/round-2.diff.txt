@@ -1,0 +1,95 @@
+diff --git a/apps/web/src/runs/inspector/EvaluationDetails.test.tsx b/apps/web/src/runs/inspector/EvaluationDetails.test.tsx
+index f3a8dcb6..6c1b5627 100644
+--- a/apps/web/src/runs/inspector/EvaluationDetails.test.tsx
++++ b/apps/web/src/runs/inspector/EvaluationDetails.test.tsx
+@@ -319,6 +319,7 @@ describe('EvaluationDetails', () => {
+       expect(screen.getByRole('list', { name: 'Alternative probabilities' })).toHaveTextContent(
+         'Review (review): 20%',
+       );
++      expect(screen.getByText('Alternative probabilities', { selector: 'p' })).toBeVisible();
+       rerender(
+         <EvaluationDetails
+           event={event('run', 2, 'decision.made', {
+@@ -473,6 +474,7 @@ describe('EvaluationDetails', () => {
+     expect(screen.getByRole('list', { name: 'Rubric index probabilities' })).toHaveTextContent(
+       '1: 92%',
+     );
++    expect(screen.getByText('Rubric index probabilities', { selector: 'p' })).toBeVisible();
+   });
+ 
+   it('shows a confidence-gate rejection as a proposed answer with no selected route', () => {
+diff --git a/apps/web/src/runs/inspector/EvaluationDetails.tsx b/apps/web/src/runs/inspector/EvaluationDetails.tsx
+index 961b445f..dad1938c 100644
+--- a/apps/web/src/runs/inspector/EvaluationDetails.tsx
++++ b/apps/web/src/runs/inspector/EvaluationDetails.tsx
+@@ -8,7 +8,7 @@ import {
+   type RunEvent,
+ } from '@graphgoblin/contracts';
+ import { Card } from '../../components/ui/index.js';
+-import { Fragment } from 'react';
++import { Fragment, useId } from 'react';
+ import {
+   answerDescription,
+   describeEvent,
+@@ -107,6 +107,7 @@ function ClassifierDetails({
+   definition?: LoopDefinition | undefined;
+   nodeId?: string | undefined;
+ }) {
++  const probabilitiesId = useId();
+   return (
+     <>
+       {answer.type === 'score' ? (
+@@ -124,23 +125,24 @@ function ClassifierDetails({
+         </ul>
+       ) : null}
+       {answer.type !== 'noul' && answer.probabilities ? (
+-        <ul
+-          aria-label={
+-            answer.type === 'score'
++        <>
++          {/* A visible heading names the percentages as probabilities (#123) and labels the list. */}
++          <p id={probabilitiesId} className="mt-2 text-sm font-medium">
++            {answer.type === 'score'
+               ? `${prefix}${prefix ? 'rubric' : 'Rubric'} index probabilities`
+-              : `${prefix}Alternative probabilities`
+-          }
+-          className="mt-2 grid gap-1 text-sm"
+-        >
+-          {Object.entries(answer.probabilities).map(([key, value]) => (
+-            <li key={key}>
+-              <code>
+-                {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
+-              </code>
+-              : <span title={String(value)}>{formatProbability(value)}</span>
+-            </li>
+-          ))}
+-        </ul>
++              : `${prefix}Alternative probabilities`}
++          </p>
++          <ul aria-labelledby={probabilitiesId} className="mt-1 grid gap-1 text-sm">
++            {Object.entries(answer.probabilities).map(([key, value]) => (
++              <li key={key}>
++                <code>
++                  {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
++                </code>
++                : <span title={String(value)}>{formatProbability(value)}</span>
++              </li>
++            ))}
++          </ul>
++        </>
+       ) : null}
+       {answer.type !== 'noul' && answer.probabilities === null ? (
+         <p className="mt-2 text-sm text-muted">Alternative probabilities: not recorded.</p>
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 106c39ba..78020751 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -81,7 +81,7 @@ The owner's request: move the horizontal and vertical break points of a line to
+ - Exact execution evidence (#255): selecting any timeline event offers **Exact recorded event**, with bounded JSON, Show all and an exact JSON download. **Execution context** identifies the pinned definition and offers the exact run record and definition JSON. Missing definitions, labels, cancellation actors and initial seeds are identified explicitly; reconstruction without a recorded seed remains the documented fallback and may be incomplete.
+ - Patch diffs show each `add` operation's recorded inserted value, including `null`, nested arrays and multiple `/-` appends in one patch. **Added value** describes the operation's value rather than the final array or an absent value at the append pointer. Other operations retain the completed patch's before/after path view; the exact operations remain in the selected event.
+ - Timeline, node progress, wait, patch and evaluation labels use only the immutable version named by the run's `versionId`. Labels appear beside stable IDs. Run-list names use `run.pinned.name`, so later loop renames do not relabel history. Unavailable pinned definitions never fall back to the current draft or published version.
+-- Probabilities and confidence use percentages with at most two decimal places. Nonzero values below 0.01% show **<0.01%**; values above 99.99% below one show **>99.99%**, preserving the distinction from zero and one. Exact recorded numbers remain in event JSON. Choice alternatives show their pinned route labels beside IDs; Score probability keys remain rubric indices.
++- Probabilities and confidence use percentages with at most two decimal places. Nonzero values below 0.01% show **<0.01%**; values above 99.99% below one show **>99.99%**, preserving the distinction from zero and one. Exact recorded numbers remain in event JSON. Choice alternatives show their pinned route labels beside IDs; Score probability keys remain rubric indices. Both probability lists sit under a visible heading (**Alternative probabilities** or **Rubric index probabilities**) that also names the list for assistive technology.
+ - A cancelled run identifies its recorded cancellation-request actor and event numbers, or says the actor was not recorded. An incomplete event prefix is distinguished from unrecorded facts; a missing terminal cancellation event is named without denying a request that was recorded. The recorded node position is labelled separately. Cancellation never displays a stale failure alert. Provider failures retain the recorded diagnostic and raw failure evidence; the list shows its recorded code and message. An elapsed run deadline remains the distinct engine failure `RUN_DEADLINE_EXCEEDED`, as recorded, rather than a provider error or an invented cancellation actor.
+ 
+ - Timeline from the SSE stream with the cursor stored so reload resumes without gaps.
