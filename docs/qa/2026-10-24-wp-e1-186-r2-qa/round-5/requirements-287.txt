@@ -1,0 +1,66 @@
+# #287 [I05] Keep sustained loops responsive and resource use controlled
+
+state: OPEN | milestone: Later | labels: type:epic, area:web, area:api, area:engine, area:integrations, backlog, kind:intent, status:approved-held
+parent: #278 GraphGoblin roadmap — owner-approved intents, UoWs and bolts
+sub-issues: #302(OPEN), #303(OPEN), #304(OPEN)
+created: 2026-10-17T19:58:15Z updated: 2026-10-18T23:38:08Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:I05 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome
+
+Long-lived loops and large contexts remain observable and controllable without unbounded incidental buffering.
+
+## Priority
+
+5 in the approved next-intent order.
+
+## Units of work
+
+- #302 **U13: Measure sustained execution first** — Performance work has a reproducible baseline and identified causes.
+- #303 **U14: Bound handling and repair measured costs** — Incidental buffering and identified hot paths are bounded without removing supported data.
+- #304 **U15: Clean only history the owner approves** — Storage pressure never expands the user's approved deletion scope.
+
+## Intent acceptance
+
+An integrated sustained-run scenario stays observable and controllable across I03/I04 behavior, with explicit limits from I06 and measured resource evidence; no hidden execution cap or unapproved deletion.
+
+## Source issue coverage
+
+#117, #186, #187, #190, #259, #268
+
+Conditional investigation/measurement bolts require their evidence before corrective implementation. Do not count a negative investigation as a successful fix.
+
+## Specific owner feedback
+
+- The owner explicitly confirms which selected history is delete-ready. Failure/success does not change deletion eligibility. Automatic pressure cleanup cannot infer consent from age, completion, or a broad future-history preference. If an explicit loop-delete flow removes associated history, its confirmation must clearly cover that history; do not silently use loop deletion to bypass consent.
+- Measure sustained loops early because they are central to the POC. Bounded extraction follows actual responsibility/performance evidence; do not assume file size proves a performance problem or mandate a general RunManager rewrite.
+
+## Approved review refinements
+
+Measure realistic sustained work early in #190 without waiting for unlimited mode. Optimize measured costs, page/reconnect history losslessly and bound temporary buffers/rendering. Cleanup uses explicit eligibility plus reference/ownership checks; pressure never broadens deletion authority.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #259 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/events/EventsPage.tsx#L1), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/inspector/ThreadViewer.tsx#L1)
+
+### Source #268 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/db.ts#L92), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/app.ts#L41), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/runs.ts#L1), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1453)
+
+
+## Comments (0)

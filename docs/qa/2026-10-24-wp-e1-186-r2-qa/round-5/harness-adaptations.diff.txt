@@ -1,0 +1,160 @@
+diff --git a/apps/web/e2e/bounded-history.spec.ts b/apps/web/.tmp/qa5/e2e/bounded-history.spec.ts
+index 1a681b83..f7f809a7 100644
+--- a/apps/web/e2e/bounded-history.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/bounded-history.spec.ts
+@@ -1,5 +1,5 @@
+ import { ContextThreadSchema, RunRecordSchema, type RunEvent } from '@graphgoblin/contracts';
+-import { replaySeedLoop } from '../scripts/replay-seed-fixture.js';
++import { replaySeedLoop } from 'file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/apps/web/scripts/replay-seed-fixture.ts';
+ import { expect, publishLoop, test } from './fixtures.js';
+ 
+ test('bounded Timeline browses a long run with keyboard focus, exact threads and persisted resume', async ({
+diff --git a/apps/web/e2e/issue-170-qa.spec.ts b/apps/web/.tmp/qa5/e2e/issue-170-qa.spec.ts
+index f12349a4..55d662c9 100644
+--- a/apps/web/e2e/issue-170-qa.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/issue-170-qa.spec.ts
+@@ -33,7 +33,7 @@ let baseline: {
+ test.beforeAll(async () => {
+   // A read-only main-schema oracle: transpile tracked sources into this test's private temp
+   // directory, resolving the already-installed zod directly. No checkout, install or link.
+-  baselineDir = await mkdtemp(join(tmpdir(), 'gg170-main-contracts-'));
++  baselineDir = await mkdtemp(join(tmpdir(), 'gg-qa-e1-186r2-5-gg170-main-contracts-'));
+   await writeFile(join(baselineDir, 'package.json'), '{"type":"module"}');
+   const require = createRequire(import.meta.url);
+   const zodUrl = pathToFileURL(join(dirname(require.resolve('zod/package.json')), 'index.js')).href;
+@@ -65,7 +65,7 @@ test.beforeAll(async () => {
+   baseline = (await import(pathToFileURL(join(baselineDir, 'index.js')).href)) as typeof baseline;
+ });
+ test.afterAll(async () => {
+-  if (baselineDir) await rm(baselineDir, { recursive: true, force: true });
++  /* QA: retain disposable baseline oracle. */
+ });
+ const choice = {
+   type: 'choice',
+@@ -248,7 +248,7 @@ test('I1: current golden bytes and main inference survive placement and edited s
+   ) as LoopDefinition;
+   const currentGolden: unknown = JSON.parse(
+     await readFile(
+-      new URL('../../../packages/contracts/src/__golden__/loop-every-field.json', import.meta.url),
++      new URL("file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/packages/contracts/src/__golden__/loop-every-field.json", import.meta.url),
+       'utf8',
+     ),
+   );
+diff --git a/apps/web/e2e/replay-seed.spec.ts b/apps/web/.tmp/qa5/e2e/replay-seed.spec.ts
+index 5d4d4e4c..af9d4c9c 100644
+--- a/apps/web/e2e/replay-seed.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/replay-seed.spec.ts
+@@ -5,7 +5,7 @@ import {
+   RunRecordSchema,
+ } from '@graphgoblin/contracts';
+ import { replayThread } from '@graphgoblin/domain';
+-import { replaySeedLoop } from '../scripts/replay-seed-fixture.js';
++import { replaySeedLoop } from 'file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/apps/web/scripts/replay-seed-fixture.ts';
+ import { expect, publishLoop, test } from './fixtures.js';
+ 
+ test('a replay inspector shows inherited counters and values at its first event', async ({
+diff --git a/apps/web/e2e/responsive.spec.ts b/apps/web/.tmp/qa5/e2e/responsive.spec.ts
+index d21a8b17..a976aced 100644
+--- a/apps/web/e2e/responsive.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/responsive.spec.ts
+@@ -9,7 +9,7 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+  */
+ import { writeFile } from 'node:fs/promises';
+ import type { Locator, Page } from '@playwright/test';
+-import { denseGraph } from '../src/__fixtures__/routing.js';
++import { denseGraph } from 'file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/apps/web/src/__fixtures__/routing.ts';
+ import {
+   approvalLoop,
+   closeNode,
+diff --git a/apps/web/e2e/routing.spec.ts b/apps/web/.tmp/qa5/e2e/routing.spec.ts
+index cab4cec0..2ed40a10 100644
+--- a/apps/web/e2e/routing.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/routing.spec.ts
+@@ -16,7 +16,7 @@ import {
+   simpleLoop,
+   sixReturnDecision,
+   tightGap,
+-} from '../src/__fixtures__/routing.js';
++} from 'file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/apps/web/src/__fixtures__/routing.ts';
+ import { expect, test } from './fixtures.js';
+ 
+ // Trace snapshots of 300 canvas elements distort the frame budget; these specs capture PNGs.
+diff --git a/apps/web/e2e/shutdown.spec.ts b/apps/web/.tmp/qa5/e2e/shutdown.spec.ts
+index 870918ff..db9a0bb1 100644
+--- a/apps/web/e2e/shutdown.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/shutdown.spec.ts
+@@ -21,10 +21,10 @@ async function gateway(
+     prepare?: (directory: string) => Promise<NodeJS.ProcessEnv>;
+   } = {},
+ ) {
+-  const directory = options.directory ?? (await mkdtemp(join(tmpdir(), 'gg-wp-c7-319-')));
++  const directory = options.directory ?? (await mkdtemp(join(tmpdir(), 'gg-qa-e1-186r2-5-gg-wp-c7-319-')));
+   const extra = options.prepare ? await options.prepare(directory) : options.env;
+-  let port = 5980;
+-  for (; port <= 5989; port++) {
++  let port = 6154;
++  for (; port <= 6158; port++) {
+     const probe = createServer();
+     const free = await new Promise<boolean>((done, reject) => {
+       probe.once('error', (error: NodeJS.ErrnoException) =>
+@@ -34,7 +34,7 @@ async function gateway(
+     });
+     if (free) break;
+   }
+-  if (port > 5989) throw new Error('No disposable port free in 5980?5989');
++  if (port > 6158) throw new Error('No disposable port free in 6154?6158');
+   const origin = `http://127.0.0.1:${port}`;
+   let logs = '';
+   const inherited = Object.fromEntries(
+diff --git a/apps/web/e2e/stored-loop-defaults.spec.ts b/apps/web/.tmp/qa5/e2e/stored-loop-defaults.spec.ts
+index f12f3a9e..1f455b81 100644
+--- a/apps/web/e2e/stored-loop-defaults.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/stored-loop-defaults.spec.ts
+@@ -1,14 +1,14 @@
+ import { mkdtemp, rm } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { resolve, join } from 'node:path';
+-import { createTestApp, storeLoopBefore } from '@graphgoblin/api/testing';
++import { createTestApp, storeLoopBefore } from '../testing/test-app.js';
+ import { approvalLoop, expect, showLoopPanel, test } from './fixtures.js';
+ 
+ for (const status of ['draft', 'published'] as const) {
+   test(`editor reopens stored ${status} with omitted additive deadline defaults`, async ({
+     page,
+   }) => {
+-    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-editor-'));
++    const dataDir = await mkdtemp(join(tmpdir(), 'gg-qa-e1-186r2-5-gg-wp-f3-270-editor-'));
+     // A genuine store from before 0019; the gateway's startup applies 0019 and every later one.
+     const stored = await storeLoopBefore({
+       dataDir,
+@@ -22,7 +22,7 @@ for (const status of ['draft', 'published'] as const) {
+     });
+     try {
+       expect(await t.container.handle.pendingMigrations()).toBe(0);
+-      const url = await t.app.listen({ host: '127.0.0.1', port: 0 });
++      const url = await t.app.listen({ host: '127.0.0.1', port: 6154 });
+       const loop = { id: stored.loopId };
+       await page.goto(`${url}/app/loops/${loop.id}/edit`);
+       await expect(
+@@ -46,7 +46,7 @@ for (const status of ['draft', 'published'] as const) {
+       );
+     } finally {
+       await t.close();
+-      await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }).catch(() => undefined);
++      /* QA: retain disposable directory. */
+     }
+   });
+ }
+diff --git a/apps/web/e2e/webhook-delivery.spec.ts b/apps/web/.tmp/qa5/e2e/webhook-delivery.spec.ts
+index 07f0c0d2..a21b2a84 100644
+--- a/apps/web/e2e/webhook-delivery.spec.ts
++++ b/apps/web/.tmp/qa5/e2e/webhook-delivery.spec.ts
+@@ -77,7 +77,7 @@ test('inspector retains unknown acknowledgement after a rejection and eventual s
+ test.beforeAll(async () => {
+   await new Promise<void>((ok, no) => {
+     receiver.once('error', no);
+-    receiver.listen(0, '127.0.0.1', ok);
++    receiver.listen(6159, '127.0.0.1', ok);
+   });
+   const address = receiver.address();
+   if (!address || typeof address === 'string') throw Error('Missing receiver address');

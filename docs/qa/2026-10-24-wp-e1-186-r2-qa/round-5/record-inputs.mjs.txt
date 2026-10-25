@@ -1,0 +1,17 @@
+import { readFile,writeFile } from 'node:fs/promises';
+const base=process.env.USERPROFILE+'/.claude/codex-runs/GraphGoblin/briefs/i01-i07/';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/';
+const clean=(s)=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+for(const [from,to]of [['COMMON.md','requirements-COMMON.txt'],['QA-COMMON.md','requirements-QA-COMMON.txt'],['qa-wp-e1-186-r2-5.md','requirements-round5.txt'],['issues/186.md','requirements-186.txt'],['issues/303.md','requirements-303.txt'],['issues/287.md','requirements-287.txt']])await writeFile(out+to,clean(await readFile(base+from,'utf8')));
+const ledger=(await readFile(base+'issues/278.md','utf8')).split(/\r?\n/).slice(37,170).join('\n');
+await writeFile(out+'requirements-owner-ledger.txt',clean(ledger));
+await writeFile(out+'qa-setup-attempts.json',JSON.stringify({attempts:[
+{attempt:'custom-command',outcome:'Not launched',cause:'PowerShell legacy native argument quoting split the custom command argument. See commands.jsonl; no product check executed.'},
+{attempt:'first focused launch',outcome:'Setup failed',cause:'QA fixture relocation could not resolve infrastructure from the web dependency boundary.',evidence:'edge-setup-import-failure.log.txt'},
+{attempt:'second focused launch',outcome:'Collection failed; zero cases',cause:'Playwright did not remap file-URL .js imports to the tracked .ts fixtures.',evidence:'edge-setup-ts-resolution.log.txt'},
+{attempt:'exploratory browser attempt',outcome:'Interrupted; invalid QA harness; no final result claimed',cause:'Legacy cmd argument quoting selected the entire suite instead of the focus group; broad QA temp-prefix replacement also changed gg-pulse in one assertion. Narrowed to mkdtemp calls and used verbatim cmd arguments. Assertion audit now passes for all 52 specs / 5718 expressions.',evidence:['invalid-harness-assertion-audit.json','invalid-harness-adaptations.diff.txt','harness-assertion-audit.json'],outputFolder:'apps/web/.tmp/qa5/edge-targeted-results',stop:'Terminal interrupt; assigned listener range was empty before the corrected harness was prepared.'},
+{attempt:'manual initial fetch',outcome:'Setup failure; zero observations',cause:'QA script used Playwright response ok() on a native Fetch Response; corrected to the ok boolean.',evidence:['manual-fetch-setup.log.txt','manual-fetch-setup.json']},
+{attempt:'manual unbounded snapshot wait',outcome:'Interrupted; no product verdict',cause:'QA snapshot requested a main element not present in the app shell; standalone locator default had no timeout.',evidence:'manual-stalled-attempt.log.txt'},
+{attempt:'manual bounded diagnostic',outcome:'Interrupted after identifying the QA snapshot error',cause:'Bounded timeout exposed locator(main) as the only failed step; corrected snapshot scope to body. Live pulse, accessibility and sequence checks preceding it had succeeded.',evidence:'manual-snapshot-setup.log.txt'},
+{attempt:'corrected manual matrix',outcome:'16 passed / 0 failed',cause:null,evidence:'manual-ui-results.json'}
+]},null,2));

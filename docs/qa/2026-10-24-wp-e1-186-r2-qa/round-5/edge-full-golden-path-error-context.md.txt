@@ -1,0 +1,223 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: issue-170-qa.spec.ts >> I1: current golden bytes and main inference survive placement and edited save/reload
+- Location: .tmp\qa5\e2e\issue-170-qa.spec.ts:237:1
+
+# Error details
+
+```
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-5\apps\web\packages\contracts\src\__golden__\loop-every-field.json'
+```
+
+# Test source
+
+```ts
+  150 |   const res = await request.get(`${origin}/loops/${id}`);
+  151 |   expect(res.ok()).toBe(true);
+  152 |   return ((await res.json()) as { draft: { definition: Saved } }).draft.definition;
+  153 | }
+  154 | async function config(request: APIRequestContext, id: string, origin = '') {
+  155 |   return (await saved(request, id, origin)).nodes.find((node) => node.id === 'approve')!.config;
+  156 | }
+  157 | async function mirror(page: Page, id: string): Promise<Saved | undefined> {
+  158 |   return page.evaluate(async (loopId) => {
+  159 |     const db = await new Promise<IDBDatabase>((resolveDb, reject) => {
+  160 |       const opening = indexedDB.open('graphgoblin', 2);
+  161 |       opening.onsuccess = () => resolveDb(opening.result);
+  162 |       opening.onerror = () => reject(opening.error ?? new Error('IndexedDB open failed'));
+  163 |     });
+  164 |     try {
+  165 |       return await new Promise<Saved | undefined>((resolveValue, reject) => {
+  166 |         const reading = db.transaction('drafts', 'readonly').objectStore('drafts').get(loopId);
+  167 |         reading.onsuccess = () =>
+  168 |           resolveValue((reading.result as { definition?: Saved } | undefined)?.definition);
+  169 |         reading.onerror = () => reject(reading.error ?? new Error('IndexedDB read failed'));
+  170 |       });
+  171 |     } finally {
+  172 |       db.close();
+  173 |     }
+  174 |   }, id);
+  175 | }
+  176 | async function replace(page: Page, editor: Locator, text: string) {
+  177 |   await editor.click();
+  178 |   await page.keyboard.press('ControlOrMeta+A');
+  179 |   if (text === '') await page.keyboard.press('Backspace');
+  180 |   else await page.keyboard.insertText(text);
+  181 | }
+  182 | /** CodeMirror virtualizes long documents. Read through its copy event, not viewport innerText;
+  183 |  * a synthetic clipboard keeps this entirely inside the page and leaves the OS clipboard alone. */
+  184 | async function editorText(page: Page, editor: Locator) {
+  185 |   await editor.focus();
+  186 |   await page.keyboard.press('ControlOrMeta+A');
+  187 |   const text = await editor.evaluate((el) => {
+  188 |     const clipboardData = new DataTransfer();
+  189 |     el.dispatchEvent(
+  190 |       new ClipboardEvent('copy', { clipboardData, bubbles: true, cancelable: true }),
+  191 |     );
+  192 |     return clipboardData.getData('text/plain');
+  193 |   });
+  194 |   await page.keyboard.press('ArrowRight');
+  195 |   return text;
+  196 | }
+  197 | async function chooseRadio(radio: Locator) {
+  198 |   await radio.focus();
+  199 |   await radio.press('Space');
+  200 |   await expect(radio).toBeChecked();
+  201 | }
+  202 | const code = (dialog: Locator, path: string) =>
+  203 |   dialog.locator(`[data-field="${path}"] .cm-content`).last();
+  204 | async function selectTab(dialog: Locator, name: string) {
+  205 |   const tab = dialog.getByRole('tab', { name: new RegExp(`^${name}\\b`) });
+  206 |   if (await tab.count()) await tab.click();
+  207 | }
+  208 | async function expandAll(dialog: Locator) {
+  209 |   for (const toggle of await dialog.getByRole('button', { name: /^Advanced\b/ }).all()) {
+  210 |     if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  211 |   }
+  212 | }
+  213 | async function jsonEditor(dialog: Locator, label: string) {
+  214 |   await dialog.getByRole('button', { name: `Edit as JSON: ${label}`, exact: true }).click();
+  215 |   return dialog.getByRole('textbox', { name: `${label} JSON`, exact: true });
+  216 | }
+  217 | const sectionOf = (editor: Locator) => editor.locator('xpath=ancestor::*[@data-json-section][1]');
+  218 | async function apply(editor: Locator) {
+  219 |   await sectionOf(editor).getByRole('button', { name: 'Apply JSON', exact: true }).click();
+  220 | }
+  221 | async function cancel(editor: Locator) {
+  222 |   await sectionOf(editor).getByRole('button', { name: 'Cancel JSON', exact: true }).click();
+  223 | }
+  224 | async function screenshot(dialog: Locator, name: string) {
+  225 |   // Preserve the independent QA's committed evidence; reruns write only test artifacts.
+  226 |   await dialog.screenshot({ path: test.info().outputPath(`${name}.png`) });
+  227 | }
+  228 | function at(value: unknown, path: string): unknown {
+  229 |   return path
+  230 |     .split('.')
+  231 |     .reduce<unknown>(
+  232 |       (v, key) => (v && typeof v === 'object' ? (v as Config)[key] : undefined),
+  233 |       value,
+  234 |     );
+  235 | }
+  236 | 
+  237 | test('I1: current golden bytes and main inference survive placement and edited save/reload', async ({
+  238 |   page,
+  239 |   request,
+  240 | }) => {
+  241 |   // Read the base artifact without switching, building or mutating main.
+  242 |   const golden = JSON.parse(
+  243 |     execFileSync(
+  244 |       'git',
+  245 |       ['show', `${baselineCommit}:packages/contracts/src/__golden__/loop-every-field.json`],
+  246 |       { encoding: 'utf8' },
+  247 |     ),
+  248 |   ) as LoopDefinition;
+  249 |   const currentGolden: unknown = JSON.parse(
+> 250 |     await readFile(
+      |     ^ Error: ENOENT: no such file or directory, open '%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-5\apps\web\packages\contracts\src\__golden__\loop-every-field.json'
+  251 |       new URL('../../../packages/contracts/src/__golden__/loop-every-field.json', import.meta.url),
+  252 |       'utf8',
+  253 |     ),
+  254 |   );
+  255 |   const current = LoopDefinitionSchema.parse(everyFieldLoop());
+  256 |   expect(JSON.stringify(current)).toBe(JSON.stringify(currentGolden));
+  257 |   const original = golden.nodes.find((n) => n.kind === 'inference')!;
+  258 |   if (original.kind !== 'inference') throw new Error('Missing golden inference');
+  259 |   expect(current.nodes.find((node) => node.kind === 'inference')).toEqual(original);
+  260 |   const id = await create(request, 'inference', original.config);
+  261 |   await page.goto(`/app/loops/${id}/edit`);
+  262 |   const dialog = await openNode(page, 'approve');
+  263 |   await expandAll(dialog);
+  264 |   for (const path of [
+  265 |     'harness',
+  266 |     'model',
+  267 |     'effort',
+  268 |     'session',
+  269 |     'session.key',
+  270 |     'prompt.template',
+  271 |     'harnessOptions.sandbox',
+  272 |     'harnessOptions.approval',
+  273 |     'harnessOptions.networkAccess',
+  274 |     'harnessOptions.webSearch',
+  275 |     'harnessOptions.configOverrides',
+  276 |     'capabilities',
+  277 |     'output.captureTranscript',
+  278 |     'output.toMessages',
+  279 |     'output.transforms',
+  280 |     'output.schema.jsonSchema',
+  281 |     'output.schema.native',
+  282 |     'output.schema.repair.enabled',
+  283 |     'output.schema.repair.maxAttempts',
+  284 |     'output.schema.repair.prompt',
+  285 |     'output.schema.repair.onFailure',
+  286 |     'timeoutSeconds',
+  287 |   ]) {
+  288 |     await expect(dialog.locator(`[data-field="${path}"]`).first(), path).toBeVisible();
+  289 |   }
+  290 |   await selectTab(dialog, 'Context');
+  291 |   await expandAll(dialog);
+  292 |   for (const path of ['input', 'contextFiles.0.path', 'contextFiles.0.template'])
+  293 |     await expect(dialog.locator(`[data-field="${path}"]`).first()).toBeVisible();
+  294 |   expect(JSON.stringify(await config(request, id))).toBe(JSON.stringify(original.config));
+  295 |   await dialog.locator('[data-field="contextFiles.0.path"] input').fill('notes/日本語.md');
+  296 |   await replace(page, code(dialog, 'contextFiles.0.template'), 'α\n{{ vars.topic }}');
+  297 |   await selectTab(dialog, 'Settings');
+  298 |   await dialog.locator('[data-field="session.key"] input').fill('qa-session');
+  299 |   await replace(page, code(dialog, 'prompt.template'), 'Unicode 🧪\n{{ vars.topic }}');
+  300 |   await dialog.getByRole('spinbutton', { name: 'Timeout seconds' }).fill('42');
+  301 |   await dialog.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
+  302 |   await dialog.getByLabel('Effort', { exact: true }).selectOption('low');
+  303 |   for (const [path, name] of [
+  304 |     ['harnessOptions.sandbox', 'workspace-write'],
+  305 |     ['harnessOptions.approval', 'never'],
+  306 |     ['harnessOptions.networkAccess', 'No'],
+  307 |     ['harnessOptions.webSearch', 'Yes'],
+  308 |     ['output.captureTranscript', 'artifact'],
+  309 |     ['output.toMessages', 'none'],
+  310 |     ['output.schema.repair.onFailure', 'fail-run'],
+  311 |   ] as const)
+  312 |     await chooseRadio(
+  313 |       dialog.locator(`[data-field="${path}"]`).getByRole('radio', { name, exact: true }),
+  314 |     );
+  315 |   await dialog.locator('[data-field="output.schema.native"]').getByRole('switch').click();
+  316 |   await dialog.locator('[data-field="output.schema.repair.enabled"]').getByRole('switch').click();
+  317 |   await dialog.locator('[data-field="output.schema.repair.maxAttempts"] input').fill('3');
+  318 |   await replace(page, code(dialog, 'output.schema.jsonSchema'), '{"type":"string"}');
+  319 |   await replace(page, code(dialog, 'output.schema.repair.prompt'), 'Repair\n{{ vars.topic }}');
+  320 |   const expected = structuredClone(original.config);
+  321 |   expected.model = 'gpt-6-luna';
+  322 |   expected.effort = 'low';
+  323 |   expected.harnessOptions.sandbox = 'workspace-write';
+  324 |   expected.harnessOptions.approval = 'never';
+  325 |   expected.harnessOptions.networkAccess = false;
+  326 |   expected.harnessOptions.webSearch = true;
+  327 |   expected.output.captureTranscript = 'artifact';
+  328 |   expected.output.toMessages = 'none';
+  329 |   expected.output.schema = {
+  330 |     jsonSchema: { type: 'string' },
+  331 |     native: true,
+  332 |     repair: {
+  333 |       enabled: false,
+  334 |       maxAttempts: 3,
+  335 |       prompt: 'Repair\n{{ vars.topic }}',
+  336 |       onFailure: 'fail-run',
+  337 |     },
+  338 |   };
+  339 |   expected.session = { policy: 'resume-named', key: 'qa-session' };
+  340 |   expected.prompt.template = 'Unicode 🧪\n{{ vars.topic }}';
+  341 |   expected.timeoutSeconds = 42;
+  342 |   expected.contextFiles = [{ path: 'notes/日本語.md', template: 'α\n{{ vars.topic }}' }];
+  343 |   await expect
+  344 |     .poll(async () => JSON.stringify(await config(request, id)))
+  345 |     .toBe(JSON.stringify(expected));
+  346 |   expect(JSON.stringify(baseline.InferenceConfigSchema.parse(expected))).toBe(
+  347 |     JSON.stringify(expected),
+  348 |   );
+  349 |   await page.reload();
+  350 |   await openNode(page, 'approve');
+```

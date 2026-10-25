@@ -1,0 +1,42 @@
+import {execFileSync} from 'node:child_process';
+import {writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+const archive=resolve('apps/web/.tmp/qa5/edge-targeted-results/responsive-responsive-dark-b680d-at-360-768-1024-and-1440-px-chromium/trace.zip');
+const quoted="'"+archive.replaceAll("'","''")+"'";
+const ps=`Add-Type -AssemblyName System.IO.Compression.FileSystem
+$archive = [System.IO.Compression.ZipFile]::OpenRead(${quoted})
+$selected = @()
+try {
+  foreach ($entry in $archive.Entries) {
+    if (-not $entry.FullName.EndsWith('.network')) { continue }
+    $reader = [System.IO.StreamReader]::new($entry.Open())
+    $content = $reader.ReadToEnd(); $reader.Dispose()
+    foreach ($line in ($content -split [char]10)) {
+      if ([string]::IsNullOrWhiteSpace($line)) { continue }
+      $row = $line | ConvertFrom-Json
+      $s = $row.snapshot
+      if ($s.request.url -notmatch '/loops($|[?/])') { continue }
+      $body = $null
+      if ($s.response.content._file) {
+        $bodyEntry = $archive.GetEntry($s.response.content._file)
+        if ($bodyEntry) { $r = [System.IO.StreamReader]::new($bodyEntry.Open()); $body = $r.ReadToEnd(); $r.Dispose() }
+      }
+      if ($s.request.postData._file) {
+        $postEntry = $archive.GetEntry($s.request.postData._file)
+        if ($postEntry) { $r = [System.IO.StreamReader]::new($postEntry.Open()); $s.request.postData | Add-Member -NotePropertyName text -NotePropertyValue $r.ReadToEnd() -Force; $r.Dispose() }
+      }
+      $selected += [pscustomobject]@{ at=$s.startedDateTime; request=$s.request; status=$s.response.status; response=$body }
+    }
+  }
+  ConvertTo-Json -Depth 15 -Compress -InputObject $selected
+} finally { $archive.Dispose() }
+`;
+const raw=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(ps,'utf16le').toString('base64')],{encoding:'utf8',maxBuffer:20_000_000,windowsHide:true});
+const all=JSON.parse(raw);
+const records=all.map((r)=>{
+  let response;try{response=JSON.parse(r.response)??{};}catch{response={text:String(r.response).slice(0,200)};}
+  let data;try{data=JSON.parse(r.request.postData?.text);}catch{}
+  return {at:r.at,method:r.request.method,url:r.request.url,status:r.status,createdName:data?.definition?.name,createdLoop:response.loop,hasMore:response.hasMore,nextCursor:response.nextCursor,items:response.items?.map((x)=>({id:x.id,name:x.name,updatedAt:x.updatedAt})),count:response.items?.length};
+});
+await writeFile('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/exploratory-responsive-network.json',JSON.stringify({scope:'Read-only extraction from retained scratch trace; no network requests were made',records},null,2));
+console.log(JSON.stringify(records.map((r)=>({at:r.at,method:r.method,url:r.url,status:r.status,createdName:r.createdName,count:r.count,includesSeed:r.items?.some((x)=>x.name==='responsive sweep'),hasMore:r.hasMore}))));

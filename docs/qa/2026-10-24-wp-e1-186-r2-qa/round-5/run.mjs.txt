@@ -1,0 +1,70 @@
+import { spawn } from 'node:child_process';
+import { mkdir, writeFile, appendFile } from 'node:fs/promises';
+import { appendFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5');
+const temp = join(tmpdir(), 'gg-qa-e1-186r2-5-gates');
+await mkdir(out, { recursive: true });
+await mkdir(temp, { recursive: true });
+const clean = (s) => s.replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%');
+const env = { ...process.env, TEMP: temp, TMP: temp, TMPDIR: temp, LIVE: '0', GG_E2E_BROWSER_CHANNEL: 'msedge', GG_E2E_MAIN_PORT: '6150', GG_E2E_CONTROL_PORT: '6151', GG_E2E_WEB_DIST: resolve('apps/web/.tmp/qa5/dist'), GG_TEST_PORT_START: '6152', GG_TEST_PORT_COUNT: '8', GG_TEST_STORE_PREFIX: 'gg-qa-e1-186r2-5-gate-' };
+async function run(name, cmd, cwd = root) {
+  const start = new Date();
+  let log = `Node ${process.version}\nCommand: ${cmd}\nCwd: ${cwd}\nStarted: ${start.toISOString()}\n`;
+  console.log(`START ${name}: ${cmd}`);
+  await writeFile(join(out, name + '.log.txt'), clean(log));
+  const child = spawn('cmd.exe', ['/d', '/s', '/c', cmd], { cwd, env: { ...env, PLAYWRIGHT_JSON_OUTPUT_NAME: join(out, name + '.json'), GG_THREAD_EVIDENCE: join(out, name + '-thread.json') }, windowsHide: true, windowsVerbatimArguments: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  for (const stream of [child.stdout, child.stderr]) { stream.setEncoding('utf8'); stream.on('data', (s) => { log += s; appendFileSync(join(out, name + '.log.txt'), clean(s)); }); }
+  const code = await new Promise((done) => { child.once('error', (e) => { log += String(e); done(-1); }); child.once('exit', done); });
+  const elapsedSeconds = (Date.now() - start.getTime()) / 1000;
+  log += `\nExit code: ${code}\nElapsed seconds: ${elapsedSeconds}\n`;
+  await writeFile(join(out, name + '.log.txt'), clean(log));
+  const result = { name, command: cmd, cwd: clean(cwd), code, elapsedSeconds, started: start.toISOString(), storeLock: log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK') };
+  await appendFile(join(out, 'commands.jsonl'), JSON.stringify(result) + '\n');
+  console.log(JSON.stringify(result));
+  return result;
+}
+const build = ['build', 'pnpm.cmd build', 'node_modules\\.bin\\turbo.cmd run build'];
+const gates = [
+  ['typecheck', 'pnpm.cmd typecheck', 'node_modules\\.bin\\turbo.cmd run typecheck'],
+  ['lint', 'pnpm.cmd lint', 'node_modules\\.bin\\turbo.cmd run lint'],
+  ['format-check', 'pnpm.cmd format:check', 'node_modules\\.bin\\prettier.cmd --check .'],
+  ['check-layers', 'pnpm.cmd check:layers', 'node tooling/scripts/check-layers.mjs'],
+  ['check-deps', 'pnpm.cmd check:deps', 'node_modules\\.bin\\depcruise.cmd packages apps --config .dependency-cruiser.cjs'],
+  ['check-docs', 'pnpm.cmd check:docs', 'node_modules\\.bin\\turbo.cmd run build --filter=@graphgoblin/contracts && node tooling/scripts/gen-docs.mjs --check'],
+  ['check-tokens', 'pnpm.cmd check:tokens', 'node tooling/scripts/check-design-tokens.mjs'],
+  ...['web','api','api-client','infrastructure','domain'].map((p) => [p + '-coverage', `pnpm.cmd --filter @graphgoblin/${p} test:coverage --maxWorkers=2`, `node_modules\\.bin\\vitest.cmd run --coverage --maxWorkers=2`, resolve(p === 'web' || p === 'api' ? 'apps/' + p : 'packages/' + p)]),
+  ['tooling-coverage', 'pnpm.cmd --filter @graphgoblin/tooling test:coverage', 'node --test scripts/*.test.mjs perf/*.test.mjs', resolve('tooling')]
+];
+const task = process.argv[2];
+if (task === 'build' || task === 'gates') {
+  for (const [name, cmd, fallback, fallbackCwd] of task === 'build' ? [build] : gates) {
+    const result = await run(name, cmd);
+    if (result.storeLock) await run(name + '-binary-fallback', fallback, fallbackCwd);
+  }
+} else if (task === 'edge-targeted' || task === 'edge-full') {
+  const name = task === 'edge-targeted' ? 'edge-focused' : task;
+  const selection = task === 'edge-targeted' ? ' e2e/issue-7-qa.spec.ts e2e/responsive.spec.ts e2e/thread-history.spec.ts --grep "I7-QA-03|on a coarse pointer|persisted failure"' : '';
+  const result = await run(name, `pnpm.cmd exec playwright test -c .tmp/qa5/playwright.config.ts${selection} --retries=0 --workers=1 --reporter=list,json --output=.tmp/qa5/${name}-results`, resolve('apps/web'));
+  if (result.storeLock) await run(name + '-binary-fallback', `node_modules\\.bin\\playwright.cmd test -c .tmp/qa5/playwright.config.ts${selection} --retries=0 --workers=1 --reporter=list,json --output=.tmp/qa5/${name}-results`, resolve('apps/web'));
+} else if (task === 'manual') {
+  await run('manual-ui', 'node --input-type=module < docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/inspect-ui.mjs.txt');
+} else if (task === 'golden') {
+  await run('isolated-golden', 'pnpm.cmd exec playwright test -c .tmp/qa5/playwright.config.ts issue-170-qa.spec.ts --grep="I1: current golden" --retries=0 --workers=1 --reporter=list,json --output=.tmp/qa5/isolated-golden-results',resolve('apps/web'));
+} else if (task === 'responsive-isolate') {
+  await run('isolated-responsive','pnpm.cmd exec playwright test -c .tmp/qa5/playwright.config.ts responsive.spec.ts --grep="responsive dark.*screens and transient" --retries=0 --workers=1 --reporter=list,json --output=.tmp/qa5/isolated-responsive-results',resolve('apps/web'));
+} else if (task === 'format-report') {
+  const result = await run('format-report','pnpm.cmd exec prettier --write docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/*.md');
+  if(result.storeLock)await run('format-report-binary-fallback','node_modules\\.bin\\prettier.cmd --write docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/*.md');
+} else if (task === 'lint-final') {
+  const result = await run('lint-after-retirement','pnpm.cmd lint');
+  if(result.storeLock)await run('lint-after-retirement-binary-fallback','node_modules\\.bin\\turbo.cmd run lint');
+} else if (task === 'format-final') {
+  const result=await run('final-format-check','pnpm.cmd exec prettier --check docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/*.md');
+  if(result.storeLock)await run('final-format-check-binary-fallback','node_modules\\.bin\\prettier.cmd --check docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/*.md');
+} else if (task === 'custom') {
+  await run(process.argv[3], process.argv[4], resolve(process.argv[5] ?? '.'));
+} else throw new Error('Expected build, gates or custom');
