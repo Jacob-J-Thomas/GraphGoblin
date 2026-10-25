@@ -1,0 +1,22 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+{"level":30,"time":1792828502560,"pid":41464,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5670"}
+{"level":30,"time":1792828502561,"pid":41464,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5670,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-fYzavG","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792828502611,"pid":41464,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792828502617,"pid":41464,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":5.263499999999112,"msg":"request completed"}
+ ✓ src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close 903ms
+ ✓ src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process 15414ms
+ ✓ src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes 22478ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup 12737ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure 27187ms
+ ↓ src/main.test.ts > built API entry and startup failures > releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGINT
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGTERM
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > handles a real signal before readiness, holds ownership through startup and shuts down once
+
+ Test Files  1 passed (1)
+      Tests  5 passed | 4 skipped (9)
+   Start at  02:54:49
+   Duration  91.15s (tests 87%, import 7%, transform 6%)
+

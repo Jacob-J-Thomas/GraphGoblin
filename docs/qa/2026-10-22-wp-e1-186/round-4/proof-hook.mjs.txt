@@ -1,0 +1,32 @@
+import { spawn, execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync, openSync, closeSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const gates=JSON.parse(readFileSync('.tmp/r4-gates.json'));
+if(!gates.results.some(item=>item.name==='corruption-after')) throw new Error('wait for original full gates to finish before historical-source proof');
+const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const frozen=JSON.parse(readFileSync('.tmp/r4-source-frozen.json'));
+const sources=['apps/api/src/sse.ts','packages/api-client/src/sse.ts','apps/web/src/runs/useRunEvents.ts'].map(path=>{
+ const current=readFileSync(path),baseline=execFileSync('git',['show',`HEAD:${path}`]);
+ if(hash(current)!==frozen[path]) throw new Error(`source drift: ${path}`);
+ return {path,current,baseline};
+});
+const results=[];
+try {
+ for(const source of sources) writeFileSync(source.path,source.baseline);
+ for(const [name,command,expectedFailures] of [
+  ['api','pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-completion.test.ts --maxWorkers=1 --reporter=verbose',8],
+  ['client','pnpm.cmd --filter @graphgoblin/api-client exec vitest run src/sse-completion.test.ts --maxWorkers=1 --reporter=verbose',10],
+  ['web','pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/RunInspectorPage.test.tsx src/runs/useRunEvents.test.tsx --maxWorkers=1 --reporter=verbose -t confirms',3],
+ ]) {
+   const log=`.tmp/r4-final-red-${name}.log.txt`,fd=openSync(log,'w');
+   const code=await new Promise((resolve,reject)=>{
+     const child=spawn(process.env.ComSpec??'C:\\Windows\\System32\\cmd.exe',['/d','/s','/c',command],{env:process.env,stdio:['ignore',fd,fd],windowsHide:true});child.on('error',reject);child.on('close',resolve);
+   });closeSync(fd);
+   const intended=new RegExp(`Tests\\s+${expectedFailures} failed`).test(readFileSync(log,'utf8'));
+   results.push({name,command,log,code,expectedFailures,intended});
+ }
+} finally {for(const source of sources) writeFileSync(source.path,source.current);}
+const restored=sources.every(source=>hash(readFileSync(source.path))===hash(source.current));
+writeFileSync('.tmp/r4-regression-baseline-proof.json',JSON.stringify({head:gates.head,results,sources:sources.map(source=>({path:source.path,baselineSha256:hash(source.baseline),currentSha256:hash(source.current)})),restored},null,2));
+if(!restored || results.some(item=>item.code!==1 || !item.intended)) throw new Error('unexpected proof/restore outcome');
+console.log('21 final-byte regressions failed against archived production sources; fixed sources restored');

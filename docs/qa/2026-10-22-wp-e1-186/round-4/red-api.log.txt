@@ -1,0 +1,210 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ × src/sse-completion.test.ts > authoritative SSE completion > replays a real failed, resumed and succeeded run through its current outcome 2550ms
+   → expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(2) ] to deeply equal [ Array(24) ]
+ × src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 0 697ms
+   → expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, …(119) ] to deeply equal [ 1, 2, 3, 4, 5, 6, 7, 8, 9, …(123) ]
+ × src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 128 599ms
+   → expected [ 129, 130, 131 ] to deeply equal [ 129, 130, 131, 132 ]
+ × src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 131 453ms
+   → expected [] to deeply equal [ Array(1) ]
+ × src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 132 834ms
+   → expected [] to deeply equal [ Array(1) ]
+ × src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 232 828ms
+   → expected [] to deeply equal [ Array(1) ]
+ × src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup racing a audit 79ms
+   → expected [] to deeply equal [ Array(1) ]
+ × src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup racing a resume 3ms
+   → expected [] to deeply equal [ Array(1) ]
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-completion ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > replays a real failed, resumed and succeeded run 
+through its current outcome
+AssertionError: expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(2) ] to deeply equal [ Array(24) ]
+
+- Expected
++ Received
+
+@@ -9,18 +9,6 @@
+    8,
+    9,
+    10,
+    11,
+    12,
+-   13,
+-   14,
+-   15,
+-   16,
+-   17,
+-   18,
+-   19,
+-   20,
+-   21,
+-   22,
+-   23,
+-   24,
+  ]
+
+ ❯ src/sse-completion.test.ts:52:34
+     50|       expect(log.some((event) => event.type === 'run.resumed')).toBe(t…
+     51|       const response = await t.app.inject({ url: `/runs/${run.id}/even…
+     52|       expect(ids(response.body)).toEqual(log.map((event) => event.seq)…
+       |                                  ^
+     53|       completion(response.body, log.at(-1)!.seq);
+     54|     } finally { await t.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 0
+AssertionError: expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, …(119) ] to deeply equal [ 1, 2, 3, 4, 5, 6, 7, 8, 9, …(123) ]
+
+- Expected
++ Received
+
+@@ -125,10 +125,6 @@
+    124,
+    125,
+    126,
+    127,
+    128,
+-   129,
+-   130,
+-   131,
+-   132,
+  ]
+
+ ❯ src/sse-completion.test.ts:76:34
+     74|       const log = await store.read(run.id);
+     75|       const response = await t.app.inject({ url: `/runs/${run.id}/even…
+     76|       expect(ids(response.body)).toEqual(log.filter((event) => event.s…
+       |                                  ^
+     77|       completion(response.body, Math.max(after, 132));
+     78|     } finally { await t.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 128
+AssertionError: expected [ 129, 130, 131 ] to deeply equal [ 129, 130, 131, 132 ]
+
+- Expected
++ Received
+
+  [
+    129,
+    130,
+    131,
+-   132,
+  ]
+
+ ❯ src/sse-completion.test.ts:76:34
+     74|       const log = await store.read(run.id);
+     75|       const response = await t.app.inject({ url: `/runs/${run.id}/even…
+     76|       expect(ids(response.body)).toEqual(log.filter((event) => event.s…
+       |                                  ^
+     77|       completion(response.body, Math.max(after, 132));
+     78|     } finally { await t.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 131
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 132
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "event: stream.complete
+- data: {\"after\":132}",
+- ]
++ []
+
+ ❯ completion src/sse-completion.test.ts:13:20
+     11| const completion = (body: string, after: number) => {
+     12|   const controls = frames(body).filter((frame) => frame.includes('even…
+     13|   expect(controls).toEqual([`event: stream.complete\ndata: ${JSON.stri…
+       |                    ^
+     14|   expect(body).not.toContain('stream.error');
+     15| };
+ ❯ src/sse-completion.test.ts:77:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 232
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "event: stream.complete
+- data: {\"after\":232}",
+- ]
++ []
+
+ ❯ completion src/sse-completion.test.ts:13:20
+     11| const completion = (body: string, after: number) => {
+     12|   const controls = frames(body).filter((frame) => frame.includes('even…
+     13|   expect(controls).toEqual([`event: stream.complete\ndata: ${JSON.stri…
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  10:07:31
+   Duration  30.10s (transform 47%, import 31%, tests 22%)
+
+  Transform  transforming modules took 12.92s · 47% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+       |                    ^
+     14|   expect(body).not.toContain('stream.error');
+     15| };
+ ❯ src/sse-completion.test.ts:77:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup 
+racing a audit
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > checks the durable tail after a lifecycle lookup 
+racing a resume
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "event: stream.complete
+- data: {\"after\":1}",
+- ]
++ []
+
+ ❯ completion src/sse-completion.test.ts:13:20
+     11| const completion = (body: string, after: number) => {
+     12|   const controls = frames(body).filter((frame) => frame.includes('even…
+     13|   expect(controls).toEqual([`event: stream.complete\ndata: ${JSON.stri…
+       |                    ^
+     14|   expect(body).not.toContain('stream.error');
+     15| };
+ ❯ src/sse-completion.test.ts:104:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+

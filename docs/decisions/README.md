@@ -51,3 +51,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 
 [ADR-0044: Loops compose only as awaited subloops](ADR-0044-awaited-subloops.md) supersedes ADR-0010's `event` channel: child wakes are bound to the observed park, a child returns its configured output or none, child execution failures and cancellations follow the inline rules, and exit-to-Event chaining is retired while external Event intake stays.
 [ADR-0045: Inherited session IDs do not establish authored-task acceptance](ADR-0045-inference-inherited-session-recovery.md) records D-022: uncertain authored work cannot continue an inherited conversation without acceptance evidence.
+
+[ADR-0050: Bound SSE replay and slow-consumer buffering](ADR-0050-bounded-sse-replay.md) records paged durable catch-up, bounded live queues, backpressure and typed stream recovery.

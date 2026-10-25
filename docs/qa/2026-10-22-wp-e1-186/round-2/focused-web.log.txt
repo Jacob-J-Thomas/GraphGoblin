@@ -1,0 +1,27 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes an oversized single event immediately without dropping its payload 44ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > shows a slow-consumer reason during retry and clears it when the stream reopens 6ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the batching timer runs 17ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > leaves an accepted clean close on the stream backoff without reporting an outage 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts only if the last connection failure was a transport failure 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > re-arms an outage on cursor progress rather than acceptance or replay alone 7ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 15000 ms open 5ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 20000 ms open 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports rapid two-second drops once and does not restart again on recovery 10ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 0 ms 33ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 2000 ms 14ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports transport failure while online and clears it on an accepted stream 3ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts a stream in backoff on recovery with its cursor and cleans up 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > does not report HTTP refusals or malformed event frames as transport failures 3ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  02:16:46
+   Duration  15.76s (transform 35%, environment 32%, import 18%, setup 13%, tests 1%)
+
+  Transform  transforming modules took 5.41s · 35% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

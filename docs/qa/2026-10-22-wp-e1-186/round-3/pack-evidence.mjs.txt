@@ -1,0 +1,91 @@
+﻿import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+const dir = 'docs/qa/2026-10-22-wp-e1-186/round-3',
+  profile = process.env.USERPROFILE;
+const sha = (b) => createHash('sha256').update(b).digest('hex');
+const clean = (s) =>
+  s
+    .replaceAll(profile.replaceAll('\\', '\\\\'), '%USERPROFILE%')
+    .replaceAll(profile.replaceAll('\\', '/'), '%USERPROFILE%')
+    .replaceAll(profile, '%USERPROFILE%')
+    .replace(/C:[\s│]*\\Users\\[^\\\s│\r\n]+/gi, '%USERPROFILE%')
+    .replace(/\\Users\\[^\\\s│\r\n]+/gi, '%USERPROFILE%')
+    .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\r\n/g, '\n');
+let omitted = [];
+for (const name of await readdir('.tmp')) {
+  if (!/^r3-.*\.log\.txt$/.test(name)) continue;
+  const b = await readFile(`.tmp/${name}`);
+  let s = b[0] === 255 && b[1] === 254 ? b.toString('utf16le').slice(1) : b.toString('utf8');
+  if (b.length > 1000000) {
+    omitted.push({ path: `.tmp/${name}`, bytes: b.length, sha256: sha(b) });
+    s = `Full capture not kept; see NOT-KEPT.md. First/last excerpts:\n${s.slice(0, 10000)}\n[omitted]\n${s.slice(-120000)}`;
+  }
+  await writeFile(`${dir}/${name.slice(3)}`, clean(s));
+}
+for (const name of ['r3-gates.json', 'r3-gates-attempt-1.json', 'r3-source-frozen.json']) {
+  try {
+    await writeFile(`${dir}/${name.slice(3)}`, clean(await readFile(`.tmp/${name}`, 'utf8')));
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
+}
+for (const name of await readdir(dir))
+  if (name.endsWith('.json')) {
+    const p = `${dir}/${name}`;
+    await writeFile(p, clean((await readFile(p, 'utf8')).replace(/^\uFEFF/, '')));
+    if (/^terminal-(before|after)\.json$/.test(name))
+      omitted.push(...JSON.parse(await readFile(p, 'utf8')).largeCaptures);
+  }
+if (!process.argv.includes('--logs-only'))
+  await writeFile(
+    `${dir}/NOT-KEPT.md`,
+    '# Captures not kept\n\nRaw captures over 1,000,000 bytes remain disposable local evidence and are not proposed for commit. Sizes and SHA-256 values refer to original bytes. Logs kept here are normalized UTF-8; local user paths use `%USERPROFILE%`. Execution helpers under `.tmp/` are not kept as executable files; their exact code/ignore copies are retained beside this manifest. No manual directory cleanup was performed.\n\n| Capture | Bytes | SHA-256 |\n| --- | ---: | --- |\n' +
+      omitted.map((r) => `| ${r.path} | ${r.bytes} | ${r.sha256} |`).join('\n') +
+      '\n',
+  );
+const copies = [
+  ['apps/api/src/sse.ts', 'sse.ts.txt'],
+  ['apps/api/src/sse-catchup.test.ts', 'sse-catchup.test.ts.txt'],
+  ['apps/api/src/sse.test.ts', 'sse.test.ts.txt'],
+  ['apps/api/src/routes/runs.ts', 'routes-runs.ts.txt'],
+  ['packages/infrastructure/src/sqlite/events.ts', 'sqlite-events.ts.txt'],
+  ['packages/infrastructure/src/sqlite/lifecycle-tail.test.ts', 'lifecycle-tail.test.ts.txt'],
+  ['.tmp/r3-gates.mjs', 'run-gates.mjs.txt'],
+  ['.tmp/r3-red-proof.mjs', 'regression-proof.mjs.txt'],
+  ['.r3-prettierignore', 'format-ignore.txt'],
+  ['.tmp/r3-prettierignore-correct-used', 'format-ignore.txt'],
+  ['.tmp/r3-prettierignore-invalid-attempt', 'format-ignore-invalid-attempt.txt'],
+  ['.tmp/r3-restore-format.mjs', 'restore-format.mjs.txt'],
+  ['.tmp/r3-qa-manifest.mjs', 'qa-manifest-check.mjs.txt'],
+  ['.tmp/r3-status-note.mjs', 'git-status-check.mjs.txt'],
+  ['.tmp/r3-pack.mjs', 'pack-evidence.mjs.txt'],
+  ['.tmp/r3-report.mjs', 'write-report.mjs.txt'],
+  ['.tmp/r3-validate.mjs', 'validate-evidence.mjs.txt'],
+];
+const copyRecords = [];
+for (const [path, name] of copies)
+  try {
+    const original = await readFile(path);
+    const retained = Buffer.from(original.toString('utf8').replace(/\r\n/g, '\n'));
+    await writeFile(`${dir}/${name}`, retained);
+    copyRecords.push({ source: path, originalBytes: original.length, originalSha256: sha(original), retained: name, retainedBytes: retained.length, retainedSha256: sha(retained) });
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
+let previousNormalizations = [];
+try { previousNormalizations = JSON.parse(await readFile(`${dir}/source-copy-provenance.json`, 'utf8')).archiveEolNormalizations; } catch (e) { if (e.code !== 'ENOENT') throw e; }
+for (const name of await readdir(dir)) {
+  if (!/\.(txt|json)$/.test(name)) continue;
+  const path = `${dir}/${name}`, original = await readFile(path);
+  const retained = Buffer.from(original.toString('utf8').replace(/\r\n/g, '\n'));
+  if (!original.equals(retained)) {
+    previousNormalizations.push({ path: name, originalBytes: original.length, originalSha256: sha(original), retainedBytes: retained.length, retainedSha256: sha(retained) });
+    await writeFile(path, retained);
+  }
+}
+await writeFile(`${dir}/source-copy-provenance.json`, JSON.stringify({ normalization: 'UTF-8/LF copies for stable Git hashes. Original execution helpers remain local and are not proposed for commit.', copies: copyRecords, archiveEolNormalizations: previousNormalizations }, null, 2) + '\n');
+const frozen = JSON.parse(await readFile('.tmp/r3-source-frozen.json', 'utf8'));
+for (const f of frozen)
+  if (sha(await readFile(f.path)) !== f.sha256) throw new Error(`Tested source changed: ${f.path}`);
+console.log('Round-3 evidence packaged; all six tested source hashes unchanged.');

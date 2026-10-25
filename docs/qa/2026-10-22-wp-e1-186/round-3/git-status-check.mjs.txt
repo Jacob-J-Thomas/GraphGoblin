@@ -1,0 +1,17 @@
+﻿import {execFileSync} from 'node:child_process';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const dir='docs/qa/2026-10-22-wp-e1-186/round-3';
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const diff=execFileSync('git',['diff','--name-only','HEAD'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+const statuses=execFileSync('git',['status','--porcelain=v1','-uno'],{encoding:'utf8'}).trimEnd().split(/\r?\n/).filter(Boolean);
+const paths=statuses.filter(s=>s.startsWith(' M ')).map(s=>s.slice(3)).filter(p=>!diff.includes(p));
+const details=[];
+for(const path of paths){const current=await readFile(path),head=execFileSync('git',['show',`HEAD:${path}`]);details.push({path,bytes:current.length,sha256:sha(current),headSha256:sha(head),identicalToHead:current.equals(head)});}
+if(details.some(d=>!d.identicalToHead))throw new Error('Unexpected content difference outside reported diff');
+execFileSync('git',['diff','--cached','--quiet']);
+await writeFile(`${dir}/git-status-disposition.json`,JSON.stringify({contentDiff:diff,statusOnlyPaths:details,allStatusOnlyPathsByteIdenticalToHead:true,indexContentUnchanged:true,explanation:'Read-only index stat information still reports these restored files as modified; byte hashes equal HEAD and git diff has no content change for them. No index refresh or staging was performed.'},null,2)+'\n');
+const p=`${dir}/native-disposition.json`,note=JSON.parse(await readFile(p,'utf8'));
+note.text+='\n\nGit status still lists restored QA/browser-evidence files as modified from stale stat information in the read-only index. They are byte-identical to HEAD and absent from the content diff; [status/hash comparison](git-status-disposition.json) records every path. No staging or index refresh was performed. The orchestrator can refresh that stat information when it stages the reviewed change.';
+await writeFile(p,JSON.stringify(note,null,2)+'\n');
+console.log(`Verified ${details.length} status-only files byte-identical to HEAD; ${diff.length} intended tracked content changes.`);

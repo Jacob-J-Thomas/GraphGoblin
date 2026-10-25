@@ -1,0 +1,19 @@
+import { spawn } from 'node:child_process';
+import { readFileSync, writeFileSync, openSync, closeSync, mkdtempSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+const results=JSON.parse(readFileSync('.tmp/r4-extra-gates.json'));
+for(const [name,spec,grep] of [
+ ['browser-qa-alone','qa.spec.ts','streams'],
+ ['browser-inspector','inspector-large-values.spec.ts','large values stay bounded'],
+]) {
+ const output=mkdtempSync(join(tmpdir(),`gg-wp-e1-186-r4-${name}-`));
+ writeFileSync(`.tmp/r4-${name}-output.json`,JSON.stringify({output,kept:false},null,2));
+ const command=`pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/${spec} --grep "${grep}" --output "${output}" --retries=0`;
+ const log=`.tmp/r4-${name}.log.txt`,fd=openSync(log,'w'),started=new Date().toISOString();
+ console.log(`START ${name}`);
+ const code=await new Promise((resolve,reject)=>{
+  const child=spawn(process.env.ComSpec??'C:\\Windows\\System32\\cmd.exe',['/d','/s','/c',`"${command}"`],{env:process.env,stdio:['ignore',fd,fd],windowsHide:true,windowsVerbatimArguments:true});child.on('error',reject);child.on('close',resolve);
+ });closeSync(fd);
+ results.push({name,command,code,started,ended:new Date().toISOString(),log});writeFileSync('.tmp/r4-extra-gates.json',JSON.stringify(results,null,2));console.log(`END ${name}: ${code}`);
+}

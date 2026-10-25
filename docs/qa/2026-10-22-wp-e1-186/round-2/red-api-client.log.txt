@@ -1,0 +1,84 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/packages/api-client
+
+ ↓ src/sse.test.ts > SseParser > parses id, event, and multi-line data; ignores comments and unknown fields
+ ↓ src/sse.test.ts > SseParser > handles CRLF and CR endings, including a CRLF split across chunks
+ ↓ src/sse.test.ts > SseParser > buffers partial lines and drops frames without data
+ ↓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at data-newline without advancing the resume cursor
+ ↓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at id-prefix without advancing the resume cursor
+ ↓ src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control STORED_EVENT_INVALID without advancing the cursor or retrying
+ ↓ src/sse.test.ts > subscribeRunEvents > rejects malformed stream controls without consuming their id
+ ↓ src/sse.test.ts > subscribeRunEvents > reports partial data without an id, then retries a slow control from the complete cursor
+ ↓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_SLOW_CONSUMER problem and retries from the last delivered id
+ × src/sse.test.ts > subscribeRunEvents > reports a typed SSE_REPLAY_FAILED problem and retries from the last delivered id 27ms
+   → SSE_REPLAY_FAILED: The reader fell behind; reconnecting from the last received event.
+ × src/sse.test.ts > subscribeRunEvents > provides the received JSON size to batch consumers without another serialization 10ms
+   → expected [ undefined ] to deeply equal [ 202 ]
+ ↓ src/sse.test.ts > subscribeRunEvents > accepts exhausted completion and closes without reconnecting
+ ↓ src/sse.test.ts > subscribeRunEvents > delivers validated events in order, skips replays, and stops after a terminal event
+ ↓ src/sse.test.ts > subscribeRunEvents > reports each accepted connection through onOpen, before and without any event
+ ↓ src/sse.test.ts > subscribeRunEvents > reports invalid frames, advances past their id, and keeps going
+ ↓ src/sse.test.ts > subscribeRunEvents > retries refused connections and retryable statuses with capped exponential backoff
+ ↓ src/sse.test.ts > subscribeRunEvents > gives up after maxAttempts consecutive failures
+ ↓ src/sse.test.ts > subscribeRunEvents > rejects without retrying on non-retryable statuses and on a missing body
+ ↓ src/sse.test.ts > subscribeRunEvents > tolerates an unreadable error body
+ ↓ src/sse.test.ts > subscribeRunEvents > rejects when onEvent throws
+ ↓ src/sse.test.ts > subscribeRunEvents > reconnects after a stream error mid-read and resets backoff after progress
+ ↓ src/sse.test.ts > subscribeRunEvents > stops quietly when closed or aborted, including before it starts
+ ↓ src/sse.test.ts > subscribeRunEvents > stops when closed from inside onEvent or while waiting to retry
+ ↓ src/sse.test.ts > subscribeRunEvents > ends quietly when the stream finishes after close() aborts the read
+ ↓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting headers without cancelling the run
+ ↓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting body without cancelling the run
+ ↓ src/sse.test.ts > subscribeRunEvents > reconnects over real HTTP after the server drops the connection
+ ↓ src/sse.test.ts > defaultSleep > waits, and resolves early on abort
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > reports a typed SSE_REPLAY_FAILED problem and retries from the last delivered id
+GraphGoblinApiError: SSE_REPLAY_FAILED: The reader fell behind; reconnecting from the last received event.
+ ❯ connect src/sse.ts:231:27
+    229|               throw new Fatal(new RunEventParseError(frame, cause));
+    230|             }
+    231|             const error = new GraphGoblinApiError(problem);
+       |                           ^
+    232|             // Control frames never advance lastSeq. Only slow consume…
+    233|             // unreadable stored history needs repair and must not loo…
+ ❯ run src/sse.ts:267:14
+ ❯ src/sse.test.ts:219:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 500, code: 'SSE_REPLAY_FAILED', detail: 'The reader fell behind; reconnecting from the last received event.', errors: undefined, problem: { status: 500, code: 'SSE_REPLAY_FAILED', detail: 'The reader fell behind; reconnecting from the last received event.' } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/sse.test.ts > subscribeRunEvents > provides the received JSON size to batch consumers without another serialization
+AssertionError: expected [ undefined ] to deeply equal [ 202 ]
+
+- Expected
++ Received
+
+  [
+-   202,
++   undefined,
+  ]
+
+ ❯ src/sse.test.ts:239:22
+    237|       },
+    238|     }).done;
+    239|     expect(received).toEqual([json.length * 2]);
+       |                      ^
+    240|   });
+    241|   it('accepts exhausted completion and closes without reconnecting', a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 26 skipped (28)
+   Start at  02:26:09
+   Duration  3.16s (transform 51%, import 46%, tests 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\packages\api-client
+
