@@ -1,0 +1,54 @@
+import {fork} from 'node:child_process';
+import {readFile,writeFile,mkdtemp,copyFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {get} from 'node:http';
+import {createHash} from 'node:crypto';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-e1-186-qa');
+const runtime=await mkdtemp(join(tmpdir(),'gg-qa-e1-186-runtime-'));
+const previous=JSON.parse(await readFile(join(out,'runtime-results.json'),'utf8')); const dataDir=previous.dataDir.replaceAll('%USERPROFILE%',process.env.USERPROFILE);
+await copyFile(join(out,'worker.mjs.txt'),join(runtime,'worker.mjs'));
+const dep=(name)=>import(import.meta.resolve(name,pathToFileURL(join(root,'apps/web/package.json'))));
+const {SseParser,subscribeRunEvents,createGraphGoblinClient}=await dep('@graphgoblin/api-client');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const results={revision:'8b760b6b1250bd64ab541cbfd53af83c04e140e2',started:new Date().toISOString(),dataDir,runtime,cases:[],errors:[]};
+const portable=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+async function save(){await writeFile(join(out,'restart-results.json'),portable(JSON.stringify(results,null,2)));}
+let child,base,token,definition,nextId=0,bootInfo;
+const pending=new Map();
+async function boot(){
+ const start=performance.now();
+ child=fork(join(runtime,'worker.mjs'),[],{cwd:root,windowsHide:true,execArgv:['--experimental-import-meta-resolve'],env:{...process.env,GG_QA_OPTIONS:JSON.stringify({dataDir,port:5953})},stdio:['ignore','pipe','pipe','ipc']});
+ child.stdout.on('data',b=>process.stdout.write(b));child.stderr.on('data',b=>process.stderr.write(b));
+ const ready=new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('worker boot timeout')),120000);child.on('exit',(code)=>{for(const entry of pending.values())entry.reject(new Error('worker exited '+code));pending.clear();});child.on('message',msg=>{if(msg.ready){clearTimeout(timeout);resolve(msg);}else{const p=pending.get(msg.id);if(!p)return;pending.delete(msg.id);msg.error?p.reject(new Error(msg.error)):p.resolve(msg.result);}});});
+ bootInfo=await ready;({base,token,definition}=bootInfo);results.boots??=[];results.boots.push({pid:bootInfo.pid,ms:performance.now()-start});
+}
+function call(name,args){const id=++nextId;return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});child.send({id,name,args});});}
+async function api(path,body,extra={}){const r=await fetch(base+path,{...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)}),headers:{authorization:'Bearer '+token,'content-type':'application/json',...extra},signal:AbortSignal.timeout(120000)});if(!r.ok)throw new Error(path+' HTTP '+r.status+' '+await r.text());return r.json();}
+async function makeRun(count,payloadBytes=256){const {loop}=await api('/loops',{definition});await api('/loops/'+loop.id+'/publish',{});const {run}=await api('/loops/'+loop.id+'/runs',{});for(let i=0;i<100;i++){const r=await api('/runs/'+run.id);if(r.status==='waiting')break;await sleep(20);}await call('seed',{runId:run.id,count,payloadBytes});return run.id;}
+function collector(after=0){return {after,count:0,last:after,gaps:0,duplicates:0,controls:[],hash:createHash('sha256'),firstMs:null,consume(frame,at){if(frame.event==='stream.error'){this.controls.push({problem:JSON.parse(frame.data),id:frame.id,atMs:at});return;}let e;try{e=JSON.parse(frame.data);}catch{this.partialFrames=(this.partialFrames??0)+1;return;}if(!Number.isInteger(e.seq))return;if(e.seq<=this.last)this.duplicates++;if(e.seq!==this.last+1)this.gaps++;if(this.firstMs===null)this.firstMs=at;this.count++;this.last=e.seq;this.hash.update(JSON.stringify(e)+'\n');},summary(ms){return {after:this.after,count:this.count,last:this.last,gaps:this.gaps,duplicates:this.duplicates,controls:this.controls,partialFrames:this.partialFrames??0,firstMs:this.firstMs,totalMs:ms,sha256:this.hash.digest('hex')};}};}
+async function raw(runId,{after=0,pauseMs=0,paceMs=0,headers={},onProgress}={}){
+ const start=performance.now(),c=collector(after),parser=new SseParser();
+ return new Promise((resolve,reject)=>{let pauseTimer;const request=get(base+'/runs/'+runId+'/events?after='+after,{headers:{authorization:'Bearer '+token,accept:'text/event-stream',...headers}},res=>{let bytes=0;res.setEncoding('utf8');res.pause();pauseTimer=setTimeout(()=>res.resume(),pauseMs);res.on('data',chunk=>{bytes+=Buffer.byteLength(chunk);for(const frame of parser.push(chunk))c.consume(frame,performance.now()-start);onProgress?.(c);if(paceMs){res.pause();pauseTimer=setTimeout(()=>res.resume(),paceMs);}});const finish=(error)=>{clearTimeout(pauseTimer);resolve({...c.summary(performance.now()-start),bytes,status:res.statusCode,transportError:error});};res.once('end',()=>finish());res.once('error',e=>finish(String(e)));});request.on('error',reject);request.setTimeout(120000,()=>request.destroy(new Error('raw timeout')));});
+}
+async function fetched(runId,after=0){const start=performance.now(),c=collector(after),p=new SseParser();const res=await fetch(base+'/runs/'+runId+'/events?after='+after,{headers:{authorization:'Bearer '+token,accept:'text/event-stream'},signal:AbortSignal.timeout(120000)});const reader=res.body.getReader(),d=new TextDecoder();for(;;){const {value,done}=await reader.read();if(done)break;for(const f of p.push(d.decode(value,{stream:true})))c.consume(f,performance.now()-start);}return {...c.summary(performance.now()-start),status:res.status};}
+function clientRead(runId,after=0){const start=performance.now(),c=collector(after),errors=[],opens=[];const client=createGraphGoblinClient({baseUrl:base,apiKey:token});const sub=subscribeRunEvents({client,runId,after,onEvent:e=>c.consume({data:JSON.stringify(e)},performance.now()-start),onOpen:()=>opens.push(performance.now()-start),onError:(e,attempt)=>errors.push({code:e.code??e.problem?.code,message:e.message,attempt}),backoff:{initialMs:50,maxMs:100,maxAttempts:5}});return sub.done.then(()=>({...c.summary(performance.now()-start),lastSeq:sub.lastSeq,errors,opens}),e=>({...c.summary(performance.now()-start),lastSeq:sub.lastSeq,errors,opens,rejected:{code:e.code??e.problem?.code,message:e.message}}));}
+async function record(name,fn){console.log('QA_CASE '+name);try{const actual=await fn();results.cases.push({name,...actual});}catch(e){results.cases.push({name,error:e.stack});results.errors.push({name,error:e.stack});}await save();}
+let browser;
+try {
+ await boot();const runId=previous.browserLiveRunId;results.runId=runId;
+ const webUrl=pathToFileURL(join(root,'apps/web/package.json'));
+ const testUrl=import.meta.resolve('@playwright/test',webUrl);
+ const {chromium}=await import(import.meta.resolve('playwright',testUrl));browser=await chromium.launch({channel:'msedge',headless:true});
+ const context=await browser.newContext({viewport:{width:390,height:900}});await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),token);
+ const page=await context.newPage();page.setDefaultTimeout(120000);const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('/events?'))requests.push(r.url());});
+ async function inspect(label,expected){await page.waitForFunction(n=>document.querySelector('ol[aria-label="Timeline"]')?.children.length===n,expected,{timeout:120000});const value=await page.evaluate(()=>{const ids=[...document.querySelector('ol[aria-label="Timeline"]').children].map(x=>Number(x.querySelector('button span').textContent.replace('#','')));return {count:ids.length,last:ids.at(-1),gaps:ids.filter((x,i)=>x!==i+1).length,duplicates:ids.filter((x,i)=>i&&x<=ids[i-1]).length,documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth};});await page.screenshot({path:join(out,'restart-'+label+'-390.png')});console.log('QA_RESTART_CHECK '+label+' '+value.count);results.cases.push({name:label,expected,...value,pass:value.count===expected&&!value.gaps&&!value.duplicates});await save();}
+ await page.goto(base+'/app/runs/'+runId,{waitUntil:'domcontentloaded'});const before=await api('/runs/'+runId);await inspect('before-kill',before.lastEventSeq);
+ const clientResult=clientRead(runId,20000);
+ const exited=new Promise(r=>child.once('exit',(code,signal)=>r({code,signal})));const oldPid=child.pid;child.kill();results.nativeExit={pid:oldPid,...await exited};await boot();
+ await call('burst',{runId,count:100});let current=await api('/runs/'+runId);await inspect('after-restart',current.lastEventSeq);
+ await api('/runs/'+runId+'/cancel',{});current=await api('/runs/'+runId);await inspect('terminal',current.lastEventSeq);results.client=await clientResult;results.requests=requests;results.errors=errors;
+ await page.reload({waitUntil:'domcontentloaded'});await inspect('reload',current.lastEventSeq);
+ results.pass=results.cases.every(x=>x.pass)&&!results.client.rejected&&!results.client.gaps&&results.client.last===current.lastEventSeq&&!errors.length;
+}catch(e){results.error=e.stack;console.error(e.stack);}finally{await browser?.close();if(child?.connected)await call('close').catch(e=>{results.closeError=e.stack;child.kill();});results.finished=new Date().toISOString();await save();console.log('QA_RESTART_FINISHED');}

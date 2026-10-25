@@ -1,0 +1,19 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --no-file-parallelism
+At line:5 char:3
++   & pnpm.cmd --filter ('@graphgoblin/'+$taskPackage) test:coverage -- ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...ile-parallelism:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 2 failed) 71124ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20588ms
+     × 16: terminal SSE with Last-Event-ID -1 always closes 937ms
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 355512ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180536ms
+     × the built API recovers a child finished while down with one continuation per parent 134441ms

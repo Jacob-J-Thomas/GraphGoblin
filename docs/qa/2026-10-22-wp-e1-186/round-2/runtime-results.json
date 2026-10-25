@@ -1,0 +1,26 @@
+[
+  {
+    "name": "build-after-coverage",
+    "command": "pnpm.cmd build",
+    "exitCode": 0,
+    "log": ".tmp/r2-build-after-coverage.log.txt"
+  },
+  {
+    "name": "measurement",
+    "command": "node tooling/perf/measure.mjs replay --passes=1000 --profile=inspector --port=5745 --store-prefix=gg-wp-e1-186- --out=.tmp/gg-wp-e1-186-fix-replay",
+    "exitCode": 0,
+    "log": ".tmp/r2-measurement.log.txt"
+  },
+  {
+    "name": "b1-after-final",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/zz-review-186-probe.test.ts --maxWorkers=1 --no-file-parallelism --reporter=verbose",
+    "exitCode": 0,
+    "log": ".tmp/r2-b1-after-final.log.txt"
+  },
+  {
+    "name": "browser",
+    "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test --config ../../docs/qa/2026-10-22-wp-e1-186/playwright.config.mts e2e/loop-lifecycle.spec.ts e2e/replay-seed.spec.ts --grep \"cancel a waiting run|a replay inspector\" --reporter=json",
+    "exitCode": 0,
+    "log": ".tmp/r2-browser.log.txt"
+  }
+]

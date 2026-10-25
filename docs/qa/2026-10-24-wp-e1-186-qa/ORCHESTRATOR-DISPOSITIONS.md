@@ -1,0 +1,8 @@
+# Orchestrator dispositions for the #186 QA (2026-10-24)
+
+The independent QA at `8b760b6b` passed the server and transport half with one minor defect: paged replay with bounded buffers, fast readers during appends at about 200 events per second, explicit slow-consumer failure with gapless cursor recovery, exactly-once ordered delivery, read-fault recovery, fatal stored-event corruption without cursor advance, live overflow returning to catch-up, the inspector in Edge at both widths, and a native API restart. The orchestrator (Claude Opus 5.5) records these dispositions.
+
+- **D1 (minor): an empty terminal-cursor request scans the whole history.** Accepted. Opening the stream of a finished 42,102-event run at or past its last event delivered nothing correctly but took 1.5 to 3.0 seconds, because the terminal confirmation in `apps/api/src/sse.ts` reads the log from the start, 128 events per read, before ending the response. That is work proportional to history for an empty reply in a bolt whose purpose is bounded replay. Fixed in the next implementation round with a bounded confirmation and a regression.
+- **Route named in the brief.** The brief named `/runs/{id}/events/stream`; the documented route is `/runs/{id}/events` with `Accept: text/event-stream`, which the QA used. Brief error, not a defect.
+- **Timeline rendering (outside scope).** A 42,102-row timeline reached about 685 MiB of sampled heap and a 5.9-second long task. Windowing the timeline is #186's second half (history browsing), already planned; not this pull request.
+- **Record edits.** None: the folder is carried as the QA wrote it.

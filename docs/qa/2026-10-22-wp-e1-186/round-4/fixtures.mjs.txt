@@ -1,0 +1,33 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+function edit(path, fn) { writeFileSync(path, fn(readFileSync(path, 'utf8'))); }
+edit('packages/api-client/src/sse.test.ts', s => {
+  s = s.replace("function frame(e: RunEvent): string {", "const completion = (after: number) => `event: stream.complete\\ndata: ${JSON.stringify({ after })}\\n\\n`;\n\nfunction frame(e: RunEvent): string {");
+  s = s.replaceAll("stream([frame(event(2, 'run.cancelled'))])", "stream([frame(event(2, 'run.cancelled')), completion(2)])");
+  for (const seq of [5,7]) s = s.replaceAll(`stream([frame(event(${seq}, 'run.cancelled'))])`, `stream([frame(event(${seq}, 'run.cancelled')), completion(${seq})])`);
+  s = s.replace("stream([`data: ${json}\\nid: 1\\n\\n`])", "stream([`data: ${json}\\nid: 1\\n\\n`, completion(1)])");
+  s = s.replace("stream([frame(finished)])", "stream([frame(finished), completion(1)])");
+  s = s.replace('stops after a terminal event', 'stops after authoritative completion');
+  s = s.replace("        frame(event(4)),", "        frame(event(4)),\n        completion(4),");
+  s = s.replace('expect(seen).toEqual([1, 2, 3]);\n    expect(subscription.lastSeq).toBe(3);', 'expect(seen).toEqual([1, 2, 3, 4]);\n    expect(subscription.lastSeq).toBe(4);');
+  s = s.replace("res.end(frame(event(3, 'run.cancelled')))", "res.end(frame(event(3, 'run.cancelled')) + completion(3))");
+  return s;
+});
+edit('apps/api/src/sse.test.ts', s => s
+  .replaceAll('.filter((frame) => frame.event)', '.filter((frame) => frame.id !== undefined)')
+  .replaceAll('.filter((f) => f.event)', '.filter((f) => f.id !== undefined)')
+  .replace("expect(frames).toEqual([{ comment: 'connected' }]);", "expect(frames).toEqual([{ comment: 'connected' }, { event: 'stream.complete', data: JSON.stringify({ after: total }) }]);"));
+// Controls have no id. Compare durable payloads only, while retaining separate control assertions.
+for (const path of ['apps/api/src/sse-catchup.test.ts','apps/api/src/sse-bounds.test.ts']) edit(path, s => s
+  .replace("[...text.matchAll(/^data: (.+)$/gm)]", "[...text.matchAll(/^data: (.+)\\nid: \\d+$/gm)]")
+  .replace("[...body.matchAll(/^data: (.+)$/gm)]", "[...body.matchAll(/^data: (.+)\\nid: \\d+$/gm)]"));
+// This public-port fixture must obey durable read cursor semantics: completion now rereads
+// the tail rather than dropping every notification after the first terminal event.
+edit('apps/api/src/edges.test.ts', s => {
+  s = s.replace('merges events appended during replay in order, sends heartbeats, and ignores events after the end', 'merges events appended during replay in order, sends heartbeats, and completes after the durable suffix');
+  s = s.replace('    let listener: ((e: RunEvent) => void) | undefined;\n    const store = {', '    let listener: ((e: RunEvent) => void) | undefined;\n    const log = [event(1), event(2)];\n    let first = true;\n    const store = {');
+  s = s.replace("      read: () => {\n        // Two live events arrive while history is being read, out of order, one overlapping it.\n        listener?.(event(3));\n        listener?.(event(2));\n        return Promise.resolve([event(1), event(2)]);\n      },", "      read: (_runId: string, after = 0) => {\n        const page = log.filter((event) => event.seq > after);\n        if (first) {\n          first = false;\n          log.push(event(3));\n          listener?.(event(3));\n          listener?.(event(2));\n        }\n        return Promise.resolve(page);\n      },");
+  s = s.replace("      finish(event(4, 'run.finished'));\n      finish(event(5, 'run.waiting'));", "      log.push(event(4, 'run.finished'), event(5, 'return.delivered'));\n      finish(log[3]!);\n      finish(log[4]!);");
+  s = s.replace('expect(ids).toEqual([1, 2, 3, 4]);', 'expect(ids).toEqual([1, 2, 3, 4, 5]);');
+  s = s.replace("const data = [...response.body.matchAll(/^data: (.+)$/gm)];\n      expect(JSON.parse(data.at(-1)![1]!)).toMatchObject({ type: 'run.finished' });", "const data = [...response.body.matchAll(/^data: (.+)\\nid: \\d+$/gm)];\n      expect(JSON.parse(data.at(-1)![1]!)).toMatchObject({ type: 'return.delivered' });\n      expect(response.body).toContain('event: stream.complete');");
+  return s;
+});

@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+const phase = process.argv[2];
+if (!['before','after'].includes(phase)) throw new Error('expected before/after');
+const transport = JSON.parse(readFileSync(`.tmp/r4-${phase}/transport-results.json`));
+const corruption = JSON.parse(readFileSync(`.tmp/r4-${phase}/initial-corruption-results.json`));
+const cases = new Map(transport.cases.map(value=>[value.name,value]));
+for(const item of transport.cases) {
+  if(phase==='before' && item.name==='append during every read and replay-live boundary') continue;
+  assert.equal(item.error,undefined,item.name);
+}
+const real = cases.get('real manager failure then resume through REST');
+const suffix = cases.get('failed then resumed then finished with audit');
+const terminal = [cases.get('terminal cursor 387'),cases.get('terminal cursor 487')];
+const successfulClient = client => {
+  assert.equal(client.rejected,undefined);assert.equal(client.opens,1);assert.deepEqual(client.errors,[]);
+};
+const complete = (raw,after) => {
+  assert.equal(raw.status,200);assert.deepEqual(raw.controls,[]);
+  assert.deepEqual(raw.completions,[{data:{after}}]);
+};
+if(phase==='before') {
+  assert.equal(real.raw.last,12);assert.equal(real.after.lastEventSeq,24);
+  assert.equal(real.client.lastSeq,12);assert.equal(suffix.raw.ids.at(-1),128);
+  for(const item of terminal) {assert.equal(item.client.opens,2);assert.equal(item.client.rejected.code,undefined);assert.match(item.client.rejected.message,/gave up/);assert.deepEqual(item.raw.completions,[]);}
+  for(const item of corruption.cases) {assert.equal(item.requests.length,2);assert.equal(item.rejection.name,'Error');assert.equal(item.lastSeq,item.after);}
+} else {
+  assert.equal(real.raw.count,24);assert.equal(real.raw.last,24);successfulClient(real.client);
+  assert.deepEqual(real.client.seen.map(event=>event.seq),Array.from({length:24},(_,i)=>i+1));
+  assert.deepEqual(suffix.raw.ids,[127,128,129,130,131,132]);complete(suffix.raw,132);successfulClient(suffix.client);
+  assert.deepEqual(suffix.client.seen.map(event=>event.seq),suffix.raw.ids);
+  for(const [name,expected] of [
+    ['cursor after former failure',[129,130,131,132]],
+    ['cursor after current terminal with trailing audits',[132]],
+  ]) {const item=cases.get(name);assert.deepEqual(item.raw.ids,expected);complete(item.raw,132);successfulClient(item.client);assert.deepEqual(item.client.seen.map(event=>event.seq),expected);}
+  for(const item of terminal) {assert.deepEqual(item.raw.ids,[]);complete(item.raw,item.after);successfulClient(item.client);assert.equal(item.client.lastSeq,item.after);}
+  for(const item of corruption.cases) {
+    assert.equal(item.raw.status,500);assert.equal(item.raw.body.code,'STORED_EVENT_INVALID');
+    assert.equal(item.requests.length,1);assert.equal(item.rejection.name,'GraphGoblinApiError');
+    assert.equal(item.rejection.code,'STORED_EVENT_INVALID');assert.equal(item.lastSeq,item.after);
+    assert.deepEqual(item.seen,[]);assert.deepEqual(item.errors,[]);
+  }
+  const corrupt=cases.get('later page corruption');assert.equal(corrupt.wire.last,128);
+  assert.equal(corrupt.wire.controls[0].problem.code,'STORED_EVENT_INVALID');assert.equal(corrupt.client.rejected.code,'STORED_EVENT_INVALID');assert.equal(corrupt.client.opens,1);assert.equal(corrupt.client.lastSeq,128);
+  const equal=cases.get('equal timestamp page boundaries');assert.equal(equal.actual,equal.expected);assert.equal(equal.unique,equal.expected);assert.equal(equal.ordered,true);
+  const handoff=cases.get('append during every read and replay-live boundary');assert.equal(handoff.count,handoff.expected);assert.equal(handoff.ordered,true);assert.deepEqual(handoff.controls,[]);
+  const grace=cases.get('terminal status without terminal marker grace');assert.deepEqual(grace.raw.completions,[]);assert.equal(grace.client.opens,2);assert.match(grace.client.rejected.message,/gave up/);
+  assert.equal(transport.subscriptionsAtEnd,0);
+}
+const result={phase,verified:true,head:transport.head,transportCases:transport.cases.length,corruptionCases:corruption.cases.length,auxiliaryFixtureError:phase==='before'?cases.get('append during every read and replay-live boundary').error:undefined,realRun:{expected:real.after.lastEventSeq,rawLast:real.raw.last,clientLast:real.client.lastSeq},terminalCursors:terminal.map(item=>({after:item.after,opens:item.client.opens,rejection:item.client.rejected})),corruption:corruption.cases.map(item=>({location:item.location,requests:item.requests.length,rejection:item.rejection,lastSeq:item.lastSeq}))};
+writeFileSync(`.tmp/r4-${phase}-verification.json`,JSON.stringify(result,null,2));
+console.log(JSON.stringify(result,null,2));

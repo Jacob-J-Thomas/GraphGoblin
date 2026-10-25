@@ -1,0 +1,36 @@
+pnpm.cmd : $ vitest run --coverage
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api test:coverage *> .tmp/coverage-api ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+      Coverage enabled with v8
+
+ ❯ src/nested-readiness.test.ts (19 tests | 2 failed) 122239ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the claude executable fixture through public nested admission 21707ms
+     × uses the codex executable fixture through public nested admission 21281ms
+ ❯ src/adversarial.test.ts (34 tests | 2 failed) 147734ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 21837ms
+     × 16: terminal SSE with Last-Event-ID -1 always closes 4851ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 2 failed) 81926ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20378ms
+     × observes only current state and cannot reconstruct a label transition between snapshots 20012ms
+ ❯ src/routes/template-drafts.test.ts (23 tests | 1 failed) 217890ms
+   ❯ editable template starting points (18)
+     × creates exactly one ordinary starter draft without credentials, readiness or repository settings 21730ms
+{"level":30,"time":1792801035323,"pid":59984,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5607"}
+{"level":30,"time":1792801035526,"pid":59984,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5607,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-ZVzPag","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792801036214,"pid":59984,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792801036221,"pid":59984,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.8179999999993015,"msg":"request completed"}
+ ❯ src/retired-event-startup.test.ts (2 tests | 1 failed) 156811ms
+   ❯ cold start over a stored retired Event destination (#242) (2)
+     × starts with a published version holding one, refuses that loop per loop and serves the rest 61418ms
+ ❯ src/version-migration.test.ts (3 tests | 1 failed) 98623ms
+   ❯ migrated SQLite versions through the API (3)
+     × recovers a current-format pinned run across restart mid-run without migration 62283ms

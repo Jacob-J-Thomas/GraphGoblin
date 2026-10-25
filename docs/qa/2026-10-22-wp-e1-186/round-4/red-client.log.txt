@@ -1,0 +1,148 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/packages/api-client
+
+ × src/sse-completion.test.ts > stream completion contract > delivers historical terminals, resumes and delivery audits before authoritative completion 57ms
+   → expected [ 1 ] to deeply equal [ 1, 2, 3, 4 ]
+ × src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 387 without retry or cursor advance 37ms
+   → gave up on the event stream for run 32TRRVEMQJJ0K90D4SRTRD74QW after 1 attempts
+ × src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 487 without retry or cursor advance 23ms
+   → gave up on the event stream for run 32TRRVEMQJJ0K90D4SRTRD74QW after 1 attempts
+ × src/sse-completion.test.ts > stream completion contract > retries EOF after a terminal event from that cursor until completion is authoritative 3ms
+   → expected [ 1 ] to deeply equal [ 1, 2 ]
+ × src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal at cursor 0 31ms
+   → expected Error: gave up on the event stream for ru… to be an instance of GraphGoblinApiError
+ × src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal at cursor 8 2ms
+   → expected Error: gave up on the event stream for ru… to be an instance of GraphGoblinApiError
+ × src/sse-completion.test.ts > stream completion contract > rejects malformed completion { without consuming its id 10ms
+   → expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+ × src/sse-completion.test.ts > stream completion contract > rejects malformed completion {} without consuming its id 3ms
+   → expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+ × src/sse-completion.test.ts > stream completion contract > rejects malformed completion null without consuming its id 30ms
+   → expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+ × src/sse-completion.test.ts > stream completion contract > rejects malformed completion {"after":999} without consuming its id 2ms
+   → expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/api-client exec vitest run src/sse-com ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-completion.test.ts > stream completion contract > delivers historical terminals, resumes and delivery 
+audits before authoritative completion
+AssertionError: expected [ 1 ] to deeply equal [ 1, 2, 3, 4 ]
+
+- Expected
++ Received
+
+  [
+    1,
+-   2,
+-   3,
+-   4,
+  ]
+
+ ❯ src/sse-completion.test.ts:25:18
+     23|     const sub = subscribeRunEvents({ client, runId, onEvent: event => …
+     24|     await sub.done;
+     25|     expect(seen).toEqual([1, 2, 3, 4]);
+       |                  ^
+     26|     expect(sub.lastSeq).toBe(4);
+     27|     expect(requests).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 387 
+without retry or cursor advance
+ FAIL  src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 487 
+without retry or cursor advance
+Error: gave up on the event stream for run 32TRRVEMQJJ0K90D4SRTRD74QW after 1 attempts
+ ❯ run src/sse.ts:283:15
+    281|       onError?.(lastError, failures);
+    282|       if (failures >= maxAttempts) {
+    283|         throw new Error(`gave up on the event stream for run ${runId} …
+       |               ^
+    284|           cause: lastError,
+    285|         });
+ ❯ src/sse-completion.test.ts:37:5
+
+Caused by: Error: the event stream closed before the run finished
+ ❯ run src/sse.ts:273:21
+ ❯ src/sse-completion.test.ts:37:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/sse-completion.test.ts > stream completion contract > retries EOF after a terminal event from that cursor 
+until completion is authoritative
+AssertionError: expected [ 1 ] to deeply equal [ 1, 2 ]
+
+- Expected
++ Received
+
+  [
+    1,
+-   2,
+  ]
+
+ ❯ src/sse-completion.test.ts:54:18
+     52|     });
+     53|     await sub.done;
+     54|     expect(seen).toEqual([1, 2]);
+       |                  ^
+     55|     expect(urls).toHaveLength(2);
+     56|     expect(urls[1]).toMatch(/after=1$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal 
+at cursor 0
+ FAIL  src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal 
+at cursor 8
+AssertionError: expected Error: gave up on the event stream for ru… to be an instance of GraphGoblinApiError
+ ❯ src/sse-completion.test.ts:68:27
+     66|       runId, after, onEvent: () => { throw new Error('unexpected event…
+     67|     });
+     68|     await expect(sub.done).rejects.toBeInstanceOf(GraphGoblinApiError);
+       |                           ^
+     69|     await expect(sub.done).rejects.toMatchObject({ code: problem.code,…
+     70|     expect(sub.lastSeq).toBe(after);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/sse-completion.test.ts > stream completion contract > rejects malformed completion { without consuming its 
+id
+ FAIL  src/sse-completion.test.ts > stream completion contract > rejects malformed completion {} without consuming its 
+id
+ FAIL  src/sse-completion.test.ts > stream completion contract > rejects malformed completion null without consuming 
+its id
+ FAIL  src/sse-completion.test.ts > stream completion contract > rejects malformed completion {"after":999} without 
+consuming its id
+AssertionError: expected Error: gave up on the event stream for ru… to be an instance of RunEventParseError
+ ❯ src/sse-completion.test.ts:80:27
+     78|       runId, after: 8, onEvent: () => undefined, backoff: { maxAttempt…
+     79|     });
+     80|     await expect(sub.done).rejects.toBeInstanceOf(RunEventParseError);
+       |                           ^
+     81|     expect(sub.lastSeq).toBe(8);
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  10:08:06
+   Duration  9.18s (transform 81%, import 16%, tests 3%)
+
+  Transform  transforming modules took 6.61s · 81% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\packages\api-client
+

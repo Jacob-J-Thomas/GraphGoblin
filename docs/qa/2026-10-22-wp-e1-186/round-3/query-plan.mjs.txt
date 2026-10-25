@@ -1,0 +1,18 @@
+﻿import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+const base=pathToFileURL(join(process.cwd(),'apps/api/package.json')).href;
+const {openMemoryDatabase}=await import(import.meta.resolve('@graphgoblin/infrastructure/sqlite',base));
+const handle=await openMemoryDatabase();
+try {
+ const types=['run.finished','run.failed','run.cancelled','run.started','run.resumed'];
+ const subqueries=types.map(()=> 'coalesce((select max("run_events"."seq") from "run_events" where "run_events"."run_id" = ? and "run_events"."type" = ?), 0)');
+ const statement=`select "run_events"."run_id", "run_events"."seq", "run_events"."ts", "run_events"."type", "run_events"."node_id", "run_events"."payload" from "run_events" where ("run_events"."run_id" = ? and "run_events"."seq" = max(${subqueries.join(', ')})) limit ?`;
+ const args=['plan-run',...types.flatMap(type=>['plan-run',type]),1];
+ const plan=(await handle.client.execute({sql:'EXPLAIN QUERY PLAN '+statement,args})).rows;
+ const bytecode=(await handle.client.execute({sql:'EXPLAIN '+statement,args})).rows;
+ const seeks=plan.filter(row=>String(row.detail).includes('run_events_delivery_idx')).length;
+ if(seeks!==5||plan.some(row=>/^SCAN /i.test(String(row.detail))))throw new Error(JSON.stringify(plan));
+ await writeFile('docs/qa/2026-10-22-wp-e1-186/round-3/query-plan.json',JSON.stringify({purpose:'EXPLAIN of the candidate lifecycle lookup SQL shape; not a timing benchmark',statement,args,indexSeeks:seeks,plan,bytecode},null,2)+'\n');
+ console.log(`Five covering-index searches, no full-table scan; ${bytecode.length} EXPLAIN instructions.`);
+}finally{handle.close();}

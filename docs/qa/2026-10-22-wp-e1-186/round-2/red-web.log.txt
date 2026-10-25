@@ -1,0 +1,53 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes an oversized single event immediately without dropping its payload
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_SLOW_CONSUMER reason during retry and clears it when the stream reopens
+ × src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_REPLAY_FAILED reason during retry and clears it when the stream reopens 44ms
+   → expected 'connecting' to be 'error' // Object.is equality
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the batching timer runs
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > leaves an accepted clean close on the stream backoff without reporting an outage
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts only if the last connection failure was a transport failure
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > re-arms an outage on cursor progress rather than acceptance or replay alone
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 15000 ms open
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 20000 ms open
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports rapid two-second drops once and does not restart again on recovery
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 0 ms
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 2000 ms
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports transport failure while online and clears it on an accepted stream
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts a stream in backoff on recovery with its cursor and cleans up
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > does not report HTTP refusals or malformed event frames as transport failures
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_REPLAY_FAILED reason during retry and clears it when the stream reopens
+AssertionError: expected 'connecting' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "connecting"
+
+ ❯ src/runs/useRunEvents.test.tsx:93:35
+     91|       ),
+     92|     );
+     93|     expect(result.current.status).toBe('error');
+       |                                   ^
+     94|     expect(result.current.error).toContain('The reader fell behind');
+     95|     act(() => options().onOpen?.());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  02:26:14
+   Duration  11.89s (environment 39%, transform 28%, import 20%, setup 13%)
+
+  Transform  transforming modules took 3.19s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+
