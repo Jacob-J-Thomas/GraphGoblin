@@ -1,0 +1,25 @@
+node : node:internal/deps/undici/undici:13502
+At line:2 char:720
++ ... ins -Force; node $qaPins *> docs/qa/2026-10-24-wp-g1-255-qa/pin-readb ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/deps/undici/undici:13502:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+      Error.captureStackTrace(err);
+            ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-pin-readback.mjs:18:10 {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:6081
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 6081
+  }
+}
+
+Node.js v22.14.0

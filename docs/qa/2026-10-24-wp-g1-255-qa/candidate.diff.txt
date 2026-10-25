@@ -1,0 +1,2013 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 56440bf6..3608d460 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Run history shows inserted patch values, pinned node/route/loop labels, readable probabilities with exact event and run JSON, and recorded cancellation or failure causes. (#255)
++
+ - Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. Obsolete Refresh responses cannot overwrite a newer snapshot across revisits; inclusive anchored receipt reads keep displaced pending rows up to date. (#240)
+ 
+ - Show model and reasoning effort directly in inference and LLM decision editors, each in one dropdown naming the inherited default. Refresh default labels on dialog open, window focus and Settings saves; describe inherited values and unsupported efforts accessibly. Refuse a manual run whose Claude effort is outside the ready capabilities before recording it. Classifiers keep Question, Model, then Answer with no effort. Process defaults are exposed read-only for accurate labels, and a label whose latest Settings or process-defaults read failed says unavailable until a read succeeds, while Effort then offers only the efforts every enabled model supports and marks a saved effort outside them as of unknown support; saved configuration shapes are unchanged. **Upgrade:** no stored data changes. API clients gain the read-only `GET /system/model-defaults` (`system:read`), and a manual start can now answer 422 `EFFORT_UNSUPPORTED` on the node when Claude's ready capabilities do not support its effective effort; deploy the web app and API together. (#205)
+diff --git a/apps/web/e2e/classifiers.spec.ts b/apps/web/e2e/classifiers.spec.ts
+index f543b58b..bbf10443 100644
+--- a/apps/web/e2e/classifiers.spec.ts
++++ b/apps/web/e2e/classifiers.spec.ts
+@@ -537,7 +537,7 @@ test('a classifier Choice gate explains its options, refuses a duplicate label,
+   await page.goto(`${target.url}/app/runs/${runId}`);
+   await expect(
+     page.getByText(
+-      'Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
++      'Last gate decision: Gate (gate) chose Again (again) on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
+       { exact: true },
+     ),
+   ).toBeVisible();
+diff --git a/apps/web/e2e/decision-routes.spec.ts b/apps/web/e2e/decision-routes.spec.ts
+index b0fe4bc8..8fd76630 100644
+--- a/apps/web/e2e/decision-routes.spec.ts
++++ b/apps/web/e2e/decision-routes.spec.ts
+@@ -686,7 +686,7 @@ test('a rejected Noul confidence result stays raw and visible without selecting
+   await expect(rejection).toContainText('No decision was accepted and no route was selected.');
+   await expect(rejection).toContainText('Noul true');
+   await expect(rejection).toContainText('True probability');
+-  await expect(rejection).toContainText('0.6');
++  await expect(rejection).toContainText('60%');
+   await expect(rejection).toContainText('Minimum confidence');
+-  await expect(rejection).toContainText('0.8');
++  await expect(rejection).toContainText('80%');
+ });
+diff --git a/apps/web/e2e/execution-evidence-setup.ts b/apps/web/e2e/execution-evidence-setup.ts
+new file mode 100644
+index 00000000..cb3c1c0d
+--- /dev/null
++++ b/apps/web/e2e/execution-evidence-setup.ts
+@@ -0,0 +1,259 @@
++import { mkdtemp } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { resolve, join } from 'node:path';
++import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
++import {
++  CURRENT_DEFINITION_FORMAT,
++  LoopVersionRecordSchema,
++  RunRecordSchema,
++  type LoopDefinitionInput,
++} from '@graphgoblin/contracts';
++import type { DeciderPort } from '@graphgoblin/engine';
++import {
++  CapturingLogger,
++  FakeClock,
++  FakeClassifier,
++  FakeClassifierRegistry,
++  FakeHarness,
++  FakeStructured,
++} from '@graphgoblin/engine/testing';
++
++/** Public admission/control with built packages and physical SQLite; no live providers. */
++export default async function setup() {
++  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g1-255-'));
++  const harness = new FakeHarness();
++  const clock = new FakeClock();
++  const classifier = new FakeClassifier('jev', (request) => ({
++    type: 'choice',
++    optionId: request.options[0]!.id,
++    confidence: 0.8765432109876543,
++    probabilities: { accept: 0.8765432109876543, reject: 0.1234567890123457 },
++  }));
++  const decider: DeciderPort = {
++    id: 'codex',
++    available: () => true,
++    route: (request) =>
++      Promise.resolve({
++        route: request.routes[0]!.id,
++        confidence: 0.9123456789012345,
++        reasoning: 'Controlled LLM route evidence',
++      }),
++  };
++  const container = await createContainer(
++    loadConfig({
++      GG_DATA_DIR: dataDir,
++      GG_WEB_DIST: resolve('dist'),
++      GG_SWAGGER_UI: 'false',
++      GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
++    }),
++    {
++      harnesses: { codex: harness },
++      deciders: [decider],
++      classifiers: new FakeClassifierRegistry(classifier),
++      structured: new FakeStructured(),
++      clock,
++      logger: new CapturingLogger(),
++      startTimers: false,
++    },
++  );
++  await container.start();
++  const app = await buildApp(container, { logger: false });
++  const url = await app.listen({ host: '127.0.0.1', port: 6002 });
++  async function api(
++    method: 'GET' | 'POST' | 'PUT',
++    path: string,
++    payload?: unknown,
++    headers?: Record<string, string>,
++  ): Promise<Record<string, unknown>> {
++    const response = await app.inject({
++      method,
++      url: path,
++      ...(payload === undefined
++        ? {}
++        : {
++            payload: JSON.stringify(payload),
++            headers: { 'content-type': 'application/json', ...headers },
++          }),
++    });
++    if (response.statusCode >= 400) throw new Error(method + ' ' + path + ': ' + response.body);
++    return response.json<Record<string, unknown>>();
++  }
++  const startNode = {
++    id: 'start',
++    kind: 'trigger',
++    label: 'Original start',
++    config: { type: 'manual' },
++  } as const;
++  const done = { id: 'done', kind: 'exit', label: 'Original finish', config: {} } as const;
++  const edge = (from: string, port: string, to: string) => ({
++    id: from + '-' + port,
++    from: { node: from, port },
++    to: { node: to },
++  });
++  function workLoop(name: string): LoopDefinitionInput {
++    return {
++      schemaVersion: CURRENT_DEFINITION_FORMAT,
++      name,
++      nodes: [
++        startNode,
++        {
++          id: 'work',
++          kind: 'inference',
++          label: 'Original work',
++          config: { prompt: { template: 'Append exact evidence' } },
++        },
++        done,
++      ],
++      edges: [edge('start', 'out', 'work'), edge('work', 'out', 'done')],
++    };
++  }
++  async function admit(definition: LoopDefinitionInput) {
++    const created = await api('POST', '/loops', { definition });
++    const loopId = String((created['loop'] as { id: string }).id);
++    await api('POST', '/loops/' + loopId + '/publish');
++    const started = await api('POST', '/loops/' + loopId + '/runs', { input: {} });
++    return RunRecordSchema.parse(started['run']);
++  }
++  await api('PUT', '/secrets/jev-api-key', { value: 'synthetic-evidence-key' });
++  harness.script([{ finalText: 'Appended exact value α 0.123456789012345' }]);
++  const append = await admit(workLoop('Original append loop'));
++  await container.manager.waitForIdle();
++  const decision = await admit({
++    schemaVersion: CURRENT_DEFINITION_FORMAT,
++    name: 'Original decision loop',
++    nodes: [
++      startNode,
++      {
++        id: 'classify',
++        kind: 'decision',
++        label: 'Original classifier',
++        config: {
++          kind: 'classifier',
++          model: 'jev',
++          question: 'Accept?',
++          recordAlternatives: true,
++          answer: {
++            type: 'choice',
++            options: [
++              { id: 'accept', label: 'Original accept', criteria: 'Accept the item' },
++              { id: 'reject', label: 'Original reject', criteria: 'Reject the item' },
++            ],
++          },
++        },
++      },
++      {
++        id: 'route',
++        kind: 'decision',
++        label: 'Original LLM',
++        config: {
++          kind: 'llm',
++          harness: 'codex',
++          model: { mode: 'inherit' },
++          effort: { mode: 'inherit' },
++          instructions: 'Choose original route',
++          routes: [
++            { id: 'ship', label: 'Original ship' },
++            { id: 'hold', label: 'Original hold' },
++          ],
++        },
++      },
++      done,
++    ],
++    edges: [
++      edge('start', 'out', 'classify'),
++      edge('classify', 'accept', 'route'),
++      edge('classify', 'reject', 'done'),
++      edge('route', 'ship', 'done'),
++      edge('route', 'hold', 'done'),
++    ],
++  });
++  await container.manager.waitForIdle();
++  harness.script([{ delayMs: 60_000, finalText: 'Must not complete' }]);
++  const cancelled = await admit(workLoop('User cancellation loop'));
++  for (let attempt = 0; attempt < 200; attempt++) {
++    const events = await api('GET', '/runs/' + cancelled.id + '/events');
++    if ((events['items'] as { type: string }[]).some((event) => event.type === 'harness.session'))
++      break;
++    if (attempt === 199) throw new Error('Cancellation fixture did not reach its harness');
++    await new Promise((done) => setTimeout(done, 10));
++  }
++  await api('POST', '/runs/' + cancelled.id + '/cancel');
++  await container.manager.waitForIdle();
++  const deadline = await admit({
++    schemaVersion: CURRENT_DEFINITION_FORMAT,
++    name: 'Deadline loop',
++    settings: { runDeadlineSeconds: 1 },
++    nodes: [
++      startNode,
++      {
++        id: 'wait',
++        kind: 'wait',
++        label: 'Original deadline wait',
++        config: { mode: 'input', prompt: 'Wait for the deadline' },
++      },
++      done,
++    ],
++    edges: [edge('start', 'out', 'wait'), edge('wait', 'out', 'done')],
++  });
++  await container.manager.waitForIdle();
++  clock.advance(1001);
++  await container.timers.poll();
++  await container.manager.waitForIdle();
++  harness.script([
++    {
++      error: {
++        code: 'HARNESS_TRANSPORT_FAILED',
++        message: 'Recorded diagnostic: controlled provider connection closed',
++        retriable: false,
++      },
++    },
++  ]);
++  const provider = await admit(workLoop('Provider failure loop'));
++  await container.manager.waitForIdle();
++  const changed = workLoop('Renamed append loop');
++  changed.nodes = changed.nodes.map((node) => ({ ...node, label: 'Renamed ' + node.id }));
++  const current = await api('GET', '/loops/' + append.loopId);
++  await api(
++    'PUT',
++    '/loops/' + append.loopId + '/draft',
++    { definition: changed },
++    { 'if-match': String(current['draftToken']) },
++  );
++  await api('POST', '/loops/' + append.loopId + '/publish');
++
++  const renamedDecision = LoopVersionRecordSchema.parse(
++    await api('GET', '/loops/' + decision.loopId + '/versions/' + decision.versionId),
++  ).definition;
++  renamedDecision.name = 'Renamed decision loop';
++  for (const node of renamedDecision.nodes) {
++    node.label = 'Renamed ' + node.id;
++    if (node.kind !== 'decision') continue;
++    if (node.config.kind === 'classifier' && node.config.answer.type === 'choice') {
++      for (const option of node.config.answer.options) option.label = 'Renamed ' + option.id;
++    } else if (node.config.kind === 'expression' || node.config.kind === 'llm') {
++      for (const route of node.config.routes) route.label = 'Renamed ' + route.id;
++    }
++  }
++  const decisionCurrent = await api('GET', '/loops/' + decision.loopId);
++  await api(
++    'PUT',
++    '/loops/' + decision.loopId + '/draft',
++    { definition: renamedDecision },
++    { 'if-match': String(decisionCurrent['draftToken']) },
++  );
++  await api('POST', '/loops/' + decision.loopId + '/publish');
++  process.env['GG_E2E_BASE_URL'] = url;
++  process.env['GG_EXECUTION_EVIDENCE'] = JSON.stringify({
++    append,
++    decision,
++    cancelled,
++    deadline,
++    provider,
++  });
++  console.log('Execution evidence: ' + url + '; disposable store ' + dataDir);
++  return async () => {
++    await app.close();
++    await container.dispose();
++    // Keep the disposable store for inspection; workers do not delete directories.
++  };
++}
+diff --git a/apps/web/e2e/execution-evidence.capture.ts b/apps/web/e2e/execution-evidence.capture.ts
+new file mode 100644
+index 00000000..72fccf0e
+--- /dev/null
++++ b/apps/web/e2e/execution-evidence.capture.ts
+@@ -0,0 +1,258 @@
++import { mkdir, readFile, writeFile } from 'node:fs/promises';
++import { homedir } from 'node:os';
++import { resolve, join } from 'node:path';
++import {
++  CURRENT_DEFINITION_FORMAT,
++  RunRecordSchema,
++  RunEventSchema,
++  ContextThreadSchema,
++  type RunEvent,
++} from '@graphgoblin/contracts';
++import { test, expect } from './fixtures.js';
++
++test('exact recorded execution evidence across inspector, list and API (#255)', async ({
++  page,
++  request,
++}) => {
++  test.setTimeout(120_000);
++  const cases = Object.fromEntries(
++    Object.entries(
++      JSON.parse(process.env['GG_EXECUTION_EVIDENCE'] ?? '{}') as Record<string, unknown>,
++    ).map(([name, run]) => [name, RunRecordSchema.parse(run)]),
++  );
++  expect(Object.keys(cases)).toHaveLength(5);
++  const stage = process.env['GG_EVIDENCE_STAGE'] === 'before' ? 'before' : 'after';
++  const root = resolve('../../docs/qa/2026-10-24-wp-g1-255');
++  await mkdir(root, { recursive: true });
++  const captures: Record<string, unknown> = {};
++  const rows: Record<string, string> = {};
++  await page.goto('/app/runs');
++  for (const [name, run] of Object.entries(cases)) {
++    const row = page
++      .getByRole('row')
++      .filter({ has: page.getByRole('link', { name: run.id, exact: true }) });
++    await expect(row).toBeVisible();
++    rows[name] = await row.innerText();
++  }
++  const history = new Map<string, RunEvent[]>();
++  for (const [name, started] of Object.entries(cases)) {
++    const run = RunRecordSchema.parse(await (await request.get('/runs/' + started.id)).json());
++    const events = RunEventSchema.array().parse(
++      ((await (await request.get('/runs/' + run.id + '/events')).json()) as { items: unknown })
++        .items,
++    );
++    const thread = ContextThreadSchema.parse(
++      await (await request.get('/runs/' + run.id + '/thread')).json(),
++    );
++    const version: unknown = await (
++      await request.get('/loops/' + run.loopId + '/versions/' + run.versionId)
++    ).json();
++    history.set(name, events);
++    await page.goto('/app/runs/' + run.id);
++    const timeline = page.getByRole('list', { name: 'Timeline' });
++    await expect(timeline).toBeVisible();
++    await expect(timeline.getByRole('button')).toHaveCount(events.length);
++    const overview = await page.locator('body').innerText();
++    const selected: Record<string, string> = {};
++    for (const event of events.filter(
++      (e) =>
++        e.type === 'decision.made' ||
++        (e.type === 'node.finished' && e.nodeId === 'work') ||
++        e.type === 'run.cancelled' ||
++        e.type === 'run.failed',
++    )) {
++      await timeline.getByRole('button').nth(events.indexOf(event)).click();
++      selected[String(event.seq)] = await page.locator('body').innerText();
++    }
++    captures[name] = { run, events, thread, version, list: rows[name], overview, selected };
++    await page.screenshot({ path: join(root, stage + '-' + name + '.png'), fullPage: true });
++  }
++  // Evidence paths use the agreed owner-neutral spelling; all other recorded values are retained.
++  const json = JSON.stringify(captures, null, 2).replaceAll(
++    JSON.stringify(homedir()).slice(1, -1),
++    '%USERPROFILE%',
++  );
++  await writeFile(join(root, stage + '-readers.json'), json);
++  const cancelledEvents = history.get('cancelled')!;
++  expect(
++    cancelledEvents.some(
++      (e) => e.type === 'run.cancel_requested' && e.actor.kind === 'user' && e.actor.id === 'local',
++    ),
++  ).toBe(true);
++  expect(cancelledEvents.some((e) => e.type === 'run.cancelled')).toBe(true);
++  expect(cancelledEvents.some((e) => e.type === 'run.failed')).toBe(false);
++  await page.goto('/app/runs/' + cases['provider']!.id);
++  await expect(
++    page
++      .getByText('Recorded diagnostic: controlled provider connection closed', { exact: false })
++      .first(),
++  ).toBeVisible();
++  await page.goto('/app/runs/' + cases['deadline']!.id);
++  await expect(page.getByText(/RUN_DEADLINE_EXCEEDED/).first()).toBeVisible();
++
++  // The short baseline timeout applies only after complete histories and readers were captured.
++  const assertion = expect.configure({ soft: true, timeout: stage === 'before' ? 1000 : 10_000 });
++  await page.goto('/app/runs/' + cases['append']!.id);
++  const timeline = page.getByRole('list', { name: 'Timeline' });
++  await timeline
++    .getByRole('button')
++    .filter({ hasText: 'node.finished' })
++    .filter({ hasText: 'work' })
++    .click();
++  const appends = page
++    .getByRole('list', { name: 'Patch diff' })
++    .getByRole('listitem')
++    .filter({ hasText: '/messages/-' });
++  await assertion(appends.filter({ hasText: 'Appended exact value α' })).toHaveCount(1);
++  assertion(rows['append']).toContain('Original append loop');
++  assertion(rows['append']).not.toContain('Renamed append loop');
++  await assertion(timeline).toContainText('Original work');
++  await page.goto('/app/runs/' + cases['decision']!.id);
++  await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original accept');
++  await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original ship');
++  const decisions = history.get('decision')!;
++  const chosen = decisions.find((e) => e.type === 'decision.made')!;
++  await page
++    .getByRole('list', { name: 'Timeline' })
++    .getByRole('button')
++    .nth(decisions.indexOf(chosen))
++    .click();
++  await assertion(page.getByRole('list', { name: 'Alternative probabilities' })).toContainText(
++    'Original accept (accept): 87.65%',
++  );
++  await assertion(
++    page.getByRole('button', { name: 'Exact recorded event #' + chosen.seq }),
++  ).toBeVisible();
++  await page.goto('/app/runs/' + cases['cancelled']!.id);
++  await assertion(page.getByText(/Cancelled by user local/)).toBeVisible();
++  assertion(rows['provider']).toContain(
++    'Recorded diagnostic: controlled provider connection closed',
++  );
++  assertion(rows['deadline']).toContain('RUN_DEADLINE_EXCEEDED');
++
++  if (stage === 'after') {
++    await page.goto('/app/runs/' + cases['decision']!.id);
++    await page
++      .getByRole('list', { name: 'Timeline' })
++      .getByRole('button')
++      .nth(decisions.indexOf(chosen))
++      .click();
++    await page.getByRole('button', { name: 'Exact recorded event #' + chosen.seq }).click();
++    expect(JSON.parse(await page.getByTestId('recorded-event-json').innerText())).toEqual(chosen);
++    const downloaded = page.waitForEvent('download');
++    await page.getByRole('button', { name: 'Download Exact recorded event as JSON' }).click();
++    const download = await downloaded;
++    const path = join(root, 'after-decision-event.json');
++    await download.saveAs(path);
++    expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(chosen);
++    await page.route('**/loops/*/versions/*', (route) =>
++      route.fulfill({
++        status: 404,
++        contentType: 'application/problem+json',
++        body: JSON.stringify({
++          type: 'about:blank',
++          title: 'Unavailable fixture',
++          status: 404,
++          code: 'NOT_FOUND',
++        }),
++      }),
++    );
++    await page.reload();
++    await expect(page.getByText(/Pinned definition unavailable/)).toBeVisible();
++    await expect(page.getByRole('list', { name: 'Timeline' })).not.toContainText('Renamed');
++    await page.unroute('**/loops/*/versions/*');
++    await page.reload();
++    await expect(page.getByRole('list', { name: 'Timeline' })).toContainText('Original ship');
++  }
++});
++
++for (const width of [390, 768]) {
++  test(
++    'pinned node and route labels wrap across the inspector at ' + width + ' px (#255)',
++    async ({ page, request }) => {
++      const nodeLabel = 'N'.repeat(120);
++      const waitLabel = 'A'.repeat(120);
++      const routeLabel = 'L'.repeat(120);
++      const created = await request.post('/loops', {
++        data: {
++          definition: {
++            schemaVersion: CURRENT_DEFINITION_FORMAT,
++            name: 'Long pinned labels ' + width,
++            nodes: [
++              { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++              {
++                id: 'wait',
++                kind: 'wait',
++                label: waitLabel,
++                config: { mode: 'input', prompt: 'Continue?' },
++              },
++              {
++                id: 'work',
++                kind: 'mutate',
++                label: nodeLabel,
++                config: {
++                  operations: [{ op: 'append-message', role: 'note', content: 'Recorded message' }],
++                },
++              },
++              {
++                id: 'pick',
++                kind: 'decision',
++                label: 'P'.repeat(120),
++                config: {
++                  kind: 'expression',
++                  jsonata: '"go"',
++                  routes: [
++                    { id: 'go', label: routeLabel },
++                    { id: 'stop', label: 'Stop' },
++                  ],
++                },
++              },
++              { id: 'done', kind: 'exit', label: 'D'.repeat(120), config: {} },
++            ],
++            edges: [
++              { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },
++              { id: 'e2', from: { node: 'wait', port: 'out' }, to: { node: 'work' } },
++              { id: 'e3', from: { node: 'work', port: 'out' }, to: { node: 'pick' } },
++              { id: 'e4', from: { node: 'pick', port: 'go' }, to: { node: 'done' } },
++              { id: 'e5', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
++            ],
++          },
++        },
++      });
++      expect(created.status()).toBe(201);
++      const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
++      expect((await request.post('/loops/' + loopId + '/publish')).status()).toBe(200);
++      const started = await request.post('/loops/' + loopId + '/runs', { data: {} });
++      expect(started.status()).toBe(202);
++      const run = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run);
++      await page.setViewportSize({ width, height: 900 });
++      await page.goto('/app/runs/' + run.id);
++      await expect(page.getByText('At ' + waitLabel + ' (wait)', { exact: true })).toBeVisible();
++      const fits = async () =>
++        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
++          width,
++        );
++      await fits();
++      await page.getByLabel('Input (JSON)').fill('true');
++      await page.getByRole('button', { name: 'Submit input' }).click();
++      await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
++      const events = RunEventSchema.array().parse(
++        ((await (await request.get('/runs/' + run.id + '/events')).json()) as { items: unknown })
++          .items,
++      );
++      const timeline = page.getByRole('list', { name: 'Timeline' });
++      await expect(timeline.getByRole('button')).toHaveCount(events.length);
++      const completion = events.findIndex((e) => e.type === 'node.finished' && e.nodeId === 'work');
++      await timeline.getByRole('button').nth(completion).click();
++      await expect(
++        page.getByRole('heading', { name: 'Patch from ' + nodeLabel + ' (work)', exact: true }),
++      ).toBeVisible();
++      await fits();
++      const decision = events.findIndex((e) => e.type === 'decision.made');
++      await timeline.getByRole('button').nth(decision).click();
++      await expect(page.getByText(routeLabel, { exact: true })).toBeVisible();
++      await page.getByRole('button', { name: /Node progress/ }).click();
++      await fits();
++    },
++  );
++}
+diff --git a/apps/web/e2e/exit-primitives.spec.ts b/apps/web/e2e/exit-primitives.spec.ts
+index fb0feb8c..9cc37b7a 100644
+--- a/apps/web/e2e/exit-primitives.spec.ts
++++ b/apps/web/e2e/exit-primitives.spec.ts
+@@ -191,8 +191,8 @@ for (const finalChoice of ['repeat', 'done'] as const) {
+     await expect(
+       page.getByText(
+         finalChoice === 'repeat'
+-          ? 'Last gate decision: gate chose repeat on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.'
+-          : 'Last gate decision: gate chose done on pass 3 of 3.',
++          ? 'Last gate decision: Gate (gate) chose Repeat (repeat) on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.'
++          : 'Last gate decision: Gate (gate) chose Done (done) on pass 3 of 3.',
+         { exact: true },
+       ),
+     ).toBeVisible();
+diff --git a/apps/web/playwright.evidence.config.ts b/apps/web/playwright.evidence.config.ts
+new file mode 100644
+index 00000000..6405da4e
+--- /dev/null
++++ b/apps/web/playwright.evidence.config.ts
+@@ -0,0 +1,10 @@
++import { defineConfig } from '@playwright/test';
++import config from './playwright.config.js';
++
++/** #255: built packages, physical disposable storage and this worker's reserved ports. */
++export default defineConfig({
++  ...config,
++  globalSetup: './e2e/execution-evidence-setup.ts',
++  testMatch: '**/execution-evidence.capture.ts',
++  retries: 0,
++});
+diff --git a/apps/web/src/runs/RunInspectorPage.test.tsx b/apps/web/src/runs/RunInspectorPage.test.tsx
+index ab4c5a5e..1ad880e5 100644
+--- a/apps/web/src/runs/RunInspectorPage.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.test.tsx
+@@ -187,7 +187,7 @@ describe('RunInspectorPage', () => {
+ 
+     expect(await screen.findByText('True-probability threshold')).toBeInTheDocument();
+     await waitFor(() =>
+-      expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2'),
++      expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('20%'),
+     );
+     // The chosen side's label and criterion, as the run version authored them.
+     expect(row('Label')).toHaveTextContent('True');
+@@ -834,3 +834,19 @@ describe('RunInspectorPage exit evidence', () => {
+     expect(screen.queryByTestId('exit-returns')).toBeNull();
+   });
+ });
++
++it('shows cancellation instead of a stale provider failure on a cancelled run (#255)', async () => {
++  const api = new FakeApi();
++  const run = api.addRun({
++    status: 'cancelled',
++    failure: {
++      code: 'HARNESS_TRANSPORT_FAILED',
++      message: 'Earlier provider failure',
++      resumable: false,
++    },
++  });
++  api.pushEvent(run.id, event(run.id, 1, 'run.cancelled', {}));
++  renderApp('/runs/' + run.id, api);
++  expect(await screen.findByText(/Cancelled; actor not recorded/)).toBeInTheDocument();
++  expect(screen.queryByText('Earlier provider failure')).not.toBeInTheDocument();
++});
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index 52a3b9fb..cad11029 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -1,3 +1,4 @@
++import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
+ import type { RunEvent } from '@graphgoblin/contracts';
+ import { RunLimits } from './inspector/RunLimits.js';
+ import { useQueryClient } from '@tanstack/react-query';
+@@ -16,7 +17,7 @@ import { Timeline } from './inspector/Timeline.js';
+ import { WaitPanel } from './inspector/WaitPanel.js';
+ import { DeliveryPanel } from './inspector/DeliveryPanel.js';
+ import { useRunEvents } from './useRunEvents.js';
+-import { describeEvent, exitReturnSummary, lastGateSummary } from './projections.js';
++import { describeEvent, exitReturnSummary, lastGateSummary, nodeName } from './projections.js';
+ 
+ const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
+ 
+@@ -81,24 +82,13 @@ export function RunInspectorPage() {
+   const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
+   const seq = selectedSeq ?? log.lastSeq;
+   const selectedEvent = log.events.find((event) => event.seq === seq);
+-  const firstEvent = log.events[0];
+   const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
+   const finished = log.events.findLast(
+     (event): event is Extract<RunEvent, { type: 'run.finished' }> => event.type === 'run.finished',
+   );
+-  // The exit's configuration explains a run that returned nothing, so a finished exit needs it too.
+-  const needsPinnedDefinition =
+-    latestExit !== undefined ||
+-    selectedEvent?.type === 'decision.made' ||
+-    selectedEvent?.type === 'run.failed' ||
+-    (firstEvent !== undefined && (firstEvent.type !== 'run.queued' || !firstEvent.initialThread));
+-  const versionQuery = useLoopVersion(
+-    runQuery.data?.loopId ?? '',
+-    runQuery.data?.versionId ?? '',
+-    needsPinnedDefinition,
+-  );
++  const versionQuery = useLoopVersion(runQuery.data?.loopId ?? '', runQuery.data?.versionId ?? '');
+   const definition = versionQuery.data?.definition;
+-  const gateSummary = lastGateSummary(log.events);
++  const gateSummary = lastGateSummary(log.events, definition);
+   const returnSummary = exitReturnSummary(
+     log.events,
+     definition,
+@@ -123,7 +113,11 @@ export function RunInspectorPage() {
+                 <RunStatusBadge status={run.status} />
+               </div>
+               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
+-                {run.currentNodeId ? <span>at {run.currentNodeId}</span> : null}
++                {run.currentNodeId ? (
++                  <span className="min-w-0 wrap-anywhere">
++                    at {nodeName(definition, run.currentNodeId)}
++                  </span>
++                ) : null}
+                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
+                   loop
+                 </Link>
+@@ -140,7 +134,7 @@ export function RunInspectorPage() {
+                 <RunControls run={run} />
+               </div>
+             </header>
+-            {run.failure ? (
++            {run.status === 'failed' && run.failure ? (
+               <Alert title={`Failed: ${run.failure.code}`}>
+                 {run.failure.message}
+                 {run.failure.resumable ? ' (resumable)' : ''}
+@@ -148,8 +142,8 @@ export function RunInspectorPage() {
+               </Alert>
+             ) : null}
+             {latestExit ? (
+-              <Card title="Exit evaluation">
+-                <p>{describeEvent(latestExit)}</p>
++              <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
++                <p>{describeEvent(latestExit, definition)}</p>
+                 {gateSummary ? <p>{gateSummary}</p> : null}
+                 {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
+               </Card>
+@@ -167,7 +161,13 @@ export function RunInspectorPage() {
+               </Card>
+             ) : null}
+             <RunLimits run={run} />
+-            <WaitPanel run={run} />
++            <ExecutionContext
++              run={run}
++              events={log.events}
++              definition={definition}
++              definitionLoading={versionQuery.isPending}
++            />
++            <WaitPanel run={run} definition={definition} />
+             <DeliveryPanel run={run} />
+           </>
+         )}
+@@ -175,6 +175,7 @@ export function RunInspectorPage() {
+       <div className="grid items-start gap-section lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+         <Timeline
+           events={log.events}
++          definition={definition}
+           status={log.status}
+           error={log.error}
+           selected={seq}
+@@ -185,6 +186,7 @@ export function RunInspectorPage() {
+           selectedEvent?.type === 'child_run.finished' ? (
+             <ChildRunDetails runId={selectedEvent.childRunId} />
+           ) : null}
++          <RecordedEvent event={selectedEvent} />
+           <EvaluationDetails
+             event={selectedEvent}
+             definition={definition}
+@@ -202,7 +204,7 @@ export function RunInspectorPage() {
+           ) : (
+             <p className="text-sm text-muted">The thread is not available yet.</p>
+           )}
+-          <ProgressDrawer events={log.events} />
++          <ProgressDrawer events={log.events} definition={definition} />
+         </div>
+       </div>
+     </Page>
+diff --git a/apps/web/src/runs/RunsPage.test.tsx b/apps/web/src/runs/RunsPage.test.tsx
+index 59b4f343..3bccdb2e 100644
+--- a/apps/web/src/runs/RunsPage.test.tsx
++++ b/apps/web/src/runs/RunsPage.test.tsx
+@@ -1,4 +1,4 @@
+-import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { minimalLoop, samplePin } from '@graphgoblin/contracts/testing';
+ import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { describe, expect, it } from 'vitest';
+@@ -29,9 +29,14 @@ describe('RunsPage', () => {
+     const user = userEvent.setup();
+     const api = new FakeApi();
+     const loop = api.addLoop({ ...minimalLoop(), name: 'alpha' }, { published: true });
+-    const parent = api.addRun({ loopId: loop.id, status: 'waiting' });
++    const parent = api.addRun({
++      loopId: loop.id,
++      status: 'waiting',
++      pinned: samplePin({ name: 'alpha' }),
++    });
+     const child = api.addRun({
+       loopId: 'UNKNOWNLOOP',
++      pinned: samplePin({ name: 'Original deleted loop' }),
+       status: 'succeeded',
+       parentRunId: parent.id,
+       startedAt: undefined,
+@@ -46,7 +51,7 @@ describe('RunsPage', () => {
+       'href',
+       `/runs/${parent.id}`,
+     );
+-    expect(within(childRow).getByText('UNKNOWNLOOP')).toBeInTheDocument();
++    expect(within(childRow).getByText('Original deleted loop')).toBeInTheDocument();
+ 
+     await user.selectOptions(screen.getByLabelText('Status'), 'waiting');
+     await waitFor(() =>
+@@ -234,3 +239,25 @@ describe('RunsPage', () => {
+     expect(await screen.findByText('No runs match.')).toBeInTheDocument();
+   });
+ });
++
++it('keeps the pinned loop name after rename and shows recorded failure diagnostics (#255)', async () => {
++  const api = new FakeApi();
++  const loop = api.addLoop({ ...minimalLoop(), name: 'Renamed loop' });
++  const run = api.addRun({
++    loopId: loop.id,
++    status: 'failed',
++    pinned: samplePin({ name: 'Original loop' }),
++    failure: {
++      code: 'HARNESS_TRANSPORT_FAILED',
++      message: 'Recorded connection diagnostic',
++      resumable: false,
++    },
++  });
++  renderApp('/runs', api);
++  const row = (await screen.findByRole('link', { name: run.id })).closest('tr')!;
++  expect(within(row).getByText('Original loop')).toBeInTheDocument();
++  expect(within(row).queryByText('Renamed loop')).not.toBeInTheDocument();
++  expect(
++    within(row).getByText('HARNESS_TRANSPORT_FAILED: Recorded connection diagnostic'),
++  ).toBeInTheDocument();
++});
+diff --git a/apps/web/src/runs/RunsPage.tsx b/apps/web/src/runs/RunsPage.tsx
+index 7ac491ae..5c558bdd 100644
+--- a/apps/web/src/runs/RunsPage.tsx
++++ b/apps/web/src/runs/RunsPage.tsx
+@@ -41,7 +41,6 @@ export function RunsPage() {
+   };
+   const loopsQuery = useLoops();
+   const runsQuery = useRuns(query, 5000);
+-  const names = new Map((loopsQuery.data ?? []).map((l) => [l.id, l.name]));
+ 
+   const setFilter = (key: string, value: string) => {
+     const next = new URLSearchParams(params);
+@@ -141,10 +140,15 @@ export function RunsPage() {
+                         </Link>
+                       </Td>
+                       <Td label="Loop" className="wrap-anywhere">
+-                        {names.get(run.loopId) ?? run.loopId}
++                        {run.pinned.name}
+                       </Td>
+                       <Td label="Status">
+                         <RunStatusBadge status={run.status} />
++                        {run.status === 'failed' && run.failure ? (
++                          <p className="mt-1 text-xs wrap-anywhere text-muted">
++                            {run.failure.code}: {run.failure.message}
++                          </p>
++                        ) : null}
+                       </Td>
+                       <Td label="Started" className="text-sm whitespace-nowrap text-muted">
+                         {formatDateTime(run.startedAt ?? run.createdAt)}
+diff --git a/apps/web/src/runs/inspector/EvaluationDetails.test.tsx b/apps/web/src/runs/inspector/EvaluationDetails.test.tsx
+index 0013930f..f3a8dcb6 100644
+--- a/apps/web/src/runs/inspector/EvaluationDetails.test.tsx
++++ b/apps/web/src/runs/inspector/EvaluationDetails.test.tsx
+@@ -261,7 +261,7 @@ describe('EvaluationDetails', () => {
+         })}
+       />,
+     );
+-    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.4');
++    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('40%');
+     expect(screen.getByText('Reasoning excerpt').parentElement).toHaveTextContent(
+       'Recorded historical explanation.',
+     );
+@@ -270,9 +270,9 @@ describe('EvaluationDetails', () => {
+ 
+   it.each([
+     [undefined, 0.8, 'No minimum configured in run version'],
+-    [0.7, 0.8, 'Meets run-version minimum 0.7'],
+-    [0.9, 0.8, 'Below run-version minimum 0.9'],
+-    [0.7, null, 'Not recorded; run-version minimum 0.7'],
++    [0.7, 0.8, 'Meets run-version minimum 70%'],
++    [0.9, 0.8, 'Below run-version minimum 90%'],
++    [0.7, null, 'Not recorded; run-version minimum 70%'],
+   ] as const)(
+     'shows recorded Choice evidence and factual confidence comparison %#',
+     (minimum, confidence, expected) => {
+@@ -317,7 +317,7 @@ describe('EvaluationDetails', () => {
+       expect(screen.getByText('Option ID').parentElement).toHaveTextContent('ship');
+       expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(expected);
+       expect(screen.getByRole('list', { name: 'Alternative probabilities' })).toHaveTextContent(
+-        'review: 0.2',
++        'Review (review): 20%',
+       );
+       rerender(
+         <EvaluationDetails
+@@ -407,7 +407,7 @@ describe('EvaluationDetails', () => {
+       ),
+     ).toBeInTheDocument();
+     expect(screen.getAllByText('Not recorded')).toHaveLength(3);
+-    expect(screen.getByText('0.7')).toBeInTheDocument();
++    expect(screen.getByText('70%')).toBeInTheDocument();
+   });
+ 
+   it('shows typed Noul and fractional Score evidence with stable ports and rubric anchors', () => {
+@@ -471,7 +471,7 @@ describe('EvaluationDetails', () => {
+       'Anchor 2: Fully meets',
+     ]);
+     expect(screen.getByRole('list', { name: 'Rubric index probabilities' })).toHaveTextContent(
+-      '1: 0.92',
++      '1: 92%',
+     );
+   });
+ 
+@@ -516,10 +516,10 @@ describe('EvaluationDetails', () => {
+       screen.getByRole('region', { name: 'Rejected classifier evaluation' }),
+     ).toHaveTextContent('No decision was accepted and no route was selected.');
+     expect(screen.getByText('Proposed answer').parentElement).toHaveTextContent('Noul false');
+-    expect(screen.getByText('True probability').parentElement).toHaveTextContent('0.3');
+-    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.42');
+-    expect(screen.getByText('Minimum confidence').parentElement).toHaveTextContent('0.8');
+-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2');
++    expect(screen.getByText('True probability').parentElement).toHaveTextContent('30%');
++    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('42%');
++    expect(screen.getByText('Minimum confidence').parentElement).toHaveTextContent('80%');
++    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('20%');
+     expect(screen.getByText('Provider').parentElement).toHaveTextContent('typesafe');
+     expect(screen.getByText('Classifier').parentElement).toHaveTextContent('jev');
+     expect(screen.getByText('Model').parentElement).toHaveTextContent('jev-latest');
+@@ -552,7 +552,7 @@ describe('EvaluationDetails', () => {
+         definition={noulDefinition()}
+       />,
+     );
+-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.5');
++    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('50%');
+   });
+ 
+   it('keeps the rejected Score rubric and classifier identity when alternatives are absent', () => {
+diff --git a/apps/web/src/runs/inspector/EvaluationDetails.tsx b/apps/web/src/runs/inspector/EvaluationDetails.tsx
+index a39ff936..961b445f 100644
+--- a/apps/web/src/runs/inspector/EvaluationDetails.tsx
++++ b/apps/web/src/runs/inspector/EvaluationDetails.tsx
+@@ -9,7 +9,14 @@ import {
+ } from '@graphgoblin/contracts';
+ import { Card } from '../../components/ui/index.js';
+ import { Fragment } from 'react';
+-import { answerDescription, describeEvent, observationDescription } from '../projections.js';
++import {
++  answerDescription,
++  describeEvent,
++  formatProbability,
++  nodeName,
++  observationDescription,
++  routeName,
++} from '../projections.js';
+ 
+ function record(value: unknown): Record<string, unknown> {
+   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+@@ -89,7 +96,17 @@ function truthThreshold(definition: LoopDefinition | undefined, nodeId: string |
+     ? (node.config.truthThreshold ?? 0.5)
+     : undefined;
+ }
+-function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; prefix?: string }) {
++function ClassifierDetails({
++  answer,
++  prefix = '',
++  definition,
++  nodeId,
++}: {
++  answer: ClassifierAnswer;
++  prefix?: string;
++  definition?: LoopDefinition | undefined;
++  nodeId?: string | undefined;
++}) {
+   return (
+     <>
+       {answer.type === 'score' ? (
+@@ -117,7 +134,10 @@ function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer;
+         >
+           {Object.entries(answer.probabilities).map(([key, value]) => (
+             <li key={key}>
+-              <code>{key}</code>: {value}
++              <code>
++                {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
++              </code>
++              : <span title={String(value)}>{formatProbability(value)}</span>
+             </li>
+           ))}
+         </ul>
+@@ -154,8 +174,8 @@ function DecisionAcceptance({
+             : config.minConfidence === undefined
+               ? 'No minimum configured in run version'
+               : confidence === null
+-                ? `Not recorded; run-version minimum ${config.minConfidence}`
+-                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${config.minConfidence}`}
++                ? `Not recorded; run-version minimum ${formatProbability(config.minConfidence)}`
++                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${formatProbability(config.minConfidence)}`}
+       </dd>
+     </>
+   );
+@@ -224,16 +244,20 @@ function ObservationDetails({
+       {answer?.type === 'noul' ? (
+         <>
+           <dt>True probability</dt>
+-          <dd>{answer.trueProbability ?? 'Not recorded'}</dd>
++          <dd>{formatProbability(answer.trueProbability)}</dd>
+           <dt>True-probability threshold</dt>
+-          <dd>{threshold ?? 'Unknown (run version unavailable)'}</dd>
++          <dd>
++            {threshold === undefined
++              ? 'Unknown (run version unavailable)'
++              : formatProbability(threshold)}
++          </dd>
+         </>
+       ) : null}
+       {confidence !== null || provenance.kind !== 'expression' ? (
+         <>
+           <dt>{provenance.kind === 'llm' ? 'Self-reported confidence' : 'Confidence'}</dt>
+           <dd>
+-            {confidence ?? 'Not recorded'}
++            {formatProbability(confidence)}
+             {provenance.kind === 'llm' ? (
+               <span className="ml-1 text-muted">
+                 (reported by the evaluator; informational only, not a calibrated classifier score)
+@@ -274,8 +298,11 @@ export function EvaluationDetails({
+   const rejection = rejectedEvaluation(event);
+   if (event.type === 'run.failed' && !rejection) return null;
+   return (
+-    <Card title="Evaluation details">
+-      <p>{describeEvent(event)}</p>
++    <Card title="Evaluation details" bodyClassName="min-w-0 wrap-anywhere">
++      <p>{describeEvent(event, definition)}</p>
++      {'nodeId' in event ? (
++        <p className="text-sm text-muted">Node: {nodeName(definition, event.nodeId)}</p>
++      ) : null}
+       {event.type === 'exit.evaluated' ? (
+         <p>
+           Exit outcome: {event.outcome}. This exit is terminal.{' '}
+@@ -333,7 +360,7 @@ export function EvaluationDetails({
+                 <dd>{event.gate.passes}</dd>
+                 <dt>Repeat route</dt>
+                 <dd>
+-                  <code>{event.gate.repeatRouteId}</code>
++                  <code>{routeName(definition, event.nodeId, event.gate.repeatRouteId)}</code>
+                 </dd>
+                 <dt>Maximum passes</dt>
+                 <dd>{event.gate.maxPasses ?? 'Unlimited'}</dd>
+@@ -368,7 +395,11 @@ export function EvaluationDetails({
+             />
+           </dl>
+           {event.observation.kind === 'classifier' ? (
+-            <ClassifierDetails answer={event.observation.answer} />
++            <ClassifierDetails
++              answer={event.observation.answer}
++              definition={definition}
++              nodeId={event.nodeId}
++            />
+           ) : null}
+           {event.diagnostics.length ? (
+             <ul aria-label="Evaluation diagnostics" className="mt-2 grid gap-2 text-sm">
+@@ -400,11 +431,15 @@ export function EvaluationDetails({
+                 )}
+               />
+               <dt>Minimum confidence</dt>
+-              <dd>{rejection.minConfidence}</dd>
++              <dd>{formatProbability(rejection.minConfidence)}</dd>
+               <Identity value={rejection.provenance} />
+             </dl>
+           </section>
+-          <ClassifierDetails answer={rejection.answer} />
++          <ClassifierDetails
++            answer={rejection.answer}
++            definition={definition}
++            nodeId={event.type === 'run.failed' ? event.failure.nodeId : undefined}
++          />
+         </>
+       ) : null}
+     </Card>
+diff --git a/apps/web/src/runs/inspector/ExecutionEvidence.test.tsx b/apps/web/src/runs/inspector/ExecutionEvidence.test.tsx
+new file mode 100644
+index 00000000..ae754dfe
+--- /dev/null
++++ b/apps/web/src/runs/inspector/ExecutionEvidence.test.tsx
+@@ -0,0 +1,133 @@
++import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
++import { render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { minimalLoop, samplePin } from '@graphgoblin/contracts/testing';
++import { describe, expect, it } from 'vitest';
++import { event, runRecord } from '../../__fixtures__/fake-api.js';
++import { ExecutionContext, RecordedEvent } from './ExecutionEvidence.js';
++
++describe('execution evidence (#255)', () => {
++  it('distinguishes loading, unavailable labels, and unrecorded cancellation actors', async () => {
++    const run = runRecord({
++      status: 'cancelled',
++      pinned: samplePin({ name: 'Original loop', label: 'Original loop v1' }),
++    });
++    const view = (loading: boolean) => (
++      <ExecutionContext
++        run={run}
++        events={[event(run.id, 2, 'run.cancelled', {})]}
++        definition={undefined}
++        definitionLoading={loading}
++      />
++    );
++    const { rerender } = render(view(true));
++    expect(screen.getByText('Loading pinned definition…')).toBeInTheDocument();
++    rerender(view(false));
++    expect(screen.getByText(/Pinned definition unavailable/)).toBeInTheDocument();
++    expect(screen.getByText(/Cancelled; actor not recorded/)).toBeInTheDocument();
++    expect(screen.getByText(/Initial thread not recorded/)).toBeInTheDocument();
++    await userEvent.setup().click(screen.getByRole('button', { name: 'Exact run record' }));
++    expect(JSON.parse(screen.getByLabelText('Exact run record').textContent)).toEqual(run);
++  });
++
++  it('shows the recorded actor and pinned node at cancellation, with exact definition reachable', async () => {
++    const definition = LoopDefinitionSchema.parse(minimalLoop());
++    const node = definition.nodes[0]!;
++    const run = runRecord({ status: 'cancelled', currentNodeId: node.id });
++    render(
++      <ExecutionContext
++        run={run}
++        events={[
++          event(run.id, 1, 'run.cancel_requested', { actor: { kind: 'run', id: 'child-run' } }),
++          event(run.id, 2, 'run.cancelled', {}),
++        ]}
++        definition={definition}
++        definitionLoading={false}
++      />,
++    );
++    expect(screen.getByText(/Cancelled by run child-run/)).toHaveTextContent(
++      node.label + ' (' + node.id + ')',
++    );
++    await userEvent.setup().click(screen.getByRole('button', { name: 'Pinned definition JSON' }));
++    expect(JSON.parse(screen.getByLabelText('Pinned definition JSON').textContent)).toEqual(
++      definition,
++    );
++  });
++
++  it('keeps exact probabilities and provider diagnostics reachable as the selection changes', async () => {
++    const user = userEvent.setup();
++    const first = event('run', 7, 'decision.made', {
++      nodeId: 'pick',
++      portId: 'accept',
++      diagnostics: [],
++      provenance: {
++        kind: 'classifier',
++        provider: 'typesafe',
++        classifierId: 'jev',
++        model: 'jev',
++        effort: null,
++      },
++      observation: {
++        kind: 'classifier',
++        answer: {
++          type: 'choice',
++          optionId: 'accept',
++          confidence: 0.8765432109876543,
++          probabilities: { accept: 0.8765432109876543 },
++        },
++      },
++    });
++    const { rerender } = render(<RecordedEvent event={undefined} />);
++    expect(screen.queryByRole('button')).not.toBeInTheDocument();
++    rerender(<RecordedEvent event={first} />);
++    expect(screen.queryByTestId('recorded-event-json')).not.toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Exact recorded event #7' }));
++    expect(JSON.parse(screen.getByTestId('recorded-event-json').textContent)).toEqual(first);
++    const failure = event('run', 8, 'run.failed', {
++      failure: {
++        code: 'HARNESS_TRANSPORT_FAILED',
++        message: 'Recorded provider diagnostic',
++        resumable: false,
++        details: { exact: 'x'.repeat(5000) },
++      },
++    });
++    rerender(<RecordedEvent event={failure} />);
++    await user.click(screen.getByRole('button', { name: 'Show all of Exact recorded event' }));
++    expect(JSON.parse(screen.getByTestId('recorded-event-json').textContent)).toEqual(failure);
++    expect(
++      screen.getByRole('button', { name: 'Download Exact recorded event as JSON' }),
++    ).toBeInTheDocument();
++  });
++});
++
++it('distinguishes incomplete cancellation history from an unrecorded actor (#255)', () => {
++  const run = runRecord({ status: 'cancelled', lastEventSeq: 3 });
++  const partial = [event(run.id, 1, 'run.started', { attempt: 1 })];
++  const view = (events: RunEvent[]) => (
++    <ExecutionContext run={run} events={events} definition={undefined} definitionLoading={false} />
++  );
++  const { rerender } = render(view(partial));
++  expect(screen.getByText(/Cancellation history is incomplete/)).toBeInTheDocument();
++  expect(screen.queryByText(/actor not recorded/)).not.toBeInTheDocument();
++  rerender(
++    view([
++      ...partial,
++      event(run.id, 2, 'run.cancel_requested', { actor: { kind: 'user', id: 'local' } }),
++      event(run.id, 3, 'run.cancelled', {}),
++    ]),
++  );
++  expect(screen.getByText(/Cancelled by user local/)).toBeInTheDocument();
++});
++it('names the missing terminal event without denying a request that was recorded (#255)', () => {
++  const run = runRecord({ status: 'cancelled', lastEventSeq: 1 });
++  render(
++    <ExecutionContext
++      run={run}
++      events={[event(run.id, 1, 'run.cancel_requested', { actor: { kind: 'user', id: 'local' } })]}
++      definition={undefined}
++      definitionLoading={false}
++    />,
++  );
++  expect(screen.getByText(/terminal cancellation event not recorded/)).toBeInTheDocument();
++  expect(screen.queryByText(/actor not recorded/)).not.toBeInTheDocument();
++});
+diff --git a/apps/web/src/runs/inspector/ExecutionEvidence.tsx b/apps/web/src/runs/inspector/ExecutionEvidence.tsx
+new file mode 100644
+index 00000000..59bdda95
+--- /dev/null
++++ b/apps/web/src/runs/inspector/ExecutionEvidence.tsx
+@@ -0,0 +1,122 @@
++import type { LoopDefinition, RunEvent, RunRecord } from '@graphgoblin/contracts';
++import { useState } from 'react';
++import { BoundedValue, Button, Card, Disclosure } from '../../components/ui/index.js';
++import { downloadJson } from '../../lib/utils.js';
++import { cancellationSummary, nodeName } from '../projections.js';
++
++/** Read-only evidence, separate from failure/resume eligibility and stream status. */
++export function ExecutionContext({
++  run,
++  events,
++  definition,
++  definitionLoading,
++}: {
++  run: RunRecord;
++  events: readonly RunEvent[];
++  definition: LoopDefinition | undefined;
++  definitionLoading: boolean;
++}) {
++  const [showRun, setShowRun] = useState(false);
++  const [showDefinition, setShowDefinition] = useState(false);
++  return (
++    <Card title="Execution context">
++      <p className="text-sm wrap-anywhere">
++        {run.pinned.label} · version ID <code>{run.versionId}</code>
++      </p>
++      {!definition ? (
++        <p className="text-sm text-muted">
++          {definitionLoading
++            ? 'Loading pinned definition…'
++            : 'Pinned definition unavailable. Authored node and route labels are not recorded in the available history.'}
++        </p>
++      ) : null}
++      {events.length > 0 && (events[0]?.type !== 'run.queued' || !events[0].initialThread) ? (
++        <p className="text-sm text-muted">
++          Initial thread not recorded. Historical reconstruction uses the documented fallback and
++          may be incomplete.
++        </p>
++      ) : null}
++      {run.status === 'cancelled' ? (
++        <p className="text-sm wrap-anywhere">
++          {cancellationSummary(events) ??
++            ((events.at(-1)?.seq ?? 0) < run.lastEventSeq
++              ? 'Cancelled. Cancellation history is incomplete; actor not available yet.'
++              : 'Cancelled; terminal cancellation event not recorded, so its actor cannot be established.')}
++          {run.currentNodeId
++            ? ` Recorded node position: ${nodeName(definition, run.currentNodeId)}.`
++            : ' Node position not recorded.'}
++        </p>
++      ) : null}
++      <Disclosure label="Exact run record" variant="row" open={showRun} onOpenChange={setShowRun}>
++        {showRun ? (
++          <ExactValue value={run} label="Exact run record" fileName={`run-${run.id}-record`} />
++        ) : null}
++      </Disclosure>
++      {definition ? (
++        <Disclosure
++          label="Pinned definition JSON"
++          variant="row"
++          open={showDefinition}
++          onOpenChange={setShowDefinition}
++        >
++          {showDefinition ? (
++            <ExactValue
++              value={definition}
++              label="Pinned definition JSON"
++              fileName={`run-${run.id}-definition`}
++            />
++          ) : null}
++        </Disclosure>
++      ) : null}
++    </Card>
++  );
++}
++
++/** Every selected event is inspectable and downloadable without formatting away evidence. */
++export function RecordedEvent({ event }: { event: RunEvent | undefined }) {
++  const [open, setOpen] = useState(false);
++  if (!event) return null;
++  return (
++    <Disclosure
++      label={`Exact recorded event #${event.seq}`}
++      variant="row"
++      open={open}
++      onOpenChange={setOpen}
++    >
++      {open ? (
++        <ExactValue
++          value={event}
++          label="Exact recorded event"
++          testId="recorded-event-json"
++          fileName={`run-${event.runId}-event-${event.seq}`}
++        />
++      ) : null}
++    </Disclosure>
++  );
++}
++
++/** Keep a download available even for a value small enough to need no preview controls. */
++function ExactValue({
++  value,
++  label,
++  fileName,
++  testId,
++}: {
++  value: unknown;
++  label: string;
++  fileName: string;
++  testId?: string;
++}) {
++  return (
++    <div className="grid gap-2">
++      <BoundedValue value={value} label={label} labelled {...(testId ? { testId } : {})} />
++      <Button
++        size="sm"
++        aria-label={`Download ${label} as JSON`}
++        onClick={() => downloadJson(`${fileName}.json`, value)}
++      >
++        Download JSON
++      </Button>
++    </div>
++  );
++}
+diff --git a/apps/web/src/runs/inspector/ProgressDrawer.tsx b/apps/web/src/runs/inspector/ProgressDrawer.tsx
+index 2de9d2fe..98b84091 100644
+--- a/apps/web/src/runs/inspector/ProgressDrawer.tsx
++++ b/apps/web/src/runs/inspector/ProgressDrawer.tsx
+@@ -1,7 +1,7 @@
+-import { COMMAND_PREVIEW_MAX, type RunEvent } from '@graphgoblin/contracts';
++import { COMMAND_PREVIEW_MAX, type LoopDefinition, type RunEvent } from '@graphgoblin/contracts';
+ import { BoundedValue, CELL_PREVIEW_CHARS, Disclosure } from '../../components/ui/index.js';
+ import { prettyJson } from '../../lib/utils.js';
+-import { describeEvent, nodeActivity } from '../projections.js';
++import { describeEvent, nodeActivity, nodeName } from '../projections.js';
+ 
+ function describeStatusProgress(value: unknown): string | undefined {
+   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+@@ -60,11 +60,11 @@ function describeSession(event: Extract<RunEvent, { type: 'harness.session' }>):
+ }
+ 
+ /** The one-line text of an activity event, or nothing when its value needs a bounded block. */
+-function describeActivity(event: RunEvent): string | undefined {
++function describeActivity(event: RunEvent, definition?: LoopDefinition): string | undefined {
+   if ('progress' in event) return describeStatusProgress(event.progress);
+   if ('usage' in event) return prettyJson(event.usage);
+   if (event.type === 'harness.session') return describeSession(event);
+-  return describeEvent(event);
++  return describeEvent(event, definition);
+ }
+ 
+ /**
+@@ -72,7 +72,13 @@ function describeActivity(event: RunEvent): string | undefined {
+  * value without a one-line description is laid out within a bound (`BoundedValue`), and every row
+  * wraps at any character, so a long single-line value never widens the page (#259, #380).
+  */
+-export function ProgressDrawer({ events }: { events: RunEvent[] }) {
++export function ProgressDrawer({
++  events,
++  definition,
++}: {
++  events: RunEvent[];
++  definition?: LoopDefinition | undefined;
++}) {
+   const activity = nodeActivity(events);
+   return (
+     <Disclosure
+@@ -82,10 +88,12 @@ export function ProgressDrawer({ events }: { events: RunEvent[] }) {
+     >
+       {[...activity.entries()].map(([nodeId, items]) => (
+         <div key={nodeId} className="grid min-w-0 gap-1">
+-          <h3 className="font-mono text-xs font-semibold wrap-anywhere">{nodeId}</h3>
++          <h3 className="font-mono text-xs font-semibold wrap-anywhere">
++            {nodeName(definition, nodeId)}
++          </h3>
+           <ul className="grid min-w-0 gap-0.5 text-xs text-muted">
+             {items.map((e) => {
+-              const text = describeActivity(e);
++              const text = describeActivity(e, definition);
+               return (
+                 <li key={e.seq} className="grid min-w-0 gap-1 wrap-anywhere">
+                   <span>
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+index d8ed9469..e8a9edd5 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.test.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -262,3 +262,32 @@ describe('ThreadViewer with a large history', () => {
+     expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
+   });
+ });
++
++describe('ThreadViewer appended patch values (#255)', () => {
++  it('shows the individual recorded append, including null, without substituting the array', () => {
++    const thread = sampleThread();
++    thread.vars = { items: ['existing'] };
++    const events = [
++      event(thread.run.id, 1, 'run.queued', queuedFields({ initialThread: thread })),
++      event(thread.run.id, 2, 'node.started', {
++        nodeId: 'append',
++        kind: 'mutate',
++        attempt: 1,
++        configHash: 'x',
++      }),
++      event(thread.run.id, 3, 'node.finished', {
++        nodeId: 'append',
++        durationMs: 1,
++        patch: [
++          { op: 'add', path: '/vars/items/-', value: null },
++          { op: 'add', path: '/vars/items/-', value: { exact: 'Appended exact value' } },
++        ],
++      }),
++    ];
++    render(<ThreadViewer current={thread} events={events} seq={3} />);
++    const diff = screen.getByRole('list', { name: 'Patch diff' });
++    expect(within(diff).getByText('null')).toBeInTheDocument();
++    expect(within(diff).getByText(/Appended exact value/)).toBeInTheDocument();
++    expect(within(diff).queryByText(/existing/)).not.toBeInTheDocument();
++  });
++});
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.tsx b/apps/web/src/runs/inspector/ThreadViewer.tsx
+index cfeae7e4..b319048f 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.tsx
+@@ -11,7 +11,13 @@ import {
+ } from '../../components/ui/index.js';
+ import { downloadJson } from '../../lib/utils.js';
+ import { LARGE_HISTORY_BYTES } from '../event-store.js';
+-import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
++import {
++  createThreadCache,
++  initialThreadFrom,
++  nodeName,
++  patchDiff,
++  type PatchLine,
++} from '../projections.js';
+ 
+ /**
+  * Messages laid out at once: the latest ones, which is where a reader looks at an event; the
+@@ -25,7 +31,7 @@ const megabytes = (n: number) => `${(n / 1_000_000).toFixed(1)} MB`;
+ /** A finished node's patch: each operation with the value before and after it. */
+ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
+   return (
+-    <Card title={`Patch from ${nodeId}`}>
++    <Card title={<span className="min-w-0 wrap-anywhere">Patch from {nodeId}</span>}>
+       {lines.length === 0 ? <p className="text-xs text-muted">No changes.</p> : null}
+       <ul className="grid gap-3" aria-label="Patch diff">
+         {lines.map((line, i) => (
+@@ -52,7 +58,9 @@ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
+                 />
+               </div>
+               <div className="grid min-w-0 content-start bg-status-good-bg">
+-                <span className="px-3 pt-2 text-xs font-semibold text-status-good-fg">After</span>
++                <span className="px-3 pt-2 text-xs font-semibold text-status-good-fg">
++                  {line.op === 'add' ? 'Added value' : 'After'}
++                </span>
+                 <BoundedValue
+                   value={line.after}
+                   label={`Value after ${line.path}`}
+@@ -231,7 +239,7 @@ export function ThreadViewer({
+     <div className="grid gap-section" {...viewerFocus}>
+       {diff ? (
+         <PatchDiff
+-          nodeId={selected?.type === 'node.finished' ? selected.nodeId : ''}
++          nodeId={selected?.type === 'node.finished' ? nodeName(definition, selected.nodeId) : ''}
+           lines={diff}
+         />
+       ) : null}
+@@ -293,7 +301,9 @@ export function ThreadViewer({
+                 <li key={m.id} className="grid min-w-0 gap-1 rounded-md border border-default p-3">
+                   <div className="flex items-center gap-2">
+                     <Badge size="sm">{m.role}</Badge>{' '}
+-                    <code className="text-xs text-muted">{m.nodeId}</code>
++                    <code className="min-w-0 text-xs wrap-anywhere text-muted">
++                      {m.nodeId ? nodeName(definition, m.nodeId) : 'Node not recorded'}
++                    </code>
+                   </div>
+                   <BoundedValue
+                     value={m.content}
+diff --git a/apps/web/src/runs/inspector/Timeline.tsx b/apps/web/src/runs/inspector/Timeline.tsx
+index b3bc3492..8a4fb4ed 100644
+--- a/apps/web/src/runs/inspector/Timeline.tsx
++++ b/apps/web/src/runs/inspector/Timeline.tsx
+@@ -1,4 +1,4 @@
+-import type { RunEvent } from '@graphgoblin/contracts';
++import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
+ import { Alert, Card } from '../../components/ui/index.js';
+ import { cn } from '../../lib/utils.js';
+ import { describeEvent } from '../projections.js';
+@@ -18,8 +18,10 @@ export function Timeline({
+   error,
+   selected,
+   onSelect,
++  definition,
+ }: {
+   events: RunEvent[];
++  definition?: LoopDefinition | undefined;
+   status: StreamStatus;
+   error: string | undefined;
+   selected: number | undefined;
+@@ -59,7 +61,9 @@ export function Timeline({
+             >
+               <span className="text-right font-mono text-xs text-subtle">#{event.seq}</span>
+               <code className="text-[12.5px] font-medium">{event.type}</code>
+-              <span className="min-w-0 break-words text-muted">{describeEvent(event)}</span>
++              <span className="min-w-0 break-words text-muted">
++                {describeEvent(event, definition)}
++              </span>
+             </button>
+           </li>
+         ))}
+diff --git a/apps/web/src/runs/inspector/WaitPanel.tsx b/apps/web/src/runs/inspector/WaitPanel.tsx
+index ba7fbea6..c7de2ae7 100644
+--- a/apps/web/src/runs/inspector/WaitPanel.tsx
++++ b/apps/web/src/runs/inspector/WaitPanel.tsx
+@@ -1,3 +1,5 @@
++import type { LoopDefinition } from '@graphgoblin/contracts';
++import { nodeName } from '../projections.js';
+ import { runs, type RunSnapshot } from '@graphgoblin/api-client';
+ import { useMutation, useQueryClient } from '@tanstack/react-query';
+ import { useApi } from '../../api/context.js';
+@@ -15,7 +17,13 @@ type Answer = {
+ };
+ 
+ /** The run waits on input or a signal: a form for it, generated from the wait node's schema. */
+-export function WaitPanel({ run }: { run: RunSnapshot }) {
++export function WaitPanel({
++  run,
++  definition,
++}: {
++  run: RunSnapshot;
++  definition?: LoopDefinition | undefined;
++}) {
+   const client = useApi();
+   const queryClient = useQueryClient();
+   const waiting = run.waiting;
+@@ -38,7 +46,7 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
+       <Alert tone="info">
+         Waiting for {waiting.kind}
+         {waiting.until ? ` until ${formatDateTime(waiting.until)}` : ''} at{' '}
+-        <code>{waiting.nodeId}</code>.
++        <code className="wrap-anywhere">{nodeName(definition, waiting.nodeId)}</code>.
+       </Alert>
+     );
+   }
+@@ -54,6 +62,9 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
+       }
+     >
+       <div className="grid gap-5">
++        <p className="min-w-0 text-sm wrap-anywhere text-muted">
++          At {nodeName(definition, waiting.nodeId)}
++        </p>
+         {waiting.prompt ? (
+           <BoundedValue
+             value={waiting.prompt}
+diff --git a/apps/web/src/runs/projections.exact-values.test.ts b/apps/web/src/runs/projections.exact-values.test.ts
+new file mode 100644
+index 00000000..bf7189b3
+--- /dev/null
++++ b/apps/web/src/runs/projections.exact-values.test.ts
+@@ -0,0 +1,179 @@
++import { LoopDefinitionSchema } from '@graphgoblin/contracts';
++import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
++import { applyPatch } from '@graphgoblin/domain';
++import { describe, expect, it } from 'vitest';
++import { event } from '../__fixtures__/fake-api.js';
++import {
++  patchDiff,
++  describeEvent,
++  formatProbability,
++  nodeName,
++  routeName,
++  cancellationSummary,
++} from './projections.js';
++
++describe('exact recorded execution projections (#255)', () => {
++  it('shows each appended value, including null and nested arrays, independently of the final array', () => {
++    const before = sampleThread();
++    before.vars = { items: ['already present'] };
++    const patch = [
++      { op: 'add' as const, path: '/vars/items/-', value: null },
++      { op: 'add' as const, path: '/vars/items/-', value: { nested: [1, false, 'α'] } },
++      { op: 'add' as const, path: '/vars/items/-', value: ['nested array'] },
++    ];
++    const after = applyPatch(before, patch);
++    expect(patchDiff(before, after, patch).map((line) => line.after)).toEqual([
++      null,
++      { nested: [1, false, 'α'] },
++      ['nested array'],
++    ]);
++    expect(before.vars['items']).toEqual(['already present']);
++  });
++
++  it('resolves escaped append parents and keeps an object property named dash literal', () => {
++    const before = sampleThread();
++    before.vars = { 'a/b~c': [1], object: { '-': 'old' } };
++    const patch = [
++      { op: 'add' as const, path: '/vars/a~1b~0c/-', value: 2 },
++      { op: 'add' as const, path: '/vars/object/-', value: 'new' },
++    ];
++    expect(patchDiff(before, applyPatch(before, patch), patch).map((line) => line.after)).toEqual([
++      2,
++      'new',
++    ]);
++  });
++
++  it('names the pinned node and authored route beside their stable IDs in the timeline', () => {
++    const definition = LoopDefinitionSchema.parse({
++      ...minimalLoop(),
++      nodes: [
++        {
++          id: 'decide',
++          kind: 'decision',
++          label: 'Original decision',
++          config: {
++            kind: 'llm',
++            harness: 'codex',
++            model: { mode: 'inherit' },
++            effort: { mode: 'inherit' },
++            instructions: 'Choose',
++            routes: [
++              { id: 'ship', label: 'Original ship' },
++              { id: 'hold', label: 'Original hold' },
++            ],
++          },
++        },
++      ],
++    });
++    const decision = event('run', 1, 'decision.made', {
++      nodeId: 'decide',
++      portId: 'ship',
++      diagnostics: [],
++      provenance: {
++        kind: 'llm',
++        provider: 'codex',
++        classifierId: null,
++        model: 'model',
++        effort: 'high',
++      },
++      observation: {
++        kind: 'route',
++        routeId: 'ship',
++        confidence: 0.9123456789012345,
++        reasoning: null,
++      },
++    });
++    expect(describeEvent(decision, definition)).toContain('Original ship (ship)');
++    expect(describeEvent(decision, definition)).toContain('91.23%');
++    expect(
++      describeEvent(
++        event('run', 2, 'node.started', {
++          nodeId: 'decide',
++          kind: 'decision',
++          attempt: 1,
++          configHash: 'x',
++        }),
++        definition,
++      ),
++    ).toContain('Original decision (decide)');
++  });
++});
++
++describe('probabilities, labels and lifecycle evidence (#255)', () => {
++  it.each([
++    [null, 'Not recorded'],
++    [0, '0%'],
++    [1, '100%'],
++    [0.8765432109876543, '87.65%'],
++    [0.000001, '<0.01%'],
++    [0.999999, '>99.99%'],
++    [0.0001, '0.01%'],
++    [0.9999, '99.99%'],
++  ] as const)(
++    'formats %s without pretending a tiny probability is zero or one',
++    (value, expected) => {
++      expect(formatProbability(value)).toBe(expected);
++    },
++  );
++  it('labels unavailable nodes and routes without inventing authored names', () => {
++    const definition = LoopDefinitionSchema.parse(minimalLoop());
++    expect(nodeName(undefined, 'gone')).toBe('gone');
++    expect(nodeName(definition, 'gone')).toBe('gone (label not recorded)');
++    expect(nodeName(definition, definition.nodes[0]!.id)).toContain(definition.nodes[0]!.label);
++    expect(routeName(definition, 'gone', 'route')).toBe('route');
++    const gate = LoopDefinitionSchema.parse({
++      ...definition,
++      nodes: [
++        {
++          id: 'gate',
++          kind: 'decision',
++          label: 'Gate',
++          config: {
++            kind: 'expression',
++            jsonata: '"yes"',
++            routes: [
++              { id: 'yes', label: 'Yes' },
++              { id: 'no', label: 'No' },
++            ],
++          },
++        },
++      ],
++    });
++    expect(routeName(gate, 'gate', 'missing')).toBe('missing (label not recorded)');
++    expect(routeName(gate, 'gate', 'limit-reached')).toBe('Limit reached (limit-reached)');
++  });
++  it.each(['user', 'system', 'run'] as const)(
++    'uses only the recorded %s cancellation request before its terminal event',
++    (kind) => {
++      const events = [
++        event('run', 1, 'run.cancel_requested', { actor: { kind, id: 'recorded-actor' } }),
++        event('run', 2, 'run.cancelled', {}),
++        event('run', 3, 'run.cancel_requested', { actor: { kind: 'user', id: 'later' } }),
++      ];
++      expect(cancellationSummary(events)).toBe(
++        'Cancelled by ' + kind + ' recorded-actor (request #1; cancellation #2).',
++      );
++      expect(cancellationSummary(events.slice(0, 1))).toBeUndefined();
++      expect(cancellationSummary([events[1]!])).toBe('Cancelled; actor not recorded.');
++    },
++  );
++  it('retains distinct provider and deadline failures rather than calling either cancellation', () => {
++    for (const code of ['HARNESS_TRANSPORT_FAILED', 'RUN_DEADLINE_EXCEEDED'] as const) {
++      const failure = event('run', 1, 'run.failed', {
++        failure: { code, message: 'Exact recorded cause', resumable: false },
++      });
++      expect(describeEvent(failure)).toBe(code + ': Exact recorded cause');
++      expect(cancellationSummary([failure])).toBeUndefined();
++    }
++  });
++});
++
++it('does not attribute a later cancellation to a request from before resume (#255)', () => {
++  expect(
++    cancellationSummary([
++      event('run', 1, 'run.cancel_requested', { actor: { kind: 'user', id: 'earlier' } }),
++      event('run', 2, 'run.resumed', { actor: { kind: 'user', id: 'resumer' } }),
++      event('run', 3, 'run.cancelled', {}),
++    ]),
++  ).toBe('Cancelled; actor not recorded.');
++});
+diff --git a/apps/web/src/runs/projections.test.ts b/apps/web/src/runs/projections.test.ts
+index 1799f097..2c466d45 100644
+--- a/apps/web/src/runs/projections.test.ts
++++ b/apps/web/src/runs/projections.test.ts
+@@ -221,7 +221,7 @@ describe('run projections', () => {
+         }),
+       ),
+     ).toBe(
+-      'Answered true (true probability 0.72) with classifier via typesafe (jev-latest) with confidence 0.83',
++      'Answered true (true probability 72%) with classifier via typesafe (jev-latest) with confidence 83%',
+     );
+     expect(
+       describeEvent(
+@@ -264,7 +264,7 @@ describe('run projections', () => {
+         }),
+       ),
+     ).toBe(
+-      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 0.91',
++      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 91%',
+     );
+   });
+ 
+@@ -319,7 +319,7 @@ describe('run projections', () => {
+     freshStore.setState({ runs: {} });
+   });
+   it('describes every event type', () => {
+-    const lines = ALL.map(describeEvent);
++    const lines = ALL.map((entry) => describeEvent(entry));
+     expect(lines).toContain('attempt 1');
+     expect(lines).toContain('by user local');
+     expect(lines).toContain('w waits for input');
+diff --git a/apps/web/src/runs/projections.ts b/apps/web/src/runs/projections.ts
+index 30b17463..ebb12684 100644
+--- a/apps/web/src/runs/projections.ts
++++ b/apps/web/src/runs/projections.ts
+@@ -11,7 +11,7 @@ import type {
+   LoopDefinition,
+   ReturnChannel,
+ } from '@graphgoblin/contracts';
+-import { getAtPointer, reconcileThread } from '@graphgoblin/domain';
++import { decisionRouteDeclarations, getAtPointer, reconcileThread } from '@graphgoblin/domain';
+ 
+ /**
+  * The thread as the run started. The engine records it on the first event (`run.queued`),
+@@ -158,7 +158,7 @@ export interface PatchLine {
+   after: unknown;
+ }
+ 
+-/** One line per patch operation with the value at its path before and after. */
++/** Add operations show the recorded inserted value; other operations show the path before/after the completed patch. */
+ export function patchDiff(
+   before: ContextThread,
+   after: ContextThread,
+@@ -173,12 +173,13 @@ export function patchDiff(
+     path: op.path,
+     ...('from' in op ? { from: op.from } : {}),
+     before: read(before, op.path),
+-    after: read(after, op.path),
++    after: op.op === 'add' ? op.value : read(after, op.path),
+   }));
+ }
+ 
+ /** A one-line description of an event for the timeline. */
+-export function describeEvent(event: RunEvent): string {
++export function describeEvent(event: RunEvent, definition?: LoopDefinition): string {
++  const node = (id: string) => nodeName(definition, id);
+   switch (event.type) {
+     case 'run.started':
+       return `attempt ${event.attempt}`;
+@@ -191,15 +192,15 @@ export function describeEvent(event: RunEvent): string {
+     case 'run.cancel_requested':
+       return `by ${event.actor.kind} ${event.actor.id}`;
+     case 'run.waiting':
+-      return `${event.nodeId} waits for ${event.wait.kind}`;
++      return `${node(event.nodeId)} waits for ${event.wait.kind}`;
+     case 'run.woken':
+-      return `${event.nodeId} woken by ${event.reason}`;
++      return `${node(event.nodeId)} woken by ${event.reason}`;
+     case 'iteration.incremented':
+-      return `iteration ${event.from} → ${event.to} at ${event.targetNodeId}`;
++      return `iteration ${event.from} → ${event.to} at ${node(event.targetNodeId)}`;
+     case 'node.started':
+-      return `${event.nodeId} (${event.kind}) attempt ${event.attempt}`;
++      return `${node(event.nodeId)} (${event.kind}) attempt ${event.attempt}`;
+     case 'node.finished':
+-      return `${event.nodeId}${event.route ? ` → ${event.route}` : ''}, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`;
++      return `${node(event.nodeId)}${event.route ? ` → ${routeName(definition, event.nodeId, event.route)}` : ''}, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`;
+     case 'node.progress':
+     case 'harness.usage':
+     case 'heartbeat.beat':
+@@ -209,11 +210,11 @@ export function describeEvent(event: RunEvent): string {
+     case 'harness.turn':
+     case 'harness.submission':
+     case 'harness.session':
+-      return 'nodeId' in event ? event.nodeId : '';
++      return 'nodeId' in event ? node(event.nodeId) : '';
+     case 'decision.made':
+-      return describeDecision(event);
++      return describeDecision(event, definition);
+     case 'exit.evaluated':
+-      return describeExit(event);
++      return describeExit(event, definition);
+     case 'signal.received':
+       return event.name;
+     case 'delivery.queued':
+@@ -224,19 +225,24 @@ export function describeEvent(event: RunEvent): string {
+     case 'return.delivered':
+     case 'return.failed':
+       return event.channel.kind;
+-    case 'run.queued':
+     case 'run.cancelled':
++      return 'Cancelled';
++    case 'run.queued':
+       return '';
+   }
+ }
+ 
+-function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): string {
++function describeDecision(
++  event: Extract<RunEvent, { type: 'decision.made' }>,
++  definition?: LoopDefinition,
++): string {
++  const route = (id: string) => routeName(definition, event.nodeId, id);
+   const { observation, provenance } = event;
+   let description: string;
+   let confidence: number | null;
+   switch (observation.kind) {
+     case 'route':
+-      description = `Chose ${observation.routeId}`;
++      description = `Chose ${route(observation.routeId)}`;
+       confidence = observation.confidence;
+       break;
+     case 'boolean':
+@@ -248,13 +254,13 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>):
+       confidence = answer.confidence;
+       switch (answer.type) {
+         case 'choice':
+-          description = `Chose ${answer.optionId}`;
++          description = `Chose ${route(answer.optionId)}`;
+           break;
+         case 'score':
+-          description = `Scored ${answer.score} to band ${event.gate?.limit ? event.gate.repeatRouteId : event.portId}`;
++          description = `Scored ${answer.score} to band ${route(event.gate?.limit ? event.gate.repeatRouteId : event.portId)}`;
+           break;
+         case 'noul':
+-          description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability ?? 'not recorded'})`;
++          description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability === null ? 'not recorded' : formatProbability(answer.trueProbability)})`;
+           break;
+       }
+       break;
+@@ -266,7 +272,7 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>):
+     provenance.kind === 'llm' ? 'self-reported confidence (informational)' : 'confidence';
+   const confidenceText =
+     confidence !== null
+-      ? ` with ${confidenceLabel} ${confidence}`
++      ? ` with ${confidenceLabel} ${formatProbability(confidence)}`
+       : provenance.kind === 'llm' ||
+           (observation.kind === 'classifier' && observation.answer.type !== 'score')
+         ? ` with ${confidenceLabel} not recorded`
+@@ -275,8 +281,11 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>):
+   return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes}${event.gate.maxPasses === null ? ' (unlimited)' : ` of ${event.gate.maxPasses}`}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
+ }
+ 
+-function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
+-  return `Exited: ${event.outcome}`;
++function describeExit(
++  event: Extract<RunEvent, { type: 'exit.evaluated' }>,
++  definition?: LoopDefinition,
++): string {
++  return `${definition ? nodeName(definition, event.nodeId) + ': ' : ''}Exited: ${event.outcome}`;
+ }
+ 
+ /**
+@@ -284,7 +293,10 @@ function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): str
+  * a loop-back exit used to say "iteration 2 of 5", a gate says which pass chose what and whether a
+  * limit stopped the repeat (#129). Undefined when no gate decided.
+  */
+-export function lastGateSummary(events: readonly RunEvent[]): string | undefined {
++export function lastGateSummary(
++  events: readonly RunEvent[],
++  definition?: LoopDefinition,
++): string | undefined {
+   const event = events.findLast(
+     (e): e is Extract<RunEvent, { type: 'decision.made' }> =>
+       e.type === 'decision.made' && e.gate !== undefined,
+@@ -293,7 +305,7 @@ export function lastGateSummary(events: readonly RunEvent[]): string | undefined
+   if (!event || !gate) return undefined;
+   // An Unlimited gate records `maxPasses: null` (#243): name the pass without a bound.
+   const of = gate.maxPasses === null ? ' (unlimited passes)' : ` of ${gate.maxPasses}`;
+-  const chose = `Last gate decision: ${event.nodeId} chose ${gate.limit ? gate.repeatRouteId : event.portId} on pass ${gate.previousPasses}${of}`;
++  const chose = `Last gate decision: ${nodeName(definition, event.nodeId)} chose ${routeName(definition, event.nodeId, gate.limit ? gate.repeatRouteId : event.portId)} on pass ${gate.previousPasses}${of}`;
+   if (!gate.limit) return `${chose}.`;
+   const limit = gate.limit === 'max-passes' ? 'maximum passes' : 'maximum run time';
+   return `${chose}; ${limit} stopped the repeat, so it took Limit reached.`;
+@@ -391,3 +403,49 @@ export function observationDescription(observation: EvaluationObservation): stri
+       return answerDescription(observation.answer);
+   }
+ }
++
++/** The caller supplies only the immutable run version. Stable IDs remain visible. */
++export function nodeName(definition: LoopDefinition | undefined, id: string): string {
++  const node = definition?.nodes.find((item) => item.id === id);
++  return node ? `${node.label} (${id})` : definition ? `${id} (label not recorded)` : id;
++}
++
++export function routeName(
++  definition: LoopDefinition | undefined,
++  nodeId: string,
++  id: string,
++): string {
++  const node = definition?.nodes.find((item) => item.id === nodeId);
++  if (node?.kind !== 'decision') return id;
++  if (id === 'limit-reached') return 'Limit reached (limit-reached)';
++  const route = decisionRouteDeclarations(node.config).find((item) => item.id === id);
++  return route ? `${route.label} (${id})` : `${id} (label not recorded)`;
++}
++
++/** Two percentage decimals for scanning; exact numbers remain in the recorded-event disclosure. */
++export function formatProbability(value: number | null): string {
++  if (value === null) return 'Not recorded';
++  if (value > 0 && value < 0.0001) return '<0.01%';
++  if (value < 1 && value > 0.9999) return '>99.99%';
++  return new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 }).format(
++    value,
++  );
++}
++
++/** A cancellation's actor is its recorded request's actor, never a provider error. */
++export function cancellationSummary(events: readonly RunEvent[]): string | undefined {
++  const cancelled = events.findLast((event) => event.type === 'run.cancelled');
++  if (!cancelled) return undefined;
++  const resumed = events.findLast(
++    (event) => event.type === 'run.resumed' && event.seq < cancelled.seq,
++  );
++  const request = events.findLast(
++    (event) =>
++      event.type === 'run.cancel_requested' &&
++      event.seq > (resumed?.seq ?? 0) &&
++      event.seq < cancelled.seq,
++  );
++  return request?.type === 'run.cancel_requested'
++    ? `Cancelled by ${request.actor.kind} ${request.actor.id} (request #${request.seq}; cancellation #${cancelled.seq}).`
++    : 'Cancelled; actor not recorded.';
++}
+diff --git a/apps/web/tsconfig.json b/apps/web/tsconfig.json
+index 075d50e3..4df5e597 100644
+--- a/apps/web/tsconfig.json
++++ b/apps/web/tsconfig.json
+@@ -20,6 +20,7 @@
+     "vite.config.ts",
+     "vitest.config.ts",
+     "playwright.config.ts",
++    "playwright.evidence.config.ts",
+     "playwright.capture.config.ts"
+   ]
+ }
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index c73df7ee..106c39ba 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -78,6 +78,12 @@ The owner's request: move the horizontal and vertical break points of a line to
+ 
+ ## Run inspector (Draft)
+ 
++- Exact execution evidence (#255): selecting any timeline event offers **Exact recorded event**, with bounded JSON, Show all and an exact JSON download. **Execution context** identifies the pinned definition and offers the exact run record and definition JSON. Missing definitions, labels, cancellation actors and initial seeds are identified explicitly; reconstruction without a recorded seed remains the documented fallback and may be incomplete.
++- Patch diffs show each `add` operation's recorded inserted value, including `null`, nested arrays and multiple `/-` appends in one patch. **Added value** describes the operation's value rather than the final array or an absent value at the append pointer. Other operations retain the completed patch's before/after path view; the exact operations remain in the selected event.
++- Timeline, node progress, wait, patch and evaluation labels use only the immutable version named by the run's `versionId`. Labels appear beside stable IDs. Run-list names use `run.pinned.name`, so later loop renames do not relabel history. Unavailable pinned definitions never fall back to the current draft or published version.
++- Probabilities and confidence use percentages with at most two decimal places. Nonzero values below 0.01% show **<0.01%**; values above 99.99% below one show **>99.99%**, preserving the distinction from zero and one. Exact recorded numbers remain in event JSON. Choice alternatives show their pinned route labels beside IDs; Score probability keys remain rubric indices.
++- A cancelled run identifies its recorded cancellation-request actor and event numbers, or says the actor was not recorded. An incomplete event prefix is distinguished from unrecorded facts; a missing terminal cancellation event is named without denying a request that was recorded. The recorded node position is labelled separately. Cancellation never displays a stale failure alert. Provider failures retain the recorded diagnostic and raw failure evidence; the list shows its recorded code and message. An elapsed run deadline remains the distinct engine failure `RUN_DEADLINE_EXCEEDED`, as recorded, rather than a provider error or an invented cancellation actor.
++
+ - Timeline from the SSE stream with the cursor stored so reload resumes without gaps.
+ - Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`. The Full thread JSON shown and downloaded at an event is that reconstruction, so its property order follows the replay rather than the API's serialisation of the live thread; the values are the same.
+ - Node progress drawer that shows harness items as they arrive.
