@@ -1,0 +1,121 @@
+# WP-A2 / #241: Edge browser gate restack
+
+**#241 is blocked by a confirmed product defect.** The API reports event 22 while the inspector labels 21 events complete and omits the persisted tail. [Reproduction and evidence](product-terminal-history-gap.md). The regression remains in the suite; product implementation is untouched. {{OWNED_STATUS}}
+
+## 1. Branch and worktree
+
+Branch `codex-wp-a2-241`, worktree `%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a2-241`. Base/current HEAD `24d7be41da50944cae25e9093c0591f4a7fdf5c0`; before editing, `git log -1 --format=%H` confirmed it and `git merge-base --is-ancestor ab98d3e0 HEAD` succeeded. The starting worktree was clean.
+
+Uncommitted; ready for orchestrator review/commit as a **blocked restack**, not accepted for #241. No index changes, commits, pushes, merges, rebases or branch switches. Final application/test diff SHA-256: `a2d861f84b2eb15ccf0031a66f3eb6f03854b8930d8de345173e85fb3cdc0337`.
+
+## 2. Per bolt
+
+| #241 acceptance criterion | Result and evidence |
+| --- | --- |
+| Run the whole provider-free suite before repairs | Complete: 397 passed, 12 failed, one live skip; 410 selected tests in 47 files, 4171.645 s. [Log](baseline.log.txt), [metadata](baseline.json), [captures](baseline-artifacts.json). |
+| Fix failures at their causes without retries, skips or product edits | Current-behavior and synchronization repairs are below. A stronger history check exposed the confirmed product blocker; its assertion stays strict. |
+| Retain/update PR #351's CI job | Edge, shared Node 22 pin, explicit one worker/zero retries, always-run exclusions summary, failure/cancellation upload retained. Test/job budgets are 60/75 minutes, based on a measured 48m28s candidate. |
+| Prove failure on a one-line UI regression and success without it | {{SEED_STATUS}} |
+| Three consecutive clean full runs | **Unresolved: product fix required.** No clean sequence or CI pass is claimed. |
+| Docs/10 and top Unreleased CHANGELOG bullet | Updated, including #400; the CHANGELOG bullet ends `(#241)`. |
+
+Node `v22.14.0`, installed Edge `156.0.4314.42`. Browser runs set `CI=true`, `LIVE=0`, `GG_E2E_BROWSER_CHANNEL=msedge`, zero retries/one worker. Playwright's project is named `chromium`; its executable channel is Edge. The original command relied on the configured one worker; the updated exact job command is `pnpm.cmd exec playwright test --retries=0 --workers=1` from `apps/web`.
+
+## 3. Files changed
+
+- **CI:** `.github/workflows/ci.yml` preserves the job, updates execution budgets, makes the worker count explicit and removes the obsolete future Node-pin comment.
+- **Web E2E assertions:** `actions.spec.ts`, `forms.spec.ts`, `issue-170-qa.spec.ts`, `issue-7-qa.spec.ts`, `qa.spec.ts`, `webhook-delivery.spec.ts`, `trigger-types.spec.ts` assert current behavior and actual saved values.
+- **Web E2E synchronization:** `drafts.spec.ts`, `thread-history.spec.ts`, `pwa.spec.ts`, `routing.spec.ts`, `earlier-node-outputs.spec.ts`, `inspector-large-values.spec.ts`; shared `fixtures.ts` targets rendered card headers.
+- **Web harness:** `server.ts` optionally serves a scratch build using `GG_E2E_WEB_DIST`. `model-effort.spec.ts` changes only two screenshot destinations to `test.info().outputPath(...)`. Baseline execution overwrote three historical #205 PNGs; they were restored byte-for-byte from HEAD ([manifest](baseline-model-captures.json)). Historical images and model-picker assertions have no final diff.
+- **Web unit harness:** `vitest.config.ts` uses two isolated thread workers. `src/editor/routing-review.test.ts` changes only the finite 300-graph correctness watchdog and its justification comment.
+- **Docs/evidence:** `docs/10-testing-and-quality.md`, the first Unreleased bullet in `CHANGELOG.md`, and this folder.
+
+Shared-file callouts: `fixtures.ts` affects every `openNode` caller; `model-effort.spec.ts` overlaps the model-picker work; inspector/history, PWA and webhook specs are named explicitly for coordination with parallel owners. Product files owned by #319, #265 and #255 are untouched. No product implementation, contract, dependency, production export, generated reference, coverage threshold or exclusion changed.
+
+## 4. Tests
+
+### Every initial failure
+
+Locations identify the original baseline. All errors came from its complete log, not a tail sample.
+
+{{BASELINE_TABLE}}
+
+The non-routing repairs passed **13/13**, **166.051 s**, including all four legacy variants ([log](focused-2.log.txt), [metadata](focused-2.json)). All 1,214 events were contiguous; opening took 1,889 ms and selecting event 601 took 899 ms against unchanged 5,000/2,000 ms bounds. The incomplete baseline history ZIP supplied timing diagnosis only ([analysis](thread-trace-analysis.json)).
+
+### Additional findings and final owned corrections
+
+| Case | Failure/cause | Correction or disposition |
+| --- | --- | --- |
+| PWA focus update | A native update was detected before the intended focus; registration/update counters alone did not observe the app's separate pageshow trigger. | Observe trusted native pageshow, foreground/visibility state and completed native promises in both documents. Keep all original detection counts, Later, activation-message and single-reload assertions. Focused PWA passed in 6.6 s; [39 lifecycle records](pwa-lifecycle-focused.json) include four native pageshows. Full qualification remains blocked. |
+| General webhook at 1440 px | Expected input value `webhook`, received empty. The authored request omitted fallback, while save/reload responses correctly supplied its schema default. | Check the durable default and placeholder, author distinct `fixture-webhook-type`, wait for exact saved configuration, then assert exact UI/export persistence. [Trace analysis](trigger-reload-trace-analysis.json). Both widths passed in the five-case focused check. |
+| Earlier-node references at 390 px | Fixed-offset click was intercepted by the rail/pane. Initial readable zoom leaves the decision partly outside the phone canvas; after fitting, a fixed 60 px offset can exceed a rendered card's width. | Use real Fit View and a native header hit-test; click the rendered header box in the shared fixture. Both widths passed **2/2**, **62.692 s** ([log](focused-header-hit.log.txt), [metadata](focused-header-hit.json), [captured geometry](earlier-node-click-analysis.json)). |
+| Large-history reconstruction | Captured event 21 was overtaken by caller-return event 22. A stronger completion check then exposed a real product gap: API sequence 22, inspector complete at 21. | **Unresolved product defect.** Keep the delivery/authoritative-sequence regression, do not weaken it or change product code. [Confirmed report](product-terminal-history-gap.md), [network evidence](large-history-network-analysis.json). |
+
+Header development mistakes are retained: `focused-lifecycle` used the wrong capitalization for the exact Fit View name; `focused-header` then rejected an intersection ratio of 0.99999976. The final readiness check uses the actual native hit-test, preserving every original authoring, clipboard, output and routing assertion. Final typechecking also caught another PWA counter initializer missing the new required field; its type was fixed without casts or exclusions.
+
+Routing diagnosis identified held-button Playwright mouse movement installing/removing shared HTML5 drag interception on every call ([installed-source analysis](playwright-input-analysis.json)). The test now uses only public `BrowserContext.newCDPSession` / `CDPSession.send`, with equivalent native mouse events. Absolute 60 Hz deadlines prevent per-iteration timer/dispatch delay from accumulating. Phase advances at 6 radians/s within the same circuit and five-second windows, with 64-command credit. Actual sent/observed input, queue occupancy, acknowledgement latency and sampler alignment are recorded. No private methods or synthetic DOM input are invoked.
+
+The corrected five-case focused check passed **5/5**, **119.189 s** ([log](focused-absolute.log.txt), [metadata](focused-absolute.json)): 306 moves per drag; 300-node route counts 205/193/204 and p95s 3.5/3.3/3.3 ms, median 3.3 ms. The later complete `qualified-1` run passed both routing cases ([measurements](qualified-1-routing.json)). All original sample minima, three windows, rerouted-edge checks, 16 ms per-drag/8 ms default median bounds, strict-mode bounds and browser test budgets remain.
+
+### Whole-suite history and the three-clean-run requirement
+
+{{FULL_RUNS}}
+
+All complete development runs kept their inputs unchanged and had zero retries. Every failed candidate sequence stopped before a second full run; no spec was skipped or filtered from a whole run. Focused diagnostics are separate, never acceptance. The final E2E-only corrections have targeted verification; full qualification of the final patch remains pending the product fix.
+
+| Required clean run | Result |
+| --- | --- |
+| 1 | Unresolved: confirmed product history gap must be fixed first. |
+| 2 | Not started after the known blocker. |
+| 3 | Not started after the known blocker. |
+
+Earlier rejected driver/PWA experiments remain in their logs and metadata: `routing-diagnostic-1`, `routing-after`, `routing-pipeline`, `routing-window`, `pwa-routing-verified`, `pwa-routing-paced`, `pwa-routing-cdp`. Waiting for an unconditional extra worker-script request was rejected because it was not a guaranteed event ([analysis](pwa-event-wait-analysis.json)). No rejected experiment is counted as acceptance.
+
+### Final-build UI regression proof
+
+Exactly one rendered literal in a disposable physical build copy changes from `The draft changed on the server` to `Seeded conflict notice regression`. The unchanged two-tab draft test runs with zero retries/one worker.
+
+{{SEED_RUNS}}
+
+{{SEED_DETAILS}}
+
+The earlier build had the same successful counterfactual pair: 1 failed in 33.157 s and 1 passed in 24.826 s (`seed-regression` / `conflict-restored`). The subsequent normal bundle had different bytes, so that earlier byte-identity claim was withdrawn and the final-build proof was rerun. No older fault proof is substituted for the latest build.
+
+### Web unit coverage and execution budgets
+
+`pnpm.cmd --filter @graphgoblin/web test:coverage`: **1,686/1,686 passed**, **134/134 files**, **1584.428 s** ([log](coverage-qualified.log.txt), [metadata](coverage-qualified.json)). Coverage: **98.91% lines (7,533/7,616)**, **94.88% branches (7,849/8,272)**, 98.00% statements and 98.41% functions ([totals/hash](coverage-qualified-summary.json)).
+
+Only E2E fixtures/specs changed afterwards. [Unit-input verification](unit-inputs-reused.json) confirms unchanged HEAD, Node version, unit-relevant source/configuration/dependencies and scope diff SHA-256 `f037003d67035e87bc4899c086c0b6bca166e1e0600ca370b8ed38c907b755a6`. E2E specs are outside Vitest's include patterns and are not imported/read by the web unit sources/scripts. This is retained complete coverage of identical unit inputs, not a claimed new coverage execution on the later global patch hash.
+
+The default-pool run had six failures: legacy restoration, two EditorPage cases, 150-card routing, Settings LiteLLM and the sparse-graph corpus ([log](coverage-final.log.txt)). Bounding workers made five pass; the remaining 300-graph corpus took 105.580 s under V8 and exceeded its 60-second watchdog ([log](coverage-cdp.log.txt)). Its watchdog is now **180 seconds**, retaining the same seed, all 300 trials, more than 3,000 routes, twelve-bend, label, lane and equivalence assertions. This is a measured finite correctness-corpus execution budget; native browser performance assertions and other unit deadlines remain unchanged.
+
+A later fork failed its fixed 60-second startup handshake: 1,683 tests/133 files ran, three UndoRedo tests did not. That run is **not acceptance**, despite high partial coverage ([log](coverage-absolute.log.txt), [partial totals](coverage-absolute-summary.json)). The public `pool: 'threads'`, `isolate: true`, `maxWorkers: 2` configuration avoids per-file Windows fork startup while preserving isolation. The final complete coverage pass includes every file/test. No worker error is ignored or retried ([source analysis](vitest-pool-analysis.json)).
+
+## 5. Gates
+
+Node 22 is first on PATH. Fresh final commands record unchanged HEAD and application/test inputs; web unit coverage is retained with the explicit input-invariance evidence above.
+
+{{GATES}}
+
+{{FORMAT_NOTE}}
+
+No schema, route or dependency changes require generated references, license changes or an ADR. Existing `ThreadViewer.tsx:106` lint and shared Turbo-cache write warnings remain recorded; they did not fail the passing gates. No owner/global cache configuration was altered.
+
+## 6. Docs
+
+[Docs/10](../../10-testing-and-quality.md) covers the CI job, exact local commands, live exclusions, optional modes, synchronization, native input and unit execution budgets, and links the product blocker. The first [CHANGELOG](../../../CHANGELOG.md) Unreleased bullet mentions #400 and ends `(#241)`. No ADR or generated reference changes. [NOT-KEPT.md](NOT-KEPT.md) and capture inventories preserve discarded-file sizes/SHA-256 hashes; raw logs and code copies retain their bytes.
+
+## 7. Decisions and parameters
+
+- Edge, zero retries, one worker, all ordinary functional specs. Only `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI` is skipped; it requires installed/authenticated Codex CLI and spends quota. Optional historical capture, routing profiling/strict modes and thread evidence remain off; ordinary tests still run.
+- Native routing: 60 Hz absolute deadlines, 6 radians/s, unchanged circuit/windows, 64 outstanding-command credit; report actual delivery. Timers define workload cadence, while readiness observes browser state.
+- Unit pool: two isolated threads. The one 180-second finite-corpus watchdog is justified by measured 105.6-second covered execution. CI step/job budgets are 60/75 minutes based on a measured 48m28s candidate. These are engineering execution budgets, not owner-approved product parameters.
+- Keep the strict history regression. Source and native trace show that terminal SSE closure plus a finite successful catch-up can omit later delivery facts; product owners must fix that behavior.
+- Main/control listeners use 6020/6021; automated extra instances use free ports. Disposable stores are inside `gg-wp-a2-241-*` temporary parents. No owner app/store/checkout or ports 4747/4748 are used.
+- No manual directory deletion. Scratch files are individually removed with prefix checks; empty directories remain for the orchestrator. Evidence over 1,000,000 bytes is not retained; inventories record size/hash. Home paths in logs are normalized to `%USERPROFILE%`.
+
+## 8. Caveats and open items
+
+**#241 is not complete.** The orchestrator must route [the confirmed terminal-history product defect](product-terminal-history-gap.md) to the inspector/session-recovery owner, integrate its fix, then run the entire Edge suite three consecutive times with zero retries and this regression intact. Global header-fixture changes also require that full qualification. No product code was edited to make a test pass.
+
+No Ubuntu/GitHub CI pass, independent sign-off, live-provider result, issue closure, publication or merge is claimed. The orchestrator owns commit/publication and actual CI evidence after integration. `gh issue view 400` returned HTTP 401; the supplied issue description and local reproductions establish the three stale expectations. Generated coverage/report folders, disposable stores and empty scratch directories remain for orchestrator cleanup under COMMON's rule.

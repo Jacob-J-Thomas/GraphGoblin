@@ -1,0 +1,198 @@
+Source: error-context.md from the seeded test output; path-normalized text, not a retained Playwright output folder.
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: actions.spec.ts >> Loops keeps on cancel, contains keyboard focus, exports, and deletes on confirmation
+- Location: e2e\actions.spec.ts:15:1
+
+# Error details
+
+```
+Error: expect(locator).toBeFocused() failed
+
+Locator: getByRole('heading', { name: 'Loops', exact: true })
+Expected: focused
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeFocused" getByRole('heading', { name: 'Loops', exact: true }) with timeout 10000ms
+  - waiting for getByRole('heading', { name: 'Loops', exact: true })
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- form "Create loop":
+  - text: New loop name
+  - textbox "New loop name":
+    - /placeholder: nightly-triage
+  - button "Create" [disabled]
+- text: Import an exported loop (JSON)
+- button "Import an exported loop (JSON)"
+- text: No file chosen
+- button "New from template"
+- paragraph: No loops yet. Create one above or import an export.
+```
+
+# Test source
+
+```ts
+  1   | import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
+  2   | import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
+  3   | import type { Locator, Page } from '@playwright/test';
+  4   | 
+  5   | async function tabTo(page: Page, target: Locator) {
+  6   |   for (
+  7   |     let i = 0;
+  8   |     i < 40 && !(await target.evaluate((element) => element === document.activeElement));
+  9   |     i++
+  10  |   )
+  11  |     await page.keyboard.press('Tab');
+  12  |   await expect(target).toBeFocused();
+  13  | }
+  14  | 
+  15  | test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on confirmation', async ({
+  16  |   page,
+  17  |   request,
+  18  | }) => {
+  19  |   const id = await publishLoop(request, approvalLoop('actions loop'));
+  20  |   await page.goto('/app/loops');
+  21  |   const trigger = page.getByRole('button', { name: 'Delete actions loop', exact: true });
+  22  |   await trigger.click();
+  23  |   const dialog = page.getByRole('alertdialog', { name: 'Delete “actions loop”?' });
+  24  |   await expect(dialog).toContainText('all its versions, its triggers and all its runs (0)');
+  25  |   await expect(dialog).toContainText('including run history and artifact references');
+  26  |   await expect(dialog.getByRole('button', { name: 'Keep' })).toBeFocused();
+  27  |   await page.keyboard.press('Tab');
+  28  |   await expect(dialog.getByRole('button', { name: 'Confirm delete actions loop' })).toBeFocused();
+  29  |   await page.keyboard.press('Shift+Tab');
+  30  |   await expect(dialog.getByRole('button', { name: 'Keep' })).toBeFocused();
+  31  |   await page.keyboard.press('Escape');
+  32  |   await expect(dialog).toHaveCount(0);
+  33  |   await expect(trigger).toBeFocused();
+  34  |   expect((await request.get(`/loops/${id}`)).status()).toBe(200);
+  35  |   const download = page.waitForEvent('download');
+  36  |   await page.getByRole('button', { name: 'Export actions loop' }).click();
+  37  |   expect((await download).suggestedFilename()).toBe('actions-loop.graphgoblin.json');
+  38  |   await trigger.click();
+  39  |   await page.getByRole('button', { name: 'Confirm delete actions loop' }).click();
+  40  |   await expect(trigger).toHaveCount(0);
+> 41  |   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeFocused();
+      |                                                                           ^ Error: expect(locator).toBeFocused() failed
+  42  |   await page.keyboard.press('Tab');
+  43  |   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).not.toHaveAttribute(
+  44  |     'tabindex',
+  45  |   );
+  46  |   expect((await request.get(`/loops/${id}`)).status()).toBe(404);
+  47  | });
+  48  | 
+  49  | test('Keep followed by a runs poll leaves body focus and Space opens no confirmation', async ({
+  50  |   page,
+  51  |   request,
+  52  | }) => {
+  53  |   const name = `cancel-poll-${test.info().repeatEachIndex}`;
+  54  |   const id = await publishLoop(request, approvalLoop(name));
+  55  |   await page.goto('/app/loops');
+  56  |   // Check this Edge version's removal events; the microtask must distinguish them from blur.
+  57  |   const removalEvents = await page.evaluate(async () => {
+  58  |     const probe = document.createElement('button');
+  59  |     document.body.append(probe);
+  60  |     const events: { duringEvent: boolean; afterMicrotask: boolean }[] = [];
+  61  |     probe.addEventListener('focusout', () => {
+  62  |       const event = { duringEvent: probe.isConnected, afterMicrotask: true };
+  63  |       events.push(event);
+  64  |       queueMicrotask(() => {
+  65  |         event.afterMicrotask = probe.isConnected;
+  66  |       });
+  67  |     });
+  68  |     probe.focus();
+  69  |     probe.remove();
+  70  |     await Promise.resolve();
+  71  |     return events;
+  72  |   });
+  73  |   console.log(`Focused-element removal focusout events: ${JSON.stringify(removalEvents)}`);
+  74  |   for (const event of removalEvents) expect(event.afterMicrotask).toBe(false);
+  75  |   const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
+  76  |   await trigger.click();
+  77  |   await page.getByRole('button', { name: 'Keep', exact: true }).click();
+  78  |   await expect(trigger).toBeFocused();
+  79  |   await page.getByRole('heading', { name: 'Loops', exact: true }).click();
+  80  |   await expect.poll(() => page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  81  |   const response = await request.post(`/loops/${id}/runs`, { data: {} });
+  82  |   expect(response.status()).toBe(202);
+  83  |   const { run } = (await response.json()) as { run: { id: string } };
+  84  |   try {
+  85  |     // The regular five-second runs poll must commit the new badge before checking focus.
+  86  |     const row = page.getByRole('row').filter({ has: trigger });
+  87  |     await expect(row.getByRole('link', { name: 'waiting', exact: true })).toHaveAttribute(
+  88  |       'href',
+  89  |       `/app/runs/${run.id}`,
+  90  |     );
+  91  |     expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  92  |     await page.keyboard.press('Space');
+  93  |     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  94  |     expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  95  |   } finally {
+  96  |     await request.post(`/runs/${run.id}/cancel`);
+  97  |     await expect
+  98  |       .poll(
+  99  |         async () =>
+  100 |           ((await (await request.get(`/runs/${run.id}`)).json()) as { status: string }).status,
+  101 |       )
+  102 |       .toBe('cancelled');
+  103 |     await request.delete(`/loops/${id}`);
+  104 |   }
+  105 | });
+  106 | 
+  107 | test('Settings keeps on cancel and deletes a secret after explicit confirmation', async ({
+  108 |   page,
+  109 |   request,
+  110 | }) => {
+  111 |   expect(
+  112 |     (await request.put('/secrets/actions-secret', { data: { value: 'fixture-only' } })).status(),
+  113 |   ).toBe(200);
+  114 |   await page.goto('/app/settings');
+  115 |   const trigger = page.getByRole('button', { name: 'Delete secret actions-secret' });
+  116 |   await trigger.click();
+  117 |   let dialog = page.getByRole('alertdialog');
+  118 |   await expect(dialog).toContainText('503 HOOK_NOT_READY');
+  119 |   await expect(dialog).toContainText('secret:actions-secret');
+  120 |   await dialog.getByRole('button', { name: 'Keep' }).click();
+  121 |   await expect(trigger).toBeFocused();
+  122 |   await expect(dialog).toHaveCount(0);
+  123 |   const secrets = await request.get('/secrets');
+  124 |   expect(await secrets.json()).toMatchObject({
+  125 |     items: expect.arrayContaining([expect.objectContaining({ name: 'actions-secret' })]),
+  126 |   });
+  127 |   await trigger.click();
+  128 |   dialog = page.getByRole('alertdialog');
+  129 |   await dialog.getByRole('button', { name: 'Confirm delete actions-secret' }).click();
+  130 |   await expect(trigger).toHaveCount(0);
+  131 |   await expect(page.getByRole('heading', { name: 'Secrets', exact: true })).toBeFocused();
+  132 | });
+  133 | 
+  134 | test('Settings catalog edits LiteLLM models, refuses Add, and reports a second-delete error', async ({
+  135 |   page,
+  136 |   request,
+  137 | }) => {
+  138 |   await control(request, '/catalog/upsert', {
+  139 |     harness: 'codex',
+  140 |     model: 'actions-model',
+  141 |     source: 'litellm',
+```

@@ -1,0 +1,341 @@
+{
+  "trace": "apps/web/test-results/trigger-types-general-webh-c8dbc-sts-and-validates-at-1440px-chromium/trace.zip",
+  "bytes": 3698458,
+  "sha256": "d99cbdefe8a3c24bfc1f05d21514ac44f76a6921156abd58a892de96fddf3ecd",
+  "resources": {
+    "resources/09759f5cca5e54a1f5d269dd9919143ad01125e4.json": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "general webhook 1440",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "webhook",
+              "authentication": {},
+              "body": {
+                "type": "json"
+              },
+              "eventType": {
+                "source": "json-pointer",
+                "pointer": "/event~1type/0"
+              }
+            }
+          },
+          {
+            "id": "approve",
+            "label": "Approve",
+            "ui": {
+              "x": 260,
+              "y": 80
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "Approve?",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 520,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "approve",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "approve",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      }
+    },
+    "resources/71ac370c6e2e5b0a7bbf28966c80237ea9bfefcf.json": {
+      "draft": {
+        "id": "01M3Y7RKG0DFRQ6N63V442RS11",
+        "loopId": "01M3Y7RKG0DFRQ6N63V442RS10",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "general webhook 1440",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "webhook",
+                "authentication": {
+                  "type": "none"
+                },
+                "body": {
+                  "type": "json"
+                },
+                "eventType": {
+                  "source": "json-pointer",
+                  "pointer": "/event~1type/0",
+                  "fallback": "webhook"
+                }
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-02T12:00:00.000Z"
+      },
+      "draftToken": "119c689df48b9b6a",
+      "issues": []
+    },
+    "resources/2349c35f8e6b8da83a41d8a940506b671823d3f6.json": {
+      "loop": {
+        "id": "01M3Y7RKG0DFRQ6N63V442RS10",
+        "ownerId": "local",
+        "name": "general webhook 1440",
+        "draftVersionId": "01M3Y7RKG0DFRQ6N63V442RS11",
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "updatedAt": "2026-10-02T12:00:00.000Z"
+      },
+      "draft": {
+        "id": "01M3Y7RKG0DFRQ6N63V442RS11",
+        "loopId": "01M3Y7RKG0DFRQ6N63V442RS10",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "general webhook 1440",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "webhook",
+                "authentication": {
+                  "type": "none"
+                },
+                "body": {
+                  "type": "json"
+                },
+                "eventType": {
+                  "source": "json-pointer",
+                  "pointer": "/event~1type/0",
+                  "fallback": "webhook"
+                }
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 260,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-02T12:00:00.000Z"
+      },
+      "draftToken": "119c689df48b9b6a"
+    }
+  }
+}

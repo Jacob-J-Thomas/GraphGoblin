@@ -1,0 +1,248 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: issue-170-qa.spec.ts >> inference Claude and Codex: family selection, policy, advanced model/effort, save/reload and policy refusal
+- Location: e2e\issue-170-qa.spec.ts:1191:1
+
+# Error details
+
+```
+Error: expect(locator).toHaveValue(expected) failed
+
+Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+Expected: "claude-opus-5-5"
+Received: "gpt-6-luna"
+Timeout:  10000ms
+
+Call log:
+  - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+    22 × locator resolved to <select id="_r_1k_" aria-describedby="_r_1k_-help _r_1k_-default" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h…>…</select>
+       - unexpected value "gpt-6-luna"
+
+```
+
+```yaml
+- combobox "Model":
+  - option "(loop default) (gpt-6-luna)"
+  - option "GPT-5.5 (gpt-5.5)"
+  - option "GPT-5.6 Luna (gpt-5.6-luna)"
+  - option "GPT-5.6 Sol (gpt-5.6-sol)"
+  - option "GPT-5.6 Terra (gpt-5.6-terra)"
+  - option "GPT-6 Astra (gpt-6-astra)"
+  - option "GPT-6 Luna (gpt-6-luna)" [selected]
+  - option "GPT-6 Sol (gpt-6-sol)"
+  - option "GPT-6.1 Sol (gpt-6.1-sol)"
+```
+
+# Test source
+
+```ts
+  1148 |   });
+  1149 |   expect.soft(published.current).toBeUndefined();
+  1150 | });
+  1151 | 
+  1152 | test('I6 integer bounds: timeout and nested repair attempts use exact schema messages and preserve last good values', async ({
+  1153 |   page,
+  1154 |   request,
+  1155 | }) => {
+  1156 |   const original = InferenceConfigSchema.parse({
+  1157 |     prompt: { template: 'Hi' },
+  1158 |     timeoutSeconds: 30,
+  1159 |     output: { schema: { jsonSchema: {}, repair: { maxAttempts: 2 } } },
+  1160 |   });
+  1161 |   const id = await create(request, 'inference', original);
+  1162 |   await page.goto(`/app/loops/${id}/edit`);
+  1163 |   const dialog = await openNode(page, 'approve');
+  1164 |   await expandAll(dialog);
+  1165 |   for (const [path, values, good] of [
+  1166 |     ['timeoutSeconds', [0, -1, 1.5, 86401], 86400],
+  1167 |     ['output.schema.repair.maxAttempts', [-1, 1.5, 11], 0],
+  1168 |   ] as const) {
+  1169 |     const field = dialog.locator(`[data-field="${path}"] input`);
+  1170 |     await expect(field).toHaveAttribute('step', '1');
+  1171 |     const before = at(await config(request, id), path);
+  1172 |     for (const number of values) {
+  1173 |       const bad = structuredClone(original);
+  1174 |       if (path === 'timeoutSeconds') bad.timeoutSeconds = number;
+  1175 |       else bad.output.schema!.repair.maxAttempts = number;
+  1176 |       const messages = InferenceConfigSchema.safeParse(bad)
+  1177 |         .error!.issues.filter((issue) => issue.path.join('.') === path)
+  1178 |         .map((issue) => issue.message);
+  1179 |       await field.fill(String(number));
+  1180 |       await expect(field).toHaveAttribute('aria-invalid', 'true');
+  1181 |       expect(await field.getAttribute('aria-describedby')).toBeTruthy();
+  1182 |       for (const message of messages)
+  1183 |         await expect(dialog.locator(`[data-field="${path}"]`)).toContainText(message);
+  1184 |       expect(at(await config(request, id), path)).toBe(before);
+  1185 |     }
+  1186 |     await field.fill(String(good));
+  1187 |     await expect.poll(async () => at(await config(request, id), path)).toBe(good);
+  1188 |   }
+  1189 | });
+  1190 | 
+  1191 | test('inference Claude and Codex: family selection, policy, advanced model/effort, save/reload and policy refusal', async ({
+  1192 |   page,
+  1193 |   request,
+  1194 | }) => {
+  1195 |   const app = await control(request, '/apps', { claude: true });
+  1196 |   const url = String(app['url']);
+  1197 |   const id = await create(
+  1198 |     request,
+  1199 |     'inference',
+  1200 |     { prompt: { template: 'Hi' }, harnessOptions: { sandbox: 'read-only' } },
+  1201 |     url,
+  1202 |   );
+  1203 |   await page.goto(`${url}/app/loops/${id}/edit`);
+  1204 |   const dialog = await openNode(page, 'approve');
+  1205 |   await chooseRadio(dialog.getByRole('radio', { name: 'claude', exact: true }));
+  1206 |   await expect(dialog.getByLabel('Sandbox and approval policy', { exact: true })).toHaveValue('0');
+  1207 |   await expandAll(dialog);
+  1208 |   const model = dialog.getByLabel('Model', { exact: true });
+  1209 |   await model.selectOption('claude-opus-5-5');
+  1210 |   await dialog.getByLabel('Effort', { exact: true }).selectOption('xhigh');
+  1211 |   await expect
+  1212 |     .poll(() => config(request, id, url))
+  1213 |     .toMatchObject({ harness: 'claude', model: 'claude-opus-5-5', effort: 'xhigh' });
+  1214 |   await selectTab(dialog, 'Context');
+  1215 |   const input = await jsonEditor(dialog, 'Input');
+  1216 |   await replace(page, input, '[{"op":"delete","path":"/vars/topic"}]');
+  1217 |   await apply(input);
+  1218 |   await selectTab(dialog, 'Settings');
+  1219 |   await expandAll(dialog);
+  1220 |   const overrides = await jsonEditor(dialog, 'Config overrides');
+  1221 |   await replace(page, overrides, '{"authored":true}');
+  1222 |   // Parent policy refuses the locally valid record before it can become applied state.
+  1223 |   await expect(sectionOf(overrides).getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
+  1224 |   await expect(
+  1225 |     sectionOf(overrides).getByText('Claude raw configuration overrides are unsupported', {
+  1226 |       exact: false,
+  1227 |     }),
+  1228 |   ).toBeVisible();
+  1229 |   await closeNode(page);
+  1230 |   await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  1231 |   await expect(page.getByText('Publish failed')).toBeVisible();
+  1232 |   const repaired = await openNode(page, 'approve');
+  1233 |   await expandAll(repaired);
+  1234 |   const json = repaired.getByRole('textbox', { name: 'Config overrides JSON', exact: true });
+  1235 |   if (!(await json.isVisible()))
+  1236 |     await repaired.getByRole('button', { name: 'Edit as JSON: Config overrides' }).click();
+  1237 |   await replace(page, json, '{}');
+  1238 |   await apply(json);
+  1239 |   await expect
+  1240 |     .poll(() => config(request, id, url))
+  1241 |     .toMatchObject({ harness: 'claude', harnessOptions: { configOverrides: {} } });
+  1242 |   await page.reload();
+  1243 |   const reopened = await openNode(page, 'approve');
+  1244 |   await expandAll(reopened);
+  1245 |   await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
+  1246 |   await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('xhigh');
+  1247 |   await chooseRadio(reopened.getByRole('radio', { name: 'codex', exact: true }));
+> 1248 |   await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
+       |                                                               ^ Error: expect(locator).toHaveValue(expected) failed
+  1249 |   await reopened.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
+  1250 |   await reopened.getByLabel('Effort', { exact: true }).selectOption('low');
+  1251 |   await expect.poll(() => config(request, id, url)).toMatchObject({ harness: 'codex' });
+  1252 |   await expect(reopened.getByRole('radiogroup', { name: 'Sandbox', exact: true })).toBeVisible();
+  1253 | });
+  1254 | 
+  1255 | for (const kind of ['expression', 'classifier', 'llm']) {
+  1256 |   test(`route replacement ${kind}: retained IDs reorder safely, explicit remove drops edge, and undo/redo is atomic`, async ({
+  1257 |     page,
+  1258 |     request,
+  1259 |   }) => {
+  1260 |     const id = await create(request, 'decision', decision(kind));
+  1261 |     await page.goto(`/app/loops/${id}/edit`);
+  1262 |     const dialog = await openNode(page, 'approve');
+  1263 |     const section = kind === 'classifier' ? 'Answer' : 'Routes';
+  1264 |     const editor = await jsonEditor(dialog, section);
+  1265 |     const routes = [...choice.options].reverse().map(({ id, label }) => ({ id, label }));
+  1266 |     const reordered =
+  1267 |       kind === 'classifier' ? { ...choice, options: [...choice.options].reverse() } : routes;
+  1268 |     await replace(page, editor, JSON.stringify(reordered));
+  1269 |     await apply(editor);
+  1270 |     await expect
+  1271 |       .poll(async () => (await config(request, id))[kind === 'classifier' ? 'answer' : 'routes'])
+  1272 |       .toEqual(reordered);
+  1273 |     expect((await saved(request, id)).edges.find((e) => e.id === 'e2')!.from.port).toBe('out');
+  1274 |     const added =
+  1275 |       kind === 'classifier'
+  1276 |         ? {
+  1277 |             ...choice,
+  1278 |             options: [...choice.options]
+  1279 |               .reverse()
+  1280 |               .concat({ id: 'third', label: 'Third', criteria: 'Third' }),
+  1281 |           }
+  1282 |         : [...routes, { id: 'third', label: 'Third' }];
+  1283 |     await replace(page, editor, JSON.stringify(added));
+  1284 |     await apply(editor);
+  1285 |     const removed = Array.isArray(added)
+  1286 |       ? added.filter((row) => row.id !== 'out')
+  1287 |       : { ...added, options: added.options.filter((row) => row.id !== 'out') };
+  1288 |     await replace(page, editor, JSON.stringify(removed));
+  1289 |     await apply(editor);
+  1290 |     await expect(
+  1291 |       sectionOf(editor).getByRole('group', { name: 'Confirm connection removal' }),
+  1292 |     ).toContainText('out → done');
+  1293 |     await sectionOf(editor).getByRole('button', { name: 'Confirm Apply JSON' }).click();
+  1294 |     await expect
+  1295 |       .poll(async () => (await saved(request, id)).edges.some((e) => e.id === 'e2'))
+  1296 |       .toBe(false);
+  1297 |     await sectionOf(editor).getByRole('button', { name: 'Apply JSON' }).focus();
+  1298 |     await page.keyboard.press('Control+z');
+  1299 |     await expect
+  1300 |       .poll(async () => (await saved(request, id)).edges.some((e) => e.id === 'e2'))
+  1301 |       .toBe(true);
+  1302 |     await expect(editor).toBeVisible();
+  1303 |     await sectionOf(editor).getByRole('button', { name: 'Apply JSON' }).focus();
+  1304 |     await page.keyboard.press('Control+Shift+z');
+  1305 |     await expect
+  1306 |       .poll(async () => (await saved(request, id)).edges.some((e) => e.id === 'e2'))
+  1307 |       .toBe(false);
+  1308 |   });
+  1309 | }
+  1310 | 
+  1311 | for (const [label, value] of [
+  1312 |   ['Config overrides', { raw: true }],
+  1313 |   ['Capabilities', { skills: ['authored'] }],
+  1314 | ] as const) {
+  1315 |   test(`I4 parent validation ${label}: invalid Claude JSON must not apply or reach the device draft`, async ({
+  1316 |     page,
+  1317 |     request,
+  1318 |   }) => {
+  1319 |     // D3 regression: section replacements must satisfy the whole node's parent refinements.
+  1320 |     const app = await control(request, '/apps', { claude: true });
+  1321 |     const url = String(app['url']);
+  1322 |     const id = await create(
+  1323 |       request,
+  1324 |       'inference',
+  1325 |       {
+  1326 |         harness: 'claude',
+  1327 |         prompt: { template: 'Hi' },
+  1328 |         harnessOptions: { sandbox: 'read-only', approval: 'never' },
+  1329 |       },
+  1330 |       url,
+  1331 |     );
+  1332 |     const original = await config(request, id, url);
+  1333 |     await page.goto(`${url}/app/loops/${id}/edit`);
+  1334 |     const dialog = await openNode(page, 'approve');
+  1335 |     await expandAll(dialog);
+  1336 |     const editor = await jsonEditor(dialog, label);
+  1337 |     await replace(page, editor, JSON.stringify(value));
+  1338 |     const button = sectionOf(editor).getByRole('button', { name: 'Apply JSON' });
+  1339 |     const enabled = await button.isEnabled();
+  1340 |     if (enabled) await button.click();
+  1341 |     await dialog.getByLabel('Label', { exact: true }).fill('Trigger mirror after JSON');
+  1342 |     await expect(page.getByTestId('save-state')).toHaveText(
+  1343 |       /All changes saved|Saved on this device only/,
+  1344 |     );
+  1345 |     const local = (await mirror(page, id))?.nodes.find((n) => n.id === 'approve')?.config;
+  1346 |     const rawPath = label === 'Capabilities' ? 'capabilities' : 'harnessOptions.configOverrides';
+  1347 |     console.log(
+  1348 |       `D3 ${label}: Apply enabled=${enabled}; device=${JSON.stringify(at(local, rawPath))}; server=${JSON.stringify(at(await config(request, id, url), rawPath))}`,
+```

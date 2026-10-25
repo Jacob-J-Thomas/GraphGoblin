@@ -1,0 +1,71 @@
+// Node 22, repository root. Finish owned checks; acceptance remains blocked on the product finding.
+import assert from 'node:assert/strict';
+import {spawn,execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readFile,writeFile,copyFile,readdir} from 'node:fs/promises';
+import {join} from 'node:path';
+const root=process.cwd();
+const evidence=join(root,'docs/qa/2026-10-24-wp-a2-241');
+const expectedHead='24d7be41da50944cae25e9093c0591f4a7fdf5c0';
+const expectedPatch='a2d861f84b2eb15ccf0031a66f3eb6f03854b8930d8de345173e85fb3cdc0337';
+const hash=(value)=>createHash('sha256').update(value).digest('hex');
+assert.equal(process.version,'v22.14.0');
+const readResult=async(label)=>JSON.parse(await readFile(join(evidence,label+'.json'),'utf8'));
+const validate=(result,exit=0)=>{
+ assert.equal(result.exitCode,exit,result.label);
+ assert.equal(result.head,expectedHead);
+ assert.equal(result.applicationPatchSha256,expectedPatch);
+ assert.equal(result.applicationPatchSha256After,expectedPatch);
+ assert.equal(result.inputsUnchanged,true);
+};
+// The only later runtime change is an unused field in a different PWA test's counter initializer.
+const headerFocus = await readResult('focused-header-hit');
+assert.equal(headerFocus.exitCode,0); assert.equal(headerFocus.inputsUnchanged,true); assert.equal(headerFocus.head,expectedHead);
+async function unitInputs(){
+ const prior=await readResult('unit-inputs-qualified');
+ const coverage=await readResult('coverage-qualified');
+ const summary=await readResult('coverage-qualified-summary');
+ assert.equal(coverage.exitCode,0);assert.equal(summary.accepted,true);
+ assert.equal(summary.tests,1686);assert.equal(summary.testFiles,134);
+ assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),prior.head);
+ const patch=execFileSync('git',['diff','--no-ext-diff','HEAD','--',...prior.scope]);
+ assert.equal(hash(patch),prior.scopePatchSha256);
+ assert.equal(execFileSync('git',['ls-files','--others','--exclude-standard','--',...prior.scope],{encoding:'utf8'}).trim(),'');
+ await writeFile(join(evidence,'unit-inputs-reused.json'),JSON.stringify({verified:new Date().toISOString(),head:expectedHead,node:process.version,currentApplicationPatchSha256:expectedPatch,coverageRun:'coverage-qualified.json',coverageApplicationPatchSha256:coverage.applicationPatchSha256,priorUnitInputs:'unit-inputs-qualified.json',scope:prior.scope,scopePatchSha256:hash(patch),scopePatchBytes:patch.length,unitInputsUnchanged:true,tests:1686,testFiles:134,reason:'Only E2E fixtures/specs changed after the complete coverage pass; all unit-relevant source, configuration, dependencies and HEAD are identical.'},null,2)+'\n');
+}
+async function helper(file,args,extra={}){
+ const env={...process.env};delete env.GG_E2E_WEB_DIST;
+ const child=spawn(process.execPath,['--input-type=module','-',...args],{cwd:root,env:{...env,...extra},windowsHide:true,stdio:['pipe','inherit','inherit']});
+ child.stdin.end(await readFile(join(evidence,file),'utf8'));
+ return await new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve);});
+}
+await copyFile(join(evidence,'unit-inputs-reused.json'),join(evidence,'unit-inputs-before-handoff.json'));
+await unitInputs();
+for(const gate of ['typecheck','lint','layers','tokens','deps','docs','build']){
+ const label=gate+'-handoff-ready';assert.equal(await helper('run.mjs.txt',[label,gate]),0);
+ validate(await readResult(label));
+}
+await unitInputs();
+let seedHelper=await readFile(join(evidence,'seed.mjs.txt'),'utf8');
+seedHelper=seedHelper.replaceAll("'seed.json'","'seed-final.json'").replaceAll("'seed-discarded-files.json'","'seed-final-discarded-files.json'");
+await writeFile(join(evidence,'seed-final.mjs.txt'),seedHelper);
+assert.equal(await helper('seed-final.mjs.txt',['prepare']),0);
+const seed=await readResult('seed-final');
+const scratch=seed.scratch.replaceAll('%USERPROFILE%',process.env.USERPROFILE);
+const failed=await helper('run.mjs.txt',['seed-final-regression','conflict'],{GG_E2E_WEB_DIST:scratch});
+assert.equal(await helper('capture.mjs.txt',['seed-final-regression']),0);
+validate(await readResult('seed-final-regression'),1);assert.equal(failed,1);
+const tests=join(root,'apps/web/test-results');
+let seededNoticeVisible=false;
+for(const entry of await readdir(tests,{withFileTypes:true})){
+ if(!entry.isDirectory())continue;
+ try{const text=await readFile(join(tests,entry.name,'error-context.md'),'utf8');seededNoticeVisible ||= text.includes('Seeded conflict notice regression');}catch{}
+}
+assert.equal(seededNoticeVisible,true,'The failure must show the actual seeded UI notice');
+assert.equal(await helper('seed-final.mjs.txt',['clean']),0);
+assert.equal(await helper('run.mjs.txt',['seed-final-control','conflict']),0);
+validate(await readResult('seed-final-control'));
+assert.equal(await helper('capture.mjs.txt',['seed-final-control']),0);
+await unitInputs();
+await writeFile(join(evidence,'handoff-result.json'),JSON.stringify({head:expectedHead,applicationPatchSha256:expectedPatch,ownedGatesPassed:true,unitEvidence:'coverage-qualified.json',unitInputsEvidence:'unit-inputs-reused.json',seedFailure:'seed-final-regression.json',normalControl:'seed-final-control.json',acceptance:'blocked',blocker:'product-terminal-history-gap.md',threeCleanFullRunsAchieved:false,formatCheck:'pending final report formatting'},null,2)+'\n');
+console.log('Owned checks and final-build fault proof complete; #241 acceptance remains blocked on the confirmed product history gap.');

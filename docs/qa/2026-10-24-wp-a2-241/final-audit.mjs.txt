@@ -1,0 +1,81 @@
+// Node 22, repository root. Read-only checks; persist only this audit and handoff metadata.
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+if (process.versions.node.split('.')[0] !== '22') throw new Error('Select Node 22');
+const base = 'docs/qa/2026-10-24-wp-a2-241';
+const read = (name) => JSON.parse(readFileSync(join(base, name + '.json'), 'utf8').replace(/^\uFEFF/, ''));
+const errors = [];
+const requireCheck = (ok, message) => { if (!ok) errors.push(message); };
+const sha = (data) => createHash('sha256').update(data).digest('hex');
+const git = (args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const head = git(['log', '-1', '--format=%H']);
+const applicationPatchSha256 = sha(execFileSync('git', ['diff', '--no-ext-diff', 'HEAD', '--', 'apps', 'packages']));
+requireCheck(head === '24d7be41da50944cae25e9093c0591f4a7fdf5c0', 'Unexpected HEAD');
+requireCheck(applicationPatchSha256 === 'a2d861f84b2eb15ccf0031a66f3eb6f03854b8930d8de345173e85fb3cdc0337', 'Application/test inputs changed');
+git(['merge-base', '--is-ancestor', 'ab98d3e0', 'HEAD']);
+git(['diff', '--check']);
+requireCheck(git(['branch', '--show-current']) === 'codex-wp-a2-241', 'Branch changed');
+requireCheck(git(['diff', '--cached', '--name-status']) === '', 'Git index changed');
+requireCheck(!git(['diff', '--name-only']).split('\n').some((name) => name.endsWith('.png')), 'Historical image diff');
+
+const gates = ['typecheck', 'lint', 'layers', 'tokens', 'deps', 'docs', 'build'].map((gate) => gate + '-handoff-ready');
+gates.push('format-initial-report', 'format-final');
+for (const name of gates) {
+  const r = read(name);
+  requireCheck(r.exitCode === 0 && r.inputsUnchanged && r.head === head && r.applicationPatchSha256 === applicationPatchSha256, 'Gate evidence mismatch: ' + name);
+}
+const units = read('unit-inputs-reused');
+const unitScopeHash = sha(execFileSync('git', ['diff', '--no-ext-diff', 'HEAD', '--', ...units.scope]));
+requireCheck(units.unitInputsUnchanged && unitScopeHash === units.scopePatchSha256 && read('coverage-qualified').exitCode === 0, 'Unit evidence mismatch');
+const seed = read('seed-final');
+requireCheck(seed.normalBuildUnchangedAfter && seed.scratchFilesRemoved && read('seed-final-regression').exitCode === 1 && read('seed-final-control').exitCode === 0, 'Fault/control evidence mismatch');
+requireCheck(sha(readFileSync('apps/web/dist/assets/index-Clu_24uK.js')) === '5f272b3141eb93c9d29febb46abdf7ecbbd8dc3615401d036c30a248251ec10b', 'Normal build changed');
+
+const files = [];
+function walk(path) {
+  for (const d of readdirSync(path, { withFileTypes: true })) {
+    const name = join(path, d.name);
+    if (d.isDirectory()) walk(name); else files.push(name);
+  }
+}
+walk(base);
+let jsonFilesChecked = 0;
+for (const name of files) {
+  requireCheck(statSync(name).size <= 1_000_000, 'Oversize QA artifact: ' + name);
+  if (name.endsWith('.json')) {
+    JSON.parse(readFileSync(name, 'utf8').replace(/^\uFEFF/, ''));
+    jsonFilesChecked++;
+  }
+}
+for (const name of ['README.md', 'product-terminal-history-gap.md', 'NOT-KEPT.md']) {
+  const file = join(base, name);
+  const content = readFileSync(file, 'utf8');
+  for (const m of content.matchAll(/\]\(([^)]+)\)/g)) {
+    if (/^(https?:|#)/.test(m[1])) continue;
+    requireCheck(existsSync(resolve(dirname(file), m[1].split('#')[0])), 'Missing report link: ' + m[1]);
+  }
+}
+const report = readFileSync(join(base, 'README.md'), 'utf8');
+requireCheck((report.match(/^## [1-8]\. /gm) ?? []).length === 8, 'Report must have eight sections');
+requireCheck(!/\{\{[A-Z_]+\}\}/.test(report), 'Unresolved report placeholder');
+requireCheck(report.includes('Three consecutive clean full runs') && report.includes('Unresolved: product fix required'), 'Browser blocker missing');
+const changelog = readFileSync('CHANGELOG.md', 'utf8');
+const topBullet = changelog.split('## Unreleased')[1].trimStart().split('\n')[0];
+requireCheck(topBullet.includes('#400') && topBullet.endsWith('(#241)'), 'CHANGELOG bullet mismatch');
+
+const result = { verified: new Date().toISOString(), node: process.version, head, applicationPatchSha256,
+  unitScopeHash, gatesChecked: gates, qaFilesChecked: files.length, jsonFilesChecked,
+  eachQaFileAtMostOneMillionBytes: true, localReportLinksChecked: true, indexEmpty: true,
+  normalBuildUnchanged: true, threeCleanFullRunsAchieved: false, acceptance: 'blocked', errors };
+writeFileSync(join(base, 'final-audit.json'), JSON.stringify(result, null, 2) + '\n');
+if (!errors.length) {
+  const handoff = read('handoff-result');
+  handoff.formatCheck = { root: 'format-initial-report.json', reportAfterRootPass: 'format-final.json', exitCode: 0 };
+  handoff.finalAudit = 'final-audit.json';
+  writeFileSync(join(base, 'handoff-result.json'), JSON.stringify(handoff, null, 2) + '\n');
+}
+console.log(JSON.stringify(result));
+if (errors.length) process.exitCode = 1;

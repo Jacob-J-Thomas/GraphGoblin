@@ -1,0 +1,1082 @@
+3ffb23affa0148ce3eeccc7869f69b6da8dbaebb
+codex-qa-wp-a2-241
+?? docs/qa/2026-10-25-wp-a2-241-qa/
+.bin
+.pnpm
+@eslint
+@eslint-react
+@vitest
+dependency-cruiser
+eslint
+eslint-config-prettier
+ .github/workflows/ci.yml                     |  68 ++++++++++++++
+ CHANGELOG.md                                 |   2 +
+ apps/web/e2e/actions.spec.ts                 |   8 +-
+ apps/web/e2e/cron.spec.ts                    |   4 +-
+ apps/web/e2e/drafts.spec.ts                  |  13 ++-
+ apps/web/e2e/earlier-node-outputs.spec.ts    |   8 ++
+ apps/web/e2e/fixtures.ts                     |   3 +-
+ apps/web/e2e/forms.spec.ts                   |  10 ++-
+ apps/web/e2e/inspector-large-values.spec.ts  |  15 ++++
+ apps/web/e2e/issue-170-qa.spec.ts            |  12 +--
+ apps/web/e2e/issue-7-qa.spec.ts              |   2 +-
+ apps/web/e2e/model-effort.spec.ts            |   4 +-
+ apps/web/e2e/pwa.spec.ts                     |  96 ++++++++++++++++----
+ apps/web/e2e/qa.spec.ts                      |  23 +++--
+ apps/web/e2e/routing.spec.ts                 | 130 +++++++++++++++++++++++++--
+ apps/web/e2e/server.ts                       |   5 +-
+ apps/web/e2e/thread-history.spec.ts          |   3 +
+ apps/web/e2e/trigger-types.spec.ts           |  37 +++++---
+ apps/web/e2e/webhook-delivery.spec.ts        |   2 +-
+ apps/web/playwright.config.ts                |   5 +-
+ apps/web/src/editor/routing-review.test.ts   |   4 +-
+ apps/web/vitest.config.ts                    |   5 ++
+ docs/10-testing-and-quality.md               |  81 ++++++++++++-----
+ docs/delivery/2026-10-18-i01-i07-register.md |   2 +-
+ eslint.config.js                             |   2 +
+ 25 files changed, 458 insertions(+), 86 deletions(-)
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index e4067ae4..ae17443d 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -94,6 +94,74 @@ jobs:
+             apps/*/coverage/coverage-summary.json
+           if-no-files-found: ignore
+ 
++  browser:
++    name: Browser
++    runs-on: ubuntu-latest
++    timeout-minutes: 75
++    env:
++      # Match Windows development and the existing Linux routing-performance job.
++      GG_E2E_BROWSER_CHANNEL: msedge
++      # Live checks spend subscription quota and require an installed, signed-in CLI.
++      LIVE: '0'
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          # issue-170-qa reads frozen golden definitions from an earlier commit with git ls-tree.
++          fetch-depth: 0
++
++      - uses: pnpm/action-setup@v4
++
++      - uses: actions/setup-node@v4
++        with:
++          node-version-file: .nvmrc
++          cache: pnpm
++
++      - name: Install (frozen lockfile)
++        run: pnpm install --frozen-lockfile
++
++      - name: Install Edge
++        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
++
++      - name: Build
++        run: pnpm build
++
++      - name: Functional browser suite (no retries)
++        timeout-minutes: 60
++        working-directory: apps/web
++        run: pnpm exec playwright test --retries=0 --workers=1
++
++      - name: Browser coverage and exclusions
++        if: always()
++        shell: bash
++        run: |
++          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
++          ## Functional browser gate
++
++          Selected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.
++          The test step and report record the executed result, including any setup failure.
++          The real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.
++
++          Skipped: `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI`.
++          It requires `LIVE=1`, an installed Codex CLI and a provider login, and spends subscription quota. CI sets `LIVE=0`.
++          No other functional spec or test is skipped or gated on a provider login or installed CLI.
++
++          Optional modes are off: `GG_FORMS_QA_PHASE` (historical before/after captures),
++          `GG_ROUTING_SCREENSHOTS` (captures), `GG_ROUTING_PROFILE` (profiling), and
++          `GG_ROUTING_STRICT_PERF` (stricter manual performance bounds). Their ordinary tests still run.
++          `screens.capture.ts` is a manual screenshot utility, outside the `*.spec.ts` suite.
++          Live/paid checks remain separate, manually authorized checks; this job schedules none.
++          SUMMARY
++
++      - name: Upload browser failure evidence
++        if: failure() || cancelled()
++        uses: actions/upload-artifact@v4
++        with:
++          name: browser-failure
++          path: |
++            apps/web/test-results/
++            apps/web/playwright-report/
++          if-no-files-found: warn
++
+   template-image:
+     name: Template image
+     runs-on: ubuntu-latest
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index af10f603..9100c0d7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Run provider-free functional browser checks in CI on Edge with zero retries and one worker, publish live exclusions, and upload available failure or cancellation evidence and the HTML report. Update stale #244 delivery/event assertions (#400) and #204/#205 model assertions, synchronize draft/PWA lifecycles and zoomed editor targets, verify durable webhook defaults and authored fallback persistence, and retain a regression for missing post-terminal history. Drive native routing gestures on absolute deadlines without Playwright drag-interception overhead. Use bounded isolated web unit threads and calibrate the unchanged 300-graph correctness corpus's execution watchdog; retain conflict assertions, native performance limits and coverage thresholds. (#241)
++
+ - Enforce visible, pinned structured-completion deadlines for LLM decision evaluations and output-transform repairs through the structured port, abort overdue Codex work, release run capacity and discard late results while preserving explicit cancellation. No completion deadline applies by default; Unlimited removes that cutoff. **Upgrade:** engine embedders configure `LoopSettings.structuredTimeoutMs` instead of the previously unenforced `EngineSettings.structuredTimeoutMs`; startup migration `0019_completion_deadline_defaults` materializes omitted loop/pin deadline values as null in drafts, versions, run snapshots, queued events and admission intents, preserving authored values. This also fixes reopening pre-#243 loops without `runDeadlineSeconds`. Same-session inference schema repairs follow node/run timeouts. Timeout details retain the completion provider, model and effort. Direct evaluator callers must supply `runId` and `structuredTimeoutMs` (null for Unlimited). Export and API clients must accept the nullable loop-settings field `structuredTimeoutMs`, `pinned.limits.structuredTimeoutMs` and the `STRUCTURED_COMPLETION_TIMEOUT` value of `RunErrorCode`. Regenerate clients for this contract. (#270)
+ 
+ - Page SSE replay and bound transport buffering, honour backpressure, and report slow readers explicitly with cursor recovery. Replay and live notification overflow catch up from durable history on the same connection; transient replay failures retry. Bounded lifecycle and tail reads confirm completion only after historical outcomes and durable delivery audits are delivered; an id-less `stream.complete` control also completes empty terminal cursors. Stored-history corruption is fatal before or after SSE headers. The inspector shows the retry reason and bounds held batches using the client's received JSON size. History browsing follows in #186 round 2. **Upgrade:** rebuild the API, API client and web together for `stream.complete`, typed stream failures and the `onEvent(event, jsonBytes)` callback; SSE consumers must wait for completion rather than stop at historical terminal events. No store migration is required. (#186)
+diff --git a/apps/web/e2e/actions.spec.ts b/apps/web/e2e/actions.spec.ts
+index ecd2d358..300c3881 100644
+--- a/apps/web/e2e/actions.spec.ts
++++ b/apps/web/e2e/actions.spec.ts
+@@ -295,7 +295,7 @@ test('Settings catalog preserves a disabled saved default until the owner change
+   await expect(defaults).toHaveValue('gpt-6-luna');
+   await expect(defaults.locator('option:checked')).toHaveText('GPT-6 Luna (disabled)');
+   await expect(defaults).toHaveAccessibleDescription(
+-    'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
++    'Disabled in the model catalog. Enable it or choose another default.',
+   );
+   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
+     defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
+@@ -310,7 +310,11 @@ test('Settings catalog preserves a disabled saved default until the owner change
+       return values;
+     })
+     .not.toHaveProperty('defaults');
+-  await expect(page.getByText(/This saved model is unavailable/)).toHaveCount(0);
++  await expect(
++    page.getByText('Disabled in the model catalog. Enable it or choose another default.', {
++      exact: true,
++    }),
++  ).toHaveCount(0);
+ });
+ 
+ test('Settings catalog refreshes a vanished toggle and announces the reason at the heading', async ({
+diff --git a/apps/web/e2e/cron.spec.ts b/apps/web/e2e/cron.spec.ts
+index 09548564..ccad9a64 100644
+--- a/apps/web/e2e/cron.spec.ts
++++ b/apps/web/e2e/cron.spec.ts
+@@ -217,7 +217,9 @@ test('cron presets, keyboard days, timezone and custom source round trip through
+   await page.goto(`/app/loops/${id}/edit`);
+   let dialog = await openNode(page, 'start');
+   await expect(dialog.getByLabel('Repeat')).toHaveValue('custom');
+-  await expect(dialog.getByText('Custom expression: */7 3-5 * * 1,3 · UTC')).toBeVisible();
++  await expect(
++    dialog.getByText('Custom expression: */7 3-5 * * 1,3 · UTC', { exact: true }),
++  ).toBeVisible();
+   await expect(dialog.locator('time')).toHaveCount(5);
+   await dialog.getByLabel('Timezone').fill('Europe/London');
+   await closeNode(page);
+diff --git a/apps/web/e2e/drafts.spec.ts b/apps/web/e2e/drafts.spec.ts
+index e79bff18..9f128c0f 100644
+--- a/apps/web/e2e/drafts.spec.ts
++++ b/apps/web/e2e/drafts.spec.ts
+@@ -199,8 +199,9 @@ test('an older version’s open connection blocks device drafts: the editor says
+     ),
+   ).toBeVisible();
+ 
+-  // The older tab closes its connection: the upgrade completes, and the edit is on the device.
+-  await older.evaluate(() => (window as unknown as { olderTab: IDBDatabase }).olderTab.close());
++  // Closing the old tab releases its real connection without evaluating in an inactive renderer.
++  // Wait for that public browser operation, then observe the completed upgrade in the editor.
++  await older.close();
+   await expect(page.getByText('Changes are not kept on this device')).toBeHidden();
+   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+   await page.reload();
+@@ -271,6 +272,14 @@ for (const scenario of ['pending', 'synced', 'stale', 'unsynced'] as const) {
+       expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(original);
+     } else if (synced || stale) {
+       await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
++      // The server heading can render before device conversion and archival finish. Negative
++      // notice assertions and reload must follow the observable reconciliation completion.
++      await expect(
++        page.getByText(
++          'The editor is available. Checking the server and this device before saving changes.',
++          { exact: true },
++        ),
++      ).toBeHidden();
+       await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
+       await expect(page.getByText('The draft changed on the server')).toBeHidden();
+       if (stale) {
+diff --git a/apps/web/e2e/earlier-node-outputs.spec.ts b/apps/web/e2e/earlier-node-outputs.spec.ts
+index 33a1cea0..35781412 100644
+--- a/apps/web/e2e/earlier-node-outputs.spec.ts
++++ b/apps/web/e2e/earlier-node-outputs.spec.ts
+@@ -81,6 +81,14 @@ for (const viewport of [
+     expect(created.status()).toBe(201);
+     const { loop } = (await created.json()) as { loop: { id: string } };
+     await page.goto(`/app/loops/${loop.id}/edit`);
++    await expect(page.locator('.react-flow__node')).toHaveCount(definition.nodes.length);
++    await page.evaluate(() => document.fonts.ready);
++    // Initial zoom preserves readability; explicitly fit this wide graph before authoring.
++    await page.getByRole('button', { name: 'Fit View', exact: true }).click();
++    await page
++      .getByTestId('node-check')
++      .locator(':scope > div:has([data-kind])')
++      .click({ trial: true });
+     await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+       origin: new URL(page.url()).origin,
+     });
+diff --git a/apps/web/e2e/fixtures.ts b/apps/web/e2e/fixtures.ts
+index 02df8488..00210aa4 100644
+--- a/apps/web/e2e/fixtures.ts
++++ b/apps/web/e2e/fixtures.ts
+@@ -94,7 +94,8 @@ export async function showLoopPanel(page: Page): Promise<void> {
+ 
+ /** Open a node's editor by clicking its card (on the header band, away from port handles). */
+ export async function openNode(page: Page, nodeId: string) {
+-  await page.getByTestId(`node-${nodeId}`).click({ position: { x: 60, y: 12 } });
++  // Target the rendered header box: a fixed pixel offset can leave the card after zooming.
++  await page.getByTestId(`node-${nodeId}`).locator(':scope > div:has([data-kind])').click();
+   const dialog = page.getByRole('dialog');
+   await expect(dialog).toBeVisible();
+   return dialog;
+diff --git a/apps/web/e2e/forms.spec.ts b/apps/web/e2e/forms.spec.ts
+index 4c02947b..7dba88ad 100644
+--- a/apps/web/e2e/forms.spec.ts
++++ b/apps/web/e2e/forms.spec.ts
+@@ -463,10 +463,10 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
+         { timeoutSeconds?: number } | undefined
+     )?.timeoutSeconds;
+ 
+-  // The basic set keeps session policy and sandbox visible; model overrides are Advanced.
++  // Model and effort stay in the basic set alongside session policy and sandbox (#205).
+   await expect(dialog.getByLabel('Harness', { exact: true })).toBeVisible();
+-  await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
+-  await expect(dialog.getByLabel('Effort', { exact: true })).toBeHidden();
++  await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
++  await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
+   await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
+   await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
+   const sandbox = dialog.getByRole('radiogroup', { name: 'Sandbox', exact: true });
+@@ -488,9 +488,11 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
+   await page.keyboard.press('Enter');
+   await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+   const panel = page.locator(`[id="${await advanced.getAttribute('aria-controls')}"]`);
+-  for (const group of ['Model', 'Harness options', 'Output', 'Limits']) {
++  for (const group of ['Harness options', 'Output', 'Limits']) {
+     await expect(panel.getByRole('group', { name: group, exact: true })).toBeVisible();
+   }
++  await expect(panel.getByLabel('Model', { exact: true })).toHaveCount(0);
++  await expect(panel.getByLabel('Effort', { exact: true })).toHaveCount(0);
+ 
+   // A value set inside, then collapsed: the toggle says so.
+   await dialog.getByLabel('Timeout seconds', { exact: true }).fill('120');
+diff --git a/apps/web/e2e/inspector-large-values.spec.ts b/apps/web/e2e/inspector-large-values.spec.ts
+index 8e6f0666..ce56484d 100644
+--- a/apps/web/e2e/inspector-large-values.spec.ts
++++ b/apps/web/e2e/inspector-large-values.spec.ts
+@@ -245,6 +245,9 @@ test('a run with a large history reconstructs the thread at an event on request
+   await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
+   await expect(reconstruct).toBeVisible();
+   await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
++  await expect(reconstruct).toHaveText(
++    `Reconstruct the thread at event ${(await run()).lastEventSeq}`,
++  );
+   const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+   expect(waitSeq).toBeDefined();
+   await reconstruct.click();
+@@ -260,7 +263,19 @@ test('a run with a large history reconstructs the thread at an event on request
+   });
+   expect(answered.status(), await answered.text()).toBe(200);
+   await expect(timeline.getByText('run.finished')).toBeVisible();
++  // Caller delivery follows run.finished. Observe that durable fact before freezing the latest
++  // selection; otherwise the later last-button click can select a different, unreplayed event.
++  await expect(timeline.getByText('return.delivered', { exact: true })).toBeVisible();
++  const completed = await run();
++  expect(completed.status).toBe('succeeded');
++  await expect(
++    page.getByRole('heading', {
++      name: `Timeline (${completed.lastEventSeq} events, complete)`,
++      exact: true,
++    }),
++  ).toBeVisible();
+   await expect(reconstruct).toBeVisible();
++  await expect(reconstruct).toHaveText(`Reconstruct the thread at event ${completed.lastEventSeq}`);
+   const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+   expect(finishedSeq).toBeDefined();
+   expect(finishedSeq).not.toBe(waitSeq);
+diff --git a/apps/web/e2e/issue-170-qa.spec.ts b/apps/web/e2e/issue-170-qa.spec.ts
+index d1fd0d59..f12349a4 100644
+--- a/apps/web/e2e/issue-170-qa.spec.ts
++++ b/apps/web/e2e/issue-170-qa.spec.ts
+@@ -1,4 +1,4 @@
+-﻿/** Independent browser QA for #170. Defect references resolve in docs/qa/2026-10-10-issue-170. */
++/** Independent browser QA for #170. Defect references resolve in docs/qa/2026-10-10-issue-170. */
+ import { execFileSync } from 'node:child_process';
+ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+ import { createRequire } from 'node:module';
+@@ -1188,7 +1188,7 @@ test('I6 integer bounds: timeout and nested repair attempts use exact schema mes
+   }
+ });
+ 
+-test('inference Claude and Codex: family selection, policy, advanced model/effort, save/reload and policy refusal', async ({
++test('inference Claude and Codex: family selection, policy, visible model/effort, save/reload and policy refusal', async ({
+   page,
+   request,
+ }) => {
+@@ -1245,10 +1245,12 @@ test('inference Claude and Codex: family selection, policy, advanced model/effor
+   await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
+   await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('xhigh');
+   await chooseRadio(reopened.getByRole('radio', { name: 'codex', exact: true }));
+-  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
+-  await reopened.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
++  // An explicit family switch selects and persists the compatible default (#204).
++  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('gpt-6-luna');
+   await reopened.getByLabel('Effort', { exact: true }).selectOption('low');
+-  await expect.poll(() => config(request, id, url)).toMatchObject({ harness: 'codex' });
++  await expect
++    .poll(() => config(request, id, url))
++    .toMatchObject({ harness: 'codex', model: 'gpt-6-luna', effort: 'low' });
+   await expect(reopened.getByRole('radiogroup', { name: 'Sandbox', exact: true })).toBeVisible();
+ });
+ 
+diff --git a/apps/web/e2e/issue-7-qa.spec.ts b/apps/web/e2e/issue-7-qa.spec.ts
+index 38566fcc..d21eb7e8 100644
+--- a/apps/web/e2e/issue-7-qa.spec.ts
++++ b/apps/web/e2e/issue-7-qa.spec.ts
+@@ -169,7 +169,7 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
+ 
+   // Alert: a real failure whose message is one 350-character word.
+   await page.goto(`/app/runs/${runId}`);
+-  const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' });
++  const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_DELIVERY_UNCERTAIN' });
+   await expect(alert).toContainText(word);
+   expect(await alert.evaluate((a) => a.scrollWidth <= a.clientWidth)).toBe(true);
+   expect(await pageOverflows(page)).toBe(false);
+diff --git a/apps/web/e2e/model-effort.spec.ts b/apps/web/e2e/model-effort.spec.ts
+index b8e7ad49..6885a05b 100644
+--- a/apps/web/e2e/model-effort.spec.ts
++++ b/apps/web/e2e/model-effort.spec.ts
+@@ -274,7 +274,7 @@ for (const kind of ['inference', 'llm'] as const) {
+       if (level === 'loop') {
+         await effort.scrollIntoViewIfNeeded();
+         await page.screenshot({
+-          path: `../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-${kind}.png`,
++          path: test.info().outputPath(`after-${kind}.png`),
+         });
+       }
+       await closeNode(page);
+@@ -378,7 +378,7 @@ test('classifier keeps Question, Model, Answer visible and has no effort', async
+   ).toEqual(['question', 'model', 'answer']);
+   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
+   await page.screenshot({
+-    path: '../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-classifier.png',
++    path: test.info().outputPath('after-classifier.png'),
+   });
+ });
+ 
+diff --git a/apps/web/e2e/pwa.spec.ts b/apps/web/e2e/pwa.spec.ts
+index 44f47065..976c1f4d 100644
+--- a/apps/web/e2e/pwa.spec.ts
++++ b/apps/web/e2e/pwa.spec.ts
+@@ -3,7 +3,13 @@ import { approvalLoop, control, expect, publishLoop, showLoopPanel, test } from
+ 
+ declare global {
+   interface Window {
+-    pwaChecks: { calls: number; found: number; pending: number; activity: number };
++    pwaChecks: {
++      calls: number;
++      found: number;
++      pending: number;
++      activity: number;
++      pageShown: boolean;
++    };
+   }
+ }
+ 
+@@ -158,7 +164,13 @@ test('clean event-stream closes retain backoff without refetch or worker-update
+   expect(response.ok()).toBe(true);
+   const { run } = (await response.json()) as { run: { id: string } };
+   await page.addInitScript(() => {
+-    const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
++    const stats = (window.pwaChecks = {
++      calls: 0,
++      found: 0,
++      pending: 0,
++      activity: Date.now(),
++      pageShown: false,
++    });
+     const update = ServiceWorkerRegistration.prototype.update;
+     ServiceWorkerRegistration.prototype.update = function () {
+       stats.calls++;
+@@ -195,8 +207,39 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
+ }) => {
+   test.setTimeout(100_000);
+   const messages = await observeSkipWaiting(page);
++  page.on('console', (message) => {
++    const content = message.text();
++    if (content.startsWith('PWA lifecycle:')) console.log(content);
++  });
+   await page.addInitScript(() => {
+-    const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
++    const stats: Window['pwaChecks'] = (window.pwaChecks = {
++      calls: 0,
++      found: 0,
++      pending: 0,
++      activity: Date.now(),
++      pageShown: false,
++    });
++    const record = (kind: string, event?: Event) =>
++      console.log(
++        'PWA lifecycle:' +
++          JSON.stringify({
++            kind,
++            at: Date.now(),
++            documentId: performance.timeOrigin,
++            ...stats,
++            visibility: document.visibilityState,
++            focused: document.hasFocus(),
++            trusted: event?.isTrusted ?? null,
++          }),
++      );
++    window.addEventListener('pageshow', (event) => {
++      stats.pageShown = event.isTrusted;
++      record('pageshow', event);
++    });
++    window.addEventListener('focus', (event) => record('focus', event));
++    window.addEventListener('pagehide', (event) => record('pagehide', event));
++    document.addEventListener('visibilitychange', (event) => record('visibilitychange', event));
++    record('document-created');
+     const watched = new WeakSet<ServiceWorkerRegistration>();
+     const watch = (registration: ServiceWorkerRegistration) => {
+       if (!watched.has(registration)) {
+@@ -204,13 +247,24 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
+         registration.addEventListener('updatefound', () => {
+           stats.found++;
+           stats.activity = Date.now();
++          record('updatefound');
+         });
+       }
+       return registration;
+     };
+     const register = ServiceWorkerContainer.prototype.register;
+     ServiceWorkerContainer.prototype.register = function (...args) {
+-      return register.apply(this, args).then(watch);
++      stats.pending++;
++      stats.activity = Date.now();
++      record('register-start');
++      return register
++        .apply(this, args)
++        .then(watch)
++        .finally(() => {
++          stats.pending--;
++          stats.activity = Date.now();
++          record('register-complete');
++        });
+     };
+     const update = ServiceWorkerRegistration.prototype.update;
+     ServiceWorkerRegistration.prototype.update = function () {
+@@ -218,35 +272,45 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
+       stats.calls++;
+       stats.pending++;
+       stats.activity = Date.now();
++      record('update-start');
+       return update.call(this).finally(() => {
+         stats.pending--;
+         stats.activity = Date.now();
++        record('update-complete');
+       });
+     };
+   });
++  const initialCheckFinished = () =>
++    page.evaluate(async () => {
++      const registration = await navigator.serviceWorker.getRegistration('/app/');
++      return (
++        window.pwaChecks.pageShown &&
++        document.visibilityState === 'visible' &&
++        document.hasFocus() &&
++        registration?.active?.state === 'activated' &&
++        !registration.installing &&
++        window.pwaChecks.calls > 0 &&
++        window.pwaChecks.pending === 0
++      );
++    });
++  await page.bringToFront();
+   await page.goto('/app/loops');
+   await page.evaluate(async () => {
+     await navigator.serviceWorker.ready;
+   });
++  // Observe native pageshow and registration/update completion in each document. The app also
++  // checks on pageshow, which can follow load and an earlier registration-triggered check.
++  await expect.poll(initialCheckFinished).toBe(true);
++  await page.bringToFront();
+   await page.reload();
+   await expect
+     .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+     .toBe(true);
+   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+   // Finish the navigation check before publishing; only the subsequent app check may detect it.
+-  await expect
+-    .poll(() =>
+-      page.evaluate(async () => {
+-        const registration = await navigator.serviceWorker.getRegistration('/app/');
+-        return (
+-          !registration?.installing &&
+-          window.pwaChecks.pending === 0 &&
+-          Date.now() - window.pwaChecks.activity >= 2_000
+-        );
+-      }),
+-    )
+-    .toBe(true);
++  await expect.poll(initialCheckFinished).toBe(true);
+   const baseline = await page.evaluate(() => ({ ...window.pwaChecks }));
++  console.log('PWA baseline: ' + JSON.stringify(baseline));
+   const initialWorker = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL);
+   const navigation = [] as string[];
+   page.on('framenavigated', (frame) => {
+diff --git a/apps/web/e2e/qa.spec.ts b/apps/web/e2e/qa.spec.ts
+index 66b8f63a..0c868ac5 100644
+--- a/apps/web/e2e/qa.spec.ts
++++ b/apps/web/e2e/qa.spec.ts
+@@ -1,4 +1,4 @@
+-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
++import { CURRENT_DEFINITION_FORMAT, RunRecordSchema } from '@graphgoblin/contracts';
+ /**
+  * Regression specs for the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md). They drive
+  * the built app against the in-process API; `control()` scripts the fake harness through the E2E
+@@ -106,11 +106,16 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
+   const runId = await startRun(request, loopId);
+   const started = Date.now();
+   await page.goto(`/app/runs/${runId}`);
+-  await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
++  await expect(page.getByText(/^Timeline \(\d+ events, complete\)$/)).toBeVisible({
+     timeout: 30_000,
+   });
+   const live = Date.now() - started;
+-  // Twelve lifecycle/evidence facts include the persisted exit evaluation; all 1,200 items remain.
++  const completedRun = RunRecordSchema.parse(await (await request.get(`/runs/${runId}`)).json());
++  expect(completedRun.status).toBe('succeeded');
++  // Derive the full durable sequence rather than hard-coding its lifecycle/evidence overhead.
++  const eventCount = completedRun.lastEventSeq;
++  const completeTimeline = `Timeline (${eventCount} events, complete)`;
++  await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
+   const timeline = page.getByRole('list', { name: 'Timeline' });
+   await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
+     1200,
+@@ -119,9 +124,13 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
+     1,
+   );
+   await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
++  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.turn ask$/ })).toHaveCount(1);
++  await expect(
++    timeline.getByRole('button', { name: /^#\d+ harness\.submission ask$/ }),
++  ).toHaveCount(1);
+   await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
+   const seqs = await timelineSeqs(page);
+-  expect(seqs).toEqual(Array.from({ length: 1212 }, (_, i) => i + 1));
++  expect(seqs).toEqual(Array.from({ length: eventCount }, (_, i) => i + 1));
+   // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
+   // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
+   const liveRunGets = runGets;
+@@ -132,14 +141,14 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
+   await page.evaluate(() => sessionStorage.clear());
+   const fresh = Date.now();
+   await page.reload();
+-  await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible();
++  await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
+   const freshMs = Date.now() - fresh;
+   const click = Date.now();
+   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
+   await expect(page.getByText('Thread at event 601')).toBeVisible();
+   const clickMs = Date.now() - click;
+   console.log(
+-    `1,212-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
++    `${eventCount}-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
+   );
+   expect(freshMs).toBeLessThan(5_000);
+   expect(clickMs).toBeLessThan(2_000);
+@@ -154,7 +163,7 @@ test('failure reasons are typed and visible: harness failure and decider unavail
+   });
+   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+   await page.goto(`/app/runs/${await startRun(request, failing)}`);
+-  await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
++  await expect(page.getByText('Failed: HARNESS_DELIVERY_UNCERTAIN')).toBeVisible();
+ 
+   await control(request, '/deciders', { jev: true, codex: true });
+   try {
+diff --git a/apps/web/e2e/routing.spec.ts b/apps/web/e2e/routing.spec.ts
+index 49b0865a..cab4cec0 100644
+--- a/apps/web/e2e/routing.spec.ts
++++ b/apps/web/e2e/routing.spec.ts
+@@ -464,6 +464,10 @@ interface Samples {
+   routing: number[];
+   duration: number;
+   rerouted: number[];
++  pointerMoves: number;
++  samplerStartedAt: number;
++  firstPointerMs: number | null;
++  lastPointerMs: number | null;
+ }
+ const p95 = (samples: number[]) =>
+   [...samples].sort((a, b) => a - b)[Math.ceil(samples.length * 0.95) - 1]!;
+@@ -483,7 +487,8 @@ for (const count of [100, 300])
+     // The opening view contains this middle card; the drag starts at its centre.
+     const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
+     await expect(card).toBeVisible();
+-    await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
++    // Fonts and the initial routes are ready; wait for a stable, hittable drag target as well.
++    await card.click({ trial: true });
+     // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
+     // Added frame time (drag p95 minus this idle p95) is reported only; the strict assertion
+     // below uses the absolute 60 Hz budget.
+@@ -511,12 +516,43 @@ for (const count of [100, 300])
+       await profile.send('Profiler.start');
+     }
+     const repetitions = [];
++    // mouse.move installs/cleans up HTML5 drag interception for every held-button move.
++    // Those extra page evaluations and overlapping interception polluted the measurement.
++    // Use the public CDP session for the same native mouse events, without that machinery.
++    const nativeInput = await page.context().newCDPSession(page);
++    const pointerEvent = async (
++      type: 'mouseMoved' | 'mousePressed' | 'mouseReleased',
++      x: number,
++      y: number,
++      held: boolean,
++    ) => {
++      await nativeInput.send('Input.dispatchMouseEvent', {
++        type,
++        x,
++        y,
++        button: type === 'mouseMoved' && !held ? 'none' : 'left',
++        buttons: held ? 1 : 0,
++        modifiers: 0,
++        clickCount: type === 'mouseMoved' ? 0 : 1,
++        force: held ? 0.5 : 0,
++      });
++    };
++    // Pace native input independently at 60 Hz.
++    // A 64-command credit bounds the queue to about one second of that input cadence.
++    const inputFrequencyHz = 60;
++    const inputPeriodMs = 1000 / inputFrequencyHz;
++    const maxInFlightMoves = 64;
++    // Advance the original 0.1-radian step at a nominal 60 Hz using elapsed time.
++    // Acknowledgement/coalescing rates must not shrink the five-second gesture's travel.
++    // The circuit's bounds stay the same, and both graph sizes receive the same motion.
++    const radiansPerMillisecond = (0.1 * inputFrequencyHz) / 1000;
+     for (let repetition = 0; repetition < 3; repetition += 1) {
+       const rect = (await card.boundingBox())!;
+       const origin = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+-      await page.mouse.move(origin.x, origin.y);
+-      await page.mouse.down();
+-      await page.mouse.move(origin.x + 5, origin.y);
++      await pointerEvent('mouseMoved', origin.x, origin.y, false);
++      await pointerEvent('mousePressed', origin.x, origin.y, true);
++      await pointerEvent('mouseMoved', origin.x + 5, origin.y, true);
++      await expect(card).toHaveClass(/\bdragging\b/);
+       const measuring = page.evaluate(
+         (count) =>
+           new Promise<Samples>((resolveSamples) => {
+@@ -538,6 +574,18 @@ for (const count of [100, 300])
+             });
+             observer.observe({ type: 'measure' });
+             const start = performance.now();
++            const samplerStartedAt = Date.now();
++            let pointerMoves = 0;
++            let firstPointerMs: number | null = null;
++            let lastPointerMs: number | null = null;
++            // Read-only workload evidence distinguishes under-driven input from slow routing.
++            const onPointerMove = () => {
++              const at = performance.now() - start;
++              firstPointerMs ??= at;
++              lastPointerMs = at;
++              pointerMoves += 1;
++            };
++            document.addEventListener('pointermove', onPointerMove, true);
+             let previous: number | undefined;
+             const frame = (now: number) => {
+               if (previous !== undefined) frames.push(now - previous);
+@@ -545,7 +593,17 @@ for (const count of [100, 300])
+               if (now - start < 5000) requestAnimationFrame(frame);
+               else {
+                 observer.disconnect();
+-                resolveSamples({ frames, routing, rerouted, duration: now - start });
++                document.removeEventListener('pointermove', onPointerMove, true);
++                resolveSamples({
++                  frames,
++                  routing,
++                  rerouted,
++                  duration: now - start,
++                  pointerMoves,
++                  samplerStartedAt,
++                  firstPointerMs,
++                  lastPointerMs,
++                });
+               }
+             };
+             requestAnimationFrame(frame);
+@@ -554,12 +612,53 @@ for (const count of [100, 300])
+       );
+       const started = Date.now();
+       let step = 0;
++      let lastInput = { x: origin.x + 5, y: origin.y };
++      const moves = new Set<Promise<void>>();
++      const acknowledgementMs: number[] = [];
++      let peakInFlightMoves = 0;
++      let inputFailure: Error | undefined;
+       while (Date.now() - started < 5100) {
+-        // Native Playwright input; a small circuit stays within the row's clear corridor.
+-        const phase = step++ / 10;
+-        await page.mouse.move(origin.x + 12 + Math.sin(phase) * 10, origin.y + Math.cos(phase) * 8);
++        // Native CDP input; a small circuit stays within the row's clear corridor.
++        if (inputFailure) throw inputFailure;
++        if (moves.size >= maxInFlightMoves) {
++          await Promise.race(moves);
++          if (Date.now() - started >= 5100) break;
++        }
++        const phase = (Date.now() - started) * radiansPerMillisecond;
++        step += 1;
++        const sentAt = Date.now();
++        lastInput = {
++          x: origin.x + 12 + Math.sin(phase) * 10,
++          y: origin.y + Math.cos(phase) * 8,
++        };
++        const move = pointerEvent('mouseMoved', lastInput.x, lastInput.y, true);
++        moves.add(move);
++        peakInFlightMoves = Math.max(peakInFlightMoves, moves.size);
++        void move.then(
++          () => {
++            acknowledgementMs.push(Date.now() - sentAt);
++            moves.delete(move);
++          },
++          (error: unknown) => {
++            inputFailure =
++              error instanceof Error
++                ? error
++                : new Error('Native pointer input failed', { cause: error });
++            moves.delete(move);
++          },
++        );
++        // Use absolute deadlines: a relative timer accumulates host timer/dispatch delay and
++        // under-drives the gesture. Catch up within the same window and bounded native queue.
++        const remainingMs = started + step * inputPeriodMs - Date.now();
++        if (remainingMs > 0) {
++          await new Promise<void>((resolve) => setTimeout(resolve, remainingMs));
++        }
+       }
+-      await page.mouse.up();
++      await Promise.all(moves);
++      if (inputFailure) throw inputFailure;
++      const inputDurationMs = Date.now() - started;
++      await pointerEvent('mouseReleased', lastInput.x, lastInput.y, false);
++      await expect(card).not.toHaveClass(/\bdragging\b/);
+       const samples = await measuring;
+       console.log(
+         `${count} nodes, drag ${repetition + 1}: routing ${p95(samples.routing).toFixed(3)} ms / frame ${p95(samples.frames).toFixed(3)} ms p95; ${samples.routing.length} routes, ${samples.frames.length} frames`,
+@@ -573,8 +672,21 @@ for (const count of [100, 300])
+         routingSamples: samples.routing.length,
+         frameSamples: samples.frames.length,
+         durationMs: samples.duration,
++        pointerMovesSent: step,
++        pointerMovesObserved: samples.pointerMoves,
++        inputRadiansPerSecond: radiansPerMillisecond * 1000,
++        inputBackend: 'cdp-dispatchMouseEvent',
++        inputFrequencyHz,
++        maxInFlightMoves,
++        peakInFlightMoves,
++        acknowledgementP95Ms: p95(acknowledgementMs),
++        samplerStartOffsetMs: samples.samplerStartedAt - started,
++        firstPointerMs: samples.firstPointerMs,
++        lastPointerMs: samples.lastPointerMs,
++        inputDurationMs,
+       });
+     }
++    await nativeInput.detach();
+     if (profile) {
+       const result = await profile.send('Profiler.stop');
+       await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));
+diff --git a/apps/web/e2e/server.ts b/apps/web/e2e/server.ts
+index 75273416..554c40b6 100644
+--- a/apps/web/e2e/server.ts
++++ b/apps/web/e2e/server.ts
+@@ -32,7 +32,10 @@ import {
+ } from '@graphgoblin/contracts';
+ import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
+ 
+-const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
++// A disposable build copy allows regression seeding without changing the normal build.
++const dist = resolve(
++  process.env['GG_E2E_WEB_DIST'] ?? resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist'),
++);
+ if (!existsSync(join(dist, 'index.html'))) {
+   console.error(
+     `No web build at ${dist}. Run \`pnpm build\` (or \`pnpm --filter @graphgoblin/web build\`) first.`,
+diff --git a/apps/web/e2e/thread-history.spec.ts b/apps/web/e2e/thread-history.spec.ts
+index ee830c02..18495583 100644
+--- a/apps/web/e2e/thread-history.spec.ts
++++ b/apps/web/e2e/thread-history.spec.ts
+@@ -61,6 +61,9 @@ test('open and reloaded inspectors follow persisted failure, resume and success
+       );
+       await expect.poll(() => browserThread(open)).toEqual(api);
+       const existing = await browserThread(open);
++      // Drive the active renderer, as the two-tab draft fixture does: background reloads can
++      // finish navigation while leaving the following UI wait stalled until activation.
++      await reloaded.bringToFront();
+       await reloaded.reload();
+       await reloaded.getByRole('button', { name: 'Full thread JSON' }).click();
+       await expect.poll(() => browserThread(reloaded)).toEqual(api);
+diff --git a/apps/web/e2e/trigger-types.spec.ts b/apps/web/e2e/trigger-types.spec.ts
+index 91a0c429..4c2d999f 100644
+--- a/apps/web/e2e/trigger-types.spec.ts
++++ b/apps/web/e2e/trigger-types.spec.ts
+@@ -164,6 +164,31 @@ for (const width of [360, 1440]) {
+     await expect(
+       dialog.getByText('JSON pointers require JSON body mode', { exact: true }),
+     ).toHaveCount(0);
++    const savedConfig = async () => {
++      const exported = await request.get(`/loops/${id}/export?draft=true`);
++      expect(exported.ok()).toBe(true);
++      const value = (await exported.json()) as {
++        loop: { nodes: { id: string; config: unknown }[] };
++      };
++      return value.loop.nodes.find((node) => node.id === 'start')?.config;
++    };
++    const implicitDefault = {
++      type: 'webhook',
++      authentication: { type: 'none' },
++      body: { type: 'json' },
++      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
++    };
++    // An omitted default may be drawn as a placeholder in the device copy. Check its
++    // durable meaning, then author a distinct value whose exact persistence is observable.
++    await expect.poll(savedConfig).toMatchObject(implicitDefault);
++    const fallback = dialog.getByLabel('Fallback event type');
++    await expect(fallback).toHaveAttribute('placeholder', 'webhook');
++    await fallback.fill('fixture-webhook-type');
++    const explicitFallback = {
++      ...implicitDefault,
++      eventType: { ...implicitDefault.eventType, fallback: 'fixture-webhook-type' },
++    };
++    await expect.poll(savedConfig).toMatchObject(explicitFallback);
+     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+     await page.reload();
+     const reopened = await openNode(page, 'start');
+@@ -171,15 +196,7 @@ for (const width of [360, 1440]) {
+       'None',
+     );
+     await expect(reopened.getByLabel('JSON pointer')).toHaveValue('/event~1type/0');
+-    await expect(reopened.getByLabel('Fallback event type')).toHaveValue('webhook');
+-    const exported = await request.get(`/loops/${id}/export?draft=true`);
+-    expect(exported.ok()).toBe(true);
+-    const value = (await exported.json()) as { loop: { nodes: { id: string; config: unknown }[] } };
+-    expect(value.loop.nodes.find((node) => node.id === 'start')?.config).toMatchObject({
+-      type: 'webhook',
+-      authentication: { type: 'none' },
+-      body: { type: 'json' },
+-      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
+-    });
++    await expect(reopened.getByLabel('Fallback event type')).toHaveValue('fixture-webhook-type');
++    expect(await savedConfig()).toMatchObject(explicitFallback);
+   });
+ }
+diff --git a/apps/web/e2e/webhook-delivery.spec.ts b/apps/web/e2e/webhook-delivery.spec.ts
+index 8fa412a9..d200aae6 100644
+--- a/apps/web/e2e/webhook-delivery.spec.ts
++++ b/apps/web/e2e/webhook-delivery.spec.ts
+@@ -58,7 +58,7 @@ test('inspector retains unknown acknowledgement after a rejection and eventual s
+   ).json()) as { run: { id: string } };
+   await page.goto('/app/runs/' + run.id);
+   await expect(page.getByText('Delivered after 3 attempts')).toBeVisible({ timeout: 20000 });
+-  await expect(page.getByText(/HTTP 429/)).toBeVisible();
++  await expect(page.getByText('http: Webhook returned HTTP 429.', { exact: true })).toBeVisible();
+   await expect(page.getByText(/An acknowledgement was unknown/)).toBeVisible();
+   expect(uncertainRequests).toHaveLength(3);
+   expect(new Set(uncertainRequests).size).toBe(1);
+diff --git a/apps/web/playwright.config.ts b/apps/web/playwright.config.ts
+index f05de488..a1cc025f 100644
+--- a/apps/web/playwright.config.ts
++++ b/apps/web/playwright.config.ts
+@@ -17,10 +17,11 @@ export default defineConfig({
+   globalSetup: './e2e/global-setup.ts',
+   fullyParallel: false,
+   workers: 1,
+-  retries: process.env['CI'] ? 1 : 0,
++  // A pass only after retry is a flaky failure, locally and in the mandatory browser job.
++  retries: 0,
+   timeout: 60_000,
+   expect: { timeout: 10_000 },
+-  reporter: [['list']],
++  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']],
+   outputDir: 'test-results',
+   use: {
+     trace: 'retain-on-failure',
+diff --git a/apps/web/src/editor/routing-review.test.ts b/apps/web/src/editor/routing-review.test.ts
+index 78f88169..598f86ce 100644
+--- a/apps/web/src/editor/routing-review.test.ts
++++ b/apps/web/src/editor/routing-review.test.ts
+@@ -659,6 +659,8 @@ describe('routing review regressions', () => {
+     expect(workspace.costs).toBe(buffer);
+   });
+ 
++  // The finite 300-graph correctness corpus took 105.6 s with V8 coverage on Node 22.
++  // Allow a three-minute execution watchdog; retain every seed and geometry/count assertion.
+   it('seeded sparse graphs preserve geometry and keep detours below twelve bends', () => {
+     let seed = 0x182026;
+     const random = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32;
+@@ -738,5 +740,5 @@ describe('routing review regressions', () => {
+     expect(covered).toBeGreaterThan(0);
+     expect(labels).toBe(checked + covered);
+     expect(alternatives).toBeGreaterThan(100);
+-  }, 60_000);
++  }, 180_000);
+ });
+diff --git a/apps/web/vitest.config.ts b/apps/web/vitest.config.ts
+index 147260b6..f2ce6da1 100644
+--- a/apps/web/vitest.config.ts
++++ b/apps/web/vitest.config.ts
+@@ -7,6 +7,11 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
+ export default createVitestConfig({
+   plugins: [react()],
+   test: {
++    // Keep per-file isolation without a separate Windows process startup for every file.
++    pool: 'threads',
++    isolate: true,
++    // Bound simultaneous jsdom/V8 work; deadlines and coverage thresholds stay configured below.
++    maxWorkers: 2,
+     environment: 'jsdom',
+     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
+     setupFiles: ['src/__fixtures__/setup.ts'],
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 41a554f3..a1e20630 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -17,7 +17,7 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
+ | Unit: `apps/api`                      | Vitest with Fastify inject and in-memory SQLite                                         | Every route, validation errors, auth, SSE framing and resume                                                        |
+ | Unit: `apps/web`                      | Vitest with Testing Library and the browser mode where DOM APIs matter; MSW for the API | Components, hooks, stores, thread projection, editor validation, update toast                                       |
+ | End to end                            | Playwright against a built app with a seeded database and a fake harness                | Draw a loop, publish, run, watch events, provide input, cancel                                                      |
+-| Live smoke                            | Nightly, behind an environment flag                                                     | A tiny Codex session and a Jev call to detect SDK drift                                                             |
++| Live smoke                            | Manual, separately authorized `LIVE=1` checks                                           | Small provider calls to detect SDK drift; outside the provider-free CI gate                                         |
+ 
+ The Codex plugin assembly tests use a fresh temporary directory per test and retry temporary-directory cleanup on Windows. MCP entry fixtures and a fake package layout keep these tests independent of build output. The three tests that copy plugin directories have a 20 s timeout: repository-wide parallel runs can exceed Vitest's 5 s default for filesystem I/O. The other tests in `plugin.test.ts` retain the default timeout.
+ 
+@@ -29,6 +29,8 @@ Historical conversion tests use frozen contracts: the v1-to-v2 stage uses `V2*`,
+ 
+ `apps/api/src/guide-examples.test.ts` extracts the visible `guide-example` markers in guides 02 and 03, validates their JSON with current contracts, then imports, saves, publishes and executes the loops through Fastify inject over disposable in-memory SQLite and the fake harness. It also exercises the HTTP requests represented by the command examples; it does not launch a shell. Every fenced block is inventoried in a named test. The MCP suite in `apps/mcp/src/mcp.test.ts` also extracts `start-mcp` and starts it by its exact loop name over the SDK transport against the disposable API, with the fake harness. The first-summary graph runs with a scripted fake response; its paid Codex variant is explicitly excluded from provider execution because it needs an installed authenticated provider and consumes usage. Run the check with `pnpm --filter @graphgoblin/api exec vitest run src/guide-examples.test.ts`.
+ 
++The web unit and coverage suites use at most two isolated Vitest thread workers, bounding simultaneous jsdom/V8 work on shared hosts while preserving per-file isolation. Threads avoid a separate Windows fork startup for each file: a measured coverage run lost one file to Vitest's fixed 60-second fork-startup watchdog. The deterministic 300-graph routing correctness corpus keeps every seed and its more-than-3,000-route geometry/count assertions; its execution watchdog is 180 seconds after a measured 105.6-second V8 coverage run exceeded the old 60-second allowance. Other unit deadlines, all native browser performance limits, coverage thresholds and denominators stay unchanged. The #241 QA report records the pool and execution-budget evidence. CI continues to run one package at a time for repository coverage.
++
+ ## Fake harness (Decided)
+ 
+ `packages/engine` ships a `FakeHarness` that replays scripted sessions: items, usage, a final text, an optional structured result, and optional failures. It is used by engine tests, API tests, and E2E, so the whole product is testable without tokens. The Codex adapter's fixtures are JSONL captures of real sessions used only by the adapter's own tests.
+@@ -46,28 +48,67 @@ This process complements, and never replaces, the coverage gate.
+ 
+ The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Microsoft Edge and attacked the API directly; its defects, fixes, and open gaps are in `qa/2026-10-03-wp-d2.md`. Its regressions live in `apps/web/e2e/qa.spec.ts` and `apps/api/src/qa.test.ts`. The E2E server (`apps/web/e2e/server.ts`) has a loopback control port, published to specs as `GG_E2E_CONTROL_URL`, that scripts the fake harness (`POST /harness/script`, with `items` as a count for long streams), toggles decider availability, sets structured responses, reads the model and effort of harness requests, polls timers, and starts extra API instances (`POST /apps` with `requireApiKey`, which also mints a key; `POST /apps/live` with the real adapters). `apps/web/e2e/live.spec.ts` builds, publishes, and runs a one-turn inference loop against Codex through the UI and is skipped unless `LIVE=1`.
+ 
+-Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions. The [WP-A2 QA report](qa/2026-10-18-wp-a2-browser-gates.md) records the pre-change modal failure, single activation A/B diagnostic and bounded repeated checks; the historical second-tab failure remains not reproduced, not disproven.
+-
+ Exit evidence after the decision-gate redesign (#129) has a [capability inventory](qa/2026-10-18-exit-evidence-inventory.md) and a [self-contained owner review](qa/2026-10-19-wp-g4-exit-evidence/README.md). The review builds an isolated instance on port 5641 with disposable data and imports three loops from the same folder. Its browser regressions are in `apps/web/e2e/exit-primitives.spec.ts` and `apps/web/e2e/classifiers.spec.ts`.
+ 
+-## CI gates (Decided, in order)
++## CI gates (Decided)
++
++`.github/workflows/ci.yml` runs three jobs on pushes to `main` and pull requests; a failure in any job fails the workflow. Jobs run independently; the steps below describe their execution order within each job.
++
++The `gates` job runs:
+ 
+ 1. Install with a frozen lockfile.
+-2. Typecheck every package, test files included.
+-3. Lint.
+-4. dependency-cruiser: layer rules and no circular imports.
+-5. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
+-6. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+-7. Unit tests with coverage thresholds.
+-8. Licence allowlist check over the full dependency tree.
+-9. Generated reference docs are current (`pnpm check:docs`).
+-10. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+-11. Dependency audit for known vulnerabilities, failing on high and critical. An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
+-12. Build every package and app.
+-13. Playwright E2E on the built app.
+-14. Build the container image on the default branch.
+-
+-Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
++2. Build every package and app (`pnpm build`).
++3. Recovery, wait restart, prompt restart, webhook retry and offline upgrade acceptance (`pnpm test:recovery-process`, `pnpm test:wait-restart`, `pnpm test:prompt-restart`, `pnpm test:webhook-retry`, `pnpm test:upgrade`).
++4. Typecheck every package, test files included (`pnpm typecheck`).
++5. Lint and formatting (`pnpm lint`, `pnpm format:check`).
++6. Declared workspace layer rules (`pnpm check:layers`).
++7. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
++8. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
++9. dependency-cruiser: dependency rules and no circular imports (`pnpm check:deps`).
++10. Shipped templates and deliberate-invalid refusal (`pnpm check:templates`).
++11. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`).
++12. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
++13. Generated reference docs are current (`pnpm check:docs`).
++14. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
++15. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`). An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
++
++The `browser` job installs pnpm and Node 22 from the shared `.nvmrc` pin, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0 --workers=1` from `apps/web`. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job. The functional step has a 60-minute timeout inside the 75-minute job budget. The expanded serial suite took 45m32s in the Windows candidate run; the step budget leaves about 14 minutes beyond that measurement, with another 15 minutes for setup/build and evidence upload outside the test step. These are whole-job budgets; individual test and performance limits stay unchanged. The first Ubuntu execution still needs its own duration recorded. A step timeout fails the step, allowing the upload with `failure() || cancelled()` to run; exhausting the whole job budget can still prevent later steps. The `browser-failure` artifact contains available `apps/web/test-results/` evidence and the HTML report at `apps/web/playwright-report/` on failure or cancellation. The default trace mode retains failure traces where tracing is enabled: `routing.spec.ts` sets `trace: 'off'`, and the custom contexts in `responsive.spec.ts` attach no trace. A failure does not guarantee a trace ZIP.
++
++Run the same provider-free gate locally after selecting Node 22. On Windows PowerShell:
++
++```powershell
++$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
++node --version # must report v22.x
++pnpm.cmd build
++$env:GG_E2E_BROWSER_CHANNEL = 'msedge'
++$env:LIVE = '0'
++$env:CI = 'true' # also produce the HTML report used in CI
++Set-Location apps/web
++pnpm.cmd exec playwright test --retries=0 --workers=1
++```
++
++On Linux, install Edge first with `pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge`; use the same channel, `LIVE=0`, build and test command. The global setup starts its own API and control server over disposable storage. `GG_E2E_WEB_DIST` can point the test server at a disposable copy of `apps/web/dist` for a seeded UI regression; ordinary runs use the normal build. [The #241 restack evidence](qa/2026-10-24-wp-a2-241/README.md) records the baseline failures, regression seed and repeated full-suite results. Local Windows results do not establish an executed Ubuntu CI result.
++
++The performance assertions in `routing.spec.ts` and the 90-second and 120-second budgets in `responsive.spec.ts` are intentional timing assertions and stay in the gate. They are distinct from synchronization waits for editor state and are not skipped or relaxed for CI.
++
++The routing workload waits for a stable, hittable card and an observed dragging state, and observes release before starting the next drag. It sends native mouse events through Playwright's public CDP session, avoiding the repeated HTML5 drag-interception page evaluations performed by held-button mouse.move calls. It paces input at 60 Hz against absolute deadlines, independently of acknowledgements, with at most 64 commands in flight (about one second of credit at that cadence). Absolute scheduling prevents per-iteration timer and dispatch delays from accumulating into an under-driven workload. Its phase advances by elapsed time at 6 radians per second, the original 0.1-radian increment at a nominal 60 Hz. Both graph sizes travel the same bounded circuit during each five-second window; acknowledgement speed and event coalescing no longer determine how far the gesture travels. The report includes movements sent and received, queue occupancy, acknowledgement latency, sampler alignment and input duration alongside routing/frame measurements. All three five-second measurement windows, minimum sample counts and latency bounds remain enforced.
++
++The PWA focus-update spec observes native pageshow, foreground/visibility state, registration and app update promises. It waits for an active worker and completed initial checks in each document before reloading or publishing a changed worker. The app also checks on pageshow, which can follow load and a registration-triggered check. A heading or idle counter interval did not establish that lifecycle completion. Focus/visibility detection counts, prompt deferral, activation messages and the single confirmed reload remain asserted; lifecycle diagnostics record native events without changing them.
++
++Node-editor fixtures click the rendered card header instead of a fixed pixel offset that can miss a zoomed card. The phone reference-copy scenario explicitly uses Fit View and waits for a native header hit-test before authoring. Large-history selection checks observe caller-delivery evidence and match the completed run's durable sequence. The [#241 restack report](qa/2026-10-24-wp-a2-241/README.md) records a [confirmed terminal-history gap](qa/2026-10-24-wp-a2-241/product-terminal-history-gap.md) that currently blocks three-clean-run acceptance. Its regression stays in the suite pending the product fix.
++
++Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions. The [WP-A2 QA report](qa/2026-10-18-wp-a2-browser-gates.md) records the pre-change modal failure, single activation A/B diagnostic and bounded repeated checks; the historical second-tab failure remains not reproduced, not disproven.
++
++Browser exclusions and conditional modes, also written to the job summary on every run:
++
++- `live.spec.ts`, test `LIVE: build, publish, and run an inference loop against Codex from the UI`, is skipped unless `LIVE=1`. It requires an installed Codex CLI, provider login and subscription quota. CI explicitly sets `LIVE=0`.
++- No other functional spec or test is skipped or conditional on an installed provider CLI or login. The real API runs with disposable storage and scripted harness/classifier boundaries; these checks do not prove live-provider behavior.
++- `GG_FORMS_QA_PHASE=before|after` enables historical captures (the `before` mode also expects the historical heartbeat preview); `GG_ROUTING_SCREENSHOTS=1` enables captures; `GG_ROUTING_PROFILE=1` enables profiling; `GG_ROUTING_STRICT_PERF=1` selects stricter manual performance bounds. These optional modes are off in CI; their ordinary tests still run, including the default routing performance checks.
++- `screens.capture.ts` is a manual screenshot utility and does not match the functional suite's `*.spec.ts` pattern.
++
++The `template-image` job builds the distributed container and checks installed template contents without network or writable storage. It runs on pull requests as well as pushes to `main`.
++
++Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
+ 
+ `pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
+ 
+@@ -93,7 +134,7 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the
+ 
+ ## Fixture and SDK drift management (Decided)
+ 
+-- `@openai/codex-sdk` and `@typesafe-ai/sdk` are pinned to exact versions. Renovate opens upgrade PRs; the nightly live job and the recorded fixtures tell us whether the event shapes changed.
++- `@openai/codex-sdk` and `@typesafe-ai/sdk` are pinned to exact versions. Renovate opens upgrade PRs; manual, separately authorized `LIVE=1` checks and the recorded fixtures tell us whether the event shapes changed. CI schedules no recurring paid-provider job.
+ - A fixture is re-recorded with a small script in the adapter package, never hand-edited.
+ 
+ ## Definition of done for any change (Decided)
+diff --git a/docs/delivery/2026-10-18-i01-i07-register.md b/docs/delivery/2026-10-18-i01-i07-register.md
+index 06eac4f9..06238e0c 100644
+--- a/docs/delivery/2026-10-18-i01-i07-register.md
++++ b/docs/delivery/2026-10-18-i01-i07-register.md
+@@ -59,7 +59,7 @@ Concurrency cap: about eight workers at once (CPU and test-pool contention). Hot
+ | WP-D1   | #320, #321                 | Opus            | Sol      | Sol                                | Claude worktree                                                                                                           | launched 2026-10-20 after WP-C6 merged (`wp-d1.md`): #320 durable child-creation intent and idempotent reconciliation across the creation and link crash windows with real kills, the double `child_run.finished` closed; then #321 uncertain script outcomes with a typed non-auto-replayed failure, knowing resume, F4-consistent class names, a marker-script owner README; two commits, two PRs (#320 aidlc-ready, #321 `human-in-the-loop`); ADR-0046 reserved; the first run was cut by a rate limit and its worktree removed with no commit, so the agent restarted in `wp-d1-child-recovery` from `origin/main`, committing per bolt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+ | WP-D2   | #246 then #185             | Sol then Opus   | opposite | Sol                                | `codex-wp-d2-webhook-retry`                                                                                               | #246 implemented and committed `2f050f0` (53 files): stable `Idempotency-Key` per return channel allocated with `run.finished`, five attempts with fixed 2, 5, 10 and 20 s delays and a 10 s per-attempt timeout, eligible versus permanent failures, unknown acknowledgement with a sticky effect flag, `RunRecord.deliveries[]`, durable `delivery.*` events with the attempt intent written before I/O, background delivery outside the execution slots, recovery of in-flight attempts, migration `0015_webhook_delivery_journal` converting old receipts once, `return.delivered`/`return.failed` no longer covering webhooks, inspector `DeliveryPanel`, docs 03, 05, 07, 08 and guide 03, ADR renumbered by the orchestrator to **ADR-0043** (WP-B3's pending branch holds 0042), before and after records; implementer's gates green with D-015 natives and one api-client load timeout; Opus review of `2f050f0` (resumed after a rate limit): approve with required fixes, every #246 criterion satisfied live (14 runs, 30 receiver requests, four SIGKILLs, MCP over stdio; migration 0015 through production startup converting old receipts and chaining to 0014; force stop and restart used the remaining budget with one key), six required fixes (a deleted loop keeps delivering and leaves orphan events; the delivery projection reads each run's whole log, `page(20)` 2 ms to 329 ms at 20,000 events; fixed test ports and leaked stores; a second Playwright config that isolates nothing; an unwired acceptance script; an unbounded shutdown drain of up to 87 s sending new attempts, decided as D-021), small items (a shape-damaged receipt rewritten by 0015, parameters spread over four places, CHANGELOG gaps and backup advice, stale text, MCP description, backoff assertions, inspector copy); parameters judged reasonable for a local single-process product (section 6 after round 2); collision notes for WP-C6 recorded; round 2 `999e03a1` (deliveries stop for deleted runs; an index and an `IN` list for the projection, page 20.89 ms to 3.68 ms in the implementer's run; ephemeral ports and store cleanup in tests; one Playwright home with the second config and `.gitignore` line removed; the acceptance script wired as a root script with a CI step; orderly stop per D-021 measured at 309 ms in backoff and 10.1 s mid-attempt with zero new requests; the shape-damaged receipt guarded in 0015; parameters in one place; CHANGELOG, MCP description, inspector copy; engine 513, infrastructure 617 with the D-015 natives, api 677, api-client 71, mcp 45, web 1,479, contracts 259); Opus confirmation of round 2: **confirmed** (deleted loops stop deliveries with no orphan rows; one indexed query per page, `get` 1.2 to 1.9 ms and `page(20)` 3.9 ms at 20,000 events; no fixed ports or leaked stores; one Playwright home; `test:webhook-retry` wired and green in 100 s; D-021 stop measured at 38 ms in backoff and 9.96 s mid-attempt with zero new requests and the same key after restart; migration 0015 keeps shape-damaged rows byte-identical; infrastructure 624/624 outside the sandbox) with one new required fix R7 (a `generate:webhook-policy` script could rewrite the shipped migration 0015 from the live policy, which the upgrade guard would then refuse on every existing store) and four small items; round 3 `f35760d5` (the policy generator script removed and the import budget frozen at five; dead export dropped; neutral temp prefix; benchmark archived under `docs/qa`; `webhook-returns.ts` 100 percent lines and 97 percent branches); the Opus integration worker is merging main with WP-C6 in the branch worktree (`integration-d2-c6.md`), then a Sol review of the integrated branch and the PR; earlier plan: the orchestrator's integration of main with WP-C6 (`integration-d2-c6.md`: twelve conflicting files per the two reviewers' notes and the pre-upgrade unfinalised-run regression) and a Sol review of the integrated branch; parameters in section 6; #185 follows for Opus; aidlc-ready                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+ | WP-D3   | #232, #117                 | Sol             | Opus     | Sol                                | `codex-wp-d3-utf8-probe-bounds` (committed `beefcae`)                                                                     | Opus review: approve with one required fix (body-less 304/204 with a large `Content-Length` refused as overflow) plus docs/upgrade-note and heartbeat-code items; round 2 applied `6743071` (body-less and encoded length checks, typed `HTTP_PROBE_BODY_OVERFLOW` on heartbeat, raw byte counts on `ScriptRunResult`, shared constant, IPC-handshake split tests, complete upgrade guidance); Opus confirmation of `6743071`: **confirmed** outside the sandbox (infrastructure 554/554, engine 458/458, api 628) with one new non-blocking gap (items mode lost the explicit `POLL_STDOUT_UNBOUNDED` detection required by ADR-0024) and a rename nit; round 3 applied `7639cbf` (explicit `POLL_STDOUT_OVERFLOW` detection restored, constant renamed `PROBE_MAX_BODY_BYTES`) and **confirmed** by Opus outside the sandbox (api 630 passed 98.48/93.54, infrastructure 554/554, engine 458/458; Sol's sandbox worker crash not reproduced); Sol QA against the built API: 39 of 43 runtime checks and 4 of 4 supplemental passed, the four failures being the sandbox `taskkill` denial (D-015), report carried in `849b0a2`; main merged `10bc23c` (A5a's container test override given the raw byte fields `89060d3`); **merged** PR #356 as `0e4c289` (2026-10-19); #232 and #117 closed; cap impact in section 6; C2 and C4 branches re-merge main (`heartbeat.ts`, `script.ts`, `FakeScripts` fields)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+-| WP-D4   | #343                       | Opus            | Sol      | Sol                                | `codex-wp-d4-343` (PR #389)                                                                                               | Sol five rounds; Sol QA four rounds (round 4 passed at `ad9d9f15`); migration regenerated as `0020_targeted_event_admission` after #270 (D-040); Astra audit round 1 (`e505ed92`: implicit-entry retry race, recovery starvation, records) and round 2 (`c8ebb3c9`: recovery rounds could be extended by newer pages) fixed by the orchestrator (`c8ebb3c9`, `01828862`); audit round 3 (last) next                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
++| WP-D4   | #343                       | Opus            | Sol      | Sol                                | -                                                                                                                         | queued after #247                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+ | WP-D5   | #256                       | Opus            | Sol      | Sol + owner                        | -                                                                                                                         | queued after #251, #320, #321, #116                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+ | WP-E1   | #190 then #268, #186, #259 | Sol then Opus   | opposite | Sol                                | -                                                                                                                         | queued after #263                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+ | WP-E3   | #187 then #322             | Opus            | Sol      | Sol + owner                        | -                                                                                                                         | queued after #320                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+diff --git a/eslint.config.js b/eslint.config.js
+index 5d1c2a02..bed67045 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -12,6 +12,8 @@ export default tseslint.config(
+       '**/coverage/**',
+       '**/node_modules/**',
+       '**/.turbo/**',
++      // Playwright's generated HTML report includes bundled JavaScript, not source.
++      'apps/web/playwright-report/**',
+       // Playwright's trace staging captures built bundles. Other test-results content is linted.
+       'apps/web/test-results/.playwright-artifacts-*/traces/**',
+       // Generated code (for example the OpenAPI types in packages/api-client) is not linted.

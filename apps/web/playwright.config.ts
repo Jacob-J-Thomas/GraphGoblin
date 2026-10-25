@@ -17,10 +17,13 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   workers: 1,
-  retries: process.env['CI'] ? 1 : 0,
+  // A pass only after retry is a flaky failure, locally and in the mandatory browser job.
+  retries: 0,
+  // A focused test left in a spec would silently skip the rest of the gate.
+  forbidOnly: Boolean(process.env['CI']),
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  reporter: [['list']],
+  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']],
   outputDir: 'test-results',
   use: {
     trace: 'retain-on-failure',

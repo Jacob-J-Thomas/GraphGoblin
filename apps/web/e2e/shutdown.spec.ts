@@ -3,9 +3,16 @@ import { access, chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:net';
 import { join, resolve } from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect as baseExpect } from '@playwright/test';
 
 const root = resolve('../..');
+// The cases hold the same way under `shutdown.config.ts` and inside the functional browser gate:
+// each drives its own gateway through a grace period and a restart; the service worker is
+// blocked so a stopped gateway reads as disconnected rather than answered from the cache; and an
+// assertion allows one ten-second poll of a running gateway plus slack.
+test.describe.configure({ timeout: 120_000 });
+test.use({ serviceWorkers: 'block' });
+const expect = baseExpect.configure({ timeout: 15_000 });
 
 async function gateway(
   options: {

@@ -1,0 +1,60 @@
+Command: pnpm.cmd exec playwright test e2e/routing.spec.ts --grep "performance:" --retries=0 --workers=1
+Working directory: apps/web
+Node: v22.14.0
+Started: 2026-10-24T20:58:32.038Z
+
+Running 2 tests using 1 worker
+
+100 nodes, drag 1: routing 5.200 ms / frame 21.400 ms p95; 91 routes, 371 frames
+100 nodes, drag 2: routing 2.200 ms / frame 33.300 ms p95; 41 routes, 325 frames
+100 nodes, drag 3: routing 4.600 ms / frame 26.700 ms p95; 66 routes, 345 frames
+Routing performance: {"nodes":100,"edges":200,"repeat":1,"channel":"msedge","browser":"156.0.4314.42","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":4.600000023841858,"idle":{"frameP95Ms":25.09999999999991,"frameSamples":201},"repetitions":[{"repetition":1,"routingP95Ms":5.200000047683716,"frameP95Ms":21.399999999999636,"addedFrameP95Ms":-3.700000000000273,"reroutedEdgesP95":8,"routingSamples":91,"frameSamples":371,"durationMs":5034.300000071526,"pointerMovesSent":108,"pointerMovesObserved":107,"samplerStartOffsetMs":11,"firstPointerMs":52.5,"lastPointerMs":5030.300000071526,"inputDurationMs":5155},{"repetition":2,"routingP95Ms":2.200000047683716,"frameP95Ms":33.30000000000109,"addedFrameP95Ms":8.200000000001182,"reroutedEdgesP95":8,"routingSamples":41,"frameSamples":325,"durationMs":5006.500000047683,"pointerMovesSent":48,"pointerMovesObserved":47,"samplerStartOffsetMs":4,"firstPointerMs":12.899999976158142,"lastPointerMs":5004.899999976158,"inputDurationMs":5128},{"repetition":3,"routingP95Ms":4.600000023841858,"frameP95Ms":26.69999999999709,"addedFrameP95Ms":1.5999999999971806,"reroutedEdgesP95":10,"routingSamples":66,"frameSamples":345,"durationMs":5006,"pointerMovesSent":80,"pointerMovesObserved":77,"samplerStartOffsetMs":4,"firstPointerMs":47.799999952316284,"lastPointerMs":4955.699999928474,"inputDurationMs":5143}]}
+  x  1 [chromium] › e2e\routing.spec.ts:476:3 › performance: 100 nodes / 200 edges, three five-second pointer drags (23.0s)
+300 nodes, drag 1: routing 11.200 ms / frame 33.300 ms p95; 43 routes, 310 frames
+300 nodes, drag 2: routing 7.400 ms / frame 33.400 ms p95; 75 routes, 328 frames
+300 nodes, drag 3: routing 5.300 ms / frame 33.500 ms p95; 72 routes, 339 frames
+Routing performance: {"nodes":300,"edges":600,"repeat":1,"channel":"msedge","browser":"156.0.4314.42","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":7.399999976158142,"idle":{"frameP95Ms":28.5,"frameSamples":225},"repetitions":[{"repetition":1,"routingP95Ms":11.199999928474426,"frameP95Ms":33.30000000000109,"addedFrameP95Ms":4.800000000001091,"reroutedEdgesP95":8,"routingSamples":43,"frameSamples":310,"durationMs":5011.500000071526,"pointerMovesSent":52,"pointerMovesObserved":48,"samplerStartOffsetMs":9,"firstPointerMs":62.200000047683716,"lastPointerMs":4973.100000023842,"inputDurationMs":5290},{"repetition":2,"routingP95Ms":7.399999976158142,"frameP95Ms":33.399999999999636,"addedFrameP95Ms":4.899999999999636,"reroutedEdgesP95":10,"routingSamples":75,"frameSamples":328,"durationMs":5009.599999976159,"pointerMovesSent":88,"pointerMovesObserved":84,"samplerStartOffsetMs":17,"firstPointerMs":12.699999928474426,"lastPointerMs":4961.599999904633,"inputDurationMs":5175},{"repetition":3,"routingP95Ms":5.299999952316284,"frameP95Ms":33.5,"addedFrameP95Ms":5,"reroutedEdgesP95":8,"routingSamples":72,"frameSamples":339,"durationMs":5001.29999997616,"pointerMovesSent":80,"pointerMovesObserved":79,"samplerStartOffsetMs":4,"firstPointerMs":4,"lastPointerMs":4883.199999928474,"inputDurationMs":5496}]}
+  x  2 [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags (27.3s)
+
+
+  1) [chromium] › e2e\routing.spec.ts:476:3 › performance: 100 nodes / 200 edges, three five-second pointer drags 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 60
+    Received:   41
+
+      675 |       // A loose ceiling beside the median: no single drag may spike far past it.
+      676 |       expect(result.routingP95Ms).toBeLessThan(16);
+    > 677 |       expect(result.routingSamples).toBeGreaterThan(60);
+          |                                     ^
+      678 |       expect(result.frameSamples).toBeGreaterThan(120);
+      679 |       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+      680 |       if (strictPerf) {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\routing.spec.ts:677:37
+
+    Error Context: test-results\routing-performance-100-no-2d076-e-five-second-pointer-drags-chromium\error-context.md
+
+  2) [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 60
+    Received:   43
+
+      675 |       // A loose ceiling beside the median: no single drag may spike far past it.
+      676 |       expect(result.routingP95Ms).toBeLessThan(16);
+    > 677 |       expect(result.routingSamples).toBeGreaterThan(60);
+          |                                     ^
+      678 |       expect(result.frameSamples).toBeGreaterThan(120);
+      679 |       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+      680 |       if (strictPerf) {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\routing.spec.ts:677:37
+
+    Error Context: test-results\routing-performance-300-no-c363b-e-five-second-pointer-drags-chromium\error-context.md
+
+  2 failed
+    [chromium] › e2e\routing.spec.ts:476:3 › performance: 100 nodes / 200 edges, three five-second pointer drags 
+    [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags 
+
+{"label":"routing-after","command":"pnpm.cmd exec playwright test e2e/routing.spec.ts --grep \"performance:\" --retries=0 --workers=1","cwd":"apps/web","node":"v22.14.0","head":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","endHead":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","applicationPatchSha256":"39cbdfa9f65e84760a38e2680659ee66bb7fc9aaaf8be2a96f0d609211a52c82","applicationPatchSha256After":"39cbdfa9f65e84760a38e2680659ee66bb7fc9aaaf8be2a96f0d609211a52c82","inputsUnchanged":true,"webDist":"apps/web/dist","started":"2026-10-24T20:58:32.038Z","finished":"2026-10-24T21:00:56.886Z","durationSeconds":144.848,"exitCode":1}

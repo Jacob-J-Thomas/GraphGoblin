@@ -1,0 +1,321 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: inspector-large-values.spec.ts >> a run with a large history reconstructs the thread at an event on request (#259)
+- Location: e2e\inspector-large-values.spec.ts:217:1
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('list', { name: 'Timeline' }).getByText('return.delivered', { exact: true })
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" getByRole('list', { name: 'Timeline' }).getByText('return.delivered', { exact: true }) with timeout 10000ms
+  - waiting for getByRole('list', { name: 'Timeline' }).getByText('return.delivered', { exact: true })
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - heading "Run 01M3Y7RKG0XYB0QB8C3VPGYTCE" [level=1]
+  - text: succeeded
+  - link "loop":
+    - /url: /app/loops/01M3Y7RKG0XYB0QB8C3VPGYTCC/edit
+  - link "child runs":
+    - /url: /app/runs?parent=01M3Y7RKG0XYB0QB8C3VPGYTCE
+- region "Exit evaluation":
+  - heading "Exit evaluation" [level=2]
+  - paragraph: "Exited: success"
+- region "Result":
+  - heading "Result" [level=2]
+  - text: "\"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv…"
+  - paragraph:
+    - text: Showing the first 4,096 characters of a larger value.
+    - button "Show all of Result": Show all
+    - button "Download Result as JSON": Download JSON
+- region "Execution limits":
+  - heading "Execution limits" [level=2]
+  - paragraph: "Maximum node visits: 10. Run deadline: none."
+  - paragraph: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+- region "Timeline (21 events, complete)":
+  - heading "Timeline (21 events, complete)" [level=2]
+  - list "Timeline":
+    - listitem:
+      - button "#1 run.queued":
+        - text: "#1"
+        - code: run.queued
+    - listitem:
+      - button "#2 run.started attempt 1":
+        - text: "#2"
+        - code: run.started
+        - text: attempt 1
+    - listitem:
+      - button "#3 node.started start (trigger) attempt 1":
+        - text: "#3"
+        - code: node.started
+        - text: start (trigger) attempt 1
+    - listitem:
+      - button "#4 node.finished start → out, 2 changes, 5 ms":
+        - text: "#4"
+        - code: node.finished
+        - text: start → out, 2 changes, 5 ms
+    - listitem:
+      - button "#5 node.started work (inference) attempt 1":
+        - text: "#5"
+        - code: node.started
+        - text: work (inference) attempt 1
+    - listitem:
+      - button "#6 harness.turn work":
+        - text: "#6"
+        - code: harness.turn
+        - text: work
+    - listitem:
+      - button "#7 harness.session work":
+        - text: "#7"
+        - code: harness.session
+        - text: work
+    - listitem:
+      - button "#8 harness.submission work":
+        - text: "#8"
+        - code: harness.submission
+        - text: work
+    - listitem:
+      - button "#9 node.progress work":
+        - text: "#9"
+        - code: node.progress
+        - text: work
+    - listitem:
+      - button "#10 harness.usage work":
+        - text: "#10"
+        - code: harness.usage
+        - text: work
+    - listitem:
+      - button "#11 node.finished work → out, 5 changes, 1491 ms":
+        - text: "#11"
+        - code: node.finished
+        - text: work → out, 5 changes, 1491 ms
+    - listitem:
+      - button "#12 node.started approve (wait) attempt 1":
+        - text: "#12"
+        - code: node.started
+        - text: approve (wait) attempt 1
+    - listitem:
+      - button "#13 run.waiting approve waits for input":
+        - text: "#13"
+        - code: run.waiting
+        - text: approve waits for input
+    - listitem:
+      - button "#14 input.received approve":
+        - text: "#14"
+        - code: input.received
+        - text: approve
+    - listitem:
+      - button "#15 run.woken approve woken by input":
+        - text: "#15"
+        - code: run.woken
+        - text: approve woken by input
+    - listitem:
+      - button "#16 node.started approve (wait) attempt 2":
+        - text: "#16"
+        - code: node.started
+        - text: approve (wait) attempt 2
+    - listitem:
+      - button "#17 node.finished approve → out, 3 changes, 30 ms":
+        - text: "#17"
+        - code: node.finished
+        - text: approve → out, 3 changes, 30 ms
+    - listitem:
+      - button "#18 node.started done (exit) attempt 1":
+        - text: "#18"
+        - code: node.started
+        - text: done (exit) attempt 1
+    - listitem:
+      - 'button "#19 exit.evaluated Exited: success"':
+        - text: "#19"
+        - code: exit.evaluated
+        - text: "Exited: success"
+    - listitem:
+      - button "#20 node.finished done, 0 changes, 90 ms":
+        - text: "#20"
+        - code: node.finished
+        - text: done, 0 changes, 90 ms
+    - listitem:
+      - button "#21 run.finished succeeded (success)":
+        - text: "#21"
+        - code: run.finished
+        - text: succeeded (success)
+- region "Thread at event 21":
+  - heading "Thread at event 21" [level=2]
+  - paragraph: This run's history holds 8.4 MB of recorded events. Replaying them to rebuild the thread at an event can take a while, so it happens on request.
+  - paragraph:
+    - button "Reconstruct the thread at event 21"
+- button "Node progress (2 nodes)"
+```
+
+# Test source
+
+```ts
+  168 | }) => {
+  169 |   const instance = await control(request, '/apps');
+  170 |   const url = String(instance['url']);
+  171 |   const instanceId = instance['instanceId'];
+  172 |   const created = await request.post(url + '/loops', {
+  173 |     data: { definition: inferenceLoop('Live replacement', true) },
+  174 |   });
+  175 |   expect(created.status(), await created.text()).toBe(201);
+  176 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  177 |   expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  178 |   await control(request, '/harness/script', { instanceId, turns: [{ finalText: LONG }] });
+  179 |   const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  180 |   expect(started.status()).toBe(202);
+  181 |   const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  182 |   const run = async () =>
+  183 |     RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  184 |   await expect
+  185 |     .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+  186 |     .toBe('waiting');
+  187 | 
+  188 |   await page.goto(url + '/app/runs/' + runId);
+  189 |   // The thread at the wait carries the long value; read it whole, with the keyboard on it.
+  190 |   await page.getByText('Full thread JSON', { exact: true }).click();
+  191 |   await page.getByRole('button', { name: 'Show all of Full thread JSON' }).click();
+  192 |   const region = page.getByRole('region', { name: 'Full thread JSON' });
+  193 |   await region.focus();
+  194 |   await expect(region).toBeFocused();
+  195 | 
+  196 |   // Input arrives from elsewhere: the run finishes, the thread at the latest event is a new
+  197 |   // value, the region collapses, and the keyboard lands on its Show all, never on the body.
+  198 |   const waiting = (await run()).waiting;
+  199 |   expect(waiting).toBeDefined();
+  200 |   const answered = await request.post(url + '/runs/' + runId + '/input', {
+  201 |     data: { waitId: waiting!.waitId, input: { approved: true } },
+  202 |   });
+  203 |   expect(answered.status(), await answered.text()).toBe(200);
+  204 |   await expect(
+  205 |     page.getByRole('list', { name: 'Timeline' }).getByText('run.finished'),
+  206 |   ).toBeVisible();
+  207 |   const showAll = page.getByRole('button', { name: 'Show all of Full thread JSON' });
+  208 |   await expect(showAll).toBeVisible();
+  209 |   await expect(showAll).toBeFocused();
+  210 |   expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
+  211 |   // Tab moves on from the control; nothing is left focusable behind it.
+  212 |   await page.keyboard.press('Tab');
+  213 |   await expect(showAll).not.toBeFocused();
+  214 |   await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
+  215 | });
+  216 | 
+  217 | test('a run with a large history reconstructs the thread at an event on request (#259)', async ({
+  218 |   page,
+  219 |   request,
+  220 | }) => {
+  221 |   const instance = await control(request, '/apps');
+  222 |   const url = String(instance['url']);
+  223 |   const instanceId = instance['instanceId'];
+  224 |   const created = await request.post(url + '/loops', {
+  225 |     data: { definition: inferenceLoop('Large history', true) },
+  226 |   });
+  227 |   expect(created.status(), await created.text()).toBe(201);
+  228 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  229 |   expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  230 |   await control(request, '/harness/script', { instanceId, turns: [{ finalText: HUGE }] });
+  231 |   const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  232 |   expect(started.status()).toBe(202);
+  233 |   const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  234 |   const run = async () =>
+  235 |     RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  236 |   await expect
+  237 |     .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+  238 |     .toBe('waiting');
+  239 | 
+  240 |   await page.goto(url + '/app/runs/' + runId);
+  241 |   const timeline = page.getByRole('list', { name: 'Timeline' });
+  242 |   await expect(timeline.getByText('run.waiting')).toBeVisible();
+  243 |   // The history is above the threshold: the latest event asks before anything is replayed.
+  244 |   const reconstruct = page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ });
+  245 |   await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
+  246 |   await expect(reconstruct).toBeVisible();
+  247 |   await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
+  248 |   await expect(reconstruct).toHaveText(
+  249 |     `Reconstruct the thread at event ${(await run()).lastEventSeq}`,
+  250 |   );
+  251 |   const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+  252 |   expect(waitSeq).toBeDefined();
+  253 |   await reconstruct.click();
+  254 |   await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  255 |   await expect(reconstruct).toHaveCount(0);
+  256 | 
+  257 |   // A live event that becomes the selection (the inspector follows the latest event until one is
+  258 |   // selected by hand) asks again.
+  259 |   const waiting = (await run()).waiting;
+  260 |   expect(waiting).toBeDefined();
+  261 |   const answered = await request.post(url + '/runs/' + runId + '/input', {
+  262 |     data: { waitId: waiting!.waitId, input: { approved: true } },
+  263 |   });
+  264 |   expect(answered.status(), await answered.text()).toBe(200);
+  265 |   await expect(timeline.getByText('run.finished')).toBeVisible();
+  266 |   // Caller delivery follows run.finished. Observe that durable fact before freezing the latest
+  267 |   // selection; otherwise the later last-button click can select a different, unreplayed event.
+> 268 |   await expect(timeline.getByText('return.delivered', { exact: true })).toBeVisible();
+      |                                                                         ^ Error: expect(locator).toBeVisible() failed
+  269 |   const completed = await run();
+  270 |   expect(completed.status).toBe('succeeded');
+  271 |   await expect(
+  272 |     page.getByRole('heading', {
+  273 |       name: `Timeline (${completed.lastEventSeq} events, complete)`,
+  274 |       exact: true,
+  275 |     }),
+  276 |   ).toBeVisible();
+  277 |   await expect(reconstruct).toBeVisible();
+  278 |   await expect(reconstruct).toHaveText(`Reconstruct the thread at event ${completed.lastEventSeq}`);
+  279 |   const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+  280 |   expect(finishedSeq).toBeDefined();
+  281 |   expect(finishedSeq).not.toBe(waitSeq);
+  282 | 
+  283 |   // The first event asks too; the events reconstructed earlier stay shown on return.
+  284 |   await timeline.getByRole('button').first().click();
+  285 |   await expect(page.getByRole('heading', { name: 'Thread at event 1', exact: true })).toBeVisible();
+  286 |   await page.getByRole('button', { name: 'Reconstruct the thread at event 1' }).click();
+  287 |   await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  288 |   await timeline.getByRole('button').filter({ hasText: 'run.waiting' }).click();
+  289 |   await expect(
+  290 |     page.getByRole('heading', { name: `Thread at event ${waitSeq}`, exact: true }),
+  291 |   ).toBeVisible();
+  292 |   await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  293 |   await expect(reconstruct).toHaveCount(0);
+  294 |   await timeline.getByRole('button').last().click();
+  295 |   await expect(
+  296 |     page.getByRole('button', { name: `Reconstruct the thread at event ${finishedSeq}` }),
+  297 |   ).toBeVisible();
+  298 | 
+  299 |   // The log of such a run is not stored: a reload replays it from the first event and asks again.
+  300 |   await page.reload();
+  301 |   await expect(page.getByRole('list', { name: 'Timeline' }).getByText('run.finished')).toBeVisible({
+  302 |     timeout: 20_000,
+  303 |   });
+  304 |   await expect(
+  305 |     page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ }),
+  306 |   ).toBeVisible();
+  307 | });
+  308 | 
+```
