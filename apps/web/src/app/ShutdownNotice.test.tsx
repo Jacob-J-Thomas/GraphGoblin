@@ -146,6 +146,36 @@ describe('gateway shutdown notice', () => {
     expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
   });
 
+  it('keeps keyboard focus on the notice after a sent choice, and on the page when the notice leaves', async () => {
+    const user = userEvent.setup();
+    const { api, change } = fixture();
+    const view = renderWith(
+      <>
+        <h1>Loops</h1>
+        <ShutdownNotice />
+      </>,
+      '/',
+      api,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Force stop' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm force stop' }));
+    const forcing = await screen.findByRole('heading', { name: 'Gateway is force stopping' });
+    expect(document.activeElement).toBe(forcing);
+    change(state('draining'));
+    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
+    await user.click(await screen.findByRole('button', { name: 'Keep waiting' }));
+    expect(document.activeElement).toBe(
+      screen.getByRole('heading', { name: 'Gateway is draining' }),
+    );
+    // The gateway is running again: the notice leaves and focus goes to the page heading.
+    change(state('running'));
+    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'Gateway shutdown' })).not.toBeInTheDocument(),
+    );
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Loops' }));
+  });
+
   it('keeps keyboard focus on the notice when a newer state replaces an open confirmation', async () => {
     const user = userEvent.setup();
     const { api, change } = fixture();

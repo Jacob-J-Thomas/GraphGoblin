@@ -1,9 +1,10 @@
 import { GraphGoblinApiError, unwrap, type ResponseBody } from '@graphgoblin/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useApi } from '../api/context.js';
 import { Button, Dialog } from '../components/ui/index.js';
+import { focusFallback } from '../lib/focus.js';
 
 type ShutdownState = ResponseBody<'/system/shutdown', 'get'>;
 function checkedSnapshot(snapshot: ShutdownState): ShutdownState {
@@ -78,9 +79,13 @@ function ShutdownChoices({
   const canWait = state.choices.includes('wait');
   const failedForce = state.phase === 'force-failed';
   const ids = state.activeRunIds;
+  const submittedRef = useRef(false);
   const send = (choice: 'wait' | 'force') => {
+    // A sent choice unmounts these controls while it is pending: focus the notice, not BODY.
+    submittedRef.current = true;
     setConfirm(false);
     choose(choice, state.controlToken);
+    if (choice === 'wait') document.getElementById(fallbackFocusId)?.focus();
   };
   return (
     <>
@@ -98,8 +103,11 @@ function ShutdownChoices({
         <Dialog
           open
           onClose={() => setConfirm(false)}
-          // The opener is gone when a new token replaced these choices: keep focus on the notice.
-          returnFocus={() => openerRef.current ?? document.getElementById(fallbackFocusId)}
+          // Dismissal returns to the opener. A confirmed choice, or a new token that replaced these
+          // choices, removes it: keep focus on the notice.
+          returnFocus={() =>
+            (!submittedRef.current && openerRef.current) || document.getElementById(fallbackFocusId)
+          }
           title={failedForce ? 'Force exit after failed cleanup?' : 'Force stop active work?'}
           footer={
             <>
@@ -192,8 +200,16 @@ export function ShutdownNotice() {
   const forbidden =
     status.error instanceof GraphGoblinApiError &&
     (status.error.status === 401 || status.error.status === 403);
-  if ((!state || state.phase === 'running') && (!status.error || forbidden) && !message)
-    return null;
+  const hidden = (!state || state.phase === 'running') && (!status.error || forbidden) && !message;
+  // The notice leaving the page (the gateway is running again) drops focus held inside it;
+  // give it to the page's heading rather than leaving it on BODY.
+  const shownRef = useRef(false);
+  useEffect(() => {
+    if (hidden && shownRef.current && document.activeElement === document.body)
+      focusFallback(document.querySelector('main h1') ?? document.querySelector('h1'));
+    shownRef.current = !hidden;
+  }, [hidden]);
+  if (hidden) return null;
   const closing = state !== undefined && networkFailure;
   const terminal = state !== undefined && TERMINAL.has(state.phase);
   const available = !status.error && !terminal && !action.isPending;
