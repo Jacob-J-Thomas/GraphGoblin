@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+import {spawn} from 'node:child_process';
+const command='pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --coverage.reportOnFailure';
+const log='coverage-web-clean.log.txt', root=process.cwd(), dir=root+'/docs/qa/2026-10-24-wp-d2-185', fd=fs.openSync(dir+'/'+log,'w');
+const begin=Date.now();
+const child=spawn(process.env.ComSpec,['/d','/s','/c',command],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore',fd,fd]});
+const code=await new Promise((ok,no)=>{child.on('error',no);child.on('exit',ok)});fs.closeSync(fd);
+fs.appendFileSync(dir+'/final-results.jsonl',JSON.stringify({command,code,elapsedMs:Date.now()-begin,log,node:process.version,reason:'earlier web coverage interrupted and two contenders rejected by report lock; no concurrent web coverage now'})+'\n');console.log(code);

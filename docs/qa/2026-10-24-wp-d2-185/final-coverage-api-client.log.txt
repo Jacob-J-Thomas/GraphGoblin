@@ -1,0 +1,75 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/packages/api-client
+      Coverage enabled with v8
+
+ ❯ src/templates.test.ts (2 tests | 2 failed) 30083ms
+   × creates an ordinary editable draft with the generated client without automation setup 15035ms
+   × reads manifest-only catalogue entries through the generated API 15046ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates.test.ts:19:1
+     17| }
+     18|
+     19| it('creates an ordinary editable draft with the generated client witho…
+       | ^
+     20|   const client = await setup();
+     21|   app!.harness.preflightResult = {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup
+ FAIL  src/templates.test.ts > reads manifest-only catalogue entries through the generated API
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/templates.test.ts:7:1
+      5|
+      6| let app: TestApp | undefined;
+      7| afterEach(async () => {
+       | ^
+      8|   await app?.close();
+      9|   app = undefined;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/templates.test.ts > reads manifest-only catalogue entries through the generated API
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates.test.ts:45:1
+     43| });
+     44|
+     45| it('reads manifest-only catalogue entries through the generated API', …
+       | ^
+     46|   const client = await setup();
+     47|   const entries = await templates.list(client);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  2 failed | 92 passed (94)
+   Start at  21:00:14
+   Duration  153.55s (transform 54%, import 26%, tests 19%, worker 1%)
+
+  Transform  transforming modules took 146.05s · 54% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 99.35% ( 307/309 )
+Branches     : 98.38% ( 183/186 )
+Functions    : 100% ( 95/95 )
+Lines        : 100% ( 271/271 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ 185\packages\api-client
+
