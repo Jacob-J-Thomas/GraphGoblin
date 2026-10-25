@@ -789,7 +789,7 @@ value migration. Model and effort sit on the node's Settings, outside Advanced (
 
 ### Missing-session recovery control (#265)
 
-The inspector names a missing provider handle and its origin in the failure alert.
+The inspector names a missing provider handle and its origin in the failure alert. While such a failure awaits the explicit fresh-session choice, the inspector keeps checking the run every two seconds, so a choice made here, in another tab or through the API is followed to its next outcome without a reload. Long node IDs wrap in the recovery controls.
 For an eligible inference failure it offers **Start fresh session for <node>**.
 The explanation states that prior provider conversation is not carried over, earlier
 provider actions are not undone, and configured context mode, selected loop inputs,
