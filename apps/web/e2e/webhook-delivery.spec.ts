@@ -58,7 +58,7 @@ test('inspector retains unknown acknowledgement after a rejection and eventual s
   ).json()) as { run: { id: string } };
   await page.goto('/app/runs/' + run.id);
   await expect(page.getByText('Delivered after 3 attempts')).toBeVisible({ timeout: 20000 });
-  await expect(page.getByText(/HTTP 429/)).toBeVisible();
+  await expect(page.getByText('http: Webhook returned HTTP 429.', { exact: true })).toBeVisible();
   await expect(page.getByText(/An acknowledgement was unknown/)).toBeVisible();
   expect(uncertainRequests).toHaveLength(3);
   expect(new Set(uncertainRequests).size).toBe(1);

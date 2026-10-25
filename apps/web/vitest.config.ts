@@ -7,6 +7,11 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
 export default createVitestConfig({
   plugins: [react()],
   test: {
+    // Keep per-file isolation without a separate Windows process startup for every file.
+    pool: 'threads',
+    isolate: true,
+    // Bound simultaneous jsdom/V8 work; deadlines and coverage thresholds stay configured below.
+    maxWorkers: 2,
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
     setupFiles: ['src/__fixtures__/setup.ts'],

@@ -295,7 +295,7 @@ test('Settings catalog preserves a disabled saved default until the owner change
   await expect(defaults).toHaveValue('gpt-6-luna');
   await expect(defaults.locator('option:checked')).toHaveText('GPT-6 Luna (disabled)');
   await expect(defaults).toHaveAccessibleDescription(
-    'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
+    'Disabled in the model catalog. Enable it or choose another default.',
   );
   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
     defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
@@ -310,7 +310,11 @@ test('Settings catalog preserves a disabled saved default until the owner change
       return values;
     })
     .not.toHaveProperty('defaults');
-  await expect(page.getByText(/This saved model is unavailable/)).toHaveCount(0);
+  await expect(
+    page.getByText('Disabled in the model catalog. Enable it or choose another default.', {
+      exact: true,
+    }),
+  ).toHaveCount(0);
 });
 
 test('Settings catalog refreshes a vanished toggle and announces the reason at the heading', async ({

@@ -94,7 +94,8 @@ export async function showLoopPanel(page: Page): Promise<void> {
 
 /** Open a node's editor by clicking its card (on the header band, away from port handles). */
 export async function openNode(page: Page, nodeId: string) {
-  await page.getByTestId(`node-${nodeId}`).click({ position: { x: 60, y: 12 } });
+  // Target the rendered header box: a fixed pixel offset can leave the card after zooming.
+  await page.getByTestId(`node-${nodeId}`).locator(':scope > div:has([data-kind])').click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   return dialog;

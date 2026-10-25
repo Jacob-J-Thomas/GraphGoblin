@@ -1,4 +1,4 @@
-﻿/** Independent browser QA for #170. Defect references resolve in docs/qa/2026-10-10-issue-170. */
+/** Independent browser QA for #170. Defect references resolve in docs/qa/2026-10-10-issue-170. */
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -1188,7 +1188,7 @@ test('I6 integer bounds: timeout and nested repair attempts use exact schema mes
   }
 });
 
-test('inference Claude and Codex: family selection, policy, advanced model/effort, save/reload and policy refusal', async ({
+test('inference Claude and Codex: family selection, policy, visible model/effort, save/reload and policy refusal', async ({
   page,
   request,
 }) => {
@@ -1245,10 +1245,12 @@ test('inference Claude and Codex: family selection, policy, advanced model/effor
   await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
   await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('xhigh');
   await chooseRadio(reopened.getByRole('radio', { name: 'codex', exact: true }));
-  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
-  await reopened.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
+  // An explicit family switch selects and persists the compatible default (#204).
+  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('gpt-6-luna');
   await reopened.getByLabel('Effort', { exact: true }).selectOption('low');
-  await expect.poll(() => config(request, id, url)).toMatchObject({ harness: 'codex' });
+  await expect
+    .poll(() => config(request, id, url))
+    .toMatchObject({ harness: 'codex', model: 'gpt-6-luna', effort: 'low' });
   await expect(reopened.getByRole('radiogroup', { name: 'Sandbox', exact: true })).toBeVisible();
 });
 

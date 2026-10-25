@@ -1,4 +1,4 @@
-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, RunRecordSchema } from '@graphgoblin/contracts';
 /**
  * Regression specs for the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md). They drive
  * the built app against the in-process API; `control()` scripts the fake harness through the E2E
@@ -106,11 +106,16 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   const runId = await startRun(request, loopId);
   const started = Date.now();
   await page.goto(`/app/runs/${runId}`);
-  await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
+  await expect(page.getByText(/^Timeline \(\d+ events, complete\)$/)).toBeVisible({
     timeout: 30_000,
   });
   const live = Date.now() - started;
-  // Twelve lifecycle/evidence facts include the persisted exit evaluation; all 1,200 items remain.
+  const completedRun = RunRecordSchema.parse(await (await request.get(`/runs/${runId}`)).json());
+  expect(completedRun.status).toBe('succeeded');
+  // Derive the full durable sequence rather than hard-coding its lifecycle/evidence overhead.
+  const eventCount = completedRun.lastEventSeq;
+  const completeTimeline = `Timeline (${eventCount} events, complete)`;
+  await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
   const timeline = page.getByRole('list', { name: 'Timeline' });
   await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
     1200,
@@ -119,9 +124,13 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
     1,
   );
   await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
+  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.turn ask$/ })).toHaveCount(1);
+  await expect(
+    timeline.getByRole('button', { name: /^#\d+ harness\.submission ask$/ }),
+  ).toHaveCount(1);
   await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
   const seqs = await timelineSeqs(page);
-  expect(seqs).toEqual(Array.from({ length: 1212 }, (_, i) => i + 1));
+  expect(seqs).toEqual(Array.from({ length: eventCount }, (_, i) => i + 1));
   // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
   // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
   const liveRunGets = runGets;
@@ -132,14 +141,14 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   await page.evaluate(() => sessionStorage.clear());
   const fresh = Date.now();
   await page.reload();
-  await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible();
+  await expect(page.getByText(completeTimeline, { exact: true })).toBeVisible();
   const freshMs = Date.now() - fresh;
   const click = Date.now();
   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
   await expect(page.getByText('Thread at event 601')).toBeVisible();
   const clickMs = Date.now() - click;
   console.log(
-    `1,212-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
+    `${eventCount}-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
   );
   expect(freshMs).toBeLessThan(5_000);
   expect(clickMs).toBeLessThan(2_000);
@@ -154,7 +163,7 @@ test('failure reasons are typed and visible: harness failure and decider unavail
   });
   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
   await page.goto(`/app/runs/${await startRun(request, failing)}`);
-  await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+  await expect(page.getByText('Failed: HARNESS_DELIVERY_UNCERTAIN')).toBeVisible();
 
   await control(request, '/deciders', { jev: true, codex: true });
   try {

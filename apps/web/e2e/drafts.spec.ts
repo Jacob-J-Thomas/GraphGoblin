@@ -199,8 +199,9 @@ test('an older version’s open connection blocks device drafts: the editor says
     ),
   ).toBeVisible();
 
-  // The older tab closes its connection: the upgrade completes, and the edit is on the device.
-  await older.evaluate(() => (window as unknown as { olderTab: IDBDatabase }).olderTab.close());
+  // Closing the old tab releases its real connection without evaluating in an inactive renderer.
+  // Wait for that public browser operation, then observe the completed upgrade in the editor.
+  await older.close();
   await expect(page.getByText('Changes are not kept on this device')).toBeHidden();
   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
   await page.reload();
@@ -271,6 +272,14 @@ for (const scenario of ['pending', 'synced', 'stale', 'unsynced'] as const) {
       expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(original);
     } else if (synced || stale) {
       await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
+      // The server heading can render before device conversion and archival finish. Negative
+      // notice assertions and reload must follow the observable reconciliation completion.
+      await expect(
+        page.getByText(
+          'The editor is available. Checking the server and this device before saving changes.',
+          { exact: true },
+        ),
+      ).toBeHidden();
       await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
       await expect(page.getByText('The draft changed on the server')).toBeHidden();
       if (stale) {
