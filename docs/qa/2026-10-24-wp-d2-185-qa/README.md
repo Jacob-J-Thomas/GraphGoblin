@@ -644,7 +644,7 @@ For rows below, the linked script gives exact steps; expected/actual are the ori
 
 ## 4. Report path and evidence folder
 
-Report: `docs/qa/2026-10-24-wp-d2-185-qa/README.md`. Evidence folder: `docs/qa/2026-10-24-wp-d2-185-qa/`. All kept artifacts are linked below, including scripts (.mjs.txt), raw result JSON, logs and screenshots. Local user paths are normalized to %USERPROFILE% before the final SHA-256 inventory; result values are not reformatted by Prettier. Captures over 1,000,000 bytes are recorded in [NOT-KEPT.md](NOT-KEPT.md) instead. [SHA256.json](SHA256.json) records retained artifact sizes/hashes, excluding the manifest itself.
+Report: `docs/qa/2026-10-24-wp-d2-185-qa/README.md`. Evidence folder: `docs/qa/2026-10-24-wp-d2-185-qa/`. All kept artifacts are linked below, including scripts (.mjs.txt), raw result JSON, logs and screenshots. Local user paths are normalized to %USERPROFILE% before the final SHA-256 inventory; result values are not reformatted by Prettier. Captures over 1,000,000 bytes are recorded in [NOT-KEPT.md](NOT-KEPT.md) instead. [SHA256.json](SHA256.json) records retained artifact sizes/hashes, excluding the manifest itself. Sizes and hashes are of the committed blobs (line endings as Git stores them); they were regenerated from the commit after audit round 1 found 44 records written from the working-tree bytes.
 
 ### Artifact inventory
 

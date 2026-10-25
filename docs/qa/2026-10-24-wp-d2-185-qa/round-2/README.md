@@ -107,7 +107,7 @@ Steps and expected results are defined by the probes above and their linked scri
 
 ## 4. Report path and evidence folder
 
-`docs/qa/2026-10-24-wp-d2-185-qa/round-2/README.md`; evidence is the same round-2 folder. Every kept artifact is linked below. [SHA256.json](SHA256.json) records final retained sizes/hashes; it excludes itself. Local user paths are written as %USERPROFILE%. No raw result formatting is applied by Prettier. [NOT-KEPT.md](NOT-KEPT.md) records oversized captures, if any.
+`docs/qa/2026-10-24-wp-d2-185-qa/round-2/README.md`; evidence is the same round-2 folder. Every kept artifact is linked below. [SHA256.json](SHA256.json) records final retained sizes/hashes; it excludes itself. Sizes and hashes are of the committed blobs (line endings as Git stores them); they were regenerated from the commit after audit round 1 found 17 records written from the working-tree bytes. Local user paths are written as %USERPROFILE%. No raw result formatting is applied by Prettier. [NOT-KEPT.md](NOT-KEPT.md) records oversized captures, if any.
 
 - [NOT-KEPT.md](NOT-KEPT.md)
 - [build-result.json](build-result.json)
