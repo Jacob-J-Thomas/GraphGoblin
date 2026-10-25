@@ -17,6 +17,8 @@ const sides = {
 };
 function request(): ClassifierEvaluationRequest {
   return {
+    structuredTimeoutMs: null,
+    runId: 'run',
     nodeId: 'evaluate',
     ownerId: 'owner',
     config: ClassifierDecisionConfigSchema.parse({
@@ -174,7 +176,7 @@ describe('separate typed evaluation operations', () => {
         model: 'gpt-6-luna',
         effort: 'low',
       },
-      input.signal,
+      expect.any(AbortSignal),
     );
   });
   it.each(['route'] as const)(

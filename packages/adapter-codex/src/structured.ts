@@ -46,9 +46,11 @@ export class CodexStructured implements StructuredPort {
     },
     signal: AbortSignal,
   ): Promise<{ value: unknown; usage?: Usage }> {
+    signal.throwIfAborted();
     const fixed = request.workingDirectory ?? this.options.workingDirectory;
     const temp = fixed ? undefined : await (this.options.tempDir ?? freshTempDir)();
     try {
+      signal.throwIfAborted();
       const session = this.harness.start(
         {
           workingDirectory: fixed ?? (temp as { path: string }).path,
@@ -64,13 +66,40 @@ export class CodexStructured implements StructuredPort {
         },
         signal,
       );
-      // Drain events so the queue does not grow unread; the result carries everything needed.
-      for await (const event of session.events) void event;
-      const result = await session.result;
-      return {
-        value: result.structured !== undefined ? result.structured : parseLoose(result.finalText),
-        usage: result.usage,
+      let cancellation: Promise<void> | undefined;
+      let rejectAbort!: (reason: unknown) => void;
+      const aborted = new Promise<never>((_resolve, reject) => {
+        rejectAbort = reject;
+      });
+      const onAbort = () => {
+        // cancel() owns the harness's bounded process shutdown. Wait for it before removing
+        // the scratch directory; the engine independently settles its deadline immediately.
+        cancellation ??= session.cancel();
+        void cancellation.then(
+          () => rejectAbort(signal.reason),
+          (error: unknown) => rejectAbort(error),
+        );
       };
+      const work = async () => {
+        // Drain events so the queue cannot grow unread. Observe result rejection immediately,
+        // even if an external harness fails its result before closing the event iterator.
+        void session.result.catch(() => undefined);
+        for await (const event of session.events) void event;
+        const result = await session.result;
+        signal.throwIfAborted();
+        return {
+          value: result.structured !== undefined ? result.structured : parseLoose(result.finalText),
+          usage: result.usage,
+        };
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
+      if (signal.aborted) onAbort();
+      try {
+        return await Promise.race([work(), aborted]);
+      } finally {
+        signal.removeEventListener('abort', onAbort);
+        await cancellation;
+      }
     } finally {
       await temp?.cleanup().catch(() => undefined);
     }

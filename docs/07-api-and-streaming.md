@@ -71,7 +71,7 @@ The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unrea
 
 Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
 
-## Pinned execution limits (#243)
+## Pinned execution limits (#243, #270)
 
 Run responses expose `pinned.limits`: `maxNodeVisits` defaults to 10 and
 `runDeadlineSeconds` defaults to null (no deadline). Explicit null removes the visit
@@ -80,6 +80,15 @@ pauses and downtime. Queue time is excluded. Editing a loop or Settings cannot c
 an existing run's pin. Expiry fails with non-resumable `RUN_DEADLINE_EXCEEDED` and
 cancels awaited children; explicit Cancel remains `cancelled`. Observation deadlines
 on client/MCP waits only stop observation and do not impose a run deadline.
+
+`pinned.limits.structuredTimeoutMs` defaults to null (Unlimited). A positive value
+sets milliseconds per LLM decision or structured repair completion, independently
+of the run deadline. Expiry aborts that completion and releases capacity with resumable
+`STRUCTURED_COMPLETION_TIMEOUT`; its message and `failure.details.timeoutMs` name the
+deadline. LLM decision failures also include evaluation provenance (provider, model
+and effort) in `failure.details.provenance`. Late results cannot change the failure
+or thread. Explicit Cancel remains `cancelled`, without a timeout failure. Export/API
+clients must accept this nullable pin and the new `RunErrorCode` value.
 
 ## Artifact downloads
 

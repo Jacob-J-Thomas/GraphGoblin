@@ -1,0 +1,421 @@
+{
+  "status": "PASS",
+  "oldPid": 57932,
+  "newPid": 9816,
+  "preservedEvents": true,
+  "run": {
+    "id": "01M5PFH79Q2AGNJS30P2CH950Q",
+    "ownerId": "local",
+    "loopId": "01M5PFH791NS9BZM41CRY2X8H4",
+    "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA supplemental 500ms deadline",
+      "label": "QA supplemental 500ms deadline v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": 500
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PFH79Q2AGNJS30P2CH950R",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-24T08:13:14.935Z",
+    "startedAt": "2026-10-24T08:13:14.946Z",
+    "finishedAt": "2026-10-24T08:23:42.801Z",
+    "lastEventSeq": 14
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 1,
+        "ts": "2026-10-24T08:13:14.935Z",
+        "type": "run.queued",
+        "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA supplemental 500ms deadline",
+          "label": "QA supplemental 500ms deadline v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PFH79Q2AGNJS30P2CH950Q",
+            "loopId": "01M5PFH791NS9BZM41CRY2X8H4",
+            "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PFH79Q2AGNJS30P2CH950R",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T08:13:14.935Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 2,
+        "ts": "2026-10-24T08:13:14.949Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 3,
+        "ts": "2026-10-24T08:13:14.964Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 4,
+        "ts": "2026-10-24T08:13:14.971Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T08:13:14.969Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T08:13:14.969Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 5,
+        "ts": "2026-10-24T08:13:14.994Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "decision",
+        "attempt": 1,
+        "configHash": "6ae97fdcb88b8b58"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 6,
+        "ts": "2026-10-24T08:13:15.510Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 500 ms",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 7,
+        "ts": "2026-10-24T08:23:41.619Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "user",
+          "id": "local"
+        }
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 8,
+        "ts": "2026-10-24T08:23:42.448Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "decision",
+        "attempt": 2,
+        "configHash": "6ae97fdcb88b8b58"
+      },
+      {
+        "provenance": {
+          "kind": "llm",
+          "provider": "codex",
+          "classifierId": null,
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "observation": {
+          "kind": "route",
+          "routeId": "yes",
+          "confidence": 1,
+          "reasoning": "QA result"
+        },
+        "portId": "yes",
+        "diagnostics": [],
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 9,
+        "ts": "2026-10-24T08:23:42.710Z",
+        "type": "decision.made",
+        "nodeId": "work"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 10,
+        "ts": "2026-10-24T08:23:42.710Z",
+        "type": "node.finished",
+        "nodeId": "work",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/work",
+            "value": {
+              "nodeId": "work",
+              "value": {
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "observation": {
+                  "kind": "route",
+                  "routeId": "yes",
+                  "confidence": 1,
+                  "reasoning": "QA result"
+                },
+                "portId": "yes"
+              },
+              "at": "2026-10-24T08:23:42.704Z"
+            }
+          },
+          {
+            "op": "replace",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "work",
+              "value": {
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                },
+                "observation": {
+                  "kind": "route",
+                  "routeId": "yes",
+                  "confidence": 1,
+                  "reasoning": "QA result"
+                },
+                "portId": "yes"
+              },
+              "at": "2026-10-24T08:23:42.704Z"
+            }
+          }
+        ],
+        "route": "yes",
+        "durationMs": 173
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 11,
+        "ts": "2026-10-24T08:23:42.766Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "caacd31f1376b30f"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 12,
+        "ts": "2026-10-24T08:23:42.796Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 13,
+        "ts": "2026-10-24T08:23:42.796Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5PFH79Q2AGNJS30P2CH950Q",
+        "seq": 14,
+        "ts": "2026-10-24T08:23:42.796Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success"
+      }
+    ],
+    "nextAfter": 14,
+    "hasMore": false
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5PFH79Q2AGNJS30P2CH950Q",
+      "loopId": "01M5PFH791NS9BZM41CRY2X8H4",
+      "versionId": "01M5PFH791NS9BZM41CRY2X8H5",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5PFH79Q2AGNJS30P2CH950R",
+      "source": "manual.api",
+      "caller": {
+        "kind": "user",
+        "id": "local"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-24T08:13:14.935Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-24T08:13:14.969Z"
+      },
+      "work": {
+        "nodeId": "work",
+        "value": {
+          "provenance": {
+            "kind": "llm",
+            "provider": "codex",
+            "classifierId": null,
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "yes",
+            "confidence": 1,
+            "reasoning": "QA result"
+          },
+          "portId": "yes"
+        },
+        "at": "2026-10-24T08:23:42.704Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "work",
+      "value": {
+        "provenance": {
+          "kind": "llm",
+          "provider": "codex",
+          "classifierId": null,
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "observation": {
+          "kind": "route",
+          "routeId": "yes",
+          "confidence": 1,
+          "reasoning": "QA result"
+        },
+        "portId": "yes"
+      },
+      "at": "2026-10-24T08:23:42.704Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1,
+        "work": 2,
+        "done": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

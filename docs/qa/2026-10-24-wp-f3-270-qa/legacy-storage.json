@@ -1,0 +1,136 @@
+{
+  "before": {
+    "schemaVersion": 4,
+    "name": "QA physical pre-field fixture",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "a",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  },
+  "after": {
+    "schemaVersion": 4,
+    "name": "QA physical pre-field fixture",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "a",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  },
+  "versionId": "01M5PFT9VR4GG5JXH9Y0TW0NV2"
+}

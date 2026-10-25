@@ -1,0 +1,461 @@
+{
+  "name": "isolated-output-schema-repair",
+  "status": "FAIL",
+  "sampleAfterRepairObservedMs": 4584,
+  "expected": "STRUCTURED_COMPLETION_TIMEOUT at 500ms, queue slot released",
+  "delayed": {
+    "id": "01M5PJDFPEDSABHXA566SVNPGZ",
+    "ownerId": "local",
+    "loopId": "01M5PJDEP14V2BS2P8SBTMJG70",
+    "versionId": "01M5PJDEP2QYHVMY4VGEJK3YWY",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA isolated schema repair",
+      "label": "QA isolated schema repair v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": 500
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PJDFPEDSABHXA566SVNPH0",
+    "status": "running",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "createdAt": "2026-10-24T09:03:38.190Z",
+    "startedAt": "2026-10-24T09:03:38.569Z",
+    "lastEventSeq": 15
+  },
+  "queued": {
+    "id": "01M5PJDQKW78BRY87BM103QTSN",
+    "ownerId": "local",
+    "loopId": "01M5PJDP9RXH7VRD4ZE9PH3NEV",
+    "versionId": "01M5PJDP9RXH7VRD4ZE9PH3NEW",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA isolated queue",
+      "label": "QA isolated queue v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PJDQKW78BRY87BM103QTSP",
+    "status": "queued",
+    "iteration": 1,
+    "createdAt": "2026-10-24T09:03:46.300Z",
+    "lastEventSeq": 1
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 1,
+        "ts": "2026-10-24T09:03:38.190Z",
+        "type": "run.queued",
+        "versionId": "01M5PJDEP2QYHVMY4VGEJK3YWY",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA isolated schema repair",
+          "label": "QA isolated schema repair v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5PJDFPEDSABHXA566SVNPGZ",
+            "loopId": "01M5PJDEP14V2BS2P8SBTMJG70",
+            "versionId": "01M5PJDEP2QYHVMY4VGEJK3YWY",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5PJDFPEDSABHXA566SVNPH0",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T09:03:38.190Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 2,
+        "ts": "2026-10-24T09:03:38.914Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 3,
+        "ts": "2026-10-24T09:03:39.255Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 4,
+        "ts": "2026-10-24T09:03:39.806Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T09:03:39.780Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T09:03:39.780Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 24
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 5,
+        "ts": "2026-10-24T09:03:40.589Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "b3853925db6f1024"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 6,
+        "ts": "2026-10-24T09:03:41.303Z",
+        "type": "harness.turn",
+        "nodeId": "work",
+        "visitId": "01M5PJDFPEDSABHXA566SVNPGZ:5",
+        "turnId": "01M5PJDJQQK0KVNZ0SKWS9Q9SE",
+        "harness": "codex",
+        "promptKind": "authored",
+        "prompt": "Answer"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 7,
+        "ts": "2026-10-24T09:03:42.258Z",
+        "type": "harness.session",
+        "nodeId": "work",
+        "harness": "codex",
+        "sessionId": "fake-session-1",
+        "mode": "fresh",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 8,
+        "ts": "2026-10-24T09:03:42.675Z",
+        "type": "harness.submission",
+        "nodeId": "work",
+        "visitId": "01M5PJDFPEDSABHXA566SVNPGZ:5",
+        "turnId": "01M5PJDJQQK0KVNZ0SKWS9Q9SE",
+        "submission": "submitted",
+        "marker": "fake.accepted"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 9,
+        "ts": "2026-10-24T09:03:42.684Z",
+        "type": "node.progress",
+        "nodeId": "work",
+        "progress": {
+          "item": {
+            "id": "i1",
+            "summary": "bad",
+            "type": "message"
+          }
+        }
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 10,
+        "ts": "2026-10-24T09:03:42.835Z",
+        "type": "harness.usage",
+        "nodeId": "work",
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 11,
+        "ts": "2026-10-24T09:03:43.059Z",
+        "type": "harness.turn",
+        "nodeId": "work",
+        "visitId": "01M5PJDFPEDSABHXA566SVNPGZ:5",
+        "turnId": "01M5PJDMEK5KC6C6JKGJ7RR96S",
+        "harness": "codex",
+        "promptKind": "repair",
+        "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n\"bad\"\n\nValidation errors:\n- / must be number\n",
+        "resumeSessionId": "fake-session-1"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 12,
+        "ts": "2026-10-24T09:03:43.737Z",
+        "type": "harness.session",
+        "nodeId": "work",
+        "harness": "codex",
+        "sessionId": "fake-session-1",
+        "mode": "resumed",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 13,
+        "ts": "2026-10-24T09:03:43.965Z",
+        "type": "harness.submission",
+        "nodeId": "work",
+        "visitId": "01M5PJDFPEDSABHXA566SVNPGZ:5",
+        "turnId": "01M5PJDMEK5KC6C6JKGJ7RR96S",
+        "submission": "submitted",
+        "marker": "fake.accepted"
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 14,
+        "ts": "2026-10-24T09:03:44.386Z",
+        "type": "node.progress",
+        "nodeId": "work",
+        "progress": {
+          "item": {
+            "id": "i1",
+            "summary": "7",
+            "type": "message"
+          }
+        }
+      },
+      {
+        "runId": "01M5PJDFPEDSABHXA566SVNPGZ",
+        "seq": 15,
+        "ts": "2026-10-24T09:03:44.951Z",
+        "type": "harness.usage",
+        "nodeId": "work",
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    ],
+    "nextAfter": 15,
+    "hasMore": false
+  },
+  "cancelled": {
+    "id": "01M5PJDFPEDSABHXA566SVNPGZ",
+    "ownerId": "local",
+    "loopId": "01M5PJDEP14V2BS2P8SBTMJG70",
+    "versionId": "01M5PJDEP2QYHVMY4VGEJK3YWY",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA isolated schema repair",
+      "label": "QA isolated schema repair v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": 500
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5PJDFPEDSABHXA566SVNPH0",
+    "status": "cancelled",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "cancelRequestedAt": "2026-10-24T09:03:47.503Z",
+    "createdAt": "2026-10-24T09:03:38.190Z",
+    "startedAt": "2026-10-24T09:03:38.569Z",
+    "finishedAt": "2026-10-24T09:03:47.660Z",
+    "lastEventSeq": 18
+  },
+  "observation": {
+    "calls": [
+      {
+        "id": 0,
+        "at": 1792830222541,
+        "request": {
+          "prompt": "You are the routing step of an automated workflow. Choose exactly one declared route.\n\nChoose a route\n\nRoutes:\n- yes: Yes\n- no: No\n\nContext (JSON):\n{\n  \"trigger\": null,\n  \"messages\": [],\n  \"vars\": {},\n  \"lastOutput\": null\n}\n\nDo not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "route": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no"
+                ]
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "reasoning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "route",
+              "confidence",
+              "reasoning"
+            ],
+            "additionalProperties": false
+          },
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        "abortedAt": null,
+        "releasedAt": 1792830222700,
+        "aborted": false
+      }
+    ],
+    "logs": [],
+    "timerStacks": [
+      {
+        "id": 19590,
+        "at": 1792830222540,
+        "stack": "Error\n    at AsyncHook.init (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/[eval1]:18:19)\n    at emitInitNative (node:internal/async_hooks:202:43)\n    at emitInitScript (node:internal/async_hooks:505:3)\n    at initAsyncResource (node:internal/timers:170:5)\n    at new Timeout (node:internal/timers:204:5)\n    at setTimeout (node:timers:163:19)\n    at expire (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/packages/engine/dist/completion-deadline.js:30:21)\n    at completeWithDeadline (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/packages/engine/dist/completion-deadline.js:37:9)\n    at evaluateLlm (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/packages/engine/dist/primitive-evaluator.js:173:21)\n    at async Object.execute (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f3-270/packages/engine/dist/handlers/decision.js:43:23)"
+      }
+    ],
+    "started": [
+      {
+        "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-api-LhcPkQ\\workspaces\\01M5PJDFPEDSABHXA566SVNPGZ",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "options": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        },
+        "turn": {
+          "prompt": "Answer",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      }
+    ],
+    "resumed": [
+      {
+        "sessionId": "fake-session-1",
+        "request": {
+          "workingDirectory": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-f3-270-api-LhcPkQ\\workspaces\\01M5PJDFPEDSABHXA566SVNPGZ",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "options": {
+            "sandbox": "workspace-write",
+            "approval": "never"
+          },
+          "turn": {
+            "prompt": "A value was expected to match a JSON Schema but did not.\nReturn only a corrected JSON value that satisfies the schema. Do not explain.\n\nSchema:\n{\n  \"type\": \"number\"\n}\n\nValue:\n\"bad\"\n\nValidation errors:\n- / must be number\n",
+            "outputSchema": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

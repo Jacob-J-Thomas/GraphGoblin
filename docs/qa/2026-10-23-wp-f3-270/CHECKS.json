@@ -1,0 +1,220 @@
+[
+  {
+    "command": "pnpm.cmd typecheck --concurrency=2",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "typecheck-final.log.txt",
+    "detail": "20 successful tasks; task-local Turbo cache"
+  },
+  {
+    "command": "pnpm.cmd lint --concurrency=2",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "lint-final.log.txt",
+    "detail": "11 successful tasks; existing ThreadViewer.tsx:106 warning"
+  },
+  {
+    "command": "pnpm.cmd format:check",
+    "result": "interrupted; not accepted",
+    "exitCode": -1,
+    "log": "format-check-final.log.txt",
+    "detail": "Final scan after coverage jobs finished remained at Checking formatting; stopped only the verified worktree-owned formatter PID. Earlier interrupted captures retained."
+  },
+  {
+    "command": "pnpm.cmd check:layers",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "check-layers.log.txt"
+  },
+  {
+    "command": "pnpm.cmd check:deps",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "check-deps.log.txt",
+    "detail": "one existing no-orphans warning"
+  },
+  {
+    "command": "pnpm.cmd check:docs",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "check-docs.log.txt"
+  },
+  {
+    "command": "pnpm.cmd check:tokens",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "check-tokens.log.txt"
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+    "result": "failed",
+    "exitCode": 1,
+    "log": "engine-coverage-final.log.txt",
+    "tests": {
+      "passed": 1592,
+      "failed": 2
+    },
+    "coverage": {
+      "lines": 98.09,
+      "branches": 93.05
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+    "result": "failed",
+    "exitCode": 1,
+    "log": "adapter-codex-coverage-final.log.txt",
+    "tests": {
+      "passed": 498,
+      "failed": 2,
+      "skipped": 5
+    },
+    "coverage": {
+      "lines": 98.88,
+      "branches": 94.66
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "api-coverage-final.log.txt",
+    "tests": {
+      "passed": 1328,
+      "skipped": 8
+    },
+    "coverage": {
+      "lines": 97.94,
+      "branches": 93.16
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/contracts test:coverage --maxWorkers=2",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "contracts-coverage-serial.log.txt",
+    "tests": {
+      "passed": 266
+    },
+    "coverage": {
+      "lines": 99.74,
+      "branches": 95.0
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+    "result": "passed",
+    "log": "web-coverage-final.log.txt",
+    "exitCode": 0,
+    "tests": {
+      "passed": 1636
+    },
+    "coverage": {
+      "lines": 98.92,
+      "branches": 94.97
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+    "result": "failed",
+    "log": "infrastructure-coverage-final.log.txt",
+    "exitCode": 1,
+    "tests": {
+      "passed": 762,
+      "failed": 10
+    },
+    "coverage": {
+      "lines": 98.69,
+      "branches": 95.04
+    },
+    "detail": "Unchanged native process cleanup/readiness failures and cutover timeouts; no claim that all are scheduling-only failures"
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+    "result": "passed",
+    "log": "api-client-coverage-final.log.txt",
+    "exitCode": 0,
+    "tests": {
+      "passed": 72
+    },
+    "coverage": {
+      "lines": 100,
+      "branches": 99.37
+    }
+  },
+  {
+    "command": "pnpm.cmd build --concurrency=2",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "build.log.txt",
+    "detail": "11 successful tasks; before final engine helper refactor, subsequent typecheck rebuilt engine/API"
+  },
+  {
+    "command": "pnpm.cmd exec playwright test e2e/unlimited-mode.spec.ts",
+    "cwd": "apps/web",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "browser.log.txt",
+    "tests": {
+      "passed": 2
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/structured-deadline.test.ts src/primitive-evaluator.test.ts --maxWorkers=1",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "engine-focused-final.log.txt",
+    "tests": {
+      "passed": 40
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/structured-cancel.test.ts --maxWorkers=1",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "finite-cancel-focused.log.txt",
+    "tests": {
+      "passed": 1
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/structured-deadline.test.ts --maxWorkers=1",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "api-focused-verified.log.txt",
+    "tests": {
+      "passed": 7
+    }
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine typecheck",
+    "result": "passed",
+    "exitCode": 0,
+    "log": "engine-typecheck-final.log.txt",
+    "detail": "Includes the separately added finite-cancel fixture"
+  },
+  {
+    "command": "pnpm.cmd exec prettier --check --ignore-unknown <changed source and Markdown paths>",
+    "result": "passed diagnostic; not whole-repository gate",
+    "exitCode": 0,
+    "log": "format-changed.log.txt"
+  },
+  {
+    "command": "node docs/qa/2026-10-23-wp-f3-270/real-adapter-check.mjs",
+    "result": "failed positive live case",
+    "exitCode": 1,
+    "log": "real-adapter.log.txt",
+    "detail": "100ms timeout and SDK/scratch cleanup assertions passed; ordinary completion timed out at60000ms. Used retained runner version before final engine helper refactor."
+  },
+  {
+    "command": "git diff --check",
+    "result": "passed",
+    "exitCode": 0
+  },
+  {
+    "command": "node --check docs/qa/2026-10-23-wp-f3-270/real-adapter-check.mjs && node --check docs/qa/2026-10-23-wp-f3-270/real-adapter-check-run.mjs",
+    "result": "passed",
+    "exitCode": 0,
+    "detail": "Syntax only; no further provider turn"
+  }
+]

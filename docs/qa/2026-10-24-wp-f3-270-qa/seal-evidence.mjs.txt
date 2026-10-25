@@ -1,0 +1,24 @@
+﻿import {readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const profile=process.env.USERPROFILE;
+for(const file of await readdir(out)){
+ if(!/\.(json|txt|md)$/.test(file)||file==='README.md'||file==='ARTIFACTS.json')continue;
+ const encoded=await readFile(resolve(out,file));let data=encoded[0]===255&&encoded[1]===254?encoded.subarray(2).toString('utf16le'):encoded.toString('utf8');
+ for(let n=8;n>=1;n--)data=data.replaceAll(profile.replaceAll('\\','\\'.repeat(n)),'%USERPROFILE%');
+ data=data.replaceAll(profile.replaceAll('\\','/'),'%USERPROFILE%');
+ data=data.replace(/C:\s*(?:\\\s*){1,8}Users(?:\\\s*){1,8}<user name>/gi,'%USERPROFILE%');
+ data=data.replace(/C:[\\/\s?|]*Users[\\/\s?|]*<user name>/gi,'%USERPROFILE%');
+ await writeFile(resolve(out,file),data);
+}
+const omitted=[];
+for(const file of await readdir(out)){
+ const s=await stat(resolve(out,file));if(s.isFile()&&s.size>1000000){const bytes=await readFile(resolve(out,file));omitted.push({file,size:s.size,sha256:createHash('sha256').update(bytes).digest('hex')});await unlink(resolve(out,file));}
+}
+await writeFile(resolve(out,'NOT-KEPT.md'),'# Captures not retained\n\n'+(omitted.length?omitted.map(x=>`- ${x.file}: ${x.size} bytes; SHA-256 ${x.sha256}`).join('\n'):'No capture exceeded 1000000 bytes. No capture was omitted for size.')+'\n\nDisposable instance and scratch directories remain under the task prefix for orchestrator cleanup. They are runtime resources, not retained report captures.\n');
+const sources=['packages/contracts/src/loop.ts','packages/contracts/src/run.ts','packages/engine/src/completion-deadline.ts','packages/engine/src/handlers/common.ts','packages/engine/src/handlers/inference.ts','packages/engine/src/primitive-evaluator.ts','packages/adapter-codex/src/structured.ts','apps/api/src/container.ts','apps/api/src/routes/loops.ts','apps/web/src/editor/ExecutionLimitField.tsx','apps/web/src/editor/LoopSettingsPanel.tsx','apps/web/src/runs/inspector/RunLimits.tsx','apps/web/src/settings/sections/ExecutionDefaultsSection.tsx','packages/engine/dist/completion-deadline.js','packages/engine/dist/handlers/inference.js'];
+const sourceHashes=[];for(const file of sources){const bytes=await readFile(resolve(root,file));sourceHashes.push({file,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}await writeFile(resolve(out,'sources.json'),JSON.stringify(sourceHashes,null,2));
+const files=[];for(const file of (await readdir(out)).sort()){if(['README.md','ARTIFACTS.json'].includes(file))continue;const s=await stat(resolve(out,file));if(s.isFile()){const bytes=await readFile(resolve(out,file));files.push({file,size:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}}
+await writeFile(resolve(out,'ARTIFACTS.json'),JSON.stringify({note:'Hashes of retained bytes after required user-path redaction. README and this manifest are excluded from self-referential hashing.',files},null,2));
+console.log(JSON.stringify({kept:files.length,omitted}));
