@@ -1,0 +1,79 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/web
+
+ × src/runs/useRunEvents.test.tsx > run stream reachability > flushes an oversized single event immediately without dropping its payload 47ms
+   → Target cannot be null or undefined.
+ × src/runs/useRunEvents.test.tsx > run stream reachability > shows a slow-consumer reason during retry and clears it when the stream reopens 13ms
+   → expected 'connecting' to be 'error' // Object.is equality
+ × src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the batching timer runs 13ms
+   → actual value must be number or bigint, received "undefined"
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > leaves an accepted clean close on the stream backoff without reporting an outage
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts only if the last connection failure was a transport failure
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > re-arms an outage on cursor progress rather than acceptance or replay alone
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 15000 ms open
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 20000 ms open
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports rapid two-second drops once and does not restart again on recovery
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 0 ms
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 2000 ms
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > reports transport failure while online and clears it on an accepted stream
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts a stream in backoff on recovery with its cursor and cleans up
+ ↓ src/runs/useRunEvents.test.tsx > run stream reachability > does not report HTTP refusals or malformed event frames as transport failures
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > run stream reachability > flushes an oversized single event immediately without dropping its payload
+AssertionError: Target cannot be null or undefined.
+ ❯ src/runs/useRunEvents.test.tsx:74:61
+     72|       );
+     73|     });
+     74|     expect(useRunEventStore.getState().runs[runId]?.events).toHaveLeng…
+       |                                                             ^
+     75|   });
+     76|   it('shows a slow-consumer reason during retry and clears it when the…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > run stream reachability > shows a slow-consumer reason during retry and clears it when the stream reopens
+AssertionError: expected 'connecting' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "connecting"
+
+ ❯ src/runs/useRunEvents.test.tsx:88:35
+     86|       ),
+     87|     );
+     88|     expect(result.current.status).toBe('error');
+       |                                   ^
+     89|     expect(result.current.error).toContain('The reader fell behind');
+     90|     act(() => options().onOpen?.());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the batching timer runs
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ src/runs/useRunEvents.test.tsx:102:68
+    100|         await options().onEvent(event(runId, seq, 'run.started', { att…
+    101|     });
+    102|     expect(useRunEventStore.getState().runs[runId]?.events.length).toB…
+       |                                                                    ^
+    103|     await act(async () => {
+    104|       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 skipped (14)
+   Start at  20:45:04
+   Duration  27.99s (environment 42%, transform 33%, import 13%, setup 12%)
+
+  Transform  transforming modules took 9.05s · 33% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+

@@ -1,0 +1,47 @@
+{
+  "head": "389dc14f24fcab33f6c22b0ba14428596fdda539",
+  "results": [
+    {
+      "name": "api",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-completion.test.ts --maxWorkers=1 --reporter=verbose",
+      "log": ".tmp/r4-final-red-api.log.txt",
+      "code": 1,
+      "expectedFailures": 8,
+      "intended": true
+    },
+    {
+      "name": "client",
+      "command": "pnpm.cmd --filter @graphgoblin/api-client exec vitest run src/sse-completion.test.ts --maxWorkers=1 --reporter=verbose",
+      "log": ".tmp/r4-final-red-client.log.txt",
+      "code": 1,
+      "expectedFailures": 10,
+      "intended": true
+    },
+    {
+      "name": "web",
+      "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/RunInspectorPage.test.tsx src/runs/useRunEvents.test.tsx --maxWorkers=1 --reporter=verbose -t confirms",
+      "log": ".tmp/r4-final-red-web.log.txt",
+      "code": 1,
+      "expectedFailures": 3,
+      "intended": true
+    }
+  ],
+  "sources": [
+    {
+      "path": "apps/api/src/sse.ts",
+      "baselineSha256": "537afeb102524e527c863e83ccae575d2ea5878bec7485cc36672bbcc184bb9a",
+      "currentSha256": "9788b115bc9b890646eaae295465368e50063d8fbd68a45ba4c6d10d7b17c77c"
+    },
+    {
+      "path": "packages/api-client/src/sse.ts",
+      "baselineSha256": "e718874e6b0667bcf3f9c30beb51084b9bd70ebfaf9398f36e36bf5a8aab8946",
+      "currentSha256": "cb5d04b0666af0a0d135491406b301008ff23f30d655e8cd27a49965d6f7f524"
+    },
+    {
+      "path": "apps/web/src/runs/useRunEvents.ts",
+      "baselineSha256": "885910680621092b29cc6eb5d6a36978cf3bd50c2d86edb0fe1588035806994d",
+      "currentSha256": "a11683eb9d6879907d6bf2af56d7dfe7062f184084c66963f493cf7486e24727"
+    }
+  ],
+  "restored": true
+}

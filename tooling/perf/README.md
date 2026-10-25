@@ -31,6 +31,10 @@ Execution sizes can be changed with `--passes=100,1000,10000`, `--items=2`,
 with an initial hold of at least 1,000 ms), and `--browser-ms=5000` (per page). `--setup-timeout-ms=600000` is the API import/setup ceiling, adjustable separately from workload sizing.
 `--out=.tmp/my-measurement` selects an evidence directory; otherwise it is a new
 directory under the system temp folder. Use a **new output directory for each invocation**.
+`--port=5740` binds the worker API to an assigned loopback port instead of a free
+ephemeral port; `--store-prefix=gg-wp-e1-186-` names its disposable store directory.
+Use the same observation options for a before/after pair. Worker cleanup uses the
+public raw run-reference enumeration so retired run-decoding APIs are not required.
 The gate and per-node visit limits remain at or below 10,000. Initialization runs
 once outside the context-growth cycle. An allowed repeat increments the one-based
 gate count; the Nth work visit ends through Limit reached.

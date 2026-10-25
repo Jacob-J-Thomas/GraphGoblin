@@ -1,0 +1,20 @@
+let browser;
+try {
+ await boot();const runId=await makeRun(40000);results.runId=runId;
+ const webUrl=pathToFileURL(join(root,'apps/web/package.json'));
+ const testUrl=import.meta.resolve('@playwright/test',webUrl);
+ const {chromium}=await import(import.meta.resolve('playwright',testUrl));
+ browser=await chromium.launch({channel:'msedge',headless:true});
+ const context=await browser.newContext({viewport:{width:1440,height:900}});
+ await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),token);
+ const page=await context.newPage();page.setDefaultTimeout(120000);const pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
+ await call('resetStats');await call('produce',{runId,durationMs:15000});
+ const reads=[fetched(runId),fetched(runId,20000),clientRead(runId),clientRead(runId,20000)];
+ await page.goto(base+'/app/runs/'+runId,{waitUntil:'domcontentloaded'});
+ await sleep(15000);const producer=await call('stopProducer');await api('/runs/'+runId+'/cancel',{});
+ const stored=await api('/runs/'+runId),readers=await Promise.all(reads);
+ await page.waitForFunction(n=>document.querySelector('ol[aria-label="Timeline"]')?.children.length===n,stored.lastEventSeq,{timeout:120000});
+ const inspector=await page.evaluate(()=>{const ids=[...document.querySelector('ol[aria-label="Timeline"]').children].map(x=>Number(x.querySelector('button span').textContent.replace('#','')));return {count:ids.length,last:ids.at(-1),gaps:ids.filter((x,i)=>x!==i+1).length};});
+ await page.screenshot({path:join(out,'rate-200-inspector-1440.png')});
+ const stats=await call('stats');results.cases.push({name:'40k history with measured 200-per-second appends; fetch, API client, Edge inspector',producer,readers,inspector,pageErrors,stats,storedLastSeq:stored.lastEventSeq,pass:producer.perSecond>=190&&producer.perSecond<=210&&readers.every(x=>!x.rejected&&!x.controls.length&&!x.gaps&&!x.duplicates&&x.last===stored.lastEventSeq)&&inspector.count===stored.lastEventSeq&&inspector.gaps===0&&!pageErrors.length});
+}catch(e){results.error=e.stack;console.error(e.stack);}finally{await browser?.close();if(child?.connected)await call('close').catch(e=>{results.closeError=e.stack;child.kill();});results.finished=new Date().toISOString();await save();console.log('QA_RATE_FINISHED');}

@@ -103,6 +103,29 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the 
 
 ## Performance baseline (Decided by measurement, 2026-10-03)
 
+The #186 server/transport change has a current-baseline [before report](qa/2026-10-22-wp-e1-186-before.md)
+and the same-workload [after report](qa/2026-10-22-wp-e1-186-after.md), including full/late/slow/
+interrupted/reconnected exact payload hashes, event-loop delay, raw paused-socket wire bytes,
+and separate heap samples. Engineering bounds are ADR-0050. API regressions exercise paged
+replay with a concurrent append, bounded held live events, and a paused real socket against
+SQLite followed by complete cursor recovery. Client and hook regressions cover typed failure,
+resume cursor, visible retry reason and early batch flush. The tests were run red on the base.
+The round-1 7,078 ms replay and 569 ms loop maximum were host contention, as established by the
+reviewer's [interleaved same-host A/B](qa/2026-10-22-wp-e1-186/round-2/review-ab-bench-out.json)
+(41,001 events, three rounds): base 3,525.67 ms total / 2,569.01 ms stall / 2,561.28 ms first event;
+round-1 head 3,315.19 ms / 180.75 ms / 17.83 ms. The benchmark and reader source are retained
+with that evidence; this comparison is separate from the original non-interleaved runs.
+The [round-3 terminal-cursor evidence](qa/2026-10-22-wp-e1-186/README.md#round-3-bounded-terminal-confirmation)
+compares empty replies on 42,102-event histories and verifies constant read work at/past the end,
+including post-terminal delivery audits and resume invalidation. It does not repeat the full replay benchmark.
+The [round-4 completion evidence](qa/2026-10-22-wp-e1-186/README.md#round-4-authoritative-stream-completion)
+reproduces and fixes truncated resumed histories, omitted delivery audits, empty-cursor retries
+and initial corruption retries, using the audit's real SQLite/HTTP and injection probes plus
+regressions run red on the audited head. Completion checks retain bounded reads; this is
+transport correctness evidence rather than a new full-replay performance comparison.
+Shared-host observations are not a quiet-host performance guarantee. History browsing follows
+in #186 round 2.
+
 The sustained, file-backed baseline for #190 is recorded in [2026-10-18 sustained-run measurements](qa/2026-10-18-sustained-run-measurements.md). [The repeatable scripts](../tooling/perf/README.md) cover cyclic work, growing context, SSE replay and slow readers, transcripts, readiness, populated stores, and headless Edge. They run separately from coverage and preserve their disposable stores, JSON summaries, memory samples, and API CPU profiles. The earlier in-memory baseline below remains historical evidence.
 
 `apps/api/src/perf.test.ts` boots the API in-process over the in-memory database with the fake harness, whose scripted turn streams 1,000 items, so one run of `trigger -> inference -> exit` appends 1,011 events (one `node.progress` per item). It is skipped unless `PERF=1`:

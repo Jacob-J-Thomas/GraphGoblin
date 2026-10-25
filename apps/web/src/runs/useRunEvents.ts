@@ -1,7 +1,6 @@
 import {
   GraphGoblinApiError,
   subscribeRunEvents,
-  TERMINAL_RUN_EVENT_TYPES,
   type RunEventSubscription,
 } from '@graphgoblin/api-client';
 import type { RunEvent } from '@graphgoblin/contracts';
@@ -23,6 +22,9 @@ export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
  * storage, and refetch the run once per event.
  */
 export const EVENT_BATCH_MS = 100;
+// Flush early under bursts: timer throttling must not grow the temporary batch indefinitely.
+const MAX_BATCH_EVENTS = 256;
+const MAX_BATCH_BYTES = 1_048_576;
 // Matches the API's default SSE heartbeat interval (apps/api/src/sse.ts).
 const STREAM_HEARTBEAT_MS = 15_000;
 
@@ -47,8 +49,11 @@ export function useRunEvents(
   useEffect(() => {
     const { runs, append } = useRunEventStore.getState();
     const known = runs[runId];
+    // Cached outcomes can be superseded or followed by delivery audits. Resume at the
+    // cached cursor and let the helper's authoritative completion confirm the current tail.
     let active = true;
     let buffer: RunEvent[] = [];
+    let bufferBytes = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const flush = () => {
       clearTimeout(timer);
@@ -56,6 +61,7 @@ export function useRunEvents(
       if (buffer.length === 0) return;
       const batch = buffer;
       buffer = [];
+      bufferBytes = 0;
       append(runId, ...batch);
       if (!active) return;
       setStatus('live');
@@ -115,9 +121,23 @@ export function useRunEvents(
           inTransportBackoff = false;
           markApiReachable();
           setStatus('live');
+          setError(undefined);
         },
         onError: (err, attempt) => {
           if (!current() || attempt === 0) return; // Invalid frames are not connection drops.
+          if (
+            err instanceof GraphGoblinApiError &&
+            (err.code === 'SSE_SLOW_CONSUMER' || err.code === 'SSE_REPLAY_FAILED')
+          ) {
+            inTransportBackoff = false;
+            openedAt = undefined;
+            flush();
+            setError(
+              err.detail ?? 'The reader fell behind; reconnecting from the last received event.',
+            );
+            setStatus('error');
+            return;
+          }
           if (openedAt !== undefined && Date.now() - openedAt >= STREAM_HEARTBEAT_MS)
             reportedOutage = false;
           openedAt = undefined;
@@ -136,13 +156,20 @@ export function useRunEvents(
             { cancelRefetch: false },
           );
         },
-        onEvent: (event) => {
+        onEvent: (event, bytes) => {
           if (!current()) return;
           if (event.seq > lastSeq) {
             lastSeq = event.seq;
             reportedOutage = false;
           }
+          // The transport already has JSON text. Reuse its size rather than serializing here.
+          if (buffer.length && bufferBytes + bytes > MAX_BATCH_BYTES) flush();
           buffer.push(event);
+          bufferBytes += bytes;
+          if (buffer.length >= MAX_BATCH_EVENTS || bufferBytes >= MAX_BATCH_BYTES) {
+            flush();
+            return;
+          }
           timer ??= setTimeout(flush, EVENT_BATCH_MS);
         },
       });
@@ -164,8 +191,7 @@ export function useRunEvents(
     const unsubscribe = subscribeApiRecovery(() => {
       if (active && inTransportBackoff) connect();
     });
-    if (known?.events.some((e) => TERMINAL_RUN_EVENT_TYPES.has(e.type))) followAttempts();
-    else connect();
+    connect();
     return () => {
       active = false;
       unsubscribe();

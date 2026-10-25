@@ -1,0 +1,32 @@
+﻿import { execFileSync } from 'node:child_process';
+import { readFile, writeFile, lstat, rename } from 'node:fs/promises';
+import { resolve, sep } from 'node:path';
+import { createHash } from 'node:crypto';
+const dir='docs/qa/2026-10-22-wp-e1-186/round-3',root=resolve('.');
+const sha=b=>createHash('sha256').update(b).digest('hex');
+if(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()!=='3289c122cdaa985d90d1c48e7d10bb8b5c830d58')throw new Error('HEAD changed; restoration refused');
+execFileSync('git',['diff','--cached','--quiet']);
+const frozen=JSON.parse(await readFile('.tmp/r3-source-frozen.json','utf8'));
+for(const f of frozen)if(sha(await readFile(f.path))!==f.sha256)throw new Error(`Candidate source changed: ${f.path}`);
+const keep=new Set([...frozen.map(f=>f.path),'CHANGELOG.md','docs/07-api-and-streaming.md','docs/10-testing-and-quality.md','docs/decisions/ADR-0050-bounded-sse-replay.md']);
+const paths=execFileSync('git',['diff','--name-only','HEAD'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean).filter(p=>!keep.has(p));
+const restored=[];
+for(const path of paths){
+ const absolute=resolve(path);
+ if(!absolute.startsWith(root+sep)||(await lstat(path)).isSymbolicLink())throw new Error(`Unsafe restoration path ${path}`);
+ const original=execFileSync('git',['show',`HEAD:${path}`],{maxBuffer:100000000});
+ const current=await readFile(path);
+ restored.push({path,formattedBytes:current.length,formattedSha256:sha(current),committedBytes:original.length,committedSha256:sha(original)});
+}
+await writeFile(`${dir}/format-restoration.json`,JSON.stringify({reason:'Temporary ignore file was placed below the root; patterns were resolved relative to that directory. Incidental formatter changes only; initial worktree was clean and the candidate files are explicitly preserved.',candidateSourceUnchanged:true,restored:false,files:restored},null,2)+'\n');
+for(const f of restored){const original=execFileSync('git',['show',`HEAD:${f.path}`],{maxBuffer:100000000});await writeFile(f.path,original);if(sha(await readFile(f.path))!==f.committedSha256)throw new Error(`Restoration mismatch ${f.path}`);}
+for(const name of ['baseline-proof.json','terminal-before.json','query-plan.json','source-frozen.json']){
+ const path=`${dir}/${name}`;await writeFile(path,JSON.stringify(JSON.parse(await readFile(path,'utf8')),null,2)+'\n');
+}
+const incident=JSON.parse(await readFile(`${dir}/format-restoration.json`,'utf8'));incident.restored=true;incident.protectedQaRestored=restored.filter(f=>f.path.startsWith('docs/qa/2026-10-24-wp-e1-186-qa/')).length;
+await writeFile(`${dir}/format-restoration.json`,JSON.stringify(incident,null,2)+'\n');
+const gates=JSON.parse(await readFile('.tmp/r3-gates.json','utf8'));
+for(const g of gates){if(!['format','format-check'].includes(g.name))continue;const path=`.tmp/r3-${g.name}-invalid-ignore.log.txt`;await rename(g.log,path);g.log=path;}
+await writeFile('.tmp/r3-gates-attempt-1.json',JSON.stringify(gates,null,2)+'\n');
+execFileSync('git',['diff','--quiet','HEAD','--','docs/qa/2026-10-24-wp-e1-186-qa']);
+console.log(`Restored ${restored.length} incidental tracked files from HEAD; independent QA matches committed bytes. All six candidate source hashes unchanged.`);

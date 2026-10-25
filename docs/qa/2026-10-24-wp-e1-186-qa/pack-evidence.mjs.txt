@@ -1,0 +1,25 @@
+import {readFile,writeFile,readdir,stat,mkdir} from 'node:fs/promises';
+import {join,basename} from 'node:path';
+import {createHash} from 'node:crypto';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-e1-186-qa');
+const decode=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');
+const portable=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const perf=decode(await readFile(join(out,'perf-location.log.txt'))).trim().replaceAll('%USERPROFILE%',process.env.USERPROFILE);
+const raw=JSON.parse(decode(await readFile(join(perf,'raw-summary.json'))));
+const c=raw.cases[0],f=c.replays.first;
+const reduced={command:raw.command,environment:raw.environment,boot:raw.boot,error:raw.error,closeError:raw.closeError,correctness:c.correctness,firstReplayKeys:Object.keys(f),replays:Object.fromEntries(Object.entries(c.replays).map(([name,r])=>[name,name==='reconnect'?r:{...r,observations:undefined}])),firstReplaySampledPeakHeap:Math.max(f.before.heapUsed,f.afterMemory.heapUsed,...f.observations.map(x=>x.heapUsed)),pausedOutstandingBytes:c.replays.slow.maxBytesInFlight,cpuProfileSummary:raw.cpuProfile};
+await writeFile(join(out,'perf-results.json'),portable(JSON.stringify(reduced,null,2)));
+const notKept=[];await mkdir(join(out,'perf'),{recursive:true});
+for(const entry of await readdir(perf,{withFileTypes:true})){if(!entry.isFile())continue;const path=join(perf,entry.name),b=await readFile(path);const sha256=createHash('sha256').update(b).digest('hex');if(b.length>1000000){notKept.push({path:portable(path),size:b.length,sha256,reason:'capture exceeds 1000000 bytes; original remains in disposable temp output'});continue;}await writeFile(join(out,'perf',entry.name),portable(decode(b)));}
+// Inventory large disposable stores without deleting or copying them into the report.
+const prior=JSON.parse(decode(await readFile(join(out,'runtime-results.json'))));
+const attempt=JSON.parse(decode(await readFile(join(out,'runtime-attempt-1.json'))));
+const rate=JSON.parse(decode(await readFile(join(out,'rate-results.json')))); const restart=JSON.parse(decode(await readFile(join(out,'restart-results.json')))); const dirs=[perf,prior.dataDir,attempt.dataDir,rate.dataDir,restart.dataDir].filter(Boolean).map(x=>x.replaceAll('%USERPROFILE%',process.env.USERPROFILE));
+async function scan(dir){for(const e of await readdir(dir,{withFileTypes:true})){const path=join(dir,e.name);if(e.isDirectory()){await scan(path);continue;}const size=(await stat(path)).size;if(size<=1000000 || notKept.some(x=>x.path===portable(path)))continue;const b=await readFile(path);notKept.push({path:portable(path),size,sha256:createHash('sha256').update(b).digest('hex'),reason:'large disposable store/capture; retained in temp for orchestrator disposal'});}}
+for(const dir of dirs)await scan(dir);
+await writeFile(join(out,'NOT-KEPT.md'),'# Captures not kept in the QA evidence folder\n\nNo directories were deleted. Originals remain at the locations below. Hashes cover the original bytes at evidence packaging time. Portable copies of smaller text files normalize local user paths to `%USERPROFILE%` and may change encoding. Runtime connection files contain disposable credentials and are not copied.\n\n| Original location | Bytes | SHA-256 | Reason |\n| --- | ---: | --- | --- |\n'+notKept.map(x=>'| `'+x.path+'` | '+x.size+' | `'+x.sha256+'` | '+x.reason+' |').join('\n')+'\n');
+// Normalize paths and PowerShell encodings in every small retained text artifact.
+async function normalize(dir){for(const e of await readdir(dir,{withFileTypes:true})){const path=join(dir,e.name);if(e.isDirectory()){await normalize(path);continue;}if(/\.(txt|json|jsonl|md)$/.test(e.name)){const b=await readFile(path);if(b.length>1000000)throw new Error('Oversized retained artifact '+basename(path));await writeFile(path,portable(decode(b)));}}}
+await normalize(out);
+const manifest=[];async function inventory(dir,prefix=''){for(const e of await readdir(dir,{withFileTypes:true})){const rel=prefix+e.name,path=join(dir,e.name);if(e.isDirectory()){await inventory(path,rel+'/');continue;}if(['README.md','artifact-manifest.json'].includes(rel))continue;const b=await readFile(path);manifest.push({path:rel,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});}}
+await inventory(out);await writeFile(join(out,'artifact-manifest.json'),JSON.stringify(manifest,null,2));console.log(JSON.stringify({artifacts:manifest.length,notKept:notKept.length,perf:{first:f.firstMs,total:f.totalMs,loop:f.eventLoopDelayMs.max,heap:reduced.firstReplaySampledPeakHeap,paused:reduced.pausedOutstandingBytes}}));

@@ -1,0 +1,32 @@
+import { spawn } from 'node:child_process';
+import { readFileSync, writeFileSync, openSync, closeSync, mkdtempSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const gates=JSON.parse(readFileSync('.tmp/r4-gates.json'));
+if(!gates.results.some(item=>item.name==='corruption-after')) throw new Error('wait for required gates/build/probes first');
+const separate=process.argv.includes('--separate');
+if(!separate && existsSync('.tmp/r4-extra-gates.json')) {
+ const completed=JSON.parse(readFileSync('.tmp/r4-extra-gates.json'));
+ if(completed.some(item=>item.name==='tokens') && completed.some(item=>item.name==='browser')) {
+   for(const result of completed) if(!gates.results.some(item=>item.name===result.name)) gates.results.push(result);
+   writeFileSync('.tmp/r4-gates.json',JSON.stringify(gates,null,2));console.log('independent extra gate results merged');process.exit(0);
+ }
+}
+const extraResults=[];
+const output=mkdtempSync(join(tmpdir(),'gg-wp-e1-186-r4-browser-'));
+writeFileSync('.tmp/r4-browser-output.json',JSON.stringify({output,kept:false},null,2));
+for(const [name,command] of [
+ ['tokens','pnpm.cmd check:tokens'],
+ ['browser',`pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/qa.spec.ts --grep "streams 1,200 harness items" --output "${output}" --retries=0`],
+]) {
+ const log=`.tmp/r4-${name}.log.txt`,fd=openSync(log,'w');
+ const started=new Date().toISOString();
+ console.log(`START ${name}`);
+ const code=await new Promise((resolve,reject)=>{
+   const child=spawn(process.env.ComSpec??'C:\\Windows\\System32\\cmd.exe',['/d','/s','/c',`"${command}"`],{env:process.env,stdio:['ignore',fd,fd],windowsHide:true,windowsVerbatimArguments:true});child.on('error',reject);child.on('close',resolve);
+ });
+ closeSync(fd);const result={name,command,code,started,ended:new Date().toISOString(),log};extraResults.push(result);
+ writeFileSync('.tmp/r4-extra-gates.json',JSON.stringify(extraResults,null,2));
+ if(!separate) {gates.results.push(result);writeFileSync('.tmp/r4-gates.json',JSON.stringify(gates,null,2));}
+ console.log(`END ${name}: ${code}`);
+}

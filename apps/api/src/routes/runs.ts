@@ -225,6 +225,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             const run = await repos.runs.get(request.params.id);
             return run !== undefined && isTerminal(run.status);
           },
+          lastLifecycleEvent: () => repos.events.lastLifecycleEvent(request.params.id),
         });
         return reply;
       }

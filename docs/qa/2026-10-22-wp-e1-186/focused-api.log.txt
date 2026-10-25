@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > refuses a live sequence gap so reconnect cannot silently skip durable history 466ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 0 and merges a durable live append between pages exactly once 107ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from -1 and merges a durable live append between pages exactly once 36ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reads bounded pages from 1.5 and merges a durable live append between pages exactly once 24ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reports a held-live count overflow explicitly without losing history 90ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > reports a held-live bytes overflow explicitly without losing history 54ms
+ ✓ src/sse-bounds.test.ts > bounded SSE transport > fails a paused real socket, then recovers its complete SQLite sequence and payloads from the last id 4756ms
+ ✓ src/edges.test.ts > scopes > rejects every write route for a key without the matching scope 2230ms
+ ✓ src/edges.test.ts > loop and run route branches > shows the published version without a draft and reports a missing published export 529ms
+ ✓ src/edges.test.ts > loop and run route branches > starts runs with every optional body field, signals without a payload, and delivers caller return defaults 915ms
+ ✓ src/edges.test.ts > loop and run route branches > reports missing artifact content 1262ms
+ ✓ src/edges.test.ts > loop and run route branches > skips unset harnesses and reports non-Error preflight failures 653ms
+ ✓ src/edges.test.ts > error handler > maps every error family to problem details 384ms
+ ✓ src/edges.test.ts > error handler > serves Swagger UI when enabled 1036ms
+ ✓ src/edges.test.ts > SSE framing > merges events appended during replay in order, sends heartbeats, and ignores events after the end 678ms
+ ✓ src/edges.test.ts > SSE terminal runs > waits out the grace when the status is terminal but the log has no terminal event 818ms
+ ✓ src/edges.test.ts > SSE terminal runs > ends on the terminal event that arrives during the grace 468ms
+ ✓ src/edges.test.ts > SSE terminal runs > keeps tailing a run that is not terminal 530ms
+ ✓ src/edges.test.ts > test helper > surfaces create and publish failures 653ms
+ ✓ src/edges.test.ts > composition defaults > opens a file database, generates a master key, and runs with default ports 1310ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 4270ms
+ ✓ src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 1356ms
+ ✓ src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1863ms
+ ✓ src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 662ms
+ ✓ src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 631ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 840ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 791ms
+ ✓ src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 1001ms
+ ✓ src/sse.test.ts > SSE event stream > stops writing when the client disconnects 4787ms
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Start at  20:09:18
+   Duration  82.80s (tests 43%, import 36%, transform 21%)
+

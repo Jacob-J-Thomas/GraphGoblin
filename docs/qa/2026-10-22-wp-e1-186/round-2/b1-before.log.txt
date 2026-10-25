@@ -1,0 +1,77 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/apps/api
+
+stdout | src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast in-memory reader, 2 live appends per 128-event page over a 19,200-event replay
+{"probe":"in-memory-real-socket","stored":19458,"liveAppendedDuringReplay":258,"delivered":16384,"lastDelivered":16384,"slowConsumer":true}
+
+ × src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast in-memory reader, 2 live appends per 128-event page over a 19,200-event replay 926ms
+   → expected true to be false // Object.is equality
+stdout | src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast real-socket reader on SQLite while the run appends ~100 events/s
+{"probe":"sqlite-real-socket","replayMs":1500,"appendedWhileOpen":258,"delivered":29824,"lastDelivered":29824,"slowConsumer":true}
+
+ × src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast real-socket reader on SQLite while the run appends ~100 events/s 6179ms
+   → expected true to be false // Object.is equality
+pnpm.cmd : 
+At line:8 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/zz-review-186- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast in-memory reader, 
+2 live appends per 128-event page over a 19,200-event replay
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/zz-review-186-probe.test.ts:62:50
+     60|         }),
+     61|       );
+     62|       expect(body.includes('SSE_SLOW_CONSUMER')).toBe(false);
+       |                                                  ^
+     63|     } finally {
+     64|       clearTimeout(stopper);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/zz-review-186-probe.test.ts > review probe: held live buffer during a long replay > fast real-socket reader 
+on SQLite while the run appends ~100 events/s
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/zz-review-186-probe.test.ts:118:50
+    116|         }) + '\n',
+    117|       );
+    118|       expect(text.includes('SSE_SLOW_CONSUMER')).toBe(false);
+       |                                                  ^
+    119|     } finally {
+    120|       clearInterval(timer);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  02:05:44
+   Duration  74.70s (transform 79%, import 11%, tests 10%)
+
+  Transform  transforming modules took 56.32s · 79% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\api
+
