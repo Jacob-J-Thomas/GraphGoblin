@@ -1,0 +1,46 @@
+Command: pnpm.cmd --filter @graphgoblin/web test:coverage
+Working directory: .
+Node: v22.14.0
+Started: 2026-10-24T23:26:05.673Z
+$ vitest run --coverage
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-a2-241/apps/web[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [31m❯[39m src/editor/routing-review.test.ts [2m([22m[2m23 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 219846[2mms[22m[39m
+   [31m❯[39m routing review regressions [2m(23)[22m
+[31m     [31m×[31m seeded sparse graphs preserve geometry and keep detours below twelve bends[39m[33m 105580[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/editor/routing-review.test.ts[2m > [22mrouting review regressions[2m > [22mseeded sparse graphs preserve geometry and keep detours below twelve bends
+[31m[1mError[22m: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/editor/routing-review.test.ts:[2m662:3[22m[39m
+    [90m660|[39m   });
+    [90m661|[39m
+    [90m662|[39m   it('seeded sparse graphs preserve geometry and keep detours below tw…
+    [90m   |[39m   [31m^[39m
+    [90m663|[39m     let seed = 0x182026;
+    [90m664|[39m     const random = () => (seed = (Math.imul(seed, 1664525) + 101390422…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m133 passed[39m[22m[90m (134)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1685 passed[39m[22m[90m (1686)[39m
+[2m   Start at [22m 18:26:24
+[2m   Duration [22m 1442.61s[2m (tests 55%, environment 21%, import 9%, setup 8%, transform 7%, worker 1%)[22m
+
+[2m    Isolate [22m [33m134 workers spawned[39m[2m · ~4.92s startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~324.79s faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-
+  │ 241\apps\web
+
+
+{"label":"coverage-cdp","command":"pnpm.cmd --filter @graphgoblin/web test:coverage","cwd":".","node":"v22.14.0","head":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","endHead":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","applicationPatchSha256":"8cb3eb977c0ee9c202bb90eab46b4e0f9445493ec251638102de59c3f0a3eaca","applicationPatchSha256After":"8cb3eb977c0ee9c202bb90eab46b4e0f9445493ec251638102de59c3f0a3eaca","inputsUnchanged":true,"webDist":"apps/web/dist","started":"2026-10-24T23:26:05.673Z","finished":"2026-10-24T23:50:28.362Z","durationSeconds":1462.689,"exitCode":1}

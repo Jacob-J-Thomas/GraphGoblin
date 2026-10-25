@@ -1,0 +1,256 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: drafts.spec.ts >> a seeded format-3 device draft: synced
+- Location: e2e\drafts.spec.ts:212:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Original device copy preserved')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" getByText('Original device copy preserved') with timeout 10000ms
+  - waiting for getByText('Original device copy preserved')
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - link "Loops":
+    - /url: /app/loops
+  - text: /
+  - heading "cutover server" [level=1]
+  - text: draft only All changes saved
+  - button "Undo" [disabled]
+  - button "Redo" [disabled]
+  - link "Open in Runs" [disabled]
+  - text: "Publish the loop first: runs start from a published version. Ready to publish"
+  - button "Publish"
+- complementary "Palette":
+  - button "Hide palette" [expanded]
+  - heading "Palette" [level=2]
+  - navigation "Node palette":
+    - button "Add Trigger node": Trigger Starts a run
+    - button "Add Decision node": Decision Chooses a route and can limit repeats
+    - button "Add Inference node": Inference Hands work to a harness
+    - button "Add Script node": Script Runs a program
+    - button "Add Mutate node": Mutate Changes the context thread
+    - button "Add Subloop node": Subloop Runs another loop
+    - button "Add Wait node": Wait Parks until input, time, or a signal
+    - button "Add Heartbeat node": Heartbeat Polls on an interval
+    - button "Add Exit node": Exit Finishes with an outcome and return value
+- main:
+  - application:
+    - img:
+      - group "start out to approve"
+    - img:
+      - group "approve out to done"
+    - group "Trigger Start (start)": Trigger Start start out
+    - group "Wait Approve (approve)": Wait Approve approve out
+    - group "Exit Done (done)": Exit Done done
+    - img
+    - button "Zoom In":
+      - img
+    - button "Zoom Out":
+      - img
+    - button "Fit View":
+      - img
+    - button "Toggle Interactivity":
+      - img
+    - link "React Flow attribution":
+      - /url: https://reactflow.dev?utm_source=attribution
+      - text: React Flow
+- complementary "Loop settings":
+  - heading "Loop settings" [level=2]
+  - button "Hide loop settings" [expanded]
+  - region "Loop settings":
+    - text: Name
+    - textbox "Name": cutover server
+    - text: Description
+    - textbox "Description"
+    - heading "Settings" [level=3]
+    - paragraph: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Visits and passes can be explicitly set to Unlimited; cancellation remains available.
+    - form "Loop settings form":
+      - group "Working directory":
+        - text: Working directory Kind
+        - combobox "Kind":
+          - option "fixed"
+          - option "template"
+          - option "temp" [selected]
+      - group "Defaults":
+        - text: Defaults
+        - group "By harness":
+          - text: By harness
+          - paragraph: Defaults keyed by their harness; omitted fields inherit only within that harness.
+          - button "Add entry"
+          - status
+      - text: Maximum node visits
+      - spinbutton "Maximum node visits": "10"
+      - combobox "Maximum node visits mode":
+        - option "Limited" [selected]
+        - option "Unlimited"
+      - paragraph: Fresh entries per node. Default 10; unlimited removes this cutoff.
+      - text: Run deadline seconds
+      - combobox "Run deadline seconds mode":
+        - option "Limited"
+        - option "No run deadline" [selected]
+      - paragraph: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+      - paragraph: No deadline; set one to stop a forgotten run.
+      - text: Subloop depth limit
+      - spinbutton "Subloop depth limit": "8"
+    - heading "Variables" [level=3]
+    - paragraph: Each variable maps a name to a JSON Schema.
+    - form "Variables form":
+      - group "Variables":
+        - text: Variables
+        - button "Add entry"
+        - status
+```
+
+# Test source
+
+```ts
+  187 |   await page.goto(`/app/loops/${loopId}/edit`);
+  188 |   await expect(page.getByRole('heading', { name: 'qa blocked storage' })).toBeVisible();
+  189 |   await expect(page.getByText('Changes are not kept on this device')).toBeVisible();
+  190 |   await expect(page.getByText(/Close other GraphGoblin tabs and windows\./)).toBeVisible();
+  191 | 
+  192 |   // A schema-invalid edit (a subloop without its loop) cannot go to the server, and the device
+  193 |   // refuses it: the editor says it is in this window only.
+  194 |   await page.getByRole('button', { name: 'Add Subloop node' }).click();
+  195 |   await expect(page.getByTestId('save-state')).toHaveText('Kept in this window only');
+  196 |   await expect(
+  197 |     page.getByText(
+  198 |       'Fix the schema errors to save to the server. Changes are kept in this window only.',
+  199 |     ),
+  200 |   ).toBeVisible();
+  201 | 
+  202 |   // The older tab closes its connection: the upgrade completes, and the edit is on the device.
+  203 |   await older.evaluate(() => (window as unknown as { olderTab: IDBDatabase }).olderTab.close());
+  204 |   await expect(page.getByText('Changes are not kept on this device')).toBeHidden();
+  205 |   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  206 |   await page.reload();
+  207 |   await expect(page.getByText('Restored unsaved changes from this device.')).toBeVisible();
+  208 |   await expect(page.locator('.react-flow__node[data-id="subloop"]')).toBeVisible();
+  209 | });
+  210 | 
+  211 | for (const scenario of ['pending', 'synced', 'stale', 'unsynced'] as const) {
+  212 |   test(`a seeded format-3 device draft: ${scenario}`, async ({ page, request }) => {
+  213 |     const pending = scenario === 'pending';
+  214 |     const synced = scenario === 'synced';
+  215 |     const stale = scenario === 'stale';
+  216 |     const created = await request.post('/loops', {
+  217 |       data: { definition: approvalLoop('cutover server') },
+  218 |     });
+  219 |     expect(created.status()).toBe(201);
+  220 |     const { loop } = (await created.json()) as { loop: { id: string } };
+  221 |     const original = {
+  222 |       loopId: loop.id,
+  223 |       savedAt: scenario === 'unsynced' ? '2999-01-01T00:00:00.000Z' : '2000-01-01T00:00:00.000Z',
+  224 |       synced,
+  225 |       baseToken: 'old-server-token',
+  226 |       definition: {
+  227 |         schemaVersion: 3,
+  228 |         name: pending ? 'pending device' : 'automatic device',
+  229 |         nodes: [
+  230 |           { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+  231 |           {
+  232 |             id: 'done',
+  233 |             kind: 'exit',
+  234 |             label: 'Done',
+  235 |             config: pending ? { criteria: [{ when: 'max-iterations', value: 3 }] } : {},
+  236 |           },
+  237 |         ],
+  238 |         edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  239 |       },
+  240 |     };
+  241 |     await page.goto('/app/loops');
+  242 |     await page.evaluate(async (draft) => {
+  243 |       const database = await new Promise<IDBDatabase>((resolve, reject) => {
+  244 |         const opening = indexedDB.open('graphgoblin', 2);
+  245 |         opening.onupgradeneeded = () => {
+  246 |           if (!opening.result.objectStoreNames.contains('drafts'))
+  247 |             opening.result.createObjectStore('drafts');
+  248 |         };
+  249 |         opening.onsuccess = () => resolve(opening.result);
+  250 |         opening.onerror = () => reject(opening.error ?? new Error('IndexedDB open failed'));
+  251 |       });
+  252 |       await new Promise<void>((resolve, reject) => {
+  253 |         const tx = database.transaction('drafts', 'readwrite');
+  254 |         tx.objectStore('drafts').put(draft, draft.loopId);
+  255 |         tx.oncomplete = () => resolve();
+  256 |         tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
+  257 |         tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
+  258 |       });
+  259 |       database.close();
+  260 |     }, original);
+  261 |     await page.goto(`/app/loops/${loop.id}/edit`);
+  262 |     if (pending) {
+  263 |       await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
+  264 |       await expect(page.getByText('This device copy could not be migrated safely')).toBeVisible();
+  265 |       await expect(page.getByText('/nodes/1/config:exit-policy', { exact: true })).toBeVisible();
+  266 |       const downloadReady = page.waitForEvent('download');
+  267 |       await page.getByRole('button', { name: 'Export original device copy' }).click();
+  268 |       const download = await downloadReady;
+  269 |       const path = await download.path();
+  270 |       if (!path) throw new Error('Expected local download');
+  271 |       expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(original);
+  272 |     } else if (synced || stale) {
+  273 |       await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
+  274 |       await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
+  275 |       await expect(page.getByText('The draft changed on the server')).toBeHidden();
+  276 |       if (stale) {
+  277 |         await expect(page.getByText('The server has a newer draft')).toBeVisible();
+  278 |         await page.getByRole('button', { name: "Use this device's copy instead" }).click();
+  279 |         await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
+  280 |         await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  281 |       } else {
+  282 |         await expect(
+  283 |           page.getByRole('button', { name: "Use this device's copy instead" }),
+  284 |         ).toBeHidden();
+  285 |         await page.reload();
+  286 |         await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
+> 287 |         await expect(page.getByText('Original device copy preserved')).toBeVisible();
+      |                                                                        ^ Error: expect(locator).toBeVisible() failed
+  288 |         await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
+  289 |       }
+  290 |     } else {
+  291 |       await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
+  292 |       await expect(page.getByText('This device draft was converted to format 4')).toBeVisible();
+  293 |       await expect(page.getByText(/Another tab or device saved/)).toBeHidden();
+  294 |       const before = (await (await request.get(`/loops/${loop.id}`)).json()) as {
+  295 |         draft: { definition: { name: string } };
+  296 |       };
+  297 |       expect(before.draft.definition.name).toBe('cutover server');
+  298 |       await page.getByRole('button', { name: 'Overwrite with this copy' }).click();
+  299 |       await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  300 |       await page.reload();
+  301 |       await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
+  302 |       await expect(page.getByText('Original device copy preserved')).toBeVisible();
+  303 |     }
+  304 |   });
+  305 | }
+  306 | 
+```

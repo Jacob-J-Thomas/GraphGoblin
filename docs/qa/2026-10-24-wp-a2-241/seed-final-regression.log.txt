@@ -1,0 +1,47 @@
+Command: pnpm.cmd exec playwright test e2e/drafts.spec.ts --grep "two tabs editing" --retries=0 --workers=1
+Working directory: apps/web
+Node: v22.14.0
+Started: 2026-10-25T03:57:44.511Z
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › e2e\drafts.spec.ts:25:1 › two tabs editing one draft: the stale tab is asked to reload or overwrite (15.1s)
+
+
+  1) [chromium] › e2e\drafts.spec.ts:25:1 › two tabs editing one draft: the stale tab is asked to reload or overwrite 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('The draft changed on the server')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('The draft changed on the server') with timeout 10000ms
+      - waiting for getByText('The draft changed on the server')
+
+
+      49 |   // Tab B, still on the copy it loaded, is refused and asked; nothing is overwritten.
+      50 |   await describeLoop(b, 'from tab B');
+    > 51 |   await expect(b.getByText('The draft changed on the server')).toBeVisible();
+         |                                                                ^
+      52 |   await expect(b.getByTestId('save-state')).toHaveText('Draft changed elsewhere');
+      53 |   expect(await serverDescription(request, loopId)).toBe('from tab A');
+      54 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\drafts.spec.ts:51:64
+
+    Error Context: test-results\drafts-two-tabs-editing-on-71871-sked-to-reload-or-overwrite-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\drafts-two-tabs-editing-on-71871-sked-to-reload-or-overwrite-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\drafts-two-tabs-editing-on-71871-sked-to-reload-or-overwrite-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\drafts.spec.ts:25:1 › two tabs editing one draft: the stale tab is asked to reload or overwrite 
+
+{"label":"seed-final-regression","command":"pnpm.cmd exec playwright test e2e/drafts.spec.ts --grep \"two tabs editing\" --retries=0 --workers=1","cwd":"apps/web","node":"v22.14.0","head":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","endHead":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","applicationPatchSha256":"a2d861f84b2eb15ccf0031a66f3eb6f03854b8930d8de345173e85fb3cdc0337","applicationPatchSha256After":"a2d861f84b2eb15ccf0031a66f3eb6f03854b8930d8de345173e85fb3cdc0337","inputsUnchanged":true,"webDist":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-a2-241-seed-WQ01pp","started":"2026-10-25T03:57:44.511Z","finished":"2026-10-25T03:58:19.463Z","durationSeconds":34.952,"exitCode":1}

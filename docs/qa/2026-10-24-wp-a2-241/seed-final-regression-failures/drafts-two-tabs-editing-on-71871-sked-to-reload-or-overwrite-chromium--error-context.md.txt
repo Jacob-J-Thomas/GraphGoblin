@@ -1,0 +1,292 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: drafts.spec.ts >> two tabs editing one draft: the stale tab is asked to reload or overwrite
+- Location: e2e\drafts.spec.ts:25:1
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('The draft changed on the server')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" getByText('The draft changed on the server') with timeout 10000ms
+  - waiting for getByText('The draft changed on the server')
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - link "Loops":
+    - /url: /app/loops
+  - text: /
+  - heading "qa conflict" [level=1]
+  - text: draft only Draft changed elsewhere
+  - button "Undo edit loop description"
+  - button "Redo" [disabled]
+  - link "Open in Runs" [disabled]
+  - text: "Publish the loop first: runs start from a published version. Ready to publish"
+  - button "Publish"
+- status:
+  - paragraph: Seeded conflict notice regression
+  - text: Another tab or device saved this loop’s draft after this editor loaded it. Your changes are kept on this device and nothing was overwritten.
+  - button "Reload server draft"
+  - button "Overwrite with this copy"
+- complementary "Palette":
+  - button "Hide palette" [expanded]
+  - heading "Palette" [level=2]
+  - navigation "Node palette":
+    - button "Add Trigger node": Trigger Starts a run
+    - button "Add Decision node": Decision Chooses a route and can limit repeats
+    - button "Add Inference node": Inference Hands work to a harness
+    - button "Add Script node": Script Runs a program
+    - button "Add Mutate node": Mutate Changes the context thread
+    - button "Add Subloop node": Subloop Runs another loop
+    - button "Add Wait node": Wait Parks until input, time, or a signal
+    - button "Add Heartbeat node": Heartbeat Polls on an interval
+    - button "Add Exit node": Exit Finishes with an outcome and return value
+- main:
+  - application:
+    - img:
+      - group "start out to approve"
+    - img:
+      - group "approve out to done"
+    - group "Trigger Start (start)": Trigger Start start out
+    - group "Wait Approve (approve)": Wait Approve approve out
+    - group "Exit Done (done)": Exit Done done
+    - img
+    - button "Zoom In":
+      - img
+    - button "Zoom Out":
+      - img
+    - button "Fit View":
+      - img
+    - button "Toggle Interactivity":
+      - img
+    - link "React Flow attribution":
+      - /url: https://reactflow.dev?utm_source=attribution
+      - text: React Flow
+- complementary "Loop settings":
+  - heading "Loop settings" [level=2]
+  - button "Hide loop settings" [expanded]
+  - region "Loop settings":
+    - text: Name
+    - textbox "Name": qa conflict
+    - text: Description
+    - textbox "Description": from tab B
+    - heading "Settings" [level=3]
+    - paragraph: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Visits and passes can be explicitly set to Unlimited; cancellation remains available.
+    - form "Loop settings form":
+      - group "Working directory":
+        - text: Working directory Kind
+        - combobox "Kind":
+          - option "fixed"
+          - option "template"
+          - option "temp" [selected]
+      - group "Defaults":
+        - text: Defaults
+        - group "By harness":
+          - text: By harness
+          - paragraph: Defaults keyed by their harness; omitted fields inherit only within that harness.
+          - button "Add entry"
+          - status
+      - text: Maximum node visits
+      - spinbutton "Maximum node visits": "10"
+      - combobox "Maximum node visits mode":
+        - option "Limited" [selected]
+        - option "Unlimited"
+      - paragraph: Fresh entries per node. Default 10; unlimited removes this cutoff.
+      - text: Run deadline seconds
+      - combobox "Run deadline seconds mode":
+        - option "Limited"
+        - option "No run deadline" [selected]
+      - paragraph: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+      - paragraph: No deadline; set one to stop a forgotten run.
+      - text: Subloop depth limit
+      - spinbutton "Subloop depth limit": "8"
+    - heading "Variables" [level=3]
+    - paragraph: Each variable maps a name to a JSON Schema.
+    - form "Variables form":
+      - group "Variables":
+        - text: Variables
+        - button "Add entry"
+        - status
+```
+
+# Test source
+
+```ts
+  1   | /**
+  2   |  * Draft edit conflicts (D26, docs/07 and docs/09): two tabs edit one loop. The draft save sends
+  3   |  * `If-Match` with the token the tab loaded; a stale one answers 409 `DRAFT_CONFLICT`, and the
+  4   |  * editor asks before reloading or overwriting.
+  5   |  */
+  6   | import { readFile } from 'node:fs/promises';
+  7   | import type { APIRequestContext, Page } from '@playwright/test';
+  8   | import { approvalLoop, expect, openDraftTab, showLoopPanel, test } from './fixtures.js';
+  9   | 
+  10  | async function serverDescription(request: APIRequestContext, loopId: string) {
+  11  |   const res = await request.get(`/loops/${loopId}`);
+  12  |   const body = (await res.json()) as {
+  13  |     draft?: { definition: { description?: string } };
+  14  |     current?: { definition: { description?: string } };
+  15  |   };
+  16  |   return (body.draft ?? body.current)?.definition.description;
+  17  | }
+  18  | 
+  19  | async function describeLoop(page: Page, text: string): Promise<void> {
+  20  |   await page.bringToFront();
+  21  |   await showLoopPanel(page);
+  22  |   await page.getByLabel('Description').fill(text);
+  23  | }
+  24  | 
+  25  | test('two tabs editing one draft: the stale tab is asked to reload or overwrite', async ({
+  26  |   context,
+  27  |   request,
+  28  | }) => {
+  29  |   const created = await request.post('/loops', {
+  30  |     data: { definition: approvalLoop('qa conflict') },
+  31  |   });
+  32  |   expect(created.status()).toBe(201);
+  33  |   const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
+  34  | 
+  35  |   // Activate and reconcile each tab before it captures the draft used by conflict assertions.
+  36  |   const a = await context.newPage();
+  37  |   await openDraftTab(a, loopId, 'qa conflict');
+  38  |   const b = await context.newPage();
+  39  |   await openDraftTab(b, loopId, 'qa conflict');
+  40  | 
+  41  |   // Tab A saves first.
+  42  |   await describeLoop(a, 'from tab A');
+  43  |   // Read the stored draft before allowing the other tab to attempt its stale write.
+  44  |   await expect
+  45  |     .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+  46  |     .toBe('from tab A');
+  47  |   await expect(a.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
+  48  | 
+  49  |   // Tab B, still on the copy it loaded, is refused and asked; nothing is overwritten.
+  50  |   await describeLoop(b, 'from tab B');
+> 51  |   await expect(b.getByText('The draft changed on the server')).toBeVisible();
+      |                                                                ^ Error: expect(locator).toBeVisible() failed
+  52  |   await expect(b.getByTestId('save-state')).toHaveText('Draft changed elsewhere');
+  53  |   expect(await serverDescription(request, loopId)).toBe('from tab A');
+  54  | 
+  55  |   // Reload: tab B shows tab A's draft.
+  56  |   await b.getByRole('button', { name: 'Reload server draft' }).click();
+  57  |   await expect(b.getByText('The draft changed on the server')).toBeHidden();
+  58  |   await showLoopPanel(b);
+  59  |   await expect(b.getByLabel('Description')).toHaveValue('from tab A');
+  60  | 
+  61  |   // Tab A saves again; tab B edits again, conflicts, and overwrites this time.
+  62  |   await describeLoop(a, 'tab A again');
+  63  |   await expect
+  64  |     .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+  65  |     .toBe('tab A again');
+  66  |   await describeLoop(b, 'tab B wins');
+  67  |   await expect(b.getByText('The draft changed on the server')).toBeVisible();
+  68  |   await b.getByRole('button', { name: 'Overwrite with this copy' }).click();
+  69  |   await expect
+  70  |     .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+  71  |     .toBe('tab B wins');
+  72  |   await expect(b.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
+  73  | 
+  74  |   // Tab A is now the stale one.
+  75  |   await describeLoop(a, 'tab A late');
+  76  |   await expect(a.getByText('The draft changed on the server')).toBeVisible();
+  77  |   expect(await serverDescription(request, loopId)).toBe('tab B wins');
+  78  | });
+  79  | 
+  80  | test('a restored-draft notice stays dismissed through edits and returns after a restoring reload', async ({
+  81  |   page,
+  82  |   request,
+  83  | }) => {
+  84  |   const created = await request.post('/loops', {
+  85  |     data: { definition: approvalLoop('server copy') },
+  86  |   });
+  87  |   expect(created.status()).toBe(201);
+  88  |   const { loop } = (await created.json()) as { loop: { id: string } };
+  89  |   const localDefinition = approvalLoop('older local copy');
+  90  |   await page.goto('/app/loops');
+  91  | 
+  92  |   // Seed an older unsynced browser copy so the editor offers it separately from the server draft.
+  93  |   await page.evaluate(
+  94  |     async ({ loopId, definition }) => {
+  95  |       const db = await new Promise<IDBDatabase>((resolve, reject) => {
+  96  |         // Version 2 preserves older copies; conversion is explicit per draft.
+  97  |         const request = indexedDB.open('graphgoblin', 2);
+  98  |         request.onupgradeneeded = () => request.result.createObjectStore('drafts');
+  99  |         request.onsuccess = () => resolve(request.result);
+  100 |         request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+  101 |       });
+  102 |       await new Promise<void>((resolve, reject) => {
+  103 |         const transaction = db.transaction('drafts', 'readwrite');
+  104 |         transaction.objectStore('drafts').put(
+  105 |           {
+  106 |             loopId,
+  107 |             definition,
+  108 |             savedAt: '2000-01-01T00:00:00.000Z',
+  109 |             synced: false,
+  110 |           },
+  111 |           loopId,
+  112 |         );
+  113 |         transaction.oncomplete = () => resolve();
+  114 |         transaction.onerror = () =>
+  115 |           reject(transaction.error ?? new Error('IndexedDB write failed'));
+  116 |         transaction.onabort = () =>
+  117 |           reject(transaction.error ?? new Error('IndexedDB write aborted'));
+  118 |       });
+  119 |       db.close();
+  120 |     },
+  121 |     { loopId: loop.id, definition: localDefinition },
+  122 |   );
+  123 | 
+  124 |   // Keep the accepted local copy unsynced so the reload below exercises restoration again.
+  125 |   await page.route(`**/loops/${loop.id}/draft`, (route) =>
+  126 |     route.request().method() === 'PUT' ? route.abort() : route.continue(),
+  127 |   );
+  128 |   await page.goto(`/app/loops/${loop.id}/edit`);
+  129 |   await expect(page.getByRole('heading', { name: 'server copy' })).toBeVisible();
+  130 |   await page.getByRole('button', { name: "Use this device's copy instead" }).click();
+  131 |   await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
+  132 |   const restoredNotice = page.getByText('Restored unsaved changes from this device.');
+  133 |   await expect(restoredNotice).toBeVisible();
+  134 |   await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+  135 | 
+  136 |   const dismissButtons = page.getByRole('button', { name: 'Dismiss notice' });
+  137 |   await dismissButtons.nth(0).click();
+  138 |   await expect(restoredNotice).toBeHidden();
+  139 |   await expect(page.getByText('Notice dismissed')).toBeAttached();
+  140 |   await expect(dismissButtons).toHaveCount(1);
+  141 |   await expect(dismissButtons).toBeFocused();
+  142 |   await dismissButtons.click();
+  143 |   await expect(page.getByTestId('save-state')).toBeFocused();
+  144 |   await expect(page.getByTestId('save-state')).toHaveAttribute('tabindex', '-1');
+  145 | 
+  146 |   await showLoopPanel(page);
+  147 |   await page.getByLabel('Description').fill('edited while the restore notice is dismissed');
+  148 |   await expect(restoredNotice).toBeHidden();
+  149 |   await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+  150 |   await expect(
+  151 |     page.getByText('Offline: the draft is kept on this device and saved when the API is back.'),
+```

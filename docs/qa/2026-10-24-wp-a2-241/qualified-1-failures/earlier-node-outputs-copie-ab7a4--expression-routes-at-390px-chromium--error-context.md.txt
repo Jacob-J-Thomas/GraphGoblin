@@ -1,0 +1,745 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: earlier-node-outputs.spec.ts >> copied output references drive scripts and expression routes at 390px
+- Location: e2e\earlier-node-outputs.spec.ts:8:3
+
+# Error details
+
+```
+Test timeout of 60000ms exceeded.
+```
+
+```
+Error: locator.click: Test timeout of 60000ms exceeded.
+Call log:
+  - waiting for getByTestId('node-check')
+    - locator resolved to <div data-testid="node-check" class="rounded-lg border bg-surface-raised text-xs text-default border-default shadow-2">…</div>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 20ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  5 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  3 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - performing click action
+    2 × <div class="react-flow__pane draggable">…</div> intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+    2 × <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+    2 × <div class="react-flow__pane draggable">…</div> intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - performing click action
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  6 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  3 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  3 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - performing click action
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  3 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  3 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - performing click action
+    2 × <div class="react-flow__pane draggable">…</div> intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  2 × retrying click action
+      - waiting 500ms
+      - waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div data-testid="loop-panel-rail-content" class="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div> from <aside id="loop-panel" data-side="right" aria-label="Loop settings" class="flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2 pointer-coarse:w-[45px]">…</aside> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - performing click action
+    - <div class="react-flow__pane draggable">…</div> intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+    - element is visible, enabled and stable
+    - scrolling into view if needed
+    - done scrolling
+    - <span aria-hidden="true" data-kind="script" class="inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]">…</span> from <div tabindex="0" role="group" data-id="consumer" aria-roledescription="node" data-testid="rf__node-consumer" aria-label="Script Add one (consumer)" aria-describedby="react-flow__node-desc-1" class="react-flow__node react-flow__node-gg nopan selected selectable draggable">…</div> subtree intercepts pointer events
+  - retrying click action
+    - waiting 500ms
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - button "Menu" [ref=e22] [cursor=pointer]
+  - generic [ref=e25]:
+    - banner [ref=e26]:
+      - link "Loops" [ref=e27] [cursor=pointer]:
+        - /url: /app/loops
+      - generic [ref=e28]: /
+      - heading "Output references 390" [level=1] [ref=e29]
+      - generic [ref=e30]: draft only
+      - generic [ref=e32]: All changes saved
+      - generic [ref=e36]:
+        - button "Undo edit config of consumer" [ref=e37] [cursor=pointer]
+        - button "Redo" [disabled] [ref=e41]
+        - link "Open in Runs" [disabled] [ref=e45]
+        - generic [ref=e48]: "Publish the loop first: runs start from a published version."
+        - generic [ref=e49]: Ready to publish
+        - button "Publish" [ref=e53] [cursor=pointer]
+    - generic [ref=e58]:
+      - complementary "Palette" [ref=e59]:
+        - button "Show palette" [ref=e60] [cursor=pointer]
+        - generic [ref=e65]:
+          - button "Add Trigger node" [ref=e66]
+          - button "Add Decision node" [ref=e70]
+          - button "Add Inference node" [ref=e75]
+          - button "Add Script node" [ref=e80]
+          - button "Add Mutate node" [ref=e84]
+          - button "Add Subloop node" [ref=e89]
+          - button "Add Wait node" [ref=e94]
+          - button "Add Heartbeat node" [ref=e98]
+          - button "Add Exit node" [ref=e102]
+      - main [ref=e106]:
+        - application [ref=e108]:
+          - generic [ref=e110]:
+            - generic:
+              - generic:
+                - img:
+                  - group "start out to producer-id" [ref=e111] [cursor=pointer]
+                - img:
+                  - group "producer-id out to consumer" [ref=e114] [cursor=pointer]
+                - img:
+                  - group "consumer out to check" [ref=e117] [cursor=pointer]
+                - img:
+                  - group "check Yes (yes) to done" [ref=e120] [cursor=pointer]:
+                    - generic [ref=e123]: "Yes"
+                - img:
+                  - group "check No (no) to wrong" [ref=e125] [cursor=pointer]:
+                    - generic [ref=e128]: "No"
+              - generic:
+                - group "Trigger Start (start)" [ref=e130]:
+                  - generic [ref=e131]:
+                    - generic [ref=e132]: Trigger
+                    - generic [ref=e137]:
+                      - generic [ref=e138]: Start
+                      - generic [ref=e139]: start
+                      - generic [ref=e141]:
+                        - text: out
+                        - generic "start output out (out)" [ref=e142]
+                - group "Script Produce 42 (producer-id)" [ref=e143]:
+                  - generic [ref=e144]:
+                    - generic "producer-id input" [ref=e145]
+                    - generic [ref=e146]: Script
+                    - generic [ref=e151]:
+                      - generic [ref=e152]: Produce 42
+                      - generic [ref=e153]: producer-id
+                      - generic [ref=e155]:
+                        - text: out
+                        - generic "producer-id output out (out)" [ref=e156]
+                - group "Script Add one (consumer)" [active] [ref=e157]:
+                  - generic [ref=e158]:
+                    - generic "consumer input" [ref=e159]
+                    - generic [ref=e160]: Script
+                    - generic [ref=e165]:
+                      - generic [ref=e166]: Add one
+                      - generic [ref=e167]: consumer
+                      - generic [ref=e169]:
+                        - text: out
+                        - generic "consumer output out (out)" [ref=e170]
+                - group "Decision Check 43 (check)" [ref=e171]:
+                  - generic [ref=e172]:
+                    - generic "check input" [ref=e173]
+                    - generic [ref=e174]: Decision
+                    - generic [ref=e180]:
+                      - generic [ref=e181]: Check 43
+                      - generic [ref=e182]: check
+                      - generic [ref=e183]:
+                        - generic [ref=e184]:
+                          - text: "Yes"
+                          - generic "check output Yes (yes)" [ref=e185]
+                        - generic [ref=e186]:
+                          - text: "No"
+                          - generic "check output No (no)" [ref=e187]
+                - group "Exit Done (done)" [ref=e188]:
+                  - generic [ref=e189]:
+                    - generic "done input" [ref=e190]
+                    - generic [ref=e191]: Exit
+                    - generic [ref=e196]:
+                      - generic [ref=e197]: Done
+                      - generic [ref=e198]: done
+                - group "Exit Wrong value (wrong)" [ref=e199]:
+                  - generic [ref=e200]:
+                    - generic "wrong input" [ref=e201]
+                    - generic [ref=e202]: Exit
+                    - generic [ref=e207]:
+                      - generic [ref=e208]: Wrong value
+                      - generic [ref=e209]: wrong
+          - generic "Control Panel" [ref=e210]:
+            - button "Zoom In" [ref=e211] [cursor=pointer]
+            - button "Zoom Out" [ref=e214] [cursor=pointer]
+            - button "Fit View" [ref=e217] [cursor=pointer]
+            - button "Toggle Interactivity" [ref=e220] [cursor=pointer]
+          - link "React Flow attribution" [ref=e224] [cursor=pointer]:
+            - /url: https://reactflow.dev?utm_source=attribution
+            - text: React Flow
+      - complementary "Loop settings" [ref=e227]:
+        - button "Show loop settings" [ref=e228] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  1   | import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+  2   | import {
+  3   |   test as base,
+  4   |   expect,
+  5   |   type APIRequestContext,
+  6   |   type Locator,
+  7   |   type Page,
+  8   | } from '@playwright/test';
+  9   | import { manualTriggerConfig } from '../src/__fixtures__/triggers.js';
+  10  | export type { TriggerFields } from '../src/__fixtures__/triggers.js';
+  11  | export { triggerConfig, manualTriggerConfig } from '../src/__fixtures__/triggers.js';
+  12  | 
+  13  | /** Tests run against the server global-setup started; its URL arrives through the environment. */
+  14  | export const test = base.extend({
+  15  |   // Playwright fixtures must destructure their dependencies, even when there are none.
+  16  |   // eslint-disable-next-line no-empty-pattern
+  17  |   baseURL: async ({}, use) => {
+  18  |     const url = process.env['GG_E2E_BASE_URL'];
+  19  |     if (!url) throw new Error('GG_E2E_BASE_URL is not set; the global setup did not run');
+  20  |     await use(url);
+  21  |   },
+  22  | });
+  23  | 
+  24  | export { expect };
+  25  | 
+  26  | /** Initialize an explicitly active editor tab before another tab can edit its draft. */
+  27  | export async function openDraftTab(page: Page, loopId: string, name: string): Promise<void> {
+  28  |   // Multi-page traces show renderer work stalled until explicit activation, even while the
+  29  |   // headless page reports visible/focused. A heading alone can also precede reconciliation.
+  30  |   // These are state synchronization waits; their timeouts are failure budgets, not delays
+  31  |   // or assertions about how fast the editor must render.
+  32  |   await page.bringToFront();
+  33  |   await page.goto(`/app/loops/${loopId}/edit`);
+  34  |   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  35  |   await expect(
+  36  |     page.getByText(
+  37  |       'The editor is available. Checking the server and this device before saving changes.',
+  38  |       { exact: true },
+  39  |     ),
+  40  |   ).toBeHidden();
+  41  | }
+  42  | 
+  43  | /** A manual trigger, a wait-for-input node, and an exit. */
+  44  | export function approvalLoop(name: string) {
+  45  |   return {
+  46  |     schemaVersion: CURRENT_DEFINITION_FORMAT,
+  47  |     name,
+  48  |     nodes: [
+  49  |       {
+  50  |         id: 'start',
+  51  |         kind: 'trigger',
+  52  |         label: 'Start',
+  53  |         config: manualTriggerConfig(),
+  54  |         ui: { x: 0, y: 80 },
+  55  |       },
+  56  |       {
+  57  |         id: 'approve',
+  58  |         kind: 'wait',
+  59  |         label: 'Approve',
+  60  |         config: { mode: 'input', prompt: 'Approve?' },
+  61  |         ui: { x: 260, y: 80 },
+  62  |       },
+  63  |       { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 520, y: 80 } },
+  64  |     ],
+  65  |     edges: [
+  66  |       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'approve' } },
+  67  |       { id: 'e2', from: { node: 'approve', port: 'out' }, to: { node: 'done' } },
+  68  |     ],
+  69  |   };
+  70  | }
+  71  | 
+  72  | /** Drive the E2E server's control port, for example to script the fake harness. */
+  73  | export async function control(request: APIRequestContext, path: string, body: unknown = {}) {
+  74  |   const base = process.env['GG_E2E_CONTROL_URL'];
+  75  |   if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
+  76  |   const res = await request.post(`${base}${path}`, { data: body });
+  77  |   expect(res.ok()).toBe(true);
+  78  |   return (await res.json()) as Record<string, unknown>;
+  79  | }
+  80  | 
+  81  | /**
+  82  |  * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it
+  83  |  * is already open. With nothing remembered it starts expanded at 1280 px and wider, collapsed below.
+  84  |  */
+  85  | export async function showLoopPanel(page: Page): Promise<void> {
+  86  |   await expect(page.getByRole('button', { name: /^(Show|Hide) loop settings$/ })).toBeVisible();
+  87  |   const show = page.getByRole('button', { name: 'Show loop settings' });
+  88  |   if (await show.isVisible()) await show.click();
+  89  |   await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+  90  |     'aria-expanded',
+  91  |     'true',
+  92  |   );
+  93  | }
+  94  | 
+  95  | /** Open a node's editor by clicking its card (on the header band, away from port handles). */
+  96  | export async function openNode(page: Page, nodeId: string) {
+> 97  |   await page.getByTestId(`node-${nodeId}`).click({ position: { x: 60, y: 12 } });
+      |                                            ^ Error: locator.click: Test timeout of 60000ms exceeded.
+  98  |   const dialog = page.getByRole('dialog');
+  99  |   await expect(dialog).toBeVisible();
+  100 |   return dialog;
+  101 | }
+  102 | 
+  103 | /**
+  104 |  * Expand the node editor's Advanced options (#14) unless they are open already, and return the
+  105 |  * toggle. Advanced fields stay collapsed under it until then.
+  106 |  */
+  107 | export async function openAdvanced(scope: Page | Locator) {
+  108 |   const toggle = scope.getByRole('button', { name: /^Advanced\b/ });
+  109 |   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  110 |   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  111 |   return toggle;
+  112 | }
+  113 | 
+  114 | /** Expand a collapsed list item, such as "Operations 1" of a mutate node (#14). */
+  115 | export async function openItem(scope: Page | Locator, name: string) {
+  116 |   const toggle = scope.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+  117 |   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  118 |   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  119 |   return toggle;
+  120 | }
+  121 | 
+  122 | /** Close the open node editor with its Done button. */
+  123 | export async function closeNode(page: Page): Promise<void> {
+  124 |   await page.getByRole('dialog').getByRole('button', { name: 'Done', exact: true }).click();
+  125 |   await expect(page.getByRole('dialog')).toHaveCount(0);
+  126 | }
+  127 | 
+  128 | /** Create and publish a loop through the API; returns its id. */
+  129 | export async function publishLoop(
+  130 |   request: APIRequestContext,
+  131 |   definition: unknown,
+  132 | ): Promise<string> {
+  133 |   const created = await request.post('/loops', { data: { definition } });
+  134 |   expect(created.status()).toBe(201);
+  135 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  136 |   const published = await request.post(`/loops/${loop.id}/publish`);
+  137 |   expect(published.status()).toBe(200);
+  138 |   return loop.id;
+  139 | }
+  140 | 
+```
