@@ -1,0 +1,554 @@
+{
+  "run": {
+    "id": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+    "ownerId": "local",
+    "loopId": "01M5QZ88GN04WAH1F4R4D6PFJA",
+    "versionId": "01M5QZ88GN04WAH1F4R4D6PFJB",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Repair missing 0.6441038775962111",
+      "label": "Repair missing 0.6441038775962111 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5QZ88HX0GAKJVFSGMFC1RZ6",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-24T22:07:12.957Z",
+    "startedAt": "2026-10-24T22:07:12.983Z",
+    "finishedAt": "2026-10-24T22:07:13.489Z",
+    "lastEventSeq": 24
+  },
+  "events": [
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 1,
+      "ts": "2026-10-24T22:07:12.957Z",
+      "type": "run.queued",
+      "versionId": "01M5QZ88GN04WAH1F4R4D6PFJB",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Repair missing 0.6441038775962111",
+        "label": "Repair missing 0.6441038775962111 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+          "loopId": "01M5QZ88GN04WAH1F4R4D6PFJA",
+          "versionId": "01M5QZ88GN04WAH1F4R4D6PFJB",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5QZ88HX0GAKJVFSGMFC1RZ6",
+          "source": "manual.api",
+          "caller": {
+            "kind": "api-key",
+            "id": "01M5QZ8475YCD5H5ZCEB99CE3Q"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-24T22:07:12.957Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 2,
+      "ts": "2026-10-24T22:07:12.987Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 3,
+      "ts": "2026-10-24T22:07:13.001Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 4,
+      "ts": "2026-10-24T22:07:13.011Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T22:07:13.008Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-24T22:07:13.008Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 3
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 5,
+      "ts": "2026-10-24T22:07:13.040Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 1,
+      "configHash": "86f8351ab19ea241"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 6,
+      "ts": "2026-10-24T22:07:13.046Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88MPHJVGWY5F9DJGEH6A",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Authored task: preserve exactly [QA-265]"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 7,
+      "ts": "2026-10-24T22:07:13.070Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "7ed52632-2594-4dcd-b92b-2790aa002238",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 8,
+      "ts": "2026-10-24T22:07:13.072Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88MPHJVGWY5F9DJGEH6A",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 9,
+      "ts": "2026-10-24T22:07:13.088Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 1,
+        "outputTokens": 1,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 10,
+      "ts": "2026-10-24T22:07:13.134Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88QEE6HHPJE9H995TTTJ",
+      "harness": "codex",
+      "promptKind": "repair",
+      "prompt": "Repair exactly: \"invalid\"",
+      "resumeSessionId": "7ed52632-2594-4dcd-b92b-2790aa002238"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 11,
+      "ts": "2026-10-24T22:07:13.165Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88QEE6HHPJE9H995TTTJ",
+      "submission": "session-missing"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 12,
+      "ts": "2026-10-24T22:07:13.172Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88QEE6HHPJE9H995TTTJ",
+      "submission": "session-missing"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 13,
+      "ts": "2026-10-24T22:07:13.182Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "HARNESS_SESSION_MISSING",
+        "message": "The codex session \"7ed52632-2594-4dcd-b92b-2790aa002238\" from current-visit is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+        "nodeId": "worker",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_SESSION_MISSING"
+        },
+        "inference": {
+          "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+          "turnId": "01M5QZ88QEE6HHPJE9H995TTTJ",
+          "submission": "session-missing",
+          "promptKind": "repair",
+          "sessionId": "7ed52632-2594-4dcd-b92b-2790aa002238"
+        },
+        "missingSession": {
+          "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+          "harness": "codex",
+          "sessionId": "7ed52632-2594-4dcd-b92b-2790aa002238",
+          "origin": "current-visit",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 14,
+      "ts": "2026-10-24T22:07:13.332Z",
+      "type": "run.resumed",
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5QZ8475YCD5H5ZCEB99CE3Q"
+      },
+      "freshSession": {
+        "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+        "harness": "codex",
+        "sessionId": "7ed52632-2594-4dcd-b92b-2790aa002238",
+        "origin": "current-visit",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 13,
+        "priorContextCarried": false,
+        "prompt": "Authored task: preserve exactly [QA-265]"
+      }
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 15,
+      "ts": "2026-10-24T22:07:13.364Z",
+      "type": "node.started",
+      "nodeId": "worker",
+      "kind": "inference",
+      "attempt": 2,
+      "configHash": "86f8351ab19ea241"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 16,
+      "ts": "2026-10-24T22:07:13.369Z",
+      "type": "harness.turn",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88YSKHA9FFQNH4F8XA68",
+      "harness": "codex",
+      "promptKind": "authored",
+      "prompt": "Authored task: preserve exactly [QA-265]"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 17,
+      "ts": "2026-10-24T22:07:13.395Z",
+      "type": "harness.session",
+      "nodeId": "worker",
+      "harness": "codex",
+      "sessionId": "a0943130-6574-4803-9c66-43024c65014c",
+      "mode": "fresh",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 18,
+      "ts": "2026-10-24T22:07:13.397Z",
+      "type": "harness.submission",
+      "nodeId": "worker",
+      "visitId": "01M5QZ88HX0GAKJVFSGMFC1RZ5:5",
+      "turnId": "01M5QZ88YSKHA9FFQNH4F8XA68",
+      "submission": "submitted",
+      "marker": "fake.accepted"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 19,
+      "ts": "2026-10-24T22:07:13.398Z",
+      "type": "harness.usage",
+      "nodeId": "worker",
+      "usage": {
+        "inputTokens": 1,
+        "outputTokens": 1,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 20,
+      "ts": "2026-10-24T22:07:13.433Z",
+      "type": "node.finished",
+      "nodeId": "worker",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/artifacts/-",
+          "value": {
+            "id": "01M5QZ890NN3P266GP6X6CJ98W",
+            "kind": "transcript",
+            "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "nodeId": "worker",
+            "bytes": 2,
+            "label": "transcript worker"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/messages/-",
+          "value": {
+            "id": "01M5QZ890NN3P266GP6X6CJ98X",
+            "role": "assistant",
+            "content": "42",
+            "nodeId": "worker",
+            "ts": "2026-10-24T22:07:13.429Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/outputs/worker",
+          "value": {
+            "nodeId": "worker",
+            "value": 42,
+            "at": "2026-10-24T22:07:13.429Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "worker",
+            "value": 42,
+            "at": "2026-10-24T22:07:13.429Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 64
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 21,
+      "ts": "2026-10-24T22:07:13.463Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "caacd31f1376b30f"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 22,
+      "ts": "2026-10-24T22:07:13.485Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 23,
+      "ts": "2026-10-24T22:07:13.485Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 2
+    },
+    {
+      "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "seq": 24,
+      "ts": "2026-10-24T22:07:13.485Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success"
+    }
+  ],
+  "sessions": {
+    "items": [
+      {
+        "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+        "nodeId": "worker",
+        "attempt": 1,
+        "harness": "codex",
+        "sessionId": "7ed52632-2594-4dcd-b92b-2790aa002238",
+        "status": "failed",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-24T22:07:13.175Z"
+      },
+      {
+        "runId": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+        "nodeId": "worker",
+        "attempt": 2,
+        "harness": "codex",
+        "sessionId": "a0943130-6574-4803-9c66-43024c65014c",
+        "status": "finished",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-24T22:07:13.429Z"
+      }
+    ]
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5QZ88HX0GAKJVFSGMFC1RZ5",
+      "loopId": "01M5QZ88GN04WAH1F4R4D6PFJA",
+      "versionId": "01M5QZ88GN04WAH1F4R4D6PFJB",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5QZ88HX0GAKJVFSGMFC1RZ6",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5QZ8475YCD5H5ZCEB99CE3Q"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-24T22:07:12.957Z"
+      }
+    },
+    "messages": [
+      {
+        "id": "01M5QZ890NN3P266GP6X6CJ98X",
+        "role": "assistant",
+        "content": "42",
+        "nodeId": "worker",
+        "ts": "2026-10-24T22:07:13.429Z"
+      }
+    ],
+    "vars": {},
+    "artifacts": [
+      {
+        "id": "01M5QZ890NN3P266GP6X6CJ98W",
+        "kind": "transcript",
+        "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "nodeId": "worker",
+        "label": "transcript worker",
+        "bytes": 2
+      }
+    ],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-24T22:07:13.008Z"
+      },
+      "worker": {
+        "nodeId": "worker",
+        "value": 42,
+        "at": "2026-10-24T22:07:13.429Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "worker",
+      "value": 42,
+      "at": "2026-10-24T22:07:13.429Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1,
+        "worker": 2,
+        "done": 1
+      },
+      "usage": {
+        "inputTokens": 1,
+        "outputTokens": 1,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

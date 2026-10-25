@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-25T01:58:13.915Z",
+  "case": "Build capture encoding/path normalization",
+  "expected": "Canonical UTF-8 text with user paths normalized",
+  "before": {
+    "encoding": "UTF-16LE with BOM",
+    "bytes": 8186,
+    "sha256": "ee1d9bda2a43412a24241fbacdf6315e1e67e2e0481b2b620cdafb9bd46ddf1f",
+    "decodedUnnormalizedPaths": 1,
+    "manualPathReview": "FAIL",
+    "initialAuditMissedInterleavedNulPaths": true
+  },
+  "after": {
+    "encoding": "UTF-8",
+    "bytes": 4115,
+    "sha256": "26c7aecfec2bc10eeed67006e9a73f74f906d4367f255ba7ebc5a4d514dea7e0",
+    "decodedUnnormalizedPaths": 0,
+    "pathReview": "PASS"
+  },
+  "auditRule": "Reject UTF-16, invalid UTF-8 and NUL-containing text; validate normalized paths",
+  "testOutcomesChanged": false
+}

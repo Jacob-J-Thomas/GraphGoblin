@@ -1,0 +1,36 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');
+const read=async n=>JSON.parse((await readFile(join(out,n),'utf8')).replace(/^\uFEFF/,''));
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(head,'08acef6cebd40e7f6acbb896d950c7de2d62e9d6');assert.match(process.version,/^v22\./);
+assert.equal(execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim(),'');assert.equal(execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim(),'');
+const report=await readFile(join(out,'README.md'),'utf8'),files=(await readdir(out)).sort();
+const links=[...report.matchAll(/\]\(([^)]+)\)/g)].map(x=>x[1]);
+for(const target of links)if(target!=='qa-audit.json')await stat(resolve(out,target.split('#')[0]));
+let json=0,jsonl=0;
+for(const file of files){
+  assert.ok(!file.endsWith('.mjs'),'Executable QA copy left behind: '+file);
+  const path=join(out,file),info=await stat(path);assert.ok(info.isFile());assert.ok(info.size<=1_000_000,file+' too large');
+  if(file!=='README.md')assert.ok(links.includes(file),'Unlinked artifact '+file);
+  const buffer=await readFile(path);assert.ok(!(buffer[0]===255&&buffer[1]===254)&&!(buffer[0]===254&&buffer[1]===255),'UTF-16 text in '+file);
+  const text=new TextDecoder('utf-8',{fatal:true}).decode(buffer);assert.ok(!text.includes('\0'),'NUL in text artifact '+file);
+  for(const raw of [process.env.USERPROFILE,process.env.USERPROFILE.replaceAll('\\','/'),JSON.stringify(process.env.USERPROFILE).slice(1,-1)])assert.ok(!text.includes(raw),'Unnormalized path in '+file);
+  if(file.endsWith('.json')){await read(file);json++}
+  if(file.endsWith('.jsonl')){for(const line of text.trim().split('\n').filter(Boolean))JSON.parse(line);jsonl++}
+}
+const gates=(await read('gates.json')).filter(r=>r.kind==='coverage gate');assert.equal(gates.length,3);
+const chronological=gates.flatMap(g=>[g,...g.retries]).sort((a,b)=>Date.parse(a.startedAt)-Date.parse(b.startedAt));
+for(let i=0;i<chronological.length;i++){
+  const job=chronological[i];assert.ok(job.cmd.includes('--maxWorkers=1'));
+  if(i)assert.ok(Date.parse(job.startedAt)>=Date.parse(chronological[i-1].finishedAt),'Overlapping test jobs');
+}
+for(const gate of gates){assert.deepEqual([...gate.retries.map(r=>r.file)].sort(),gate.exitCode===0?[]:[...gate.failedFiles].sort());assert.equal(new Set(gate.retries.map(r=>r.file)).size,gate.retries.length)}
+const allocations=(await readFile(join(out,'api-allocation.log.txt'),'utf8')).trim().split('\n').filter(Boolean).map(x=>JSON.parse(x));assert.ok(allocations.length>0,'No allocation audit rows');
+for(const row of allocations){assert.ok(row.port>=6040&&row.port<=6049);assert.ok(row.dataDir.includes('gg-qa-f4-265-r2-api-'))}
+const manifest=[];for(const name of files)if(!['artifact-manifest.json','qa-audit.json'].includes(name)){const b=await readFile(join(out,name));manifest.push({name,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')})}
+await writeFile(join(out,'artifact-manifest.json'),JSON.stringify(manifest,null,2));
+const result={head,node:process.version,checkedAt:new Date().toISOString(),result:'PASS',files:files.length+Number(!files.includes('qa-audit.json')),jsonFiles:json,jsonlFiles:jsonl,links:links.length,allocationRows:allocations.length,ports:[...new Set(allocations.map(a=>a.port))].sort(),sequentialTestJobs:chronological.length,oneRerunPerFailedFile:true,noTrackedOrStagedChanges:true,noExecutableQaCopies:true,allKeptArtifactsLinked:true,allUnderOneMillionBytes:true,localPathsNormalized:true};
+await writeFile(join(out,'qa-audit.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));

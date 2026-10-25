@@ -1,0 +1,43 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {once} from 'node:events';
+import {readFile,writeFile,copyFile,stat,unlink,readdir} from 'node:fs/promises';
+import {appendFileSync,writeFileSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.equal(head,'08acef6cebd40e7f6acbb896d950c7de2d62e9d6');assert.match(process.version,/^v22\./);
+const functional=JSON.parse(await readFile(join(out,'functional-complete.json'),'utf8'));assert.equal(functional.gatewayExited,true);
+const results=[];
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+async function save(name,value){await writeFile(join(out,name),clean(JSON.stringify(value,null,2)))}
+async function command(name,cmd){
+  const logFile=join(out,name+'.log.txt');writeFileSync(logFile,'');const start=Date.now();const began=new Date().toISOString();console.log('START '+cmd);
+  const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',cmd],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+  child.stdout.on('data',x=>appendFileSync(logFile,x));child.stderr.on('data',x=>appendFileSync(logFile,x));
+  const [exitCode,signal]=await once(child,'close');const raw=await readFile(logFile,'utf8');await writeFile(logFile,clean(raw));
+  const result={name,cmd,exitCode,signal,startedAt:began,finishedAt:new Date().toISOString(),ms:Date.now()-start,log:name+'.log.txt'};
+  console.log('END '+name+' exit='+exitCode+' seconds='+(result.ms/1000).toFixed(2));return {result,raw,start};
+}
+const apiConfig=' --config ../../docs/qa/2026-10-24-wp-f4-265-qa/round-2/api-allocation.vitest.mjs';
+for(const [pkg,dir]of [['adapter-codex','packages/adapter-codex'],['api','apps/api'],['web','apps/web']]){
+  if(pkg==='api')for(const stem of ['api-allocation.vitest','api-allocation.fixture'])await copyFile(join(out,stem+'.mjs.txt'),join(out,stem+'.mjs'));
+  const config=pkg==='api'?apiConfig:'';
+  let run=await command('coverage-'+pkg,'pnpm.cmd --filter @graphgoblin/'+pkg+' test:coverage --maxWorkers=1'+config);
+  // The brief explicitly authorizes direct binaries only for this pnpm store-lock error.
+  if(run.raw.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')){
+    results.push({...run.result,kind:'pnpm store-lock failure'});await save('gates.json',results);
+    const fallback='cd /d "'+resolve(dir)+'" && node_modules\\.bin\\vitest.cmd run --coverage --maxWorkers=1'+config;
+    run=await command('coverage-'+pkg+'-store-lock-fallback',fallback);
+  }
+  let summary;
+  try{const path=resolve(dir,'coverage/coverage-summary.json');const info=await stat(path);if(info.mtimeMs>=run.start){summary=JSON.parse(await readFile(path,'utf8')).total;await copyFile(path,join(out,'coverage-summary-'+pkg+'.json'))}}
+  catch{}
+  const text=run.raw.replace(/\x1b\[[0-9;]*m/g,'');const failedFiles=[...new Set([...text.matchAll(/^\s*FAIL\s+(\S+\.(?:test|spec)\.[cm]?[jt]sx?)(?:\s|$)/gm)].map(m=>m[1]))];
+  const entry={...run.result,package:pkg,kind:'coverage gate',coverage:summary??null,failedFiles,retries:[]};results.push(entry);await save('gates.json',results);
+  if(run.result.exitCode!==0)for(const [i,file]of failedFiles.entries()){
+    const retry=await command('retry-'+pkg+'-'+(i+1),'pnpm.cmd --filter @graphgoblin/'+pkg+' exec vitest run '+file+' --maxWorkers=1'+config);
+    entry.retries.push({...retry.result,file,kind:'one isolated file rerun'});await save('gates.json',results);
+  }
+  if(pkg==='api')for(const stem of ['api-allocation.vitest','api-allocation.fixture'])await unlink(join(out,stem+'.mjs'));
+}
+await save('coverage-complete.json',{head,node:process.version,gateCount:results.filter(r=>r.kind==='coverage gate').length,allPassed:results.filter(r=>r.kind==='coverage gate').every(r=>r.exitCode===0),finishedAt:new Date().toISOString(),gateOrder:results.map(r=>r.name),qualification:'Sequential jobs with --maxWorkers=1; no other tests launched by this QA thread. Other shared-PC activity was not controlled.'});

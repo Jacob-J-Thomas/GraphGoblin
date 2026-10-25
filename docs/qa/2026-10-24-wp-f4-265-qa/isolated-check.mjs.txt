@@ -1,0 +1,17 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+const root=process.cwd(),out=resolve('docs/qa/2026-10-24-wp-f4-265-qa');
+// Wait for this QA's remaining coverage and functional jobs before the single isolated rerun.
+for(;;){try{const gates=JSON.parse(await readFile(join(out,'gates.json'),'utf8'));if(gates.length===12)break}catch{}await delay(500)}
+for(;;){try{const r=JSON.parse(await readFile(join(out,'focused-results.json'),'utf8'));if(r.length===2)break}catch{}await delay(500)}
+const cmd='pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run src/probe-directory.test.ts';
+console.log('START isolated '+cmd);let log='';const start=Date.now();
+const p=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',cmd],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+p.stdout.on('data',x=>log+=x);p.stderr.on('data',x=>log+=x);
+const [exitCode,signal]=await once(p,'close');
+await writeFile(join(out,'probe-directory-isolated.log.txt'),log.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%'));
+await writeFile(join(out,'isolated-result.json'),JSON.stringify({cmd,exitCode,signal,ms:Date.now()-start,qualification:'One unchanged file, once, after this QA test jobs finished. Other users of the shared PC are outside this QA control.'},null,2));
+console.log('END isolated exit='+exitCode);
