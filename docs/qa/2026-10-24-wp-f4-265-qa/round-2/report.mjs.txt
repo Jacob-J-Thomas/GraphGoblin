@@ -1,0 +1,179 @@
+import {readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {resolve,join,basename} from 'node:path';
+import {tmpdir} from 'node:os';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');
+const expectedHead='08acef6cebd40e7f6acbb896d950c7de2d62e9d6';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+assert.match(process.version,/^v22\./);assert.equal(git('rev-parse','HEAD'),expectedHead);
+const decodeText=buffer=>new TextDecoder(buffer[0]===255&&buffer[1]===254?'utf-16le':buffer[0]===254&&buffer[1]===255?'utf-16be':'utf-8',{fatal:true}).decode(buffer);
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll('C:\n  │ \\Users\\'+basename(process.env.USERPROFILE),'%USERPROFILE%\n  │ ');
+const put=(name,value)=>writeFile(join(out,name),clean(typeof value==='string'?value:JSON.stringify(value,null,2)));
+const read=async name=>JSON.parse(decodeText(await readFile(join(out,name))));
+const link=name=>'['+name+']('+name+')';
+const results=await read('own-policy-results.json'),functional=await read('functional-complete.json'),complete=await read('coverage-complete.json');
+assert.equal(functional.passed,4);assert.equal(functional.gatewayExited,true);
+const gates=(await read('gates.json')).filter(x=>x.kind==='coverage gate');assert.equal(gates.length,3);
+const comparisonBase='c63db24590d23263a3f7253eda13249f9252ec16';
+const comparedFiles=git('diff','--name-only',comparisonBase,'HEAD','--','.',':!docs/qa').split('\n').filter(Boolean);
+const current={head:git('rev-parse','HEAD'),branch:git('branch','--show-current'),comparisonBase,comparedFiles,node:process.version,trackedDiff:git('diff','--name-only'),stagedDiff:git('diff','--cached','--name-only'),status:git('status','--short'),checkedAt:new Date().toISOString()};
+assert.equal(current.trackedDiff,'');assert.equal(current.stagedDiff,'');await put('final-state.json',current);
+const disposableDirectories=(await readdir(tmpdir(),{withFileTypes:true})).filter(d=>d.isDirectory()&&d.name.startsWith('gg-qa-f4-265-r2-')).map(d=>join(tmpdir(),d.name));
+await put('cleanup-inventory.json',{checkedAt:new Date().toISOString(),disposableDirectories,generatedCoverageDirectories:['packages/adapter-codex/coverage','apps/api/coverage','apps/web/coverage'],action:'No direct directory deletion or native process-tree termination attempted by the QA driver; listed for orchestrator inspection and cleanup.'});
+// Normalize kept text before hashing. This does not change test results.
+for(const name of await readdir(out))if(/\.(?:json|jsonl|txt|md)$/.test(name)&&name!=='README.md'){
+  const path=join(out,name),before=await readFile(path),normalized=clean(decodeText(before));if(!before.equals(Buffer.from(normalized)))await writeFile(path,normalized);
+}
+const omitted=[];
+for(const name of await readdir(out)){
+  const path=join(out,name),info=await stat(path);assert.ok(info.isFile(),'Unexpected directory '+name);
+  if(info.size<=1_000_000)continue;
+  const buffer=await readFile(path),parts=[];
+  for(let start=0,n=1;start<buffer.length;n++){
+    let end=Math.min(start+900_000,buffer.length);if(end<buffer.length){const newline=buffer.lastIndexOf(10,end);if(newline>start)end=newline+1}
+    const part=name.replace(/\.log\.txt$/, '')+'-part-'+String(n).padStart(2,'0')+'.log.txt';await writeFile(join(out,part),buffer.subarray(start,end));parts.push(part);start=end;
+  }
+  omitted.push({name,size:buffer.length,sha256:createHash('sha256').update(buffer).digest('hex'),parts});await unlink(path);
+}
+await put('NOT-KEPT.md','# Captures not kept whole\n\n'+(omitted.length?omitted.map(x=>`- ${x.name}: ${x.size} bytes; SHA-256 \`${x.sha256}\`. Kept as ${x.parts.map(link).join(', ')}; concatenate parts in order to reconstruct.\n`).join(''):'No round 2 capture exceeded 1,000,000 bytes.\n'));
+function logfile(name){const item=omitted.find(x=>x.name===name);return item?item.parts.map(link).join(', '):link(name)}
+const checks=[],calls=[],sessions=[];
+for(const r of results){
+  const key=r.case,a=r.calls[0].id,b=r.calls[2].id,c=r.calls[3].id;
+  const snapshots=Object.fromEntries(await Promise.all(['visit-1','visit-2-missing','visit-2-recovered','visit-3'].map(async phase=>[phase,await read(key+'-'+phase+'.json')])));
+  const evidence=phase=>link(key+'-'+phase+'.json');
+  checks.push([key,'Current definition','Validate complete current schema, POST/publish, read pinned version','201; no unknown top-level limits; correct configured policy','Accepted and published; pinned policy matched','PASS',link(key+'-definition.json')]);
+  checks.push([key,'Visit 1','Run until input wait; inspect calls and sessions','Fresh A; finished session row A',`Fresh ${a}; finished row`,'PASS',evidence('visit-1')]);
+  checks.push([key,'Visit 2 missing','Delete A provider file, submit wait input','Resume A fails with handle and resume-own origin; failed row A',`${snapshots['visit-2-missing'].run.failure.code}; origin resume-own; A failed`,'PASS',evidence('visit-2-missing')]);
+  checks.push([key,'Plain Resume','POST /resume at missing-session failure','409, deliberate choice required','409 in traffic; no extra provider call','PASS',link('traffic.json')]);
+  checks.push([key,'Explicit choice','POST recover-session for worker and observed failure sequence','One durable choice, actor/time, failure answered, no prior context; fresh B',`run.resumed seq ${r.choice.seq}, failureSeq ${r.choice.freshSession.failureSeq}, priorContextCarried false; fresh ${b}`,'PASS',evidence('visit-2-recovered')]);
+  checks.push([key,'Visit 3','Submit second wait input','No reset: resume B; resetAfterVisits 2: fresh C',`${r.calls[3].mode} ${c}; finished row`,'PASS',evidence('visit-3')]);
+  checks.push([key,'Session announcements','Inspect durable harness.session events','No resumed claim for missing provider turn',snapshots['visit-3'].events.filter(e=>e.type==='harness.session'&&e.nodeId==='worker').map(e=>e.mode).join(', '),'PASS',evidence('visit-3')]);
+  checks.push([key,'Visits and completion','Count worker turn/finished events and run.finished','4 calls within 3 logical visits; 3 worker completions; run completes once',`4 turns, ${r.logicalVisits} visits, ${r.completedVisits} worker completions, 1 run.finished`,'PASS',evidence('visit-3')]);
+  checks.push([key,'Configuration/provenance','Compare pinned full version before/after; every provider request','Policy/reset unchanged; exact authored prompt/model/effort','Full version deep-equal; all four calls retained authored prompt/model/effort','PASS',link('own-policy-results.json')]);
+  for(const call of r.calls)calls.push([key,String(call.n),call.mode,'`'+call.id+'`',call.n===r.calls[1].n?'HARNESS_SESSION_MISSING':'success']);
+  for(const [phase,snap]of Object.entries(snapshots))for(const row of snap.sessions)sessions.push([key,phase,String(row.attempt),'`'+row.sessionId+'`',row.status,evidence(phase)]);
+}
+await put('checks.json',checks.map(([caseId,system,steps,expected,actual,result,evidence])=>({case:caseId,system,steps,expected,actual,result,evidence})));
+const table=(headers,rows)=>'| '+headers.join(' | ')+' |\n| '+headers.map(()=> '---').join(' | ')+' |\n'+rows.map(row=>'| '+row.map(v=>String(v).replaceAll('|','\\|').replaceAll('\n',' ')).join(' | ')+' |').join('\n');
+const strip=s=>s.replace(/\x1b\[[0-9;]*m/g,'');
+const summary=async log=>{
+  const parts=omitted.find(x=>x.name===log)?.parts??[log];const text=strip((await Promise.all(parts.map(p=>readFile(join(out,p),'utf8')))).join(''));
+  return {text,testFiles:text.match(/^\s*Test Files\s+(.+)$/m)?.[1]?.trim()??'No test summary',tests:text.match(/^\s*Tests\s+(.+)$/m)?.[1]?.trim()??'No test summary'};
+};
+const gateRows=[],retryRows=[],failures=[],failureDetails=[];
+for(const gate of gates){
+  const s=await summary(gate.log),cov=gate.coverage;
+  let pending=[];
+  for(const line of s.text.split(/\r?\n/)){
+    const failure=line.match(/^\s*FAIL\s+(.+)$/);if(failure){pending.push(failure[1].trim());continue}
+    if(pending.length&&/^\s*(?:Error|AssertionError|TypeError|ReferenceError|TestingLibraryElementError):/.test(line)){for(const name of pending)failureDetails.push([gate.package,name,line.trim(),logfile(gate.log)]);pending=[]}
+  }
+  gateRows.push([gate.package,'`'+gate.cmd+'`',gate.exitCode===0?'PASS':'FAIL',String(gate.exitCode),s.tests,(gate.ms/1000).toFixed(2),cov?[cov.lines.pct,cov.branches.pct,cov.statements.pct,cov.functions.pct].join(' / '):'Not emitted by failed run',logfile(gate.log)]);
+  if(gate.exitCode!==0)failures.push(`**R2-${failures.length+1} — major verification blocker (${gate.package}).** Reproduce at this head with Node 22 using \`${gate.cmd}\`. Expected: exit 0 with all tests passing and coverage above the existing thresholds. Actual: exit ${gate.exitCode}; ${s.testFiles}; ${s.tests}. ${cov?'Coverage is retained below.':'No fresh coverage summary was emitted; no stale or CI percentage is substituted.'} Evidence: ${logfile(gate.log)}. Failing files: ${gate.failedFiles.map(x=>'\`'+x+'\`').join(', ')||'none reported by runner'}. Each listed file was rerun exactly once alone; its result follows. No production attribution is inferred from a timeout alone.`);
+  for(const retry of gate.retries){const s=await summary(retry.log);retryRows.push([gate.package,'`'+retry.file+'`'+(retry.reusedValidIsolation?' (earlier valid isolation)':''),String(retry.exitCode),s.tests,(retry.ms/1000).toFixed(2),logfile(retry.log)])}
+}
+const env=await read('environment.json');
+const setup=JSON.parse(await readFile(join(out,'gates-setup-attempt.json'),'utf8')).find(r=>r.package==='api');
+const setupSummary=await summary(setup.log);
+const setupRows=await Promise.all(setup.retries.map(async retry=>{const s=await summary(retry.log);return ['`'+retry.file+'`',String(retry.exitCode),s.tests,(retry.ms/1000).toFixed(2),logfile(retry.log)]}));
+const setupNote=`The first API allocation config had a QA fixture error: its suffix-only alias left a relative-path prefix before the absolute replacement. That attempt exited ${setup.exitCode}; ${setupSummary.testFiles}; ${setupSummary.tests}. It is retained in ${logfile(setup.log)}, ${link('gates-setup-attempt.json')}, ${link('coverage-complete-setup-attempt.json')} and ${link('api-allocation.vitest-setup-attempt.mjs.txt')}. The independently reproduced string-replacement check and corrected whole-import alias are in ${link('allocation-alias-check.json')}, ${link('allocation-check.mjs.txt')} and ${link('api-allocation.vitest.mjs.txt')}. The original attempt's file reruns are also retained in the archive and artifact index. A new full API package run with that corrected resource config was necessary to exercise the missing native-test modules; ${link('api-recheck.mjs.txt')}, ${link('api-recheck-complete.json')}. The setup failure is not counted as a product defect or a qualifying API gate. Valid prior isolated executions of unaffected files are referenced instead of repeated. No adapter or web package gate was repeated.`;
+const artifacts=(await readdir(out)).filter(n=>n!=='README.md');for(const name of ['artifact-manifest.json','qa-audit.json'])if(!artifacts.includes(name))artifacts.push(name);
+const body=`# Independent QA round 2: WP-F4 bolt #265
+
+## 1. Verdict
+
+**${complete.allPassed?'PASS':'FAIL'}** at \`${expectedHead}\`. All four new own-session policy/reset cases passed. ${complete.allPassed?'All three requested serial coverage reruns passed.':'The requested serial coverage reruns did not all pass; local coverage blockers remain.'} No #265 functional defect was demonstrated by these fake-provider checks. Round 1 functional recovery/refusal/restart/subloop/Edge results remain accepted by the orchestrator; this round adds the specifically missing policy/reset evidence and preserves every new gate and file-rerun result.
+
+Branch \`${current.branch}\`; comparison base \`c63db24590d23263a3f7253eda13249f9252ec16\`; worktree \`%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265\`. QA evidence is uncommitted; no production changes, index changes, commits, sub-agents or GitHub mutations. See ${link('final-state.json')}.
+
+Node ${env.node}, dependencies present/nonempty; fresh \`pnpm.cmd build\` passed (11 tasks, 9 cached). Evidence: ${link('environment.json')}, ${link('build-result.json')}, ${link('build.log.txt')}. The real built API/container/engine and physical SQLite stores ran with public fake harness ports on port ${env.port}, data directory \`${env.dataDir}\`. The process exited normally through fixture IPC before coverage began; ${link('functional-complete.json')}. **Provider evidence is fake-only**; no live provider turn was performed. Edge was not rerun in round 2; its accepted 1440/390 px evidence remains in the [round 1 report](../README.md).
+
+## 2. Defects
+
+${failures.length?failures.join('\n\n'):'None found in this round.'}
+
+${failureDetails.length?table(['Package','Failing test/suite','Recorded error excerpt','Evidence'],failureDetails):''}
+
+**Resolved QA tooling issue — minor:** the initial artifact audit read a UTF-16LE build capture as UTF-8, so interleaved NULs hid one local path from the literal path check. Reproduction: apply the former UTF-8-only reader to that PowerShell capture. Expected: normalized user paths; actual: one decoded build-log path remained. The capture was converted to UTF-8 and normalized, and the audit now rejects UTF-16/non-UTF-8 or NUL-containing text. Before/after sizes, hashes and checks are retained in ${link('artifact-repair.json')}, with the earlier audit in ${link('qa-audit-before-repair.json')}. Test outcomes were unchanged.
+
+${gates.some(g=>g.package==='adapter-codex'&&g.exitCode!==0)?'The Codex probe-directory failures are in an unchanged file. D-032 was followed by a fresh, one-worker package run and a single file rerun. The fresh gate is still failed; this is not a waiver or a retry-to-green result. ':''}The orchestrator supplied that exact-head Linux CI run 40135298347 passed all gates; this is context from the round 2 task, not an independently fetched CI result or a replacement for local evidence. No fix was attempted.
+
+## 3. Coverage of criteria
+
+Systems exercised this round: strict loop-definition admission, published/pinned definitions, API missing-session and explicit-choice routes, inference own-session selection/reset counting, durable provider/session/visit/choice events, SQLite-backed session records, prompt/model/effort provenance, and adjacent Codex adapter/API/web component gates. Round 1 covers the other #265 criteria and neighbouring #33/#251/#244 behaviour.
+
+### Policy after the explicit choice
+
+The valid shape follows \`docs/reference/nodes.md\`, the current contract, and the existing public \`@graphgoblin/engine/testing.singleNodeLoop\` fixture. Execution limits are under \`settings\`; no unknown top-level \`limits\` key is sent. The complete definition is parsed before POST, accepted (201), published and read back. A three-pass decision and API-input waits make provider deletion happen between actual logical visits. The missing provider record is a physical file belonging to the fake harness, not a stubbed run-manager response. Source and assertions: ${link('own-policy.mjs.txt')}, ${link('gateway.mjs.txt')}; aggregate results: ${link('own-policy-results.json')}, ${link('checks.json')}.
+
+${table(['Case','Check','Steps','Expected','Actual','Result','Evidence'],checks)}
+
+### Every provider call
+
+A is the original own conversation; B is the fresh conversation chosen on visit two; C exists only for the configured reset on visit three. The failed resume request and successful recovery are the same logical visit. All requests retain the exact authored prompt, configured model and low effort; the complete request records are in ${link('provider-calls.json')}.
+
+${table(['Case','Call number','Fresh/resume','Handle','Result'],calls)}
+
+### Session records at each checkpoint
+
+These are the real API's SQLite-backed rows, retained with full event/thread snapshots. Rows are keyed by node and attempt, so a later logical visit may update an earlier attempt row; the phase snapshots preserve the original/missing/replacement handles rather than inferring history from final rows alone.
+
+${table(['Case','Checkpoint','Attempt','Session handle','Status','Evidence'],sessions)}
+
+### Serial package coverage and one file rerun per failure
+
+Commands ran in order, with one worker and no other tests launched by this QA thread. Other shared-PC activity was not controlled. The API allocation config preserves every test, pool/GC/global-setup setting, timeout, coverage input and threshold. It wraps only the existing test fixture's supported resource options, including files whose explicit port options override environment defaults, to enforce ports 6040–6049 and \`gg-qa-f4-265-r2-api-\` stores. ${link('api-allocation.vitest.mjs.txt')}, ${link('api-allocation.fixture.mjs.txt')}, ${link('api-allocation.log.txt')}. The temporary executable copies were removed after use; retained scripts use \`.mjs.txt\`.
+
+${setupNote.replace('Valid prior isolated executions of unaffected files are referenced instead of repeated.','All three corrected-gate file isolations ran after that gate.')}
+
+The corrected config first passed a collection-only check of main.test.ts, with no test bodies executed: ${link('api-allocation-collection.log.txt')}, ${link('api-allocation-collection-result.json')}. The initial attempt's eight executed-test timeouts (six readiness-evidence and two nested-readiness cases) are separate from the module-collection error. Their isolated passes do not erase those original failures or establish the alias as their cause.
+
+Initial API setup-attempt file reruns (each once, retained with the failed collection and timing results):
+
+${table(['File','Exit','Test result','Seconds','Evidence'],setupRows)}
+
+Exact command/timestamps/exit codes: ${link('gates.json')}; orchestration: ${link('coverage.mjs.txt')}; completion: ${link('coverage-complete.json')}. No thresholds were relaxed. Coverage percentages below are lines / branches / statements / functions, from fresh emitted summaries only. Orchestrator dispositions and the supplied CI context are recorded in ${link('round-2-task.md')}.
+
+${table(['Package','Command','Gate','Exit','Test result','Seconds','Coverage % L/B/S/F','Evidence'],gateRows)}
+
+${retryRows.length?table(['Package','File rerun once','Exit','Test result','Seconds','Evidence'],retryRows):'No failing files required a rerun.'}
+
+Each qualifying gate's failing file was rerun once alone after that gate, using the normal timeout: one Codex file and three API files. The initial setup attempt and its seven file executions are retained separately above. A later file pass does not change the failed coverage-gate result. Detailed failure names, source lines, expectations and timeout/response excerpts are retained in the linked logs.
+
+### Scope and limitations
+
+| Criterion | Round 2 status |
+| --- | --- |
+| #265 / #33: next own visit resumes the newly chosen conversation | Tested and passed for both harnesses; calls fresh A, failed resume A, fresh B, resume B. |
+| #265 / #33: configured reset on visit three remains effective | Tested and passed for both harnesses with resetAfterVisits 2; final call fresh C. |
+| Configured policy/reset and authored task/model/effort unchanged | Tested and passed; full pinned version deep-equal and every request checked. |
+| Truthful choice/session events and once-only completion | Tested and passed: one choice, three logical visits, no resumed announcement for missing turn, one run.finished in each run. |
+| Three requested quiet coverage reruns | Completed serially; results above. D-032 is not a coverage waiver. |
+| Other #265 modes, refusals, restart points, subloops, inspector at both widths, #251 and #244 | Not rerun this round; accepted round 1 evidence remains linked from the parent report. |
+| Live-provider session retention/recall or native process-tree termination | Not testable under fake-only scope and D-015; no such claim is made. |
+
+No new production/test implementation, numbered documentation, ADR or CHANGELOG changes were made. The requested new QA probes are retained as standalone scripts. Full typecheck/lint/layers/deps/docs/token gates were not repeated at this unchanged head; their round 1 results remain in the parent report. This round reruns build and the three specifically requested coverage gates, then checks report formatting and artifact integrity.
+
+## 4. Report path and evidence folder
+
+Report: \`docs/qa/2026-10-24-wp-f4-265-qa/round-2/README.md\`. Evidence: the same folder; all kept artifacts are linked below. The parent report points here while retaining historical round 1 results. Artifact sizes/hashes: ${link('artifact-manifest.json')}; integrity checks: ${link('qa-audit.json')}. Oversized original captures, if any: ${link('NOT-KEPT.md')}.
+
+${artifacts.sort().map(n=>'- '+link(n)).join('\n')}
+
+## 5. Observations outside scope
+
+The failed force-shutdown case is Windows-only (\`apps/api/src/shutdown-process.test.ts:655\`, also shown in the kept API failure log); a Linux CI pass does not exercise that case. File rerun results retain their reported skipped-test counts without implying that every platform-dependent branch ran.
+
+The local gate failures above require orchestrator disposition and are not attributed to #265 without evidence. D-015 remains the restriction on native process-tree termination; no process-tree kill was attempted by this QA driver. Disposable generated build/coverage directories and test stores are left for orchestrator cleanup, as directory deletion is prohibited; the remaining directories are listed in ${link('cleanup-inventory.json')}. The original round 1 fixture errors remain retained there: ordinary pre-send failure auto-retry was correct, and the top-level-limits own-policy probe did not exercise the intended case. This round replaces that missing case with accepted, current-format definitions for both harnesses and both reset configurations.
+`;
+await put('README.md',body);
+// Manifest excludes itself and the final audit to avoid self-referential hashes.
+const manifest=[];
+for(const name of (await readdir(out)).sort())if(!['artifact-manifest.json','qa-audit.json'].includes(name)){
+  const buffer=await readFile(join(out,name));manifest.push({name,bytes:buffer.length,sha256:createHash('sha256').update(buffer).digest('hex')});
+}
+await put('artifact-manifest.json',manifest);
+console.log(JSON.stringify({verdict:complete.allPassed?'PASS':'FAIL',functional:results.map(r=>({case:r.case,result:r.status})),gates:gateRows,retries:retryRows,artifacts:manifest.length},null,2));

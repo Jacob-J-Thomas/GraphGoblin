@@ -1,0 +1,30 @@
+﻿import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve, sep } from 'node:path';
+import process from 'node:process';
+const repo = realpathSync(process.cwd());
+const modules = realpathSync(join(repo, 'packages/engine/node_modules'));
+if (!modules.startsWith(repo + sep)) throw new Error('Baseline cache would leave this worktree');
+const snapshot = join(modules, '.cache/gg-wp-f4-265-baseline');
+const evidence = join(repo, 'docs/qa/2026-10-24-wp-f4-265');
+const base = 'd32aa382cfc5578632e8b2b2cfd11813df9f8c44';
+const entries = execFileSync('git', ['ls-tree', '-r', base, 'packages/engine/src'], { cwd: repo, encoding: 'utf8' }).trim().split('\n');
+const manifest = [];
+for (const entry of entries) {
+  const match = /^(100644) blob ([a-f0-9]+)\t(.+)$/.exec(entry);
+  if (!match) throw new Error('Unexpected non-regular baseline entry');
+  const [, , blob, source] = match;
+  if (!source.endsWith('.ts') || source.endsWith('.test.ts')) continue;
+  const bytes = execFileSync('git', ['show', `${base}:${source}`], { cwd: repo });
+  const actualBlob = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes])).digest('hex');
+  if (actualBlob !== blob) throw new Error('Baseline source byte mismatch');
+  const target = resolve(snapshot, source.slice('packages/engine/'.length));
+  if (!target.startsWith(snapshot + sep)) throw new Error('Baseline path outside cache');
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, bytes);
+  manifest.push({ source, blob, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
+  const kept = { 'packages/engine/src/run-manager.ts': 'baseline-run-manager.mjs.txt', 'packages/engine/src/handlers/inference.ts': 'baseline-inference.mjs.txt', 'packages/engine/src/handlers/inference-turn.ts': 'baseline-inference-turn.mjs.txt' }[source];
+  if (kept) writeFileSync(join(evidence, kept), bytes);
+}
+writeFileSync(join(evidence, 'baseline-source-manifest.json'), JSON.stringify({ base, snapshot: 'packages/engine/node_modules/.cache/gg-wp-f4-265-baseline', contractNote: 'The exact base engine uses the installed current contracts/domain. Domain is unchanged; new optional event/failure fields do not alter this no-recovery baseline.', files: manifest }));

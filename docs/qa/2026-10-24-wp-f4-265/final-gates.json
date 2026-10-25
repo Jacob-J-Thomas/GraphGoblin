@@ -1,0 +1,143 @@
+{
+  "base": "d32aa382cfc5578632e8b2b2cfd11813df9f8c44",
+  "branch": "codex-wp-f4-265",
+  "nodeVersion": "v22.14.0",
+  "providerTurns": 0,
+  "qualification": "API, web and Codex package failures retained; D-005 CLI evidence outstanding",
+  "commands": [
+    {
+      "command": "pnpm docs:generate",
+      "exitCode": 0,
+      "elapsedSeconds": 3.47,
+      "log": "docs-generate.log.txt"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "elapsedSeconds": null,
+      "log": "typecheck-final.log.txt"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "elapsedSeconds": null,
+      "log": "lint-candidate.log.txt"
+    },
+    {
+      "command": "pnpm format:check",
+      "exitCode": 0,
+      "elapsedSeconds": 627.69,
+      "log": "format-final.log.txt"
+    },
+    {
+      "command": "pnpm check:layers",
+      "exitCode": 0,
+      "elapsedSeconds": 5.12,
+      "log": "layers.log.txt"
+    },
+    {
+      "command": "pnpm check:deps",
+      "exitCode": 0,
+      "elapsedSeconds": 32.9,
+      "log": "deps.log.txt"
+    },
+    {
+      "command": "pnpm check:docs",
+      "exitCode": 0,
+      "elapsedSeconds": 11.06,
+      "log": "docs.log.txt"
+    },
+    {
+      "command": "pnpm check:migrations",
+      "exitCode": 0,
+      "elapsedSeconds": 14.5,
+      "log": "migrations.log.txt"
+    },
+    {
+      "command": "pnpm check:tokens",
+      "exitCode": 0,
+      "elapsedSeconds": 8.33,
+      "log": "tokens.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/engine test:coverage --maxWorkers=2",
+      "exitCode": 0,
+      "elapsedSeconds": null,
+      "log": "engine-coverage-final.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/api test:coverage --maxWorkers=2",
+      "exitCode": 1,
+      "elapsedSeconds": 2165.73,
+      "log": "api-coverage.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/web test:coverage --maxWorkers=2",
+      "exitCode": 1,
+      "elapsedSeconds": 2321.27,
+      "log": "web-coverage.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/adapter-codex test:coverage --maxWorkers=2",
+      "exitCode": 1,
+      "elapsedSeconds": 88.99,
+      "log": "codex-coverage.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/contracts test:coverage --maxWorkers=2",
+      "exitCode": 0,
+      "elapsedSeconds": 46.45,
+      "log": "contracts-coverage.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/api-client test:coverage --maxWorkers=2",
+      "exitCode": 0,
+      "elapsedSeconds": 69.56,
+      "log": "client-coverage.log.txt"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "elapsedSeconds": 5.93,
+      "log": "build.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+      "exitCode": 1,
+      "elapsedSeconds": 1322.44,
+      "log": "api-coverage-candidate.log.txt",
+      "portStart": 5990,
+      "portCount": 10,
+      "storePrefix": "gg-wp-f4-265-"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/adapter-codex exec vitest run src/probe-directory.test.ts --maxWorkers=1",
+      "exitCode": 0,
+      "elapsedSeconds": 7.74,
+      "log": "codex-readiness-isolated.log.txt"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/api exec vitest run src/main.test.ts -t dispatches the API-key and preflight CLIs with their real exit codes --maxWorkers=1",
+      "exitCode": 0,
+      "elapsedSeconds": 26.13,
+      "log": "main-cli-isolated.log.txt"
+    },
+    {
+      "command": "pnpm build --filter=@graphgoblin/api",
+      "exitCode": 0,
+      "log": "api-candidate-build.log.txt"
+    },
+    {
+      "command": "node --test apps/api/scripts/missing-session.integration.mjs",
+      "exitCode": 0,
+      "log": "restart-candidate.log.txt",
+      "evidence": "Real built API/SQLite processes; file-backed fake provider port"
+    },
+    {
+      "command": "pnpm --filter @graphgoblin/web exec playwright test e2e/missing-session.spec.ts --retries=0",
+      "exitCode": 0,
+      "log": "browser.log.txt",
+      "evidence": "Built web; existing API test server; fake harness"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-265/apps/api
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed | 33 skipped) 20067ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20064ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:181:3
+    179|   };
+    180|
+    181|   it('ADV-008: every advertised route against every scope', async () =…
+       |   ^
+    182|     const t = await app({ requireApiKey: true });
+    183|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 6 passed | 33 skipped (40)
+   Start at  15:27:42
+   Duration  136.08s (transform 41%, tests 30%, import 29%, worker 1%)
+
+  Transform  transforming modules took 52.60s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 265\apps\api
+System.Management.Automation.RemoteException

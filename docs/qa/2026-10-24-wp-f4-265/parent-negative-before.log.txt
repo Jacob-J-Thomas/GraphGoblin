@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-265/apps/api
+
+ ❯ src/missing-session.test.ts (6 tests | 1 failed | 3 skipped) 8129ms
+   × allows an explicit parent Resume after its missing-session child was explicitly recovered (failure) 2527ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/missing-session.test.ts > allows an explicit parent Resume after its missing-session child was explicitly recovered (failure)
+AssertionError: expected 409 to be 200 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 200
++ 409
+System.Management.Automation.RemoteException
+ ❯ src/missing-session.test.ts:216:9
+    214|       expect(
+    215|         (await t.app.inject({ method: 'POST', url: `/runs/${parent.id}…
+    216|       ).toBe(200);
+       |         ^
+    217|       await t.idle();
+    218|       expect((await t.container.repos.runs.get(parent.id))?.status).to…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 3 skipped (6)
+   Start at  14:36:08
+   Duration  35.69s (transform 52%, tests 25%, import 23%)
+
+  Transform  transforming modules took 17.25s · 52% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 265\apps\api
+System.Management.Automation.RemoteException

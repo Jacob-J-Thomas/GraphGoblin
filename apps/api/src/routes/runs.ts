@@ -253,6 +253,27 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
   }
 
   app.post(
+    '/runs/:id/recover-session',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Explicitly start a fresh session for the observed missing-session failure',
+        params: IdParams,
+        body: z.strictObject({ nodeId: SlugSchema, failureSeq: z.number().int().positive() }),
+        response: { 200: RunRecordSchema },
+      },
+    },
+    async (request) => {
+      await ownedRun(request, request.params.id);
+      return manager.recoverSession(
+        request.params.id,
+        request.body.nodeId,
+        request.body.failureSeq,
+        request.auth.actor,
+      );
+    },
+  );
+  app.post(
     '/runs/:id/input',
     {
       schema: {

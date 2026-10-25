@@ -4486,6 +4486,60 @@
               "promptKind"
             ],
             "additionalProperties": false
+          },
+          "missingSession": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "resume-previous",
+                  "resume-named",
+                  "resume-own",
+                  "current-visit"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effort": {
+                "type": "string",
+                "enum": [
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              }
+            },
+            "required": [
+              "visitId",
+              "harness",
+              "origin",
+              "model",
+              "effort"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -6174,6 +6228,79 @@
                 "required": [
                   "kind",
                   "id"
+                ],
+                "additionalProperties": false
+              },
+              "freshSession": {
+                "type": "object",
+                "properties": {
+                  "visitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "resume-previous",
+                      "resume-named",
+                      "resume-own",
+                      "current-visit"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "effort": {
+                    "type": "string",
+                    "enum": [
+                      "minimal",
+                      "low",
+                      "medium",
+                      "high",
+                      "xhigh",
+                      "max"
+                    ]
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  },
+                  "failureSeq": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "priorContextCarried": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "prompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "visitId",
+                  "harness",
+                  "origin",
+                  "model",
+                  "effort",
+                  "nodeId",
+                  "failureSeq",
+                  "priorContextCarried"
                 ],
                 "additionalProperties": false
               }
@@ -13377,6 +13504,60 @@
               "promptKind"
             ],
             "additionalProperties": false
+          },
+          "missingSession": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "resume-previous",
+                  "resume-named",
+                  "resume-own",
+                  "current-visit"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effort": {
+                "type": "string",
+                "enum": [
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              }
+            },
+            "required": [
+              "visitId",
+              "harness",
+              "origin",
+              "model",
+              "effort"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -15087,6 +15268,79 @@
                 "required": [
                   "kind",
                   "id"
+                ],
+                "additionalProperties": false
+              },
+              "freshSession": {
+                "type": "object",
+                "properties": {
+                  "visitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "resume-previous",
+                      "resume-named",
+                      "resume-own",
+                      "current-visit"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "effort": {
+                    "type": "string",
+                    "enum": [
+                      "minimal",
+                      "low",
+                      "medium",
+                      "high",
+                      "xhigh",
+                      "max"
+                    ]
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  },
+                  "failureSeq": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "priorContextCarried": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "prompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "visitId",
+                  "harness",
+                  "origin",
+                  "model",
+                  "effort",
+                  "nodeId",
+                  "failureSeq",
+                  "priorContextCarried"
                 ],
                 "additionalProperties": false
               }
@@ -19520,6 +19774,63 @@
         "tags": [
           "runs"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunRecord"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{id}/recover-session": {
+      "post": {
+        "summary": "Explicitly start a fresh session for the observed missing-session failure",
+        "tags": [
+          "runs"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  },
+                  "failureSeq": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "nodeId",
+                  "failureSeq"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "parameters": [
           {
             "schema": {

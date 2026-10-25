@@ -1,0 +1,9 @@
+import base from '../../../../apps/api/vitest.config.ts';
+import {mergeConfig} from 'vitest/config';
+import {fileURLToPath} from 'node:url';
+// Preserve every test, timeout, pool/GC/global-setup setting, coverage input and threshold.
+// Only the test-resource factory receives supported disposable port/store options.
+export default mergeConfig(base,{
+  resolve:{alias:[{find:/\/testing\/api-subprocess\.js$/,replacement:fileURLToPath(new URL('./api-allocation.fixture.mjs',import.meta.url))}]},
+  test:{env:{GG_TEST_PORT_START:'6040',GG_TEST_PORT_COUNT:'10',GG_TEST_STORE_PREFIX:'gg-qa-f4-265-r2-api-',GG_QA_ALLOCATION_AUDIT:fileURLToPath(new URL('./api-allocation.jsonl',import.meta.url))}},
+});

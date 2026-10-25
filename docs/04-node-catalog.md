@@ -120,7 +120,7 @@ A definitely-not-submitted turn retries that saved task with its original sessio
 selection when the cause is resumable. Uncertain authored work cannot continue a previous/named/own
 conversation on its inherited ID alone: this visit needs durable acceptance or a newly
 established session. Repairs and continuations can use the visit's own session. Without a
-usable session, or with a missing session, the run fails non-resumably; Replay from the node
+usable session, the run fails non-resumably. Missing sessions have the explicit recovery choice below; Replay from the node
 is the available deliberate new attempt. Named-session lookup still applies on replay.
 See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
 
@@ -303,3 +303,18 @@ loop controls, pass limits and any authored watchdogs to permit intentionally in
 execution, ending through authored exits, Cancel or an external/resource failure.
 GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
 Authors may use script/decision nodes for their own usage-aware behavior.
+
+### Missing provider sessions (#265)
+
+`HARNESS_SESSION_MISSING` names the harness, missing handle (or absent completed
+own-session reference) and origin: previous, named, own, or this visit's continuation
+or repair. Plain Resume refuses. The run inspector offers **Start fresh session for
+<node>**, also available through `POST /runs/{id}/recover-session` with `nodeId` and
+the observed failed event's `failureSeq`. Leaving it untouched keeps the run failed.
+
+The explicit choice restarts this node's authored task without prior provider
+conversation, retaining its context mode, selected loop inputs, model and effort.
+Earlier actions are not undone. The shared thread and other nodes are preserved;
+later visits use the configured session policy normally. Actor, time, node and
+lost-context decision persist in `run.resumed.freshSession` across restart.
+See [ADR-0055](decisions/ADR-0055-explicit-missing-session-recovery.md).
