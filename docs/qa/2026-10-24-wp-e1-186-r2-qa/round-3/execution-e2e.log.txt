@@ -1,0 +1,37 @@
+pnpm.cmd : node:events:496
+At line:2 char:153
++ ... ORT='6153'; pnpm.cmd --filter @graphgoblin/web exec playwright test - ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:events:496:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: spawn %USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node.exe ENOENT
+    at Process.ChildProcess._handle.onexit (node:internal/child_process:285:19)
+    at onErrorNT (node:internal/child_process:483:16)
+    at processTicksAndRejections (node:internal/process/task_queues:90:21)
+Emitted 'error' event on ChildProcess instance at:
+    at Process.ChildProcess._handle.onexit (node:internal/child_process:291:12)
+    at onErrorNT (node:internal/child_process:483:16)
+    at processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'spawn %USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe',
+  path: '%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe',
+  spawnargs: [
+    '--conditions=development',
+    '--import',
+    'tsx',
+    '.tmp/qa3/server.ts'
+  ]
+}
+
+Node.js v22.14.0
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 186-r2-3\apps\web
+

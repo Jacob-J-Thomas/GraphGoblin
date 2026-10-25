@@ -1,0 +1,46 @@
+Command: pnpm.cmd --filter @graphgoblin/web exec playwright test --config .tmp/qa3/playwright.config.ts qa.spec.ts --grep failure
+
+Running 1 test using 1 worker
+
+(node:38488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable (10.6s)
+
+
+  1) .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Failed: HARNESS_TURN_FAILED')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Failed: HARNESS_TURN_FAILED') with timeout 10000ms
+      - waiting for getByText('Failed: HARNESS_TURN_FAILED')
+
+
+      155 |   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+      156 |   await page.goto(`/app/runs/${await startRun(request, failing)}`);
+    > 157 |   await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+          |                                                               ^
+      158 |
+      159 |   await control(request, '/deciders', { jev: true, codex: true });
+      160 |   try {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\qa.spec.ts:157:63
+
+    Error Context: ..\..\.tmp\qa3\pw-results\qa-failure-reasons-are-typ-0d3ec-ure-and-decider-unavailable\error-context.md
+
+  1 failed
+    .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 186-r2-3\apps\web
+
+
+Exit: 1

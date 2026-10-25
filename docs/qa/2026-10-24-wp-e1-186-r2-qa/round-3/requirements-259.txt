@@ -1,0 +1,64 @@
+# #259 [I05/U14/B37] Bound large-value rendering
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:ui-polish, area:web, backlog, kind:bolt, status:approved-held
+parent: #303 [I05/U14] Bound handling and repair measured costs
+sub-issues: -
+created: 2026-10-17T00:02:07Z updated: 2026-10-18T23:35:59Z
+
+## Body
+
+Part of #303
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B37 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Bound large-value rendering
+
+## Acceptance criteria
+
+- [ ] Large values do not freeze ordinary inspector controls; previews are bounded and exact full values remain accessible without silently modifying stored data.
+
+- [ ] Bound rendering and in-memory presentation of large values while preserving access to exact stored values; do not truncate the execution context to speed up the inspector.
+
+## Verification
+
+Large nested values, expand/download or equivalent existing access, navigation and browser responsiveness.
+
+## Dependencies
+
+- #190 — B34
+- #279 — implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#259
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #259 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/events/EventsPage.tsx#L1), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/inspector/ThreadViewer.tsx#L1)
+
+
+## Comments (0)

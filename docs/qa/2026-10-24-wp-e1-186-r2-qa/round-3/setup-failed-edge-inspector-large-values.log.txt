@@ -1,0 +1,38 @@
+Command: pnpm.cmd --filter @graphgoblin/web exec playwright test --config .tmp/qa3/playwright.config.ts inspector-large-values.spec.ts
+
+node:internal/modules/run_main:122
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\packages\infrastructure\src\sqlite\testing.js' imported from %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\test-app.ts
+    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+    at moduleResolve (node:internal/modules/esm/resolve:860:10)
+    at defaultResolve (node:internal/modules/esm/resolve:984:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:10494)
+    at async resolveDirectory (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11575) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/packages/infrastructure/src/sqlite/testing.js'
+}
+
+Node.js v22.14.0
+Error: the E2E server exited early with code 1
+
+   at ..\global-setup.ts:41
+
+  39 |     child.once('exit', (code) => {
+  40 |       clearTimeout(timer);
+> 41 |       reject(new Error(`the E2E server exited early with code ${String(code)}`));
+     |              ^
+  42 |     });
+  43 |   });
+  44 |   process.env['GG_E2E_BASE_URL'] = url;
+    at ChildProcess.<anonymous> (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\global-setup.ts:41:14)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 186-r2-3\apps\web
+
+
+Exit: 1

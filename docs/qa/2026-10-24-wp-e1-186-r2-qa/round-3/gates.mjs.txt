@@ -1,0 +1,16 @@
+import {spawn} from 'node:child_process';
+import {writeFile,readFile} from 'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3';
+const jobs={typecheck:'pnpm.cmd typecheck',lint:'pnpm.cmd lint',format:'pnpm.cmd format:check',layers:'pnpm.cmd check:layers',deps:'pnpm.cmd check:deps',docs:'pnpm.cmd check:docs',tokens:'pnpm.cmd check:tokens',web:'pnpm.cmd --filter @graphgoblin/web test:coverage',api:'pnpm.cmd --filter @graphgoblin/api test:coverage','api-client':'pnpm.cmd --filter @graphgoblin/api-client test:coverage',infrastructure:'pnpm.cmd --filter @graphgoblin/infrastructure test:coverage',domain:'pnpm.cmd --filter @graphgoblin/domain test:coverage'};
+const records=[];
+for(const name of process.argv.slice(2)){
+ const command=jobs[name];let log='';const start=new Date().toISOString();
+ const child=spawn(process.env.ComSpec,['/d','/s','/c',command],{windowsHide:true,env:{...process.env,GG_TEST_PORT_START:'6154',GG_TEST_PORT_COUNT:'6',GG_TEST_STORE_PREFIX:'gg-qa-e1-186r2-3-gate-'}});
+ child.stdout.on('data',b=>log+=b);child.stderr.on('data',b=>log+=b);
+ const code=await new Promise(r=>child.once('close',r));
+ await writeFile(out+'/'+name+'.log.txt',('Command: '+command+'\nNode: '+process.version+'\nStart: '+start+'\n'+log+'\nExit: '+code).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+ records.push({name,command,code,start,end:new Date().toISOString(),lock:log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')});
+ console.log(JSON.stringify(records.at(-1)));await writeFile(out+'/gates-'+process.argv[2]+'.json',JSON.stringify(records,null,2));
+ if(log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK'))throw Error('Store lock: use direct binaries');
+}
+await writeFile(out+'/gates.mjs.txt',await readFile(import.meta.filename,'utf8'));

@@ -1,0 +1,157 @@
+
+Running 24 tests using 1 worker
+
+pnpm.cmd : (node:58552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:5 char:196
++ ... ORT='6153'; pnpm.cmd --filter @graphgoblin/web exec playwright test - ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:58552) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:58552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 .tmp\qa3\specs\bounded-history.spec.ts:5:1 › bounded Timeline browses a long run with keyboard focus, exact threads and persisted resume (7.6s)
+  ok  2 .tmp\qa3\specs\history.spec.ts:4:1 › Runs appends a second page and preserves loop, status and parent filters (3.8s)
+  ok  3 .tmp\qa3\specs\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact (4.5s)
+  ok  4 .tmp\qa3\specs\history.spec.ts:80:1 › Loops shows older history beyond 500 unrelated runs and a genuine never-run control (14.0s)
+  x   5 .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) (1.0m)
+(node:18820) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18820) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  6 .tmp\qa3\specs\inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 1440 px (#259) (1.4s)
+  x   7 .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) (1.0m)
+(node:24420) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24420) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  8 .tmp\qa3\specs\inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 390 px (#259) (1.7s)
+  ok  9 .tmp\qa3\specs\inspector-large-values.spec.ts:165:1 › the keyboard stays inside an expanded value that a live event replaces (#259) (1.4s)
+  ok 10 .tmp\qa3\specs\inspector-large-values.spec.ts:217:1 › oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259) (6.3s)
+  ok 11 .tmp\qa3\specs\missing-session.spec.ts:5:1 › missing inherited session: decline, reload, choose fresh and follow it to success without a reload (3.2s)
+  ok 12 .tmp\qa3\specs\qa.spec.ts:54:1 › a subloop child run opens in the inspector and replays from its seeded thread (869ms)
+  x  13 .tmp\qa3\specs\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event (31.3s)
+(node:49120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  14 .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable (10.8s)
+(node:54512) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54512) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 15 .tmp\qa3\specs\qa.spec.ts:206:1 › the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees (2.8s)
+  ok 16 .tmp\qa3\specs\qa.spec.ts:290:1 › keyboard only: add a node, connect it, and publish (2.2s)
+  ok 17 .tmp\qa3\specs\qa.spec.ts:355:1 › an edit made right before leaving the editor is kept (1.3s)
+  ok 18 .tmp\qa3\specs\qa.spec.ts:375:1 › Settings defaults reach the next run without a restart (1.0s)
+  ok 19 .tmp\qa3\specs\qa.spec.ts:416:1 › with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it (2.5s)
+  ok 20 .tmp\qa3\specs\qa.spec.ts:443:1 › with GG_REQUIRE_API_KEY, editor and inspector deep links go live once the key is entered (4.2s)
+  ok 21 .tmp\qa3\specs\qa.spec.ts:482:1 › main screens fit 1024x768 without horizontal scrolling, and deep links load cold (4.8s)
+  ok 22 .tmp\qa3\specs\thread-history.spec.ts:6:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots (5.9s)
+  ok 23 .tmp\qa3\specs\webhook-delivery.spec.ts:28:1 › inspector retains unknown acknowledgement after a rejection and eventual success (8.2s)
+  ok 24 .tmp\qa3\specs\webhook-delivery.spec.ts:88:1 › inspector updates pending delivery to delivered without a reload while execution stays succeeded (789ms)
+
+
+  1) .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /node\.finished work\b/ })
+
+
+       95 |     // progress drawer shows the harness items: with everything open, nothing widens the document.
+       96 |     const timeline = page.getByRole('list', { name: 'Timeline' });
+    >  97 |     await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+          |                                                                           ^
+       98 |     const diff = page.getByRole('list', { name: 'Patch diff' });
+       99 |     await expect(diff).toBeVisible();
+      100 |     await expect(
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\inspector-large-values.spec.ts:97:75
+
+    Error Context: ..\..\.tmp\qa3\pw-results\inspector-large-values-lar-faef7-s-width-at-1440-px-259-380-\error-context.md
+
+  2) .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /node\.finished work\b/ })
+
+
+       95 |     // progress drawer shows the harness items: with everything open, nothing widens the document.
+       96 |     const timeline = page.getByRole('list', { name: 'Timeline' });
+    >  97 |     await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+          |                                                                           ^
+       98 |     const diff = page.getByRole('list', { name: 'Patch diff' });
+       99 |     await expect(diff).toBeVisible();
+      100 |     await expect(
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\inspector-large-values.spec.ts:97:75
+
+    Error Context: ..\..\.tmp\qa3\pw-results\inspector-large-values-lar-0ecd6-ts-width-at-390-px-259-380-\error-context.md
+
+  3) .tmp\qa3\specs\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Timeline \(1212 events, complete\)/)
+    Expected: visible
+    Timeout: 30000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/Timeline \(1212 events, complete\)/) with timeout 30000ms
+      - waiting for getByText(/Timeline \(1212 events, complete\)/)
+
+
+      107 |   const started = Date.now();
+      108 |   await page.goto(`/app/runs/${runId}`);
+    > 109 |   await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
+          |                                                                      ^
+      110 |     timeout: 30_000,
+      111 |   });
+      112 |   const live = Date.now() - started;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\qa.spec.ts:109:70
+
+    Error Context: ..\..\.tmp\qa3\pw-results\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event\error-context.md
+
+  4) .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Failed: HARNESS_TURN_FAILED')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Failed: HARNESS_TURN_FAILED') with timeout 10000ms
+      - waiting for getByText('Failed: HARNESS_TURN_FAILED')
+
+
+      155 |   const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+      156 |   await page.goto(`/app/runs/${await startRun(request, failing)}`);
+    > 157 |   await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+          |                                                               ^
+      158 |
+      159 |   await control(request, '/deciders', { jev: true, codex: true });
+      160 |   try {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\qa.spec.ts:157:63
+
+    Error Context: ..\..\.tmp\qa3\pw-results\qa-failure-reasons-are-typ-0d3ec-ure-and-decider-unavailable\error-context.md
+
+  4 failed
+    .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) 
+    .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) 
+    .tmp\qa3\specs\qa.spec.ts:94:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event 
+    .tmp\qa3\specs\qa.spec.ts:148:1 › failure reasons are typed and visible: harness failure and decider unavailable 
+  20 passed (4.4m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 186-r2-3\apps\web
+
