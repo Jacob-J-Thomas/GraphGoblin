@@ -223,7 +223,7 @@ Composition: `apps/api` builds the Codex adapters from the Codex entry of the ha
 
 | Codex event                                                       | `HarnessEvent`                                                                                                                                                                                                                                                                                          |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `thread.started`                                                  | `session` with `mode: 'fresh'`, as soon as it arrives. On resume the known id is announced before the CLI starts.                                                                                                                                                                                       |
+| `thread.started`                                                  | `session` with `mode: 'fresh'`, as soon as it arrives. On resume, emit resumed mode only after the native ID matches and the turn succeeds.                                                                                                                                                             |
 | `item.completed`                                                  | `item`; `agent_message` → `message`, `reasoning`, `command_execution` → `command`, `file_change` → `file-change`, `mcp_tool_call` → `tool-call`, `web_search` → `search`, `error`, anything else → `other`, each with a one-line summary and the raw item (command output capped at 16 KiB) as `detail` |
 | `item.started`, `item.updated`                                    | not emitted                                                                                                                                                                                                                                                                                             |
 | SDK item `status`                                                 | Explicit `completed`, `failed`, and in-progress/running states normalize to `ok`, `failed`, and `running`. Command items also derive status from integer `exit_code` when present; every command has a status. Other item types include status only when the SDK reports one.                           |
@@ -311,7 +311,7 @@ Fresh conversation isolation does not change the authored working-directory/tool
 Missing sessions remain `HARNESS_SESSION_MISSING`, non-resumable, without a silent
 fresh fallback. A prior visit's own handle, like previous/named handles, is not proof
 that a new authored task was submitted. #244/ADR-0045's acceptance and exact-task retry
-rules apply unchanged; #265 owns the future explicit recovery choice.
+rules apply unchanged; #265 provides the explicit recovery choice below.
 
 ### Structured output and repair (Decided)
 
@@ -571,10 +571,10 @@ prompts and visit provenance before invoking either adapter; see [recovery](05-e
 The run event `harness.submission` says `submitted` with a marker on positive acceptance;
 only failed or interrupted turns use the three failure classifications.
 
-| Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                     |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
-| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
+| Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records |
+| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, session identity alone, configuration/deprecation error items                 |
 
 Markers emit once per adapter turn. Claude emits `claude.result` as soon as a successful
 result record passes session, model, usage and result-text validation, before waiting for CLI exit.
@@ -674,3 +674,23 @@ authored selections. A failed catalog lookup shows **Validation unavailable**; a
 leaves an incompatible draft that cannot be saved until corrected. See [the editor's harness-change rule](09-frontend-and-pwa.md#explicit-node-harness-changes-204)
 for compatibility, effort, notices and persistence. Runtime resolution is unchanged; stored values
 need no migration.
+
+### Missing-session recovery (#265)
+
+The engine preserves a positively identified missing conversation as
+`HARNESS_SESSION_MISSING`, including the requested native ID and its origin.
+`HarnessPort.resume` never requests an automatic replacement. Codex waits for native
+`thread.started` and a successful turn before emitting resumed mode, and rejects a different returned ID;
+a requested ID alone never establishes reuse. Claude retains its fixed native
+missing-session refusal and initialization-identity checks. Controlled SDK/CLI-port
+fixtures establish these adapter behaviors; real unknown-session versions require
+the separate D-005 orchestrator verification.
+
+Only the explicit failed-run recovery action starts fresh. It retains the original
+model, effort, harness options and configured graph context, records loss of the
+old provider conversation, and restarts the authored task for that node. Plain
+Resume does not start fresh. See ADR-0055 and docs/07 for the request contract.
+
+The engine also withholds durable resumed-session announcements until that turn succeeds,
+for both harnesses. Requested handles and submission evidence remain durable immediately;
+a missing-session refusal after initialization therefore cannot leave a false reuse record.

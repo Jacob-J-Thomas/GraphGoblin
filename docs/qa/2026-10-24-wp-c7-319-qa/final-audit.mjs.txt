@@ -1,0 +1,21 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const q=path.resolve('docs/qa/2026-10-24-wp-c7-319-qa');
+const md=fs.readFileSync(path.join(q,'README.md'),'utf8');
+const targets=[...md.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]).filter(t=>!/^https?:/.test(t));
+const missing=[...new Set(targets.filter(t=>!fs.existsSync(path.resolve(q,t.split('#')[0]))))];
+const files=fs.readdirSync(q);
+const unlinked=files.filter(n=>n!=='README.md'&&!targets.includes(n));
+const oversized=files.filter(n=>fs.statSync(path.join(q,n)).size>1000000);
+const accountPattern=new RegExp(path.basename(process.env.USERPROFILE),'i');
+const unnormalized=files.filter(n=>/\.(json|txt|md)$/.test(n)&&accountPattern.test(fs.readFileSync(path.join(q,n),'utf8')));
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const trackedDiff=execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim();
+const sourceStatus=execFileSync('git',['status','--short'],{encoding:'utf8'}).trim();
+const result={head,trackedDiff,sourceStatus,artifactFiles:files.length,linkedTargets:targets.length,missing,unlinked,oversized,unnormalized,pass:head==='3a6055a69470a111ef301b8df232ee27fc35f698'&&!trackedDiff&&!missing.length&&!unlinked.length&&!oversized.length&&!unnormalized.length};
+fs.writeFileSync(path.join(q,'final-audit.json'),JSON.stringify(result,null,2));
+const hashes={};for(const name of fs.readdirSync(q).filter(n=>!['README.md','HASHES.json'].includes(n)).sort()){const b=fs.readFileSync(path.join(q,name));hashes[name]={bytes:b.length,sha256:crypto.createHash('sha256').update(b).digest('hex')};}
+fs.writeFileSync(path.join(q,'HASHES.json'),JSON.stringify(hashes,null,2));
+console.log(JSON.stringify(result));if(!result.pass)process.exitCode=1;

@@ -88,6 +88,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -98,7 +99,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "x-graphgoblin-shutdown-token"?: string;
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -127,6 +130,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -146,6 +150,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -1166,6 +1171,51 @@ export interface paths {
                 cookie?: never;
             };
             requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RunRecord"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{id}/recover-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly start a fresh session for the observed missing-session failure */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        nodeId: string;
+                        failureSeq: number;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -3823,6 +3873,17 @@ export interface components {
                     resumeSessionId?: string | undefined;
                 } | undefined;
             } | undefined;
+            missingSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+            } | undefined;
         };
         WaitSpecInput: {
             waitId: string;
@@ -4211,6 +4272,22 @@ export interface components {
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";
                 id: string;
             };
+            freshSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                nodeId: string;
+                failureSeq: number;
+                /** @constant */
+                priorContextCarried: false;
+                prompt?: string | undefined;
+            } | undefined;
         } | {
             runId: string;
             seq: number;
@@ -5910,6 +5987,17 @@ export interface components {
                     resumeSessionId?: string | undefined;
                 } | undefined;
             } | undefined;
+            missingSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+            } | undefined;
         };
         WaitSpec: {
             waitId: string;
@@ -6298,6 +6386,22 @@ export interface components {
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";
                 id: string;
             };
+            freshSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                nodeId: string;
+                failureSeq: number;
+                /** @constant */
+                priorContextCarried: false;
+                prompt?: string | undefined;
+            } | undefined;
         } | {
             runId: string;
             seq: number;

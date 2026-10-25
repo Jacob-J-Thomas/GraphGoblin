@@ -1,0 +1,99 @@
+// Independent QA fixture. Execute the preserved text with a data: module loader.
+import { readFile, writeFile, appendFile, mkdir, access } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { setTimeout as delay } from 'node:timers/promises';
+const root = process.cwd();
+const req = createRequire(resolve(root, 'apps/api/package.json'));
+const enginePackage = resolve(root, 'apps/api/node_modules/@graphgoblin/engine');
+const engineExports = JSON.parse(await readFile(join(enginePackage, 'package.json'), 'utf8')).exports;
+const { FakeHarness } = await import(new URL(engineExports['./testing'].import, pathToFileURL(enginePackage + '/')));
+const { createContainer } = await import(pathToFileURL(resolve(root, 'apps/api/dist/container.js')));
+const { loadConfig } = await import(pathToFileURL(resolve(root, 'apps/api/dist/config.js')));
+const { buildApp } = await import(pathToFileURL(resolve(root, 'apps/api/dist/app.js')));
+const disk = join(process.env.GG_DATA_DIR, 'fake-provider');
+await mkdir(disk, { recursive: true });
+let plans = [];
+let choiceCrash;
+let callCounter = 0;
+const live = new Set();
+function turn(family, request, signal, prior) {
+  const id = prior ?? randomUUID();
+  const plan = plans.shift() ?? {};
+  let resolveResult, rejectResult, resolveId, rejectId;
+  const result = new Promise((yes, no) => { resolveResult = yes; rejectResult = no; });
+  result.catch(() => {});
+  const sessionId = new Promise((yes, no) => { resolveId = yes; rejectId = no; });
+  sessionId.catch(() => {});
+  const call = { n: ++callCounter, harness: family, mode: prior ? 'resume' : 'fresh', id,
+    model: request.model, effort: request.effort, prompt: request.turn.prompt, plan };
+  const events = (async function* () {
+    await appendFile(join(process.env.GG_DATA_DIR, 'calls.jsonl'), JSON.stringify(call) + '\n');
+    process.send?.({ type: 'call', call });
+    try {
+      if (plan.initThenMissing) { resolveId(id); yield { type: 'session', sessionId: id, mode: 'resumed' }; }
+      const controlledError = () => Object.assign(new Error('Controlled ' + plan.error), { code: plan.error, submission: plan.submission ?? 'definitely-not-submitted', retriable: plan.retriable ?? false });
+      if (plan.error && !plan.afterAccept) throw controlledError();
+      if (prior) {
+        try { await access(join(disk, id)); }
+        catch { throw Object.assign(new Error('Removed fake provider conversation'), { code: 'HARNESS_SESSION_MISSING', submission: 'session-missing', retriable: false }); }
+      } else await writeFile(join(disk, id), request.turn.prompt);
+      resolveId(id);
+      yield { type: 'session', sessionId: id, mode: prior ? 'resumed' : 'fresh' };
+      yield { type: 'submitted', marker: 'fake.accepted' };
+      if (plan.error && plan.afterAccept) throw controlledError();
+      if (plan.hold) {
+        process.send?.({ type: 'holding', id });
+        live.add(id);
+        while (live.has(id)) { if (signal.aborted) throw new DOMException('aborted', 'AbortError'); await delay(20); }
+      }
+      if (plan.crashAfterAccepted) {
+        // Allow the engine's consumer to persist the preceding yielded acceptance marker.
+        process.exit(17);
+      }
+      const usage = { inputTokens: 1, outputTokens: 1, cachedInputTokens: 0, reasoningOutputTokens: 0 };
+      yield { type: 'usage', usage };
+      const finalText = plan.finalText ?? 'OK';
+      resolveResult({ finalText, usage, items: [] });
+    } catch (error) {
+      rejectId(error);
+      yield { type: 'error', code: error.code ?? 'HARNESS_TURN_FAILED', message: error.message, submission: error.submission, retriable: error.retriable ?? false };
+      rejectResult(error);
+    }
+  })();
+  return { sessionId, events, result, cancel: async () => { live.delete(id); } };
+}
+const harnesses = Object.fromEntries(['codex', 'claude'].map(family => {
+  const ready = new FakeHarness([], family);
+  return [family, { id: family, preflight: () => ready.preflight(),
+    start: (r, s) => turn(family, r, s), resume: (id, r, s) => turn(family, r, s, id) }];
+}));
+const container = await createContainer(loadConfig(process.env), { harnesses, startTimers: false });
+await container.start();
+const operator = await container.repos.apiKeys.create('local', 'QA operator', ['*']);
+const reader = await container.repos.apiKeys.create('local', 'QA reader', ['runs:read']);
+const app = await buildApp(container, { logger: false });
+await app.listen({ host: '127.0.0.1', port: Number(process.env.GG_PORT) });
+process.send?.({ type: 'ready', token: operator.token, reader: reader.token });
+process.on('message', async message => {
+  try {
+    if (message.type === 'plans') { plans = message.plans; process.send?.({ type: 'ack', requestId: message.requestId }); }
+    if (message.type === 'release') { live.clear(); process.send?.({ type: 'ack', requestId: message.requestId }); }
+    if (message.type === 'snapshot') {
+      const { runId } = message;
+      const run = await container.repos.runs.get(runId);
+      const events = await container.repos.events.read(runId);
+      process.send?.({ type: 'snapshot', requestId: message.requestId, run, events });
+    }
+    if (message.type === 'arm-choice-crash') {
+      choiceCrash = container.repos.events.subscribe(message.runId, event => {
+        if (event.type === 'run.resumed' && event.freshSession) process.exit(18);
+      });
+      process.send?.({ type: 'ack', requestId: message.requestId });
+    }
+    if (message.type === 'exit') process.exit(19);
+    if (message.type === 'stop') { choiceCrash?.(); await app.close(); await container.dispose(); process.exit(0); }
+  } catch (error) { process.send?.({ type: 'fixture-error', error: error.message }); }
+});

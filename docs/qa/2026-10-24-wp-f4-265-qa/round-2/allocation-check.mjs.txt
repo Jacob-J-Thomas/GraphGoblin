@@ -1,0 +1,15 @@
+import {readFile,writeFile,copyFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');
+const path=join(out,'api-allocation.vitest.mjs.txt');
+const before=await readFile(path,'utf8');
+await copyFile(path,join(out,'api-allocation.vitest-setup-attempt.mjs.txt'));
+const replacement=join(out,'api-allocation.fixture.mjs');
+const checks=['./testing/api-subprocess.js','../testing/api-subprocess.js'].map(input=>({input,oldResult:input.replace(/\/testing\/api-subprocess\.js$/,replacement),newResult:input.replace(/^.*\/testing\/api-subprocess\.js$/,replacement),expected:replacement}));
+assert.ok(checks.every(c=>c.oldResult!==c.expected&&c.newResult===c.expected));
+const after=before.replace('find:/\\/testing\\/api-subprocess\\.js$/','find:/^.*\\/testing\\/api-subprocess\\.js$/');assert.notEqual(after,before);
+await writeFile(path,after);
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+await writeFile(join(out,'allocation-alias-check.json'),clean(JSON.stringify({issue:'QA allocation regex matched only a suffix and retained the relative import prefix',old:'suffix match',corrected:'whole import match',checks,runtimeConfigUnchangedUntilCurrentPipelineEnds:true},null,2)));
+console.log('PASS: alias error reproduced and source corrected; current runtime copy retained unchanged');

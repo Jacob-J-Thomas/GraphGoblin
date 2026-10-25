@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,readdir,stat,access} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa');
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const head=git('rev-parse','HEAD'),branch=git('branch','--show-current');
+assert.equal(head,'08acef6cebd40e7f6acbb896d950c7de2d62e9d6');
+assert.equal(branch,'codex-qa-wp-f4-265');assert.equal(git('diff','--name-only'),'');assert.equal(git('diff','--cached','--name-only'),'');
+const md=await readFile(join(out,'README.md'),'utf8');
+const files=(await readdir(out)).filter(x=>x!=='README.md');const missing=[],oversized=[],badPaths=[],invalidJson=[];
+for(const name of files){const size=(await stat(join(out,name))).size;if(size>1000000)oversized.push({name,size});if(!md.includes(']('+name+')'))missing.push(name);
+ if(/\.(json|txt|md)$/.test(name)){const text=await readFile(join(out,name),'utf8');if(text.includes(process.env.USERPROFILE)||text.includes(process.env.USERPROFILE.replaceAll('\\','/'))||text.includes(JSON.stringify(process.env.USERPROFILE).slice(1,-1)))badPaths.push(name);if(name.endsWith('.json')){try{JSON.parse(text.replace(/^\uFEFF/,''))}catch{invalidJson.push(name)}}}}
+const broken=[];for(const match of md.matchAll(/\]\(([^)]+)\)/g)){const target=match[1];if(/^[a-z]+:\/\//i.test(target))continue;try{await access(resolve(out,target))}catch{broken.push(target)}}
+const result={head,branch,node:process.version,dependenciesPresent:(await readdir('node_modules')).length>0,artifactCount:files.length,missingLinks:missing,oversized,badLocalUserPaths:badPaths,invalidJson,brokenLinks:[...new Set(broken)],gitStatus:git('status','--short'),trackedDiff:git('diff','--stat'),stagedDiff:git('diff','--cached','--stat')};
+result.status=missing.length+oversized.length+badPaths.length+invalidJson.length+broken.length===0?'PASS':'FAIL';
+await writeFile(join(out,'qa-audit.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));assert.equal(result.status,'PASS');

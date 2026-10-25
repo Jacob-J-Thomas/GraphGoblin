@@ -1,0 +1,38 @@
+START pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown --maxWorkers=1
+END api-shutdown-focused 1
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/app/ShutdownNotice --maxWorkers=1
+END web-shutdown-focused 0
+START pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts --maxWorkers=1
+END isolated-api-main 0
+START pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers=1
+END isolated-api-subloop-restart 0
+START pnpm.cmd --filter @graphgoblin/api exec vitest run src/templates/catalog-package.test.ts --maxWorkers=1
+END isolated-api-templates-catalog-package 0
+START pnpm.cmd --filter @graphgoblin/api exec vitest run src/triggers/github-recipe.test.ts --maxWorkers=1
+END isolated-api-triggers-github-recipe 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/EditorPage.undo.test.tsx --maxWorkers=1
+END isolated-web-editor-EditorPage.undo 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/TriggerEditor.test.tsx --maxWorkers=1
+END isolated-web-editor-TriggerEditor 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/events/EventsPage.races.test.tsx --maxWorkers=1
+END isolated-web-events-EventsPage.races 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/manual-route.test.ts --maxWorkers=1
+END isolated-web-editor-manual-route 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/styles/fonts.test.ts --maxWorkers=1
+END isolated-web-styles-fonts 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/api/api-key-fetch.test.ts --maxWorkers=1
+END isolated-web-api-api-key-fetch 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/history.test.ts --maxWorkers=1
+END isolated-web-editor-history 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/port-targets.test.ts --maxWorkers=1
+END isolated-web-editor-port-targets 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/api/prefixes.test.ts --maxWorkers=1
+END isolated-web-api-prefixes 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/lib/variants.test.ts --maxWorkers=1
+END isolated-web-lib-variants 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/forms/return-channel-default.test.ts --maxWorkers=1
+END isolated-web-forms-return-channel-default 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/forms/setup-instructions.test.ts --maxWorkers=1
+END isolated-web-forms-setup-instructions 0
+START pnpm.cmd --filter @graphgoblin/web exec vitest run src/e2e-support/worker.test.ts --maxWorkers=1
+END isolated-web-e2e-support-worker 0

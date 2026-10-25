@@ -1,0 +1,9 @@
+import {createApiProcessFixture as original} from '../../../../apps/api/src/testing/api-subprocess.ts';
+import {appendFile} from 'node:fs/promises';
+export * from '../../../../apps/api/src/testing/api-subprocess.ts';
+// This is a test-resource wrapper, not a replacement for application code or process behavior.
+export async function createApiProcessFixture(options={}){
+  const fixture=await original({...options,portStart:6040,portCount:10,prefix:'gg-qa-f4-265-r2-api-'});
+  if(process.env.GG_QA_ALLOCATION_AUDIT)await appendFile(process.env.GG_QA_ALLOCATION_AUDIT,JSON.stringify({at:new Date().toISOString(),requested:options,port:fixture.port,dataDir:fixture.dataDir})+'\n');
+  return fixture;
+}

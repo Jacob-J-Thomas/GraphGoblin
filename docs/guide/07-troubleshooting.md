@@ -12,11 +12,11 @@ For non-pinned generic failures, Codex permits Resume even when the adapter repo
 evidence. Both still need a usable session for uncertain recovery; pinned unsupported-policy,
 configuration and argument refusals remain non-resumable.
 
-| Case                                                                                                                   | Action                                                                                                                                                                                                                                                                                                                |
-| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Definitely not submitted (`definitely-not-submitted`)                                                                  | Fix the external cause and Resume when eligible: the exact saved authored/repair task uses its original session selection. Unsupported policy, invalid configuration and rejected arguments need a corrected definition and a new run; the failed run's definition is pinned.                                         |
-| Delivery uncertain (`HARNESS_DELIVERY_UNCERTAIN`, or a specific timeout/quota/storage cause with `delivery-uncertain`) | When eligible, Resume continues a usable recorded session. An inherited previous/named ID without authored-task acceptance is insufficient. When non-resumable, inspect possible effects and use **Replay from the node** for a deliberate attempt. Stop an unconfirmed native process first.                         |
-| Session missing (`HARNESS_SESSION_MISSING`)                                                                            | Preserve and inspect the failed run. Resume is refused. Use **Replay from the node** for a deliberate attempt; named-session lookup can still select the same missing conversation. To change that policy, correct the definition and start a new run. A dedicated fresh-session recovery action is deferred to #265. |
+| Case                                                                                                                   | Action                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Definitely not submitted (`definitely-not-submitted`)                                                                  | Fix the external cause and Resume when eligible: the exact saved authored/repair task uses its original session selection. Unsupported policy, invalid configuration and rejected arguments need a corrected definition and a new run; the failed run's definition is pinned.                                                                     |
+| Delivery uncertain (`HARNESS_DELIVERY_UNCERTAIN`, or a specific timeout/quota/storage cause with `delivery-uncertain`) | When eligible, Resume continues a usable recorded session. An inherited previous/named ID without authored-task acceptance is insufficient. When non-resumable, inspect possible effects and use **Replay from the node** for a deliberate attempt. Stop an unconfirmed native process first.                                                     |
+| Session missing (`HARNESS_SESSION_MISSING`)                                                                            | Preserve and inspect the failed run. Resume is refused. Use **Replay from the node** for a deliberate attempt; named-session lookup can still select the same missing conversation. To change that policy, correct the definition and start a new run. For eligible failures use the explicit Start fresh session control described below (#265). |
 
 ## Find the symptom
 
@@ -292,7 +292,19 @@ or `{ "action": "force" }` to interrupt. A second Ctrl+C or SIGTERM at least one
 Signals inside the second after each accepted signal are coalesced because pnpm may forward a duplicate of one
 keypress.
 Wait has no hidden kill timer. Cancelling a particular run remains a separate command.
-The browser shutdown-choice UI is follow-on #319; closing the tab only stops observation.
+Every browser page now shows the drain notice (#319), active runs linked to their
+inspectors, and **Keep waiting** / **Force stop**. Force requires confirmation naming
+the work and warning that external effects may be uncertain. Closing, reloading or
+navigating a tab only changes observation; none sends a shutdown action. Starting a
+drain remains a terminal/API operation.
+
+If another tab acts first, a 409 shows the current gateway state. A changed phase
+or restarted gateway closes any open force confirmation and requires a fresh choice. A lost action
+response has an unknown outcome and is never automatically retried. After HTTP
+closes, **Gateway stopped or disconnected** keeps the last state without repeated
+shutdown polling; **Check gateway state** explicitly checks after restart. This
+message alone does not prove process exit or resource release. Read access needs
+`system:read`; actions need `system:write`; optional run names use `runs:read`.
 
 Forced runs show `RUN_INTERRUPTED_BY_STOP`, the node and attempt, and possible external
 effects. They do not automatically resume. Inspect what happened before explicitly replaying.
@@ -311,3 +323,26 @@ SIGKILL cannot record managed force evidence.
 On Windows, use the API controls when stopping from another process. Windows `taskkill`
 and Node's programmatic `child.kill('SIGINT'/'SIGTERM')` bypass JavaScript signal handlers;
 they cannot establish managed drain/force evidence. The real signal cases run on Linux CI.
+
+## A provider conversation is missing
+
+`HARNESS_SESSION_MISSING` means the provider no longer has the selected conversation,
+for example after removal, expiry or changing the provider's home directory. The
+failure names the harness, handle and origin. Plain Resume cannot restore it.
+
+In the run inspector choose **Start fresh session for <node>** only when you want
+to repeat that node's authored task without its prior provider conversation. Selected
+loop inputs and the configured context mode, model and effort stay the same. Earlier
+provider actions are not undone. Leaving the choice untouched keeps the run failed;
+reload and gateway restart preserve it. The recovery note records who chose and when.
+
+API callers read the failed event's sequence and post `{ "nodeId": "worker",
+"failureSeq": 17 }` to `/runs/{id}/recover-session` with `runs:write`. A stale or
+repeated choice returns 409: inspect the current failure before acting again.
+Failures recorded by an older gateway without the new typed provenance require a
+deliberate new run/replay; upgrading does not rewrite historical failures.
+
+A containing subloop run retains the original non-resumable failure in history.
+Recover the failed inference child via its child-run link, then use the API Resume
+on the containing run. The gateway verifies the same owned child's later durable
+resume and current absence of a runtime failure; before that recovery it rejects Resume.

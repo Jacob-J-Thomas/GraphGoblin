@@ -51,7 +51,24 @@ it('catches up across historical terminals in pages and stops at the captured bo
   expect(o.error).not.toHaveBeenCalled();
   stop();
 });
-it('checks a resumable failure, catches up, then opens a new live tail', async () => {
+const missingSession: RunFailure = {
+  code: 'HARNESS_SESSION_MISSING',
+  message: 'missing',
+  nodeId: 'ask',
+  resumable: false,
+  missingSession: {
+    visitId: `${id}:ask:1`,
+    harness: 'codex',
+    origin: 'resume-own',
+    model: 'gpt-6.1-sol',
+    effort: 'low',
+  },
+};
+it.each([
+  ['a resumable failure', failure],
+  // The explicit fresh-session choice can come from this tab, another tab or the API (#265).
+  ['a missing-session failure awaiting an explicit choice', missingSession],
+])('checks %s, catches up, then opens a new live tail', async (_name, failed) => {
   vi.useFakeTimers();
   let running = false;
   const read = vi.fn((request: Request) =>
@@ -62,7 +79,7 @@ it('checks a resumable failure, catches up, then opens a new live tail', async (
           : runRecord({
               id,
               status: running ? 'running' : 'failed',
-              failure,
+              failure: failed,
               lastEventSeq: running ? 2 : 1,
             }),
       ),

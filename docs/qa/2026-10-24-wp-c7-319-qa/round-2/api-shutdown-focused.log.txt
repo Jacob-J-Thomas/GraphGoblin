@@ -1,0 +1,48 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-c7-319/apps/api
+
+ ❯ src/shutdown-process.test.ts (11 tests | 3 failed | 3 skipped) 392730ms
+   × native drain rechecks a wake during delivery cleanup and completes its required child before closing controls 122075ms
+   × native racing Events retain admitted work or reusable keys through drain and restart 60668ms
+   × native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work 60410ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/shutdown-process.test.ts > native drain rechecks a wake during delivery cleanup and completes its required child before closing controls
+Error: Test timed out in 120000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/shutdown-process.test.ts:81:1
+     79| } as const;
+     80|
+     81| it('native drain rechecks a wake during delivery cleanup and completes…
+       | ^
+     82|   const a = await boot({ GG_MAX_CONCURRENT_RUNS: '2' });
+     83|   const release = join(a.f.dataDir, 'release-woken-script');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/shutdown-process.test.ts > native racing Events retain admitted work or reusable keys through drain and restart
+ FAIL  src/shutdown-process.test.ts > native HTTP drain keeps SSE and input open, creates a child, fires its timer, and recovers only queued work
+Error: API child did not exit:  
+ ❯ Timeout.<anonymous> src/testing/api-subprocess.ts:85:26
+     83|         new Promise<never>((_resolve, reject) => {
+     84|           timer = setTimeout(
+     85|             () => reject(new Error(`API child did not exit: ${safe(std…
+       |                          ^
+     86|             timeoutMs,
+     87|           );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  3 failed | 27 passed | 3 skipped (33)
+   Start at  20:09:55
+   Duration  479.41s (tests 91%, import 7%, transform 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-c7-
+  │ 319\apps\api
+

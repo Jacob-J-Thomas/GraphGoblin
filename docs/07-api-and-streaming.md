@@ -679,7 +679,21 @@ before expiry. A force cleanup failure offers `["force"]`: a further explicit fo
 code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
 terminations remain warnings without preventing normal completion. A drain observation
 failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
-#319 will build the browser interaction on these phases and controls.
+Shutdown responses also carry an opaque `controlToken` (#319). A client can send it
+in `x-graphgoblin-shutdown-token` on POST. The gateway checks it synchronously before
+dispatch and returns 409 with the current snapshot if the gateway incarnation changed, the
+phase changed, or another control chose since the token was read. Every phase entry and
+every accepted wait issue a new token, so a phase that recurs (draining, then
+awaiting-choice, then draining after a wait) does not revive the earlier token. This
+prevents a delayed force from acknowledging another request's newly failed cleanup or
+overriding a later choice to keep waiting. The browser always sends this precondition and resets confirmation
+when the token changes. Unconditional operator/API actions remain supported; signals
+and the controller's force semantics are unchanged. The token is a concurrency value,
+not an authentication credential. Reads require `system:read`; actions require
+`system:write`, including conditional actions.
+
+Existing `GET /runs/{id}` reads supply pinned loop names when permitted, with run IDs
+as the fallback. See docs/09 for the app-wide notice.
 
 Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
 503 before saving any inbound record or dedupe key, so the same Event can be retried after
@@ -704,3 +718,22 @@ waits; independent runs admitted then remain queued for restart. A new closed in
 sealed atomically with wake admission: a late command returns 503 `SHUTTING_DOWN` before
 writing, while an earlier accepted wake keeps controls and SSE open until its runnable family
 settles. Durable future parks and pauses still recover on the next start.
+
+### Explicit missing-session action (#265)
+
+`POST /runs/{id}/recover-session` requires `runs:write` and the run's owner. Its strict
+JSON body is `{ "nodeId": "worker", "failureSeq": 17 }`, where `failureSeq` is the
+sequence of the observed `run.failed` event from `GET /runs/{id}/events`. It returns
+200 with the resumed run snapshot. Only the current `HARNESS_SESSION_MISSING` failure
+with typed missing-session provenance at that inference node is eligible. Wrong
+state/node, stale event sequence, repeated choice or a concurrent loser returns 409
+`INVALID_STATE`; malformed/extra fields return 400, missing write scope 403 and a run
+owned by someone else 404. The request cannot override model or context policy.
+
+The action explicitly discards prior provider conversation and restarts the node's
+authored task in a fresh session with the same model, effort and graph context.
+`run.resumed.freshSession` durably records actor (on the event), timestamp, node,
+visit, failed sequence, prior handle/origin, model/effort and
+`priorContextCarried: false`. The event survives restart and completes an interrupted
+resume. No request leaves the failure unchanged; `/resume` still refuses it.
+The typed client exposes `runs.recoverSession(client, runId, { nodeId, failureSeq })`.

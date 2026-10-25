@@ -1,0 +1,100 @@
+import assert from 'node:assert/strict';
+import {spawn,execFileSync} from 'node:child_process';
+import {once} from 'node:events';
+import {readFile,writeFile,mkdtemp,unlink,readdir,copyFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+import {setTimeout as delay} from 'node:timers/promises';
+const root=process.cwd(),out=resolve('docs/qa/2026-10-24-wp-f4-265-qa/round-2');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+assert.equal(head,'08acef6cebd40e7f6acbb896d950c7de2d62e9d6');assert.match(process.version,/^v22\./);
+assert.ok((await readdir('node_modules')).length);
+async function publicEntry(name,entry='.'){
+  const dir=resolve('apps/api/node_modules/@graphgoblin/'+name);
+  const pkg=JSON.parse(await readFile(join(dir,'package.json'),'utf8'));
+  return import(new URL(pkg.exports[entry].import,pathToFileURL(dir+'/')));
+}
+const {singleNodeLoop}=await publicEntry('engine','./testing');
+const {LoopDefinitionSchema}=await publicEntry('contracts');
+const clean=s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+async function save(name,value){await writeFile(join(out,name),clean(JSON.stringify(value,null,2)))}
+async function until(fn,label){const deadline=Date.now()+60000;for(;;){const value=await fn();if(value)return value;assert.ok(Date.now()<deadline,label);await delay(50)}}
+const fixture=join(out,'gateway.mjs.txt');
+await copyFile(resolve('docs/qa/2026-10-24-wp-f4-265-qa/gateway.mjs.txt'),fixture);
+const fixtureHash=createHash('sha256').update(await readFile(fixture)).digest('hex');
+const dataDir=await mkdtemp(join(tmpdir(),'gg-qa-f4-265-r2-'));
+const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.toUpperCase().startsWith('GG_')&&!['JEV_API_KEY','NODE_V8_COVERAGE'].includes(k.toUpperCase())));
+Object.assign(env,{GG_DATA_DIR:dataDir,GG_DB_URL:'file:'+join(dataDir,'graphgoblin.db').replaceAll('\\','/'),GG_PORT:'6046',GG_HOST:'127.0.0.1',GG_REQUIRE_API_KEY:'true',GG_SWAGGER_UI:'false',GG_MASTER_KEY:Buffer.alloc(32,26).toString('base64'),GG_WEB_DIST:'',GG_LOG_LEVEL:'silent'});
+const child=spawn(process.execPath,['--input-type=module','-e',"import fs from 'node:fs'; await import('data:text/javascript;base64,'+fs.readFileSync(process.argv[1]).toString('base64'))",fixture],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe','ipc']});
+const messages=[],calls=[],traffic=[],results=[];let log='',token;
+child.stdout.on('data',x=>log+=x);child.stderr.on('data',x=>log+=x);
+child.on('message',m=>{messages.push(m);if(m.type==='call')calls.push(m.call)});
+async function api(path,body,expected=200){
+  const r=await fetch('http://127.0.0.1:6046'+path,{method:body===undefined?'GET':'POST',headers:{authorization:'Bearer '+token,...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+  const value=await r.json();traffic.push({method:body===undefined?'GET':'POST',path,body,status:r.status,response:value});assert.equal(r.status,expected,path+': '+JSON.stringify(value));return value;
+}
+async function status(id,wanted){return until(async()=>{const r=await api('/runs/'+id);return r.status===wanted&&r},'run '+id+' '+wanted)}
+async function snapshot(id,name){const v={run:await api('/runs/'+id),events:(await api('/runs/'+id+'/events?limit=1000')).items,sessions:(await api('/runs/'+id+'/sessions')).items,thread:await api('/runs/'+id+'/thread')};await save(name+'.json',v);return v}
+function definition(family,reset,key){
+  const session={policy:'resume-own',...(reset===undefined?{}:{resetAfterVisits:reset})};
+  const def=singleNodeLoop('R2 own '+key,{id:'worker',kind:'inference',label:'Worker',config:{harness:family,model:family==='codex'?'gpt-6-luna':'claude-opus-5-5',effort:'low',session,harnessOptions:{sandbox:'read-only',approval:'never'},prompt:{template:'R2 authored task ['+key+']'}}});
+  // Execution controls belong to settings. There is no top-level limits property.
+  def.settings={maxNodeVisits:10,runDeadlineSeconds:null};
+  def.nodes.push({id:'again',kind:'decision',label:'Again',config:{kind:'expression',jsonata:'"repeat"',maxPasses:3,routes:[{id:'repeat',label:'Repeat',repeat:true},{id:'finish',label:'Finish'}]}},{id:'hold',kind:'wait',label:'Hold',config:{mode:'input',prompt:'Pause between logical visits',exposeTo:['api']}});
+  const edge=(id,node,port,to)=>({id,from:{node,port},to:{node:to}});
+  def.edges=[edge('e1','start','out','worker'),edge('e2','worker','out','again'),edge('e3','again','repeat','hold'),edge('e4','hold','out','worker'),edge('e5','again','limit-reached','done'),edge('e6','again','finish','done')];
+  return LoopDefinitionSchema.parse(def);
+}
+try{
+  const ready=await until(()=>{if(child.exitCode!==null)throw Error('Gateway exited: '+log);return messages.find(x=>x.type==='ready')},'gateway ready');token=ready.token;
+  await save('environment.json',{head,node:process.version,port:6046,dataDir,pid:child.pid,fixtureHash,sourceOfShape:['docs/reference/nodes.md','packages/contracts/src/loop.ts','@graphgoblin/engine/testing.singleNodeLoop']});
+  for(const family of ['codex','claude'])for(const reset of [undefined,2]){
+    const key=family+(reset===undefined?'-no-reset':'-reset-2'),start=calls.length;
+    try{
+      const def=definition(family,reset,key),configured=def.nodes.find(n=>n.id==='worker').config.session;
+      await save(key+'-definition.json',def);
+      const {loop}=await api('/loops',{definition:def},201);await api('/loops/'+loop.id+'/publish',{});
+      const {run}=await api('/loops/'+loop.id+'/runs',{},202);
+      const version=await api('/loops/'+loop.id+'/versions/'+run.versionId);assert.deepEqual(version.definition.nodes.find(n=>n.id==='worker').config.session,configured);
+      const wait1=await status(run.id,'waiting');const first=await snapshot(run.id,key+'-visit-1');
+      assert.equal(calls.length-start,1);const a=calls[start].id;assert.equal(calls[start].mode,'fresh');
+      assert.ok(first.sessions.some(s=>s.nodeId==='worker'&&s.sessionId===a&&s.status==='finished'));
+      await unlink(join(dataDir,'fake-provider',a));
+      await api('/runs/'+run.id+'/input',{waitId:wait1.waiting.waitId,input:'visit two'});
+      const failure=await status(run.id,'failed');assert.equal(failure.failure.code,'HARNESS_SESSION_MISSING');assert.equal(failure.failure.missingSession.origin,'resume-own');assert.equal(failure.failure.missingSession.sessionId,a);
+      const missing=await snapshot(run.id,key+'-visit-2-missing');
+      assert.ok(missing.sessions.some(s=>s.nodeId==='worker'&&s.sessionId===a&&s.status==='failed'));
+      assert.equal(calls.length-start,2);assert.equal(calls[start+1].mode,'resume');assert.equal(calls[start+1].id,a);
+      await api('/runs/'+run.id+'/resume',{},409);
+      const failureSeq=missing.events.findLast(e=>e.type==='run.failed').seq;
+      await api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq});
+      const wait2=await status(run.id,'waiting');assert.notEqual(wait2.waiting.waitId,wait1.waiting.waitId);
+      const chosen=await snapshot(run.id,key+'-visit-2-recovered');
+      assert.equal(calls.length-start,3);const b=calls[start+2].id;assert.equal(calls[start+2].mode,'fresh');assert.notEqual(b,a);
+      assert.ok(chosen.sessions.some(s=>s.nodeId==='worker'&&s.sessionId===b&&s.status==='finished'));
+      const choice=chosen.events.filter(e=>e.type==='run.resumed'&&e.freshSession);assert.equal(choice.length,1);assert.equal(choice[0].freshSession.failureSeq,failureSeq);assert.equal(choice[0].freshSession.priorContextCarried,false);
+      const storedAfterChoice=await api('/loops/'+loop.id+'/versions/'+run.versionId);assert.deepEqual(storedAfterChoice.definition.nodes.find(n=>n.id==='worker').config.session,configured);
+      await api('/runs/'+run.id+'/input',{waitId:wait2.waiting.waitId,input:'visit three'});await status(run.id,'succeeded');
+      const final=await snapshot(run.id,key+'-visit-3');assert.equal(calls.length-start,4);const third=calls[start+3];
+      const modes=['fresh','resume','fresh',reset===undefined?'resume':'fresh'];assert.deepEqual(calls.slice(start).map(c=>c.mode),modes);
+      if(reset===undefined)assert.equal(third.id,b);else{assert.notEqual(third.id,b);assert.notEqual(third.id,a)}
+      assert.ok(final.sessions.some(s=>s.nodeId==='worker'&&s.sessionId===third.id&&s.status==='finished'));
+      assert.equal(final.events.filter(e=>e.type==='node.finished'&&e.nodeId==='worker').length,3);
+      const turns=final.events.filter(e=>e.type==='harness.turn'&&e.nodeId==='worker');assert.equal(turns.length,4);assert.equal(new Set(turns.map(e=>e.visitId)).size,3);assert.equal(turns[1].visitId,turns[2].visitId);
+      assert.equal(final.events.filter(e=>e.type==='run.finished').length,1);
+      assert.deepEqual(final.events.filter(e=>e.type==='harness.session'&&e.nodeId==='worker').map(e=>e.mode),['fresh','fresh',reset===undefined?'resumed':'fresh']);
+      const stored=await api('/loops/'+loop.id+'/versions/'+run.versionId);assert.deepEqual(stored.definition.nodes.find(n=>n.id==='worker').config.session,configured);assert.deepEqual(stored.definition,version.definition);
+      assert.ok(calls.slice(start).every(c=>c.model===def.nodes.find(n=>n.id==='worker').config.model&&c.effort==='low'&&c.prompt===def.nodes.find(n=>n.id==='worker').config.prompt.template));
+      results.push({case:key,status:'PASS',runId:run.id,steps:'Valid schema -> visit 1 fresh -> delete provider record -> visit 2 missing -> explicit fresh choice -> visit 3',expectedModes:modes,actualModes:calls.slice(start).map(c=>c.mode),calls:calls.slice(start),configuredPolicyBefore:configured,configuredPolicyAfter:stored.definition.nodes.find(n=>n.id==='worker').config.session,completedVisits:3,logicalVisits:new Set(turns.map(e=>e.visitId)).size,choiceCount:choice.length,sessionRecords:final.sessions,choice:choice[0]});
+      console.log('PASS '+key+' '+modes.join(' -> '));
+    }catch(error){results.push({case:key,status:'FAIL',message:error.message,stack:error.stack.replace(/data:text\/javascript;base64,[A-Za-z0-9+/=]+/g,'<own-policy.mjs.txt>'),calls:calls.slice(start)});console.log('FAIL '+key+': '+error.message)}
+    await save('own-policy-results.json',results);
+  }
+}finally{
+  if(child.exitCode===null){const closed=once(child,'close');child.send({type:'stop'});await closed}
+  await save('provider-calls.json',calls);await save('traffic.json',traffic);await writeFile(join(out,'gateway.log.txt'),clean(log));
+  await save('functional-complete.json',{cases:results.length,passed:results.filter(r=>r.status==='PASS').length,gatewayExited:child.exitCode!==null,exitCode:child.exitCode,head,finishedAt:new Date().toISOString()});
+}
+assert.equal(results.length,4);assert.ok(results.every(r=>r.status==='PASS'),'A continuity scenario failed');

@@ -1,0 +1,15 @@
+import {spawn} from 'node:child_process';
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {tmpdir} from 'node:os';
+const out=resolve('docs/qa/2026-10-24-wp-c7-319-qa/round-2');
+const ps=`$ErrorActionPreference='Stop'; Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -like '*${process.cwd().replaceAll("'","''")}*' } | Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Compress`;
+const child=spawn('powershell.exe',['-NoProfile','-Command',ps],{windowsHide:true,stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',b=>stdout+=b);child.stderr.on('data',b=>stderr+=b);const code=await new Promise((r,j)=>{child.on('error',j);child.on('close',r);});
+let roots=[];if(code===0&&stdout.trim()){const value=JSON.parse(stdout);roots=Array.isArray(value)?value:[value];}
+const linkedStores=[];
+for(const item of await readdir(tmpdir(),{withFileTypes:true}))if(item.isDirectory()&&/^(gg-api-process-|gg-wp-c7-)/.test(item.name)){
+ try{const lock=JSON.parse(await readFile(join(tmpdir(),item.name,'graphgoblin.lock'),'utf8'));if(roots.some(r=>r.ProcessId===lock.pid))linkedStores.push({directory:join(tmpdir(),item.name),pid:lock.pid,startedAt:lock.startedAt});}catch{}
+}
+const result={at:new Date().toISOString(),method:'Read-only CIM: node roots whose command line contains this exact worktree; current linked lock files only. No signals, mutations, directory deletions or broader process-tree proof.',code,roots,linkedStores,...(stderr?{stderr}:{})};
+await writeFile(join(out,'native-residue.json'),JSON.stringify(result,null,2).replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+console.log(JSON.stringify({code,roots:roots.length,linkedStores:linkedStores.length}));
