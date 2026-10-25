@@ -246,6 +246,19 @@ it('resolves a historical thread without decoding events past the requested boun
       expect(response.json<ContextThread>()).toEqual(reconcileThread(seed, all, undefined, at));
     }
     expect((await thread(damaged)).json()).toMatchObject({ code: 'STORED_EVENT_INVALID' });
+    // A damaged checkpoint blocks only reads at or after it (#186 round 2 audit round 2 B2).
+    const checkpoint = await t.container.repos.runs.getThreadCheckpoint(run.id);
+    if (!checkpoint) throw new Error('Missing checkpoint');
+    await t.container.handle.client.execute({
+      sql: 'UPDATE runs SET thread_snapshot = ?, thread_snapshot_replay_state = ? WHERE id = ?',
+      args: ['{invalid-json', '{invalid-json', run.id],
+    });
+    for (const at of [0, 1, checkpoint.seq - 1]) {
+      const response = await thread(at);
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json<ContextThread>()).toEqual(reconcileThread(seed, all, undefined, at));
+    }
+    expect((await thread(checkpoint.seq)).json()).toMatchObject({ code: 'STORED_RUN_INVALID' });
   } finally {
     await t.close();
   }

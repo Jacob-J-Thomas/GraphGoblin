@@ -38,16 +38,16 @@ it('enforces the byte budget independently of count and retains an oversized eve
       payload: 'x'.repeat(MAX_HISTORY_BYTES),
     }),
   );
-  // The row keeps a short outline for labels; the oversized payload itself stays on the server.
+  // The row keeps only its description's parts; the oversized payload stays on the server.
   const [marker] = useRunEventStore.getState().runs['long']!.uncached;
-  expect(marker).toMatchObject({
+  expect(marker).toEqual({
     seq: 51,
     type: 'run.woken',
     uncached: true,
-    description: 'wait woken by manual',
-    outline: { type: 'run.woken', nodeId: 'wait', reason: 'manual', payload: 'x'.repeat(256) },
+    description: [{ node: 'wait' }, ' woken by manual'],
   });
-  // An outline that would itself be large is not kept: the row keeps its recorded description.
+  // Neither a payload of many small values nor long recorded text makes the marker large: text
+  // is cut to the 4,096-character preview budget (#186 round 2 audit round 2 B1).
   useRunEventStore.getState().append(
     'long',
     event('long', 52, 'run.woken', {
@@ -55,14 +55,23 @@ it('enforces the byte budget independently of count and retains an oversized eve
       reason: 'manual',
       payload: Array.from({ length: 200_000 }, (_, i) => i),
     }),
+    event('long', 53, 'run.failed', {
+      failure: {
+        code: 'INTERNAL_ERROR',
+        message: 'm'.repeat(10_000),
+        resumable: false,
+        details: Array.from({ length: 200_000 }, (_, i) => i),
+      },
+    }),
   );
-  const crowded = useRunEventStore.getState().runs['long']!.uncached.find((row) => row.seq === 52);
-  expect(crowded).toEqual({
-    seq: 52,
-    type: 'run.woken',
-    uncached: true,
-    description: 'wait woken by manual',
-  });
+  const { uncached } = useRunEventStore.getState().runs['long']!;
+  expect(uncached.find((row) => row.seq === 52)?.description).toEqual([
+    { node: 'wait' },
+    ' woken by manual',
+  ]);
+  expect(uncached.find((row) => row.seq === 53)?.description).toEqual([
+    `INTERNAL_ERROR: ${'m'.repeat(10_000)}`.slice(0, 4096),
+  ]);
   expect(useRunEventStore.getState().runs['long']!.bytes).toBeLessThanOrEqual(MAX_HISTORY_BYTES);
 });
 it('merges older and newer pages at an identical timestamp boundary without gaps or duplicates while live advances', async () => {

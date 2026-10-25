@@ -15,7 +15,12 @@ it('preserves the ordinary accessible event name for an oversized payload marker
   render(
     <Timeline
       events={[
-        { seq: 1, type: 'node.finished', uncached: true, description: 'work, 1 change, 1 ms' },
+        {
+          seq: 1,
+          type: 'node.finished',
+          uncached: true,
+          description: [{ node: 'work' }, ', 1 change, 1 ms'],
+        },
       ]}
       status="live"
       error={undefined}
@@ -60,6 +65,100 @@ it('names an oversized marker with the pinned labels, not only its recorded IDs 
       name: new RegExp(`node\\.finished\\s*${node.label} \\(${node.id}\\), 1 change, 3 ms`),
     }),
   ).toBeInTheDocument();
+});
+it('names oversized markers of many small values with the pinned labels (#186 round 2 audit round 2 B1)', () => {
+  const definition = LoopDefinitionSchema.parse({
+    ...minimalLoop(),
+    nodes: [
+      {
+        id: 'decide',
+        kind: 'decision',
+        label: 'Original decision',
+        config: {
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          instructions: 'Choose',
+          routes: [
+            { id: 'ship', label: 'Original ship' },
+            { id: 'hold', label: 'Original hold' },
+          ],
+        },
+      },
+    ],
+  });
+  const numbers = Array.from({ length: 100_000 }, (_, i) => i);
+  const wide = Object.fromEntries(Array.from({ length: 40_000 }, (_, i) => [`k${i}`, `v${i}`]));
+  const run = 'run-many-values';
+  act(() =>
+    useRunEventStore.getState().append(
+      run,
+      event(run, 1, 'run.woken', { nodeId: 'decide', reason: 'manual', payload: numbers }),
+      event(run, 2, 'node.finished', {
+        nodeId: 'decide',
+        patch: Array.from({ length: 125 }, (_, i) => ({
+          op: 'add' as const,
+          path: `/vars/${'p'.repeat(200)}${i}`,
+          value: 'x'.repeat(5_000),
+        })),
+        route: 'ship',
+        durationMs: 3,
+      }),
+      event(run, 3, 'heartbeat.beat', { nodeId: 'decide', beat: 1, result: numbers }),
+      event(run, 4, 'run.waiting', {
+        nodeId: 'decide',
+        wait: {
+          waitId: 'wide',
+          startedSeq: 1,
+          nodeId: 'decide',
+          kind: 'input',
+          inputSchema: { type: 'object', properties: wide },
+        },
+      }),
+      event(run, 5, 'decision.made', {
+        nodeId: 'decide',
+        portId: 'ship',
+        diagnostics: [],
+        provenance: {
+          kind: 'classifier',
+          provider: 'kev',
+          classifierId: 'kev',
+          model: 'kev-latest',
+          effort: null,
+        },
+        observation: {
+          kind: 'classifier',
+          answer: { type: 'score', score: 2, confidence: 0.5, legend: wide, probabilities: null },
+        },
+      }),
+      event(run, 6, 'input.received', { nodeId: 'decide', payload: numbers }),
+    ),
+  );
+  const rows = timelineEvents(useRunEventStore.getState().runs[run]!);
+  expect(rows.map((row) => 'uncached' in row)).toEqual([true, true, true, true, true, true]);
+  for (const row of rows) expect(JSON.stringify(row).length).toBeLessThan(1_000);
+  render(
+    <Timeline
+      events={rows}
+      definition={definition}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      onSelect={vi.fn()}
+    />,
+  );
+  const list = within(screen.getByRole('list', { name: 'Timeline' }));
+  const node = String.raw`Original decision \(decide\)`;
+  for (const name of [
+    String.raw`run\.woken\s*${node} woken by manual`,
+    String.raw`node\.finished\s*${node} → Original ship \(ship\), 125 changes, 3 ms`,
+    String.raw`heartbeat\.beat\s*${node}`,
+    String.raw`run\.waiting\s*${node} waits for input`,
+    String.raw`decision\.made\s*Scored 2 to band Original ship \(ship\) with classifier via kev \(kev-latest\) with confidence 50%`,
+    String.raw`input\.received\s*${node}`,
+  ])
+    expect(list.getByRole('button', { name: new RegExp(name) })).toBeInTheDocument();
 });
 function Harness() {
   const [following, setFollowing] = useState(true);

@@ -42,28 +42,65 @@ export function patchDiff(
 
 /** A one-line description of an event for the timeline. */
 export function describeEvent(event: RunEvent, definition?: LoopDefinition): string {
-  const node = (id: string) => nodeName(definition, id);
+  return describeParts(descriptionParts(event), definition);
+}
+
+/**
+ * One piece of an event's description: recorded text, a node, a decision node's route, or the
+ * exit node that prefixes an exit's description once the pinned version is known. Labels are
+ * named when the description is shown, so a row whose payload stays on the server keeps only
+ * these pieces and is still described with the pinned version's labels (#186).
+ */
+export type DescriptionPart =
+  string | { node: string } | { node: string; route: string } | { exit: string };
+
+/** Joins description parts, naming nodes and routes from the pinned version when it is known. */
+export function describeParts(
+  parts: readonly DescriptionPart[],
+  definition?: LoopDefinition,
+): string {
+  return parts
+    .map((part) =>
+      typeof part === 'string'
+        ? part
+        : 'exit' in part
+          ? definition
+            ? `${nodeName(definition, part.exit)}: `
+            : ''
+          : 'route' in part
+            ? routeName(definition, part.node, part.route)
+            : nodeName(definition, part.node),
+    )
+    .join('');
+}
+
+/** The pieces `describeEvent` joins: everything a description reads from the event. */
+export function descriptionParts(event: RunEvent): DescriptionPart[] {
   switch (event.type) {
     case 'run.started':
-      return `attempt ${event.attempt}`;
+      return [`attempt ${event.attempt}`];
     case 'run.finished':
-      return `${event.status} (${event.outcome})`;
+      return [`${event.status} (${event.outcome})`];
     case 'run.failed':
-      return `${event.failure.code}: ${event.failure.message}`;
+      return [`${event.failure.code}: ${event.failure.message}`];
     case 'run.paused':
     case 'run.resumed':
     case 'run.cancel_requested':
-      return `by ${event.actor.kind} ${event.actor.id}`;
+      return [`by ${event.actor.kind} ${event.actor.id}`];
     case 'run.waiting':
-      return `${node(event.nodeId)} waits for ${event.wait.kind}`;
+      return [{ node: event.nodeId }, ` waits for ${event.wait.kind}`];
     case 'run.woken':
-      return `${node(event.nodeId)} woken by ${event.reason}`;
+      return [{ node: event.nodeId }, ` woken by ${event.reason}`];
     case 'iteration.incremented':
-      return `iteration ${event.from} → ${event.to} at ${node(event.targetNodeId)}`;
+      return [`iteration ${event.from} → ${event.to} at `, { node: event.targetNodeId }];
     case 'node.started':
-      return `${node(event.nodeId)} (${event.kind}) attempt ${event.attempt}`;
+      return [{ node: event.nodeId }, ` (${event.kind}) attempt ${event.attempt}`];
     case 'node.finished':
-      return `${node(event.nodeId)}${event.route ? ` → ${routeName(definition, event.nodeId, event.route)}` : ''}, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`;
+      return [
+        { node: event.nodeId },
+        ...(event.route ? [' → ', { node: event.nodeId, route: event.route }] : []),
+        `, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`,
+      ];
     case 'node.progress':
     case 'harness.usage':
     case 'heartbeat.beat':
@@ -73,43 +110,42 @@ export function describeEvent(event: RunEvent, definition?: LoopDefinition): str
     case 'harness.turn':
     case 'harness.submission':
     case 'harness.session':
-      return 'nodeId' in event ? node(event.nodeId) : '';
+      return [{ node: event.nodeId }];
     case 'decision.made':
-      return describeDecision(event, definition);
+      return decisionParts(event);
     case 'exit.evaluated':
-      return describeExit(event, definition);
+      return [{ exit: event.nodeId }, `Exited: ${event.outcome}`];
     case 'signal.received':
-      return event.name;
+      return [event.name];
     case 'delivery.queued':
     case 'delivery.attempted':
     case 'delivery.attempt_finished':
     case 'delivery.finished':
-      return `Webhook ${event.delivery.status}, ${event.delivery.attempts}/${event.delivery.maxAttempts} attempts${event.delivery.lastError ? `: ${event.delivery.lastError.message}` : ''}`;
+      return [
+        `Webhook ${event.delivery.status}, ${event.delivery.attempts}/${event.delivery.maxAttempts} attempts${event.delivery.lastError ? `: ${event.delivery.lastError.message}` : ''}`,
+      ];
     case 'return.delivered':
     case 'return.failed':
-      return event.channel.kind;
+      return [event.channel.kind];
     case 'run.cancelled':
-      return 'Cancelled';
+      return ['Cancelled'];
     case 'run.queued':
-      return '';
+      return [];
   }
 }
 
-function describeDecision(
-  event: Extract<RunEvent, { type: 'decision.made' }>,
-  definition?: LoopDefinition,
-): string {
-  const route = (id: string) => routeName(definition, event.nodeId, id);
+function decisionParts(event: Extract<RunEvent, { type: 'decision.made' }>): DescriptionPart[] {
+  const route = (id: string) => ({ node: event.nodeId, route: id });
   const { observation, provenance } = event;
-  let description: string;
+  let description: DescriptionPart[];
   let confidence: number | null;
   switch (observation.kind) {
     case 'route':
-      description = `Chose ${route(observation.routeId)}`;
+      description = ['Chose ', route(observation.routeId)];
       confidence = observation.confidence;
       break;
     case 'boolean':
-      description = `Answered ${observationDescription(observation)}`;
+      description = [`Answered ${observationDescription(observation)}`];
       confidence = observation.confidence;
       break;
     case 'classifier': {
@@ -117,13 +153,18 @@ function describeDecision(
       confidence = answer.confidence;
       switch (answer.type) {
         case 'choice':
-          description = `Chose ${route(answer.optionId)}`;
+          description = ['Chose ', route(answer.optionId)];
           break;
         case 'score':
-          description = `Scored ${answer.score} to band ${route(event.gate?.limit ? event.gate.repeatRouteId : event.portId)}`;
+          description = [
+            `Scored ${answer.score} to band `,
+            route(event.gate?.limit ? event.gate.repeatRouteId : event.portId),
+          ];
           break;
         case 'noul':
-          description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability === null ? 'not recorded' : formatProbability(answer.trueProbability)})`;
+          description = [
+            `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability === null ? 'not recorded' : formatProbability(answer.trueProbability)})`,
+          ];
           break;
       }
       break;
@@ -141,14 +182,10 @@ function describeDecision(
         ? ` with ${confidenceLabel} not recorded`
         : '';
   const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');
-  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes}${event.gate.maxPasses === null ? ' (unlimited)' : ` of ${event.gate.maxPasses}`}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
-}
-
-function describeExit(
-  event: Extract<RunEvent, { type: 'exit.evaluated' }>,
-  definition?: LoopDefinition,
-): string {
-  return `${definition ? nodeName(definition, event.nodeId) + ': ' : ''}Exited: ${event.outcome}`;
+  return [
+    ...description,
+    ` with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes}${event.gate.maxPasses === null ? ' (unlimited)' : ` of ${event.gate.maxPasses}`}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`,
+  ];
 }
 
 /**

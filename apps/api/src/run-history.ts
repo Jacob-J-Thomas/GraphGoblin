@@ -39,8 +39,9 @@ export async function historicalThread(
   if (!thread) return undefined;
   let after = 0;
   let state: ReplayState = { strict: false };
-  const checkpoint = await repos.runs.getThreadCheckpoint(runId);
-  if (checkpoint?.replayState && checkpoint.seq <= at) {
+  // A checkpoint past `at` stays undecoded, so its damage never blocks this read (D-016).
+  const checkpoint = await repos.runs.getThreadCheckpoint(runId, at);
+  if (checkpoint?.replayState) {
     const [boundary] = await repos.events.read(runId, checkpoint.seq - 1, 1);
     if (boundary?.seq === checkpoint.seq) {
       thread = checkpoint.thread;

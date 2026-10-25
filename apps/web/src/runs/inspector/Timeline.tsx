@@ -2,7 +2,7 @@ import type { LoopDefinition } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Input } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
-import { describeEvent } from '../projections.js';
+import { describeEvent, describeParts } from '../projections.js';
 import type { TimelineEvent } from '../event-store.js';
 import type { StreamStatus } from '../useRunEvents.js';
 
@@ -260,7 +260,7 @@ export function Timeline({
               <span className="min-w-0 break-words text-muted">
                 {'uncached' in event ? (
                   <>
-                    {event.outline ? describeEvent(event.outline, definition) : event.description}
+                    {describeParts(event.description, definition)}
                     <span aria-hidden="true"> - Load exact event payload</span>
                   </>
                 ) : (

@@ -149,8 +149,19 @@ it('migrates shipped snapshots without inventing state, then persists checkpoint
   }
   const reopened = openDatabase({ url });
   try {
-    const proof = (await new SqliteRunRepository(reopened.db).getThreadCheckpoint(id))?.replayState;
-    expect(proof).toEqual({ openNodeId: 'b', strict: true });
+    const repository = new SqliteRunRepository(reopened.db);
+    const checkpoint = (await repository.getThreadCheckpoint(id))!;
+    expect(checkpoint.replayState).toEqual({ openNodeId: 'b', strict: true });
+    // A read bounded before the checkpoint leaves it undecoded, so its damage cannot fail it.
+    expect(await repository.getThreadCheckpoint(id, checkpoint.seq)).toEqual(checkpoint);
+    await reopened.client.execute({
+      sql: 'UPDATE runs SET thread_snapshot = ? WHERE id = ?',
+      args: ['{invalid-json', id],
+    });
+    expect(await repository.getThreadCheckpoint(id, checkpoint.seq - 1)).toBeUndefined();
+    await expect(repository.getThreadCheckpoint(id, checkpoint.seq)).rejects.toThrow(
+      'thread_snapshot',
+    );
   } finally {
     reopened.close();
   }

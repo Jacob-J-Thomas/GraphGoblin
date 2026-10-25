@@ -337,10 +337,11 @@ export class InMemoryRunRepository implements RunRepository {
     this.checkpoints.set(runId, { seq, replayState });
     return Promise.resolve();
   }
-  getThreadCheckpoint(runId: string): Promise<ThreadCheckpoint | undefined> {
+  getThreadCheckpoint(runId: string, atOrBefore?: number): Promise<ThreadCheckpoint | undefined> {
     const thread = this.threads.get(runId);
     const checkpoint = this.checkpoints.get(runId);
-    return Promise.resolve(thread && checkpoint ? { thread, ...checkpoint } : undefined);
+    const kept = checkpoint && (atOrBefore === undefined || checkpoint.seq <= atOrBefore);
+    return Promise.resolve(thread && kept ? { thread, ...checkpoint } : undefined);
   }
   /** Test helper: drop the thread snapshot to force replay. */
   dropThreadSnapshot(runId: string): void {

@@ -471,9 +471,8 @@ describe('initial thread and replay failures', () => {
         seq: 1,
         type: 'node.finished',
         uncached: true,
-        description: 'a, 1 change, 1 ms',
-        // The outline keeps the patch's shape for the row's description, never its values.
-        outline: { ...wide, patch: [{ op: 'add', path: '/vars/wide' }] },
+        // The description's parts name the node when shown and carry no patch value.
+        description: [{ node: 'a' }, ', 1 change, 1 ms'],
       },
     ]);
     const stored = JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4') ?? '{}') as {
