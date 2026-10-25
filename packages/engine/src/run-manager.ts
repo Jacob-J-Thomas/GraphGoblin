@@ -77,6 +77,8 @@ import { createInitialThread, type InitialThreadInput } from './thread.js';
 import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 import { boundedFailure } from './event-validation.js';
 import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
+import { finalizationHistory } from './finalization-history.js';
+import { FreshEntries } from './fresh-entries.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -1936,6 +1938,7 @@ export class RunManager {
     // Read before any recovery marker is appended; a marker does not consume a wake either.
     const pendingWake = findPendingWake(events);
     let thread = await this.loadThread(run, events);
+    const freshEntries = new FreshEntries(events);
     /** Append drafts atomically and return the seq of the last one. */
     const appendAll = async (drafts: EventDraft[]): Promise<number> => {
       for (const draft of drafts)
@@ -1944,6 +1947,7 @@ export class RunManager {
           DecisionEmissionSchema.parse(evidence);
         }
       const stored = await this.ports.events.append(runId, drafts);
+      freshEntries.record(stored);
       events.push(...stored);
       return (stored.at(-1) as RunEvent).seq;
     };
@@ -2093,7 +2097,7 @@ export class RunManager {
       if (
         run.pinned.limits.maxNodeVisits !== null &&
         attempt === 1 &&
-        countEntries(events, nodeId) >= run.pinned.limits.maxNodeVisits
+        freshEntries.count(nodeId) >= run.pinned.limits.maxNodeVisits
       ) {
         await this.failRun(runId, {
           code: 'MAX_NODE_VISITS',
@@ -2450,7 +2454,7 @@ export class RunManager {
         }
       }
     }
-    const events = await this.ports.events.read(runId);
+    const events = await finalizationHistory(this.ports.events, runId);
     const terminal = terminalEvent(events);
     if (terminal?.type === 'run.finished' && terminal.result !== undefined) {
       const def = knownDef ?? (await this.ports.loops.getVersion(run.versionId))?.definition;

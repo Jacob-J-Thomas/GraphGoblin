@@ -69,7 +69,14 @@ export async function disk(directory) {
 }
 export function definition(
   format,
-  { passes, contextBytes = 0, inference = true, artifacts = false, grow = false },
+  {
+    passes,
+    contextBytes = 0,
+    inference = true,
+    artifacts = false,
+    grow = false,
+    returnControl = false,
+  },
 ) {
   const growing = !inference || grow;
   const mutation = {
@@ -130,7 +137,20 @@ export function definition(
           ],
         },
       },
-      { id: 'done', kind: 'exit', label: 'Done', config: { outcome: 'success' } },
+      {
+        id: 'done',
+        kind: 'exit',
+        label: 'Done',
+        config: {
+          outcome: 'success',
+          ...(returnControl
+            ? {
+                returns: '{"passes": gates.gate.passes, "output": outputs.work.value}',
+                destinations: [{ kind: 'caller' }, { kind: 'log' }],
+              }
+            : {}),
+        },
+      },
     ],
     edges: [
       edge('a', 'start', 'out', growing ? 'init' : 'work'),
