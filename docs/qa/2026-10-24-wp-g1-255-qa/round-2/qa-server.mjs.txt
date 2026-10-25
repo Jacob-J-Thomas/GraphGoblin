@@ -1,0 +1,77 @@
+// Run from a temporary .mjs copy with GG_QA_ROOT and GG_QA_DATA set. Built packages only.
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+import {createServer} from 'node:http';
+const root=process.env.GG_QA_ROOT;
+const req=createRequire(resolve(root,'apps/web/package.json'));
+const load=async name=>import(import.meta.resolve(name,pathToFileURL(resolve(root,'apps/web/package.json')).href));
+const {createContainer,buildApp,loadConfig}=await load('@graphgoblin/api');
+const {FakeHarness,FakeClock,FakeClassifierRegistry,FakeStructured,CapturingLogger}=await load('@graphgoblin/engine/testing');
+const {RunEventSchema}=await load('@graphgoblin/contracts');
+const harness=new FakeHarness();
+const clock=new FakeClock(Date.parse('2026-10-24T12:00:00.000Z'));
+const logger=new CapturingLogger();
+let probability=0.5000000000000001;
+const calls=[];
+const classifier={
+ id:'jev', available:()=>true,
+ choose:async r=>{calls.push({type:'choice',question:r.question});return {type:'choice',optionId:r.options[0].id,confidence:probability,probabilities:Object.fromEntries(r.options.map((o,i)=>[o.id,i===0?probability:1-probability]))};},
+ classifyNoul:async r=>{calls.push({type:'noul',question:r.question});return {type:'noul',trueProbability:probability};},
+ score:async r=>{calls.push({type:'score',question:r.question});return {type:'score',score:0.7123456789012345,confidence:probability,legend:Object.fromEntries(r.anchors.map((a,i)=>[String(i),a])),probabilities:{'0':probability,'1':1-probability}};}
+};
+const decider={id:'codex',available:()=>true,route:async r=>({route:r.routes[0].id,confidence:probability,reasoning:'Independent QA controlled LLM decision'})};
+const container=await createContainer(loadConfig({GG_DATA_DIR:process.env.GG_QA_DATA,GG_WEB_DIST:resolve(root,'apps/web/dist'),GG_SWAGGER_UI:'false',GG_MASTER_KEY:Buffer.alloc(32,27).toString('base64')}),{harnesses:{codex:harness},deciders:[decider],classifiers:new FakeClassifierRegistry(classifier),structured:new FakeStructured(),clock,logger,startTimers:false});
+await container.start();
+const app=await buildApp(container,{logger:false});
+await app.listen({host:'127.0.0.1',port:6080});
+const control=createServer(async(request,response)=>{
+ try{
+  let raw='';for await(const part of request)raw+=part;
+  const body=raw?JSON.parse(raw):{};
+  let result={ok:true};
+  switch(request.url){
+   case '/script':harness.script(body.turns);break;
+   case '/probability':probability=body.value;break;
+   case '/idle':await container.manager.waitForIdle();break;
+   case '/advance':clock.advance(body.ms);await container.timers.poll();await container.manager.waitForIdle();break;
+   case '/state':result={pid:process.pid,calls,logs:logger.lines,started:harness.started.length,resumed:harness.resumed.length,cancelled:harness.cancelled};break;
+   case '/historical':{
+    // Real stored-history fixture: remove only optional facts accepted by current contracts.
+    const rows=await container.handle.client.execute({sql:'SELECT seq,payload,type FROM run_events WHERE run_id=? ORDER BY seq',args:[body.runId]});
+    for(const row of rows.rows){
+     const payload=JSON.parse(row.payload);
+     if(row.type==='run.queued')delete payload.initialThread;
+     if(row.type==='decision.made'){
+      if(payload.observation.kind==='classifier'){
+       payload.observation.answer.confidence=null;
+       if(payload.observation.answer.type==='noul'){payload.observation.answer.trueProbability=null;payload.observation.answer.holds=null;}
+       else payload.observation.answer.probabilities=null;
+      }else{payload.observation.confidence=null;payload.observation.reasoning=null;}
+      for(const k of ['provider','classifierId','model','effort'])payload.provenance[k]=null;
+     }
+     await container.handle.client.execute({sql:'UPDATE run_events SET payload=? WHERE run_id=? AND seq=?',args:[JSON.stringify(payload),body.runId,row.seq]});
+    }
+    const events=await container.repos.events.read(body.runId,0,1000);
+    result={ok:true,accepted:events.map(e=>RunEventSchema.parse(e)).length};
+    break;
+   }
+   case '/historical-cancel':{
+    const rows=await container.handle.client.execute({sql:"SELECT seq FROM run_events WHERE run_id=? AND type='run.cancel_requested'",args:[body.runId]});
+    if(rows.rows.length!==1)throw new Error('Expected one cancellation request in isolated fixture');
+    const seq=Number(rows.rows[0].seq);
+    await container.handle.client.execute({sql:'DELETE FROM run_events WHERE run_id=? AND seq=?',args:[body.runId,seq]});
+    await container.handle.client.execute({sql:'UPDATE run_events SET seq=seq-1 WHERE run_id=? AND seq>?',args:[body.runId,seq]});
+    await container.handle.client.execute({sql:'UPDATE runs SET last_event_seq=last_event_seq-1 WHERE id=?',args:[body.runId]});
+    result={ok:true,events:(await container.repos.events.read(body.runId,0,1000)).map(e=>RunEventSchema.parse(e))};break;
+   }
+   case '/shutdown':{
+    response.writeHead(200,{'content-type':'application/json'});response.end('{"ok":true}');
+    await app.close();await container.stop();control.close();return;
+   }
+   default:throw new Error('Unknown QA control '+request.url);
+  }
+  response.writeHead(200,{'content-type':'application/json'});response.end(JSON.stringify(result));
+ }catch(e){response.writeHead(500,{'content-type':'application/json'});response.end(JSON.stringify({error:e.stack}));}
+});
+control.listen(6081,'127.0.0.1',()=>console.log('QA_READY http://127.0.0.1:6080 physical SQLite fake providers'));

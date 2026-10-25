@@ -1,0 +1,19 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-g1-255-qa');
+const index=JSON.parse(await readFile(join(out,'fixture-index.json'),'utf8'));
+const get=async path=>{const r=await fetch('http://127.0.0.1:6080'+path);assert.equal(r.status,200);return r.json();};
+const results=[];
+let ready=false;for(let i=0;i<120;i++){try{ready=(await fetch('http://127.0.0.1:6080/healthz')).ok;}catch{}if(ready)break;await new Promise(r=>setTimeout(r,250));}assert.ok(ready,'QA gateway readiness');
+try{
+ for(const key of ['patch','choice-0.12345678901234566']){
+  const fixture=index[key],detail=await get('/loops/'+fixture.loopId);
+  const pinned=await get('/loops/'+fixture.loopId+'/versions/'+fixture.versionId);
+  assert.notEqual(detail.current.id,pinned.id);assert.equal(detail.current.definition.name,'RENAMED '+key);
+  assert.ok(detail.current.definition.nodes.every(n=>n.label.startsWith('RENAMED ')));
+  assert.ok(!pinned.definition.name.startsWith('RENAMED '));
+  results.push({key,result:'PASS',expected:'Current publication is renamed, while old immutable version remains original',actual:{currentName:detail.current.definition.name,pinnedName:pinned.definition.name},current:detail.current,pinned});
+ }
+ await writeFile(join(out,'renamed-current-definitions.json'),JSON.stringify(results,null,2));console.log('PASS direct current/pinned definition readback');
+}finally{await fetch('http://127.0.0.1:6081/shutdown',{method:'POST',body:'{}'});}

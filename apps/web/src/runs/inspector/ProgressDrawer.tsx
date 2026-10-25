@@ -1,7 +1,7 @@
-import { COMMAND_PREVIEW_MAX, type RunEvent } from '@graphgoblin/contracts';
+import { COMMAND_PREVIEW_MAX, type LoopDefinition, type RunEvent } from '@graphgoblin/contracts';
 import { BoundedValue, CELL_PREVIEW_CHARS, Disclosure } from '../../components/ui/index.js';
 import { prettyJson } from '../../lib/utils.js';
-import { describeEvent, nodeActivity } from '../projections.js';
+import { describeEvent, nodeActivity, nodeName } from '../projections.js';
 
 function describeStatusProgress(value: unknown): string | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -60,11 +60,11 @@ function describeSession(event: Extract<RunEvent, { type: 'harness.session' }>):
 }
 
 /** The one-line text of an activity event, or nothing when its value needs a bounded block. */
-function describeActivity(event: RunEvent): string | undefined {
+function describeActivity(event: RunEvent, definition?: LoopDefinition): string | undefined {
   if ('progress' in event) return describeStatusProgress(event.progress);
   if ('usage' in event) return prettyJson(event.usage);
   if (event.type === 'harness.session') return describeSession(event);
-  return describeEvent(event);
+  return describeEvent(event, definition);
 }
 
 /**
@@ -72,7 +72,13 @@ function describeActivity(event: RunEvent): string | undefined {
  * value without a one-line description is laid out within a bound (`BoundedValue`), and every row
  * wraps at any character, so a long single-line value never widens the page (#259, #380).
  */
-export function ProgressDrawer({ events }: { events: RunEvent[] }) {
+export function ProgressDrawer({
+  events,
+  definition,
+}: {
+  events: RunEvent[];
+  definition?: LoopDefinition | undefined;
+}) {
   const activity = nodeActivity(events);
   return (
     <Disclosure
@@ -82,10 +88,12 @@ export function ProgressDrawer({ events }: { events: RunEvent[] }) {
     >
       {[...activity.entries()].map(([nodeId, items]) => (
         <div key={nodeId} className="grid min-w-0 gap-1">
-          <h3 className="font-mono text-xs font-semibold wrap-anywhere">{nodeId}</h3>
+          <h3 className="font-mono text-xs font-semibold wrap-anywhere">
+            {nodeName(definition, nodeId)}
+          </h3>
           <ul className="grid min-w-0 gap-0.5 text-xs text-muted">
             {items.map((e) => {
-              const text = describeActivity(e);
+              const text = describeActivity(e, definition);
               return (
                 <li key={e.seq} className="grid min-w-0 gap-1 wrap-anywhere">
                   <span>

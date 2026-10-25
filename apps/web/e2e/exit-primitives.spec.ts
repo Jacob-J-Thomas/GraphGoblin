@@ -191,8 +191,8 @@ for (const finalChoice of ['repeat', 'done'] as const) {
     await expect(
       page.getByText(
         finalChoice === 'repeat'
-          ? 'Last gate decision: gate chose repeat on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.'
-          : 'Last gate decision: gate chose done on pass 3 of 3.',
+          ? 'Last gate decision: Gate (gate) chose Repeat (repeat) on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.'
+          : 'Last gate decision: Gate (gate) chose Done (done) on pass 3 of 3.',
         { exact: true },
       ),
     ).toBeVisible();

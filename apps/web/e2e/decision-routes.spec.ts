@@ -686,7 +686,7 @@ test('a rejected Noul confidence result stays raw and visible without selecting 
   await expect(rejection).toContainText('No decision was accepted and no route was selected.');
   await expect(rejection).toContainText('Noul true');
   await expect(rejection).toContainText('True probability');
-  await expect(rejection).toContainText('0.6');
+  await expect(rejection).toContainText('60%');
   await expect(rejection).toContainText('Minimum confidence');
-  await expect(rejection).toContainText('0.8');
+  await expect(rejection).toContainText('80%');
 });

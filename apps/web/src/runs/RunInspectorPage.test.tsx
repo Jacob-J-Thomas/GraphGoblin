@@ -187,7 +187,7 @@ describe('RunInspectorPage', () => {
 
     expect(await screen.findByText('True-probability threshold')).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2'),
+      expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('20%'),
     );
     // The chosen side's label and criterion, as the run version authored them.
     expect(row('Label')).toHaveTextContent('True');
@@ -839,4 +839,20 @@ describe('RunInspectorPage exit evidence', () => {
     expect(screen.getByTestId('run-result')).toHaveTextContent('work');
     expect(screen.queryByTestId('exit-returns')).toBeNull();
   });
+});
+
+it('shows cancellation instead of a stale provider failure on a cancelled run (#255)', async () => {
+  const api = new FakeApi();
+  const run = api.addRun({
+    status: 'cancelled',
+    failure: {
+      code: 'HARNESS_TRANSPORT_FAILED',
+      message: 'Earlier provider failure',
+      resumable: false,
+    },
+  });
+  api.pushEvent(run.id, event(run.id, 1, 'run.cancelled', {}));
+  renderApp('/runs/' + run.id, api);
+  expect(await screen.findByText(/Cancelled; actor not recorded/)).toBeInTheDocument();
+  expect(screen.queryByText('Earlier provider failure')).not.toBeInTheDocument();
 });
