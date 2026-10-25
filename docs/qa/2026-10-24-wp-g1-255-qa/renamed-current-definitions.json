@@ -1,0 +1,784 @@
+[
+  {
+    "key": "patch",
+    "result": "PASS",
+    "expected": "Current publication is renamed, while old immutable version remains original",
+    "actual": {
+      "currentName": "RENAMED patch",
+      "pinnedName": "Pinned multi-patch evidence"
+    },
+    "current": {
+      "id": "01M5PWGEF9XC82S3Y8Q98QPKMV",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M4W",
+      "version": 2,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "RENAMED patch",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "RENAMED start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "patch",
+            "label": "RENAMED patch",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "set",
+                  "path": "/vars/array",
+                  "value": {
+                    "kind": "literal",
+                    "value": []
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "items": []
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/object",
+                  "value": {
+                    "kind": "literal",
+                    "value": {}
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "marker": "FIRST-original",
+                      "n": 0.12345678901234566
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": null
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": [
+                      "THIRD",
+                      false
+                    ]
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested/items/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "nested": "NESTED-original"
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested/items/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": "NESTED-second"
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/object/added",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "truth": true
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/object/remove",
+                  "value": {
+                    "kind": "literal",
+                    "value": "REMOVE-me"
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/0/marker",
+                  "value": {
+                    "kind": "literal",
+                    "value": "FIRST-replaced-in-same-node"
+                  }
+                },
+                {
+                  "op": "delete",
+                  "path": "/vars/object/remove"
+                },
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "APPENDED message alpha"
+                },
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "APPENDED message beta"
+                }
+              ]
+            }
+          },
+          {
+            "id": "later",
+            "label": "RENAMED later",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "set",
+                  "path": "/vars/array/0/marker",
+                  "value": {
+                    "kind": "literal",
+                    "value": "FIRST-later-node"
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested/items/0/nested",
+                  "value": {
+                    "kind": "literal",
+                    "value": "NESTED-later-node"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "RENAMED done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "patch",
+              "port": "in"
+            }
+          },
+          {
+            "id": "patch-out",
+            "from": {
+              "node": "patch",
+              "port": "out"
+            },
+            "to": {
+              "node": "later",
+              "port": "in"
+            }
+          },
+          {
+            "id": "later-out",
+            "from": {
+              "node": "later",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:01.001Z",
+      "publishedAt": "2026-10-24T12:00:01.001Z"
+    },
+    "pinned": {
+      "id": "01M5PWGDG08JMHRYYN75EY7M4X",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M4W",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pinned multi-patch evidence",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "patch",
+            "label": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "set",
+                  "path": "/vars/array",
+                  "value": {
+                    "kind": "literal",
+                    "value": []
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "items": []
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/object",
+                  "value": {
+                    "kind": "literal",
+                    "value": {}
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "marker": "FIRST-original",
+                      "n": 0.12345678901234566
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": null
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": [
+                      "THIRD",
+                      false
+                    ]
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested/items/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "nested": "NESTED-original"
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested/items/-",
+                  "value": {
+                    "kind": "literal",
+                    "value": "NESTED-second"
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/object/added",
+                  "value": {
+                    "kind": "literal",
+                    "value": {
+                      "truth": true
+                    }
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/object/remove",
+                  "value": {
+                    "kind": "literal",
+                    "value": "REMOVE-me"
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/array/0/marker",
+                  "value": {
+                    "kind": "literal",
+                    "value": "FIRST-replaced-in-same-node"
+                  }
+                },
+                {
+                  "op": "delete",
+                  "path": "/vars/object/remove"
+                },
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "APPENDED message alpha"
+                },
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "APPENDED message beta"
+                }
+              ]
+            }
+          },
+          {
+            "id": "later",
+            "label": "Pinned later change",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "set",
+                  "path": "/vars/array/0/marker",
+                  "value": {
+                    "kind": "literal",
+                    "value": "FIRST-later-node"
+                  }
+                },
+                {
+                  "op": "set",
+                  "path": "/vars/nested/items/0/nested",
+                  "value": {
+                    "kind": "literal",
+                    "value": "NESTED-later-node"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "patch",
+              "port": "in"
+            }
+          },
+          {
+            "id": "patch-out",
+            "from": {
+              "node": "patch",
+              "port": "out"
+            },
+            "to": {
+              "node": "later",
+              "port": "in"
+            }
+          },
+          {
+            "id": "later-out",
+            "from": {
+              "node": "later",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  },
+  {
+    "key": "choice-0.12345678901234566",
+    "result": "PASS",
+    "expected": "Current publication is renamed, while old immutable version remains original",
+    "actual": {
+      "currentName": "RENAMED choice-0.12345678901234566",
+      "pinnedName": "Pinned choice-0.12345678901234566"
+    },
+    "current": {
+      "id": "01M5PWGEF9XC82S3Y8Q98QPKMW",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M6W",
+      "version": 2,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "RENAMED choice-0.12345678901234566",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "RENAMED start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "RENAMED decide",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent choice",
+              "answer": {
+                "type": "choice",
+                "options": [
+                  {
+                    "id": "accept",
+                    "label": "RENAMED accept",
+                    "criteria": "accept criterion"
+                  },
+                  {
+                    "id": "reject",
+                    "label": "RENAMED reject",
+                    "criteria": "reject criterion"
+                  }
+                ]
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "RENAMED done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:01.001Z",
+      "publishedAt": "2026-10-24T12:00:01.001Z"
+    },
+    "pinned": {
+      "id": "01M5PWGDG08JMHRYYN75EY7M6X",
+      "loopId": "01M5PWGDG08JMHRYYN75EY7M6W",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Pinned choice-0.12345678901234566",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Pinned initial trigger",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "decide",
+            "label": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Independent choice",
+              "answer": {
+                "type": "choice",
+                "options": [
+                  {
+                    "id": "accept",
+                    "label": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    "criteria": "accept criterion"
+                  },
+                  {
+                    "id": "reject",
+                    "label": "Pinned reject",
+                    "criteria": "reject criterion"
+                  }
+                ]
+              },
+              "context": {
+                "messages": "last",
+                "includeLastOutput": true
+              },
+              "recordAlternatives": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Pinned completion",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-out",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "decide",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-accept",
+            "from": {
+              "node": "decide",
+              "port": "accept"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "decide-reject",
+            "from": {
+              "node": "decide",
+              "port": "reject"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-24T12:00:00.000Z",
+      "publishedAt": "2026-10-24T12:00:00.000Z"
+    }
+  }
+]
