@@ -511,6 +511,8 @@ async function recoverControl() {
   await manager.waitForIdle();
   const after = await capture();
   const pending = await container.repos.runs.listRecoveryCandidates();
+  // Recovery writes a fresh finalization acknowledgement; every other run field must match.
+  const withoutMarker = (run) => JSON.stringify({ ...run, finalizedAt: undefined });
   return {
     beforeHash: before.eventsSha256,
     afterHash: after.eventsSha256,
@@ -518,7 +520,8 @@ async function recoverControl() {
     ok:
       before.eventsSha256 === after.eventsSha256 &&
       JSON.stringify(before.thread) === JSON.stringify(after.thread) &&
-      JSON.stringify(before.run) === JSON.stringify(after.run) &&
+      typeof after.run?.finalizedAt === 'string' &&
+      withoutMarker(before.run) === withoutMarker(after.run) &&
       !pending.some((entry) => entry.id === id),
     mechanism:
       'Public clearFinalized port; container close and file-backed reopen; no process crash claim',
