@@ -1,0 +1,55 @@
+$ErrorActionPreference = 'Stop'
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$qaEvidence = Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-d4-343-qa/round-3'
+$qaRuntime = (Get-Content -Raw -LiteralPath (Join-Path $qaEvidence 'script-location.json') | ConvertFrom-Json).staging.Replace('%USERPROFILE%', $env:USERPROFILE)
+if (!(Test-Path -LiteralPath (Join-Path $qaEvidence 'gates-finished.json'))) { throw 'Broad gates have not finished' }
+if (!(Test-Path -LiteralPath (Join-Path $qaEvidence 'isolated-finished.json'))) { throw 'Isolated diagnostics have not finished' }
+foreach ($qaName in @('MANIFEST.json','verification.json','format-results.json','format-check.log.txt','format-check-final.log.txt','report-format-final.log.txt')) {
+  $qaFile = Join-Path $qaEvidence $qaName
+  if (!(Test-Path -LiteralPath $qaFile)) { [IO.File]::WriteAllText($qaFile, $(if ($qaName.EndsWith('.json')) { '[]' } else { '' }), [Text.UTF8Encoding]::new($false)) }
+}
+foreach ($qaName in @('normalize','oversized-runtime','report-generator','verify')) {
+  Copy-Item -LiteralPath (Join-Path $qaEvidence ($qaName + '.mjs.txt')) -Destination (Join-Path $qaRuntime ($qaName + '.mjs'))
+}
+& node (Join-Path $qaRuntime 'oversized-runtime.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Runtime inventory failed' }
+& node (Join-Path $qaRuntime 'normalize.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Normalization failed' }
+& node (Join-Path $qaRuntime 'report-generator.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Report generation failed' }
+$qaCommands = @()
+function Invoke-QaFormat([string]$qaCommand,[string]$qaLog) {
+  $qaWatch = [Diagnostics.Stopwatch]::StartNew()
+  $qaSavedErrorPreference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  & cmd.exe /d /c $qaCommand > (Join-Path $qaEvidence $qaLog) 2>&1
+  $qaExit = $LASTEXITCODE
+  $ErrorActionPreference = $qaSavedErrorPreference
+  $qaWatch.Stop()
+  $qaRecord = [ordered]@{ command=$qaCommand; code=$qaExit; ms=$qaWatch.ElapsedMilliseconds; log=$qaLog }
+  return $qaRecord
+}
+$qaRecord = Invoke-QaFormat 'pnpm.cmd exec prettier --write docs/qa/2026-10-24-wp-d4-343-qa/round-3/README.md docs/qa/2026-10-24-wp-d4-343-qa/round-3/NOT-KEPT.md' 'report-format-final.log.txt'
+$qaCommands += $qaRecord
+if ($qaRecord.code -ne 0) {
+  if (!(Select-String -LiteralPath (Join-Path $qaEvidence $qaRecord.log) -Pattern 'ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK' -Quiet)) { throw 'Report formatting failed' }
+  $qaCommands += Invoke-QaFormat 'node_modules\.bin\prettier.cmd --write docs/qa/2026-10-24-wp-d4-343-qa/round-3/README.md docs/qa/2026-10-24-wp-d4-343-qa/round-3/NOT-KEPT.md' 'report-format-fallback.log.txt'
+}
+$qaRecord = Invoke-QaFormat 'pnpm.cmd format:check' 'format-check.log.txt'
+$qaCommands += $qaRecord
+if ($qaRecord.code -ne 0) {
+  if (!(Select-String -LiteralPath (Join-Path $qaEvidence $qaRecord.log) -Pattern 'ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK' -Quiet)) { throw 'Repository format check failed' }
+  $qaCommands += Invoke-QaFormat 'node_modules\.bin\prettier.cmd --check .' 'format-check-fallback.log.txt'
+}
+$qaJson = ConvertTo-Json -InputObject @($qaCommands) -Depth 10
+[IO.File]::WriteAllText((Join-Path $qaEvidence 'format-results.json'), $qaJson, [Text.UTF8Encoding]::new($false))
+& node (Join-Path $qaRuntime 'normalize.mjs')
+& node (Join-Path $qaRuntime 'report-generator.mjs')
+$qaRecord = Invoke-QaFormat 'pnpm.cmd exec prettier --write docs/qa/2026-10-24-wp-d4-343-qa/round-3/README.md docs/qa/2026-10-24-wp-d4-343-qa/round-3/NOT-KEPT.md' 'report-format-final.log.txt'
+if ($qaRecord.code -ne 0) { throw 'Final report formatting failed; check pnpm lock before fallback' }
+$qaRecord = Invoke-QaFormat 'pnpm.cmd format:check' 'format-check-final.log.txt'
+if ($qaRecord.code -ne 0) { throw 'Final format check failed; check pnpm lock before fallback' }
+& node (Join-Path $qaRuntime 'normalize.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Final normalization failed' }
+& node (Join-Path $qaRuntime 'verify.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Evidence verification failed' }

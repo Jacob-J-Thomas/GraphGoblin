@@ -130,11 +130,50 @@ export async function closeNode(page: Page): Promise<void> {
 export async function publishLoop(
   request: APIRequestContext,
   definition: unknown,
+  baseURL = '',
 ): Promise<string> {
-  const created = await request.post('/loops', { data: { definition } });
+  const created = await request.post(`${baseURL}/loops`, { data: { definition } });
   expect(created.status()).toBe(201);
   const { loop } = (await created.json()) as { loop: { id: string } };
-  const published = await request.post(`/loops/${loop.id}/publish`);
+  const published = await request.post(`${baseURL}/loops/${loop.id}/publish`);
   expect(published.status()).toBe(200);
   return loop.id;
+}
+
+/** Publish one Event entry per type and return a sender targeting that loop. */
+export async function publishEventLoop(
+  request: APIRequestContext,
+  types: readonly string[],
+  baseURL = '',
+) {
+  const loopId = await publishLoop(
+    request,
+    {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: 'Browser Events',
+      nodes: [
+        ...types.map((eventType, index) => ({
+          id: `event-${index}`,
+          kind: 'trigger',
+          label: eventType,
+          config: { type: 'event', eventType },
+          ui: { x: 0, y: index * 100 },
+        })),
+        { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 260, y: 0 } },
+      ],
+      edges: types.map((_, index) => ({
+        id: `edge-${index}`,
+        from: { node: `event-${index}`, port: 'out' },
+        to: { node: 'done' },
+      })),
+    },
+    baseURL,
+  );
+  return async (type: string, payload: unknown, dedupeKey?: string) => {
+    const response = await request.post(`${baseURL}/events`, {
+      data: { loopId, type, payload, dedupeKey },
+    });
+    expect(response.status()).toBe(202);
+    return response;
+  };
 }

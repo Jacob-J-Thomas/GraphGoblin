@@ -1,0 +1,38 @@
+packages/domain/src/poll-items.ts:36:  dedupeKey: string;
+packages/domain/src/poll-items.ts:53:    readonly path: 'items.select' | 'items.dedupeKey',
+packages/domain/src/poll-items.ts:84:      key = await evaluateExpression(config.dedupeKey, { ...view, item: candidate, index });
+packages/domain/src/poll-items.ts:86:      throw new PollItemsError('KEY_FAILED', 'items.dedupeKey', index);
+packages/domain/src/poll-items.ts:89:      throw new PollItemsError('KEY_INVALID', 'items.dedupeKey', index);
+packages/domain/src/poll-items.ts:90:    if (seen.has(key)) throw new PollItemsError('KEY_DUPLICATE', 'items.dedupeKey', index);
+packages/domain/src/poll-items.ts:95:      dedupeKey: key,
+packages/infrastructure/src/sqlite/admission.ts:40:    sql`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey') = ${key}`,
+packages/infrastructure/src/sqlite/admission.ts:94:          .where(runKeyScope(input.run.ownerId, input.run.loopId, poll.nodeId, poll.dedupeKey))
+packages/infrastructure/src/sqlite/admission.ts:107:                  sql`json_extract(${webhookReceipts.intent}, '$.initialThread.invocation.trigger.dedupeKey') = ${poll.dedupeKey}`,
+packages/infrastructure/src/sqlite/admission.ts:123:                    eq(eventReceipts.nodeKey, poll.dedupeKey),
+packages/infrastructure/src/sqlite/admission.ts:148:        const { dedupeKey, payload, ...metadata } = inbound;
+packages/infrastructure/src/sqlite/admission.ts:159:            receipt.requestKey !== (dedupeKey ?? null) ||
+packages/infrastructure/src/sqlite/admission.ts:160:            receipt.nodeKey !== (input.initialThread.invocation.trigger.dedupeKey ?? null))
+packages/infrastructure/src/sqlite/admission.ts:175:                ...(dedupeKey !== null ? { dedupeKey } : {}),
+packages/infrastructure/src/sqlite/admission.ts:190:                ...(dedupeKey !== null ? { dedupeKey } : {}),
+packages/infrastructure/src/sqlite/admission.ts:264:      if (input.inbound.dedupeKey !== undefined) {
+packages/infrastructure/src/sqlite/admission.ts:275:                eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+packages/infrastructure/src/sqlite/admission.ts:276:                sql`json_extract(${webhookReceipts.intent}, '$.initialThread.invocation.trigger.dedupeKey') = ${input.inbound.dedupeKey}`,
+packages/infrastructure/src/sqlite/admission.ts:294:                  eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+packages/infrastructure/src/sqlite/admission.ts:316:                    input.inbound.dedupeKey,
+packages/infrastructure/src/sqlite/admission.ts:331:                    eq(eventReceipts.nodeKey, input.inbound.dedupeKey),
+packages/infrastructure/src/sqlite/runs.ts:341:  async hasTriggerDedupe(
+packages/infrastructure/src/sqlite/runs.ts:344:    dedupeKey: string,
+packages/infrastructure/src/sqlite/runs.ts:353:          sql`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey') = ${dedupeKey}`,
+packages/infrastructure/src/sqlite/runs.ts:361:  async findTriggerDedupeKeys(
+packages/infrastructure/src/sqlite/runs.ts:367:    const key = sql<string>`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey')`;
+packages/infrastructure/src/sqlite/event-admission.ts:68:        ...(inbound.dedupeKey !== null ? { dedupeKey: inbound.dedupeKey } : {}),
+packages/infrastructure/src/sqlite/event-admission.ts:85:          eq(eventReceipts.requestKey, key),
+packages/infrastructure/src/sqlite/event-admission.ts:96:      const key = input.inbound.dedupeKey;
+packages/infrastructure/src/sqlite/event-admission.ts:109:                  eq(eventReceipts.requestKey, key),
+packages/infrastructure/src/sqlite/event-admission.ts:115:      const nodeKey = intent.initialThread.invocation.trigger.dedupeKey;
+packages/infrastructure/src/sqlite/event-admission.ts:125:                eq(eventReceipts.nodeKey, input.nodeDedupeKey),
+packages/infrastructure/src/sqlite/event-admission.ts:141:                  sql`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey') = ${nodeKey}`,
+packages/infrastructure/src/sqlite/event-admission.ts:157:                  eq(inboundEvents.dedupeKey, input.nodeDedupeKey),
+packages/infrastructure/src/sqlite/event-admission.ts:176:          requestKey: key ?? null,
+packages/infrastructure/src/sqlite/event-admission.ts:177:          nodeKey: nodeKey ?? null,
+packages/infrastructure/src/sqlite/event-admission.ts:188:          dedupeKey: input.inbound.dedupeKey ?? null,

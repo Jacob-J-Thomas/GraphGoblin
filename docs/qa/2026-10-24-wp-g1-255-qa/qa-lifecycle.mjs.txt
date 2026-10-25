@@ -1,0 +1,59 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-g1-255-qa'),base='http://127.0.0.1:6080';
+const {chromium,expect}=createRequire(resolve(root,'apps/web/package.json'))('@playwright/test');
+const api=async(method,path,body)=>{const r=await fetch(base+path,{method,headers:body===undefined?{}:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const v=await r.json();if(!r.ok)throw new Error(JSON.stringify(v));return v;};
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6081'+path,{method:'POST',body:JSON.stringify(body)});const v=await r.json();if(!r.ok)throw new Error(JSON.stringify(v));return v;};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function poll(fn,pred){for(let i=0;i<400;i++){const v=await fn();if(pred(v))return v;await sleep(50);}throw new Error('poll timeout');}
+const save=async(name,value)=>writeFile(join(out,name),JSON.stringify(value,null,2));
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const ctx=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+const pages=[await ctx.newPage(),await ctx.newPage()];
+const observations=[];
+let run;
+async function thread(p){await p.bringToFront();const b=p.getByRole('button',{name:'Full thread JSON',exact:true});if(await b.getAttribute('aria-expanded')!=='true')await b.click();return JSON.parse(await p.getByTestId('thread-json').innerText());}
+try{
+ if(process.argv[2]==='after'){
+  const previous=JSON.parse(await readFile(join(out,'restart-before.json'),'utf8'));run=previous.run;
+  const current=await api('GET','/runs/'+run.id),apiThread=await api('GET','/runs/'+run.id+'/thread');
+  const serverState=await ctl('/state');assert.notEqual(serverState.pid,previous.pid);assert.equal(current.status,'waiting');assert.deepEqual(apiThread,previous.thread);
+  for(const p of pages){await p.goto(base+'/app/runs/'+run.id);await expect.poll(()=>thread(p),{timeout:20000}).toEqual(apiThread);}
+  await api('POST','/runs/'+run.id+'/input',{waitId:current.waiting.waitId,input:true});
+  await poll(()=>api('GET','/runs/'+run.id),r=>r.status==='succeeded');const final=await api('GET','/runs/'+run.id+'/thread');
+  for(const p of pages)await expect.poll(()=>thread(p),{timeout:30000}).toEqual(final);
+  await save('restart-after.json',{oldPid:previous.pid,newPid:serverState.pid,run:await api('GET','/runs/'+run.id),thread:final,browserThreads:await Promise.all(pages.map(thread)),result:'PASS: new gateway process on same physical store retained pinned run and thread, input completed'});
+  console.log('PASS native-restart');
+ }else{
+  await ctl('/script',{turns:[{error:{code:'HARNESS_QUOTA_EXHAUSTED',message:'QA lifecycle resumable quota',retriable:false},submission:'definitely-not-submitted'}]});
+  const nodes=[{id:'start',kind:'trigger',label:'Lifecycle start',config:{type:'manual'}},{id:'prep',kind:'mutate',label:'Lifecycle prepare',config:{operations:[{op:'set',path:'/vars/prepared',value:{kind:'literal',value:true}}]}},{id:'work',kind:'inference',label:'Lifecycle work',config:{prompt:{template:'fake-only lifecycle'},output:{transforms:[{op:'set',path:'/vars/completed',value:{kind:'literal',value:true}}]}}},{id:'done',kind:'exit',label:'Lifecycle done',config:{}}];
+  const def={schemaVersion:4,name:'Independent stream history',nodes,edges:nodes.slice(0,-1).map((n,i)=>({id:'e'+i,from:{node:n.id,port:'out'},to:{node:nodes[i+1].id}}))};
+  const {loop}=await api('POST','/loops',{definition:def});await api('POST','/loops/'+loop.id+'/publish');run=(await api('POST','/loops/'+loop.id+'/runs',{input:{}})).run;await poll(()=>api('GET','/runs/'+run.id),r=>r.status==='failed');await ctl('/idle');
+  const failed=await api('GET','/runs/'+run.id+'/thread');
+  // Deliberately stale transport response: event reconciliation must make it current.
+  await ctx.route('**/runs/'+run.id+'/thread',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(failed)}));
+  for(const p of pages){await p.goto(base+'/app/runs/'+run.id);await expect.poll(()=>thread(p),{timeout:20000}).toEqual(failed);}
+  observations.push({stage:'failed',api:failed,browsers:await Promise.all(pages.map(thread))});
+  await ctx.setOffline(true);
+  await ctl('/script',{turns:[{finalText:'LIFECYCLE exact appended answer',delayMs:8000,items:[{id:'progress',type:'message',summary:'LIFECYCLE exact appended answer'}]}]});
+  await api('POST','/runs/'+run.id+'/resume');await poll(()=>api('GET','/runs/'+run.id),r=>r.status==='running');const pending=await api('GET','/runs/'+run.id+'/thread');assert.equal(pending.vars.completed,undefined);
+  await ctx.setOffline(false);await pages[1].reload();
+  for(const p of pages){await expect.poll(()=>thread(p),{timeout:20000}).toEqual(pending);}
+  observations.push({stage:'resumed-unfinished',api:pending,browsers:await Promise.all(pages.map(thread))});
+  await poll(()=>api('GET','/runs/'+run.id),r=>r.status==='succeeded');const final=await api('GET','/runs/'+run.id+'/thread');assert.equal(final.vars.completed,true);
+  for(const p of pages)await expect.poll(()=>thread(p),{timeout:30000}).toEqual(final);
+  const events=(await api('GET','/runs/'+run.id+'/events?limit=1000')).items;
+  for(const p of pages){await expect(p.getByRole('list',{name:'Timeline'}).getByRole('button')).toHaveCount(events.length);await expect(p.getByRole('alert').filter({hasText:'Failed:'})).toHaveCount(0);}
+  observations.push({stage:'succeeded',api:final,browsers:await Promise.all(pages.map(thread))});
+  // Inference append is also readable in progress and exact event, including raw provider output.
+  await pages[0].getByRole('button',{name:/Node progress/}).click();await expect(pages[0].getByText('LIFECYCLE exact appended answer',{exact:false}).first()).toBeVisible();
+  const beforeReads=JSON.stringify(await api('GET','/runs/'+run.id));for(let i=0;i<5;i++)await api('GET','/runs/'+run.id+'/thread');assert.equal(JSON.stringify(await api('GET','/runs/'+run.id)),beforeReads);
+  await save('lifecycle-results.json',{result:'PASS',observations,run:await api('GET','/runs/'+run.id),events,readsUnchanged:true});console.log('PASS failure-resume-success two tabs offline/reload stale snapshot no unfinished output');
+  const waitNodes=[nodes[0],nodes[1],{id:'wait',kind:'wait',label:'Pinned restart wait',config:{mode:'input',prompt:'Restart then continue'}},nodes[3]];
+  const waitDef={schemaVersion:4,name:'Pinned native restart history',nodes:waitNodes,edges:waitNodes.slice(0,-1).map((n,i)=>({id:'e'+i,from:{node:n.id,port:'out'},to:{node:waitNodes[i+1].id}}))};
+  const created=await api('POST','/loops',{definition:waitDef});await api('POST','/loops/'+created.loop.id+'/publish');const waiting=(await api('POST','/loops/'+created.loop.id+'/runs',{input:{}})).run;await poll(()=>api('GET','/runs/'+waiting.id),r=>r.status==='waiting');await ctl('/idle');
+  const environment=JSON.parse(await readFile(join(out,'environment.json'),'utf8'));await save('restart-before.json',{pid:environment.pid,run:await api('GET','/runs/'+waiting.id),thread:await api('GET','/runs/'+waiting.id+'/thread')});console.log('RESTART_READY');
+ }
+}catch(e){await save('lifecycle-error-'+(process.argv[2]??'before')+'.json',{error:e.stack,observations,run});console.error(e.stack);process.exitCode=1;}finally{await browser.close();}

@@ -1,0 +1,129 @@
+pnpm.cmd : $ vitest run --coverage --coverage.reportOnFailure 
+'--coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-round4-api-coverage-8c4cfe80'
+At line:9 char:3
++   & pnpm.cmd @arguments *> (Join-Path $evidence ("coverage-$package.l ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...erage-8c4cfe80':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792851362407,"pid":56876,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5678"}
+{"level":30,"time":1792851362409,"pid":56876,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5678,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-qT1Z5j","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792851363551,"pid":56876,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792851363559,"pid":56876,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.833099999999831,"msg":"request completed"}
+[before-receipt] fixture
+[before-receipt] key
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+ ❯ src/main.test.ts (9 tests | 1 failed | 4 skipped) 205756ms
+   ❯ built API entry and startup failures (6)
+     × dispatches the API-key and preflight CLIs with their real exit codes 63960ms
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+[after-run] key-created
+[after-run] start
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 355489ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180167ms
+     × the built API recovers a child finished while down with one continuation per parent 117104ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their 
+real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child 
+completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 64 passed | 2 skipped (68)
+      Tests  3 failed | 1354 passed | 8 skipped (1365)
+   Start at  09:15:33
+   Duration  462.59s (tests 78%, import 18%, transform 4%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.58% ( 2037/2109 )
+Branches     : 93.48% ( 1348/1442 )
+Functions    : 94.83% ( 404/426 )
+Lines        : 97.77% ( 1849/1891 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

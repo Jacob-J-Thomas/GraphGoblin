@@ -1,0 +1,32 @@
+npx.cmd : %USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-npm-cache\_npx\31e32ef8478fbf80\node_modules\playwright-core\l
+ib\tools\cli-client\session.js:172
+At line:2 char:186
++ ... er-daemon"; npx.cmd --yes --package @playwright/cli playwright-cli -s ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (%USERPROFILE%\...\session.js:172:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    const rejectWithPid = (reject, message) => reject(Object.assign(new Error(`Daemon pid=${child.pid}: ${message}`), 
+{ daemonPid: child.pid }));
+                                                                    ^
+
+Error: Daemon pid=34796: Daemon process exited with code 1
+[PlaywrightError: EPERM: operation not permitted, open 
+'%USERPROFILE%\AppData\Local\ms-playwright\b\browser@b58c388f4e1ff0af35aec319acb259cb'] {
+  log: [],
+  code: 'EPERM',
+  errno: -4048,
+  syscall: 'open'
+}
+
+    at rejectWithPid (%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-npm-cache\_npx\31e32ef8478fbf80\node_modules\playw
+right-core\lib\tools\cli-client\session.js:172:69)
+    at ChildProcess.<anonymous> (%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-npm-cache\_npx\31e32ef8478fbf80\node_mo
+dules\playwright-core\lib\tools\cli-client\session.js:182:11)
+    at ChildProcess.emit (node:events:518:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5) {
+  daemonPid: 34796
+}
+
+Node.js v22.14.0

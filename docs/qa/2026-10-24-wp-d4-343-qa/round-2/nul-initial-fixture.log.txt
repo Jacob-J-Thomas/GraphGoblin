@@ -1,0 +1,19 @@
+node : file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-2-nul-reproduction.mjs:8
+At line:14 char:1
++ node "$env:TEMP\gg-qa-d4-343-2-nul-reproduction.mjs" *> docs/qa/2026- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/User...roduction.mjs:8:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+await writeFile(join(out,'nul-reproduction.json'),JSON.stringify({facts,log},null,2));console.log(facts.map(f=>({key:f.
+key,state:f.retry.delivery,returnedKey:f.retry.dedupeKey,runCount:f.inbound[0].run_ids,receiptStatus:f.receipt[0].statu
+s})));
+                                                                                                                       
+                                                                               ^
+
+TypeError: Cannot read properties of undefined (reading 'run_ids')
+    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-2-nul-reproduction.mjs:8:199
+    at Array.map (<anonymous>)
+    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-2-nul-reproduction.mjs:8:105
+
+Node.js v22.14.0

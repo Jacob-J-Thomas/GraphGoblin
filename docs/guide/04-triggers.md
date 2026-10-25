@@ -211,7 +211,7 @@ Keep whitespace and newlines identical between signing and sending. Send the tim
 
 `dedupeKey` is JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from the expression; ordinary delivery and timestamp metadata remains available. The example deduplicates authored delivery IDs across signing recipes and versions. Without a dedupe expression, identical raw bodies can start separate runs; raw hashes are audit evidence only. Timestamp freshness authenticates the delivery and does not expire its authored key. Saved and duplicate requests return HTTP 202 `{accepted:true}`. Inspect **Events** for the payload, delivery state and started-run links (old `filtered` rows remain historical). The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. A duplicate returns the same 202 without another run. Empty, whitespace-only, malformed JSON or invalid UTF-8 bodies return 400 `BODY_INVALID` (literal `null` is valid), and a dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
 
-A configured key expression must return a nonempty key: null, undefined and empty string return 422 `KEY_INVALID`, before saving input. Strings stay literal, including whitespace; other values use JSON serialization. Keys longer than 512 characters are refused and never truncated, for all authentication recipes. With no `dedupeKey` expression, no automatic business identity is generated. Fix invalid expressions and resend; no claim was consumed by that refusal. Event and Poll key rules are unchanged.
+A configured key expression must return a nonempty key: null, undefined, empty strings and keys containing U+0000 (NUL) return 422 `KEY_INVALID`, before saving input. Strings stay literal, including whitespace; other values use JSON serialization. Keys longer than 512 characters are refused and never truncated, for all authentication recipes. With no `dedupeKey` expression, no automatic business identity is generated. Fix invalid expressions and resend; no claim was consumed by that refusal. Event keys follow the separate Inbound Events rules below; Poll keys follow the polling section.
 
 Explicit webhook keys are permanent in owner/loop/trigger-node scope across versions. Preserved receipt and inbound claims, saved reservations and committed run-envelope keys all count, including keys from earlier trigger kinds and old inbound-only claims with endpoint provenance. Restart, republishing, filter changes or an expired timestamp window do not reopen a key. Timestamp freshness only authenticates the new request. Concurrent repeats and retries after a lost acknowledgement start at most one run for the key.
 
@@ -311,11 +311,14 @@ event.json
 
 ```json
 {
+  "loopId": "<stable-loop-id>",
   "type": "issue-ready",
   "payload": { "issueId": "example-7", "approved": true },
   "dedupeKey": "example-delivery-7"
 }
 ```
+
+Omit `dedupeKey` for independent deliveries. If supplied, it must contain 1 to 512 characters of well-formed Unicode without U+0000 (NUL). An empty string or NUL-containing key returns 400 `VALIDATION_FAILED` naming `/dedupeKey` before saving anything; whitespace is a literal key. Authored Event keys containing NUL or invalid Unicode return 422 `EVENT_KEY_INVALID` before saving anything.
 
 ```bash
 curl -sS -X POST 'http://127.0.0.1:4747/events' \
@@ -327,7 +330,11 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/events' `
   -ContentType 'application/json' -InFile event.json
 ```
 
-Matching published triggers start runs. The response includes `runIds` and `duplicate`. A repeated event type plus request dedupe key returns the earlier event without starting more runs; this dedupe persists without a replay-window expiry. A node's own dedupe expression separately suppresses keys already used by that trigger.
+Replace `<stable-loop-id>` with the owned loop's ID. The request starts exactly one matching Event trigger in that loop's current published version. If more than one matches, add `"triggerNodeId": "your-entry-id"`; an absent target, mismatched entry or ambiguity is refused instead of broadcasting.
+
+The 202 includes a saved `admissionId`, the pinned `target` and `delivery.state: "pending"`; `runIds` fills after admission. You can stop and restart GraphGoblin without resending an accepted request. A request key retry returns the original delivery and identity for this loop/trigger/type, including a failed state. The same key aimed at another loop is independent. Unkeyed repeats may each start a run; bodies are not hashed for suppression. A node's own key expression separately suppresses payload keys, including pending admissions. This protects admission, not exactly-once effects in external systems.
+
+Inspect Events for Pending admission, Admitted or Failed, failure attempts, retry time and safe failure code. The eighth admission failure ends retries; fix the underlying fault and deliberately send a new key for new work. Old broadcast history has no inferred target and shows admission "not tracked". Extremely nested payloads (container depth above 994 with the payload root counted as zero) return 422 `EVENT_PAYLOAD_TOO_DEEP`; URL webhooks use `WEBHOOK_PAYLOAD_TOO_DEEP`. Neither is accepted or retried. Other URL webhook contracts are unchanged.
 
 Events come from outside GraphGoblin. Loops do not publish Events to one another: to run another loop and use its result, call it with a Subloop node. The parent waits for the child and receives its configured output (see [Run and observe](03-run-and-observe.md#read-returns-and-child-runs)).
 

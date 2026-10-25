@@ -1,0 +1,22 @@
+param(
+  [Parameter(Mandatory = $true)][string]$Name,
+  [Parameter(ValueFromRemainingArguments = $true)][string[]]$PnpmArguments
+)
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+if ((node --version) -notmatch '^v22\.') { throw 'Node 22 is required' }
+$recordRoot = Join-Path (Get-Location) 'docs/qa/wp-d4-343/round-5'
+$started = [DateTime]::UtcNow
+$watch = [Diagnostics.Stopwatch]::StartNew()
+& pnpm.cmd @PnpmArguments *> (Join-Path $recordRoot "$Name.log.txt")
+$gateCode = $LASTEXITCODE
+$result = [ordered]@{
+  command = 'pnpm.cmd ' + ($PnpmArguments -join ' ')
+  node = 'v22.14.0'
+  startedUtc = $started.ToString('o')
+  finishedUtc = [DateTime]::UtcNow.ToString('o')
+  seconds = $watch.Elapsed.TotalSeconds
+  exitCode = $gateCode
+}
+[IO.File]::WriteAllText((Join-Path $recordRoot "$Name-status.log.txt"), (($result | ConvertTo-Json) + "`n"), [Text.UTF8Encoding]::new($false))
+Write-Output "$Name EXIT_CODE=$gateCode seconds=$($watch.Elapsed.TotalSeconds)"
+exit $gateCode

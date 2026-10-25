@@ -1,0 +1,634 @@
+{
+  "checks": [
+    {
+      "id": "same-ledger-sweep-metadata-fault",
+      "actual": {
+        "loops": [
+          "01M5PSF7XK5CWPJR774ENCKSEF",
+          "01M5PSF7XK5CWPJR774ENCKSEH"
+        ],
+        "receipts": [
+          {
+            "id": "01M5PSF7XK5CWPJR774ENCKSEK",
+            "ownerId": "local",
+            "type": "diag",
+            "payload": null,
+            "dedupeKey": "diagnostic-0",
+            "source": "api",
+            "receivedAt": "2026-10-24T11:06:55.795Z",
+            "runIds": [],
+            "admissionId": "01M5PSF7XK5CWPJR774ENCKSEM",
+            "target": {
+              "loopId": "01M5PSF7XK5CWPJR774ENCKSEF",
+              "versionId": "01M5PSF7XK5CWPJR774ENCKSEG",
+              "triggerNodeId": "start"
+            },
+            "delivery": {
+              "state": "pending",
+              "attempts": 0,
+              "nextAttemptAt": "2026-10-24T11:06:55.795Z"
+            },
+            "duplicate": false
+          },
+          {
+            "id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+            "ownerId": "local",
+            "type": "diag",
+            "payload": null,
+            "dedupeKey": "diagnostic-1",
+            "source": "api",
+            "receivedAt": "2026-10-24T11:06:55.795Z",
+            "runIds": [],
+            "admissionId": "01M5PSF7XK5CWPJR774ENCKSER",
+            "target": {
+              "loopId": "01M5PSF7XK5CWPJR774ENCKSEH",
+              "versionId": "01M5PSF7XK5CWPJR774ENCKSEJ",
+              "triggerNodeId": "start"
+            },
+            "delivery": {
+              "state": "pending",
+              "attempts": 0,
+              "nextAttemptAt": "2026-10-24T11:06:55.795Z"
+            },
+            "duplicate": false
+          }
+        ],
+        "before": [
+          {
+            "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+            "status": "pending",
+            "attempts": 1,
+            "next_attempt_at": "2026-10-24T11:07:00.795Z"
+          },
+          {
+            "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+            "status": "pending",
+            "attempts": 1,
+            "next_attempt_at": "2026-10-24T11:07:00.795Z"
+          }
+        ],
+        "after": [
+          [
+            {
+              "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+              "status": "pending",
+              "attempts": 1,
+              "next_attempt_at": "2026-10-24T11:07:00.795Z"
+            },
+            {
+              "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+              "status": "pending",
+              "attempts": 1,
+              "next_attempt_at": "2026-10-24T11:07:00.795Z"
+            }
+          ],
+          [
+            {
+              "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+              "status": "pending",
+              "attempts": 1,
+              "next_attempt_at": "2026-10-24T11:07:00.795Z"
+            },
+            {
+              "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+              "status": "pending",
+              "attempts": 1,
+              "next_attempt_at": "2026-10-24T11:07:00.795Z"
+            }
+          ],
+          [
+            {
+              "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+              "status": "pending",
+              "attempts": 1,
+              "next_attempt_at": "2026-10-24T11:07:00.795Z"
+            },
+            {
+              "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+              "status": "pending",
+              "attempts": 1,
+              "next_attempt_at": "2026-10-24T11:07:00.795Z"
+            }
+          ]
+        ],
+        "ordinary": [
+          {
+            "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+            "status": "pending",
+            "attempts": 2
+          },
+          {
+            "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+            "status": "admitted",
+            "attempts": 1
+          }
+        ]
+      },
+      "status": "PASS"
+    }
+  ],
+  "http": [
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "loop": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSEF",
+          "ownerId": "local",
+          "name": "Sweep repeated bad",
+          "draftVersionId": "01M5PSF7XK5CWPJR774ENCKSEG",
+          "createdAt": "2026-10-24T11:06:55.795Z",
+          "updatedAt": "2026-10-24T11:06:55.795Z"
+        },
+        "draft": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSEG",
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEF",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Sweep repeated bad",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "diag"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T11:06:55.795Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M5PSF7XK5CWPJR774ENCKSEF/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSEG",
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEF",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Sweep repeated bad",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "diag"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T11:06:55.795Z",
+          "publishedAt": "2026-10-24T11:06:55.795Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "loop": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSEH",
+          "ownerId": "local",
+          "name": "Sweep repeated healthy",
+          "draftVersionId": "01M5PSF7XK5CWPJR774ENCKSEJ",
+          "createdAt": "2026-10-24T11:06:55.795Z",
+          "updatedAt": "2026-10-24T11:06:55.795Z"
+        },
+        "draft": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSEJ",
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEH",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Sweep repeated healthy",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "diag"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T11:06:55.795Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M5PSF7XK5CWPJR774ENCKSEH/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M5PSF7XK5CWPJR774ENCKSEJ",
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEH",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Sweep repeated healthy",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "event",
+                  "eventType": "diag"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T11:06:55.795Z",
+          "publishedAt": "2026-10-24T11:06:55.795Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/events",
+      "status": 202,
+      "body": {
+        "id": "01M5PSF7XK5CWPJR774ENCKSEK",
+        "ownerId": "local",
+        "type": "diag",
+        "payload": null,
+        "dedupeKey": "diagnostic-0",
+        "source": "api",
+        "receivedAt": "2026-10-24T11:06:55.795Z",
+        "runIds": [],
+        "admissionId": "01M5PSF7XK5CWPJR774ENCKSEM",
+        "target": {
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEF",
+          "versionId": "01M5PSF7XK5CWPJR774ENCKSEG",
+          "triggerNodeId": "start"
+        },
+        "delivery": {
+          "state": "pending",
+          "attempts": 0,
+          "nextAttemptAt": "2026-10-24T11:06:55.795Z"
+        },
+        "duplicate": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/events",
+      "status": 202,
+      "body": {
+        "id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+        "ownerId": "local",
+        "type": "diag",
+        "payload": null,
+        "dedupeKey": "diagnostic-1",
+        "source": "api",
+        "receivedAt": "2026-10-24T11:06:55.795Z",
+        "runIds": [],
+        "admissionId": "01M5PSF7XK5CWPJR774ENCKSER",
+        "target": {
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEH",
+          "versionId": "01M5PSF7XK5CWPJR774ENCKSEJ",
+          "triggerNodeId": "start"
+        },
+        "delivery": {
+          "state": "pending",
+          "attempts": 0,
+          "nextAttemptAt": "2026-10-24T11:06:55.795Z"
+        },
+        "duplicate": false
+      }
+    }
+  ],
+  "sweepFacts": {
+    "loops": [
+      "01M5PSF7XK5CWPJR774ENCKSEF",
+      "01M5PSF7XK5CWPJR774ENCKSEH"
+    ],
+    "receipts": [
+      {
+        "id": "01M5PSF7XK5CWPJR774ENCKSEK",
+        "ownerId": "local",
+        "type": "diag",
+        "payload": null,
+        "dedupeKey": "diagnostic-0",
+        "source": "api",
+        "receivedAt": "2026-10-24T11:06:55.795Z",
+        "runIds": [],
+        "admissionId": "01M5PSF7XK5CWPJR774ENCKSEM",
+        "target": {
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEF",
+          "versionId": "01M5PSF7XK5CWPJR774ENCKSEG",
+          "triggerNodeId": "start"
+        },
+        "delivery": {
+          "state": "pending",
+          "attempts": 0,
+          "nextAttemptAt": "2026-10-24T11:06:55.795Z"
+        },
+        "duplicate": false
+      },
+      {
+        "id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+        "ownerId": "local",
+        "type": "diag",
+        "payload": null,
+        "dedupeKey": "diagnostic-1",
+        "source": "api",
+        "receivedAt": "2026-10-24T11:06:55.795Z",
+        "runIds": [],
+        "admissionId": "01M5PSF7XK5CWPJR774ENCKSER",
+        "target": {
+          "loopId": "01M5PSF7XK5CWPJR774ENCKSEH",
+          "versionId": "01M5PSF7XK5CWPJR774ENCKSEJ",
+          "triggerNodeId": "start"
+        },
+        "delivery": {
+          "state": "pending",
+          "attempts": 0,
+          "nextAttemptAt": "2026-10-24T11:06:55.795Z"
+        },
+        "duplicate": false
+      }
+    ],
+    "before": [
+      {
+        "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+        "status": "pending",
+        "attempts": 1,
+        "next_attempt_at": "2026-10-24T11:07:00.795Z"
+      },
+      {
+        "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+        "status": "pending",
+        "attempts": 1,
+        "next_attempt_at": "2026-10-24T11:07:00.795Z"
+      }
+    ],
+    "after": [
+      [
+        {
+          "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+          "status": "pending",
+          "attempts": 1,
+          "next_attempt_at": "2026-10-24T11:07:00.795Z"
+        },
+        {
+          "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+          "status": "pending",
+          "attempts": 1,
+          "next_attempt_at": "2026-10-24T11:07:00.795Z"
+        }
+      ],
+      [
+        {
+          "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+          "status": "pending",
+          "attempts": 1,
+          "next_attempt_at": "2026-10-24T11:07:00.795Z"
+        },
+        {
+          "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+          "status": "pending",
+          "attempts": 1,
+          "next_attempt_at": "2026-10-24T11:07:00.795Z"
+        }
+      ],
+      [
+        {
+          "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+          "status": "pending",
+          "attempts": 1,
+          "next_attempt_at": "2026-10-24T11:07:00.795Z"
+        },
+        {
+          "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+          "status": "pending",
+          "attempts": 1,
+          "next_attempt_at": "2026-10-24T11:07:00.795Z"
+        }
+      ]
+    ],
+    "ordinary": [
+      {
+        "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEK",
+        "status": "pending",
+        "attempts": 2
+      },
+      {
+        "inbound_id": "01M5PSF7XK5CWPJR774ENCKSEQ",
+        "status": "admitted",
+        "attempts": 1
+      }
+    ]
+  }
+}

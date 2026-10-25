@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-d4-343-qa');
+const ready=JSON.parse(await readFile(join(out,'browser-ready.json'),'utf8'));
+const auth=JSON.parse(await readFile(ready.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const headers={authorization:'Bearer '+auth.key,'content-type':'application/json'};
+const call=async(method,path,body)=>{const r=await fetch(auth.url+path,{method,headers,...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,body:await r.json()};};
+await call('POST','/__qa',{op:'settle'});
+const bounds=JSON.parse(await readFile(join(out,'key-boundaries.json'),'utf8'));
+const listed=await call('GET','/events?limit=100');
+const result=[];
+for(const boundary of bounds){const ids=boundary.responses.map(r=>r.body.id);const events=listed.body.items.filter(i=>ids.includes(i.id));const runs=await call('POST','/__qa',{op:'sql',sql:'SELECT r.id,r.loop_id,r.status FROM runs r JOIN event_receipts e ON e.inbound_id IN (?,?) AND json_extract(e.intent,\'$.run.id\')=r.id',args:ids});result.push({...boundary,events,storedRuns:runs.body});}
+assert.equal(result[0].responses[0].status,202);assert.equal(result[0].responses[1].status,202);assert.equal(result[0].sameDelivery,false);assert.equal(result[0].storedRuns.length,2);
+await writeFile(join(out,'empty-key-reproduction.json'),JSON.stringify(result,null,2));console.log('Empty key: two accepted delivery IDs; two stored runs. Space and NUL keys: same accepted delivery on retry.');

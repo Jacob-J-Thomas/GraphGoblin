@@ -46,7 +46,7 @@ async function freePort(start = 5600, count = 100): Promise<number> {
     });
     if (available) return port;
   }
-  throw new Error('No disposable API port is free in the requested range');
+  throw new Error(`No disposable API port is free in ${start}-${start + count - 1}`);
 }
 
 function launch(env: NodeJS.ProcessEnv, args: string[]) {

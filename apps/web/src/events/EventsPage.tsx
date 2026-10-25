@@ -111,8 +111,7 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
 }
 
 /**
- * Events received on the inbound bus: `POST /events`, webhook deliveries, and exit events
- * of other runs, with the runs each one started.
+ * External Events and webhook deliveries, their selected recipients and admission progress.
  */
 export function EventsPage() {
   const [params, setParams] = useSearchParams();
@@ -207,6 +206,7 @@ export function EventsPage() {
                     <Th>Received</Th>
                     <Th>Type</Th>
                     <Th>Source</Th>
+                    <Th>Target</Th>
                     <Th>Delivery</Th>
                     <Th>Dedupe key</Th>
                     <Th>Started runs</Th>
@@ -225,6 +225,34 @@ export function EventsPage() {
                       <Td label="Source" className="text-sm">
                         <Source source={event.source} />
                         <WebhookConfiguration webhook={event.webhook} />
+                      </Td>
+                      <Td label="Target" className="text-xs wrap-anywhere">
+                        <div className="grid min-w-0 gap-1">
+                          {event.target ? (
+                            <>
+                              <span>
+                                Loop{' '}
+                                <Link
+                                  to={`/loops/${event.target.loopId}/edit`}
+                                  className={`${LINK} font-mono`}
+                                >
+                                  {event.target.loopId}
+                                </Link>
+                              </span>
+                              <span>
+                                Entry <code>{event.target.triggerNodeId}</code>
+                              </span>
+                            </>
+                          ) : null}
+                          {event.admissionId ? (
+                            <span>
+                              Admission <code>{event.admissionId}</code>
+                            </span>
+                          ) : null}
+                          {!event.target && !event.admissionId ? (
+                            <span className="text-muted">not recorded</span>
+                          ) : null}
+                        </div>
                       </Td>
                       <Td label="Delivery" className="text-sm">
                         <Delivery delivery={event.delivery} />

@@ -237,6 +237,7 @@ it('native racing Events retain admitted work or reusable keys through drain and
     };
     const target = await a.publish(definition);
     const events = Array.from({ length: 6 }, (_, i) => ({
+      loopId: target,
       type: 'drain-race',
       payload: { i },
       dedupeKey: `race-${i}`,
@@ -246,8 +247,9 @@ it('native racing Events retain admitted work or reusable keys through drain and
     const responses = await Promise.all(pending);
     const statuses = responses.map((r) => r.status);
     for (const response of responses) {
-      const body = (await response.json()) as { runIds?: string[]; code?: string };
-      if (response.status === 202) expect(body.runIds).not.toHaveLength(0);
+      // A targeted Event's 202 carries its durable admission; the run follows (#343).
+      const body = (await response.json()) as { admissionId?: string; code?: string };
+      if (response.status === 202) expect(body.admissionId).toEqual(expect.any(String));
       else {
         expect(response.status).toBe(503);
         expect(body.code).toBe('SHUTTING_DOWN');
@@ -261,8 +263,8 @@ it('native racing Events retain admitted work or reusable keys through drain and
     for (const [i, event] of events.entries()) {
       const response = await a.call('POST', '/events', event);
       expect(response.status).toBe(202);
-      const body = (await response.json()) as { runIds: string[]; duplicate: boolean };
-      expect(body.runIds).not.toHaveLength(0);
+      const body = (await response.json()) as { admissionId: string; duplicate: boolean };
+      expect(body.admissionId).toEqual(expect.any(String));
       expect(body.duplicate).toBe(statuses[i] === 202);
     }
     await eventually(async () => {
@@ -594,8 +596,13 @@ it('native Event refusal leaves its dedupe key available after restart', async (
     label: 'Event',
     config: { type: 'event', eventType: 'resume-event' },
   };
-  await a.publish(definition);
-  const event = { type: 'resume-event', payload: { value: 1 }, dedupeKey: 'same-after-restart' };
+  const target = await a.publish(definition);
+  const event = {
+    loopId: target,
+    type: 'resume-event',
+    payload: { value: 1 },
+    dedupeKey: 'same-after-restart',
+  };
   try {
     await a.call('POST', '/system/shutdown', { action: 'drain' });
     const refused = await a.call('POST', '/events', event);
@@ -609,7 +616,16 @@ it('native Event refusal leaves its dedupe key available after restart', async (
   await a.f.ready(restarted, a.token);
   const accepted = await a.call('POST', '/events', event);
   expect(accepted.status).toBe(202);
-  expect(await accepted.json()).toMatchObject({ duplicate: false, runIds: [expect.any(String)] });
+  expect(await accepted.json()).toMatchObject({
+    duplicate: false,
+    admissionId: expect.any(String),
+  });
+  await eventually(async () => {
+    const runs = (await (await a.call('GET', `/runs?loopId=${target}`)).json()) as {
+      items: RunRecord[];
+    };
+    return runs.items.length === 1;
+  });
   await a.call('POST', '/system/shutdown', { action: 'drain' });
   expect(await restarted.waitForExit()).toEqual({ code: 0, signal: null });
 }, 120_000);
@@ -683,12 +699,18 @@ it.skipIf(process.platform !== 'win32')(
       }
     });
     await a.call('POST', '/system/shutdown', { action: 'force' });
-    await eventually(
-      async () =>
-        a.child.exited ||
-        ((await (await a.call('GET', '/system/shutdown')).json()) as { phase: string }).phase ===
-          'force-failed',
-    );
+    await eventually(async () => {
+      if (a.child.exited) return true;
+      try {
+        const state = (await (await a.call('GET', '/system/shutdown')).json()) as {
+          phase: string;
+        };
+        return state.phase === 'force-failed';
+      } catch {
+        // A host that confirms termination closes the listener while this poll is in flight.
+        return false;
+      }
+    });
     if (a.child.exited)
       context.skip(
         'D-015 unconfirmed termination requires sandbox taskkill denial; this host confirmed termination',

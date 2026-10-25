@@ -1,4 +1,4 @@
-import type { RunEvent } from '@graphgoblin/contracts';
+import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
 import { Alert, Card } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
 import { describeEvent } from '../projections.js';
@@ -18,8 +18,10 @@ export function Timeline({
   error,
   selected,
   onSelect,
+  definition,
 }: {
   events: RunEvent[];
+  definition?: LoopDefinition | undefined;
   status: StreamStatus;
   error: string | undefined;
   selected: number | undefined;
@@ -59,7 +61,9 @@ export function Timeline({
             >
               <span className="text-right font-mono text-xs text-subtle">#{event.seq}</span>
               <code className="text-[12.5px] font-medium">{event.type}</code>
-              <span className="min-w-0 break-words text-muted">{describeEvent(event)}</span>
+              <span className="min-w-0 break-words text-muted">
+                {describeEvent(event, definition)}
+              </span>
             </button>
           </li>
         ))}

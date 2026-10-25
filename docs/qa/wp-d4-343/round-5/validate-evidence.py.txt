@@ -1,0 +1,81 @@
+"""Validate round-5 evidence integrity after every capture writer has stopped."""
+from pathlib import Path
+import hashlib
+import json
+import re
+import subprocess
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+repo = Path.cwd()
+root = repo / 'docs/qa/wp-d4-343/round-5'
+expected = '96cc1802804c5a2960212e6341ca611d6a89c6e9'
+git = lambda *args: subprocess.check_output(['git', *args], cwd=repo).decode('utf-8').strip()
+digest = lambda data: hashlib.sha256(data).hexdigest()
+read = lambda name: json.loads((root / name).read_text(encoding='utf-8'))
+checks = []
+def require(name, condition):
+    if not condition:
+        raise AssertionError(name)
+    checks.append(name)
+
+head = git('rev-parse', 'HEAD')
+branch = git('branch', '--show-current')
+require('expected HEAD and branch', head == expected and branch == 'codex-wp-d4-343')
+require('index unchanged', git('diff', '--cached', '--name-only') == '')
+subprocess.run(['git', 'diff', '--check'], cwd=repo, check=True)
+sources = git('diff', '--name-only').splitlines()
+expected_sources = {'apps/web/e2e/' + name for name in ('fixtures.ts', 'events-refresh.spec.ts', 'history.spec.ts', 'responsive.spec.ts', 'screens.capture.ts', 'github-triggers.spec.ts')}
+require('only the six scoped browser fixture/spec files changed', set(sources) == expected_sources)
+require('Node 22', subprocess.check_output(['node', '--version']).decode().startswith('v22.'))
+before = (root / 'browser-before.log.txt').read_text(encoding='utf-8')
+require('baseline missing target reproduced', 'Expected: 202' in before and 'Received: 400' in before)
+for name, count in [('browser-events', 12), ('browser-responsive-screens', 2), ('browser-responsive-touch', 2)]:
+    result = read(name + '-status.log.txt')
+    log = (root / (name + '.log.txt')).read_text(encoding='utf-8')
+    require(name + ' passed without retries and with one worker', result['exitCode'] == 0 and '--retries=0' in result['command'] and '--workers=1' in result['command'] and re.search(r'\b' + str(count) + r' passed\b', log) is not None)
+for name, count in [('isolated-decision-authoring', 23), ('isolated-routing-review', 23), ('isolated-classifier-field', 7), ('isolated-projections', 2), ('isolated-focus-field-cron', 2)]:
+    result = read(name + '-status.log.txt')
+    log = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', (root / (name + '.log.txt')).read_text(encoding='utf-8'))
+    require(name + ' passed in one-worker isolated invocation', result['exitCode'] == 0 and '--maxWorkers=1' in result['command'] and re.search(r'\b' + str(count) + r' passed\b', log) is not None)
+gates = {name: read(name + '-status.log.txt') for name in ('typecheck', 'lint', 'build', 'layers', 'dependencies', 'format-check', 'coverage-web')}
+require('gate results recorded', all(isinstance(g['exitCode'], int) for g in gates.values()))
+require('web coverage ran with two workers', '--maxWorkers=2' in gates['coverage-web']['command'])
+summary_available = (root / 'coverage-web-summary.json').exists()
+if summary_available:
+    total = read('coverage-web-summary.json')['total']
+    require('web line and branch coverage above 90', total['lines']['pct'] > 90 and total['branches']['pct'] > 90)
+else:
+    require('coverage report unavailable after failed suite', gates['coverage-web']['exitCode'] != 0)
+report = (root / 'REPORT.md').read_text(encoding='utf-8')
+if not summary_available:
+    require('missing coverage report disclosed', 'not produced' in report.lower())
+require('eight COMMON report sections', len(re.findall(r'^## [1-8]\. ', report, flags=re.M)) == 8)
+require('report has no unfinished placeholders', 'PENDING' not in report and 'TODO' not in report and re.search(r'\|\s*OPEN\s*\|', report) is None)
+for entry in read('NORMALIZATION.json'):
+    path = root / entry['file']
+    if entry['kept']:
+        require('normalization hash: ' + entry['file'], digest(path.read_bytes()) == entry['kept_sha256'])
+    else:
+        require('omitted capture recorded: ' + entry['file'], not path.exists() and entry['file'] in (root / 'NOT-KEPT.md').read_text(encoding='utf-8'))
+artifacts = []
+for path in sorted(root.rglob('*')):
+    if not path.is_file() or path.name in ('MANIFEST.json', 'VALIDATION.json'):
+        continue
+    name = path.relative_to(root).as_posix()
+    data = path.read_bytes()
+    require('bounded artifact: ' + name, len(data) <= 1_000_000)
+    text = data.decode('utf-8')
+    require('normalized profile paths: ' + name, re.search(r'C:[/\\]+Users[/\\]+' + re.escape(Path.home().name), text, flags=re.I) is None)
+    if path.suffix == '.json' or path.name.endswith('-status.log.txt'):
+        json.loads(text)
+    artifacts.append({'file': name, 'bytes': len(data), 'sha256': digest(data)})
+ignore_result = subprocess.run(['git', 'check-ignore', '--stdin'], input=''.join((root.relative_to(repo) / entry['file']).as_posix() + '\n' for entry in artifacts), text=True, capture_output=True)
+require('retained evidence is not ignored by Git', ignore_result.returncode in (0, 1) and not ignore_result.stdout.strip())
+record = lambda name: {'file': name, 'bytes': (repo / name).stat().st_size, 'sha256': digest((repo / name).read_bytes())}
+manifest = {'head': head, 'branch': branch, 'patch_sha256': digest(subprocess.check_output(['git', 'diff', '--binary'], cwd=repo)), 'source_files': [record(name) for name in sources], 'gate_exit_codes': {name: result['exitCode'] for name, result in gates.items()}, 'coverage_summary_available': summary_available, 'artifacts': artifacts, 'excluded_self_records': ['MANIFEST.json', 'VALIDATION.json']}
+manifest_data = (json.dumps(manifest, indent=2) + '\n').encode('utf-8')
+(root / 'MANIFEST.json').write_bytes(manifest_data)
+result = {'head': head, 'branch': branch, 'manifest_sha256': digest(manifest_data), 'source_files': len(sources), 'artifacts': len(artifacts), 'checks_passed': len(checks), 'checks': checks}
+(root / 'VALIDATION.json').write_bytes((json.dumps(result, indent=2) + '\n').encode('utf-8'))
+print(json.dumps({key: value for key, value in result.items() if key != 'checks'}))

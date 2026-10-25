@@ -1,0 +1,14 @@
+import {readFile,writeFile,copyFile,mkdtemp} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+const root=process.cwd(), old=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-3'), out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-4');
+const runtime=await mkdtemp(join(tmpdir(),'gg-qa-d4-343-4-scripts-'));
+const adapt=s=>s.replaceAll('round-3','round-4').replaceAll('gg-qa-d4-343-3-','gg-qa-d4-343-4-').replaceAll('94523682d084f7a566242602762a3b04d87a8e55','ad9d9f15f0ab65f19504863f39c759fdbe1e6527').replaceAll('5850','6010').replaceAll('5851','6011').replaceAll('5854','6014');
+for(const name of ['server','acceptance','lifecycle','hard-kill','browser','gates','webhook-protected','webhook-unicode','webhook-unicode-control']){
+ let s=adapt(await readFile(join(old,name+'.mjs.txt'),'utf8'));
+ if(name==='acceptance')s=s.replace("['astral','a????b']","['astral','a\\ud83d\\ude00b']");
+ if(name==='gates')s=s.replace("'node tooling/scripts/check-docs.mjs'","'node tooling/scripts/gen-docs.mjs --check'");
+ await writeFile(join(out,name+'.mjs.txt'),s);await writeFile(join(runtime,name+'.mjs'),s);
+}
+await writeFile(join(out,'script-location.json'),JSON.stringify({runtime:runtime.replaceAll(process.env.USERPROFILE,'%USERPROFILE%')},null,2));
+console.log(runtime);

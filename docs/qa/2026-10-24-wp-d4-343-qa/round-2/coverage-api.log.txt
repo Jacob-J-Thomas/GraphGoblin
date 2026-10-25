@@ -1,0 +1,54 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure '--coverage.reportsDirectory="%USERPROFILE%\AppData\Local\Temp\gg-qa-d4-343-2-coverage-Y5p9jP\api"' --exclude src/main.test.ts --exclude src/readiness-evidence.test.ts --exclude src/nested-readiness.test.ts --exclude src/subloop-restart.test.ts --exclude src/targeted-events-restart.test.ts --exclude src/retired-event-startup.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d4-343-2/apps/api
+      Coverage enabled with v8
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Worker forks emitted error.
+ ❯ EventEmitter.onTaskError ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11532:21
+ ❯ EventEmitter.emit node:events:518:28
+ ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11007:22
+ ❯ ChildProcess.emit node:events:518:28
+ ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+
+Caused by: Error: Worker exited unexpectedly with exit code 3221225477 during started state while running test file %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d4-343-2/apps/api/src/create-api-key.test.ts
+ ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11005:33
+ ❯ ChildProcess.emit node:events:518:28
+ ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  59 passed | 2 skipped (62)
+      Tests  1307 passed | 4 skipped (1316)
+     Errors  1 error
+   Start at  07:28:33
+   Duration  1438.41s (tests 68%, import 30%, transform 2%, worker 1%)
+
+     Import  293 modules were evaluated 389 times · 395.81s total, 30% of tracked time
+             ~97.68s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 88.28% ( 1861/2108 )
+Branches     : 87.91% ( 1266/1440 )
+Functions    : 84.7% ( 360/425 )
+Lines        : 90.15% ( 1704/1890 )
+================================================================================
+ERROR: Coverage for functions (84.7%) does not meet global threshold (90%)
+ERROR: Coverage for statements (88.28%) does not meet global threshold (90%)
+ERROR: Coverage for branches (87.91%) does not meet global threshold (90%)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d4-
+  │ 343-2\apps\api
+

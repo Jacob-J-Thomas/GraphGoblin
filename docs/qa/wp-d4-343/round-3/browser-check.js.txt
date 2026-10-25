@@ -1,0 +1,34 @@
+async (page) => {
+  const events = await (await page.request.get('http://127.0.0.1:5750/events')).json();
+  const results = [];
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('http://127.0.0.1:5750/app/events');
+    await page.getByRole('heading', { name: 'Events', exact: true }).waitFor();
+    const rows = page.locator('tbody tr');
+    await rows.first().waitFor();
+    if (await rows.count() !== 2) throw Error('Expected two saved recipients');
+    const recipients = [];
+    for (let i = 0; i < events.items.length; i++) {
+      const event = events.items[i];
+      const row = rows.nth(i);
+      const link = row.getByRole('link', { name: event.target.loopId, exact: true });
+      const href = await link.getAttribute('href');
+      if (href !== '/app/loops/' + event.target.loopId + '/edit') throw Error('Wrong loop destination: ' + href);
+      if (!await link.isVisible() || !await row.getByText(event.target.triggerNodeId, { exact: true }).isVisible() || !await row.getByText(event.admissionId, { exact: true }).isVisible()) throw Error('Recipient metadata missing');
+      if (event.runIds.length !== 0 || !await row.getByText('none', { exact: true }).isVisible()) throw Error('Expected a recipient without a run');
+      const box = await row.locator('td[data-label=Target]').evaluate(el => ({ width: el.clientWidth, scrollWidth: el.scrollWidth }));
+      if (box.scrollWidth > box.width + 1) throw Error('Target cell overflows: ' + JSON.stringify(box));
+      recipients.push({ state: event.delivery.state, loopId: event.target.loopId, triggerNodeId: event.target.triggerNodeId, admissionId: event.admissionId, href, box });
+    }
+    const layout = await page.evaluate(() => ({ viewport: innerWidth, documentWidth: document.documentElement.scrollWidth }));
+    if (layout.documentWidth > width) throw Error('Page overflows: ' + JSON.stringify(layout));
+    await page.screenshot({ path: 'docs/qa/wp-d4-343/round-3/edge-' + width + '.png', fullPage: true });
+    results.push({ width, layout, recipients });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('link', { name: events.items[0].target.loopId, exact: true }).first().click();
+  await page.getByRole('heading', { name: 'Targeted Event recipient QA', exact: true }).waitFor();
+  results.push({ loopLinkNavigation: page.url() });
+  return results;
+}

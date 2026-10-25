@@ -1,0 +1,119 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+ ❯ src/targeted-events.test.ts (34 tests | 4 failed | 26 skipped) 5688ms
+   × refuses request key "before\u0000after" before saving any delivery 821ms
+   × preserves webhook key refusal and literal-key deduplication for "before\u0000after" 475ms
+   × refuses an authored Event key containing NUL before saving any delivery 313ms
+   × admits a later due Event in the same sweep despite persistent first-receipt metadata failure 732ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/ta ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > refuses request key "before\u0000after" before saving any delivery
+AssertionError: expected [ 202, 202 ] to deeply equal [ 400, 400 ]
+
+- Expected
++ Received
+
+  [
+-   400,
+-   400,
++   202,
++   202,
+  ]
+
+ ❯ src/targeted-events.test.ts:582:46
+    580|   ]);
+    581|   await settle();
+    582|   expect(responses.map((r) => r.statusCode)).toEqual([400, 400]);
+       |                                              ^
+    583|   for (const response of responses) {
+    584|     expect(response.json()).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/targeted-events.test.ts > preserves webhook key refusal and literal-key deduplication for 
+"before\u0000after"
+AssertionError: expected 202 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 202
+
+ ❯ src/targeted-events.test.ts:637:35
+    635|         payload: { issue: key },
+    636|       });
+    637|       expect(response.statusCode).toBe(invalid ? 422 : 202);
+       |                                   ^
+    638|       expect(response.json()).toEqual(
+    639|         invalid ? expect.objectContaining({ code: 'KEY_INVALID' }) : {…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/targeted-events.test.ts > refuses an authored Event key containing NUL before saving any delivery
+AssertionError: expected 202 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 202
+
+ ❯ src/targeted-events.test.ts:658:31
+    656|   const response = await post(loopId, { payload: { issue: 'before\u000…
+    657|   await settle();
+    658|   expect(response.statusCode).toBe(422);
+       |                               ^
+    659|   expect(response.json()).toMatchObject({ code: 'EVENT_KEY_INVALID' });
+    660|   expect(await listed()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/targeted-events.test.ts > admits a later due Event in the same sweep despite persistent first-receipt 
+metadata failure
+AssertionError: expected { …(11) } to match object { delivery: { state: 'admitted' } }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "delivery": {
+-     "state": "admitted",
++     "state": "pending",
+    },
+  }
+
+ ❯ src/targeted-events.test.ts:684:78
+    682|       delivery: { state: 'pending', attempts: 1 }, runIds: [],
+    683|     });
+    684|     expect((await listed()).find((event) => event.id === deliveries[1]…
+       |                                                                              ^
+    685|       delivery: { state: 'admitted' },
+    686|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed | 26 skipped (34)
+   Start at  08:31:47
+   Duration  28.47s (transform 52%, import 27%, tests 21%)
+
+  Transform  transforming modules took 14.38s · 52% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+
