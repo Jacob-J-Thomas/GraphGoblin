@@ -11,6 +11,9 @@ function snapshot(status: string) {
     pinned: samplePin(),
     invocationId: FIXTURE_IDS.invocation,
     status,
+    ...(['succeeded', 'failed', 'cancelled', 'exhausted'].includes(status)
+      ? { finalizedAt: FIXTURE_TS }
+      : {}),
     iteration: 1,
     createdAt: FIXTURE_TS,
     lastEventSeq: 1,
@@ -471,4 +474,61 @@ it('consumes a late transport rejection after the deadline', async () => {
   } finally {
     vi.useRealTimers();
   }
+});
+
+it('keeps successful execution pending until the durable finalization acknowledgement', async () => {
+  let polls = 0;
+  const run = snapshot('succeeded');
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://api',
+    fetch: () => {
+      polls += 1;
+      const { finalizedAt: _finalizedAt, ...pending } = run;
+      return Promise.resolve(Response.json(polls === 1 ? pending : run));
+    },
+  });
+  const observed: string[] = [];
+  const result = await waitForRun(client, FIXTURE_IDS.run, {
+    timeoutMs: 1000,
+    pollMs: 1,
+    sleep: () => {
+      observed.push('pending');
+      return Promise.resolve();
+    },
+  });
+  expect(observed).toEqual(['pending']);
+  expect(polls).toBe(2);
+  expect(result).toEqual({ finished: true, run });
+});
+
+it('does not hide pending delivery evidence behind a finalization acknowledgement', async () => {
+  let polls = 0;
+  const run = snapshot('succeeded');
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://api',
+    fetch: () => {
+      polls++;
+      return Promise.resolve(
+        Response.json({
+          ...run,
+          deliveries: [
+            {
+              id: 'delivery-id',
+              channel: { kind: 'webhook', url: 'https://example.test' },
+              status: polls === 1 ? 'pending' : 'delivered',
+              attempts: 1,
+              maxAttempts: 5,
+              inFlight: polls === 1,
+              acknowledgement: polls === 1 ? 'unknown' : 'accepted',
+              effectMayHaveHappened: true,
+              acknowledgementUncertain: false,
+            },
+          ],
+        }),
+      );
+    },
+  });
+  const result = await waitForRun(client, FIXTURE_IDS.run, { timeoutMs: 1000, pollMs: 1 });
+  expect(result.finished).toBe(true);
+  expect(polls).toBe(2);
 });

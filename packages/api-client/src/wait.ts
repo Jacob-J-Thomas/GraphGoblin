@@ -97,7 +97,13 @@ export async function observeRun(
       const run = await abortable(runs.get(client, runId, { signal }), signal);
       check();
       latest = run;
-      if (TERMINAL.has(run.status)) return { run, finished: true };
+      // Pending journal evidence vetoes a marker from a snapshot racing resume.
+      if (
+        TERMINAL.has(run.status) &&
+        run.finalizedAt !== undefined &&
+        !run.deliveries?.some((delivery) => delivery.status === 'pending')
+      )
+        return { run, finished: true };
       if (observer.stopWhen?.(run)) return { run, finished: false };
       if (observer.onPoll) await abortable(Promise.resolve(observer.onPoll(run, polls)), signal);
       check();
@@ -118,7 +124,7 @@ export async function observeRun(
 }
 
 /**
- * Poll until a terminal status or timeout. Caller abort rejects with its reason; the deadline
+ * Poll until terminal execution and durable finalization, or timeout. Caller abort rejects with its reason; the deadline
  * returns finished: false and the last timely snapshot, if any. Waiting for input is nonterminal.
  */
 export function waitForRun(

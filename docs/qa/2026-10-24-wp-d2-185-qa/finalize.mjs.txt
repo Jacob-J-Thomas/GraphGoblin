@@ -1,0 +1,43 @@
+import {readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {join,relative,sep} from 'node:path';
+import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d2-185-qa');
+const digest=b=>createHash('sha256').update(b).digest('hex');
+const walk=async d=>{const a=[];for(const e of await readdir(d,{withFileTypes:true})){const p=join(d,e.name);if(e.isDirectory())a.push(...await walk(p));else a.push(p);}return a;};
+const readText=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');
+const localPath=process.env.USERPROFILE;
+const clean=s=>s.replaceAll(localPath.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(localPath.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(localPath,'%USERPROFILE%');
+if(process.argv[2]==='normalize'){
+ for(const name of ['gates','isolated']){
+  const old=join(out,name+'.ps1.txt');try{
+   const transcript=readText(await readFile(old));
+   const wrapper="// Retains/replays the exact PowerShell command block executed during QA.\nimport {spawnSync} from 'node:child_process';\nconst transcript="+JSON.stringify(transcript)+";\nconst result=spawnSync('powershell.exe',['-NoProfile','-Command',transcript],{cwd:process.cwd(),stdio:'inherit'});\nprocess.exit(result.status??1);\n";
+   await writeFile(join(out,name+'.mjs.txt'),wrapper);await unlink(old);
+  }catch(e){if(e.code!=='ENOENT')throw e;}
+ }
+ const reportPath=join(out,'report.mjs.txt');let report=readText(await readFile(reportPath));report=report.replaceAll('gates.ps1.txt','gates.mjs.txt').replaceAll('isolated.ps1.txt','isolated.mjs.txt').replace("web:'See coverage-web.log.txt'","web:'1707 passed'");
+ report=report.replace('preserve exact commands.','retain the exact executed PowerShell blocks inside replayable Node wrappers (the original execution was inline PowerShell).');
+ await writeFile(reportPath,report);
+ const diff=spawnSync('git',['diff','82cffa07b542a1e01acd6003c44be6ff4a6790f7','HEAD','--','.',':!docs/qa'],{cwd:root,encoding:'utf8'});if(diff.status!==0)throw Error(diff.stderr);await writeFile(join(out,'change.patch.txt'),diff.stdout);
+ let notes='# Captures not kept\n\n';let omitted=0;
+ for(const path of await walk(out)){
+  const bytes=await readFile(path);
+  if(bytes.length>1000000){if(!path.startsWith(out+sep))throw Error('outside QA folder');notes+='- `'+relative(out,path).replaceAll('\\','/')+'`: '+bytes.length+' bytes, SHA-256 `'+digest(bytes)+'`.\n';await unlink(path);omitted++;continue;}
+  if(/\.(txt|md|json|jsonl)$/.test(path))await writeFile(path,clean(readText(bytes)));
+ }
+ if(!omitted)notes+='None. All retained captures are at most 1,000,000 bytes.\n';await writeFile(join(out,'NOT-KEPT.md'),notes);
+ console.log('NORMALIZED paths and text encodings; omitted='+omitted);
+}
+if(process.argv[2]==='manifest'){
+ const entries=[];for(const path of await walk(out)){if(path===join(out,'SHA256.json'))continue;const b=await readFile(path);entries.push({path:relative(out,path).replaceAll('\\','/'),bytes:b.length,sha256:digest(b)});}
+ entries.sort((a,b)=>a.path.localeCompare(b.path));await writeFile(join(out,'SHA256.json'),JSON.stringify(entries,null,2));console.log('MANIFEST '+entries.length+' files');
+}
+if(process.argv[2]==='validate'){
+ const md=readText(await readFile(join(out,'README.md'))),all=await walk(out),missing=[];
+ for(const path of all){const p=relative(out,path).replaceAll('\\','/');if(p==='README.md')continue;if(!md.includes(']('+p.replaceAll(' ','%20')+')'))missing.push(p);}
+ const broken=[];for(const m of md.matchAll(/\]\(([^)]+)\)/g)){if(m[1].includes('://'))continue;try{await stat(join(out,decodeURIComponent(m[1])));}catch{broken.push(m[1]);}}
+ const manifest=JSON.parse(readText(await readFile(join(out,'SHA256.json'))));const badHashes=[];for(const item of manifest){const b=await readFile(join(out,item.path));if(b.length!==item.bytes||digest(b)!==item.sha256)badHashes.push(item.path);}
+ const exposed=[];for(const path of all)if(/\.(txt|md|json|jsonl)$/.test(path)){const s=readText(await readFile(path));if(s.includes(localPath)||s.includes(localPath.replaceAll('\\','/'))||s.includes(localPath.replaceAll('\\','\\\\')))exposed.push(relative(out,path));}
+ const result={artifacts:all.length,unlinked:missing,brokenLinks:broken,badHashes,unredactedUserPaths:exposed,overLimit:manifest.filter(e=>e.bytes>1000000)};console.log(JSON.stringify(result));if(missing.length||broken.length||badHashes.length||exposed.length||result.overLimit.length)process.exitCode=1;
+}

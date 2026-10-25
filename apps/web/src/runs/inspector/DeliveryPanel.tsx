@@ -1,13 +1,18 @@
-import type { RunRecord } from '@graphgoblin/contracts';
+import { TERMINAL_RUN_STATUSES, type RunRecord } from '@graphgoblin/contracts';
 import { Card } from '../../components/ui/index.js';
 import { formatDateTime } from '../../lib/utils.js';
 
 export function DeliveryPanel({ run }: { run: RunRecord }) {
-  if (!run.deliveries?.length) return null;
+  if (!run.deliveries?.length && !TERMINAL_RUN_STATUSES.includes(run.status)) return null;
   return (
-    <Card title="Webhook delivery">
+    <Card title={run.deliveries?.length ? 'Webhook delivery' : 'Finalization'}>
+      <p role="status">
+        {run.finalizedAt && !run.deliveries?.some((delivery) => delivery.status === 'pending')
+          ? 'Fully finalized.'
+          : 'Execution ended; finalization pending.'}
+      </p>
       <p className="text-sm text-muted">Execution: {run.status}. Delivery is tracked separately.</p>
-      {run.deliveries.map((delivery) => (
+      {run.deliveries?.map((delivery) => (
         <div key={delivery.id} className="grid gap-2">
           <p>{delivery.channel.url}</p>
           <p>

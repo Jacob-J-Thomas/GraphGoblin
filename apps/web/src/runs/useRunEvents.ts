@@ -178,6 +178,8 @@ export function useRunEvents(
           if (!current()) return;
           flush();
           setStatus('finished');
+          // The finalization marker can follow the last delivery event's invalidation.
+          void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
           followAttempts();
         },
         (err: unknown) => {

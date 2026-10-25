@@ -4006,6 +4006,8 @@ export interface components {
             startedAt?: string | undefined;
             /** Format: date-time */
             finishedAt?: string | undefined;
+            /** Format: date-time */
+            finalizedAt?: string | undefined;
             lastEventSeq: number;
         };
         RunEventInput: {
@@ -6120,6 +6122,8 @@ export interface components {
             startedAt?: string | undefined;
             /** Format: date-time */
             finishedAt?: string | undefined;
+            /** Format: date-time */
+            finalizedAt?: string | undefined;
             lastEventSeq: number;
         };
         RunEvent: {

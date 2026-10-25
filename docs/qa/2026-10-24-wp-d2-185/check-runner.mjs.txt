@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import { spawn } from 'node:child_process';
+const root = process.cwd(), dir = root + '/docs/qa/2026-10-24-wp-d2-185';
+const jobs = [
+ ['typecheck-reviewed','pnpm.cmd typecheck'],
+ ['lint-reviewed','pnpm.cmd lint'],
+ ['format-reviewed','pnpm.cmd format:check'],
+ ['fixtures-reviewed','pnpm.cmd --filter @graphgoblin/api exec vitest run src/sse-completion.test.ts src/adversarial.test.ts -t "authoritative SSE completion|16: 1000 persisted" --maxWorkers=2'],
+];
+for (const [name,command] of jobs) {
+ const fd = fs.openSync(dir+'/'+name+'.log.txt','w');
+ console.log('START '+command);
+ const child = spawn(process.env.ComSpec || 'cmd.exe',['/d','/s','/c',command],{cwd:root,windowsHide:true,env:process.env,stdio:['ignore',fd,fd]});
+ const code = await new Promise((ok,no)=>{child.on('error',no);child.on('exit',ok);});
+ fs.closeSync(fd); fs.appendFileSync(dir+'/command-results.jsonl',JSON.stringify({command,code,log:name+'.log.txt'})+'\n');
+ console.log('END '+name+' '+code);
+}
