@@ -6,6 +6,9 @@ import { join, resolve } from 'node:path';
 import { test, expect } from '@playwright/test';
 
 const root = resolve('../..');
+// Each case drives its own gateway through a grace period and a restart; the same budget applies
+// under `shutdown.config.ts` and inside the functional browser gate.
+test.describe.configure({ timeout: 120_000 });
 
 async function gateway(
   options: {
