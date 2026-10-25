@@ -1,0 +1,20 @@
+{
+  "issue": "QA allocation regex matched only a suffix and retained the relative import prefix",
+  "old": "suffix match",
+  "corrected": "whole import match",
+  "checks": [
+    {
+      "input": "./testing/api-subprocess.js",
+      "oldResult": ".%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f4-265\\docs\\qa\\2026-10-24-wp-f4-265-qa\\round-2\\api-allocation.fixture.mjs",
+      "newResult": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f4-265\\docs\\qa\\2026-10-24-wp-f4-265-qa\\round-2\\api-allocation.fixture.mjs",
+      "expected": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f4-265\\docs\\qa\\2026-10-24-wp-f4-265-qa\\round-2\\api-allocation.fixture.mjs"
+    },
+    {
+      "input": "../testing/api-subprocess.js",
+      "oldResult": "..%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f4-265\\docs\\qa\\2026-10-24-wp-f4-265-qa\\round-2\\api-allocation.fixture.mjs",
+      "newResult": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f4-265\\docs\\qa\\2026-10-24-wp-f4-265-qa\\round-2\\api-allocation.fixture.mjs",
+      "expected": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f4-265\\docs\\qa\\2026-10-24-wp-f4-265-qa\\round-2\\api-allocation.fixture.mjs"
+    }
+  ],
+  "runtimeConfigUnchangedUntilCurrentPipelineEnds": true
+}

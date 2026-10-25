@@ -630,10 +630,18 @@ describe('settings, secrets, api keys, catalog, events', () => {
   });
 
   it('publishes and lists same-millisecond inbound events in reverse creation order', async () => {
+    const firstDefinition = minimalLoop();
+    firstDefinition.name = 'First Event ordering';
+    firstDefinition.nodes[0]!.config = { type: 'event', eventType: 'issue-ready' };
+    const firstLoopId = await t.publishLoop(firstDefinition);
+    const secondDefinition = minimalLoop();
+    secondDefinition.name = 'Second Event ordering';
+    secondDefinition.nodes[0]!.config = { type: 'event', eventType: 'second' };
+    const secondLoopId = await t.publishLoop(secondDefinition);
     const published = await t.app.inject({
       method: 'POST',
       url: '/events',
-      payload: { type: 'issue-ready', payload: { n: 1 }, dedupeKey: 'k' },
+      payload: { loopId: firstLoopId, type: 'issue-ready', payload: { n: 1 }, dedupeKey: 'k' },
     });
     expect(published.statusCode).toBe(202);
     expect(published.json()).toMatchObject({
@@ -645,7 +653,7 @@ describe('settings, secrets, api keys, catalog, events', () => {
     const second = await t.app.inject({
       method: 'POST',
       url: '/events',
-      payload: { type: 'second' },
+      payload: { loopId: secondLoopId, type: 'second' },
     });
     expect(second.json<{ receivedAt: string }>().receivedAt).toBe(
       published.json<{ receivedAt: string }>().receivedAt,

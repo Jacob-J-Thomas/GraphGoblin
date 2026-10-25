@@ -252,6 +252,30 @@ export class SqliteEventStore implements EventStorePort {
     return row ? toEvent(row) : undefined;
   }
 
+  /** Fresh-session choices (#265), the newest `limit` oldest first; one indexed type scan. */
+  async freshSessionChoices(runId: string, limit: number): Promise<RunEvent[]> {
+    const rows = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          eq(runEvents.type, 'run.resumed'),
+          sql`case when json_valid(${runEvents.payload}) then json_type(${runEvents.payload}, '$.freshSession') is not null else 1 end`,
+        ),
+      )
+      .orderBy(desc(runEvents.seq))
+      .limit(limit);
+    return rows.reverse().map(toEvent);
+  }
+
   async latest(
     runId: string,
     type: RunEvent['type'],

@@ -1,0 +1,29 @@
+pnpm.cmd : $ playwright test events-refresh.spec.ts history.spec.ts github-triggers.spec.ts webhook-receiver.spec.ts 
+--retries=0 --workers=1 --output=../../docs/qa/wp-d4-343/round-5/events-test-results
+At line:10 char:1
++ & pnpm.cmd @PnpmArguments *> (Join-Path $recordRoot "$Name.log.txt")
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ playwright te...ts-test-results:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Running 12 tests using 1 worker
+
+(node:11748) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11748) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › e2e\events-refresh.spec.ts:16:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) (12.2s)
+  ok  2 [chromium] › e2e\events-refresh.spec.ts:68:1 › Events keeps an offline Refresh snapshot, recovers deliberately and clears filters with the keyboard (#240) (21.6s)
+  ok  3 [chromium] › e2e\events-refresh.spec.ts:162:1 › Events drops an obsolete Refresh after clearing the filter, Back, a newer Refresh and paging (#240) (12.3s)
+  ok  4 [chromium] › e2e\events-refresh.spec.ts:255:1 › Events updates the hundredth pending receipt after a head arrival without Refresh (#240) (9.5s)
+  ok  5 [chromium] › e2e\github-triggers.spec.ts:76:1 › body-signed GitHub preset saves, admits a matching hook, and deduplicates a reused delivery key (4.2s)
+  ok  6 [chromium] › e2e\github-triggers.spec.ts:218:1 › GitHub issue poll preset keeps bounded item settings editable and reloadable without running it (3.1s)
+  ok  7 [chromium] › e2e\github-triggers.spec.ts:272:1 › Events exposes safe labels for all five webhook delivery dispositions (911ms)
+  ok  8 [chromium] › e2e\history.spec.ts:4:1 › Runs appends a second page and preserves loop, status and parent filters (8.1s)
+  ok  9 [chromium] › e2e\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact (7.9s)
+  ok 10 [chromium] › e2e\history.spec.ts:80:1 › Loops shows older history beyond 500 unrelated runs and a genuine never-run control (27.8s)
+  ok 11 [chromium] › e2e\thread-history.spec.ts:6:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots (36.5s)
+  ok 12 [chromium] › e2e\webhook-receiver.spec.ts:4:1 › the published receiver address accepts a JSON delivery and creates a run (1.4s)
+
+  12 passed (2.6m)

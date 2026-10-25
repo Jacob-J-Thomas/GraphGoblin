@@ -1,0 +1,40 @@
+﻿import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { createTestEngine, singleNodeLoop } from './src/testing/scenario.js';
+import { FakeHarness } from './src/testing/fakes.js';
+class Gone extends FakeHarness {
+  resume(id, request, signal) {
+    this.script([{ announceSession: false, accepted: false, items: [], submission: 'session-missing', error: { code: 'HARNESS_SESSION_MISSING', message: `Session ${id} not found` } }]);
+    return super.resume(id, request, signal);
+  }
+}
+const results = [];
+for (const harness of ['codex', 'claude']) for (const mode of ['fresh', 'inherited', 'own', 'own-reset']) {
+  const e = await createTestEngine();
+  const fake = new Gone([], harness);
+  e.ports.harnesses[harness] = fake;
+  const model = harness === 'codex' ? 'gpt-6-luna' : 'claude-opus-5-5';
+  if (harness === 'claude') e.ports.modelCatalog.entries.push({ harness, model, source: 'harness', displayName: 'Claude', efforts: ['low'], defaultEffort: 'low', enabled: true });
+  const session = mode === 'fresh' ? { policy: 'fresh' } : mode === 'inherited' ? { policy: 'resume-previous' } : { policy: 'resume-own', ...(mode === 'own-reset' ? { resetAfterVisits: 1 } : {}) };
+  const config = { harness, model, effort: 'low', session, prompt: { template: 'Authored selected task' }, harnessOptions: { sandbox: 'read-only', approval: 'never' } };
+  const def = singleNodeLoop(`baseline ${harness} ${mode}`, { id: 'worker', kind: 'inference', label: 'Worker', config });
+  if (mode === 'inherited') {
+    def.nodes.push({ id: 'upstream', kind: 'inference', label: 'Upstream', config: { ...config, session: { policy: 'fresh' }, prompt: { template: 'Upstream task' } } });
+    def.edges[0] = { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'upstream' } };
+    def.edges.push({ id: 'upstream-worker', from: { node: 'upstream', port: 'out' }, to: { node: 'worker' } });
+  } else {
+    def.nodes.push({ id: 'again', kind: 'decision', label: 'Again', config: { kind: 'expression', jsonata: '"repeat"', maxPasses: 2, routes: [{ id: 'repeat', label: 'Repeat', repeat: true }, { id: 'finish', label: 'Finish' }] } });
+    def.edges = def.edges.filter((edge) => edge.from.node !== 'worker');
+    def.edges.push({ id: 'gate', from: { node: 'worker', port: 'out' }, to: { node: 'again' } }, { id: 'repeat', from: { node: 'again', port: 'repeat' }, to: { node: 'worker' } }, { id: 'limit', from: { node: 'again', port: 'limit-reached' }, to: { node: 'done' } }, { id: 'finish', from: { node: 'again', port: 'finish' }, to: { node: 'done' } });
+  }
+  const version = e.publish(def);
+  const run = await e.runToIdle(version.loopId);
+  let resumeError;
+  try { await e.manager.resume(run.id); resumeError = 'unexpectedly accepted'; }
+  catch (error) { resumeError = error.code; }
+  results.push({ harness, mode, status: run.status, failureCode: run.failure?.code ?? null, message: run.failure?.message ?? null, resumable: run.failure?.resumable ?? null, resumeError, starts: fake.started.length, resumes: fake.resumed.length, announcements: e.events(run.id).filter((event) => event.type === 'harness.session').map(({ nodeId, sessionId, mode }) => ({ nodeId, sessionId, mode })) });
+  e.manager.stop();
+}
+const output = resolve(process.env.WP_265_BASELINE_OUTPUT);
+await writeFile(output, JSON.stringify(results));
+console.log(JSON.stringify(results));

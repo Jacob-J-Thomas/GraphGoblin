@@ -172,6 +172,31 @@ it('reads the latest cancellation and the request that led to it, whatever histo
       actor: { kind: 'api-key', id: 'second' },
     });
     expect(explained.cancelled!.seq).toBe(explained.cancelRequested!.seq + 601);
+    // Fresh-session choices (#265) are whole-run evidence too: the latest 20, oldest first.
+    const choice = (failureSeq: number) => ({
+      type: 'run.resumed' as const,
+      actor: { kind: 'user' as const, id: 'local' },
+      freshSession: {
+        visitId: `${run.id}:work:1`,
+        harness: 'codex' as const,
+        origin: 'resume-previous' as const,
+        model: 'gpt-6-luna',
+        effort: 'low' as const,
+        nodeId: 'work',
+        failureSeq,
+        priorContextCarried: false as const,
+      },
+    });
+    await t.container.repos.events.append(
+      run.id,
+      Array.from({ length: 22 }, (_, i) => choice(i + 1)),
+    );
+    const choices = (await t.app.inject({ url: `/runs/${run.id}/observation` })).json<{
+      freshSessionChoices: Extract<RunEvent, { type: 'run.resumed' }>[];
+    }>().freshSessionChoices;
+    expect(choices.map((event) => event.freshSession?.failureSeq)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 3),
+    );
   } finally {
     await t.close();
   }

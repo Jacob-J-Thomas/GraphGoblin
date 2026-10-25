@@ -1,0 +1,17 @@
+import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {spawn,execFileSync} from 'node:child_process';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa/round-4');const results=[];const clean=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+while(true){try{await readFile(join(out,'gates-finished.json'));break}catch{await new Promise(r=>setTimeout(r,1000))}}
+for(const pkg of ['domain','engine','api-client','web','infrastructure','api']){
+ const log=await readFile(join(out,'coverage-'+pkg+'.log.txt'),'utf8').catch(()=>''), directory=(['api','web'].includes(pkg)?'apps/':'packages/')+pkg;
+ const files=[...new Set([...log.matchAll(/FAIL\s+(src\/[^\s>]+\.test\.tsx?)/g)].map(m=>m[1]))];
+ for(const match of log.matchAll(/test files [^\r\n]*?\/(src\/[^\s,]+\.test\.tsx?)/g)){if(!files.includes(match[1]))files.push(match[1]);}
+ for(const file of files){
+  const full=directory+'/'+file;const diff=execFileSync('git',['diff','bbf64e863ec24590a4f0e3cfe9fd6c563205e759','HEAD','--',full],{cwd:root,encoding:'utf8',windowsHide:true});if(diff){results.push({name:'not-rerun-'+pkg+'-'+file.replaceAll('/','-'),file:full,reason:'File is changed by patch; root must assess original failure',code:null});continue;}
+  if(pkg==='infrastructure'&&['src/adversarial.test.ts','src/claude/process.test.ts','src/claude/readiness.test.ts','src/process/scripts.test.ts'].includes(file)){
+   results.push({name:'not-rerun-D-015-'+file.replaceAll('/','-'),file:full,unchanged:true,code:null,reason:'Not rerun: known sandbox native process-tree termination limit D-015. Original failures are EBUSY, surviving descendants or unconfirmed stopping; a rerun would create more denied-stop children.'});await writeFile(join(out,'isolated-results.json'),JSON.stringify(results,null,2));continue;
+  }
+  const name='isolated-'+pkg+'-'+file.replaceAll('/','-');let command='pnpm.cmd --filter @graphgoblin/'+pkg+' exec vitest run '+file+' --maxWorkers=1';console.log('START '+name);const began=Date.now();let output='';const p=spawn('cmd.exe',['/d','/c',command],{cwd:root,env:process.env,windowsHide:true});p.stdout.on('data',d=>output+=d);p.stderr.on('data',d=>output+=d);const code=await new Promise(r=>{p.once('exit',r);p.once('error',e=>{output+=e.stack;r(-1)})});await writeFile(join(out,name+'.log.txt'),clean(output));const result={name,file:full,unchanged:true,command,code,ms:Date.now()-began,reason:'Exactly one isolated single-file rerun after all own broad coverage jobs finished; no coverage instrumentation on this diagnostic rerun',lock:output.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')};results.push(result);await writeFile(join(out,'isolated-results.json'),JSON.stringify(results,null,2));console.log('DONE '+name+' '+code);
+  if(result.lock){command='..\\..\\node_modules\\.bin\\vitest.cmd run '+file+' --maxWorkers=1';let text='';const f=spawn('cmd.exe',['/d','/c',command],{cwd:join(root,directory),env:process.env,windowsHide:true});f.stdout.on('data',d=>text+=d);f.stderr.on('data',d=>text+=d);const fallbackCode=await new Promise(r=>f.once('exit',r));await writeFile(join(out,name+'-fallback.log.txt'),clean(text));results.push({...result,name:name+'-fallback',command,code:fallbackCode});await writeFile(join(out,'isolated-results.json'),JSON.stringify(results,null,2));}
+ }
+}
+await writeFile(join(out,'isolated-finished.json'),JSON.stringify({complete:true,results:results.length},null,2));console.log('ISOLATED_DONE');

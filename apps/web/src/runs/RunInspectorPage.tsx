@@ -11,6 +11,7 @@ import { Alert, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
+import { SessionRecoveryControls } from './inspector/SessionRecoveryControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
@@ -87,17 +88,24 @@ export function RunInspectorPage() {
     queryKey: ['run-observation', runId],
     queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
   });
-  const evidence = Object.values(observation.data ?? {}).filter(
-    (event): event is RunEvent => event !== undefined,
-  );
+  const present = (events: (RunEvent | undefined)[]) =>
+    events.filter((event): event is RunEvent => event !== undefined);
+  const evidence = present([
+    observation.data?.lifecycle,
+    observation.data?.exit,
+    observation.data?.gate,
+    observation.data?.finished,
+  ]);
   const latestExit = observation.data?.exit;
   const finished = observation.data?.finished;
-  // Whole-run cancellation evidence, whatever window the Timeline is browsing.
+  // Whole-run cancellation and recovery evidence, whatever window the Timeline is browsing.
   const cancellation = observation.data
-    ? [observation.data.cancelRequested, observation.data.cancelled].filter(
-        (event): event is RunEvent => event !== undefined,
-      )
+    ? present([observation.data.cancelRequested, observation.data.cancelled])
     : undefined;
+  const recovery = present([
+    ...(observation.data?.freshSessionChoices ?? []),
+    observation.data?.lifecycle?.type === 'run.failed' ? observation.data.lifecycle : undefined,
+  ]);
   const resolveSeq = selectedSeq ?? (selectedEvent?.type === 'node.finished' ? seq : undefined);
   const selectedThread = useQuery({
     queryKey: ['run-thread-at', runId, resolveSeq],
@@ -178,6 +186,7 @@ export function RunInspectorPage() {
             {observation.error ? (
               <Alert>Run evidence could not be read: {observation.error.message}</Alert>
             ) : null}
+            <SessionRecoveryControls run={run} events={recovery} />
             {latestExit ? (
               <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
                 <p>{describeEvent(latestExit, definition)}</p>

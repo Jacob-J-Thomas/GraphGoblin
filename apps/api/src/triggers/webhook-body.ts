@@ -1,7 +1,7 @@
+import { isJsonValue } from '@graphgoblin/domain';
 import { createHash } from 'node:crypto';
 import {
   EventNameSchema,
-  JsonValueSchema,
   type WebhookAuthentication,
   type WebhookBody,
   type WebhookEventType,
@@ -99,11 +99,10 @@ export function verifyWebhookBody(
   } catch {
     return fail(400, 'BODY_INVALID', 'the body is not valid UTF-8 or JSON');
   }
-  const parsed = JsonValueSchema.safeParse(payload);
-  if (!parsed.success) return fail(400, 'BODY_INVALID', 'the body is not valid JSON');
+  if (!isJsonValue(payload)) return fail(400, 'BODY_INVALID', 'the body is not valid JSON');
   return {
     ok: true,
-    payload: parsed.data,
+    payload,
     contentHash: createHash('sha256').update(rawBody).digest('hex'),
   };
 }

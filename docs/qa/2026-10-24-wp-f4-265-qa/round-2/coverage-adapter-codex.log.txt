@@ -1,0 +1,54 @@
+$ vitest run --coverage --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-265/packages/adapter-codex
+      Coverage enabled with v8
+
+ ❯ src/probe-directory.test.ts (4 tests | 2 failed) 10246ms
+   ❯ Codex readiness probe directory (4)
+     × runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 5051ms
+     × preserves 1 existing collision directories and bounds retries 5007ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:33:3
+     31|
+     32| describe('Codex readiness probe directory', () => {
+     33|   it('runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and…
+       |   ^
+     34|     const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-codex-long-'…
+     35|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.test.ts:59:18
+     57|   });
+     58|
+     59|   it.each([1, 4])(
+       |                  ^
+     60|     'preserves %i existing collision directories and bounds retries',
+     61|     async (collisions) => {
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 494 passed | 5 skipped (501)
+   Start at  18:11:39
+   Duration  283.43s (tests 71%, import 15%, transform 13%, worker 1%)
+
+    Isolate  10 workers spawned · ~2.33s startup each (spawn + environment, per file)
+             at least ~20.94s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%
+  │ \source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f4-
+  │ 265\packages\adapter-codex
+

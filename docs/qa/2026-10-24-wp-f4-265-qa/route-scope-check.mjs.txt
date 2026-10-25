@@ -1,0 +1,14 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+const root=process.cwd(),out=resolve('docs/qa/2026-10-24-wp-f4-265-qa');
+for(;;){try{await readFile(join(out,'isolated-result.json'));break}catch{}await delay(500)}
+const cmd='pnpm.cmd --filter @graphgoblin/api exec vitest run src/adversarial.test.ts -t "ADV-008"';
+let log='';const start=Date.now();console.log('START '+cmd);
+const p=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',cmd],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+p.stdout.on('data',x=>log+=x);p.stderr.on('data',x=>log+=x);
+const [exitCode,signal]=await once(p,'close');
+await writeFile(join(out,'route-scope-isolated.log.txt'),log.replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%'));
+await writeFile(join(out,'route-scope-result.json'),JSON.stringify({cmd,exitCode,signal,ms:Date.now()-start,qualification:'One targeted changed test, once, after coverage and the unchanged Codex file rerun finished; original API coverage failure retained.'},null,2));console.log('END route scope exit='+exitCode);

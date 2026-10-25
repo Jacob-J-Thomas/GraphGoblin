@@ -1,0 +1,9 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$qaOut = Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-d4-343-qa'
+$qaResults = @()
+foreach ($qaGate in @('typecheck','lint','format:check','check:layers','check:deps','check:docs','check:migrations')) {
+  $qaName = $qaGate.Replace(':','-')
+  & pnpm.cmd $qaGate *> (Join-Path $qaOut "$qaName.log.txt")
+  $qaResults += [pscustomobject]@{ command="pnpm.cmd $qaGate"; exit=$LASTEXITCODE }
+  $qaResults | ConvertTo-Json | Set-Content (Join-Path $qaOut 'gates.json')
+}

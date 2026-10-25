@@ -192,3 +192,64 @@ it('keeps the recorded cancellation actor while older history is browsed', async
   expect(screen.getByText(/Cancelled by api-key key-1/)).toBeInTheDocument();
   view.unmount();
 });
+
+it('keeps missing-session recovery and its recorded choices while older history is browsed', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const loop = api.addLoop(minimalLoop(), { published: true });
+  const run = api.addRun({
+    loopId: loop.id,
+    versionId: loop.currentVersionId!,
+    status: 'failed',
+    currentNodeId: 'worker',
+  });
+  const missingSession = {
+    visitId: run.id + ':2',
+    harness: 'codex' as const,
+    sessionId: 'old-handle',
+    origin: 'resume-own' as const,
+    model: 'gpt-6-luna',
+    effort: 'low' as const,
+  };
+  run.failure = {
+    code: 'HARNESS_SESSION_MISSING',
+    message: 'The provider session old-handle from resume-own is missing.',
+    nodeId: 'worker',
+    resumable: false,
+    missingSession,
+  };
+  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
+  api.pushEvent(
+    run.id,
+    event(run.id, 2, 'run.resumed', {
+      actor: { kind: 'user', id: 'earlier' },
+      freshSession: {
+        ...missingSession,
+        nodeId: 'worker',
+        failureSeq: 1,
+        priorContextCarried: false,
+      },
+    }),
+  );
+  for (let seq = 3; seq <= 720; seq++)
+    api.pushEvent(run.id, event(run.id, seq, 'run.started', { attempt: 1 }));
+  api.pushEvent(run.id, event(run.id, 721, 'run.failed', { failure: run.failure }));
+  const view = renderApp(`/runs/${run.id}`, api);
+  const log = () => useRunEventStore.getState().runs[run.id]!;
+  await waitFor(() => expect(log()?.lastSeq).toBe(721));
+  const expectRecovery = async () => {
+    expect(await screen.findByText(/user earlier chose a fresh session/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Start fresh session for worker' })).toBeEnabled(),
+    );
+  };
+  // The choice at event 2 is already outside the retained live window.
+  expect(log().events.some((e) => e.seq === 2)).toBe(false);
+  await expectRecovery();
+  await user.type(screen.getByRole('spinbutton', { name: 'Event sequence' }), '50');
+  await user.click(screen.getByRole('button', { name: 'Go to event' }));
+  await waitFor(() => expect(log().events.some((e) => e.seq === 50)).toBe(true));
+  expect(log().events.some((e) => e.seq === 721)).toBe(false);
+  await expectRecovery();
+  view.unmount();
+});

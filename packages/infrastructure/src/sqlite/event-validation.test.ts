@@ -181,6 +181,27 @@ it('reads bounded history windows in both directions and latest evidence without
     olderThan: 6,
     newerThan: Number.MAX_SAFE_INTEGER,
   });
+  const choice = {
+    type: 'run.resumed' as const,
+    actor: { kind: 'user' as const, id: 'local' },
+    freshSession: {
+      visitId: `${runId}:work:1`,
+      harness: 'claude' as const,
+      origin: 'resume-own' as const,
+      model: 'sonnet',
+      effort: 'low' as const,
+      nodeId: 'work',
+      failureSeq: 2,
+      priorContextCarried: false as const,
+    },
+  };
+  const resumes = await store.append(runId, [
+    choice,
+    { type: 'run.resumed', actor: { kind: 'user', id: 'local' } },
+    choice,
+  ]);
+  expect(await store.freshSessionChoices(runId, 5)).toEqual([resumes[0], resumes[2]]);
+  expect(await store.freshSessionChoices(runId, 1)).toEqual([resumes[2]]);
   expect(await store.latest(runId, 'run.cancelled')).toEqual(all[4]);
   expect(await store.latest(runId, 'run.cancelled', 5)).toEqual(all[2]);
   expect(await store.latest(runId, 'run.failed')).toBeUndefined();

@@ -1,0 +1,376 @@
+{
+  "checks": 6,
+  "log": [
+    {
+      "method": "PUT",
+      "path": "/secrets/qa-hook-secret",
+      "status": 200,
+      "allow": null,
+      "body": {
+        "name": "qa-hook-secret",
+        "createdAt": "2026-10-24T15:27:01.738Z",
+        "updatedAt": "2026-10-24T15:27:01.738Z"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "allow": null,
+      "body": {
+        "loop": {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JXQ",
+          "ownerId": "local",
+          "name": "Protected webhook QA final",
+          "draftVersionId": "01M5Q8BG3A9SMMQ1PXHS7B8JXR",
+          "createdAt": "2026-10-24T15:27:01.738Z",
+          "updatedAt": "2026-10-24T15:27:01.738Z"
+        },
+        "draft": {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JXR",
+          "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JXQ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Protected webhook QA final",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "entry",
+                "label": "Entry",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "hmac-sha256",
+                    "message": "body",
+                    "header": "x-hub-signature-256",
+                    "secretRef": "qa-hook-secret"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "trigger.payload",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "entry",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T15:27:01.738Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M5Q8BG3A9SMMQ1PXHS7B8JXQ/publish",
+      "status": 200,
+      "allow": null,
+      "body": {
+        "version": {
+          "id": "01M5Q8BG3A9SMMQ1PXHS7B8JXR",
+          "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JXQ",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Protected webhook QA final",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "entry",
+                "label": "Entry",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "webhook",
+                  "authentication": {
+                    "type": "hmac-sha256",
+                    "message": "body",
+                    "header": "x-hub-signature-256",
+                    "secretRef": "qa-hook-secret"
+                  },
+                  "body": {
+                    "type": "json"
+                  },
+                  "eventType": {
+                    "source": "constant",
+                    "value": "webhook"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "trigger.payload",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e",
+                "from": {
+                  "node": "entry",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T15:27:01.738Z",
+          "publishedAt": "2026-10-24T15:27:01.738Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M5Q8BG3A9SMMQ1PXHS7B8JXQ/triggers",
+      "status": 200,
+      "allow": null,
+      "body": {
+        "schedules": [],
+        "webhooks": [
+          {
+            "id": "01M5Q8BG3A9SMMQ1PXHS7B8JXS",
+            "ownerId": "local",
+            "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JXQ",
+            "versionId": "01M5Q8BG3A9SMMQ1PXHS7B8JXR",
+            "triggerNodeId": "entry",
+            "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+            "authentication": {
+              "type": "hmac-sha256",
+              "message": "body",
+              "header": "x-hub-signature-256",
+              "secretRef": "qa-hook-secret"
+            },
+            "configurationAvailable": true,
+            "body": {
+              "type": "json"
+            },
+            "eventType": {
+              "source": "constant",
+              "value": "webhook"
+            },
+            "enabled": true,
+            "createdAt": "2026-10-24T15:27:01.738Z"
+          }
+        ],
+        "polls": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+      "status": 202,
+      "allow": null,
+      "body": {
+        "accepted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+      "status": 401,
+      "allow": null,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/signature-invalid",
+        "title": "signature invalid",
+        "status": 401,
+        "code": "SIGNATURE_INVALID",
+        "detail": "the signature does not match"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+      "status": 422,
+      "allow": null,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/webhook-payload-too-deep",
+        "title": "webhook payload too deep",
+        "status": 422,
+        "code": "WEBHOOK_PAYLOAD_TOO_DEEP",
+        "detail": "payload exceeds the stored JSON nesting bound (994)"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+      "status": 400,
+      "allow": null,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/body-invalid",
+        "title": "body invalid",
+        "status": 400,
+        "code": "BODY_INVALID",
+        "detail": "the body is not valid UTF-8 or JSON"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+      "status": 404,
+      "allow": null,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/not-found",
+        "title": "not found",
+        "status": 404,
+        "code": "NOT_FOUND",
+        "detail": "GET /hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E does not exist"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/hooks/aDeDAK-sCAvWHkCipDbRTRMN3QotztuaRnDC7k4jZ3E",
+      "status": 413,
+      "allow": null,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/body-too-large",
+        "title": "body too large",
+        "status": 413,
+        "code": "BODY_TOO_LARGE",
+        "detail": "Request body is too large"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/__qa",
+      "status": 200,
+      "allow": null,
+      "body": {
+        "ok": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/runs?loopId=01M5Q8BG3A9SMMQ1PXHS7B8JXQ",
+      "status": 200,
+      "allow": null,
+      "body": {
+        "items": [
+          {
+            "id": "01M5Q8BG3A9SMMQ1PXHS7B8JXW",
+            "ownerId": "local",
+            "loopId": "01M5Q8BG3A9SMMQ1PXHS7B8JXQ",
+            "versionId": "01M5Q8BG3A9SMMQ1PXHS7B8JXR",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Protected webhook QA final",
+              "label": "Protected webhook QA final v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5Q8BG3A9SMMQ1PXHS7B8JXX",
+            "status": "succeeded",
+            "iteration": 1,
+            "outcome": "success",
+            "result": {
+              "raw": "kept"
+            },
+            "createdAt": "2026-10-24T15:27:01.738Z",
+            "startedAt": "2026-10-24T15:27:01.738Z",
+            "finishedAt": "2026-10-24T15:27:01.738Z",
+            "lastEventSeq": 9
+          }
+        ],
+        "nextCursor": null
+      }
+    }
+  ]
+}

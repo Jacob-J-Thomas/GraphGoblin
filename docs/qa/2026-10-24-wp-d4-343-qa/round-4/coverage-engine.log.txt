@@ -1,0 +1,74 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure '--coverage.reportsDirectory="%USERPROFILE%\AppData\Local\Temp\gg-qa-d4-343-4-coverage-Nqrl6L\engine"'
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-d4-343-4/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/run-manager.test.ts (27 tests | 1 failed) 9753ms
+   ❯ the per-node visit cap (maxNodeVisits) (3)
+     × lets a long but finite cycle finish when every node stays within the cap 5460ms
+ ❯ src/unlimited.test.ts (21 tests | 1 failed) 15511ms
+   ❯ execution guardrails (#243) (21)
+     × aborts overdue active work and rejects its result 3004ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/run-manager.test.ts > the per-node visit cap (maxNodeVisits) > lets a long but finite cycle finish when every node stays within the cap
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/run-manager.test.ts:781:3
+    779|   });
+    780|
+    781|   it('lets a long but finite cycle finish when every node stays within…
+       |   ^
+    782|     const engine = await createTestEngine();
+    783|     // Routes "again" while fewer than 49 decisions were made: 50 visi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/unlimited.test.ts > execution guardrails (#243) > aborts overdue active work and rejects its result
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/unlimited.test.ts:244:61
+    242|     def.settings = { runDeadlineSeconds: 1 };
+    243|     const run = await e.start(e.publish(def).loopId);
+    244|     await expect.poll(() => e.ports.harness.started.length).toBe(1);
+       |                                                             ^
+    245|     e.ports.clock.advance(2000);
+    246|     await e.ports.timers.fireDue(e.ports.clock.now());
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ src/unlimited.test.ts:244:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 43 passed (45)
+      Tests  2 failed | 1645 passed (1647)
+   Start at  13:36:58
+   Duration  880.16s (import 48%, tests 39%, transform 11%, worker 2%)
+
+     Import  160 modules were evaluated 266 times · 331.82s total, 48% of tracked time
+             ~132.23s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.18% ( 3079/3201 )
+Branches     : 91.63% ( 2442/2665 )
+Functions    : 97.45% ( 575/590 )
+Lines        : 97.63% ( 2804/2872 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d4-
+  │ 343-4\packages\engine
+

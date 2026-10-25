@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 4,
+  "name": "R2 own claude-no-reset",
+  "settings": {
+    "workingDirectory": {
+      "kind": "temp"
+    },
+    "defaults": {
+      "byHarness": {}
+    },
+    "maxNodeVisits": 10,
+    "runDeadlineSeconds": null,
+    "subloopDepthLimit": 8
+  },
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "label": "Start",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "type": "manual",
+        "exposeTo": [
+          "ui",
+          "api",
+          "mcp"
+        ]
+      }
+    },
+    {
+      "id": "worker",
+      "label": "Worker",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "inference",
+      "config": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "session": {
+          "policy": "resume-own"
+        },
+        "prompt": {
+          "template": "R2 authored task [claude-no-reset]"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      }
+    },
+    {
+      "id": "done",
+      "label": "Done",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "exit",
+      "config": {
+        "outcome": "success",
+        "returns": "none",
+        "destinations": [
+          {
+            "kind": "caller"
+          }
+        ]
+      }
+    },
+    {
+      "id": "again",
+      "label": "Again",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "decision",
+      "config": {
+        "kind": "expression",
+        "jsonata": "\"repeat\"",
+        "maxPasses": 3,
+        "routes": [
+          {
+            "id": "repeat",
+            "label": "Repeat",
+            "repeat": true
+          },
+          {
+            "id": "finish",
+            "label": "Finish"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hold",
+      "label": "Hold",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "wait",
+      "config": {
+        "mode": "input",
+        "prompt": "Pause between logical visits",
+        "exposeTo": [
+          "api"
+        ],
+        "onTimeout": "continue"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "worker",
+        "port": "in"
+      }
+    },
+    {
+      "id": "e2",
+      "from": {
+        "node": "worker",
+        "port": "out"
+      },
+      "to": {
+        "node": "again",
+        "port": "in"
+      }
+    },
+    {
+      "id": "e3",
+      "from": {
+        "node": "again",
+        "port": "repeat"
+      },
+      "to": {
+        "node": "hold",
+        "port": "in"
+      }
+    },
+    {
+      "id": "e4",
+      "from": {
+        "node": "hold",
+        "port": "out"
+      },
+      "to": {
+        "node": "worker",
+        "port": "in"
+      }
+    },
+    {
+      "id": "e5",
+      "from": {
+        "node": "again",
+        "port": "limit-reached"
+      },
+      "to": {
+        "node": "done",
+        "port": "in"
+      }
+    },
+    {
+      "id": "e6",
+      "from": {
+        "node": "again",
+        "port": "finish"
+      },
+      "to": {
+        "node": "done",
+        "port": "in"
+      }
+    }
+  ]
+}

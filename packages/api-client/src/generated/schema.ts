@@ -88,6 +88,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -98,7 +99,9 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "x-graphgoblin-shutdown-token"?: string;
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -127,6 +130,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -146,6 +150,7 @@ export interface paths {
                             unconfirmedRunIds: string[];
                             choices: ("wait" | "force")[];
                             error?: string | undefined;
+                            controlToken: string;
                         };
                     };
                 };
@@ -1108,6 +1113,7 @@ export interface paths {
                             finished?: components["schemas"]["RunEvent"] | undefined;
                             cancelled?: components["schemas"]["RunEvent"] | undefined;
                             cancelRequested?: components["schemas"]["RunEvent"] | undefined;
+                            freshSessionChoices: components["schemas"]["RunEvent"][];
                         };
                     };
                 };
@@ -1217,6 +1223,51 @@ export interface paths {
                 cookie?: never;
             };
             requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RunRecord"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{id}/recover-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly start a fresh session for the observed missing-session failure */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        nodeId: string;
+                        failureSeq: number;
+                    };
+                };
+            };
             responses: {
                 /** @description Default Response */
                 200: {
@@ -2384,6 +2435,12 @@ export interface paths {
                                     enabled: boolean;
                                     createdAt: string;
                                 } | undefined;
+                                admissionId?: string | undefined;
+                                target?: {
+                                    loopId: string;
+                                    versionId: string;
+                                    triggerNodeId: string;
+                                } | undefined;
                                 delivery?: {
                                     /** @enum {string} */
                                     state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
@@ -2399,7 +2456,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Publish an inbound event; fires matching event triggers */
+        /** Accept an external Event for one explicit published loop and event trigger */
         post: {
             parameters: {
                 query?: never;
@@ -2410,8 +2467,11 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        loopId: string;
+                        triggerNodeId?: string | undefined;
                         type: string;
                         payload?: components["schemas"]["JsonValueInput"] | undefined;
+                        /** @description Optional literal request key: 1 to 512 characters of well-formed Unicode, excluding U+0000 (NUL). Whitespace is significant. */
                         dedupeKey?: string | undefined;
                     };
                 };
@@ -2496,6 +2556,12 @@ export interface paths {
                                 dedupeKey?: string | undefined;
                                 enabled: boolean;
                                 createdAt: string;
+                            } | undefined;
+                            admissionId?: string | undefined;
+                            target?: {
+                                loopId: string;
+                                versionId: string;
+                                triggerNodeId: string;
                             } | undefined;
                             delivery?: {
                                 /** @enum {string} */
@@ -3859,6 +3925,17 @@ export interface components {
                     resumeSessionId?: string | undefined;
                 } | undefined;
             } | undefined;
+            missingSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+            } | undefined;
         };
         WaitSpecInput: {
             waitId: string;
@@ -4247,6 +4324,22 @@ export interface components {
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";
                 id: string;
             };
+            freshSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                nodeId: string;
+                failureSeq: number;
+                /** @constant */
+                priorContextCarried: false;
+                prompt?: string | undefined;
+            } | undefined;
         } | {
             runId: string;
             seq: number;
@@ -5946,6 +6039,17 @@ export interface components {
                     resumeSessionId?: string | undefined;
                 } | undefined;
             } | undefined;
+            missingSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+            } | undefined;
         };
         WaitSpec: {
             waitId: string;
@@ -6334,6 +6438,22 @@ export interface components {
                 kind: "user" | "api-key" | "mcp-client" | "system" | "run";
                 id: string;
             };
+            freshSession?: {
+                visitId: string;
+                /** @enum {string} */
+                harness: "codex" | "claude";
+                sessionId?: string | undefined;
+                /** @enum {string} */
+                origin: "resume-previous" | "resume-named" | "resume-own" | "current-visit";
+                model: string;
+                /** @enum {string} */
+                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                nodeId: string;
+                failureSeq: number;
+                /** @constant */
+                priorContextCarried: false;
+                prompt?: string | undefined;
+            } | undefined;
         } | {
             runId: string;
             seq: number;

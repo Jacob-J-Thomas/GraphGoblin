@@ -217,6 +217,8 @@ export class FakeApi {
     dedupeKey?: string;
     source: string;
     runIds: string[];
+    target?: { loopId: string; versionId: string; triggerNodeId: string };
+    admissionId?: string;
     delivery?: {
       state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
       attempts: number;
@@ -447,6 +449,15 @@ export class FakeApi {
 
   /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
   builtIn(call: RecordedCall): Response | Promise<Response> {
+    if (call.method === 'GET' && call.path === '/system/shutdown')
+      return json({
+        phase: 'running',
+        controlToken: 'fake-running',
+        graceMs: 300000,
+        activeRunIds: [],
+        unconfirmedRunIds: [],
+        choices: [],
+      });
     for (const [route, handler] of this.routes) {
       const params = match(route, call);
       if (params) return handler(call, params);
@@ -860,6 +871,9 @@ export class FakeApi {
           cancelled,
           cancelRequested:
             requested && (!resumed || requested.seq > resumed.seq) ? requested : undefined,
+          freshSessionChoices: all
+            .filter((event) => event.type === 'run.resumed' && event.freshSession !== undefined)
+            .slice(-20),
         });
       },
     ],

@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/packages/engine
+
+ ❯ src/event-admission.test.ts (11 tests | 1 failed | 10 skipped) 89ms
+   × continues the Event sweep past a persistently broken receipt metadata write 86ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/event-admission.test.ts > continues the Event sweep past a persistently broken receipt metadata write
+AssertionError: expected { …(11) } to match object { status: 'admitted' }
+(22 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "status": "admitted",
++   "status": "pending",
+  }
+
+ ❯ src/event-admission.test.ts:250:38
+    248|     await engine.manager.waitForIdle();
+    249|     expect(await store.get(claim.id)).toMatchObject({ status: 'pending…
+    250|     expect(await store.get(next.id)).toMatchObject({ status: 'admitted…
+       |                                      ^
+    251|     expect(engine.ports.runs.runs.size).toBe(1);
+    252|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  08:32:44
+   Duration  13.89s (transform 75%, import 24%, tests 1%)
+
+  Transform  transforming modules took 8.53s · 75% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\packages\engine
+

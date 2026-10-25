@@ -1,0 +1,90 @@
+# #285 [I03] Keep runs correct through waits, edits and shutdown
+
+state: OPEN | milestone: Later | labels: type:epic, area:api, area:engine, area:contracts, area:integrations, backlog, kind:intent, status:approved-held
+parent: #278 GraphGoblin roadmap — owner-approved intents, UoWs and bolts
+sub-issues: #298(OPEN), #299(OPEN), #300(OPEN)
+created: 2026-10-17T19:58:11Z updated: 2026-10-18T23:38:03Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:I03 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome
+
+A run follows the definition and logical visit it started with and remains controllable across interruption.
+
+## Priority
+
+3 in the approved next-intent order.
+
+## Units of work
+
+- #298 **U07: Preserve execution and wait identities** — Runs and all wake/input sources agree on immutable execution and logical visit identity.
+- #299 **U08: Drain or interrupt deliberately** — Normal and forced stop are observably distinct, and observation can be cancelled independently.
+- #300 **U09: Protect state and admission boundaries** — State protections and admission behavior remain true through all supported paths.
+
+## Intent acceptance
+
+Editing, waiting, waking and stopping preserve the correct execution; forced interruption is explicit and recoverable behavior is truthful.
+
+## Source issue coverage
+
+#140, #224, #225, #226, #227, #233, #247, #257, #272
+
+Conditional investigation/measurement bolts require their evidence before corrective implementation. Do not count a negative investigation as a successful fix.
+
+## Specific owner feedback
+
+- Normal shutdown stops new independent admission but lets the active parent/child work reach its result. After a configurable several-minute interactive grace, ask whether to keep waiting or force interruption. Keep waiting has no hidden kill timer. Without UI, normal stop can wait indefinitely; only explicit force-stop interrupts. Queued independent work remains recoverable.
+- Definition pinning was already settled: every in-flight execution retains its original immutable definition for its whole lifetime, including draft runs, waits, resumes and restart. Only newly started executions use later edits.
+
+## Approved review refinements
+
+Pin authored execution definitions and visit-bound waits/timers. During normal shutdown retain input/status/cancel/force access and allow required active child/continuation work to finish; explicit force records truthful interruption without blind replay.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #224 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L328), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L936), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1293), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L329), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L508)
+
+### Source #225 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L726)
+
+### Source #226 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/wait.ts#L37), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/wait.ts#L36), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1411), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/scheduler/timer-service.ts#L82)
+
+### Source #227 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/script.ts#L129), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/domain/src/patch.ts#L42), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/contracts/src/thread.ts#L1)
+
+### Source #233 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/wait.ts#L11), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/resources.ts#L125), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/mcp/src/tools.ts#L212)
+
+### Source #247 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1155), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/loops.ts#L157), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/05-execution-engine.md#L231), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/decisions/ADR-0008-runs-pin-versions.md#L11)
+
+### Source #257 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/handlers/heartbeat.ts#L55), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/04-node-catalog.md#L1)
+
+### Source #272 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/routes/runs.ts#L259), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/mcp/src/tools.ts#L405), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L725)
+
+
+## Comments (0)

@@ -1,0 +1,18 @@
+Tooling observations recorded from this QA's tool responses (excerpts, not a raw full terminal capture):
+
+Playwright CLI attempt: Node 22 first on PATH, Git Bash wrapper
+  "$HOME/.codex/skills/playwright/scripts/playwright_cli.sh" --help
+Observed excerpt:
+  npm error code EPERM
+  npm error syscall open
+  npm error path %USERPROFILE%\AppData\Local\npm-cache\_cacache\tmp\a1211884
+  Invalid response body while trying to fetch https://registry.npmjs.org/@playwright%2fcli
+Used the repository's installed @playwright/test browser driver with channel msedge instead; no browser/runtime installation or reconfiguration.
+
+Read-only process inventory attempt: Get-CimInstance Win32_Process
+Observed excerpt: Get-CimInstance : Access denied; HRESULT 0x80041003.
+No lifecycle claim relies on this inventory.
+
+Initial runner shutdown attempt, tool session 46616, write_stdin newline:
+Observed excerpt: write_stdin failed: stdin is closed for this session; rerun exec_command with tty=true to keep stdin open.
+No native process-tree termination attempted; D-015 was provided as a sandbox limit in the task brief. Initial fixture PIDs and stores are in stores-setup-attempt.json. Later fixtures added file-triggered IPC shutdown and stopped successfully.

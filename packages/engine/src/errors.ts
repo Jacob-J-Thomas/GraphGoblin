@@ -41,6 +41,7 @@ export class RunFailureError extends Error {
       details?: unknown;
       nodeId?: string;
       inference?: RunFailure['inference'];
+      missingSession?: RunFailure['missingSession'];
       /** Facts the failing visit learned, appended in the same write as `run.failed` (#398). */
       records?: EventDraft[];
     } = {},
@@ -57,6 +58,7 @@ export class RunFailureError extends Error {
       resumable: this.options.resumable ?? true,
       ...(id ? { nodeId: id } : {}),
       ...(this.options.inference ? { inference: this.options.inference } : {}),
+      ...(this.options.missingSession ? { missingSession: this.options.missingSession } : {}),
       ...(this.options.details !== undefined
         ? { details: toJsonDetails(this.options.details) }
         : {}),

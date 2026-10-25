@@ -1,0 +1,96 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { createRequire } from 'node:module';
+import { setTimeout as delay } from 'node:timers/promises';
+const out=resolve('docs/qa/2026-10-24-wp-f4-265-qa');
+const setup=JSON.parse(await readFile(join(out,'ui-setup.json'),'utf8'));
+const dataDir=setup.dataDir.replace('%USERPROFILE%',process.env.USERPROFILE);
+const {token}=JSON.parse(await readFile(join(dataDir,'browser-key.json'),'utf8'));
+const req=createRequire(resolve('apps/web/package.json'));
+const {chromium}=req('@playwright/test');
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const results=[],network=[];
+const context=await browser.newContext({viewport:{width:1440,height:900}});
+await context.addInitScript(key=>localStorage.setItem('graphgoblin-api-key',key),token);
+const api=async(path)=>{const r=await fetch('http://127.0.0.1:6043'+path,{headers:{authorization:'Bearer '+token}});return r.json()};
+const until=async(fn)=>{const t=Date.now();while(!(await fn())){assert.ok(Date.now()-t<20000,'browser/API condition');await delay(50)}};
+async function save(name,value){await writeFile(join(out,name),typeof value==='string'?value:JSON.stringify(value,null,2))}
+async function shot(page,name){await page.screenshot({path:join(out,name),fullPage:true})}
+async function check(id,fn){try{const actual=await fn();results.push({id,status:'PASS',actual});console.log('PASS '+id)}catch(error){results.push({id,status:'FAIL',actual:error.stack.replace(/data:text\/javascript;base64,[A-Za-z0-9+/=]+/g,'<browser-qa.mjs.txt>')});console.log('FAIL '+id+': '+error.message)}await save('browser-results.json',results)}
+try{
+  const page=await context.newPage();
+  page.on('response',async r=>{if(r.url().includes('recover-session'))network.push({url:r.url(),status:r.status(),body:await r.text().catch(()=>'<closed>')})});
+  await check('desktop-alert-explanation-decline-reload',async()=>{
+    await page.goto('http://127.0.0.1:6043/app/runs/'+setup.runIds[0]);
+    await page.getByRole('button',{name:'Start fresh session for worker'}).waitFor();
+    const snapshot=await page.locator('body').ariaSnapshot(); await save('desktop-before.aria.log.txt',snapshot);
+    assert.ok(snapshot.includes('HARNESS_SESSION_MISSING'));assert.ok(snapshot.includes('prior provider conversation will not be carried over'));
+    assert.ok(snapshot.includes('gpt-6-luna'));assert.ok(snapshot.includes('effort low'));assert.ok(snapshot.includes('Earlier provider actions are not undone'));
+    await shot(page,'desktop-before.png');
+    await page.reload();await page.getByRole('button',{name:'Start fresh session for worker'}).waitFor();
+    assert.equal((await api('/runs/'+setup.runIds[0])).status,'failed');
+    return {viewport:page.viewportSize(),runId:setup.runIds[0],stillFailedAfterReload:true};
+  });
+  await check('desktop-real-api-refusal',async()=>{
+    await page.route('**/recover-session',async route=>{
+      const body=route.request().postDataJSON();body.failureSeq++;
+      const response=await route.fetch({postData:JSON.stringify(body)});
+      assert.equal(response.status(),409);await route.fulfill({response});
+    },{times:1});
+    await page.getByRole('button',{name:'Start fresh session for worker'}).click();
+    await page.getByText(/The observed missing-session failure is no longer current for this inference node/).waitFor();
+    await shot(page,'desktop-refusal.png');await save('desktop-refusal.aria.log.txt',await page.locator('body').ariaSnapshot());
+    assert.equal((await api('/runs/'+setup.runIds[0])).status,'failed');
+    return {status:409,errorVisible:true,failed:true};
+  });
+  await check('desktop-keyboard-pending-choice-reload',async()=>{
+    let release;const gate=new Promise(r=>release=r);let intercepted=false;
+    await page.route('**/recover-session',async route=>{intercepted=true;await gate;await route.continue()},{times:1});
+    // Traverse the real document's tab order from its start, using only keyboard navigation.
+    await page.keyboard.press('Control+Home');await page.evaluate(()=>document.activeElement?.blur());
+    let found=false,tabs=0;
+    for(;tabs<100;tabs++){await page.keyboard.press('Tab');found=await page.getByRole('button',{name:'Start fresh session for worker'}).evaluate(el=>el===document.activeElement);if(found)break}
+    assert.ok(found,'recovery action reachable by Tab');
+    await page.keyboard.press('Enter');await until(()=>intercepted);
+    assert.ok(await page.getByRole('button',{name:'Start fresh session for worker'}).isDisabled());
+    await shot(page,'desktop-pending.png');release();
+    await until(async()=> (await api('/runs/'+setup.runIds[0])).status==='succeeded');
+    await page.reload();await page.getByText(/chose a fresh session for worker; prior provider context was not carried over/).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Start fresh session for worker'}).count(),0);
+    await shot(page,'desktop-after.png');await save('desktop-after.aria.log.txt',await page.locator('body').ariaSnapshot());
+    return {tabs,activation:'Enter',pendingDisabled:true,status:'succeeded',choiceVisibleAfterReload:true};
+  });
+  const mobile=await context.newPage();await mobile.setViewportSize({width:390,height:844});
+  const second=await context.newPage();await second.setViewportSize({width:390,height:844});
+  for(const p of [mobile,second])p.on('response',async r=>{if(r.url().includes('recover-session'))network.push({url:r.url(),status:r.status(),body:await r.text().catch(()=>'<closed>')})});
+  await check('mobile-alert-and-two-tabs',async()=>{
+    const url='http://127.0.0.1:6043/app/runs/'+setup.runIds[1];
+    await Promise.all([mobile.goto(url),second.goto(url)]);
+    for(const p of [mobile,second])await p.getByRole('button',{name:'Start fresh session for worker'}).waitFor();
+    const before=await mobile.locator('body').ariaSnapshot();await save('mobile-before.aria.log.txt',before);
+    assert.ok(before.includes('HARNESS_SESSION_MISSING'));assert.ok(before.includes('claude-opus-5-5'));
+    const bounds=await mobile.evaluate(()=>({width:window.innerWidth,scroll:document.documentElement.scrollWidth}));
+    assert.equal(bounds.scroll,bounds.width,'no horizontal document overflow');
+    await shot(mobile,'mobile-before.png');
+    let release;const gate=new Promise(r=>release=r);let intercepted=0;
+    for(const p of [mobile,second])await p.route('**/recover-session',async route=>{intercepted++;await gate;await route.continue()},{times:1});
+    await Promise.all([mobile.getByRole('button',{name:'Start fresh session for worker'}).click(),second.getByRole('button',{name:'Start fresh session for worker'}).click()]);
+    await until(()=>intercepted===2);
+    assert.ok(await mobile.getByRole('button',{name:'Start fresh session for worker'}).isDisabled());
+    assert.ok(await second.getByRole('button',{name:'Start fresh session for worker'}).isDisabled());
+    await shot(mobile,'mobile-pending.png');release();
+    await until(async()=> (await api('/runs/'+setup.runIds[1])).status==='succeeded');
+    await until(()=>network.filter(x=>x.url.includes(setup.runIds[1])).length===2);
+    assert.deepEqual(network.filter(x=>x.url.includes(setup.runIds[1])).map(x=>x.status).sort(),[200,409]);
+    for(const p of [mobile,second]){await p.reload();await p.getByText(/chose a fresh session for worker; prior provider context was not carried over/).waitFor();assert.equal(await p.getByRole('button',{name:'Start fresh session for worker'}).count(),0)}
+    const events=(await api('/runs/'+setup.runIds[1]+'/events?limit=1000')).items;
+    assert.equal(events.filter(x=>x.type==='run.resumed').length,1);assert.equal(events.filter(x=>x.type==='run.finished').length,1);
+    await shot(mobile,'mobile-after.png');await save('mobile-after.aria.log.txt',await mobile.locator('body').ariaSnapshot());
+    return {viewport:mobile.viewportSize(),bounds,concurrentStatuses:[200,409],choices:1,completions:1};
+  });
+  await save('browser-network.json',network);
+  await save('browser-environment.json',{browser:browser.version(),channel:'msedge',headless:true,port:6043,viewports:[[1440,900],[390,844]]});
+  for(const id of setup.runIds)await save('browser-run-'+id+'.json',{run:await api('/runs/'+id),events:await api('/runs/'+id+'/events?limit=1000'),sessions:await api('/runs/'+id+'/sessions'),thread:await api('/runs/'+id+'/thread')});
+}finally{await browser.close()}
+

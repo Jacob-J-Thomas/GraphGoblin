@@ -306,6 +306,7 @@ describe('model catalog source migration and repository', () => {
         (await handle.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
       ).not.toContain('template_subject');
       await handle.client.execute('DROP TABLE webhook_receipts');
+      await handle.client.execute('DROP TABLE event_receipts');
       // Reconstruct this empty pre-0008 table before replaying historical SQL.
       await handle.client.execute('DROP TABLE webhook_endpoints');
       await handle.client.execute(

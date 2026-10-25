@@ -1,0 +1,61 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-265/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792875548721,"pid":42396,"hostname":"%COMPUTERNAME%","msg":"Server listening at http://127.0.0.1:5993"}
+{"level":30,"time":1792875548721,"pid":42396,"hostname":"%COMPUTERNAME%","host":"127.0.0.1","port":5993,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-f4-265-kZeEB8","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792875548831,"pid":42396,"hostname":"%COMPUTERNAME%","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792875548840,"pid":42396,"hostname":"%COMPUTERNAME%","reqId":"req-1","res":{"statusCode":200},"responseTime":7.989799999999377,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 1 failed | 4 skipped) 157268ms
+   ❯ built API entry and startup failures (6)
+     × dispatches the API-key and preflight CLIs with their real exit codes 60126ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:69:3
+     67|   }, 60_000);
+     68|
+     69|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     70|     const f = await fixture();
+     71|     const token = await f.createKey();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 71 passed | 2 skipped (74)
+      Tests  1 failed | 1355 passed | 11 skipped (1367)
+   Start at  15:51:25
+   Duration  1318.17s (tests 82%, import 17%, transform 1%)
+
+    Isolate  74 workers spawned · ~1.06s startup each (spawn + environment, per file)
+             at least ~38.01s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.89% ( 2171/2264 )
+Branches     : 92.09% ( 1387/1506 )
+Functions    : 93.33% ( 434/465 )
+Lines        : 97.52% ( 1974/2024 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 265\apps\api
+System.Management.Automation.RemoteException

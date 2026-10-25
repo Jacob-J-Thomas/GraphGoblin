@@ -1,0 +1,138 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+import {join} from 'node:path';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+const get=async n=>JSON.parse(await readFile(join(out,n),'utf8'));
+const safe=async n=>get(n).catch(()=>null);
+const fmt=v=>JSON.stringify(v,(_k,x)=>typeof x==='bigint'?String(x):x);
+const cell=v=>String(v??'').replaceAll('|','\\|').replaceAll('\r','').replaceAll('\n',' ').replaceAll('`','\\`');
+const show=(v,n=640)=>cell(fmt(v)?.slice(0,n));
+let md=`# Independent QA round 3: WP-D4 / #343
+
+**Verdict: FAIL**, revision \`94523682d084f7a566242602762a3b04d87a8e55\`. Both round-2 findings pass their corrected-contract checks. The additional text-identity audit found **D4-343-05 (major)**: a webhook-derived lone-surrogate key is acknowledged, normalized in SQLite, fails admission, and suppresses a distinct valid replacement-character key. This is a current defect, not a demonstrated regression introduced by this patch. Static base comparison suggests it predates the patch; scope/follow-up disposition belongs with the orchestrator.
+
+## Environment and boundaries
+
+Branch \`codex-qa-wp-d4-343-3\`; base \`74e78bb212a58af15d5c1792fa599ec8a6f4bbad\`; worktree \`%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-d4-343-3\`. Exact HEAD and nonempty installed dependencies were checked before build. [Environment](environment.log.txt) and [complete requested diff](change.log.txt). No production edits, commits, index actions, branch switches, sub-agents, GitHub writes, dependency linking, or owner-instance operations.
+
+Node v22.14.0 first on PATH; PowerShell and pnpm.cmd. Build completed before API/browser work: **11 successful tasks, 1 cached, 2m48.716s**, [build log](build.log.txt). Manual QA stores use \`%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-d4-343-3-*\`; manual ports used: 5850 through 5854, 5857 and 5858. Repository suites additionally create their standard disposable fixtures. The original worktree/store and ports 4747/4748 were not used.
+
+Separate real Node processes load the built API composition root, accept HTTP, and persist file SQLite. Public dependency injection supplies FakeHarness, FakeDecider and FakeClock; automatic timers are disabled. Recovery sweeps call the public manager and advance the fake clock. SQL triggers inject actual storage faults. This establishes native process/storage/API behavior with **fake providers**, not live-provider behavior or qualification of the 15-second wall-clock timer. QA-only control routes are retained in [server.mjs.txt](server.mjs.txt). Keys are minted by built main.js --create-api-key. Copy executable .mjs.txt files into the recorded temporary script directory as .mjs and run them with Node 22 from this worktree; preserve UTF-8 when copying.
+
+Edge uses installed msedge, headless, service workers blocked, real built /app/events, disposable localStorage authentication, 1440x1000 and 390x1000. No HTTP response interception. Screenshots were visually inspected. Browser version is in [browser-results.json](browser-results.json).
+
+Binding COMMON.md/QA-COMMON.md, repository orientation, #343/#184/#286, #278 owner ledger, ADR-0048, previous QA/dispositions, and the implementation report were read as requirements/history. Only executions retained in this round establish the findings below.
+
+## Defects
+
+### D4-343-05 — major: webhook Unicode normalization loses an accepted run and consumes another key
+
+Run [webhook-unicode.mjs.txt](webhook-unicode.mjs.txt) against the disposable server after the core fixture. Publish a URL-targeted webhook loop with \`dedupeKey: "key"\`. POST JSON \`{"key":"before\\ud800after"}\`, settle admission, retry, then POST \`{"key":"before\\ufffdafter"}\`. No SQL fault applies to this loop.
+
+Expected: refuse a key that cannot survive storage before acknowledgement, or preserve distinct accepted identities and admit their runs. Actual: the first response is **202 {accepted:true}**; receipt \`01M5Q8BG3A9SMMQ1PXHS7B8JY2\` becomes **failed / WEBHOOK_INTENT_CONFLICT**, while the stored key is \`before�after\`, bytes \`6265666F7265EFBFBD6166746572\`. Retry is deduplicated. The literal replacement-character key is also deduplicated, despite being distinct input. Neither key admits a run. The two SOH/TAB controls each admit exactly one run (two runs total). A fresh-loop control proves that the literal replacement-character key normally admits one run.
+
+Evidence: [raw HTTP and SQL results](webhook-unicode-results.json), [reproduction log](webhook-unicode.log.txt), [fresh control script](webhook-unicode-control.mjs.txt), [fresh control results](webhook-unicode-control-results.json). Relevant current source: apps/api/src/triggers/trigger-service.ts, webhookKey (around line 130), and packages/engine/src/admission.ts, assertWebhookClaim. [Base/head origin comparison](webhook-origin.log.txt) shows the base helper already lacked well-formed-Unicode validation and the strict claim comparison existed. No baseline executable was run, so this report does not claim a baseline reproduction or a patch-introduced regression. No fix was made.
+
+### Earlier findings
+
+- **D4-343-01:** PASS. Empty request keys return 400 VALIDATION_FAILED naming /dedupeKey, with unchanged inbound/receipt/run counts. Space, one-character, and boundary keys keep one delivery and exact envelope values.
+- **D4-343-02:** PASS at both widths. Pending/admitted/failed/deduplicated target metadata and editor links are exercised; the focused narrow pending check uses settled current state. Initial browser scheduling failure is preserved below.
+- **D4-343-03:** PASS. Leading/embedded/trailing NUL request keys return 400; authored Event keys return 422 EVENT_KEY_INVALID; webhook-derived keys return 422 KEY_INVALID. Nothing is saved, and the keys without NUL admit successfully. [text results](text-results.json), [minimal original reproduction adapted](nul-reproduction.json).
+- **D4-343-04:** PASS. On a fresh two-receipt store the healthy receipt admits in the first sweep. The faulty receipt stays pending, attempts=1, across three sweeps with failed metadata writes. Removing metadata failure allows ordinary attempts=2; removing the run fault then admits the original receipt once. [isolated results](sweep-isolated-results.json), [shared-ledger results](sweep-reproduction.json). Corrected fresh-store boot isolation also passes.
+
+## Criteria and touched systems
+
+| Criterion/system | Coverage |
+| --- | --- |
+| #343 stable owned loop, exactly one eligible entry, no broadcast | PASS: absent/malformed/foreign/unknown/unpublished targets, wrong type/entry, ambiguous entry and missing scope refuse before writes. Explicit entries and same key across two loops/two entries remain independent. |
+| Durable delivery, frozen target/intent/identities before acknowledgement; reopen/crash | Receipt insertion fault returns 503 with zero rows; pending run insertion and admitted windows reopen with one stable run and sequence-1 event. See native tables below for exact SIGKILL outcome versus cooperative qualification. Frozen accepted version survives republish. |
+| Keyed retries/recovery; unrelated recipients independent | PASS for targeted Events: 20 simultaneous keyed requests resolve one delivery/run; changed payload returns original; unkeyed identical inputs create two runs. NUL/ill-formed keys refuse; controls/Unicode boundaries retain exact text and bytes. |
+| Independent concurrent execution/cancellation | PASS: capacity=2 admits two distinct loops while both fake turns remain active; both public cancellations succeed. Exact acknowledgement and running times retained in API results. |
+| Truthful states, repeat/dedupe, failure isolation | PASS for targeted Event ledger: pending/admitted/failed/deduplicated, eight-attempt exhaustion, safe conflict, authored-key reservation/release, deletion pins, same-ledger sweep and fresh boot isolation. |
+| URL-targeted/protected webhooks | Normal unkeyed/keyed URL targeting, exact acknowledgement, raw HMAC, auth-before-depth, malformed body, method and size refusal pass. **FAIL** for the additional malformed-Unicode identity case D4-343-05; this is not proven newly introduced. |
+| SQLite comparisons/IDs/types | Generated receipt/loop/version IDs retain ULID text. Authored node IDs/Event types reject NUL and surrogate values; unmatched REST selectors refuse before saving. Accepted TAB/CR/LF/SOH/DEL, composed/decomposed Unicode, replacement character and astral request keys retain bytes and one run; composed/decomposed keys remain distinct. The webhook exception is above. |
+| Domain payload-depth and deletion seams | Event depth994 admits and allows deletion; depth995 refuses before storage. Webhook depth994 admits, depth995/996 refuse after auth. Pending Event pins block loop deletion. |
+| Migration 0017→0018/history | PASS on current-format 0017 schema projection: 18→19 migrations, raw inbound rows and existing links preserved, old delivery untracked, old key does not suppress new targeted receipt (two runs). No damaged-history repair claim. |
+| Browser, client and adjacent shared paths | Real Edge checks below, including keyboard links, two tabs/reload and legacy metadata. Full client/domain/engine/web/infra/API coverage gates are reported separately. MCP has no Event publishing tool; no new MCP runtime behavior is claimed. |
+
+## Every retained check
+
+Named checks below map directly to the kept executable scripts and JSON records. PASS means that check's assertions passed; it is not a replacement for the criterion limitations above. Initial harness failures remain visible and are classified explicitly.
+
+`;
+
+const groups=[
+ ['Core API','api-results.json','acceptance.mjs.txt'],
+ ['Fresh text identities','text-results.json','text-identities.mjs.txt'],
+ ['Saved receipt selectors and type namespace','selector-results.json','selectors.mjs.txt'],
+ ['Corrected focused supplemental','supplemental-corrected-results.json','supplemental.mjs.txt'],
+ ['Isolated persistent metadata fault','sweep-isolated-results.json','sweep-isolated.mjs.txt'],
+ ['Shared-ledger reproduction','sweep-reproduction.json','sweep-reproduction.mjs.txt'],
+ ['Cooperative reopen and upgrade','lifecycle-results.json','lifecycle.mjs.txt'],
+ ['Single-process SIGKILL','hard-kill-results.json','hard-kill.mjs.txt'],
+ ['Edge original record','browser-results.json','browser.mjs.txt'],
+ ['Edge focused current-state check','browser-pending-current-results.json','browser-pending-current.mjs.txt'],
+ ['Initial supplemental fixture failures','initial-supplemental-results.json','initial-supplemental.mjs.txt'],
+];
+function actual(c){
+ if(c.error)return cell(c.error.split('\n').slice(0,3).join(' '));
+ const v=c.actual;if(v===undefined)return 'Assertions passed; full facts in linked JSON.';
+ if(c.id==='type-namespace-across-publish')return show({firstId:v.first.body.id,secondId:v.second.body.id,oldRetryId:v.old.body.id,types:[v.first.body.type,v.second.body.type],runCount:v.runs.length});
+ if(v.ids)return show({requests:v.ids.length,uniqueDeliveries:new Set(v.ids).size,duplicates:v.duplicates,runCount:v.item.runIds.length,deliveryId:v.item.id});
+ if(v.items&&v.retryAmbiguity)return show({recipients:v.items.length,distinctDeliveries:new Set(v.items.map(i=>i.id)).size,runCounts:v.items.map(i=>i.runIds.length),retryCode:v.retryAmbiguity.body.code});
+ if(v.characters)return show({characters:v.characters,UTF16units:v.UTF16units,accepted:v.first.status,state:v.item.delivery.state,runCount:v.item.runIds.length,refused:v.refused.status,before:v.before,after:v.after});
+ if(v.states?.bad&&v.states?.good)return show({bad:v.states.bad.delivery,good:v.states.good.delivery,hooks:v.states.hooks,recovered:v.recovered.delivery});
+ if(v.bad&&v.first&&v.retry)return show({refused:v.bad.r.status,code:v.bad.r.body.code,before:v.bad.before,after:v.bad.after,accepted:v.first.status,retrySameId:v.retry.body.id===v.first.body.id,runCount:v.retry.body.runIds.length});
+ if(v.before&&v.after&&v.ordinary){const state=rows=>rows.map(r=>({status:r.status,attempts:r.attempts}));return show({before:state(v.before),sweeps:v.after.map(state),ordinary:state(v.ordinary),recovered:v.recovered?state(v.recovered):undefined});}
+ if(v.states&&v.failed)return show({attempts:v.states.map(s=>s.attempts),failed:v.failed.delivery,retrySameId:v.retry.id===v.failed.id,fresh:v.fresh.delivery,runCount:v.fresh.runIds.length});
+ if(v.response)return show({status:v.response.status,body:v.response.body,before:v.before,after:v.after});
+ if(v.r&&v.before)return show({response:v.r,before:v.before,after:v.after??v.afterRefusal,accepted:v.rs?.map(r=>r.status),runCount:v.runs?.length});
+ if(v.phase)return show({phase:v.phase,status:v.ack.status,before:v.before,hardKill:v.hardKill,termination:v.termination,run:v.restartItem.runIds,queued:v.queued,nativeVerdict:v.nativeVerdict});
+ if(v.envelope)return show({first:v.first.status,retry:v.retry.body?.duplicate??v.retry.duplicate,runs:v.item?.runIds??v.retry.body?.runIds,envelope:v.envelope,metadata:v.metadata});
+ if(v.bothRunningAfterMs!==undefined)return show({ackTimesMs:v.ackTimesMs,bothRunningAfterMs:v.bothRunningAfterMs,running:v.running.map(r=>r.status),cancel:v.cancel.map(r=>r.status),cancelled:v.cancelled.map(r=>r.status)});
+ if(v.item&&v.text)return show({target:v.item.target,admissionId:v.item.admissionId,state:v.item.delivery,runs:v.item.runIds.length,text:v.text,opened:v.openedEditor??v.editor});
+ return show(v);
+}
+for(const [label,file,script] of groups){const r=await safe(file);md+=`### ${label}\n\n[Script](${script}) · [Full results](${file})\n\n`;if(!r){md+='NOT RUN or incomplete; see limitations/gates.\n\n';continue}
+ md+='| Case | Steps / expected | Actual | Outcome |\n| --- | --- | --- | --- |\n';
+ for(const c of r.checks??[]){let status=c.status;if(c.actual?.phase&&!c.actual.hardKill)status='PASS cooperative; abrupt kill NOT TESTABLE';md+=`| ${cell(c.id)} | Named script case; ${cell(c.expected??'assertions in linked script')} | ${actual(c)} | ${cell(status)} |\n`}
+ if(r.fatal)md+=`\nRunner failure preserved: ${cell(r.fatal.split('\n')[0])}.\n`;md+='\n';
+}
+const hard=await safe('hard-kill-results.json');md+='## Native limits and fixture reconciliation\n\n';
+md+=hard?.checks?.every(c=>c.actual?.hardKill)?'All three later single-child SIGKILL/restart checks succeeded. They establish abrupt termination of the disposable API process, not process-tree termination. D-015 remains applicable to native tree-control suites.\n\n':'Single-child abrupt termination outcomes are recorded above; denied calls remain NOT TESTABLE under D-015. Cooperative shutdown/reopen cannot establish crash behavior. Process-tree termination was never attempted manually.\n\n';
+md+=`The first acceptance launch had a quoting error in an adapted SQL string. [Initial source](initial-acceptance.mjs.txt) and [initial log](initial-acceptance.log.txt) are retained; the corrected canonical script queries the allocated run ID from the frozen intent, not a nonexistent receipt run_id column.
+
+The broad boot check incorrectly required an earlier deduplicated webhook receipt to be admitted. [Diagnostic](boot-fixture-diagnostic.json) records admitted/deduplicated receipts with no pending webhook; the corrected fresh-store test qualifies boot isolation. The first supplemental test installed its metadata fault before resetting timestamps, causing its own setup write to fail. It also used an ASCII-corrupted astral literal from a PowerShell pipeline. The initial acceptance exploratory astral label also received an ASCII-corrupted literal; Unicode conclusions use the UTF-8-loaded text-identity cases and corrected supplemental, not that label. Initial source/results remain in the table; the corrected script uses Unicode escapes and orders setup before fault injection. 512 astral characters (1024 UTF-16 units) admit; 513 refuse with 400. No product regression is inferred from those fixture failures.
+
+The original Edge run is **14 PASS / 1 FAIL**: the narrow pending-row check compared against an older API attempt count while the shared-store sweep reproduction advanced recovery. Its original screenshot/snapshot/results remain. After those sweeps finished, the focused check settled recovery and compared fresh API state: attempts=7, no run, correct target/entry/admission, keyboard link passes. This is corrected scheduling and a fresh-state check; the original run is not rewritten as all-pass.
+
+The diagnostic-only raw SQL probe in text-identities lost its process connection while testing malformed native text/JSON1 values; later checks in that initial process were not qualified. No native exit/log was retained for that process and no root cause or public-API crash claim is made. Public identity refusals and all 33 preceding text cases completed; boot isolation and Unicode boundary were independently qualified by the corrected supplemental process.
+
+Protected-webhook checks: [script](webhook-protected.mjs.txt), [six response checks and exactly one run](webhook-protected-results.json). Minimal adapted NUL reproduction: [script](nul-reproduction.mjs.txt), [results](nul-reproduction.json). Main manual listener stopped cooperatively: [runtime-stop.json](runtime-stop.json). Runtime and coverage directories remain under the declared temp prefix for orchestrator disposal; no manual directory deletion was issued.
+
+## Gates and test measurements
+
+Exact commands, working directories, exit codes, durations and lock flags are in [gates-results.json](gates-results.json), driven sequentially by [gates.mjs.txt](gates.mjs.txt). Full package coverage has no added exclusions, lowered thresholds or cache substitution. Existing project skips remain unchanged. Failures remain failed even if a single isolated diagnostic passes.
+
+| Command | Exit / result | Evidence |\n| --- | --- | --- |\n`;
+for(const g of await safe('gates-results.json')??[])md+=`| ${cell(g.command)} | ${g.code===0?'PASS':'FAIL'} (${g.code}); ${g.ms} ms${g.lock?'; pnpm store lock':''} | [log](${g.name}.log.txt) |\n`;
+for(const g of await safe('format-results.json')??[])md+=`| ${cell(g.command)} | ${g.code===0?'PASS':'FAIL'} (${g.code}); ${g.ms} ms | [log](${g.log}) |\n`;
+md+='\n| Package | Lines | Branches | Test summary |\n| --- | --- | --- | --- |\n';
+for(const p of ['domain','engine','api-client','web','infrastructure','api']){const r=await safe('coverage-'+p+'-summary.json');let summary='not completed';try{const text=(await readFile(join(out,'coverage-'+p+'.log.txt'),'utf8')).replace(/\u001b\[[0-9;]*m/g,'');summary=text.split('\n').filter(l=>/^\s*(Test Files|Tests\s)/.test(l)).map(l=>l.trim()).join('; ')}catch{}md+=`| ${p} | ${r?`${r.lines.pct}% (${r.lines.covered}/${r.lines.total})`:'unavailable'} | ${r?`${r.branches.pct}% (${r.branches.covered}/${r.branches.total})`:'unavailable'} | ${cell(summary)} |\n`}
+const diag=await safe('isolated-results.json');if(diag){md+='\nOne isolated diagnostic per selected failing untouched file, after broad suites, with both results retained:\n\n| File | Command | Result | Evidence |\n| --- | --- | --- | --- |\n';for(const d of diag)md+=`| ${cell(d.file)} | ${cell(d.command)} | ${d.code}; ${cell(d.summary)} | [log](${d.name}.log.txt) |\n`}
+md+=`\nBuild is above. Final format check is in [format-check.log.txt](format-check.log.txt); any direct-binary fallback is explicitly recorded in gate/format results. check:licenses is not run because the diff changes no dependency. No production test or docs file was edited; all new files are QA evidence under this round. No before-fix test claim is made by this independent QA run.
+
+## Not tested / observations outside scope
+
+- No live provider turns, owner acceptance, wall-clock sweep cadence, universal exactly-once external effects, arbitrary damaged historical stores, installer/platform behavior, or process-tree qualification. This is targeted QA, not full application regression or intent/UoW completion.
+- The webhook surrogate issue is newly observed on this head, with a static indication of pre-existing origin. It needs explicit orchestration disposition; no outside-scope implementation was attempted.
+- Native tree-control restrictions are D-015. The report preserves all broad/isolated gate failures; a diagnostic passing once never changes the original gate result.
+- QA-only fixture, encoding, scheduling and raw-native-probe failures are separated from product findings above. Generated build/coverage files and temporary stores are left for orchestrator cleanup.
+
+## Evidence inventory
+
+Every retained file in this folder is linked below. [MANIFEST.json](MANIFEST.json) records final byte sizes and SHA-256; [NORMALIZATION.json](NORMALIZATION.json) records UTF-16 log decoding and user-path substitution without reformatting JSON/script payloads. Captures over 1,000,000 bytes are handled by [NOT-KEPT.md](NOT-KEPT.md). [verification.json](verification.json) records link, size, HEAD, production/index and path checks.
+
+`;
+const files=new Set([...(await readdir(out)),'README.md','MANIFEST.json','NORMALIZATION.json','NOT-KEPT.md','verification.json','format-check.log.txt']);
+for(const f of [...files].sort())md+=`- [${f}](${f})\n`;
+await writeFile(join(out,'README.md'),md);

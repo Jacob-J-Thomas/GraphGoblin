@@ -26,6 +26,8 @@ import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
 import { historicalThread, historyCursor, readHistoryCursor } from '../run-history.js';
 
 const IdParams = z.object({ id: UlidSchema });
+/** Fresh-session choices the observation read returns; earlier ones stay in the history. */
+const FRESH_SESSION_NOTES = 20;
 
 const SessionSchema = z.object({
   runId: z.string(),
@@ -295,6 +297,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             finished: RunEventSchema.optional(),
             cancelled: RunEventSchema.optional(),
             cancelRequested: RunEventSchema.optional(),
+            freshSessionChoices: z.array(RunEventSchema),
           }),
         },
       },
@@ -321,6 +324,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           requested && (resumed === undefined || requested.seq > resumed.seq)
             ? requested
             : undefined,
+        freshSessionChoices: await repos.events.freshSessionChoices(runId, FRESH_SESSION_NOTES),
       };
     },
   );
@@ -343,6 +347,27 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     );
   }
 
+  app.post(
+    '/runs/:id/recover-session',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Explicitly start a fresh session for the observed missing-session failure',
+        params: IdParams,
+        body: z.strictObject({ nodeId: SlugSchema, failureSeq: z.number().int().positive() }),
+        response: { 200: RunRecordSchema },
+      },
+    },
+    async (request) => {
+      await ownedRun(request, request.params.id);
+      return manager.recoverSession(
+        request.params.id,
+        request.body.nodeId,
+        request.body.failureSeq,
+        request.auth.actor,
+      );
+    },
+  );
   app.post(
     '/runs/:id/input',
     {

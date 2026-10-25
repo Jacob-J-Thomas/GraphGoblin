@@ -1,0 +1,1489 @@
+[
+  {
+    "id": "ordinary-accepted-failure-resume",
+    "steps": "Accepted fresh task returns recoverable transport failure; recover-session refuses; plain Resume",
+    "expected": "Existing accepted session continues and succeeds without a fresh-session choice",
+    "status": "PASS",
+    "actual": {
+      "runId": "01M5QZHVEZJWVA3976ABP9QNHW",
+      "calls": [
+        {
+          "n": 1,
+          "harness": "codex",
+          "mode": "fresh",
+          "id": "55624b94-adcb-4981-8913-04081d445acb",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "Authored task: preserve exactly [QA-265]",
+          "plan": {
+            "error": "HARNESS_TRANSPORT_FAILED",
+            "submission": "submitted",
+            "retriable": true,
+            "afterAccept": true
+          }
+        },
+        {
+          "n": 2,
+          "harness": "codex",
+          "mode": "resume",
+          "id": "55624b94-adcb-4981-8913-04081d445acb",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+          "plan": {}
+        }
+      ],
+      "modes": [
+        "fresh",
+        "resumed"
+      ]
+    }
+  },
+  {
+    "id": "own-policy-after-choice",
+    "steps": "Recover own visit two; enter visit three in same execution",
+    "expected": "Visit three resumes newly chosen private conversation and original own policy remains",
+    "status": "PASS",
+    "actual": {
+      "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+      "calls": [
+        {
+          "n": 3,
+          "harness": "codex",
+          "mode": "fresh",
+          "id": "f9807acc-ba4b-47a1-a6f5-886c56f052bd",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "Authored task: preserve exactly [QA-265]",
+          "plan": {}
+        },
+        {
+          "n": 4,
+          "harness": "codex",
+          "mode": "resume",
+          "id": "f9807acc-ba4b-47a1-a6f5-886c56f052bd",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "Authored task: preserve exactly [QA-265]",
+          "plan": {}
+        },
+        {
+          "n": 5,
+          "harness": "codex",
+          "mode": "fresh",
+          "id": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "Authored task: preserve exactly [QA-265]",
+          "plan": {}
+        },
+        {
+          "n": 6,
+          "harness": "codex",
+          "mode": "resume",
+          "id": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "Authored task: preserve exactly [QA-265]",
+          "plan": {}
+        }
+      ],
+      "snapshot": {
+        "run": {
+          "id": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+          "ownerId": "local",
+          "loopId": "01M5QZHVW7W26FR6765B85BCB0",
+          "versionId": "01M5QZHVW7W26FR6765B85BCB1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA codex resume-own 0.9437548364069934",
+            "label": "QA codex resume-own 0.9437548364069934 v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5QZHVXDQX9V3JFYCFQA0NB8",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-10-24T22:12:27.693Z",
+          "startedAt": "2026-10-24T22:12:27.707Z",
+          "finishedAt": "2026-10-24T22:12:28.458Z",
+          "lastEventSeq": 53
+        },
+        "events": [
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 1,
+            "ts": "2026-10-24T22:12:27.693Z",
+            "type": "run.queued",
+            "versionId": "01M5QZHVW7W26FR6765B85BCB1",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA codex resume-own 0.9437548364069934",
+              "label": "QA codex resume-own 0.9437548364069934 v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+                "loopId": "01M5QZHVW7W26FR6765B85BCB0",
+                "versionId": "01M5QZHVW7W26FR6765B85BCB1",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5QZHVXDQX9V3JFYCFQA0NB8",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "01M5QZHTED4GRH4S2W57DKG3HP"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T22:12:27.693Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {
+                "again": {
+                  "passes": 1
+                }
+              },
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 2,
+            "ts": "2026-10-24T22:12:27.711Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 3,
+            "ts": "2026-10-24T22:12:27.724Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 4,
+            "ts": "2026-10-24T22:12:27.730Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T22:12:27.728Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T22:12:27.728Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 5,
+            "ts": "2026-10-24T22:12:27.755Z",
+            "type": "node.started",
+            "nodeId": "worker",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "d6e92f7aa8d89883"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 6,
+            "ts": "2026-10-24T22:12:27.765Z",
+            "type": "harness.turn",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:5",
+            "turnId": "01M5QZHVZNAQVEPYB1Q6M7P4JP",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Authored task: preserve exactly [QA-265]"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 7,
+            "ts": "2026-10-24T22:12:27.819Z",
+            "type": "harness.session",
+            "nodeId": "worker",
+            "harness": "codex",
+            "sessionId": "f9807acc-ba4b-47a1-a6f5-886c56f052bd",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 8,
+            "ts": "2026-10-24T22:12:27.821Z",
+            "type": "harness.submission",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:5",
+            "turnId": "01M5QZHVZNAQVEPYB1Q6M7P4JP",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 9,
+            "ts": "2026-10-24T22:12:27.823Z",
+            "type": "harness.usage",
+            "nodeId": "worker",
+            "usage": {
+              "inputTokens": 1,
+              "outputTokens": 1,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 10,
+            "ts": "2026-10-24T22:12:27.839Z",
+            "type": "node.finished",
+            "nodeId": "worker",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "01M5QZHW1WY8G1TKPB38YPBJR4",
+                  "kind": "transcript",
+                  "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                  "nodeId": "worker",
+                  "bytes": 2,
+                  "label": "transcript worker"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5QZHW1WY8G1TKPB38YPBJR5",
+                  "role": "assistant",
+                  "content": "OK",
+                  "nodeId": "worker",
+                  "ts": "2026-10-24T22:12:27.836Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/worker",
+                "value": {
+                  "nodeId": "worker",
+                  "value": "OK",
+                  "at": "2026-10-24T22:12:27.836Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "worker",
+                  "value": "OK",
+                  "at": "2026-10-24T22:12:27.836Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 1,
+                  "outputTokens": 1,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 79
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 11,
+            "ts": "2026-10-24T22:12:27.864Z",
+            "type": "node.started",
+            "nodeId": "again",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "c34597221b668151"
+          },
+          {
+            "provenance": {
+              "kind": "expression",
+              "provider": null,
+              "classifierId": null,
+              "model": null,
+              "effort": null
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "repeat",
+              "confidence": null,
+              "reasoning": null
+            },
+            "portId": "repeat",
+            "gate": {
+              "previousPasses": 1,
+              "passes": 2,
+              "repeatRouteId": "repeat",
+              "maxPasses": 3,
+              "elapsedSeconds": 0.162,
+              "limit": null
+            },
+            "diagnostics": [],
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 12,
+            "ts": "2026-10-24T22:12:27.875Z",
+            "type": "decision.made",
+            "nodeId": "again"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 13,
+            "ts": "2026-10-24T22:12:27.875Z",
+            "type": "node.finished",
+            "nodeId": "again",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/again",
+                "value": {
+                  "nodeId": "again",
+                  "value": {
+                    "provenance": {
+                      "kind": "expression",
+                      "provider": null,
+                      "classifierId": null,
+                      "model": null,
+                      "effort": null
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "repeat",
+                      "confidence": null,
+                      "reasoning": null
+                    },
+                    "portId": "repeat",
+                    "gate": {
+                      "previousPasses": 1,
+                      "passes": 2,
+                      "repeatRouteId": "repeat",
+                      "maxPasses": 3,
+                      "elapsedSeconds": 0.162,
+                      "limit": null
+                    }
+                  },
+                  "at": "2026-10-24T22:12:27.873Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "again",
+                  "value": {
+                    "provenance": {
+                      "kind": "expression",
+                      "provider": null,
+                      "classifierId": null,
+                      "model": null,
+                      "effort": null
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "repeat",
+                      "confidence": null,
+                      "reasoning": null
+                    },
+                    "portId": "repeat",
+                    "gate": {
+                      "previousPasses": 1,
+                      "passes": 2,
+                      "repeatRouteId": "repeat",
+                      "maxPasses": 3,
+                      "elapsedSeconds": 0.162,
+                      "limit": null
+                    }
+                  },
+                  "at": "2026-10-24T22:12:27.873Z"
+                }
+              }
+            ],
+            "route": "repeat",
+            "durationMs": 7
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 14,
+            "ts": "2026-10-24T22:12:27.896Z",
+            "type": "node.started",
+            "nodeId": "hold",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "f9b9bf6ee4ee4c26"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 15,
+            "ts": "2026-10-24T22:12:27.902Z",
+            "type": "run.waiting",
+            "nodeId": "hold",
+            "wait": {
+              "waitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:14",
+              "nodeId": "hold",
+              "kind": "input",
+              "prompt": "QA remove fake provider file",
+              "startedSeq": 14
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 16,
+            "ts": "2026-10-24T22:12:27.932Z",
+            "type": "input.received",
+            "nodeId": "hold",
+            "payload": "go"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 17,
+            "ts": "2026-10-24T22:12:27.932Z",
+            "type": "run.woken",
+            "nodeId": "hold",
+            "reason": "input",
+            "payload": "go"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 18,
+            "ts": "2026-10-24T22:12:27.957Z",
+            "type": "node.started",
+            "nodeId": "hold",
+            "kind": "wait",
+            "attempt": 2,
+            "configHash": "f9b9bf6ee4ee4c26"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 19,
+            "ts": "2026-10-24T22:12:27.963Z",
+            "type": "node.finished",
+            "nodeId": "hold",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5QZHW5SM30CAVG62EJVQPRM",
+                  "role": "user",
+                  "content": "go",
+                  "nodeId": "hold",
+                  "ts": "2026-10-24T22:12:27.961Z",
+                  "tags": [
+                    "input"
+                  ]
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/hold",
+                "value": {
+                  "nodeId": "hold",
+                  "value": "go",
+                  "at": "2026-10-24T22:12:27.961Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "hold",
+                  "value": "go",
+                  "at": "2026-10-24T22:12:27.961Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 20,
+            "ts": "2026-10-24T22:12:27.974Z",
+            "type": "node.started",
+            "nodeId": "worker",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "d6e92f7aa8d89883"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 21,
+            "ts": "2026-10-24T22:12:27.980Z",
+            "type": "harness.turn",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+            "turnId": "01M5QZHW6CX3X4J8W5PF1HC0CV",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Authored task: preserve exactly [QA-265]",
+            "resumeSessionId": "f9807acc-ba4b-47a1-a6f5-886c56f052bd"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 22,
+            "ts": "2026-10-24T22:12:28.013Z",
+            "type": "harness.submission",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+            "turnId": "01M5QZHW6CX3X4J8W5PF1HC0CV",
+            "submission": "session-missing"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 23,
+            "ts": "2026-10-24T22:12:28.015Z",
+            "type": "harness.submission",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+            "turnId": "01M5QZHW6CX3X4J8W5PF1HC0CV",
+            "submission": "session-missing"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 24,
+            "ts": "2026-10-24T22:12:28.023Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_SESSION_MISSING",
+              "message": "The codex session \"f9807acc-ba4b-47a1-a6f5-886c56f052bd\" from resume-own is missing. Choose Start fresh session for node \"worker\" to continue without its prior provider conversation.",
+              "nodeId": "worker",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_SESSION_MISSING"
+              },
+              "inference": {
+                "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+                "turnId": "01M5QZHW6CX3X4J8W5PF1HC0CV",
+                "submission": "session-missing",
+                "promptKind": "authored",
+                "sessionId": "f9807acc-ba4b-47a1-a6f5-886c56f052bd"
+              },
+              "missingSession": {
+                "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+                "harness": "codex",
+                "sessionId": "f9807acc-ba4b-47a1-a6f5-886c56f052bd",
+                "origin": "resume-own",
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 25,
+            "ts": "2026-10-24T22:12:28.119Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "api-key",
+              "id": "01M5QZHTED4GRH4S2W57DKG3HP"
+            },
+            "freshSession": {
+              "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+              "harness": "codex",
+              "sessionId": "f9807acc-ba4b-47a1-a6f5-886c56f052bd",
+              "origin": "resume-own",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "nodeId": "worker",
+              "failureSeq": 24,
+              "priorContextCarried": false,
+              "prompt": "Authored task: preserve exactly [QA-265]"
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 26,
+            "ts": "2026-10-24T22:12:28.141Z",
+            "type": "node.started",
+            "nodeId": "worker",
+            "kind": "inference",
+            "attempt": 2,
+            "configHash": "d6e92f7aa8d89883"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 27,
+            "ts": "2026-10-24T22:12:28.147Z",
+            "type": "harness.turn",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+            "turnId": "01M5QZHWBJ8KQ8479CRNSJ6E6N",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Authored task: preserve exactly [QA-265]"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 28,
+            "ts": "2026-10-24T22:12:28.187Z",
+            "type": "harness.session",
+            "nodeId": "worker",
+            "harness": "codex",
+            "sessionId": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 29,
+            "ts": "2026-10-24T22:12:28.189Z",
+            "type": "harness.submission",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:20",
+            "turnId": "01M5QZHWBJ8KQ8479CRNSJ6E6N",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 30,
+            "ts": "2026-10-24T22:12:28.191Z",
+            "type": "harness.usage",
+            "nodeId": "worker",
+            "usage": {
+              "inputTokens": 1,
+              "outputTokens": 1,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 31,
+            "ts": "2026-10-24T22:12:28.230Z",
+            "type": "node.finished",
+            "nodeId": "worker",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "01M5QZHWE3SCRDDPA3NQZK6ZSJ",
+                  "kind": "transcript",
+                  "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                  "nodeId": "worker",
+                  "bytes": 2,
+                  "label": "transcript worker"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5QZHWE3SCRDDPA3NQZK6ZSK",
+                  "role": "assistant",
+                  "content": "OK",
+                  "nodeId": "worker",
+                  "ts": "2026-10-24T22:12:28.227Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/outputs/worker",
+                "value": {
+                  "nodeId": "worker",
+                  "value": "OK",
+                  "at": "2026-10-24T22:12:28.227Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "worker",
+                  "value": "OK",
+                  "at": "2026-10-24T22:12:28.227Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 2,
+                  "outputTokens": 2,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 84
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 32,
+            "ts": "2026-10-24T22:12:28.256Z",
+            "type": "node.started",
+            "nodeId": "again",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "c34597221b668151"
+          },
+          {
+            "provenance": {
+              "kind": "expression",
+              "provider": null,
+              "classifierId": null,
+              "model": null,
+              "effort": null
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "repeat",
+              "confidence": null,
+              "reasoning": null
+            },
+            "portId": "repeat",
+            "gate": {
+              "previousPasses": 2,
+              "passes": 3,
+              "repeatRouteId": "repeat",
+              "maxPasses": 3,
+              "elapsedSeconds": 0.553,
+              "limit": null
+            },
+            "diagnostics": [],
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 33,
+            "ts": "2026-10-24T22:12:28.262Z",
+            "type": "decision.made",
+            "nodeId": "again"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 34,
+            "ts": "2026-10-24T22:12:28.262Z",
+            "type": "node.finished",
+            "nodeId": "again",
+            "patch": [
+              {
+                "op": "replace",
+                "path": "/outputs/again",
+                "value": {
+                  "nodeId": "again",
+                  "value": {
+                    "provenance": {
+                      "kind": "expression",
+                      "provider": null,
+                      "classifierId": null,
+                      "model": null,
+                      "effort": null
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "repeat",
+                      "confidence": null,
+                      "reasoning": null
+                    },
+                    "portId": "repeat",
+                    "gate": {
+                      "previousPasses": 2,
+                      "passes": 3,
+                      "repeatRouteId": "repeat",
+                      "maxPasses": 3,
+                      "elapsedSeconds": 0.553,
+                      "limit": null
+                    }
+                  },
+                  "at": "2026-10-24T22:12:28.260Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "again",
+                  "value": {
+                    "provenance": {
+                      "kind": "expression",
+                      "provider": null,
+                      "classifierId": null,
+                      "model": null,
+                      "effort": null
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "repeat",
+                      "confidence": null,
+                      "reasoning": null
+                    },
+                    "portId": "repeat",
+                    "gate": {
+                      "previousPasses": 2,
+                      "passes": 3,
+                      "repeatRouteId": "repeat",
+                      "maxPasses": 3,
+                      "elapsedSeconds": 0.553,
+                      "limit": null
+                    }
+                  },
+                  "at": "2026-10-24T22:12:28.260Z"
+                }
+              }
+            ],
+            "route": "repeat",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 35,
+            "ts": "2026-10-24T22:12:28.275Z",
+            "type": "node.started",
+            "nodeId": "hold",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "f9b9bf6ee4ee4c26"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 36,
+            "ts": "2026-10-24T22:12:28.280Z",
+            "type": "run.waiting",
+            "nodeId": "hold",
+            "wait": {
+              "waitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:35",
+              "nodeId": "hold",
+              "kind": "input",
+              "prompt": "QA remove fake provider file",
+              "startedSeq": 35
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 37,
+            "ts": "2026-10-24T22:12:28.330Z",
+            "type": "input.received",
+            "nodeId": "hold",
+            "payload": "go"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 38,
+            "ts": "2026-10-24T22:12:28.330Z",
+            "type": "run.woken",
+            "nodeId": "hold",
+            "reason": "input",
+            "payload": "go"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 39,
+            "ts": "2026-10-24T22:12:28.357Z",
+            "type": "node.started",
+            "nodeId": "hold",
+            "kind": "wait",
+            "attempt": 2,
+            "configHash": "f9b9bf6ee4ee4c26"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 40,
+            "ts": "2026-10-24T22:12:28.364Z",
+            "type": "node.finished",
+            "nodeId": "hold",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5QZHWJA0FN9A6S8VY391N7H",
+                  "role": "user",
+                  "content": "go",
+                  "nodeId": "hold",
+                  "ts": "2026-10-24T22:12:28.362Z",
+                  "tags": [
+                    "input"
+                  ]
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/outputs/hold",
+                "value": {
+                  "nodeId": "hold",
+                  "value": "go",
+                  "at": "2026-10-24T22:12:28.362Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "hold",
+                  "value": "go",
+                  "at": "2026-10-24T22:12:28.362Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 41,
+            "ts": "2026-10-24T22:12:28.382Z",
+            "type": "node.started",
+            "nodeId": "worker",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "d6e92f7aa8d89883"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 42,
+            "ts": "2026-10-24T22:12:28.388Z",
+            "type": "harness.turn",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:41",
+            "turnId": "01M5QZHWK4AWJCN0R46RWFMFE1",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Authored task: preserve exactly [QA-265]",
+            "resumeSessionId": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 43,
+            "ts": "2026-10-24T22:12:28.397Z",
+            "type": "harness.submission",
+            "nodeId": "worker",
+            "visitId": "01M5QZHVXDQX9V3JFYCFQA0NB7:41",
+            "turnId": "01M5QZHWK4AWJCN0R46RWFMFE1",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 44,
+            "ts": "2026-10-24T22:12:28.399Z",
+            "type": "harness.usage",
+            "nodeId": "worker",
+            "usage": {
+              "inputTokens": 1,
+              "outputTokens": 1,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 45,
+            "ts": "2026-10-24T22:12:28.401Z",
+            "type": "harness.session",
+            "nodeId": "worker",
+            "harness": "codex",
+            "sessionId": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 46,
+            "ts": "2026-10-24T22:12:28.411Z",
+            "type": "node.finished",
+            "nodeId": "worker",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "01M5QZHWKRWJG9QPAEYS3DFVYA",
+                  "kind": "transcript",
+                  "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                  "nodeId": "worker",
+                  "bytes": 2,
+                  "label": "transcript worker"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M5QZHWKRWJG9QPAEYS3DFVYB",
+                  "role": "assistant",
+                  "content": "OK",
+                  "nodeId": "worker",
+                  "ts": "2026-10-24T22:12:28.408Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/outputs/worker",
+                "value": {
+                  "nodeId": "worker",
+                  "value": "OK",
+                  "at": "2026-10-24T22:12:28.408Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "worker",
+                  "value": "OK",
+                  "at": "2026-10-24T22:12:28.408Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 3,
+                  "outputTokens": 3,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 25
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 47,
+            "ts": "2026-10-24T22:12:28.420Z",
+            "type": "node.started",
+            "nodeId": "again",
+            "kind": "decision",
+            "attempt": 1,
+            "configHash": "c34597221b668151"
+          },
+          {
+            "provenance": {
+              "kind": "expression",
+              "provider": null,
+              "classifierId": null,
+              "model": null,
+              "effort": null
+            },
+            "observation": {
+              "kind": "route",
+              "routeId": "repeat",
+              "confidence": null,
+              "reasoning": null
+            },
+            "portId": "limit-reached",
+            "gate": {
+              "previousPasses": 3,
+              "passes": 3,
+              "repeatRouteId": "repeat",
+              "maxPasses": 3,
+              "elapsedSeconds": 0.718,
+              "limit": "max-passes"
+            },
+            "diagnostics": [],
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 48,
+            "ts": "2026-10-24T22:12:28.428Z",
+            "type": "decision.made",
+            "nodeId": "again"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 49,
+            "ts": "2026-10-24T22:12:28.428Z",
+            "type": "node.finished",
+            "nodeId": "again",
+            "patch": [
+              {
+                "op": "replace",
+                "path": "/outputs/again",
+                "value": {
+                  "nodeId": "again",
+                  "value": {
+                    "provenance": {
+                      "kind": "expression",
+                      "provider": null,
+                      "classifierId": null,
+                      "model": null,
+                      "effort": null
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "repeat",
+                      "confidence": null,
+                      "reasoning": null
+                    },
+                    "portId": "limit-reached",
+                    "gate": {
+                      "previousPasses": 3,
+                      "passes": 3,
+                      "repeatRouteId": "repeat",
+                      "maxPasses": 3,
+                      "elapsedSeconds": 0.718,
+                      "limit": "max-passes"
+                    }
+                  },
+                  "at": "2026-10-24T22:12:28.425Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "again",
+                  "value": {
+                    "provenance": {
+                      "kind": "expression",
+                      "provider": null,
+                      "classifierId": null,
+                      "model": null,
+                      "effort": null
+                    },
+                    "observation": {
+                      "kind": "route",
+                      "routeId": "repeat",
+                      "confidence": null,
+                      "reasoning": null
+                    },
+                    "portId": "limit-reached",
+                    "gate": {
+                      "previousPasses": 3,
+                      "passes": 3,
+                      "repeatRouteId": "repeat",
+                      "maxPasses": 3,
+                      "elapsedSeconds": 0.718,
+                      "limit": "max-passes"
+                    }
+                  },
+                  "at": "2026-10-24T22:12:28.425Z"
+                }
+              }
+            ],
+            "route": "limit-reached",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 50,
+            "ts": "2026-10-24T22:12:28.445Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 51,
+            "ts": "2026-10-24T22:12:28.454Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 52,
+            "ts": "2026-10-24T22:12:28.454Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 4
+          },
+          {
+            "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "seq": 53,
+            "ts": "2026-10-24T22:12:28.454Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "sessions": {
+          "items": [
+            {
+              "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+              "nodeId": "worker",
+              "attempt": 2,
+              "harness": "codex",
+              "sessionId": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab",
+              "status": "finished",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "updatedAt": "2026-10-24T22:12:28.227Z"
+            },
+            {
+              "runId": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+              "nodeId": "worker",
+              "attempt": 1,
+              "harness": "codex",
+              "sessionId": "55eb0f36-cc89-4042-8a6d-e64ded2db7ab",
+              "status": "finished",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "updatedAt": "2026-10-24T22:12:28.408Z"
+            }
+          ]
+        },
+        "thread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5QZHVXDQX9V3JFYCFQA0NB7",
+            "loopId": "01M5QZHVW7W26FR6765B85BCB0",
+            "versionId": "01M5QZHVW7W26FR6765B85BCB1",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5QZHVXDQX9V3JFYCFQA0NB8",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5QZHTED4GRH4S2W57DKG3HP"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-24T22:12:27.693Z"
+            }
+          },
+          "messages": [
+            {
+              "id": "01M5QZHW1WY8G1TKPB38YPBJR5",
+              "role": "assistant",
+              "content": "OK",
+              "nodeId": "worker",
+              "ts": "2026-10-24T22:12:27.836Z"
+            },
+            {
+              "id": "01M5QZHW5SM30CAVG62EJVQPRM",
+              "role": "user",
+              "content": "go",
+              "nodeId": "hold",
+              "ts": "2026-10-24T22:12:27.961Z",
+              "tags": [
+                "input"
+              ]
+            },
+            {
+              "id": "01M5QZHWE3SCRDDPA3NQZK6ZSK",
+              "role": "assistant",
+              "content": "OK",
+              "nodeId": "worker",
+              "ts": "2026-10-24T22:12:28.227Z"
+            },
+            {
+              "id": "01M5QZHWJA0FN9A6S8VY391N7H",
+              "role": "user",
+              "content": "go",
+              "nodeId": "hold",
+              "ts": "2026-10-24T22:12:28.362Z",
+              "tags": [
+                "input"
+              ]
+            },
+            {
+              "id": "01M5QZHWKRWJG9QPAEYS3DFVYB",
+              "role": "assistant",
+              "content": "OK",
+              "nodeId": "worker",
+              "ts": "2026-10-24T22:12:28.408Z"
+            }
+          ],
+          "vars": {},
+          "artifacts": [
+            {
+              "id": "01M5QZHW1WY8G1TKPB38YPBJR4",
+              "kind": "transcript",
+              "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+              "nodeId": "worker",
+              "label": "transcript worker",
+              "bytes": 2
+            },
+            {
+              "id": "01M5QZHWE3SCRDDPA3NQZK6ZSJ",
+              "kind": "transcript",
+              "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+              "nodeId": "worker",
+              "label": "transcript worker",
+              "bytes": 2
+            },
+            {
+              "id": "01M5QZHWKRWJG9QPAEYS3DFVYA",
+              "kind": "transcript",
+              "ref": "artifact:transcript/4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+              "nodeId": "worker",
+              "label": "transcript worker",
+              "bytes": 2
+            }
+          ],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-24T22:12:27.728Z"
+            },
+            "worker": {
+              "nodeId": "worker",
+              "value": "OK",
+              "at": "2026-10-24T22:12:28.408Z"
+            },
+            "again": {
+              "nodeId": "again",
+              "value": {
+                "provenance": {
+                  "kind": "expression",
+                  "provider": null,
+                  "classifierId": null,
+                  "model": null,
+                  "effort": null
+                },
+                "observation": {
+                  "kind": "route",
+                  "routeId": "repeat",
+                  "confidence": null,
+                  "reasoning": null
+                },
+                "portId": "limit-reached",
+                "gate": {
+                  "previousPasses": 3,
+                  "passes": 3,
+                  "repeatRouteId": "repeat",
+                  "maxPasses": 3,
+                  "elapsedSeconds": 0.718,
+                  "limit": "max-passes"
+                }
+              },
+              "at": "2026-10-24T22:12:28.425Z"
+            },
+            "hold": {
+              "nodeId": "hold",
+              "value": "go",
+              "at": "2026-10-24T22:12:28.362Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "again",
+            "value": {
+              "provenance": {
+                "kind": "expression",
+                "provider": null,
+                "classifierId": null,
+                "model": null,
+                "effort": null
+              },
+              "observation": {
+                "kind": "route",
+                "routeId": "repeat",
+                "confidence": null,
+                "reasoning": null
+              },
+              "portId": "limit-reached",
+              "gate": {
+                "previousPasses": 3,
+                "passes": 3,
+                "repeatRouteId": "repeat",
+                "maxPasses": 3,
+                "elapsedSeconds": 0.718,
+                "limit": "max-passes"
+              }
+            },
+            "at": "2026-10-24T22:12:28.425Z"
+          },
+          "gates": {
+            "again": {
+              "passes": 3
+            }
+          },
+          "counters": {
+            "nodeVisits": {
+              "start": 1,
+              "worker": 4,
+              "again": 3,
+              "hold": 4,
+              "done": 1
+            },
+            "usage": {
+              "inputTokens": 3,
+              "outputTokens": 3,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      }
+    }
+  }
+]
