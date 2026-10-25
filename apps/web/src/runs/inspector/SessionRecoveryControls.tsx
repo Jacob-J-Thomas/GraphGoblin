@@ -1,4 +1,4 @@
-﻿import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
+import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { runs } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
@@ -35,8 +35,9 @@ export function SessionRecoveryControls({
     missing.visitId.startsWith(run.id + ':');
   const choices = events.filter((event) => event.type === 'run.resumed' && event.freshSession);
   if (!eligible && choices.length === 0) return null;
+  // Node IDs may be 64 characters: wrap them rather than widening the inspector at 390 px.
   return (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 gap-2 wrap-anywhere">
       {eligible ? (
         <>
           <p>

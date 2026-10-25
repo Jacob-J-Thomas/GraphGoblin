@@ -2,7 +2,7 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { RunRecord } from '@graphgoblin/contracts';
 import { control, expect, test } from './fixtures.js';
 
-test('missing inherited session: decline, reload, choose fresh and succeed', async ({
+test('missing inherited session: decline, reload, choose fresh and follow it to success without a reload', async ({
   page,
   request,
 }) => {
@@ -75,6 +75,15 @@ test('missing inherited session: decline, reload, choose fresh and succeed', asy
   await expect
     .poll(async () => ((await (await request.get(`/runs/${run.id}`)).json()) as RunRecord).status)
     .toBe('succeeded');
+  const finished = (await (await request.get(`/runs/${run.id}`)).json()) as RunRecord;
+  // Without a reload: the inspector keeps observing the recovered run to its outcome.
+  await expect(
+    page.getByText(new RegExp(`Timeline \\(${finished.lastEventSeq} events`)),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/chose a fresh session for worker; prior provider context was not carried over/),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start fresh session for worker' })).toHaveCount(0);
   await page.reload();
   await expect(
     page.getByText(/chose a fresh session for worker; prior provider context was not carried over/),

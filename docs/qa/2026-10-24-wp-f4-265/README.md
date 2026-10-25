@@ -1,4 +1,4 @@
-﻿# WP-F4 / #265 implementation evidence
+# WP-F4 / #265 implementation evidence
 
 ## 1. Branch and worktree
 
