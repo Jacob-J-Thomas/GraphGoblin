@@ -1,0 +1,1690 @@
+[
+  {
+    "at": "2026-10-24T23:06:51.218Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Saved input",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "ask",
+            "kind": "wait",
+            "label": "Input",
+            "config": {
+              "mode": "input",
+              "prompt": "Answer"
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "ask"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "ask",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R2NEY0TA335GAW2PDPN7VS",
+        "ownerId": "local",
+        "name": "Saved input",
+        "draftVersionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+        "createdAt": "2026-10-24T23:06:51.199Z",
+        "updatedAt": "2026-10-24T23:06:51.199Z"
+      },
+      "draft": {
+        "id": "01M5R2NEY0TA335GAW2PDPN7VT",
+        "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Saved input",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "ask",
+              "label": "Input",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Answer",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "ask",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "ask",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:51.199Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.246Z",
+    "path": "/loops/01M5R2NEY0TA335GAW2PDPN7VS/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R2NEY0TA335GAW2PDPN7VT",
+        "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Saved input",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "ask",
+              "label": "Input",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Answer",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "ask",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "ask",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:51.199Z",
+        "publishedAt": "2026-10-24T23:06:51.233Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.275Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Saved parent",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "child",
+            "kind": "subloop",
+            "label": "Saved child",
+            "config": {
+              "loopRef": {
+                "loopId": "01M5R2NEY0TA335GAW2PDPN7VS"
+              }
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "child"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "child",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+        "ownerId": "local",
+        "name": "Saved parent",
+        "draftVersionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+        "createdAt": "2026-10-24T23:06:51.261Z",
+        "updatedAt": "2026-10-24T23:06:51.261Z"
+      },
+      "draft": {
+        "id": "01M5R2NEZXH3PZAND6XF78ZCHK",
+        "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Saved parent",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "child",
+              "label": "Saved child",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "subloop",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "inherit"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  },
+                  "usage": "roll-up"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "child",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "child",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:51.261Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.299Z",
+    "path": "/loops/01M5R2NEZXH3PZAND6XF78ZCHJ/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R2NEZXH3PZAND6XF78ZCHK",
+        "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Saved parent",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "child",
+              "label": "Saved child",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "subloop",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "inherit"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  },
+                  "usage": "roll-up"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "child",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "child",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:51.261Z",
+        "publishedAt": "2026-10-24T23:06:51.289Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.338Z",
+    "path": "/loops/01M5R2NEZXH3PZAND6XF78ZCHJ/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+        "ownerId": "local",
+        "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+        "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Saved parent",
+          "label": "Saved parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T23:06:51.308Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.352Z",
+    "path": "/runs/01M5R2NF1CD3VSH6MBC8BA25HG",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "ownerId": "local",
+      "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+      "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved parent",
+        "label": "Saved parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+      "status": "queued",
+      "iteration": 1,
+      "createdAt": "2026-10-24T23:06:51.308Z",
+      "lastEventSeq": 1
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.440Z",
+    "path": "/runs/01M5R2NF1CD3VSH6MBC8BA25HG",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "ownerId": "local",
+      "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+      "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved parent",
+        "label": "Saved parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+      "status": "waiting",
+      "currentNodeId": "child",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF1CD3VSH6MBC8BA25HG:5",
+        "nodeId": "child",
+        "kind": "child",
+        "childRunId": "01M5R2NF4GXT959PJJ3N3AWCBY",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.308Z",
+      "startedAt": "2026-10-24T23:06:51.352Z",
+      "lastEventSeq": 7
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.459Z",
+    "path": "/runs/01M5R2NF1CD3VSH6MBC8BA25HG",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "ownerId": "local",
+      "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+      "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved parent",
+        "label": "Saved parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+      "status": "waiting",
+      "currentNodeId": "child",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF1CD3VSH6MBC8BA25HG:5",
+        "nodeId": "child",
+        "kind": "child",
+        "childRunId": "01M5R2NF4GXT959PJJ3N3AWCBY",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.308Z",
+      "startedAt": "2026-10-24T23:06:51.352Z",
+      "lastEventSeq": 7
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.487Z",
+    "path": "/runs/01M5R2NF4GXT959PJJ3N3AWCBY",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF4GXT959PJJ3N3AWCBY",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "parentRunId": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "invocationId": "01M5R2NF4GXT959PJJ3N3AWCBZ",
+      "status": "running",
+      "currentNodeId": "start",
+      "iteration": 1,
+      "createdAt": "2026-10-24T23:06:51.408Z",
+      "startedAt": "2026-10-24T23:06:51.451Z",
+      "lastEventSeq": 4
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.576Z",
+    "path": "/runs/01M5R2NF4GXT959PJJ3N3AWCBY",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF4GXT959PJJ3N3AWCBY",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "parentRunId": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "invocationId": "01M5R2NF4GXT959PJJ3N3AWCBZ",
+      "status": "waiting",
+      "currentNodeId": "ask",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF4GXT959PJJ3N3AWCBY:5",
+        "nodeId": "ask",
+        "kind": "input",
+        "prompt": "Answer",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.408Z",
+      "startedAt": "2026-10-24T23:06:51.451Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.594Z",
+    "path": "/loops/01M5R2NEY0TA335GAW2PDPN7VS/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+        "ownerId": "local",
+        "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+        "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Saved input",
+          "label": "Saved input v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T23:06:51.583Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.605Z",
+    "path": "/runs/01M5R2NF9ZBENBJNPY17Z5431H",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+      "status": "queued",
+      "iteration": 1,
+      "createdAt": "2026-10-24T23:06:51.583Z",
+      "lastEventSeq": 1
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.726Z",
+    "path": "/runs/01M5R2NF9ZBENBJNPY17Z5431H",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+      "status": "waiting",
+      "currentNodeId": "ask",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF9ZBENBJNPY17Z5431H:5",
+        "nodeId": "ask",
+        "kind": "input",
+        "prompt": "Answer",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.583Z",
+      "startedAt": "2026-10-24T23:06:51.605Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.746Z",
+    "path": "/runs/01M5R2NF9ZBENBJNPY17Z5431H/pause",
+    "method": "POST",
+    "request": {},
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+      "status": "paused",
+      "currentNodeId": "ask",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF9ZBENBJNPY17Z5431H:5",
+        "nodeId": "ask",
+        "kind": "input",
+        "prompt": "Answer",
+        "startedSeq": 5
+      },
+      "pausedAt": "2026-10-24T23:06:51.735Z",
+      "createdAt": "2026-10-24T23:06:51.583Z",
+      "startedAt": "2026-10-24T23:06:51.605Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.761Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Saved future timer",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "timer",
+            "kind": "wait",
+            "label": "Future timer",
+            "config": {
+              "mode": "duration",
+              "seconds": 60
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "timer"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "timer",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+        "ownerId": "local",
+        "name": "Saved future timer",
+        "draftVersionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+        "createdAt": "2026-10-24T23:06:51.754Z",
+        "updatedAt": "2026-10-24T23:06:51.754Z"
+      },
+      "draft": {
+        "id": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+        "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Saved future timer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "timer",
+              "label": "Future timer",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "duration",
+                "seconds": 60,
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "timer",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "timer",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:51.754Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.780Z",
+    "path": "/loops/01M5R2NFFAQY1JSBTNVZ74TX7A/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+        "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Saved future timer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "timer",
+              "label": "Future timer",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "duration",
+                "seconds": 60,
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "timer",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "timer",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:06:51.754Z",
+        "publishedAt": "2026-10-24T23:06:51.771Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.795Z",
+    "path": "/loops/01M5R2NFFAQY1JSBTNVZ74TX7A/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R2NFG9DWQCJG4M96TAABMB",
+        "ownerId": "local",
+        "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+        "versionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Saved future timer",
+          "label": "Saved future timer v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2NFG9DWQCJG4M96TAABMC",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T23:06:51.785Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.810Z",
+    "path": "/runs/01M5R2NFG9DWQCJG4M96TAABMB",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NFG9DWQCJG4M96TAABMB",
+      "ownerId": "local",
+      "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+      "versionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved future timer",
+        "label": "Saved future timer v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NFG9DWQCJG4M96TAABMC",
+      "status": "running",
+      "iteration": 1,
+      "createdAt": "2026-10-24T23:06:51.785Z",
+      "startedAt": "2026-10-24T23:06:51.799Z",
+      "lastEventSeq": 2
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.903Z",
+    "path": "/runs/01M5R2NFG9DWQCJG4M96TAABMB",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NFG9DWQCJG4M96TAABMB",
+      "ownerId": "local",
+      "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+      "versionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved future timer",
+        "label": "Saved future timer v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NFG9DWQCJG4M96TAABMC",
+      "status": "waiting",
+      "currentNodeId": "timer",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NFG9DWQCJG4M96TAABMB:5",
+        "nodeId": "timer",
+        "kind": "timer",
+        "until": "2026-10-24T23:07:51.841Z",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.785Z",
+      "startedAt": "2026-10-24T23:06:51.799Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.909Z",
+    "path": "/runs/01M5R2NF1CD3VSH6MBC8BA25HG",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "ownerId": "local",
+      "loopId": "01M5R2NEZXH3PZAND6XF78ZCHJ",
+      "versionId": "01M5R2NEZXH3PZAND6XF78ZCHK",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved parent",
+        "label": "Saved parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF1DPASZ6RJH9A0V8CHT",
+      "status": "waiting",
+      "currentNodeId": "child",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF1CD3VSH6MBC8BA25HG:5",
+        "nodeId": "child",
+        "kind": "child",
+        "childRunId": "01M5R2NF4GXT959PJJ3N3AWCBY",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.308Z",
+      "startedAt": "2026-10-24T23:06:51.352Z",
+      "lastEventSeq": 7
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.921Z",
+    "path": "/runs/01M5R2NF4GXT959PJJ3N3AWCBY",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF4GXT959PJJ3N3AWCBY",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "parentRunId": "01M5R2NF1CD3VSH6MBC8BA25HG",
+      "invocationId": "01M5R2NF4GXT959PJJ3N3AWCBZ",
+      "status": "waiting",
+      "currentNodeId": "ask",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF4GXT959PJJ3N3AWCBY:5",
+        "nodeId": "ask",
+        "kind": "input",
+        "prompt": "Answer",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.408Z",
+      "startedAt": "2026-10-24T23:06:51.451Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.921Z",
+    "path": "/runs/01M5R2NF9ZBENBJNPY17Z5431H",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NF9ZBENBJNPY17Z5431H",
+      "ownerId": "local",
+      "loopId": "01M5R2NEY0TA335GAW2PDPN7VS",
+      "versionId": "01M5R2NEY0TA335GAW2PDPN7VT",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved input",
+        "label": "Saved input v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NF9ZBENBJNPY17Z5431J",
+      "status": "paused",
+      "currentNodeId": "ask",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NF9ZBENBJNPY17Z5431H:5",
+        "nodeId": "ask",
+        "kind": "input",
+        "prompt": "Answer",
+        "startedSeq": 5
+      },
+      "pausedAt": "2026-10-24T23:06:51.735Z",
+      "createdAt": "2026-10-24T23:06:51.583Z",
+      "startedAt": "2026-10-24T23:06:51.605Z",
+      "lastEventSeq": 7
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.922Z",
+    "path": "/runs/01M5R2NFG9DWQCJG4M96TAABMB",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R2NFG9DWQCJG4M96TAABMB",
+      "ownerId": "local",
+      "loopId": "01M5R2NFFAQY1JSBTNVZ74TX7A",
+      "versionId": "01M5R2NFFAQY1JSBTNVZ74TX7B",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Saved future timer",
+        "label": "Saved future timer v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R2NFG9DWQCJG4M96TAABMC",
+      "status": "waiting",
+      "currentNodeId": "timer",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5R2NFG9DWQCJG4M96TAABMB:5",
+        "nodeId": "timer",
+        "kind": "timer",
+        "until": "2026-10-24T23:07:51.841Z",
+        "startedSeq": 5
+      },
+      "createdAt": "2026-10-24T23:06:51.785Z",
+      "startedAt": "2026-10-24T23:06:51.799Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-24T23:06:51.948Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:06:51.927Z",
+      "choiceAt": "2026-10-24T23:06:52.727Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "d4c29c0c-013f-4677-918c-94706719b68b:draining"
+    }
+  }
+]

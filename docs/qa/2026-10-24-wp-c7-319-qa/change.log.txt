@@ -1,0 +1,1600 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 56440bf6..980a4bbb 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Show gateway drain state and active run inspectors on every page, with explicit keep-waiting and confirmed force controls, current-state conflict handling, and connection-closure feedback. Closing or reloading a tab never requests shutdown. Choices reject stale phase/gateway tokens before dispatch. **Upgrade:** update the gateway and web app together; browser choices require the shutdown control token. (#319)
++
+ - Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. Obsolete Refresh responses cannot overwrite a newer snapshot across revisits; inclusive anchored receipt reads keep displaced pending rows up to date. (#240)
+ 
+ - Show model and reasoning effort directly in inference and LLM decision editors, each in one dropdown naming the inherited default. Refresh default labels on dialog open, window focus and Settings saves; describe inherited values and unsupported efforts accessibly. Refuse a manual run whose Claude effort is outside the ready capabilities before recording it. Classifiers keep Question, Model, then Answer with no effort. Process defaults are exposed read-only for accurate labels, and a label whose latest Settings or process-defaults read failed says unavailable until a read succeeds, while Effort then offers only the efforts every enabled model supports and marks a saved effort outside them as of unknown support; saved configuration shapes are unchanged. **Upgrade:** no stored data changes. API clients gain the read-only `GET /system/model-defaults` (`system:read`), and a manual start can now answer 422 `EFFORT_UNSUPPORTED` on the node when Claude's ready capabilities do not support its effective effort; deploy the web app and API together. (#205)
+diff --git a/apps/api/src/routes/system.ts b/apps/api/src/routes/system.ts
+index 640ea337..de6949d2 100644
+--- a/apps/api/src/routes/system.ts
++++ b/apps/api/src/routes/system.ts
+@@ -1,3 +1,4 @@
++import { randomUUID } from 'node:crypto';
+ import { ShutdownActionSchema, ShutdownStateSchema, ShutdownTransitionError } from '../shutdown.js';
+ import { readinessOperation } from '../readiness-operation.js';
+ import { z } from 'zod';
+@@ -10,9 +11,16 @@ import type { Container } from '../container.js';
+ import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
+ import { API_VERSION, type ApiInstance } from '../types.js';
+ 
++const ShutdownSnapshotSchema = ShutdownStateSchema.extend({ controlToken: z.string() });
++
+ const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
+ 
+ export function registerSystemRoutes(app: ApiInstance, container: Container): void {
++  const incarnation = randomUUID();
++  const snapshot = (state: ReturnType<Container['shutdown']['state']>) => ({
++    ...state,
++    controlToken: `${incarnation}:${state.phase}`,
++  });
+   app.get(
+     '/system/model-defaults',
+     {
+@@ -30,10 +38,10 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
+       schema: {
+         tags: ['system'],
+         summary: 'Observe gateway drain and force-stop state',
+-        response: { 200: ShutdownStateSchema },
++        response: { 200: ShutdownSnapshotSchema },
+       },
+     },
+-    () => container.shutdown.state(),
++    () => snapshot(container.shutdown.state()),
+   );
+   app.post(
+     '/system/shutdown',
+@@ -42,18 +50,27 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
+         tags: ['system'],
+         summary: 'Drain, keep waiting, or explicitly force-stop the gateway',
+         body: z.strictObject({ action: ShutdownActionSchema }),
+-        response: { 202: ShutdownStateSchema, 409: ShutdownStateSchema },
++        headers: z.looseObject({ 'x-graphgoblin-shutdown-token': z.string().min(1).optional() }),
++        response: { 202: ShutdownSnapshotSchema, 409: ShutdownSnapshotSchema },
+       },
+     },
+     async (request, reply) => {
++      const observed = request.headers['x-graphgoblin-shutdown-token'];
++      const current = snapshot(container.shutdown.state());
++      // No await between comparison and dispatch: a delayed force must not acknowledge
++      // cleanup failure from another tab, or act on another gateway incarnation.
++      if (observed !== undefined && observed !== current.controlToken) {
++        reply.status(409);
++        return current;
++      }
+       try {
+         const state = await container.requestShutdown(request.body.action);
+         reply.status(202);
+-        return state;
++        return snapshot(state);
+       } catch (error) {
+         if (!(error instanceof ShutdownTransitionError)) throw error;
+         reply.status(409);
+-        return error.state;
++        return snapshot(error.state);
+       }
+     },
+   );
+diff --git a/apps/api/src/shutdown-choice.test.ts b/apps/api/src/shutdown-choice.test.ts
+new file mode 100644
+index 00000000..97aef6ef
+--- /dev/null
++++ b/apps/api/src/shutdown-choice.test.ts
+@@ -0,0 +1,159 @@
++import { expect, it, vi } from 'vitest';
++import { buildApp } from './app.js';
++import { ShutdownController } from './shutdown.js';
++import { createTestApp } from './testing/test-app.js';
++
++it('rejects a stale tab force instead of acknowledging a newly failed cleanup', async () => {
++  const fixture = await createTestApp();
++  let finishDrain!: () => void;
++  const drain = new Promise<void>((resolve) => {
++    finishDrain = resolve;
++  });
++  const shutdown = new ShutdownController(
++    {
++      beginDrain: () => Promise.resolve(),
++      waitForDrain: () => drain,
++      forceStop: () => Promise.reject(new Error('controlled unconfirmed cleanup')),
++      drainingRunIds: () => ['controlled-run'],
++      unconfirmedRunIds: () => ['controlled-run'],
++    },
++    300000,
++    () => undefined,
++    fixture.logger,
++  );
++  // Public composition injection: the route uses a real controller over a failing cleanup port.
++  const app = await buildApp(
++    {
++      ...fixture.container,
++      shutdown,
++      requestShutdown: (action) => shutdown.request(action),
++    },
++    { logger: false },
++  );
++  try {
++    await shutdown.request('force');
++    await vi.waitFor(() => expect(shutdown.state().phase).toBe('force-failed'));
++    const stale = await app.inject({
++      method: 'POST',
++      url: '/system/shutdown',
++      payload: { action: 'force' },
++      headers: { 'x-graphgoblin-shutdown-token': 'stale-before-cleanup' },
++    });
++    expect(stale.statusCode).toBe(409);
++    expect(stale.json()).toMatchObject({ phase: 'force-failed', choices: ['force'] });
++    expect(shutdown.state().phase).toBe('force-failed');
++    const fresh = (await app.inject('/system/shutdown')).json<{ controlToken: string }>();
++    const confirmed = await app.inject({
++      method: 'POST',
++      url: '/system/shutdown',
++      payload: { action: 'force' },
++      headers: { 'x-graphgoblin-shutdown-token': fresh.controlToken },
++    });
++    expect(confirmed.statusCode).toBe(202);
++    expect(confirmed.json()).toMatchObject({ phase: 'exiting' });
++  } finally {
++    finishDrain();
++    await app.close();
++    await fixture.close();
++  }
++});
++
++it('keeps tokens stable per phase and rejects another route incarnation without starting drain', async () => {
++  const fixture = await createTestApp();
++  const app = await buildApp(fixture.container, { logger: false });
++  try {
++    const first = (await fixture.app.inject('/system/shutdown')).json<{ controlToken: string }>();
++    const current = (await app.inject('/system/shutdown')).json<{ controlToken: string }>();
++    expect(current.controlToken).toEqual(expect.any(String));
++    expect(current.controlToken).not.toBe(first.controlToken);
++    expect((await app.inject('/system/shutdown')).json()).toMatchObject({
++      controlToken: current.controlToken,
++    });
++    const stale = await app.inject({
++      method: 'POST',
++      url: '/system/shutdown',
++      payload: { action: 'drain' },
++      headers: { 'x-graphgoblin-shutdown-token': first.controlToken },
++    });
++    expect(stale.statusCode).toBe(409);
++    expect(stale.json()).toMatchObject({ phase: 'running', controlToken: current.controlToken });
++    expect(fixture.container.shutdown.state().phase).toBe('running');
++    const invalid = await app.inject({
++      method: 'POST',
++      url: '/system/shutdown',
++      payload: { action: 'wait' },
++      headers: { 'x-graphgoblin-shutdown-token': current.controlToken },
++    });
++    expect(invalid.statusCode).toBe(409);
++    expect(invalid.json()).toMatchObject({ phase: 'running', controlToken: current.controlToken });
++    const empty = await app.inject({
++      method: 'POST',
++      url: '/system/shutdown',
++      payload: { action: 'drain' },
++      headers: { 'x-graphgoblin-shutdown-token': '' },
++    });
++    expect(empty.statusCode).toBe(400);
++    expect(fixture.container.shutdown.state().phase).toBe('running');
++  } finally {
++    await app.close();
++    await fixture.close();
++  }
++});
++
++it('requires system read/write scopes and preserves authentication with the conditional header', async () => {
++  const fixture = await createTestApp();
++  const key = async (scope: string) => {
++    const created = await fixture.app.inject({
++      method: 'POST',
++      url: '/api-keys',
++      payload: { label: 'conditional shutdown', scopes: [scope] },
++    });
++    expect(created.statusCode).toBe(201);
++    return created.json<{ token: string }>().token;
++  };
++  const reader = await key('system:read');
++  const writer = await key('system:write');
++  const unrelated = await key('runs:read');
++  const app = await buildApp(
++    { ...fixture.container, config: { ...fixture.container.config, requireApiKey: true } },
++    { logger: false },
++  );
++  try {
++    const read = await app.inject({
++      url: '/system/shutdown',
++      headers: { authorization: `Bearer ${reader}` },
++    });
++    expect(read.statusCode).toBe(200);
++    const token = read.json<{ controlToken: string }>().controlToken;
++    expect(
++      (
++        await app.inject({
++          url: '/system/shutdown',
++          headers: { authorization: `Bearer ${unrelated}` },
++        })
++      ).statusCode,
++    ).toBe(403);
++    expect(
++      (
++        await app.inject({
++          method: 'POST',
++          url: '/system/shutdown',
++          payload: { action: 'wait' },
++          headers: { authorization: `Bearer ${reader}`, 'x-graphgoblin-shutdown-token': token },
++        })
++      ).statusCode,
++    ).toBe(403);
++    const allowed = await app.inject({
++      method: 'POST',
++      url: '/system/shutdown',
++      payload: { action: 'wait' },
++      headers: { authorization: `Bearer ${writer}`, 'x-graphgoblin-shutdown-token': token },
++    });
++    expect(allowed.statusCode).toBe(409);
++    expect(allowed.json()).toMatchObject({ phase: 'running', controlToken: token });
++    expect(fixture.container.shutdown.state().phase).toBe('running');
++  } finally {
++    await app.close();
++    await fixture.close();
++  }
++});
+diff --git a/apps/web/e2e/shutdown-fake-codex.ps1 b/apps/web/e2e/shutdown-fake-codex.ps1
+new file mode 100644
+index 00000000..6c8cb3c7
+--- /dev/null
++++ b/apps/web/e2e/shutdown-fake-codex.ps1
+@@ -0,0 +1,19 @@
++param([Parameter(Mandatory=$true)][string]$Directory)
++$source = @'
++using System;
++using System.IO;
++using System.Threading;
++public static class ShutdownFakeCodex {
++  public static void Main(string[] args) {
++    if (Array.IndexOf(args, "--version") >= 0) { Console.WriteLine("codex-cli 0.160.0"); return; }
++    if (Array.IndexOf(args, "--help") >= 0) { Console.WriteLine("--json --model --sandbox --cd --skip-git-repo-check --output-schema --config"); return; }
++    if (Array.IndexOf(args, "login") >= 0) { Console.WriteLine("Logged in using ChatGPT"); return; }
++    File.WriteAllText(Environment.GetEnvironmentVariable("SHUTDOWN_FAKE_PID"), System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
++    Console.WriteLine("{\"type\":\"thread.started\",\"thread_id\":\"shutdown-controlled-session\"}");
++    Console.WriteLine("{\"type\":\"turn.started\"}");
++    Console.Out.Flush();
++    Thread.Sleep(180000);
++  }
++}
++'@
++Add-Type -TypeDefinition $source -OutputAssembly (Join-Path $Directory 'shutdown-codex.exe') -OutputType ConsoleApplication
+diff --git a/apps/web/e2e/shutdown.config.ts b/apps/web/e2e/shutdown.config.ts
+new file mode 100644
+index 00000000..e26642d3
+--- /dev/null
++++ b/apps/web/e2e/shutdown.config.ts
+@@ -0,0 +1,18 @@
++import { defineConfig, devices } from '@playwright/test';
++
++// Shutdown owns its real built-entry process; the shared E2E gateway must stay alive.
++export default defineConfig({
++  testDir: '.',
++  testMatch: 'shutdown.spec.ts',
++  workers: 1,
++  retries: 0,
++  timeout: 120_000,
++  expect: { timeout: 15_000 },
++  outputDir: '../test-results/shutdown',
++  use: {
++    ...devices['Desktop Chrome'],
++    ...(process.platform === 'win32' ? { channel: 'msedge' } : {}),
++    serviceWorkers: 'block',
++    trace: 'on',
++  },
++});
+diff --git a/apps/web/e2e/shutdown.spec.ts b/apps/web/e2e/shutdown.spec.ts
+new file mode 100644
+index 00000000..cce0229b
+--- /dev/null
++++ b/apps/web/e2e/shutdown.spec.ts
+@@ -0,0 +1,353 @@
++import { spawn } from 'node:child_process';
++import { access, chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { createServer } from 'node:net';
++import { join, resolve } from 'node:path';
++import { test, expect } from '@playwright/test';
++
++const root = resolve('../..');
++
++async function gateway(
++  options: {
++    directory?: string;
++    env?: NodeJS.ProcessEnv;
++    prepare?: (directory: string) => Promise<NodeJS.ProcessEnv>;
++  } = {},
++) {
++  const directory = options.directory ?? (await mkdtemp(join(tmpdir(), 'gg-wp-c7-319-')));
++  const extra = options.prepare ? await options.prepare(directory) : options.env;
++  let port = 5980;
++  for (; port <= 5989; port++) {
++    const probe = createServer();
++    const free = await new Promise<boolean>((done, reject) => {
++      probe.once('error', (error: NodeJS.ErrnoException) =>
++        error.code === 'EADDRINUSE' ? done(false) : reject(error),
++      );
++      probe.listen(port, '127.0.0.1', () => probe.close(() => done(true)));
++    });
++    if (free) break;
++  }
++  if (port > 5989) throw new Error('No disposable port free in 5980?5989');
++  const origin = `http://127.0.0.1:${port}`;
++  let logs = '';
++  const inherited = Object.fromEntries(
++    Object.entries(process.env).filter(([key]) => !key.toUpperCase().startsWith('GG_')),
++  );
++  const child = spawn(process.execPath, [join(root, 'apps/api/dist/main.js')], {
++    cwd: root,
++    windowsHide: true,
++    env: {
++      ...inherited,
++      GG_DATA_DIR: directory,
++      GG_HOST: '127.0.0.1',
++      GG_PORT: String(port),
++      GG_WEB_DIST: join(root, 'apps/web/dist'),
++      GG_REQUIRE_API_KEY: 'false',
++      GG_SHUTDOWN_GRACE_MS: '3000',
++      ...extra,
++    },
++    stdio: ['ignore', 'pipe', 'pipe'],
++  });
++  child.stdout.on('data', (chunk: Buffer) => {
++    logs += chunk.toString();
++  });
++  child.stderr.on('data', (chunk: Buffer) => {
++    logs += chunk.toString();
++  });
++  const exited = new Promise<number | null>((done) => child.once('exit', done));
++  await expect
++    .poll(
++      () => {
++        if (child.exitCode !== null) throw new Error(logs);
++        return logs.includes('GraphGoblin API listening');
++      },
++      { timeout: 60_000 },
++    )
++    .toBe(true);
++  const call = async (path: string, method = 'GET', body?: unknown) => {
++    const response = await fetch(origin + path, {
++      method,
++      ...(body === undefined
++        ? {}
++        : {
++            headers: { 'content-type': 'application/json' },
++            body: JSON.stringify(body),
++          }),
++    });
++    expect(response.ok, await response.clone().text()).toBe(true);
++    return response.json() as Promise<Record<string, unknown>>;
++  };
++  return { directory, origin, call, child, exited, env: extra };
++}
++
++test('drain is visible everywhere, expiry offers choices, waiting has no timer, and completion exits cleanly', async ({
++  page,
++  context,
++}, testInfo) => {
++  const g = await gateway();
++  let restarted: Awaited<ReturnType<typeof gateway>> | undefined;
++  let shutdownReads = 0;
++  page.on('request', (request) => {
++    if (new URL(request.url()).pathname === '/system/shutdown' && request.method() === 'GET')
++      shutdownReads++;
++  });
++  const release = join(g.directory, 'release');
++  const started = join(g.directory, 'started');
++  try {
++    const created = await g.call('/loops', 'POST', {
++      definition: {
++        schemaVersion: 4,
++        name: 'Shutdown browser work',
++        nodes: [
++          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++          {
++            id: 'hold',
++            kind: 'script',
++            label: 'Held script',
++            config: {
++              command: process.execPath,
++              args: [
++                '-e',
++                `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(started)},'active');const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)}))process.exit(0)},25);setTimeout(()=>process.exit(0),180000)`,
++              ],
++            },
++          },
++          { id: 'done', kind: 'exit', label: 'Done', config: {} },
++        ],
++        edges: [
++          { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'hold' } },
++          { id: 'b', from: { node: 'hold', port: 'out' }, to: { node: 'done' } },
++        ],
++      },
++    });
++    const loopId = (created['loop'] as { id: string }).id;
++    await g.call(`/loops/${loopId}/publish`, 'POST');
++    const startedRun = await g.call(`/loops/${loopId}/runs`, 'POST', {});
++    const runId = (startedRun['run'] as { id: string }).id;
++    await expect
++      .poll(() =>
++        access(started).then(
++          () => true,
++          () => false,
++        ),
++      )
++      .toBe(true);
++    await page.goto(g.origin + '/app/loops');
++    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
++    const draining = await g.call('/system/shutdown', 'POST', { action: 'drain' });
++    await testInfo.attach('draining-state', {
++      body: JSON.stringify(draining),
++      contentType: 'application/json',
++    });
++    await expect
++      .poll(async () => (await g.call('/system/shutdown'))['phase'])
++      .toBe('awaiting-choice');
++    const state = await g.call('/system/shutdown');
++    await testInfo.attach('awaiting-choice-state', {
++      body: JSON.stringify(state),
++      contentType: 'application/json',
++    });
++    await testInfo.attach('browser-at-expiry', {
++      body: await page.locator('body').innerText(),
++      contentType: 'text/plain',
++    });
++    await testInfo.attach('expiry', { body: await page.screenshot(), contentType: 'image/png' });
++    expect(state['activeRunIds']).toContain(runId);
++    await expect(page.getByRole('heading', { name: 'Gateway is draining' })).toBeVisible();
++    await expect(page.getByText(/The gateway grace period elapsed/)).toBeVisible();
++    await testInfo.attach('browser-confirmed-choice', {
++      body: await page.locator('body').innerText(),
++      contentType: 'text/plain',
++    });
++    await testInfo.attach('confirmed-choice', {
++      body: await page.screenshot(),
++      contentType: 'image/png',
++    });
++    await expect(page.getByRole('link', { name: new RegExp(runId) })).toBeVisible();
++    await expect(page.getByRole('button', { name: 'Force stop', exact: true })).toBeVisible();
++    const other = await context.newPage();
++    await other.goto(g.origin + '/app/events');
++    await expect(other.getByRole('heading', { name: 'Gateway is draining' })).toBeVisible();
++    await page.reload();
++    await expect(page.getByRole('button', { name: 'Keep waiting' })).toBeVisible();
++    await expect(other.getByRole('button', { name: 'Keep waiting' })).toBeVisible();
++    await Promise.all([
++      page.getByRole('button', { name: 'Keep waiting' }).click(),
++      other.getByRole('button', { name: 'Keep waiting' }).click(),
++    ]);
++    await expect.poll(async () => (await g.call('/system/shutdown'))['phase']).toBe('draining');
++    // Observe beyond the original grace. This checks the absence of a second countdown.
++    await page.waitForTimeout(3500);
++    expect((await g.call('/system/shutdown'))['phase']).toBe('draining');
++    await other.close();
++    expect((await g.call('/system/shutdown'))['phase']).toBe('draining');
++    await writeFile(release, 'finish');
++    await expect.poll(() => g.child.exitCode, { timeout: 30_000 }).toBe(0);
++    expect(await g.exited).toBe(0);
++    await expect(page.getByText('Gateway stopped or disconnected', { exact: true })).toBeVisible();
++    await expect(access(join(g.directory, 'graphgoblin.lock'))).rejects.toMatchObject({
++      code: 'ENOENT',
++    });
++    const readsAtClosure = shutdownReads;
++    await page.waitForTimeout(2500);
++    expect(shutdownReads).toBe(readsAtClosure);
++    restarted = await gateway({ directory: g.directory });
++    const recovered = await restarted.call(`/runs/${runId}`);
++    expect(recovered['status']).toBe('succeeded');
++    await testInfo.attach('restarted-completion', {
++      body: JSON.stringify(recovered),
++      contentType: 'application/json',
++    });
++    await restarted.call('/system/shutdown', 'POST', { action: 'drain' });
++    await expect.poll(() => restarted?.child.exitCode).toBe(0);
++  } finally {
++    await writeFile(release, 'finish');
++    for (const instance of [g, restarted]) {
++      if (instance && instance.child.exitCode === null) {
++        await instance.call('/system/shutdown', 'POST', { action: 'drain' }).catch(() => undefined);
++        await expect.poll(() => instance.child.exitCode, { timeout: 30_000 }).toBe(0);
++      }
++    }
++  }
++});
++
++test('confirmed force interrupts a controlled native harness, releases ownership and preserves interruption on restart', async ({
++  page,
++}, testInfo) => {
++  const g = await gateway({
++    prepare: async (directory) => {
++      let binary: string;
++      if (process.platform === 'win32') {
++        binary = join(directory, 'shutdown-codex.exe');
++        const compile = spawn(
++          'powershell.exe',
++          [
++            '-NoProfile',
++            '-ExecutionPolicy',
++            'Bypass',
++            '-File',
++            join(root, 'apps/web/e2e/shutdown-fake-codex.ps1'),
++            '-Directory',
++            directory,
++          ],
++          { windowsHide: true, stdio: 'pipe' },
++        );
++        let errors = '';
++        compile.stderr.on('data', (chunk: Buffer) => {
++          errors += chunk.toString();
++        });
++        const code = await new Promise<number | null>((done) => compile.once('exit', done));
++        expect(code, errors).toBe(0);
++      } else {
++        binary = join(directory, 'shutdown-codex');
++        await writeFile(
++          binary,
++          `#!/usr/bin/env node
++if(process.argv.includes('--version')){console.log('codex-cli 0.160.0');process.exit(0)}
++if(process.argv.includes('--help')){console.log('--json --model --sandbox --cd --skip-git-repo-check --output-schema --config');process.exit(0)}
++if(process.argv.includes('login')){console.log('Logged in using ChatGPT');process.exit(0)}
++require('node:fs').writeFileSync(process.env.SHUTDOWN_FAKE_PID,String(process.pid));
++console.log(JSON.stringify({type:'thread.started',thread_id:'shutdown-controlled-session'}));
++console.log(JSON.stringify({type:'turn.started'}));setInterval(()=>{},1000);setTimeout(()=>process.exit(0),180000);
++`,
++        );
++        await chmod(binary, 0o755);
++      }
++      return { GG_CODEX_BINARY: binary, SHUTDOWN_FAKE_PID: join(directory, 'harness.pid') };
++    },
++  });
++  let restarted: Awaited<ReturnType<typeof gateway>> | undefined;
++  try {
++    const created = await g.call('/loops', 'POST', {
++      definition: {
++        schemaVersion: 4,
++        name: 'Controlled native shutdown harness',
++        nodes: [
++          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++          {
++            id: 'infer',
++            kind: 'inference',
++            label: 'Held harness',
++            config: {
++              harness: 'codex',
++              prompt: { template: 'Synthetic shutdown fixture; no provider call' },
++            },
++          },
++          { id: 'done', kind: 'exit', label: 'Done', config: {} },
++        ],
++        edges: [
++          { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'infer' } },
++          { id: 'b', from: { node: 'infer', port: 'out' }, to: { node: 'done' } },
++        ],
++      },
++    });
++    const loopId = (created['loop'] as { id: string }).id;
++    await g.call(`/loops/${loopId}/publish`, 'POST');
++    const run = await g.call(`/loops/${loopId}/runs`, 'POST', {});
++    const runId = (run['run'] as { id: string }).id;
++    await expect
++      .poll(() =>
++        access(join(g.directory, 'harness.pid')).then(
++          () => true,
++          () => false,
++        ),
++      )
++      .toBe(true);
++    const pid = Number(await readFile(join(g.directory, 'harness.pid'), 'utf8'));
++    await page.goto(g.origin + `/app/runs/${runId}`);
++    await g.call('/system/shutdown', 'POST', { action: 'drain' });
++    await expect(page.getByRole('heading', { name: 'Gateway is draining' })).toBeVisible();
++    await expect
++      .poll(async () => (await g.call('/system/shutdown'))['phase'])
++      .toBe('awaiting-choice');
++    await expect(page.getByText(/The gateway grace period elapsed/)).toBeVisible();
++    await page.getByRole('button', { name: 'Force stop', exact: true }).click();
++    const dialog = page.getByRole('dialog');
++    await expect(dialog.getByRole('link', { name: new RegExp(runId) })).toBeVisible();
++    await expect(dialog.getByText(/External effects may be uncertain/)).toBeVisible();
++    await testInfo.attach('force-confirmation', {
++      body: await page.screenshot(),
++      contentType: 'image/png',
++    });
++    expect((await g.call('/system/shutdown'))['phase']).toBe('awaiting-choice');
++    await dialog.getByRole('button', { name: 'Confirm force stop' }).click();
++    await expect.poll(() => g.child.exitCode, { timeout: 30_000 }).toBe(0);
++    expect(await g.exited).toBe(0);
++    try {
++      process.kill(pid, 0);
++      throw new Error('Controlled harness process is still running');
++    } catch (error) {
++      expect(error).toMatchObject({ code: 'ESRCH' });
++    }
++    await expect(page.getByText('Gateway stopped or disconnected', { exact: true })).toBeVisible();
++    await expect(access(join(g.directory, 'graphgoblin.lock'))).rejects.toMatchObject({
++      code: 'ENOENT',
++    });
++    restarted = await gateway({ directory: g.directory, ...(g.env ? { env: g.env } : {}) });
++    const recovered = await restarted.call(`/runs/${runId}`);
++    expect(recovered).toMatchObject({
++      status: 'failed',
++      failure: {
++        code: 'RUN_INTERRUPTED_BY_STOP',
++        nodeId: 'infer',
++        resumable: false,
++        details: { attempt: 1, effectMayHaveHappened: true },
++      },
++    });
++    await testInfo.attach('restarted-interruption', {
++      body: JSON.stringify(recovered),
++      contentType: 'application/json',
++    });
++    const events = await restarted.call(`/runs/${runId}/events`);
++    expect(JSON.stringify(events)).toContain('RUN_INTERRUPTED_BY_STOP');
++    await restarted.call('/system/shutdown', 'POST', { action: 'drain' });
++    await expect.poll(() => restarted?.child.exitCode).toBe(0);
++  } finally {
++    for (const instance of [g, restarted]) {
++      if (instance && instance.child.exitCode === null) {
++        await instance.call('/system/shutdown', 'POST', { action: 'force' }).catch(() => undefined);
++        await expect.poll(() => instance.child.exitCode, { timeout: 30_000 }).not.toBeNull();
++      }
++    }
++  }
++});
+diff --git a/apps/web/src/__fixtures__/fake-api.ts b/apps/web/src/__fixtures__/fake-api.ts
+index 38bdeb36..cfe5eb5b 100644
+--- a/apps/web/src/__fixtures__/fake-api.ts
++++ b/apps/web/src/__fixtures__/fake-api.ts
+@@ -421,6 +421,15 @@ export class FakeApi {
+ 
+   /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
+   builtIn(call: RecordedCall): Response | Promise<Response> {
++    if (call.method === 'GET' && call.path === '/system/shutdown')
++      return json({
++        phase: 'running',
++        controlToken: 'fake-running',
++        graceMs: 300000,
++        activeRunIds: [],
++        unconfirmedRunIds: [],
++        choices: [],
++      });
+     for (const [route, handler] of this.routes) {
+       const params = match(route, call);
+       if (params) return handler(call, params);
+diff --git a/apps/web/src/app/App.tsx b/apps/web/src/app/App.tsx
+index 04495109..da8a6f8a 100644
+--- a/apps/web/src/app/App.tsx
++++ b/apps/web/src/app/App.tsx
+@@ -12,6 +12,7 @@ import { NewRunPage } from '../runs/new/NewRunPage.js';
+ import { RunInspectorPage } from '../runs/RunInspectorPage.js';
+ import { RunsPage } from '../runs/RunsPage.js';
+ import { SettingsPage } from '../settings/SettingsPage.js';
++import { ShutdownNotice } from './ShutdownNotice.js';
+ 
+ const NAV: readonly NavItem[] = [
+   { to: '/loops', label: 'Loops' },
+@@ -30,6 +31,7 @@ function Layout() {
+       apiUnreachable={connection === 'api-unreachable'}
+     >
+       <ApiKeyPanel />
++      <ShutdownNotice />
+       <ErrorBoundary key={location.pathname}>
+         <Outlet />
+       </ErrorBoundary>
+diff --git a/apps/web/src/app/ShutdownNotice.test.tsx b/apps/web/src/app/ShutdownNotice.test.tsx
+new file mode 100644
+index 00000000..dd02a4f2
+--- /dev/null
++++ b/apps/web/src/app/ShutdownNotice.test.tsx
+@@ -0,0 +1,334 @@
++import { act, screen, waitFor, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, expect, it } from 'vitest';
++import type { ResponseBody } from '@graphgoblin/api-client';
++import { FakeApi, problem, runRecord } from '../__fixtures__/fake-api.js';
++import { renderApp, renderWith } from '../__fixtures__/render.js';
++import { ShutdownNotice } from './ShutdownNotice.js';
++
++type State = ResponseBody<'/system/shutdown', 'get'>;
++function state(phase: State['phase'] = 'awaiting-choice'): State {
++  return {
++    phase,
++    controlToken: `fake-${phase}`,
++    graceMs: 300000,
++    activeRunIds: ['active-run'],
++    unconfirmedRunIds: [],
++    choices:
++      phase === 'force-failed'
++        ? ['force']
++        : phase === 'draining' || phase === 'awaiting-choice'
++          ? ['wait', 'force']
++          : [],
++  };
++}
++function fixture(initial = state()) {
++  const api = new FakeApi();
++  let current = initial;
++  api.override('GET /system/shutdown', () => Response.json(current));
++  const run = runRecord();
++  run.pinned.name = 'Named loop';
++  api.override('GET /runs/:id', () => Response.json(run));
++  api.override('POST /system/shutdown', (call) => {
++    current = state((call.body as { action: string }).action === 'wait' ? 'draining' : 'forcing');
++    return Response.json(current, { status: 202 });
++  });
++  return {
++    api,
++    change: (next: State) => {
++      current = next;
++    },
++  };
++}
++
++describe('gateway shutdown notice', () => {
++  it('is absent while running and observes without sending actions', async () => {
++    const { api } = fixture(state('running'));
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    await waitFor(() => expect(api.callsTo('GET', '/system/shutdown')).toHaveLength(1));
++    expect(screen.queryByRole('region', { name: 'Gateway shutdown' })).not.toBeInTheDocument();
++    view.unmount();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++  });
++
++  it.each([
++    ['draining', 'Gateway is draining'],
++    ['awaiting-choice', 'Gateway is draining'],
++    ['forcing', 'Gateway is force stopping'],
++    ['drain-failed', 'Gateway drain failed'],
++    ['force-failed', 'Force stop failed'],
++    ['ready', 'Gateway is stopping'],
++    ['stopped', 'Gateway stopped'],
++    ['exiting', 'Gateway is exiting after failed cleanup'],
++  ] as const)('explains phase %s', async (phase, title) => {
++    const current = state(phase);
++    if (phase.endsWith('failed')) current.error = 'Cleanup failed; ownership retained.';
++    const { api } = fixture(current);
++    renderWith(<ShutdownNotice />, '/', api);
++    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
++    if (!['ready', 'stopped', 'exiting'].includes(phase)) {
++      expect(await screen.findByRole('link', { name: 'Named loop — active-run' })).toHaveAttribute(
++        'href',
++        '/runs/active-run',
++      );
++      expect(screen.getByText(/Independent starts are refused/)).toBeInTheDocument();
++    }
++    if (phase === 'awaiting-choice')
++      expect(screen.getByText(/grace period elapsed/)).toBeInTheDocument();
++    if (phase === 'force-failed')
++      expect(screen.getByText(/store lock stays for reclamation/)).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++  });
++
++  it('keeps waiting once and shows the gateway phase without a local deadline', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture();
++    renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Keep waiting' }));
++    expect(await screen.findByText(/Waiting never starts a browser countdown/)).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown').map((call) => call.body)).toEqual([
++      { action: 'wait' },
++    ]);
++  });
++
++  it('requires confirmation naming interrupted work and uncertain effects; dismissal sends nothing', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture();
++    renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Force stop' }));
++    const dialog = screen.getByRole('dialog');
++    expect(
++      await within(dialog).findByRole('link', { name: 'Named loop — active-run' }),
++    ).toBeInTheDocument();
++    expect(within(dialog).getByText(/External effects may be uncertain/)).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++    await user.click(within(dialog).getByRole('button', { name: 'Go back' }));
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++    await user.click(screen.getByRole('button', { name: 'Force stop' }));
++    await user.click(screen.getByRole('button', { name: 'Confirm force stop' }));
++    expect(
++      await screen.findByRole('heading', { name: 'Gateway is force stopping' }),
++    ).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown').map((call) => call.body)).toEqual([
++      { action: 'force' },
++    ]);
++    expect(
++      api.callsTo('POST', '/system/shutdown')[0]?.headers.get('x-graphgoblin-shutdown-token'),
++    ).toBe('fake-awaiting-choice');
++  });
++
++  it('requires fresh confirmation when another tab reports failed cleanup', async () => {
++    const user = userEvent.setup();
++    const { api, change } = fixture();
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Force stop' }));
++    expect(screen.getByRole('dialog')).toBeInTheDocument();
++    change(state('force-failed'));
++    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    await screen.findByRole('button', { name: 'Force exit' });
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++    await user.click(screen.getByRole('button', { name: 'Force exit' }));
++    await user.click(screen.getByRole('button', { name: 'Confirm force exit' }));
++    expect(
++      api.callsTo('POST', '/system/shutdown')[0]?.headers.get('x-graphgoblin-shutdown-token'),
++    ).toBe('fake-force-failed');
++  });
++
++  it('requires fresh confirmation after a gateway incarnation change even in the same phase', async () => {
++    const user = userEvent.setup();
++    const { api, change } = fixture();
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Force stop' }));
++    change({ ...state(), controlToken: 'new-gateway-token' });
++    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++  });
++
++  it('refuses malformed shutdown snapshots rather than sending an unguarded choice', async () => {
++    const { api } = fixture();
++    const malformed: Partial<State> = state();
++    delete malformed.controlToken;
++    api.override('GET /system/shutdown', () => Response.json(malformed));
++    renderWith(<ShutdownNotice />, '/', api);
++    expect(
++      await screen.findByRole('heading', { name: 'Cannot read gateway shutdown state' }),
++    ).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: 'Force stop' })).not.toBeInTheDocument();
++  });
++
++  it('offers a further confirmed force after failed cleanup and explains lock reclamation', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture(state('force-failed'));
++    api.override('POST /system/shutdown', () => Response.json(state('exiting'), { status: 202 }));
++    renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Force exit' }));
++    expect(
++      within(screen.getByRole('dialog')).getByText(/lock stays for next-start reclamation/),
++    ).toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Confirm force exit' }));
++    expect(
++      await screen.findByRole('heading', { name: 'Gateway is exiting after failed cleanup' }),
++    ).toBeInTheDocument();
++  });
++
++  it('shows 409 current state from a stale second tab without repeating the action', async () => {
++    const user = userEvent.setup();
++    const { api, change } = fixture();
++    const a = renderWith(<ShutdownNotice />, '/', api);
++    const b = renderWith(<ShutdownNotice />, '/', api);
++    await within(a.container).findByRole('button', { name: 'Keep waiting' });
++    await within(b.container).findByRole('button', { name: 'Keep waiting' });
++    // Another control won the transition while this tab still displays its prior snapshot.
++    change(state('forcing'));
++    api.override('POST /system/shutdown', () => Response.json(state('forcing'), { status: 409 }));
++    await user.click(within(b.container).getByRole('button', { name: 'Keep waiting' }));
++    expect(
++      await within(b.container).findByText(/Shutdown changed in another tab/),
++    ).toBeInTheDocument();
++    expect(
++      within(b.container).getByRole('heading', { name: 'Gateway is force stopping' }),
++    ).toBeInTheDocument();
++    await act(() => a.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    expect(
++      await within(a.container).findByRole('heading', { name: 'Gateway is force stopping' }),
++    ).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(1);
++  });
++
++  it('shows running truthfully when a stale choice meets a restarted gateway', async () => {
++    const user = userEvent.setup();
++    const { api, change } = fixture();
++    renderWith(<ShutdownNotice />, '/', api);
++    await screen.findByRole('button', { name: 'Keep waiting' });
++    change(state('running'));
++    api.override('POST /system/shutdown', () => Response.json(state('running'), { status: 409 }));
++    await user.click(screen.getByRole('button', { name: 'Keep waiting' }));
++    expect(await screen.findByRole('heading', { name: 'Gateway is running' })).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: 'Force stop' })).not.toBeInTheDocument();
++  });
++
++  it('stops shutdown polling after connection closure and allows an explicit read to recover', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture();
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    await screen.findByRole('button', { name: 'Keep waiting' });
++    api.override('GET /system/shutdown', () => {
++      throw new TypeError('connection reset');
++    });
++    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    expect(
++      await screen.findByRole('heading', { name: 'Gateway stopped or disconnected' }),
++    ).toBeInTheDocument();
++    const count = api.callsTo('GET', '/system/shutdown').length;
++    await new Promise((done) => setTimeout(done, 2100));
++    expect(api.callsTo('GET', '/system/shutdown')).toHaveLength(count);
++    api.override('GET /system/shutdown', () => Response.json(state('running')));
++    await user.click(screen.getByRole('button', { name: 'Check gateway state' }));
++    await waitFor(() =>
++      expect(screen.queryByRole('region', { name: 'Gateway shutdown' })).not.toBeInTheDocument(),
++    );
++  });
++
++  it('reports a stopped or disconnected gateway when a quick drain finishes between status polls', async () => {
++    const { api } = fixture(state('running'));
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    await waitFor(() =>
++      expect(view.queryClient.getQueryData<State>(['gateway-shutdown'])?.phase).toBe('running'),
++    );
++    api.override('GET /system/shutdown', () => {
++      throw new TypeError('listener already closed');
++    });
++    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    expect(
++      await screen.findByRole('heading', { name: 'Gateway stopped or disconnected' }),
++    ).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++  });
++
++  it('observes connection closure after readiness rather than staying at stopping forever', async () => {
++    const { api } = fixture(state('ready'));
++    renderWith(<ShutdownNotice />, '/', api);
++    await screen.findByRole('heading', { name: 'Gateway is stopping' });
++    api.override('GET /system/shutdown', () => {
++      throw new TypeError('listener closed');
++    });
++    expect(
++      await screen.findByRole(
++        'heading',
++        { name: 'Gateway stopped or disconnected' },
++        { timeout: 4000 },
++      ),
++    ).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++  });
++
++  it('does not retry an action whose network outcome is unknown', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture();
++    api.override('POST /system/shutdown', () => {
++      throw new TypeError('lost response');
++    });
++    renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Keep waiting' }));
++    expect(await screen.findByText(/action outcome is unknown/)).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(1);
++  });
++
++  it('explains refused actions without claiming an unknown outcome', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture();
++    api.override('POST /system/shutdown', () => problem(403, 'FORBIDDEN'));
++    renderWith(<ShutdownNotice />, '/', api);
++    await user.click(await screen.findByRole('button', { name: 'Keep waiting' }));
++    expect(await screen.findByText(/Actions require system:write permission/)).toBeInTheDocument();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(1);
++  });
++
++  it('stays absent for a key that cannot read shutdown state while the gateway runs', async () => {
++    const { api } = fixture(state('running'));
++    api.override('GET /system/shutdown', () => problem(403, 'FORBIDDEN'));
++    renderWith(<ShutdownNotice />, '/', api);
++    await waitFor(() => expect(api.callsTo('GET', '/system/shutdown')).toHaveLength(1));
++    expect(screen.queryByRole('region', { name: 'Gateway shutdown' })).not.toBeInTheDocument();
++  });
++
++  it('shows read failures and retains identities when names cannot be read', async () => {
++    const { api } = fixture(state('draining'));
++    api.override('GET /runs/:id', () => problem(403, 'FORBIDDEN'));
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    expect(await screen.findByRole('link', { name: 'active-run' })).toHaveAttribute(
++      'href',
++      '/runs/active-run',
++    );
++    api.override('GET /system/shutdown', () => problem(403, 'FORBIDDEN'));
++    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    expect(
++      await screen.findByRole('heading', { name: 'Cannot read gateway shutdown state' }),
++    ).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: 'Force stop' })).not.toBeInTheDocument();
++  });
++
++  it('explains empty work and unconfirmed identities', async () => {
++    const current = state('draining');
++    current.activeRunIds = [];
++    const { api } = fixture(current);
++    const view = renderWith(<ShutdownNotice />, '/', api);
++    expect(await screen.findByText(/No active run identities reported/)).toBeInTheDocument();
++    current.unconfirmedRunIds = ['unconfirmed-run'];
++    await act(() => view.queryClient.invalidateQueries({ queryKey: ['gateway-shutdown'] }));
++    expect(await screen.findByRole('link', { name: /unconfirmed-run/ })).toBeInTheDocument();
++  });
++
++  it('persists across app navigation and sends no action on navigation or unmount', async () => {
++    const user = userEvent.setup();
++    const { api } = fixture(state('draining'));
++    const view = renderApp('/loops', api);
++    await screen.findByRole('heading', { name: 'Gateway is draining' });
++    await user.click(screen.getByRole('link', { name: 'Events' }));
++    expect(screen.getByRole('heading', { name: 'Gateway is draining' })).toBeInTheDocument();
++    view.unmount();
++    expect(api.callsTo('POST', '/system/shutdown')).toHaveLength(0);
++  });
++});
+diff --git a/apps/web/src/app/ShutdownNotice.tsx b/apps/web/src/app/ShutdownNotice.tsx
+new file mode 100644
+index 00000000..846ec127
+--- /dev/null
++++ b/apps/web/src/app/ShutdownNotice.tsx
+@@ -0,0 +1,289 @@
++import { GraphGoblinApiError, unwrap, type ResponseBody } from '@graphgoblin/api-client';
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
++import { useState } from 'react';
++import { Link } from 'react-router';
++import { useApi } from '../api/context.js';
++import { Button, Dialog } from '../components/ui/index.js';
++
++type ShutdownState = ResponseBody<'/system/shutdown', 'get'>;
++function checkedSnapshot(snapshot: ShutdownState): ShutdownState {
++  if (typeof snapshot.controlToken !== 'string' || snapshot.controlToken === '')
++    throw new Error('Gateway shutdown response is missing its control token.');
++  return snapshot;
++}
++
++const KEY = ['gateway-shutdown'] as const;
++const PHASE_TITLE: Record<ShutdownState['phase'], string> = {
++  running: 'Gateway is running',
++  draining: 'Gateway is draining',
++  'awaiting-choice': 'Gateway is draining',
++  forcing: 'Gateway is force stopping',
++  'drain-failed': 'Gateway drain failed',
++  'force-failed': 'Force stop failed',
++  exiting: 'Gateway is exiting after failed cleanup',
++  ready: 'Gateway is stopping',
++  stopped: 'Gateway stopped',
++};
++const TERMINAL = new Set<ShutdownState['phase']>(['ready', 'stopped', 'exiting']);
++
++/** Names are optional decoration: restricted/unavailable run reads must never hide the choice. */
++function RunLink({ id }: { id: string }) {
++  const client = useApi();
++  const name = useQuery({
++    queryKey: ['shutdown-run-name', id],
++    queryFn: async ({ signal }) => {
++      const run = unwrap(await client.GET('/runs/{id}', { params: { path: { id } }, signal }));
++      return run.pinned.name;
++    },
++    retry: false,
++    staleTime: Infinity,
++    refetchOnWindowFocus: false,
++    refetchOnReconnect: false,
++  });
++  return (
++    <Link className="text-link underline wrap-anywhere" to={`/runs/${id}`}>
++      {name.data ? `${name.data} — ${id}` : id}
++    </Link>
++  );
++}
++
++function Work({ ids }: { ids: string[] }) {
++  return ids.length ? (
++    <ul className="max-h-40 list-disc overflow-auto pl-5">
++      {ids.map((id) => (
++        <li key={id}>
++          <RunLink id={id} />
++        </li>
++      ))}
++    </ul>
++  ) : (
++    <p>No active run identities reported. Cleanup may still be finishing.</p>
++  );
++}
++
++/** A phase/incarnation token change unmounts this confirmation and requires a new choice. */
++function ShutdownChoices({
++  state,
++  choose,
++}: {
++  state: ShutdownState;
++  choose: (choice: 'wait' | 'force', token: string) => void;
++}) {
++  const [confirm, setConfirm] = useState(false);
++  const canForce = state.choices.includes('force');
++  const canWait = state.choices.includes('wait');
++  const failedForce = state.phase === 'force-failed';
++  const ids = state.activeRunIds;
++  const send = (choice: 'wait' | 'force') => {
++    setConfirm(false);
++    choose(choice, state.controlToken);
++  };
++  return (
++    <>
++      {canWait ? (
++        <Button size="sm" onClick={() => send('wait')}>
++          Keep waiting
++        </Button>
++      ) : null}
++      {canForce ? (
++        <Button size="sm" variant="destructive" onClick={() => setConfirm(true)}>
++          {failedForce ? 'Force exit' : 'Force stop'}
++        </Button>
++      ) : null}
++      {confirm && canForce ? (
++        <Dialog
++          open
++          onClose={() => setConfirm(false)}
++          title={failedForce ? 'Force exit after failed cleanup?' : 'Force stop active work?'}
++          footer={
++            <>
++              <Button variant="outline" onClick={() => setConfirm(false)}>
++                Go back
++              </Button>
++              <Button variant="destructive" onClick={() => send('force')}>
++                {failedForce ? 'Confirm force exit' : 'Confirm force stop'}
++              </Button>
++            </>
++          }
++        >
++          <p>
++            {failedForce
++              ? 'Exit without confirmed cleanup. The lock stays for next-start reclamation; native processes may still need inspection.'
++              : 'Interrupt the active executors and queued family work listed below, including required children. Already saved waits and paused runs stay saved.'}
++          </p>
++          <Work ids={ids} />
++          <p>
++            External effects may be uncertain. Interrupted work does not automatically resume;
++            inspect the run evidence before an explicit replay. Work may finish or a required child
++            may start while you decide.
++          </p>
++        </Dialog>
++      ) : null}
++    </>
++  );
++}
++
++/** Observation never sends a shutdown action, including on unmount, reload or navigation. */
++export function ShutdownNotice() {
++  const client = useApi();
++  const cache = useQueryClient();
++  const [message, setMessage] = useState('');
++  const action = useMutation({
++    retry: false,
++    mutationFn: async ({ choice, token }: { choice: 'wait' | 'force'; token: string }) => {
++      await cache.cancelQueries({ queryKey: KEY });
++      const result = await client.POST('/system/shutdown', {
++        body: { action: choice },
++        params: { header: { 'x-graphgoblin-shutdown-token': token } },
++      });
++      if (result.response.status === 409 && result.error)
++        return { state: checkedSnapshot(result.error), conflict: true };
++      return { state: checkedSnapshot(unwrap(result)), conflict: false };
++    },
++    onSuccess: ({ state, conflict }) => {
++      cache.setQueryData(KEY, state);
++      setMessage(
++        conflict
++          ? 'Shutdown changed in another tab or control. Showing the current gateway state.'
++          : '',
++      );
++    },
++    onError: (error) => {
++      setMessage(
++        error instanceof GraphGoblinApiError && (error.status === 401 || error.status === 403)
++          ? 'The shutdown action was refused. Actions require system:write permission.'
++          : 'The action outcome is unknown. It will not be retried automatically. Check gateway state before trying again.',
++      );
++      void cache.invalidateQueries({ queryKey: KEY });
++    },
++  });
++  const status = useQuery({
++    queryKey: KEY,
++    queryFn: async ({ signal }) => {
++      const snapshot = unwrap(await client.GET('/system/shutdown', { signal, cache: 'no-store' }));
++      return checkedSnapshot(snapshot);
++    },
++    enabled: !action.isPending,
++    retry: false,
++    staleTime: 1000,
++    // A running gateway is checked every ten seconds, a shutting-down one every two, so
++    // ready/exiting still observe HTTP closure. After a failure this query does not poll: an
++    // explicit check reads it again, and the app's reachability probe (startReachability)
++    // refetches it once the API answers after a transport failure. No action is ever retried.
++    refetchInterval: (query) =>
++      query.state.error || query.state.data?.phase === 'stopped'
++        ? false
++        : query.state.data?.phase === 'running'
++          ? 10_000
++          : 2000,
++    refetchOnWindowFocus: false,
++    refetchOnReconnect: false,
++  });
++  const state = status.data;
++  const networkFailure = status.error instanceof GraphGoblinApiError && status.error.status === 0;
++  // A key without system:read cannot observe shutdown; that is not a shutdown to report.
++  const forbidden =
++    status.error instanceof GraphGoblinApiError &&
++    (status.error.status === 401 || status.error.status === 403);
++  if ((!state || state.phase === 'running') && (!status.error || forbidden) && !message)
++    return null;
++  const closing = state !== undefined && networkFailure;
++  const terminal = state !== undefined && TERMINAL.has(state.phase);
++  const available = !status.error && !terminal && !action.isPending;
++  const failedForce = state?.phase === 'force-failed';
++  const ids = state?.activeRunIds ?? [];
++  const unconfirmed = state?.unconfirmedRunIds ?? [];
++  const title = closing
++    ? 'Gateway stopped or disconnected'
++    : status.error
++      ? 'Cannot read gateway shutdown state'
++      : state
++        ? PHASE_TITLE[state.phase]
++        : 'Gateway shutdown state unavailable';
++  const send = (choice: 'wait' | 'force', token: string) => {
++    setMessage('');
++    action.mutate({ choice, token });
++  };
++  return (
++    <section
++      aria-label="Gateway shutdown"
++      className="grid gap-2 border-b border-status-warn-border bg-status-warn-bg px-6 py-3 text-sm wrap-anywhere"
++    >
++      <h2 aria-live="polite" className="font-semibold text-status-warn-fg">
++        {title}
++      </h2>
++      {closing || terminal ? (
++        <p>
++          {closing
++            ? 'The shutdown connection closed; the gateway may have stopped. Check its process if the disconnect was unexpected.'
++            : 'HTTP is closing. This page keeps the last observed state.'}{' '}
++          No shutdown action will be retried automatically.
++        </p>
++      ) : state && state.phase !== 'running' ? (
++        <>
++          <p>
++            Independent starts are refused. Active work is finishing; queued independent work
++            remains recoverable after restart. Durable waits and paused runs remain saved.
++          </p>
++          {state.phase === 'awaiting-choice' ? (
++            <p>
++              The gateway grace period elapsed. Keep waiting without a hidden kill timer, or
++              deliberately interrupt the active work.
++            </p>
++          ) : state.phase === 'forcing' ? (
++            <p>
++              Interrupting active work and checking cleanup before releasing the store. External
++              effects may be uncertain.
++            </p>
++          ) : null}
++          {state.phase === 'draining' ? (
++            <p>
++              Waiting never starts a browser countdown. Any further choice comes from the gateway.
++            </p>
++          ) : null}
++          {state.error ? <p>{state.error}</p> : null}
++          {failedForce ? (
++            <p>
++              A further force exits with failure without confirmed cleanup. The store lock stays for
++              reclamation on the next start. Inspect logs and native processes first.
++            </p>
++          ) : null}
++          {state.phase === 'drain-failed' ? (
++            <p>
++              The listener, store and lock remain held. Inspect gateway logs; no further choice is
++              available.
++            </p>
++          ) : null}
++          <Work ids={ids} />
++          {unconfirmed.length ? (
++            <div>
++              <p>Unconfirmed termination evidence (may be from an earlier stop):</p>
++              <Work ids={unconfirmed} />
++            </div>
++          ) : null}
++        </>
++      ) : null}
++      {status.error && !closing ? (
++        <p>Shutdown status is unavailable. Check the connection and system:read permission.</p>
++      ) : null}
++      {message ? <p role="status">{message}</p> : null}
++      <div className="flex flex-wrap gap-2">
++        {state && available ? (
++          <ShutdownChoices key={state.controlToken} state={state} choose={send} />
++        ) : null}
++        {status.error ? (
++          <Button
++            size="sm"
++            variant="outline"
++            onClick={() => {
++              setMessage('');
++              void status.refetch();
++            }}
++          >
++            Check gateway state
++          </Button>
++        ) : null}
++      </div>
++    </section>
++  );
++}
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 67dc0ba9..303fcf66 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -621,7 +621,18 @@ before expiry. A force cleanup failure offers `["force"]`: a further explicit fo
+ code 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed
+ terminations remain warnings without preventing normal completion. A drain observation
+ failure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.
+-#319 will build the browser interaction on these phases and controls.
++Shutdown responses also carry an opaque `controlToken` (#319). A client can send it
++in `x-graphgoblin-shutdown-token` on POST. The gateway checks it synchronously before
++dispatch and returns 409 with the current snapshot if the phase or gateway incarnation
++changed. This prevents a delayed force from acknowledging another request's newly
++failed cleanup. The browser always sends this precondition and resets confirmation
++when the token changes. Unconditional operator/API actions remain supported; signals
++and the controller's force semantics are unchanged. The token is a concurrency value,
++not an authentication credential. Reads require `system:read`; actions require
++`system:write`, including conditional actions.
++
++Existing `GET /runs/{id}` reads supply pinned loop names when permitted, with run IDs
++as the fallback. See docs/09 for the app-wide notice.
+ 
+ Independent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return
+ 503 before saving any inbound record or dedupe key, so the same Event can be retried after
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index c73df7ee..837e83bc 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -769,3 +769,40 @@ Switching to Claude also starts its supported `read-only`/`never` policy; other
+ options remain for correction when unsupported. Runs never substitute models. Runtime resolution
+ still uses node, loop, owner and process defaults; this action adds no runtime fallback or stored
+ value migration. Model and effort sit on the node's Settings, outside Advanced (#205).
++
++## Gateway shutdown notice (#319)
++
++Every page observes `GET /system/shutdown`. While draining, a notice explains that
++independent starts are refused, active work may finish, and durable waits/pauses and
++queued independent work survive restart (D-038). Active run IDs link to inspectors;
++existing run reads supply the immutable pinned loop name, with IDs retained if those
++reads are unavailable or lack permission. Earlier unconfirmed terminations are listed
++separately from active force targets.
++
++At gateway grace expiry the notice explains the choice. **Keep waiting** acknowledges
++waiting with no browser countdown or automatic force. Both choices follow the gateway's
++advertised availability, including force before expiry. **Force stop** first opens a
++confirmation naming active runs, required child work, uncertain external effects, and
++non-automatic recovery. **Force exit** after `force-failed` separately confirms leaving
++the lock for next-start reclamation without confirmed process cleanup. `drain-failed`
++offers inspection, not an incompatible force transition. No browser control starts drain.
++
++Observation polls every ten seconds while the gateway is running and every two seconds
++once a shutdown phase is observed, with no automatic retry on failure, focus or
++reconnect. The stopped phase and observation errors stop this polling; ready/exiting
++continue to observe HTTP closure. An explicit **Check gateway state** performs a read, and
++the app's reachability probe refetches it after a transport failure once the API answers.
++A key without `system:read` (401/403) shows no notice while the gateway runs.
++A lost connection after any healthy snapshot, including a quick drain between polls, says
++**Gateway stopped or disconnected**, preserving the distinction between an observed
++phase and a lost connection. Existing application connectivity recovery retains its
++bounded backoff. Actions are never automatically retried; a lost action response
++reports an unknown outcome. A 409 replaces the displayed snapshot with the returned
++current state, including when another tab acted first. Each tab observes the gateway;
++navigation, reload and tab closure send no shutdown action. Each response includes an opaque `controlToken`. Choices send it as
++`x-graphgoblin-shutdown-token`; the gateway compares it synchronously before dispatch.
++A phase change or another gateway incarnation makes a stale choice return 409 instead
++of turning it into a different force operation. Changing the token unmounts any open
++confirmation, requiring a fresh deliberate choice. A missing token is an invalid
++snapshot and never permits an unguarded browser choice. These choices preserve engine
++drain, seal, force and recovery semantics (ADR-0049).
+diff --git a/docs/decisions/ADR-0049-deliberate-shutdown.md b/docs/decisions/ADR-0049-deliberate-shutdown.md
+index 246a44b8..cfad9868 100644
+--- a/docs/decisions/ADR-0049-deliberate-shutdown.md
++++ b/docs/decisions/ADR-0049-deliberate-shutdown.md
+@@ -130,3 +130,23 @@ This change adds no browser prompt, launcher or interactive UI. It does not impl
+   stopped polling from consuming slots, but closing admission between the gate and the
+   asynchronous store write retains the pre-existing slot/admission race. Atomic cron-slot
+   admission remains outside this bolt.
++
++## Browser implementation amendment (2026-10-24, #319)
++
++The application shell now observes the existing controller through its typed routes.
++It offers only advertised wait/force choices, with an explicit force confirmation
++and a separate failed-cleanup exit confirmation. Existing run snapshots supply pinned
++loop names. Shutdown snapshots include an opaque concurrency token, and browser
++choices send it as `x-graphgoblin-shutdown-token`. A synchronous comparison before
++dispatch rejects stale phase/incarnation choices with the current 409 snapshot. This
++prevents a delayed force from acknowledging cleanup failure caused by another tab.
++A token change also resets confirmation. Unconditional API/operator requests retain
++the existing semantics; the controller and engine are unchanged. A stale action's 409 is a current-state
++snapshot. Tab lifecycle only observes, and network failures never resend actions.
++The UI does not initiate drain or change D-038, force, seal or recovery semantics.
++Two-second observation polling is an engineering choice to bound idle request cost;
++it stops on the stopped phase or errors and requires an explicit check after errors.
++Ready/exiting continue observing until HTTP closes, so the last notice does not stay
++permanently at stopping after a confirmed control response.
++A disconnected gateway is labelled stopped or disconnected, not fabricated as an
++observed `stopped` response. No new architecture decision is introduced.
+diff --git a/docs/guide/07-troubleshooting.md b/docs/guide/07-troubleshooting.md
+index 6eccfd9e..d90d915c 100644
+--- a/docs/guide/07-troubleshooting.md
++++ b/docs/guide/07-troubleshooting.md
+@@ -280,7 +280,19 @@ or `{ "action": "force" }` to interrupt. A second Ctrl+C or SIGTERM at least one
+ Signals inside the second after each accepted signal are coalesced because pnpm may forward a duplicate of one
+ keypress.
+ Wait has no hidden kill timer. Cancelling a particular run remains a separate command.
+-The browser shutdown-choice UI is follow-on #319; closing the tab only stops observation.
++Every browser page now shows the drain notice (#319), active runs linked to their
++inspectors, and **Keep waiting** / **Force stop**. Force requires confirmation naming
++the work and warning that external effects may be uncertain. Closing, reloading or
++navigating a tab only changes observation; none sends a shutdown action. Starting a
++drain remains a terminal/API operation.
++
++If another tab acts first, a 409 shows the current gateway state. A changed phase
++or restarted gateway closes any open force confirmation and requires a fresh choice. A lost action
++response has an unknown outcome and is never automatically retried. After HTTP
++closes, **Gateway stopped or disconnected** keeps the last state without repeated
++shutdown polling; **Check gateway state** explicitly checks after restart. This
++message alone does not prove process exit or resource release. Read access needs
++`system:read`; actions need `system:write`; optional run names use `runs:read`.
+ 
+ Forced runs show `RUN_INTERRUPTED_BY_STOP`, the node and attempt, and possible external
+ effects. They do not automatically resume. Inspect what happened before explicitly replaying.
+diff --git a/docs/reference/api.md b/docs/reference/api.md
+index db224dfa..aa8bfd44 100644
+--- a/docs/reference/api.md
++++ b/docs/reference/api.md
+@@ -114,12 +114,12 @@ Schedules, webhook endpoints, and the public /hooks receiver.
+ 
+ Health, version, harness preflight.
+ 
+-| Method | Path                     | Summary                                                                                        | Parameters | Request body | Responses |
+-| ------ | ------------------------ | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
+-| GET    | `/system/model-defaults` | Process model and effort defaults, before loop and owner overrides                             | -          | -            | 200       |
+-| GET    | `/system/shutdown`       | Observe gateway drain and force-stop state                                                     | -          | -            | 200       |
+-| POST   | `/system/shutdown`       | Drain, keep waiting, or explicitly force-stop the gateway                                      | -          | `{ action }` | 202, 409  |
+-| GET    | `/healthz`               | Liveness check                                                                                 | -          | -            | 200       |
+-| GET    | `/version`               | API name and version                                                                           | -          | -            | 200       |
+-| GET    | `/system/preflight`      | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
+-| GET    | `/harness/preflight`     | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |
++| Method | Path                     | Summary                                                                                        | Parameters                                      | Request body | Responses |
++| ------ | ------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------ | --------- |
++| GET    | `/system/model-defaults` | Process model and effort defaults, before loop and owner overrides                             | -                                               | -            | 200       |
++| GET    | `/system/shutdown`       | Observe gateway drain and force-stop state                                                     | -                                               | -            | 200       |
++| POST   | `/system/shutdown`       | Drain, keep waiting, or explicitly force-stop the gateway                                      | `x-graphgoblin-shutdown-token`: string (header) | `{ action }` | 202, 409  |
++| GET    | `/healthz`               | Liveness check                                                                                 | -                                               | -            | 200       |
++| GET    | `/version`               | API name and version                                                                           | -                                               | -            | 200       |
++| GET    | `/system/preflight`      | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -                                               | -            | 200       |
++| GET    | `/harness/preflight`     | Is each configured harness installed and authenticated?                                        | -                                               | -            | 200       |
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+index f5ee7c9f..49799a50 100644
+--- a/packages/api-client/openapi.json
++++ b/packages/api-client/openapi.json
+@@ -17734,6 +17734,9 @@
+                     },
+                     "error": {
+                       "type": "string"
++                    },
++                    "controlToken": {
++                      "type": "string"
+                     }
+                   },
+                   "required": [
+@@ -17741,7 +17744,8 @@
+                     "graceMs",
+                     "activeRunIds",
+                     "unconfirmedRunIds",
+-                    "choices"
++                    "choices",
++                    "controlToken"
+                   ],
+                   "additionalProperties": false
+                 }
+@@ -17779,6 +17783,17 @@
+             }
+           }
+         },
++        "parameters": [
++          {
++            "schema": {
++              "type": "string",
++              "minLength": 1
++            },
++            "in": "header",
++            "name": "x-graphgoblin-shutdown-token",
++            "required": false
++          }
++        ],
+         "responses": {
+           "202": {
+             "description": "Default Response",
+@@ -17834,6 +17849,9 @@
+                     },
+                     "error": {
+                       "type": "string"
++                    },
++                    "controlToken": {
++                      "type": "string"
+                     }
+                   },
+                   "required": [
+@@ -17841,7 +17859,8 @@
+                     "graceMs",
+                     "activeRunIds",
+                     "unconfirmedRunIds",
+-                    "choices"
++                    "choices",
++                    "controlToken"
+                   ],
+                   "additionalProperties": false
+                 }
+@@ -17902,6 +17921,9 @@
+                     },
+                     "error": {
+                       "type": "string"
++                    },
++                    "controlToken": {
++                      "type": "string"
+                     }
+                   },
+                   "required": [
+@@ -17909,7 +17931,8 @@
+                     "graceMs",
+                     "activeRunIds",
+                     "unconfirmedRunIds",
+-                    "choices"
++                    "choices",
++                    "controlToken"
+                   ],
+                   "additionalProperties": false
+                 }
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+index 7136cf72..982f0f7d 100644
+--- a/packages/api-client/src/generated/schema.ts
++++ b/packages/api-client/src/generated/schema.ts
+@@ -88,6 +88,7 @@ export interface paths {
+                             unconfirmedRunIds: string[];
+                             choices: ("wait" | "force")[];
+                             error?: string | undefined;
++                            controlToken: string;
+                         };
+                     };
+                 };
+@@ -98,7 +99,9 @@ export interface paths {
+         post: {
+             parameters: {
+                 query?: never;
+-                header?: never;
++                header?: {
++                    "x-graphgoblin-shutdown-token"?: string;
++                };
+                 path?: never;
+                 cookie?: never;
+             };
+@@ -127,6 +130,7 @@ export interface paths {
+                             unconfirmedRunIds: string[];
+                             choices: ("wait" | "force")[];
+                             error?: string | undefined;
++                            controlToken: string;
+                         };
+                     };
+                 };
+@@ -146,6 +150,7 @@ export interface paths {
+                             unconfirmedRunIds: string[];
+                             choices: ("wait" | "force")[];
+                             error?: string | undefined;
++                            controlToken: string;
+                         };
+                     };
+                 };

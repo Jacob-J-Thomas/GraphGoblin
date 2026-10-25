@@ -1,0 +1,19 @@
+import { spawn } from 'node:child_process';
+import { createWriteStream } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-c7-319-qa/round-2');
+const results=[];
+for(const [name,command] of [
+ ['api-shutdown','pnpm.cmd --filter @graphgoblin/api test -- src/shutdown'],
+ ['web-shutdown-notice','pnpm.cmd --filter @graphgoblin/web test -- src/app/ShutdownNotice'],
+]){
+ const started=new Date().toISOString(),begin=Date.now();console.log('START '+command);
+ const log=createWriteStream(resolve(out,name+'.log.txt'));
+ const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ child.stdout.on('data',b=>log.write(b));child.stderr.on('data',b=>log.write(b));
+ const exit=await new Promise((r,j)=>{child.on('error',j);child.on('close',(code,signal)=>r({code,signal}));});
+ await new Promise(r=>log.end(r));results.push({command,node:process.version,started,elapsedMs:Date.now()-begin,...exit,alone:true});
+ await writeFile(resolve(out,'requested-tests-results.json'),JSON.stringify(results,null,2));console.log('END '+name+' '+JSON.stringify(exit));
+}
+if(results.some(r=>r.code!==0))process.exitCode=1;
