@@ -133,21 +133,45 @@ it('reads bounded history windows in both directions and latest evidence without
     items: all.slice(2, 4),
     hasOlder: true,
     hasNewer: true,
+    olderThan: 3,
+    newerThan: 4,
   });
   expect(await store.window(runId, 0, 'newer', 2)).toEqual({
     items: all.slice(0, 2),
     hasOlder: false,
     hasNewer: true,
+    olderThan: 1,
+    newerThan: 2,
   });
   expect(await store.window(runId, 4, 'newer', 2)).toEqual({
     items: all.slice(4),
     hasOlder: true,
     hasNewer: false,
+    olderThan: 5,
+    newerThan: 5,
   });
   expect(await store.window('absent', 0, 'newer', 2)).toEqual({
     items: [],
     hasOlder: false,
     hasNewer: false,
+    olderThan: 1,
+    newerThan: 0,
+  });
+  // An empty page still bounds both sides at its seek position, so the event there stays
+  // reachable: before the first event, and past the last.
+  expect(await store.window(runId, 1, 'older', 2)).toEqual({
+    items: [],
+    hasOlder: false,
+    hasNewer: true,
+    olderThan: 1,
+    newerThan: 0,
+  });
+  expect(await store.window(runId, 5, 'newer', 2)).toEqual({
+    items: [],
+    hasOlder: true,
+    hasNewer: false,
+    olderThan: 6,
+    newerThan: 5,
   });
   expect(await store.latest(runId, 'run.cancelled')).toEqual(all[4]);
   expect(await store.latest(runId, 'run.cancelled', 5)).toEqual(all[2]);

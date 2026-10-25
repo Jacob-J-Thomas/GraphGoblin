@@ -180,8 +180,10 @@ export class SqliteEventStore implements EventStorePort {
       .limit(limit);
     if (direction === 'older') rows.reverse();
     const items = rows.map(toEvent);
-    const first = items[0]?.seq ?? seq;
-    const last = items.at(-1)?.seq ?? seq;
+    // The exclusive bounds of the neighbouring pages. An empty page still splits the log at its
+    // seek position, so the event at that position belongs to the side the page did not read.
+    const olderThan = items[0]?.seq ?? (direction === 'older' ? seq : seq + 1);
+    const newerThan = items.at(-1)?.seq ?? (direction === 'older' ? Math.max(seq - 1, 0) : seq);
     const exists = async (bound: number, side: 'older' | 'newer') =>
       (
         await this.db
@@ -195,7 +197,13 @@ export class SqliteEventStore implements EventStorePort {
           )
           .limit(1)
       ).length > 0;
-    return { items, hasOlder: await exists(first, 'older'), hasNewer: await exists(last, 'newer') };
+    return {
+      items,
+      hasOlder: await exists(olderThan, 'older'),
+      hasNewer: await exists(newerThan, 'newer'),
+      olderThan,
+      newerThan,
+    };
   }
 
   /** Latest matching evidence, independent of the browser window; indexed by run/type/seq. */

@@ -264,17 +264,15 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           position.direction,
           limit,
         );
-        const first = page.items[0]?.seq ?? position.seq;
-        const last = page.items.at(-1)?.seq ?? position.seq;
         return {
           items: page.items,
-          nextAfter: last,
+          nextAfter: page.newerThan,
           hasMore: page.hasNewer,
           olderCursor: page.hasOlder
-            ? historyCursor({ runId: request.params.id, seq: first, direction: 'older' })
+            ? historyCursor({ runId: request.params.id, seq: page.olderThan, direction: 'older' })
             : null,
           newerCursor: page.hasNewer
-            ? historyCursor({ runId: request.params.id, seq: last, direction: 'newer' })
+            ? historyCursor({ runId: request.params.id, seq: page.newerThan, direction: 'newer' })
             : null,
         };
       }

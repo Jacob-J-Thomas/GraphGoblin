@@ -5,6 +5,7 @@ import { expect, it } from 'vitest';
 import type { ContextThread, RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { reconcileThread } from '@graphgoblin/domain';
+import { historyCursor } from '../run-history.js';
 import { createTestApp } from '../testing/test-app.js';
 
 it('browses opaque run-scoped history in both directions and resolves threads beyond the browser window', async () => {
@@ -58,6 +59,26 @@ it('browses opaque run-scoped history in both directions and resolves threads be
     expect(new Set(collected.map((e) => e.seq)).size).toBe(all.length);
     const next = (await get(`cursor=${page.newerCursor}&limit=128`)).json<Page>();
     expect(next.items[0]?.seq).toBe(page.items.at(-1)!.seq + 1);
+    // An empty page before the first event continues at event 1, and an empty page past the
+    // tail continues back to the tail itself.
+    const beforeFirst = (await get('around=0&limit=1')).json<
+      Page & { nextAfter: number; hasMore: boolean }
+    >();
+    expect(beforeFirst).toMatchObject({
+      items: [],
+      nextAfter: 0,
+      hasMore: true,
+      olderCursor: null,
+    });
+    expect((await get(`cursor=${beforeFirst.newerCursor}&limit=1`)).json<Page>().items).toEqual(
+      all.slice(0, 1),
+    );
+    const pastTail = historyCursor({ runId: run.id, seq: total, direction: 'newer' });
+    const afterLast = (await get(`cursor=${pastTail}&limit=1`)).json<Page>();
+    expect(afterLast).toMatchObject({ items: [], newerCursor: null });
+    expect((await get(`cursor=${afterLast.olderCursor}&limit=1`)).json<Page>().items).toEqual(
+      all.slice(-1),
+    );
     for (const at of [0, 1, original.length, 129, total - 1, total]) {
       const response = await t.app.inject({ url: `/runs/${run.id}/thread?at=${at}`, headers });
       expect(response.statusCode, response.body).toBe(200);
