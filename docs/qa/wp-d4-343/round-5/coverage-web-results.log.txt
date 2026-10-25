@@ -1,0 +1,98 @@
+
+ FAIL  src/editor/ClassifierField.test.tsx > ClassifierField > preserves the saved but unavailable classifier scorer 
+with a clear reason
+Error: expect(element).toHaveAccessibleDescription()
+
+Expected element to have accessible description:
+  /Scorer \(scorer\) cannot answer Choice decisions\. Choose a Choice-capable classifier\./
+Received:
+  Explicit classifier catalog id. Loading classifier models…
+ ❯ src/editor/ClassifierField.test.tsx:102:24
+    100|       const { picker } = setup(decision(model));
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership 
+across reload with unfinished ID "review"
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:371:5
+    369|     { copy: 'set-aside', unfinished: '' },
+    370|     { copy: 'set-aside', unfinished: 'review' },
+    371|   ])(
+       |     ^
+    372|     'restores $copy device ownership across reload with unfinished ID …
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > invalidates a connection-removal review 
+when connections change, and keeps compatible held context on kind change
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:427:3
+    425|   );
+    426|
+    427|   it('invalidates a connection-removal review when connections change,…
+       |   ^
+    428|     const user = userEvent.setup();
+
+ FAIL  src/editor/routing-review.test.ts > routing review regressions > seeded sparse graphs preserve geometry and 
+keep detours below twelve bends
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/routing-review.test.ts:662:3
+    660|   });
+    661|
+    662|   it('seeded sparse graphs preserve geometry and keep detours below tw…
+       |   ^
+    663|     let seed = 0x182026;
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/web/scripts/projections.test.ts.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files %USERPROFILE%/source/repos/GraphGoblin/.claude/workt
+rees/codex-wp-d4-343/apps/web/src/editor/focus-field.cron.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 failed | 132 passed (135)
+      Tests  4 failed | 1694 passed (1698)
+     Errors  2 errors
+   Start at  17:48:56
+   Duration  2931.27s (tests 38%, environment 35%, setup 13%, import 12%, transform 2%, worker 1%)
+
+Environment  jsdom was created 135 times · 1865.81s total, 35% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\web
+
