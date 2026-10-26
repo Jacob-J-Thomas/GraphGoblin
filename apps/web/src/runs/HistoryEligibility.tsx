@@ -23,6 +23,8 @@ export function HistoryEligibility({
   }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [outcome, setOutcome] = useState<string>();
+  const selectionRef = useRef<HTMLSpanElement>(null);
   const generationRef = useRef(0);
 
   const dismiss = () => {
@@ -35,6 +37,7 @@ export function HistoryEligibility({
     const ids = [...runIds];
     setReview({ ids, action });
     setError(undefined);
+    setOutcome(undefined);
     try {
       const preview = await runs.previewDeletion(client, ids);
       if (generationRef.current === request) setReview({ ids, action, preview });
@@ -54,6 +57,13 @@ export function HistoryEligibility({
         token: review.preview.token,
         confirmed: true,
       });
+      const count = review.ids.length;
+      const noun = count === 1 ? 'run' : 'runs';
+      setOutcome(
+        review.action === 'mark'
+          ? `${count} ${noun} marked delete-ready.`
+          : `Deletion approval withdrawn for ${count} ${noun}.`,
+      );
       onConfirmed?.(review.ids);
       if (generationRef.current === request) dismiss();
       await queryClient.invalidateQueries({ queryKey: ['runs'] });
@@ -84,12 +94,22 @@ export function HistoryEligibility({
         >
           Withdraw delete-ready mark
         </Button>
-        <span className="text-sm text-muted" aria-live="polite" aria-atomic="true">
+        <span
+          ref={selectionRef}
+          tabIndex={-1}
+          className="text-sm text-muted"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {runIds.length} selected
+        </span>
+        <span className="text-sm text-muted" aria-live="polite" aria-atomic="true">
+          {outcome}
         </span>
       </div>
       <Dialog
         open={review !== undefined}
+        returnFocus={() => (outcome ? selectionRef.current : undefined)}
         onClose={(reason) => {
           if (!busy || reason === 'dismissed') dismiss();
         }}

@@ -181,6 +181,84 @@ it('leaves approvals and files alone with adequate storage, measures at most onc
   expect(api.container.historyCleanup.status().state).toBe('adequate');
 });
 
+it.each(['early-exit', 'empty-render'] as const)(
+  'reclaims workspaces while retaining an unused terminal template run (%s)',
+  async (mode) => {
+    const { api, poll } = await controlled();
+    const definition =
+      mode === 'early-exit'
+        ? minimalLoop()
+        : singleNodeLoop('Empty template', {
+            id: 'infer',
+            kind: 'inference',
+            label: 'Infer',
+            config: { prompt: { template: 'Hello' } },
+          });
+    const loop = await api.publishLoop({
+      ...definition,
+      settings: { workingDirectory: { kind: 'template', template: '{{trigger.payload.dir}}' } },
+    });
+    const start = await api.app.inject({
+      method: 'POST',
+      url: `/loops/${loop}/runs`,
+      payload: { input: { dir: '' } },
+    });
+    expect(start.statusCode).toBe(202);
+    const retained = start.json<{ run: RunRecord }>().run;
+    await api.idle();
+    expect((await api.container.repos.runs.get(retained.id))?.status).toBe(
+      mode === 'early-exit' ? 'succeeded' : 'failed',
+    );
+    const owners = [await complete(api, true), await complete(api, true)];
+    const workspaces = api.harness.started.map((turn) => turn.workingDirectory);
+    expect(workspaces).toHaveLength(2);
+    for (const path of workspaces) await writeFile(join(path, 'owned'), 'reclaim');
+    await mark(
+      api,
+      owners.map((run) => run.id),
+    );
+    await poll(0);
+    for (const path of workspaces)
+      await expect(lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect((await api.app.inject(`/runs/${retained.id}`)).statusCode).toBe(200);
+    expect(api.container.historyCleanup.status()).toMatchObject({
+      deletedRuns: 2,
+      pendingResources: 0,
+    });
+  },
+);
+
+it('uses an aliased data directory for temp workspaces, transcripts and pressure cleanup', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'gg-wp-e3-r4-api-alias-'));
+  extraDirectories.push(base);
+  const physical = join(base, 'physical');
+  const alias = join(base, 'data-alias');
+  await mkdir(physical);
+  await symlink(physical, alias, 'junction');
+  let availableBytes = 50 * GiB;
+  app = await createTestApp({
+    tempPrefix: 'gg-wp-e3-',
+    env: { GG_DATA_DIR: alias },
+    storageCapacity: { read: () => Promise.resolve({ totalBytes: 100 * GiB, availableBytes }) },
+  });
+  const run = await complete(app, true);
+  expect((await app.container.repos.runs.get(run.id))?.status).toBe('succeeded');
+  const workspace = app.harness.started[0]!.workingDirectory;
+  const artifact = (await app.container.manager.getThread(run.id))!.artifacts[0]!;
+  expect(await app.container.ports.artifacts.get(artifact.ref)).toBeDefined();
+  await writeFile(join(workspace, 'owned'), 'reclaim');
+  await mark(app, [run.id]);
+  availableBytes = 0;
+  app.clock.advance(60_000);
+  await app.container.historyCleanup.poll();
+  expect(app.container.historyCleanup.status()).toMatchObject({
+    deletedRuns: 1,
+    pendingResources: 0,
+  });
+  await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOENT' });
+  expect(await app.container.ports.artifacts.get(artifact.ref)).toBeUndefined();
+});
+
 it('warns with no eligible history and treats successful and failed retained runs identically', async () => {
   const { api, poll } = await controlled();
   const success = await complete(api),

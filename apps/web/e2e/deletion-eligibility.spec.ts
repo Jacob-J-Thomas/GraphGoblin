@@ -76,6 +76,21 @@ test('bulk confirmation covers exactly the frozen selection; later history remai
   for (const id of ids) expect((await snapshot(request, url, id)).deletionApproval).toBeDefined();
   expect((await snapshot(request, url, fresh)).deletionApproval).toBeUndefined();
   await expect(page.getByText('Delete-ready', { exact: true })).toHaveCount(2);
+  const selection = page.getByText('0 selected', { exact: true });
+  await expect(selection).toBeFocused();
+  await expect(page.getByText('2 runs marked delete-ready.', { exact: true })).toHaveAttribute(
+    'aria-live',
+    'polite',
+  );
+  for (const id of ids) await page.getByRole('checkbox', { name: `Select history ${id}` }).check();
+  await page.getByRole('button', { name: 'Withdraw delete-ready mark' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm withdrawal' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(selection).toBeFocused();
+  await expect(
+    page.getByText('Deletion approval withdrawn for 2 runs.', { exact: true }),
+  ).toHaveAttribute('aria-live', 'polite');
+  for (const id of ids) expect((await snapshot(request, url, id)).deletionApproval).toBeUndefined();
 });
 
 test('protected history and a stale confirmation refuse visibly; invalid selections cannot approve a subset', async ({

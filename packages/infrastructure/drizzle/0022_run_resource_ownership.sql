@@ -74,20 +74,28 @@ WHEN OLD.key LIKE 'workspace:%'
 BEGIN DELETE FROM workspace_references WHERE id = 'use:' || OLD.run_id || ':' || OLD.key; END;
 --> statement-breakpoint
 CREATE TRIGGER workspace_run_insert AFTER INSERT ON runs
+WHEN NEW.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')
 BEGIN
-  INSERT INTO workspace_references(id, run_id)
-    SELECT 'pending:' || NEW.id, NEW.id FROM loop_versions
+  INSERT INTO workspace_references(id, run_id, path)
+    SELECT 'pending:' || NEW.id, NEW.id, CASE WHEN instr(json_extract(definition, '$.settings.workingDirectory.template'), '{{') = 0
+      AND instr(json_extract(definition, '$.settings.workingDirectory.template'), '{%') = 0
+      THEN json_extract(definition, '$.settings.workingDirectory.template') END FROM loop_versions
     WHERE id = NEW.version_id AND json_valid(definition)
       AND json_extract(definition, '$.settings.workingDirectory.kind') = 'template';
 END;
 --> statement-breakpoint
-CREATE TRIGGER workspace_run_version AFTER UPDATE OF version_id ON runs
-WHEN NEW.version_id IS NOT OLD.version_id
+-- Lifecycle changes, including Resume, maintain only a run's own unresolved obligation.
+-- Event appends update neither column and incur no extra trigger work.
+CREATE TRIGGER workspace_run_version AFTER UPDATE OF version_id, status ON runs
+WHEN NEW.version_id IS NOT OLD.version_id OR NEW.status IS NOT OLD.status
 BEGIN
   DELETE FROM workspace_references WHERE id = 'pending:' || NEW.id;
-  INSERT INTO workspace_references(id, run_id)
-    SELECT 'pending:' || NEW.id, NEW.id FROM loop_versions
+  INSERT INTO workspace_references(id, run_id, path)
+    SELECT 'pending:' || NEW.id, NEW.id, CASE WHEN instr(json_extract(definition, '$.settings.workingDirectory.template'), '{{') = 0
+      AND instr(json_extract(definition, '$.settings.workingDirectory.template'), '{%') = 0
+      THEN json_extract(definition, '$.settings.workingDirectory.template') END FROM loop_versions
     WHERE id = NEW.version_id AND json_valid(definition)
+      AND NEW.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')
       AND json_extract(definition, '$.settings.workingDirectory.kind') = 'template'
       AND NOT EXISTS (SELECT 1 FROM run_resource_uses WHERE run_id = NEW.id AND key LIKE 'workspace:%');
 END;
@@ -95,11 +103,16 @@ END;
 CREATE TRIGGER workspace_run_delete AFTER DELETE ON runs
 BEGIN DELETE FROM workspace_references WHERE run_id = OLD.id; END;
 --> statement-breakpoint
+-- Literal template paths can be scoped without evaluating run-dependent Liquid.
 -- Existing configurations remain protected until their physical paths are observed.
 INSERT INTO workspace_references(id, version_id, path)
   SELECT 'version:' || id, id, json_extract(definition, '$.settings.workingDirectory.path') FROM loop_versions
   WHERE json_valid(definition) AND json_extract(definition, '$.settings.workingDirectory.kind') = 'fixed';
 --> statement-breakpoint
-INSERT INTO workspace_references(id, run_id)
-  SELECT 'pending:' || r.id, r.id FROM runs r JOIN loop_versions v ON v.id = r.version_id
-  WHERE json_valid(v.definition) AND json_extract(v.definition, '$.settings.workingDirectory.kind') = 'template';
+INSERT INTO workspace_references(id, run_id, path)
+  SELECT 'pending:' || r.id, r.id, CASE WHEN instr(json_extract(v.definition, '$.settings.workingDirectory.template'), '{{') = 0
+      AND instr(json_extract(v.definition, '$.settings.workingDirectory.template'), '{%') = 0
+      THEN json_extract(v.definition, '$.settings.workingDirectory.template') END FROM runs r JOIN loop_versions v ON v.id = r.version_id
+  WHERE r.status NOT IN ('succeeded', 'failed', 'cancelled', 'exhausted')
+    AND json_valid(v.definition) AND json_extract(v.definition, '$.settings.workingDirectory.kind') = 'template'
+    AND NOT EXISTS (SELECT 1 FROM run_resource_uses u WHERE u.run_id = r.id AND u.key LIKE 'workspace:%');

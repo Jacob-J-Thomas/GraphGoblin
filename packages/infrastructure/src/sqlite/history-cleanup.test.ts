@@ -11,6 +11,10 @@ import {
   symlink,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { readMigrationFiles } from 'drizzle-orm/migrator';
+import { RESOURCE_OWNERSHIP_REWIND_SQL } from './testing/resource-ownership.js';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fakeUlid, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
@@ -87,6 +91,177 @@ async function mark(runIds: string[]) {
     ).conflict,
   ).toBeNull();
 }
+
+it.each(['succeeded', 'failed', 'cancelled', 'exhausted'] as const)(
+  'reclaims approved workspaces beside a retained %s template run that never used a directory',
+  async (status) => {
+    const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+    const loop = await loops.create(
+      'local',
+      LoopDefinitionSchema.parse({
+        ...minimalLoop(),
+        settings: { workingDirectory: { kind: 'template', template: '{{trigger.payload.dir}}' } },
+      }),
+    );
+    const version = (await loops.publish(loop.loop.id))!;
+    const retained = await seed('unused-template', undefined, version);
+    await repo.update(retained, { status });
+    const owner = await seed('ordinary-workspace');
+    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+    await writeFile(join(workspace, 'owned'), 'reclaim');
+    await mark([owner]);
+    expect(await store.prepareBatch('local')).toBe(1);
+    expect(await store.reapBatch()).toMatchObject({ bytes: 7, pending: 0 });
+    await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect((await repo.get(retained))?.status).toBe(status);
+  },
+);
+
+it('backfills only live unused template obligations and restores them on Resume', async () => {
+  const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+  const loop = await loops.create(
+    'local',
+    LoopDefinitionSchema.parse({
+      ...minimalLoop(),
+      settings: { workingDirectory: { kind: 'template', template: '{{trigger.payload.dir}}' } },
+    }),
+  );
+  const version = (await loops.publish(loop.loop.id))!;
+  const terminal = await seed('historical-terminal', undefined, version);
+  const active = await seed('historical-live', undefined, version);
+  await repo.transition(active, ['succeeded'], { status: 'waiting' });
+  for (const statement of RESOURCE_OWNERSHIP_REWIND_SQL) await handle.client.execute(statement);
+  const migration = readMigrationFiles({
+    migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
+  }).find((entry) =>
+    entry.sql.some((statement) => statement.includes('CREATE TABLE `workspace_references`')),
+  )!;
+  for (const statement of migration.sql) await handle.client.execute(statement);
+  const pending = async () =>
+    (
+      await handle.client.execute(
+        'SELECT run_id FROM workspace_references WHERE path IS NULL ORDER BY run_id',
+      )
+    ).rows.map((row) => row['run_id']);
+  expect(await pending()).toEqual([active]);
+  await repo.transition(active, ['waiting'], { status: 'failed' });
+  expect(await pending()).toEqual([]);
+  await repo.transition(terminal, ['succeeded'], { status: 'queued' });
+  expect(await pending()).toEqual([terminal]);
+  for (const status of ['running', 'waiting', 'paused'] as const) {
+    await repo.update(terminal, { status });
+    expect(await pending()).toEqual([terminal]);
+  }
+  const path = await resources.workspace.resolve(
+    { kind: 'fixed', path: join(directory, 'user') },
+    {},
+    terminal,
+  );
+  expect(await pending()).toEqual([]);
+  await repo.update(terminal, { status: 'succeeded' });
+  await repo.transition(terminal, ['succeeded'], { status: 'queued' });
+  expect(await pending()).toEqual([]);
+  const use = await handle.client.execute(
+    'SELECT path FROM workspace_references WHERE run_id = ?',
+    [terminal],
+  );
+  expect(use.rows).toHaveLength(1);
+  expect((await lstat(path)).isDirectory()).toBe(true);
+});
+
+it('protects live dynamic templates until termination, and bounds literal templates to their known path', async () => {
+  const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+  const user = join(directory, 'literal-user-directory');
+  await mkdir(user);
+  await writeFile(join(user, 'keep'), 'retained');
+  const create = async (name: string, template: string) => {
+    const loop = await loops.create(
+      'local',
+      LoopDefinitionSchema.parse({
+        ...minimalLoop(),
+        settings: { workingDirectory: { kind: 'template', template } },
+      }),
+    );
+    const version = await loops.publish(loop.loop.id);
+    expect(version).toBeDefined();
+    const id = await seed(name, undefined, version);
+    await repo.transition(id, ['succeeded'], { status: 'waiting' });
+    return id;
+  };
+  const dynamic = await create('live-dynamic-template', '{{trigger.payload.dir}}');
+  const sharedOwner = await seed('literal-shared-owner');
+  const shared = await resources.workspace.resolve({ kind: 'temp' }, {}, sharedOwner);
+  await writeFile(join(shared, 'keep'), 'shared');
+  const literal = await create('live-literal-template', `\t ${shared}\n`);
+  const empty = await create('live-empty-template', '\t \n');
+  const owner = await seed('template-owner');
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+  await writeFile(join(workspace, 'owned'), 'reclaim');
+  await mark([owner, sharedOwner]);
+  await store.prepareBatch('local');
+  expect(await store.reapBatch()).toMatchObject({ bytes: 0, pending: 2 });
+  expect(await readFile(join(workspace, 'owned'), 'utf8')).toBe('reclaim');
+  await repo.transition(dynamic, ['waiting'], { status: 'failed' });
+  expect(await store.reapBatch()).toMatchObject({ bytes: 7, pending: 1 });
+  expect(await readFile(join(shared, 'keep'), 'utf8')).toBe('shared');
+  expect((await repo.get(literal))?.status).toBe('waiting');
+  expect((await repo.get(empty))?.status).toBe('waiting');
+  expect(await readFile(join(user, 'keep'), 'utf8')).toBe('retained');
+});
+
+it.each(process.platform === 'win32' ? ['junction', 'short-name'] : ['junction'])(
+  'publishes and reclaims owned workspaces/transcripts through a %s data directory',
+  async (mode) => {
+    const physical = join(directory, 'physical-data-root');
+    await mkdir(physical);
+    let dataDir: string;
+    if (mode === 'short-name') {
+      const short = spawnSync(
+        'cmd',
+        ['/d', '/s', '/c', `"for %I in ("${physical}") do @echo %~sI"`],
+        { encoding: 'utf8', windowsVerbatimArguments: true },
+      );
+      expect(short.error).toBeUndefined();
+      expect(short.status).toBe(0);
+      dataDir = short.stdout.trim();
+      expect(dataDir.toLowerCase()).not.toBe(physical.toLowerCase());
+    } else {
+      dataDir = join(directory, 'data-alias');
+      await symlink(physical, dataDir, 'junction');
+    }
+    resources = new OwnedRunResources(dataDir, new SqliteRunResources(handle.db));
+    store = new SqliteHistoryCleanup(handle.db, resources);
+    const id = await seed('alias-data-owner');
+    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+    await resources.workspace.writeFile(workspace, 'owned', 'workspace');
+    const artifact = await resources.artifacts.put('transcript', 'transcript', id);
+    expect(await resources.artifacts.get(artifact.ref)).toBe('transcript');
+    if (mode === 'junction') {
+      // Once admitted, retargeting the configured alias cannot redirect this instance's I/O.
+      await rename(dataDir, dataDir + '-old');
+      const other = join(directory, 'other-data');
+      await mkdir(other);
+      await symlink(other, dataDir, 'junction');
+      expect(await resources.artifacts.get(artifact.ref)).toBe('transcript');
+    }
+    await mark([id]);
+    expect(await store.prepareBatch('local')).toBe(1);
+    expect(await store.reapBatch()).toMatchObject({ bytes: 19, pending: 0 });
+    await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await resources.artifacts.get(artifact.ref)).toBeUndefined();
+    const target = join(physical, 'user-owned');
+    await mkdir(target);
+    await symlink(target, join(physical, 'artifacts', 'redirect'), 'junction');
+    await expect(resources.artifacts.put('redirect', 'must not publish', id)).rejects.toThrow(
+      'Artifact directory is a link',
+    );
+    await rename(join(physical, 'workspaces'), join(physical, 'old-workspaces'));
+    await symlink(target, join(physical, 'workspaces'), 'junction');
+    await expect(
+      resources.workspace.resolve({ kind: 'temp' }, {}, fakeUlid('refuse-link')),
+    ).rejects.toThrow('Managed resource root is a link');
+  },
+);
 
 it('deletes only approved whole components and their rows, leaving stable page cursors and reusable SQLite pages', async () => {
   const parent = await seed('parent'),
@@ -584,14 +759,20 @@ describe('large retained stores', () => {
     store = new SqliteHistoryCleanup(handle.db, resources);
   });
   it('does not let 61 budget-protected artifact jobs hide removable workspaces in a later window', async () => {
-    const retained = await seed('retained');
-    await handle.client.execute({
-      sql: 'UPDATE runs SET thread_snapshot=? WHERE id=?',
-      args: [
-        JSON.stringify(sampleThread({ vars: { large: 'x'.repeat(2 * 1024 ** 2) } })),
-        retained,
-      ],
-    });
+    await seed('retained');
+    // Exceed the existing document proof budget without rereading a 2-MiB fixture for
+    // every one of 61 artifacts. Byte-budget behavior is covered separately above.
+    for (let offset = 0; offset < 2001; offset += 100) {
+      const values = Array.from(
+        { length: Math.min(100, 2001 - offset) },
+        (_, i) =>
+          `('${fakeUlid('proof-document-' + (offset + i))}', 'local', 'ready', '{}', 'api', '${FIXTURE_TS}', '[]')`,
+      );
+      await handle.client.execute(
+        'INSERT INTO inbound_events(id,owner_id,type,payload,source,received_at,run_ids) VALUES ' +
+          values.join(','),
+      );
+    }
     const ids: string[] = [];
     const workspacePaths: string[] = [];
     const artifacts: { ref: string; value: string }[] = [];

@@ -34,6 +34,36 @@ function fakeConsent() {
   return api;
 }
 
+it.each(['mark', 'withdraw'] as const)(
+  'returns focus to the selection status and announces a successful %s',
+  async (action) => {
+    const api = fakeConsent(),
+      user = userEvent.setup();
+    const run = api.addRun({ status: 'succeeded' });
+    renderApp('/runs', api);
+    await user.click(await screen.findByRole('checkbox', { name: `Select history ${run.id}` }));
+    await user.click(
+      screen.getByRole('button', {
+        name: action === 'mark' ? 'Review delete-ready history' : 'Withdraw delete-ready mark',
+      }),
+    );
+    const dialog = await screen.findByRole('dialog');
+    await user.click(
+      await within(dialog).findByRole('button', {
+        name: action === 'mark' ? 'Confirm delete-ready selection' : 'Confirm withdrawal',
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    const selection = screen.getByText(/0 selected/);
+    expect(selection).toHaveFocus();
+    expect(selection).toHaveAttribute('aria-live', 'polite');
+    const outcome = screen.getByText(
+      action === 'mark' ? '1 run marked delete-ready.' : 'Deletion approval withdrawn for 1 run.',
+    );
+    expect(outcome).toHaveAttribute('aria-live', 'polite');
+  },
+);
+
 it('cancels without confirmation, freezes an explicit bulk selection while new history arrives, and shows persisted marks', async () => {
   const api = fakeConsent(),
     user = userEvent.setup();

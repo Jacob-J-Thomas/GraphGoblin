@@ -1,0 +1,111 @@
+Final round-4 readback
+worktree: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-322
+node executable: %USERPROFILE%\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.EXE
+COMMAND node --version
+v22.23.4
+
+
+EXIT 0
+COMMAND git rev-parse HEAD
+dd21b01c530c044119f400bc06abaae3dcd71b5c
+
+
+EXIT 0
+COMMAND git branch --show-current
+codex-wp-e3-187-322
+
+
+EXIT 0
+COMMAND git diff --check
+
+warning: in the working copy of 'packages/infrastructure/drizzle/0022_run_resource_ownership.sql', CRLF will be replaced by LF the next time Git touches it
+
+EXIT 0
+COMMAND git diff --cached --quiet
+
+
+EXIT 0
+COMMAND git diff --stat
+ CHANGELOG.md                                       |   2 +-
+ apps/api/src/history-cleanup.test.ts               |  78 ++++++++
+ apps/web/e2e/deletion-eligibility.spec.ts          |  15 ++
+ apps/web/src/runs/HistoryEligibility.test.tsx      |  30 ++++
+ apps/web/src/runs/HistoryEligibility.tsx           |  22 ++-
+ docs/03-domain-model.md                            |   2 +-
+ docs/07-api-and-streaming.md                       |   2 +-
+ docs/09-frontend-and-pwa.md                        |   2 +-
+ ...R-0060-explicit-history-deletion-eligibility.md |  14 +-
+ docs/guide/03-run-and-observe.md                   |   2 +
+ docs/qa/2026-10-26-wp-e3-412-fixes/README.md       | 134 +++++++-------
+ .../drizzle/0022_run_resource_ownership.sql        |  31 +++-
+ packages/infrastructure/src/fs/owned-resources.ts  |  30 ++--
+ .../src/sqlite/history-cleanup.test.ts             | 197 ++++++++++++++++++++-
+ .../src/sqlite/workspace-references.ts             |  22 ++-
+ 15 files changed, 478 insertions(+), 105 deletions(-)
+
+warning: in the working copy of 'packages/infrastructure/drizzle/0022_run_resource_ownership.sql', CRLF will be replaced by LF the next time Git touches it
+
+EXIT 0
+COMMAND git status --short
+ M CHANGELOG.md
+ M apps/api/src/history-cleanup.test.ts
+ M apps/web/e2e/deletion-eligibility.spec.ts
+ M apps/web/src/runs/HistoryEligibility.test.tsx
+ M apps/web/src/runs/HistoryEligibility.tsx
+ M docs/03-domain-model.md
+ M docs/07-api-and-streaming.md
+ M docs/09-frontend-and-pwa.md
+ M docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md
+ M docs/guide/03-run-and-observe.md
+ M docs/qa/2026-10-26-wp-e3-412-fixes/README.md
+ M packages/infrastructure/drizzle/0022_run_resource_ownership.sql
+ M packages/infrastructure/src/fs/owned-resources.ts
+ M packages/infrastructure/src/sqlite/history-cleanup.test.ts
+ M packages/infrastructure/src/sqlite/workspace-references.ts
+?? docs/qa/2026-10-26-wp-e3-412-fixes/ROUND-3.md
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-api-focused.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-append-bound.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-build.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-coverage-api.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-coverage-infrastructure.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-coverage-web.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-datadir-alias.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-datadir-alias.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-deps.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-docs-check.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-docs-generate.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-edge.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-fixture-lint-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-fixture-typecheck-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-format-development.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-format-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-format-report-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-format-write-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-format-write.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-layers.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-lint-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-lint.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-migrations-check.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-native-datadir.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-native-template.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-qa-lib.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-qa-server.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-red-literal.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-red-storage.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-red-web.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-runtime.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-scope-and-root-recheck.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-storage-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-storage-focused.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-template-unknown.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-template-unknown.mjs
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-tokens.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-typecheck-final.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-typecheck.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-typed-alias-fixture.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-upstream-18-template-unknown.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-upstream-19-datadir-alias.log.txt
+?? docs/qa/2026-10-26-wp-e3-412-fixes/r4-web-focused.log.txt
+
+
+EXIT 0

@@ -82,6 +82,7 @@ async function exists(path: string) {
 /** One process holds the data-directory lock. This gate also excludes publication during reaping. */
 export class OwnedRunResources {
   private readonly gate = new Mutex();
+  private physicalRoot?: Promise<string>;
   readonly workspace: WorkspacePort;
   readonly artifacts: ArtifactStorePort;
   constructor(
@@ -89,7 +90,7 @@ export class OwnedRunResources {
     private readonly journal: RunResourceJournal,
   ) {
     const workspace = new FsWorkspace(dataDir);
-    const artifacts = new FsArtifactStore(dataDir);
+    const artifactStore = async () => new FsArtifactStore(await this.physicalDataDir());
     this.workspace = {
       resolve: (spec, view, runId) =>
         this.exclusive(async () => {
@@ -105,7 +106,8 @@ export class OwnedRunResources {
             } catch (error) {
               if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
             }
-            if (!created) await workspace.resolve(spec, view, runId);
+            if (!created)
+              await new FsWorkspace(await this.physicalDataDir()).resolve(spec, view, runId);
             if (created)
               await this.journal.claim({
                 key: `workspace:${canonical(path)}`,
@@ -123,13 +125,14 @@ export class OwnedRunResources {
       writeFile: (dir, path, content) => workspace.writeFile(dir, path, content),
     };
     this.artifacts = {
-      get: (ref) => artifacts.get(ref),
+      get: async (ref) => (await artifactStore()).get(ref),
       put: (kind, content, runId) =>
         this.exclusive(async () => {
           const safeKind = kind.replace(/[^a-z0-9_-]/gi, '_').toLowerCase() || 'blob';
           const hash = createHash('sha256').update(content, 'utf8').digest('hex');
           const ref = `artifact:${safeKind}/${hash}`;
           const root = await this.directory('artifacts');
+          const artifacts = await artifactStore();
           const directory = join(root, safeKind);
           await mkdir(directory, { recursive: true });
           if (canonical(await realpath(directory)) !== canonical(directory))
@@ -194,13 +197,18 @@ export class OwnedRunResources {
     return this.gate.run(operation);
   }
 
+  /** The configuration may itself be an alias. Resolve it once, then police only its contents. */
+  private physicalDataDir(): Promise<string> {
+    return (this.physicalRoot ??= (async () => {
+      await mkdir(this.dataDir, { recursive: true });
+      return realpath(this.dataDir);
+    })());
+  }
+
   private async directory(name: string) {
-    const root = resolve(this.dataDir, name);
+    const root = resolve(await this.physicalDataDir(), name);
     await mkdir(root, { recursive: true });
-    if (
-      canonical(await realpath(root)) !== canonical(root) ||
-      canonical(await realpath(this.dataDir)) !== canonical(this.dataDir)
-    )
+    if (canonical(await realpath(root)) !== canonical(root))
       throw new Error('Managed resource root is a link');
     return root;
   }
@@ -261,13 +269,13 @@ export class OwnedRunResources {
   async stage(job: OwnedRunResource, plan: ResourceRemovalPlan): Promise<boolean> {
     const resource = originalResource(job);
     const expected = join(
-      resolve(this.dataDir, 'cleanup-pending'),
+      resolve(await this.physicalDataDir(), 'cleanup-pending'),
       createHash('sha256')
         .update(resource.key + resource.identity)
         .digest('hex'),
     );
     if (plan.target !== expected) return false;
-    for (const path of [this.dataDir, dirname(expected)])
+    for (const path of [await this.physicalDataDir(), dirname(expected)])
       if (canonical(await realpath(path)) !== canonical(path)) return false;
     const staged = await exists(expected);
     const stat =
@@ -294,7 +302,7 @@ export class OwnedRunResources {
     const plan = prepared;
     const resource = originalResource(job);
     const expected = join(
-      resolve(this.dataDir, 'cleanup-pending'),
+      resolve(await this.physicalDataDir(), 'cleanup-pending'),
       createHash('sha256')
         .update(resource.key + resource.identity)
         .digest('hex'),

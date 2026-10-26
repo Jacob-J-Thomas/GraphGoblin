@@ -52,14 +52,30 @@ export class SqliteWorkspaceReferences {
       }[] = [];
       for (const row of rows.slice(offset, offset + 32)) {
         if (signal?.aborted) return;
+        // Pending paths are literal Liquid templates; WorkspacePort trims their rendered value.
+        // An empty literal can only fail resolution, so it has no possible future workspace use.
+        const path = row.id.startsWith('pending:') ? row.path?.trim() : row.path;
+        if (row.id.startsWith('pending:') && row.path !== null && path === '') {
+          await this.db
+            .delete(workspaceReferences)
+            .where(
+              and(
+                eq(workspaceReferences.id, row.id),
+                eq(workspaceReferences.path, row.path),
+                eq(workspaceReferences.checkedEpoch, row.checkedEpoch),
+              ),
+            );
+          continue;
+        }
         let physical: string | null = null;
-        if (row.path !== null) {
-          if (!resolved.has(row.path)) resolved.set(row.path, await physicalDirectory(row.path));
-          physical = resolved.get(row.path)!;
+        if (path !== null && path !== undefined) {
+          if (!resolved.has(path)) resolved.set(path, await physicalDirectory(path));
+          physical = resolved.get(path)!;
         }
         observed.push({ id: row.id, path: row.path, priorEpoch: row.checkedEpoch, physical });
       }
       if (signal?.aborted) return;
+      if (!observed.length) continue;
       await this.db.run(sql`WITH observed(id, path, prior_epoch, physical) AS (VALUES
         ${sql.join(
           observed.map((row) => sql`(${row.id}, ${row.path}, ${row.priorEpoch}, ${row.physical})`),

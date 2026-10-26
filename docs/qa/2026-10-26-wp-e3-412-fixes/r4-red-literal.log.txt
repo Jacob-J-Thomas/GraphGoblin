@@ -1,0 +1,48 @@
+﻿pnpm.cmd --filter @graphgoblin/infrastructure test src/sqlite/history-cleanup.test.ts -t protects live dynamic templates
+$ vitest run src/sqlite/history-cleanup.test.ts -t 'protects live dynamic templates'
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (38 tests | 1 failed | 37 skipped) 2276ms
+   × protects live dynamic templates until termination, and bounds literal templates to their known path 2274ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/history-cleanup.test.ts > protects live dynamic templates until termination, and bounds literal templates to their known path
+AssertionError: expected { bytes: +0, preserved: 1, …(2) } to match object { bytes: 7, pending: +0 }
+(2 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "bytes": 7,
+-   "pending": 0,
++   "bytes": 0,
++   "pending": 1,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/sqlite/history-cleanup.test.ts:178:35
+    176|   expect(await readFile(join(workspace, 'owned'), 'utf8')).toBe('recla…
+    177|   await repo.transition(dynamic, ['waiting'], { status: 'failed' });
+    178|   expect(await store.reapBatch()).toMatchObject({ bytes: 7, pending: 0…
+       |                                   ^
+    179|   expect((await repo.get(literal))?.status).toBe('waiting');
+    180|   expect((await repo.get(empty))?.status).toBe('waiting');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 37 skipped (38)
+   Start at  07:52:49
+   Duration  6.51s (import 38%, tests 37%, transform 25%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT 1
