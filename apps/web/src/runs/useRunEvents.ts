@@ -31,11 +31,12 @@ const STREAM_HEARTBEAT_MS = 15_000;
 /**
  * Live tail of a run's events through the API client's SSE helper. Resumes after the stored cursor,
  * so a reload neither replays nor misses events; the helper itself reconnects on drops. `onEvents`
- * is called once per batch.
+ * is called once per batch with its events, and without events when the run record changed with
+ * no new event.
  */
 export function useRunEvents(
   runId: string,
-  onEvents?: () => void,
+  onEvents?: (events?: readonly RunEvent[]) => void,
 ): RunEventLog & { status: StreamStatus; error?: string } {
   const client = useApi();
   const queryClient = useQueryClient();
@@ -65,7 +66,7 @@ export function useRunEvents(
       append(runId, ...batch);
       if (!active) return;
       setStatus('live');
-      onEvents?.();
+      onEvents?.(batch);
     };
     let subscription: RunEventSubscription | undefined;
     let connection = 0;
