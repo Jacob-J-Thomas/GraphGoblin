@@ -11,7 +11,7 @@ import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let t: TestApp;
 beforeEach(async () => {
-  t = await createTestApp();
+  t = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
 });
 afterEach(async () => {
   await t.close();

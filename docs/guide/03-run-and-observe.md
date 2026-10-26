@@ -336,3 +336,11 @@ Provider/service limits can still fail a run. Quota exhaustion fails explicitly;
 has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
 script/decision nodes. Only a positively unsubmitted transient transport failure retries
 once; uncertain accepted work is never blindly resent.
+
+## Keep or approve particular history
+
+In **Runs**, select the exact run rows you want to review, then choose **Review delete-ready history**. You can also review one run in its inspector. The dialog lists each selected ID and any protection reason. Confirming approves those records for future cleanup under storage pressure; it does not delete anything now. New runs stay retained. Success and failure follow the same rules.
+
+Active and paused runs, unfinished terminal work and history needed by retained parent, child or replay runs remain protected. Select required related history together; a protected record refuses the whole selection. Shared artifacts needed by retained history stay protected. Cancel or close the dialog to change nothing. If the selection changes while you review it, cancel and review again.
+
+Use **Withdraw delete-ready mark** before cleanup to keep the selected history; related parent, child and replay history becomes retained too. Resuming or creating new dependencies automatically withdraws affected older approvals. Deleting a loop is a separate explicit consent: its confirmation covers all of that loop's history. Its existing active-run and admission protections still apply; terminal runs do not need a delete-ready mark. Other loops' history stays, a surviving child's parent association is cleared, and the inspector explains a missing relative.

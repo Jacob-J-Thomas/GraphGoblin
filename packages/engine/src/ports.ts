@@ -77,7 +77,8 @@ export interface EventStorePort {
 
 /** Field-level changes to a run record; `undefined` clears a field. */
 export type RunRecordChanges = {
-  [K in Exclude<keyof RunRecord, 'deliveries' | 'finalizedAt'>]?: RunRecord[K] | undefined;
+  [K in Exclude<keyof RunRecord, 'deliveries' | 'finalizedAt' | 'deletionApproval'>]?:
+    RunRecord[K] | undefined;
 };
 
 export interface RunRepository {

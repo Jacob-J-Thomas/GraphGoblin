@@ -758,3 +758,9 @@ visit, failed sequence, prior handle/origin, model/effort and
 `priorContextCarried: false`. The event survives restart and completes an interrupted
 resume. No request leaves the failure unchanged; `/resume` still refuses it.
 The typed client exposes `runs.recoverSession(client, runId, { nodeId, failureSeq })`.
+
+## Explicit deletion eligibility
+
+`POST /runs/deletion-eligibility/preview` accepts `{ runIds }` (1 to 500 unique IDs) and returns `{ token, items: [{ runId, approval?, reasons }] }` without changing history. It requires `runs:read`. `POST /runs/deletion-eligibility` requires `runs:write` and accepts the same IDs, token, `action: "mark" | "withdraw"` and `confirmed: true`. Confirmation is atomic: missing/foreign records, protection or a stale token return 409 `DELETION_SELECTION_MISSING`, `DELETION_SELECTION_PROTECTED` or `DELETION_SELECTION_STALE`, with per-run reasons in problem `errors`; nothing is silently omitted. Malformed selections return 400. The server records the authenticated actor and its own time. Neither route deletes history.
+
+Run list items, individual snapshots and MCP run summaries expose optional `deletionApproval`. MCP listings grant no consent. `DELETE /loops/{id}` has separate explicit consent covering its history and keeps [ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md) semantics unchanged: active statuses and existing admission/pin guards refuse deletion; terminal runs need no eligibility mark or finalization guard. It removes only that loop's history even with cross-loop references, retains other loops' history, and clears surviving children's parent association. See [ADR-0060](decisions/ADR-0060-explicit-history-deletion-eligibility.md).

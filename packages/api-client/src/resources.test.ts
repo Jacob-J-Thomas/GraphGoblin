@@ -1,6 +1,31 @@
 import { expect, it } from 'vitest';
 import { apiKeys, cron, events, runs, createGraphGoblinClient } from './index.js';
 
+it('forwards explicit deletion review and confirmation through the generated API', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://graphgoblin.test',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({ token: 'a'.repeat(64), items: [] }));
+    },
+  });
+  await runs.previewDeletion(client, ['run']);
+  const body = {
+    runIds: ['run'],
+    token: 'a'.repeat(64),
+    action: 'mark' as const,
+    confirmed: true as const,
+  };
+  await runs.confirmDeletion(client, body);
+  expect(requests.map((request) => new URL(request.url).pathname)).toEqual([
+    '/runs/deletion-eligibility/preview',
+    '/runs/deletion-eligibility',
+  ]);
+  expect(await requests[0]!.json()).toEqual({ runIds: ['run'] });
+  expect(await requests[1]!.json()).toEqual(body);
+});
+
 it('forwards list cancellation to the request without requiring it from existing callers', async () => {
   const requests: Request[] = [];
   const client = createGraphGoblinClient({

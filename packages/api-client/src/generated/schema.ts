@@ -1532,6 +1532,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/deletion-eligibility/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review an explicit history selection without approving or deleting it */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        runIds: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            token: string;
+                            items: {
+                                runId: string;
+                                approval?: {
+                                    /** Format: date-time */
+                                    confirmedAt: string;
+                                    confirmedBy: {
+                                        ownerId: string;
+                                        kind: string;
+                                        id: string;
+                                    };
+                                } | undefined;
+                                reasons: string[];
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/deletion-eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm or withdraw deletion eligibility for exactly the reviewed selection; deletes nothing */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        runIds: string[];
+                        token: string;
+                        /** @enum {string} */
+                        action: "mark" | "withdraw";
+                        /** @enum {boolean} */
+                        confirmed: true;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            token: string;
+                            items: {
+                                runId: string;
+                                approval?: {
+                                    /** Format: date-time */
+                                    confirmedAt: string;
+                                    confirmedBy: {
+                                        ownerId: string;
+                                        kind: string;
+                                        id: string;
+                                    };
+                                } | undefined;
+                                reasons: string[];
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/diagnostics": {
         parameters: {
             query?: never;
@@ -4059,6 +4178,15 @@ export interface components {
                     httpStatus?: number | undefined;
                 } | undefined;
             }[] | undefined;
+            deletionApproval?: {
+                /** Format: date-time */
+                confirmedAt: string;
+                confirmedBy: {
+                    ownerId: string;
+                    kind: string;
+                    id: string;
+                };
+            } | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -6192,6 +6320,15 @@ export interface components {
                     httpStatus?: number | undefined;
                 } | undefined;
             }[] | undefined;
+            deletionApproval?: {
+                /** Format: date-time */
+                confirmedAt: string;
+                confirmedBy: {
+                    ownerId: string;
+                    kind: string;
+                    id: string;
+                };
+            } | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

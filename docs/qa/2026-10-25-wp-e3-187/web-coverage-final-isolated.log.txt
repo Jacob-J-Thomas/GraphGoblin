@@ -1,0 +1,55 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=4 --coverage.reportOnFailure 
+'--coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-e3-web-coverage-20261025-final'
+At line:2 char:266
++ ... veragePath; pnpm.cmd --filter @graphgoblin/web test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...20261025-final':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/web
+      Coverage enabled with v8
+
+ ❯ src/runs/RunInspectorPage.test.tsx (26 tests | 1 failed) 28981ms
+   ❯ RunInspectorPage (20)
+     × replays a child run from its seeded first event and reports logs that do not replay 476ms
+Not implemented: navigation to another Document
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and 
+reports logs that do not replay
+Error: expect(element).toBeInTheDocument()
+
+element could not be found in the document
+ ❯ src/runs/RunInspectorPage.test.tsx:414:60
+    412|     );
+    413|     renderApp(`/runs/${broken.id}`, api);
+    414|     expect(await screen.findByText(/Thread read failed:/)).toBeInTheDo…
+       |                                                            ^
+    415|   });
+    416|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 146 passed (147)
+      Tests  1 failed | 1785 passed (1786)
+   Start at  22:52:42
+   Duration  851.35s (tests 42%, environment 29%, transform 10%, import 9%, setup 9%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.73% ( 9033/9242 )
+Branches     : 94.57% ( 8381/8862 )
+Functions    : 98% ( 2401/2450 )
+Lines        : 98.67% ( 7894/8000 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\web
+

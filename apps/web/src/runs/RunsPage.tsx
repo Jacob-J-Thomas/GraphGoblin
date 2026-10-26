@@ -1,4 +1,6 @@
 import { HistoryState } from '../components/HistoryState.js';
+import { useState } from 'react';
+import { HistoryEligibility } from './HistoryEligibility.js';
 import type { ListRunsQuery } from '@graphgoblin/api-client';
 import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
@@ -10,6 +12,7 @@ import {
   Button,
   buttonStyles,
   Card,
+  Checkbox,
   FieldGroup,
   FieldRow,
   Label,
@@ -31,6 +34,7 @@ const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
  */
 export function RunsPage() {
   const [params, setParams] = useSearchParams();
+  const [selected, setSelected] = useState<string[]>([]);
   const loopId = params.get('loop') ?? '';
   const status = params.get('status') ?? '';
   const parent = params.get('parent') ?? '';
@@ -43,6 +47,7 @@ export function RunsPage() {
   const runsQuery = useRuns(query, 5000);
 
   const setFilter = (key: string, value: string) => {
+    setSelected([]);
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
     else next.delete(key);
@@ -108,12 +113,19 @@ export function RunsPage() {
             </Select>
           </FieldGroup>
           {loopId || status || parent ? (
-            <Button variant="ghost" onClick={() => setParams(new URLSearchParams())}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelected([]);
+                setParams(new URLSearchParams());
+              }}
+            >
               Clear filters
             </Button>
           ) : null}
         </FieldRow>
       </Card>
+      <HistoryEligibility runIds={selected} />
       <HistoryState query={runsQuery} what="Runs">
         {(items) =>
           items.length === 0 ? (
@@ -123,9 +135,11 @@ export function RunsPage() {
               <Table stack="lg">
                 <thead>
                   <tr>
+                    <Th>Select history</Th>
                     <Th>Run</Th>
                     <Th>Loop</Th>
                     <Th>Status</Th>
+                    <Th>Retention</Th>
                     <Th>Started</Th>
                     <Th>Parent</Th>
                     <Th>Children</Th>
@@ -134,6 +148,19 @@ export function RunsPage() {
                 <tbody>
                   {items.map((run) => (
                     <tr key={run.id}>
+                      <Td label="Select history">
+                        <Checkbox
+                          aria-label={`Select history ${run.id}`}
+                          checked={selected.includes(run.id)}
+                          onChange={(event) =>
+                            setSelected((ids) =>
+                              event.target.checked
+                                ? [...ids, run.id]
+                                : ids.filter((id) => id !== run.id),
+                            )
+                          }
+                        />
+                      </Td>
                       <Td>
                         <Link className={ID_LINK} to={`/runs/${run.id}`}>
                           {run.id}
@@ -149,6 +176,9 @@ export function RunsPage() {
                             {run.failure.code}: {run.failure.message}
                           </p>
                         ) : null}
+                      </Td>
+                      <Td label="Retention">
+                        {run.deletionApproval ? 'Delete-ready' : 'Retained'}
                       </Td>
                       <Td label="Started" className="text-sm whitespace-nowrap text-muted">
                         {formatDateTime(run.startedAt ?? run.createdAt)}

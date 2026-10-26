@@ -875,3 +875,7 @@ that recurs gets a new token, so a confirmation opened before it stays stale. Ch
 confirmation, requiring a fresh deliberate choice; keyboard focus then moves to the notice heading, as it does after a sent choice, and to the page heading when the notice leaves because the gateway is running again while it held focus (focus elsewhere is left alone). A missing token is an invalid
 snapshot and never permits an unguarded browser choice. These choices preserve engine
 drain, seal, force and recovery semantics (ADR-0049).
+
+## History selection and confirmation
+
+Runs offers a checkbox for each visible record, a selection count, **Review delete-ready history**, and **Withdraw delete-ready mark**. The inspector offers the same actions for its one run. Review freezes the explicit IDs and displays protection reasons; active, paused, unfinished or required retained history cannot be silently skipped from a bulk selection. Confirmation marks only the reviewed selection. Cancelling, Escape or closing leaves history unchanged; polling and later history never join that selection. Filter controls clear selection. A stale confirmation requires a new review. Retention labels and the inspector show the persisted approval and confirming actor/time. Withdrawal also retains the related dependency component. No automatic deletion is introduced in this phase.

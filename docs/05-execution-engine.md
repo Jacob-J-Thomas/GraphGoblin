@@ -743,3 +743,7 @@ and has no runtime failure, an explicit API Resume of its containing failed run 
 eligible. Before the child recovery it still refuses. Parent/child ownership and
 identity are checked; plain Resume never creates a fresh provider conversation.
 The recorded failure's original resumability remains factual history.
+
+## History consent and lifecycle
+
+Explicit history deletion eligibility is separate from execution status. Only terminal, finalized and dependency-complete selections can be marked. SQLite invalidates affected component approvals when an approved run resumes or its recorded events/finalization change, when admission adds a child or replay dependency to an approved component, or when a relationship changes involving one. Admission records an indexed replay-source identity with the initial thread in the same transaction. Revocation traverses only affected components through run-ID, parent and replay-source indexes. Ordinary event appends on unapproved runs check only their own prior nullable approval, with no global approval lookup, recursive traversal or thread parsing. Withdrawal retains the selected run's whole dependency component. Finishing again never restores old consent. Phase 1 performs no automatic cleanup; future pressure cleanup must recheck eligibility and retained resource references at deletion time. [ADR-0060](decisions/ADR-0060-explicit-history-deletion-eligibility.md) defines the protection boundary.

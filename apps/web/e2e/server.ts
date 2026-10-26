@@ -177,13 +177,14 @@ async function startApp(
   env: Record<string, string> = {},
   requireApiKey = false,
   realClassifiers = false,
-  options: { claude?: boolean; id?: string } = {},
+  options: { claude?: boolean; id?: string; tempPrefix?: string } = {},
 ) {
   const id = options.id ?? 'e2e-instance-' + nextInstanceId++;
   const codex = new FakeHarness([], 'codex');
   const claude = options.claude ? new E2eClaudeHarness() : undefined;
   const harnesses = { codex, ...(claude ? { claude } : {}) };
   const app = await createTestApp({
+    ...(options.tempPrefix ? { tempPrefix: options.tempPrefix } : {}),
     env: { GG_WEB_DIST: dist, ...env },
     requireApiKey,
     realClassifiers,
@@ -548,7 +549,10 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
         body['requireApiKey'] === true,
         // The real catalog, secret resolution, and HTTP transport for classifiers (#43).
         body['realClassifiers'] === true,
-        { claude: body['claude'] === true },
+        {
+          claude: body['claude'] === true,
+          ...(body['tempPrefix'] === 'gg-wp-e3-' ? { tempPrefix: 'gg-wp-e3-' } : {}),
+        },
       );
       // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one.
       const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);

@@ -25,6 +25,7 @@ import {
   SqliteClassifierModels,
   type SqliteRunRepository,
   SqliteDeliveryRunRepository,
+  SqliteDeletionEligibility,
   SqliteSecrets,
   SqliteSessionRepository,
   SqliteSettings,
@@ -106,6 +107,7 @@ export interface Container {
   masterKey: Buffer;
   classifierRegistry: ClassifierRegistry;
   repos: {
+    deletionEligibility: SqliteDeletionEligibility;
     runs: SqliteRunRepository;
     loops: SqliteLoopRepository;
     sessions: SqliteSessionRepository;
@@ -413,6 +415,7 @@ export async function createContainer(
       masterKey,
       classifierRegistry,
       repos: {
+        deletionEligibility: new SqliteDeletionEligibility(db),
         runs,
         loops,
         sessions,

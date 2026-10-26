@@ -17,7 +17,10 @@ import {
 export { runRecordFromRow } from './run-row.js';
 
 /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
-function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert> {
+function toColumns(
+  changes: RunRecordChanges,
+  current: RunRecord,
+): Partial<typeof runs.$inferInsert> {
   const out: Record<string, unknown> = {};
   const map: Record<keyof RunRecordChanges, keyof typeof runs.$inferInsert> = {
     id: 'id',
@@ -44,6 +47,13 @@ function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert>
   for (const [key, value] of Object.entries(changes) as [keyof RunRecordChanges, unknown][]) {
     out[map[key]] = value === undefined ? null : key === 'result' ? JSON.stringify(value) : value;
   }
+  // RETURNING is evaluated before AFTER triggers; never return a superseded approval.
+  if (
+    (['status', 'parentRunId', 'lastEventSeq'] as const).some(
+      (key) => key in changes && changes[key] !== current[key],
+    )
+  )
+    out['deletionApproval'] = null;
   return out;
 }
 
@@ -55,6 +65,7 @@ export function runInsert(run: RunRecord, initialThread: ContextThread): typeof 
     versionId: run.versionId,
     pinned: run.pinned,
     parentRunId: run.parentRunId ?? null,
+    replaySourceRunId: initialThread.invocation.replayOf?.runId ?? null,
     invocationId: run.invocationId,
     status: run.status,
     currentNodeId: run.currentNodeId ?? null,
@@ -122,7 +133,7 @@ export class SqliteRunRepository implements RunRepository {
       const current = decodeRunRecord(row);
       // Validate before encoding: JSON.stringify would silently turn NaN/Infinity into null.
       RunRecordSchema.parse({ ...current, ...changes });
-      const columns = toColumns(changes);
+      const columns = toColumns(changes, current);
       if (Object.keys(columns).length === 0) return current;
       const [updated] = await tx
         .update(runs)
@@ -147,7 +158,7 @@ export class SqliteRunRepository implements RunRepository {
       if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
         return undefined;
       RunRecordSchema.parse({ ...current, ...changes });
-      const columns = toColumns(changes);
+      const columns = toColumns(changes, current);
       if (Object.keys(columns).length === 0) return current;
       const [updated] = await tx
         .update(runs)

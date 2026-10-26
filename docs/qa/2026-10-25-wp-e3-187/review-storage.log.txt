@@ -1,0 +1,73 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts (27 tests | 5 failed) 2715ms
+   × frozen receipt contract: astral maxima 75ms
+   × frozen receipt contract: failure astral maximum 53ms
+   × frozen receipt contract: astral target 2049 55ms
+   × frozen receipt contract: astral secret 65 56ms
+   × frozen receipt contract: astral error 2001 123ms
+ ❯ src/sqlite/deletion-eligibility.test.ts (15 tests | 1 failed) 858ms
+   × leaves unrelated approvals and preview tokens unchanged during ordinary event appends 50ms
+pnpm.cmd : 
+At line:15 char:164
++ ... OUNT='300'; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/deletion-eligibility.test.ts > leaves unrelated approvals and preview tokens unchanged during 
+ordinary event appends
+RunFailureError: Generated run event could not be recorded: actor: Invalid input: expected object, received undefined
+ ❯ validateGeneratedEvent ../engine/src/event-validation.ts:18:9
+     16|     .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+     17|     .join('; ');
+     18|   throw new RunFailureError(
+       |         ^
+     19|     'EVENT_INVALID',
+     20|     `Generated run event could not be recorded: ${reason}`,
+ ❯ src/sqlite/events.ts:87:23
+ ❯ LibSQLSession.transaction 
+../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:122:19
+ ❯ SqliteEventStore.append src/sqlite/events.ts:70:20
+ ❯ src/sqlite/deletion-eligibility.test.ts:170:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral maxima
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: failure astral maximum
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral target 2049
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral secret 65
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral error 2001
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:81:58
+     79|   const type = 'error' in payload ? 'return.failed' : 'return.delivere…
+     80|   const historical = { runId, seq: 1, ts: FIXTURE_TS, type, ...payload…
+     81|   expect(V3RunEventSchema.safeParse(historical).success).toBe(valid);
+       |                                                          ^
+     82|   const before = await insert(payload, type);
+     83|   await handle.migrate();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+ Test Files  2 failed | 5 passed (7)
+      Tests  6 failed | 115 passed (121)
+   Start at  23:26:31
+   Duration  23.37s (tests 62%, import 31%, transform 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+

@@ -8,6 +8,7 @@ import type {
   LoopDefinition,
   LoopVersionStatus,
   RunFailure,
+  DeletionApproval,
   RunPin,
   WaitSpec,
 } from '@graphgoblin/contracts';
@@ -67,6 +68,8 @@ export const runs = sqliteTable(
     loopId: text('loop_id').notNull(),
     versionId: text('version_id').notNull(),
     parentRunId: text('parent_run_id'),
+    /** Indexed replay provenance; written with the initial thread at admission. */
+    replaySourceRunId: text('replay_source_run_id'),
     invocationId: text('invocation_id').notNull(),
     status: text('status').notNull(),
     currentNodeId: text('current_node_id'),
@@ -92,6 +95,8 @@ export const runs = sqliteTable(
     }).$type<ReplayState>(),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
+    deletionApproval: text('deletion_approval', { mode: 'json' }).$type<DeletionApproval>(),
+    deletionRevision: integer('deletion_revision').notNull().default(0),
     /**
      * What `version_id` pins (ADR-0041). Nullable only because SQLite cannot add a NOT NULL column
      * without a default; every run is written with one and migration 0014 pinned the runs before it.
@@ -109,6 +114,8 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    index('runs_replay_source_idx').on(t.replaySourceRunId),
+    index('runs_deletion_approval_idx').on(t.deletionApproval),
     // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
     index('runs_version_idx').on(t.versionId),
   ],
