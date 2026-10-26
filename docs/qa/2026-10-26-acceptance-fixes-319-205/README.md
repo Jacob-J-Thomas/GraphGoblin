@@ -101,7 +101,7 @@ Finding outside the patch's allowed scope: on POSIX the SDK starts the CLI witho
 - `docs/guide/01-install-and-first-run.md`, "Stop and restart safely": rewritten to ADR-0049. HTTP, the browser app and the inspector stay open through the drain; running work, including Codex and Claude turns, reaches its result; the browser offers Keep waiting and a confirmed Force stop; the grace notice; a later Ctrl+C forces; `force-failed` and Force exit. The next paragraph also said a node executing at an abrupt stop "runs again"; that contradicted ADR-0059 for scripts and now says they fail `SCRIPT_OUTCOME_UNCERTAIN` until an explicit Resume or Replay.
 - `docs/decisions/ADR-0055-explicit-missing-session-recovery.md`: Accepted (2026-10-25), #265 merged as PR #401.
 
-Other docs: ADR-0049 (acceptance amendment, engineering parameter, N10 rewritten, N12 and N13 added), docs/05 "Deliberate shutdown", docs/06 (effort row, Cancellation, Model catalog, Windows notes, limits table), docs/11 managed stop controls, guide 06 (Codex efforts), guide 07 (Codex `HARNESS_TERMINATION_UNCONFIRMED` in `force-failed`, Windows console Ctrl+C), research notes on the Codex SDK and the licence ledger row for the patched SDK, CHANGELOG (four bullets under Unreleased).
+Other docs: ADR-0049 (acceptance amendment, engineering parameter, N10 rewritten, N12 and N13 added), docs/05 "Deliberate shutdown", docs/06 (effort row, Cancellation, Model catalog, Windows notes, limits table), docs/11 managed stop controls, guide 06 (Codex efforts), guide 07 (Codex `HARNESS_TERMINATION_UNCONFIRMED` in `force-failed`, Windows console Ctrl+C), research notes on the Codex SDK and the licence ledger row for the patched SDK, CHANGELOG (one bullet each for #319 and #205 under Unreleased).
 
 ## Gates
 
