@@ -27,19 +27,35 @@ export const OBSERVATION_EVENT_TYPES: ReadonlySet<RunEvent['type']> = new Set<Ru
   'decision.made',
 ]);
 
-/** The read models a change can affect, beyond the run record, which every change refreshes. */
+/** The read models a change can affect. */
 export interface LiveChanges {
+  run: boolean;
   observation: boolean;
   thread: boolean;
 }
 
+const NONE: LiveChanges = { run: false, observation: false, thread: false };
+
+/** Both sets of changes. */
+function mergeChanges(a: LiveChanges | undefined, b: LiveChanges): LiveChanges {
+  return a
+    ? {
+        run: a.run || b.run,
+        observation: a.observation || b.observation,
+        thread: a.thread || b.thread,
+      }
+    : b;
+}
+
 /**
- * What a batch of live events can change. Without events (metadata observed to change by another
- * route, such as the attempt follower) every read model may have changed.
+ * What a batch of live events can change: the run record always, the evidence and the thread only
+ * after their own event types. Without events (metadata observed to change by another route, such
+ * as the attempt follower) every read model may have changed.
  */
 export function liveChanges(events?: readonly RunEvent[]): LiveChanges {
-  if (!events) return { observation: true, thread: true };
+  if (!events) return { run: true, observation: true, thread: true };
   return {
+    run: true,
     observation: events.some((event) => OBSERVATION_EVENT_TYPES.has(event.type)),
     thread: events.some((event) => THREAD_EVENT_TYPES.has(event.type)),
   };
@@ -55,13 +71,16 @@ export interface LiveRefresh {
 /**
  * Coalesces live changes into refreshes: the first change after a quiet interval refreshes at
  * once; changes during an interval, or while a refresh is in flight, merge into one trailing
- * refresh. No change is lost, and refreshes never overlap.
+ * refresh. Refreshes never overlap. A refresh resolves with the changes it could not read (a
+ * failed read); they stay pending and join the next refresh a later change requests, so no change
+ * is lost and a failing read is not retried on its own.
  */
 export function createLiveRefresh(
-  refresh: (changes: LiveChanges) => Promise<unknown>,
+  refresh: (changes: LiveChanges) => Promise<LiveChanges | void>,
   intervalMs = LIVE_REFRESH_MS,
 ): LiveRefresh {
   let pending: LiveChanges | undefined;
+  let unread: LiveChanges | undefined;
   let running = false;
   let disposed = false;
   let lastStart = Number.NEGATIVE_INFINITY;
@@ -72,14 +91,17 @@ export function createLiveRefresh(
   };
   function start() {
     timer = undefined;
-    const changes = pending!;
-    pending = undefined;
+    const changes = mergeChanges(unread, pending!);
+    pending = unread = undefined;
     running = true;
     lastStart = Date.now();
-    refresh(changes)
-      // A failed read is reported by its own query; the next change refreshes again.
-      .catch(() => undefined)
-      .finally(() => {
+    void refresh(changes)
+      .then(
+        (left) => left ?? NONE,
+        () => changes,
+      )
+      .then((left) => {
+        if (left.run || left.observation || left.thread) unread = mergeChanges(unread, left);
         running = false;
         schedule();
       });
@@ -87,19 +109,14 @@ export function createLiveRefresh(
   return {
     request(changes) {
       if (disposed) return;
-      pending = pending
-        ? {
-            observation: pending.observation || changes.observation,
-            thread: pending.thread || changes.thread,
-          }
-        : changes;
+      pending = mergeChanges(pending, changes);
       schedule();
     },
     dispose() {
       disposed = true;
       clearTimeout(timer);
       timer = undefined;
-      pending = undefined;
+      pending = unread = undefined;
     },
   };
 }

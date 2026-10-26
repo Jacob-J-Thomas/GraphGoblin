@@ -171,3 +171,125 @@ it('reads a selected completion exactly once and refreshes the hidden current th
   expect(count.historicalThread()).toHaveLength(2);
   view.unmount();
 });
+
+/** A promise the test resolves when it chooses. */
+function barrier() {
+  let release = () => {};
+  const promise = new Promise<void>((resolve) => (release = resolve));
+  return { promise, release };
+}
+
+it('reads the context again when a live batch overtakes the first thread read (#186 review)', async () => {
+  const api = new FakeApi();
+  const run = api.addRun({ status: 'running' });
+  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
+  api.pushEvent(run.id, event(run.id, 2, 'run.started', { attempt: 1 }));
+  // The first current-thread read takes its snapshot before the pass arrives, then is held.
+  const held = barrier();
+  let first = true;
+  api.override('GET /runs/:id/thread', async (call) => {
+    const response = await api.builtIn(call);
+    if (first && !call.search.has('at')) {
+      first = false;
+      await held.promise;
+    }
+    return response;
+  });
+  const view = renderApp(`/runs/${run.id}`, api);
+  await waitFor(() => expect(first).toBe(false));
+  act(() => {
+    for (const item of cyclePass(run.id, 3, 1)) api.pushEvent(run.id, item);
+  });
+  await screen.findByText('Timeline (7 events, live)');
+  // The pass reached the live refresh, which read the run record while the first read waited.
+  await waitFor(() => expect(api.callsTo('GET', `/runs/${run.id}`).length).toBeGreaterThan(1));
+  await act(async () => {
+    held.release();
+    await held.promise;
+  });
+  await waitFor(() => expect(screen.getByLabelText('Variables')).toHaveTextContent('"n": 1'));
+  view.unmount();
+});
+
+it('serializes the return to the current thread with the next live refresh (#186 review)', async () => {
+  const api = new FakeApi();
+  const user = userEvent.setup();
+  const { run, view } = await followRunning(api);
+  await deliverBatches(api, run.id, [cyclePass(run.id, 3, 1)]);
+  await waitFor(() => expect(screen.getByLabelText('Variables')).toHaveTextContent('"n": 1'));
+  await user.click(within(screen.getByRole('list', { name: 'Timeline' })).getByText('#4'));
+  await screen.findByText('Thread at event 4');
+  // A thread change while the selection is shown leaves the current thread stale.
+  const runs = api.callsTo('GET', `/runs/${run.id}`).length;
+  await deliverBatches(api, run.id, [cyclePass(run.id, 8, 2)]);
+  await waitFor(() => expect(api.callsTo('GET', `/runs/${run.id}`).length).toBeGreaterThan(runs));
+  await new Promise((resolve) => setTimeout(resolve, 2 * LIVE_REFRESH_MS));
+  const held = barrier();
+  let inFlight = 0;
+  let most = 0;
+  let reads = 0;
+  api.override('GET /runs/:id/thread', async (call) => {
+    if (call.search.has('at')) return api.builtIn(call);
+    const response = await api.builtIn(call);
+    reads++;
+    inFlight++;
+    most = Math.max(most, inFlight);
+    if (reads === 1) await held.promise;
+    inFlight--;
+    return response;
+  });
+  try {
+    await user.click(screen.getByRole('button', { name: 'Follow live' }));
+    await waitFor(() => expect(reads).toBe(1));
+    act(() => {
+      for (const item of cyclePass(run.id, 13, 3)) api.pushEvent(run.id, item);
+    });
+    await screen.findByText('Timeline (17 events, live)');
+    // The pass asks for another thread read; it waits for the return read instead of starting
+    // beside it, however long that read takes.
+    await new Promise((resolve) => setTimeout(resolve, 3 * LIVE_REFRESH_MS));
+    expect(reads).toBe(1);
+    expect(most).toBe(1);
+  } finally {
+    await act(async () => {
+      held.release();
+      await held.promise;
+    });
+  }
+  await waitFor(() => expect(screen.getByLabelText('Variables')).toHaveTextContent('"n": 3'));
+  await waitFor(() => expect(reads).toBe(2));
+  expect(most).toBe(1);
+  view.unmount();
+});
+
+it('keeps the thread on screen while a new selection is read, not an older selection (#186 QA)', async () => {
+  const api = new FakeApi();
+  const user = userEvent.setup();
+  const { run, view } = await followRunning(api);
+  await deliverBatches(api, run.id, [cyclePass(run.id, 3, 1)]);
+  const timeline = screen.getByRole('list', { name: 'Timeline' });
+  await user.click(within(timeline).getByText('#4'));
+  await screen.findByText('Thread at event 4');
+  await user.click(screen.getByRole('button', { name: 'Follow live' }));
+  await deliverBatches(api, run.id, [cyclePass(run.id, 8, 2)]);
+  await waitFor(() => expect(screen.getByLabelText('Variables')).toHaveTextContent('"n": 2'));
+  expect(screen.getByRole('heading', { name: 'Current thread' })).toBeInTheDocument();
+  const held = barrier();
+  api.override('GET /runs/:id/thread', async (call) => {
+    if (call.search.has('at')) await held.promise;
+    return api.builtIn(call);
+  });
+  await user.click(within(timeline).getByText('#9'));
+  await screen.findByText('Reading the thread at event 9…');
+  // The reader left the current thread, so it stays until event 9's thread is read.
+  expect(screen.getByRole('heading', { name: 'Current thread' })).toBeInTheDocument();
+  expect(screen.queryByText('Thread at event 4')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Variables')).toHaveTextContent('"n": 2');
+  await act(async () => {
+    held.release();
+    await held.promise;
+  });
+  await screen.findByText('Thread at event 9');
+  expect(screen.getByLabelText('Variables')).toHaveTextContent('"n": 2');
+  view.unmount();
+});

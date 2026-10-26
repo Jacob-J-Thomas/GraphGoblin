@@ -9,9 +9,11 @@ import {
 } from './live-refresh.js';
 
 const runId = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
-const THREAD = { observation: false, thread: true };
-const EVIDENCE = { observation: true, thread: false };
-const RUN_ONLY = { observation: false, thread: false };
+const THREAD = { run: true, observation: false, thread: true };
+const EVIDENCE = { run: true, observation: true, thread: false };
+const RUN_ONLY = { run: true, observation: false, thread: false };
+const ALL = { run: true, observation: true, thread: true };
+const THREAD_ONLY = { run: false, observation: false, thread: true };
 
 describe('liveChanges', () => {
   it('refreshes the thread after thread events and the evidence after evidence events only', () => {
@@ -34,10 +36,10 @@ describe('liveChanges', () => {
     expect(liveChanges([progress, usage])).toEqual(RUN_ONLY);
     expect(liveChanges([progress, started])).toEqual(THREAD);
     expect(liveChanges([usage, exit])).toEqual(EVIDENCE);
-    expect(liveChanges([decision])).toEqual({ observation: true, thread: true });
+    expect(liveChanges([decision])).toEqual(ALL);
     expect(liveChanges([])).toEqual(RUN_ONLY);
     // A change observed without events can have changed anything.
-    expect(liveChanges()).toEqual({ observation: true, thread: true });
+    expect(liveChanges()).toEqual(ALL);
   });
 });
 
@@ -76,7 +78,7 @@ describe('createLiveRefresh', () => {
     await vi.advanceTimersByTimeAsync(LIVE_REFRESH_MS - 1);
     expect(calls).toHaveLength(1);
     await vi.advanceTimersByTimeAsync(1);
-    expect(calls).toEqual([RUN_ONLY, { observation: true, thread: true }]);
+    expect(calls).toEqual([RUN_ONLY, ALL]);
     await release();
     // Nothing pending: no further refresh, however long the reader waits.
     await vi.advanceTimersByTimeAsync(10 * LIVE_REFRESH_MS);
@@ -101,22 +103,33 @@ describe('createLiveRefresh', () => {
     expect(calls).toEqual([RUN_ONLY, THREAD]);
   });
 
-  it('continues after a failed refresh and stops scheduling once disposed', async () => {
+  it('keeps changes a refresh could not read for the next requested refresh, without retrying alone', async () => {
     const calls: LiveChanges[] = [];
+    const outcomes: (() => Promise<LiveChanges | void>)[] = [
+      () => Promise.reject(new Error('offline')),
+      () => Promise.resolve({ run: false, observation: true, thread: false }),
+      () => Promise.resolve(),
+    ];
     const live = createLiveRefresh((changes) => {
       calls.push(changes);
-      return Promise.reject(new Error('offline'));
+      return outcomes.shift()!();
     });
     live.request(THREAD);
     await vi.advanceTimersByTimeAsync(0);
-    live.request(EVIDENCE);
+    // A failed refresh does not start another by itself.
+    await vi.advanceTimersByTimeAsync(10 * LIVE_REFRESH_MS);
+    expect(calls).toEqual([THREAD]);
+    // The next change carries the unread one; a partly failed read keeps only what failed.
+    live.request(THREAD_ONLY);
+    await vi.advanceTimersByTimeAsync(0);
+    live.request({ run: false, observation: false, thread: false });
     await vi.advanceTimersByTimeAsync(LIVE_REFRESH_MS);
-    expect(calls).toEqual([THREAD, EVIDENCE]);
+    expect(calls).toEqual([THREAD, THREAD, { run: false, observation: true, thread: false }]);
     live.request(RUN_ONLY);
     live.dispose();
     live.request(THREAD);
     await vi.advanceTimersByTimeAsync(10 * LIVE_REFRESH_MS);
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(3);
   });
 
   it('bounds refreshes by elapsed time, not by the event rate', async () => {

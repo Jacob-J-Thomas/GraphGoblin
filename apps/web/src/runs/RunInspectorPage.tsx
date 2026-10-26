@@ -2,7 +2,7 @@ import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.j
 import type { RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
 import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
@@ -118,7 +118,6 @@ export function RunInspectorPage() {
       thread: await runs.thread(client, runId, { at: selectedSeq! }, { signal }),
       seq: selectedSeq!,
     }),
-    placeholderData: (previous) => previous,
     enabled: selectedSeq !== undefined,
     gcTime: 0,
     staleTime: Infinity,
@@ -131,10 +130,21 @@ export function RunInspectorPage() {
     gcTime: 0,
     staleTime: Infinity,
   });
-  const shownThread = currentThreadShown
-    ? threadQuery.data
-    : (selectedThread.data?.thread ?? threadQuery.data);
-  const shownSeq = currentThreadShown ? undefined : selectedThread.data?.seq;
+  // The thread on screen: the current thread while following, or a selected event's exact thread
+  // once read. While a selection is read, the thread shown just before it stays with its own
+  // label, so leaving the current thread keeps showing it rather than an older selection's.
+  const resolved = currentThreadShown
+    ? threadQuery.data && { runId, thread: threadQuery.data, seq: undefined }
+    : selectedThread.data && { runId, ...selectedThread.data };
+  const [preceding, setPreceding] = useState(resolved);
+  if (resolved && (resolved.thread !== preceding?.thread || resolved.seq !== preceding?.seq))
+    setPreceding(resolved);
+  const shown =
+    resolved ??
+    (preceding?.runId === runId ? preceding : undefined) ??
+    (threadQuery.data && { thread: threadQuery.data, seq: undefined });
+  const shownThread = shown?.thread;
+  const shownSeq = shown?.seq;
   const threadError = currentThreadShown ? threadQuery.error : selectedThread.error;
   // Node and route labels come from the pinned version, so it is always read (#255).
   const versionQuery = useLoopVersion(runQuery.data?.loopId ?? '', runQuery.data?.versionId ?? '');
