@@ -1,0 +1,61 @@
+import { readFile, writeFile, readdir, stat, rename, mkdir } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { resolve, relative, join } from 'node:path';
+
+const out=resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5');
+const qa=resolve('apps/web/.tmp/qa5');
+const clean=(s)=>s.replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE.slice(2),'%USERPROFILE%').replace(/\x1b\[[0-9;]*m/g,'');
+const escape=(s)=>String(s).replaceAll('|','\\|').replaceAll('\n',' ').replaceAll('\r','');
+const exists=async(p)=>{try{await stat(p);return true;}catch{return false;}};
+async function hash(path) {const h=createHash('sha256');for await(const chunk of createReadStream(path))h.update(chunk);return h.digest('hex');}
+async function walk(path) {const files=[];for(const d of await readdir(path,{withFileTypes:true})){const p=join(path,d.name);if(d.isDirectory())files.push(...await walk(p));else if(d.isFile())files.push(p);}return files.sort();}
+
+const browser=[];
+for(const name of (await readdir(out)).filter((n)=>/^(edge-focused|edge-full|isolated-).*\.json$/.test(n) && !n.endsWith('-thread.json'))) {
+  const raw=JSON.parse(await readFile(join(out,name),'utf8'));
+  if(!raw.suites)continue;
+  const cases=[];
+  function visit(suite,parents=[]) {
+    for(const spec of suite.specs??[]) for(const test of spec.tests??[]) cases.push({file:spec.file?.replaceAll('\\','/').split('/e2e/').at(-1),line:spec.line,title:[...parents,spec.title].filter(Boolean).join(' > '),expectedStatus:test.expectedStatus,status:test.status,results:(test.results??[]).map((r)=>({status:r.status,duration:r.duration,retry:r.retry,errors:(r.errors??[]).map((e)=>({message:clean(e.message??''),stack:clean(e.stack??''),snippet:clean(e.snippet??'')})),stdout:r.stdout,stderr:r.stderr}))});
+    for(const child of suite.suites??[])visit(child,[...parents,child.title]);
+  }
+  for(const suite of raw.suites)visit(suite);
+  browser.push({report:name,stats:raw.stats,errors:raw.errors,cases});
+}
+await writeFile(join(out,'browser-results.json'),clean(JSON.stringify(browser,null,2)));
+let ledger='# Complete browser check ledger\n\nAll cases use the tracked assertions, as verified by [the assertion audit](harness-assertion-audit.json). Steps: run the named spec and case through the QA port-constrained harness. Expected: every assertion passes, except the explicitly disabled LIVE case. Original steps and assertions are retained in the tracked source files; the report retains complete names, outcomes and errors in [browser-results.json](browser-results.json). No retry success replaces an original failure.\n';
+for(const report of browser) {
+  ledger+=`\n## ${report.report}\n\nStats: ${JSON.stringify(report.stats)}\n\n| Spec and line | Case | Expected | Actual | Duration ms |\n| --- | --- | --- | --- | ---: |\n`;
+  for(const c of report.cases)ledger+=`| ${escape(c.file)}:${c.line} | ${escape(c.title)} | ${c.expectedStatus} | ${c.status}; ${escape(c.results.flatMap((r)=>r.errors.map((e)=>e.message)).join('; ').slice(0,400))} | ${c.results.map((r)=>r.duration).join(', ')} |\n`;
+}
+await writeFile(join(out,'browser-cases.md'),ledger);
+const coverage=[];
+const commands=(await readFile(join(out,'commands.jsonl'),'utf8')).trim().split('\n').map((s)=>JSON.parse(s));
+for(const p of ['web','api','api-client','infrastructure','domain']) {
+  const folder=resolve(p==='web'||p==='api'?'apps/'+p:'packages/'+p);
+  const path=join(folder,'coverage/coverage-summary.json');
+  const command=commands.findLast((c)=>c.name.startsWith(p+'-coverage'));
+  const fresh=await exists(path) && (await stat(path)).mtime.getTime()>=Date.parse(command?.started??'9999-01-01');
+  coverage.push({package:p,commandCode:command?.code,...(fresh?{totals:JSON.parse(await readFile(path,'utf8')).total,modified:(await stat(path)).mtime.toISOString()}:{notEmitted:true,note:'No summary freshly emitted by this gate; pre-existing files, if any, are not accepted.'})});
+}
+await writeFile(join(out,'coverage-summary.json'),JSON.stringify(coverage,null,2));
+
+const notKept=[];
+for(const name of (await readdir(qa,{withFileTypes:true})).filter((d)=>d.isDirectory()&&(d.name==='results'||d.name.endsWith('-results'))).map((d)=>d.name)) {
+  const folder=join(qa,name),files=await walk(folder);let bytes=0;const digest=createHash('sha256');
+  for(const file of files){const size=(await stat(file)).size,sha=await hash(file);bytes+=size;digest.update(relative(folder,file).replaceAll('\\','/')+'\0'+size+'\0'+sha+'\n');if(size>1_000_000 && /\.(png|jpe?g|zip|har|json|trace)$/.test(file))notKept.push({path:relative(resolve('.'),file).replaceAll('\\','/'),bytes:size,sha256:sha,reason:'Playwright output member above 1,000,000 bytes; not retained in QA evidence.'});}
+  notKept.push({path:relative(resolve('.'),folder).replaceAll('\\','/'),files:files.length,bytes,sha256:digest.digest('hex'),reason:'Entire Playwright output folder. Folder SHA-256 is the digest of sorted path-NUL-size-NUL-fileSHA256-newline records.'});
+}
+await mkdir(join(qa,'oversized'),{recursive:true});
+for(const file of await walk(out)) {
+  const size=(await stat(file)).size;
+  if(size>1_000_000 && (/\.(png|jpe?g|zip)$/.test(file) || /(?:edge-focused|edge-full|isolated-[^/\\]+)\.json$/.test(file))) {
+    const name=relative(out,file);notKept.push({path:relative(resolve('.'),file).replaceAll('\\','/'),bytes:size,sha256:await hash(file),reason:'Oversized capture/raw report moved to ignored scratch; condensed results retained.'});
+    await rename(file,join(qa,'oversized',name.replaceAll('\\','_').replaceAll('/','_')));
+  }
+}
+await writeFile(join(out,'not-kept-inventory.json'),JSON.stringify(notKept,null,2));
+await writeFile(join(out,'NOT-KEPT.md'),'# Not kept\n\nThese files and directories remain in ignored scratch for orchestrator cleanup. No directory was deleted by a QA cleanup command. They are not report citations. The retained [inventory](not-kept-inventory.json) gives exact bytes and SHA-256. Folder digests use sorted relative path, NUL, size, NUL, file SHA-256, newline.\n\n| Scratch item | Bytes | SHA-256 | Reason |\n| --- | ---: | --- | --- |\n'+notKept.map((x)=>`| ${x.path} | ${x.bytes} | ${x.sha256} | ${x.reason} |`).join('\n')+'\n');
+for(const file of await walk(out))if(/\.(txt|md|json|jsonl)$/.test(file)){const original=await readFile(file,'utf8');await writeFile(file,clean(original.replace(/^\uFEFF/,'')));}
+console.log(JSON.stringify({browser:browser.map((r)=>({report:r.report,stats:r.stats})),notKept:notKept.length,coverage:coverage.map((x)=>({package:x.package,lines:x.totals?.lines,branches:x.totals?.branches,notEmitted:x.notEmitted}))}));

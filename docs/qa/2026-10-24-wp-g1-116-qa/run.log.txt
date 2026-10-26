@@ -1,0 +1,52 @@
+CHECK failure: REST MCP four Edge tabs and immutable stored bytes
+PASS failure: REST MCP four Edge tabs and immutable stored bytes
+CHECK native API restart while failed, tabs kept open
+PASS native API restart while failed, tabs kept open
+CHECK resume unfinished: only visit increment and no returned failing patch
+PASS resume unfinished: only visit increment and no returned failing patch
+CHECK mid-resume reload matches existing tabs
+PASS mid-resume reload matches existing tabs
+CHECK success: existing and midway-reloaded tabs follow resume after API restart
+PASS success: existing and midway-reloaded tabs follow resume after API restart
+CHECK keyboard access and viewport overflow
+PASS keyboard access and viewport overflow
+CHECK negative reads and invalid repeated controls do not mutate run
+PASS negative reads and invalid repeated controls do not mutate run
+CHECK replay fork uses own seed and leaves source unchanged
+FAIL replay fork uses own seed and leaves source unchanged Expected values to be strictly equal:
+
+1 !== 2
+
+CHECK subloop child reconciles separately and parent receives result
+PASS subloop child reconciles separately and parent receives result
+CHECK checkpoint boundaries node.started run.waiting node.finished run.finished
+PASS checkpoint boundaries node.started run.waiting node.finished run.finished
+CHECK cancel waiting run: no invented input patch and stable repeated reads
+PASS cancel waiting run: no invented input patch and stable repeated reads
+CHECK unsequenced and nonexistent checkpoint use seed and full history
+PASS unsequenced and nonexistent checkpoint use seed and full history
+CHECK recovery-written failure checkpoint falls back and agrees with full replay
+PASS recovery-written failure checkpoint falls back and agrees with full replay
+CHECK bounded reads with 10000 durable synthetic events
+PASS bounded reads with 10000 durable synthetic events
+CHECK six concurrent polling readers during 1500 quick durable appends
+node : file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-scripts-5d3c777bbc3d45d487c21be81fd2234e/runner.mjs:25
+At line:2 char:761
++ ... tion).Path; node (Join-Path $qaScriptDir 'runner.mjs') *> docs/qa/202 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///C:/User...e/runner.mjs:25:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+const ctrl=(op,args)=>new Promise((resolve,reject)=>{const id=++serial;const 
+timer=setTimeout(()=>{pending.delete(id);reject(Error('IPC timeout '+op));},120000);pending.set(id,{resolve:v=>{clearTi
+meout(timer);resolve(v);},reject:e=>{clearTimeout(timer);reject(e);}});proc.send({id,op,args});});
+                                                                                                                       
+      ^
+
+Error: IPC timeout live-append
+    at Timeout._onTimeout 
+(file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-scripts-5d3c777bbc3d45d487c21be81fd2234e/runner.mjs:25:126)
+    at listOnTimeout (node:internal/timers:594:17)
+    at process.processTimers (node:internal/timers:529:7)
+
+Node.js v22.14.0

@@ -1,0 +1,69 @@
+{
+  "comparisonBase": "74e78bb212a58af15d5c1792fa599ec8a6f4bbad",
+  "head": "94523682d084f7a566242602762a3b04d87a8e55",
+  "notes": "Static origin comparison only. The webhook surrogate defect is reproduced on HEAD. No baseline build/run is claimed."
+}
+
+74e78bb212a58af15d5c1792fa599ec8a6f4bbad apps/api/src/triggers/trigger-service.ts
+function webhookKey(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const key = typeof value === 'string' ? value : JSON.stringify(value);
+  return key !== undefined && key.length <= 512 ? key : undefined;
+}
+
+HEAD apps/api/src/triggers/trigger-service.ts
+function webhookKey(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const key = typeof value === 'string' ? value : JSON.stringify(value);
+  return key !== undefined && key.length <= 512 && !key.includes('\u0000') ? key : undefined;
+}
+
+74e78bb212a58af15d5c1792fa599ec8a6f4bbad packages/engine/src/admission.ts
+export function assertWebhookClaim(input: WebhookClaim, intent?: RunAdmission): void {
+  if (
+    input.inbound.ownerId !== input.ownerId ||
+    !/^[a-f0-9]{64}$/.test(input.contentHash) ||
+    input.inbound.type !== 'webhook' ||
+    input.inbound.runIds.length ||
+    !input.inbound.source.startsWith('webhook:') ||
+    !JsonValueSchema.safeParse(input.inbound.payload).success
+  )
+    throw new AdmissionConflictError();
+  if (
+    intent &&
+    (intent.run.ownerId !== input.ownerId ||
+      intent.run.loopId !== input.loopId ||
+      intent.initialThread.invocation.trigger.nodeId !== input.triggerNodeId ||
+      intent.initialThread.invocation.source !== 'webhook' ||
+      intent.initialThread.invocation.trigger.kind !== 'webhook' ||
+      intent.initialThread.invocation.trigger.dedupeKey !== input.inbound.dedupeKey ||
+      stableStringify(intent.initialThread.invocation.trigger.payload) !==
+        stableStringify(input.inbound.payload))
+  )
+    throw new AdmissionConflictError();
+}
+
+HEAD packages/engine/src/admission.ts
+export function assertWebhookClaim(input: WebhookClaim, intent?: RunAdmission): void {
+  if (
+    input.inbound.ownerId !== input.ownerId ||
+    !/^[a-f0-9]{64}$/.test(input.contentHash) ||
+    input.inbound.type !== 'webhook' ||
+    input.inbound.runIds.length ||
+    !input.inbound.source.startsWith('webhook:') ||
+    !JsonValueSchema.safeParse(input.inbound.payload).success
+  )
+    throw new AdmissionConflictError();
+  if (
+    intent &&
+    (intent.run.ownerId !== input.ownerId ||
+      intent.run.loopId !== input.loopId ||
+      intent.initialThread.invocation.trigger.nodeId !== input.triggerNodeId ||
+      intent.initialThread.invocation.source !== 'webhook' ||
+      intent.initialThread.invocation.trigger.kind !== 'webhook' ||
+      intent.initialThread.invocation.trigger.dedupeKey !== input.inbound.dedupeKey ||
+      stableStringify(intent.initialThread.invocation.trigger.payload) !==
+        stableStringify(input.inbound.payload))
+  )
+    throw new AdmissionConflictError();
+}

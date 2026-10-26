@@ -1,0 +1,99 @@
+﻿diff --git a/CHANGELOG.md b/CHANGELOG.md
+@@ -6,0 +7,2 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+diff --git a/apps/api/src/adversarial.test.ts b/apps/api/src/adversarial.test.ts
+@@ -148,0 +149 @@ describe('adversarial API invariants', () => {
+diff --git a/apps/api/src/routes/runs.ts b/apps/api/src/routes/runs.ts
+@@ -253,0 +254,21 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -13,0 +14 @@ import { RunControls } from './inspector/RunControls.js';
+@@ -149,0 +151 @@ export function RunInspectorPage() {
+diff --git a/docs/04-node-catalog.md b/docs/04-node-catalog.md
+@@ -123 +123 @@ established session. Repairs and continuations can use the visit's own session.
+@@ -305,0 +306,15 @@ Authors may use script/decision nodes for their own usage-aware behavior.
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+@@ -324 +324 @@ messages, gates or counters from the source/parent. Native provider expiry still
+@@ -382 +382 @@ size limit or automatic artifact offloading; large prompts therefore enlarge the
+@@ -414 +414 @@ its existing lookup semantics. Own-session lookup is also limited to the new run
+@@ -638,0 +639,30 @@ ownership is released. See [API controls](07-api-and-streaming.md) and
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+@@ -216 +216 @@ Composition: `apps/api` builds the Codex adapters from the Codex entry of the ha
+@@ -281 +281 @@ that a new authored task was submitted. #244/ADR-0045's acceptance and exact-tas
+@@ -541,4 +541,4 @@ only failed or interrupted turns use the three failure classifications.
+@@ -643,0 +644,20 @@ need no migration.
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+@@ -630,0 +631,19 @@ settles. Durable future parks and pauses still recover on the next start.
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+@@ -764,0 +765,14 @@ value migration. Model and effort remain under Advanced until the separate #205
+diff --git a/docs/guide/07-troubleshooting.md b/docs/guide/07-troubleshooting.md
+@@ -15,5 +15,5 @@ configuration and argument refusals remain non-resumable.
+@@ -301,0 +302,23 @@ they cannot establish managed drain/force evidence. The real signal cases run on
+diff --git a/docs/reference/api.md b/docs/reference/api.md
+@@ -48,0 +49 @@ Starting, observing, and controlling runs.
+diff --git a/packages/adapter-codex/src/harness.test.ts b/packages/adapter-codex/src/harness.test.ts
+@@ -76,0 +77 @@ describe('CodexHarness.start', () => {
+@@ -282 +283 @@ describe('CodexHarness.resume', () => {
+@@ -308 +309,5 @@ describe('CodexHarness.resume', () => {
+@@ -325 +330 @@ describe('CodexHarness.resume', () => {
+@@ -350,4 +355,2 @@ describe('CodexHarness.resume', () => {
+@@ -583,0 +587,26 @@ describe('createCodexAdapters', () => {
+diff --git a/packages/adapter-codex/src/harness.ts b/packages/adapter-codex/src/harness.ts
+@@ -160,0 +161 @@ export class CodexHarness implements HarnessPort {
+@@ -168,2 +169 @@ export class CodexHarness implements HarnessPort {
+@@ -181,2 +181,14 @@ export class CodexHarness implements HarnessPort {
+@@ -195 +207,2 @@ export class CodexHarness implements HarnessPort {
+@@ -220,0 +234,2 @@ export class CodexHarness implements HarnessPort {
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+@@ -4474,0 +4475,54 @@
+@@ -6138,0 +6193,73 @@
+@@ -13324,0 +13452,54 @@
+@@ -15008,0 +15190,73 @@
+@@ -19382,0 +19637,57 @@
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+@@ -1141,0 +1142,45 @@ export interface paths {
+@@ -3761,0 +3807,11 @@ export interface components {
+@@ -4145,0 +4202,16 @@ export interface components {
+@@ -5842,0 +5915,11 @@ export interface components {
+@@ -6226,0 +6310,16 @@ export interface components {
+diff --git a/packages/api-client/src/resources.test.ts b/packages/api-client/src/resources.test.ts
+@@ -115,0 +116,15 @@ it('forwards run observation cancellation to GET without cancelling the run', as
+diff --git a/packages/api-client/src/resources.ts b/packages/api-client/src/resources.ts
+@@ -144,0 +145,6 @@ export const runs = {
+diff --git a/packages/contracts/src/events.ts b/packages/contracts/src/events.ts
+@@ -15,0 +16 @@ import {
+@@ -141 +142,6 @@ export const RunEventSchema = z.discriminatedUnion('type', [
+diff --git a/packages/contracts/src/run.ts b/packages/contracts/src/run.ts
+@@ -9,0 +10 @@ import {
+@@ -114,0 +116,19 @@ export type PromptProvenance = z.infer<typeof PromptProvenanceSchema>;
+@@ -121,0 +142 @@ export const RunFailureSchema = z.strictObject({
+diff --git a/packages/engine/src/errors.ts b/packages/engine/src/errors.ts
+@@ -43,0 +44 @@ export class RunFailureError extends Error {
+@@ -59,0 +61 @@ export class RunFailureError extends Error {
+diff --git a/packages/engine/src/handlers/inference-turn.ts b/packages/engine/src/handlers/inference-turn.ts
+@@ -6,0 +7 @@ type Turn = Extract<RunEvent, { type: 'harness.turn' }>;
+@@ -20 +21,7 @@ export function visitTurn(
+@@ -25,0 +33 @@ export function visitTurn(
+@@ -26,0 +35,8 @@ export function visitTurn(
+@@ -56,0 +73 @@ export function visitTurn(
+@@ -88,0 +106 @@ export function visitTurn(
+diff --git a/packages/engine/src/handlers/inference.ts b/packages/engine/src/handlers/inference.ts
+@@ -9,0 +10 @@ import {
+@@ -21,0 +23 @@ import type {
+@@ -161,0 +164,15 @@ async function recordSubmission(
+@@ -169,0 +187 @@ async function consume(
+@@ -189,9 +207,2 @@ async function consume(
+@@ -228,0 +240 @@ async function consume(
+@@ -230 +242 @@ async function consume(
+@@ -237,0 +250,3 @@ async function consume(
+@@ -261,0 +277 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -265,2 +281,2 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -285 +301,26 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -291,4 +332,2 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -306,2 +345,5 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -331,6 +373 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -703 +740 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+@@ -709,0 +747 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+@@ -77,0 +78,2 @@ import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-def
+@@ -1040 +1042,4 @@ export class RunManager {
+@@ -1054 +1059 @@ export class RunManager {
+@@ -1082,0 +1088,64 @@ export class RunManager {

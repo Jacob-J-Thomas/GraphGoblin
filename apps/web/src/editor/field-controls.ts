@@ -1,6 +1,13 @@
+import { ExecutionLimitField } from './ExecutionLimitField.js';
 import type { FieldControls } from '../forms/fields.js';
 import { CronControl, CronTimezoneControl } from '../forms/cron/control.js';
-import { EffortField, LoopModelField, ModelField } from '../forms/fields/model.js';
+import {
+  EffortField,
+  EffortSelectionField,
+  LoopModelField,
+  ModelField,
+  ModelSelectionField,
+} from '../forms/fields/model.js';
 import { ClassifierField } from './ClassifierField.js';
 import { ClaudeApprovalField, ClaudePolicyField } from './ClaudePolicyField.js';
 import { DECISION_FIELD_OVERRIDES } from './DecisionTruthThresholdField.js';
@@ -14,8 +21,11 @@ import { CapabilityField, VariableField } from '../forms/fields/suggestions.js';
  * classifier picker (#43). Other controls register additively.
  */
 export const NODE_FIELD_CONTROLS: FieldControls = {
+  'execution-limit': ExecutionLimitField,
   model: ModelField,
   effort: EffortField,
+  'effort-selection': EffortSelectionField,
+  'model-selection': ModelSelectionField,
   cron: CronControl,
   'cron-timezone': CronTimezoneControl,
   classifier: ClassifierField,
@@ -30,4 +40,8 @@ export const NODE_FIELD_CONTROLS: FieldControls = {
 
 export { DECISION_FIELD_OVERRIDES };
 
-export const LOOP_FIELD_CONTROLS: FieldControls = { model: LoopModelField, effort: EffortField };
+export const LOOP_FIELD_CONTROLS: FieldControls = {
+  model: LoopModelField,
+  effort: EffortField,
+  'execution-limit': ExecutionLimitField,
+};

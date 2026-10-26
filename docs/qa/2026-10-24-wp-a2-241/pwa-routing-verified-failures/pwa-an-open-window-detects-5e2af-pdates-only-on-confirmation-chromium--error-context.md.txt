@@ -1,0 +1,266 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: pwa.spec.ts >> an open window detects a changed worker on focus, prompts, and updates only on confirmation
+- Location: e2e\pwa.spec.ts:192:1
+
+# Error details
+
+```
+Test timeout of 100000ms exceeded.
+```
+
+```
+Error: browserContext.waitForEvent: Test timeout of 100000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]: GraphGoblin
+    - navigation "Main" [ref=f1e22]:
+      - link "Loops" [ref=f1e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=f1e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=f1e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=f1e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=f1e31]:
+    - heading "Loops" [level=1] [ref=f1e33]
+    - generic [ref=f1e35]:
+      - generic [ref=f1e36]:
+        - form "Create loop" [ref=f1e37]:
+          - paragraph [aria-hidden] [ref=f1e38]: Required fields are marked *
+          - generic [ref=f1e39]:
+            - generic [ref=f1e40]:
+              - generic [ref=f1e41]: New loop name
+              - generic [aria-hidden] [ref=f1e42]: "*"
+            - textbox "New loop name" [ref=f1e43]:
+              - /placeholder: nightly-triage
+          - button "Create" [disabled]
+        - generic [ref=f1e44]:
+          - generic [ref=f1e45]: Import an exported loop (JSON)
+          - generic [ref=f1e46]:
+            - generic [ref=f1e47]:
+              - button "Import an exported loop (JSON)" [ref=f1e48] [cursor=pointer]
+              - generic [aria-hidden]: Choose file
+            - generic [ref=f1e49]: No file chosen
+      - button "New from template" [ref=f1e52] [cursor=pointer]
+    - paragraph [ref=f1e54]: No loops yet. Create one above or import an export.
+```
+
+# Test source
+
+```ts
+  134 |     const response = await saved;
+  135 |     expect(response.request().headers()['if-match']).toBe(`"${loaded.draftToken}"`);
+  136 |     await expect(page.getByTestId('save-state')).toHaveText('All changes saved', {
+  137 |       timeout: 6_000,
+  138 |     });
+  139 |     await expect(page.getByLabel('Description')).toHaveValue('draft kept through an API outage');
+  140 |     const server = (await (await request.get(`/loops/${loopId}`)).json()) as {
+  141 |       draft: { definition: { description: string } };
+  142 |     };
+  143 |     expect(server.draft.definition.description).toBe('draft kept through an API outage');
+  144 |     expect(navigation).toHaveLength(0);
+  145 |   } finally {
+  146 |     await control(request, '/api/listener', { listening: true });
+  147 |   }
+  148 | });
+  149 | 
+  150 | test('clean event-stream closes retain backoff without refetch or worker-update churn', async ({
+  151 |   page,
+  152 |   request,
+  153 | }) => {
+  154 |   const loopId = await publishLoop(request, approvalLoop('Clean stream backoff'));
+  155 |   const response = await request.post(`/loops/${loopId}/runs`, {
+  156 |     data: { triggerNodeId: 'start', input: {} },
+  157 |   });
+  158 |   expect(response.ok()).toBe(true);
+  159 |   const { run } = (await response.json()) as { run: { id: string } };
+  160 |   await page.addInitScript(() => {
+  161 |     const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+  162 |     const update = ServiceWorkerRegistration.prototype.update;
+  163 |     ServiceWorkerRegistration.prototype.update = function () {
+  164 |       stats.calls++;
+  165 |       return update.call(this);
+  166 |     };
+  167 |   });
+  168 |   let streams = 0;
+  169 |   let reads = 0;
+  170 |   page.on('request', (request) => {
+  171 |     if (new URL(request.url()).pathname === `/runs/${run.id}`) reads++;
+  172 |   });
+  173 |   await page.route(`**/runs/${run.id}/events**`, async (route) => {
+  174 |     streams++;
+  175 |     await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' });
+  176 |   });
+  177 |   await page.goto(`/app/runs/${run.id}`);
+  178 |   await expect(page.getByRole('heading', { name: /^Timeline/ })).toBeVisible();
+  179 |   const baselineStreams = streams;
+  180 |   const baselineReads = reads;
+  181 |   const baselineUpdates = await page.evaluate(() => window.pwaChecks.calls);
+  182 |   await page.waitForTimeout(4_000);
+  183 |   expect(streams).toBeGreaterThanOrEqual(2);
+  184 |   expect(streams - baselineStreams).toBeLessThanOrEqual(4);
+  185 |   expect(reads - baselineReads).toBeLessThanOrEqual(1);
+  186 |   expect((await page.evaluate(() => window.pwaChecks.calls)) - baselineUpdates).toBeLessThanOrEqual(
+  187 |     1,
+  188 |   );
+  189 |   await expect(page.getByText('Cannot reach the GraphGoblin API', { exact: true })).toBeHidden();
+  190 | });
+  191 | 
+  192 | test('an open window detects a changed worker on focus, prompts, and updates only on confirmation', async ({
+  193 |   page,
+  194 |   request,
+  195 | }) => {
+  196 |   test.setTimeout(100_000);
+  197 |   const messages = await observeSkipWaiting(page);
+  198 |   await page.addInitScript(() => {
+  199 |     const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+  200 |     const watched = new WeakSet<ServiceWorkerRegistration>();
+  201 |     const watch = (registration: ServiceWorkerRegistration) => {
+  202 |       if (!watched.has(registration)) {
+  203 |         watched.add(registration);
+  204 |         registration.addEventListener('updatefound', () => {
+  205 |           stats.found++;
+  206 |           stats.activity = Date.now();
+  207 |         });
+  208 |       }
+  209 |       return registration;
+  210 |     };
+  211 |     const register = ServiceWorkerContainer.prototype.register;
+  212 |     ServiceWorkerContainer.prototype.register = function (...args) {
+  213 |       return register.apply(this, args).then(watch);
+  214 |     };
+  215 |     const update = ServiceWorkerRegistration.prototype.update;
+  216 |     ServiceWorkerRegistration.prototype.update = function () {
+  217 |       watch(this);
+  218 |       stats.calls++;
+  219 |       stats.pending++;
+  220 |       stats.activity = Date.now();
+  221 |       return update.call(this).finally(() => {
+  222 |         stats.pending--;
+  223 |         stats.activity = Date.now();
+  224 |       });
+  225 |     };
+  226 |   });
+  227 |   await page.goto('/app/loops');
+  228 |   await page.evaluate(async () => {
+  229 |     await navigator.serviceWorker.ready;
+  230 |   });
+  231 |   // Edge's native navigation check can fetch the script after the app's update promise
+  232 |   // settles. Finish that real fetch before publishing a different worker.
+  233 |   await Promise.all([
+> 234 |     page.context().waitForEvent('requestfinished', (finished) => {
+      |                    ^ Error: browserContext.waitForEvent: Test timeout of 100000ms exceeded.
+  235 |       return new URL(finished.url()).pathname === '/app/sw.js';
+  236 |     }),
+  237 |     page.reload(),
+  238 |   ]);
+  239 |   await expect
+  240 |     .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+  241 |     .toBe(true);
+  242 |   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+  243 |   // Finish the navigation check before publishing; only the subsequent app check may detect it.
+  244 |   await expect
+  245 |     .poll(() =>
+  246 |       page.evaluate(async () => {
+  247 |         const registration = await navigator.serviceWorker.getRegistration('/app/');
+  248 |         return (
+  249 |           registration?.active?.state === 'activated' &&
+  250 |           !registration?.installing &&
+  251 |           window.pwaChecks.pending === 0
+  252 |         );
+  253 |       }),
+  254 |     )
+  255 |     .toBe(true);
+  256 |   const baseline = await page.evaluate(() => ({ ...window.pwaChecks }));
+  257 |   const initialWorker = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL);
+  258 |   const navigation = [] as string[];
+  259 |   page.on('framenavigated', (frame) => {
+  260 |     if (frame === page.mainFrame()) navigation.push(frame.url());
+  261 |   });
+  262 |   try {
+  263 |     await control(request, '/worker/build');
+  264 |     await page.waitForTimeout(1_000);
+  265 |     expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found);
+  266 |     expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls);
+  267 |     // Drive the window event the app listens to; there is no navigation or registration.update in the test.
+  268 |     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  269 |     const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
+  270 |     await expect(toast).toBeVisible({ timeout: 20_000 });
+  271 |     expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 1);
+  272 |     expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 1);
+  273 |     expect(navigation).toHaveLength(0);
+  274 |     expect(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL)).toBe(
+  275 |       initialWorker,
+  276 |     );
+  277 |     expect(messages).toHaveLength(0);
+  278 |     expect(
+  279 |       await page.evaluate(async () =>
+  280 |         Boolean((await navigator.serviceWorker.getRegistration('/app/'))?.waiting),
+  281 |       ),
+  282 |     ).toBe(true);
+  283 |     await toast.getByRole('button', { name: 'Later' }).click();
+  284 |     await expect(toast).toBeHidden();
+  285 |     expect(navigation).toHaveLength(0);
+  286 | 
+  287 |     // Workbox also classifies the second updatefound as external and drops its listener.
+  288 |     // Visibility checks exercise that path immediately, without waiting for the time heuristic.
+  289 |     await control(request, '/worker/build');
+  290 |     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  291 |     await expect(toast).toBeVisible({ timeout: 20_000 });
+  292 |     expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 2);
+  293 |     expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 2);
+  294 |     expect(navigation).toHaveLength(0);
+  295 |     expect(messages).toHaveLength(0);
+  296 | 
+  297 |     await toast.getByRole('button', { name: 'Later' }).click();
+  298 |     // The previous external update makes Workbox detach its own updatefound listener.
+  299 |     // Visibility is an independent check trigger, so another build does not wait on focus throttling.
+  300 |     await control(request, '/worker/build');
+  301 |     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  302 |     await expect(toast).toBeVisible({ timeout: 20_000 });
+  303 |     expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 3);
+  304 |     expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 3);
+  305 |     expect(navigation).toHaveLength(0);
+  306 | 
+  307 |     // Fresh registration sees the existing waiting worker immediately, without a second interaction.
+  308 |     await page.reload();
+  309 |     await expect(toast).toBeVisible();
+  310 |     const beforeConfirm = navigation.length;
+  311 |     const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
+  312 |     await toast.getByRole('button', { name: 'Update', exact: true }).click();
+  313 |     await reloaded;
+  314 |     await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+  315 |     await expect(toast).toBeHidden();
+  316 |     await expect
+  317 |       .poll(() =>
+  318 |         page.evaluate(
+  319 |           async () => (await navigator.serviceWorker.getRegistration('/app/'))?.waiting === null,
+  320 |         ),
+  321 |       )
+  322 |       .toBe(true);
+  323 |     await expect.poll(() => messages.length).toBe(1);
+  324 |     expect(messages).toEqual([{ type: 'SKIP_WAITING' }]);
+  325 |     expect(navigation).toHaveLength(beforeConfirm + 1);
+  326 |   } finally {
+  327 |     await control(request, '/worker/reset');
+  328 |   }
+  329 | });
+  330 | 
+  331 | test('registers the service worker and asks before applying an update', async ({
+  332 |   page,
+  333 |   request,
+  334 | }) => {
+```

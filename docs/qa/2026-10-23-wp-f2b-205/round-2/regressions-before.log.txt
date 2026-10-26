@@ -1,0 +1,426 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/web
+
+ ❯ src/forms/fields/model.test.tsx (38 tests | 2 failed | 36 skipped) 12414ms
+   ❯ catalog field controls (29)
+     × registers loop defaults with Codex choices and the inherited owner model 6795ms
+     × registers loop defaults with Codex choices and the inherited process model 5608ms
+ ❯ src/editor/model-effort.test.tsx (13 tests | 1 failed | 12 skipped) 195ms
+   × renders an unknown harness without inventing inherited defaults 193ms
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/model-e ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/model-effort.test.tsx > renders an unknown harness without inventing inherited defaults
+ZodError: [
+  {
+    "code": "invalid_value",
+    "values": [
+      "codex",
+      "claude"
+    ],
+    "path": [],
+    "message": "Invalid option: expected one of \"codex\"|\"claude\""
+  }
+]
+ ❯ src/forms/fields/model.tsx:285:58
+    283|     ...(owner.success ? [owner.data] : []),
+    284|     ...(processDefaults.data ? [processDefaults.data] : []),
+    285|   ].map((defaults) => defaults.byHarness[HarnessIdSchema.parse(harness…
+       |                                                          ^
+    286|   // Missing/failed Settings cannot certify that a lower-level fallbac…
+    287|   const defaultsKnown = settings.data !== undefined && owner.success &…
+ ❯ useCatalogField src/forms/fields/model.tsx:285:5
+ ❯ CatalogField src/forms/fields/model.tsx:333:7
+ ❯ Object.react_stack_bottom_frame ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/re
+act-dom-client.development.js:28571:20
+ ❯ renderWithHooks ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.d
+evelopment.js:8030:22
+ ❯ updateFunctionComponent ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-
+client.development.js:10569:19
+ ❯ beginWork ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.develop
+ment.js:12205:18
+ ❯ runWithFiberInDEV ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client
+.development.js:1048:13
+ ❯ performUnitOfWork ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client
+.development.js:19176:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/forms/fields/model.test.tsx > catalog field controls > registers loop defaults with Codex choices and the 
+inherited owner model
+TestingLibraryElementError: Unable to find role="option" and name "(owner default) (owner-model)"
+
+Ignored nodes: comments, script, style
+[36m<select[39m
+  [33maria-describedby[39m=[32m"_r_7_-help"[39m
+  [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover 
+bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default 
+placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken 
+disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+  [33mid[39m=[32m"_r_7_"[39m
+[36m>[39m
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m>[39m
+    [0m(owner default)[0m
+  [36m</option>[39m
+  [36m<option[39m
+    [33mvalue[39m=[32m"alpha"[39m
+  [36m>[39m
+    [0mDisplay alpha (alpha)[0m
+  [36m</option>[39m
+[36m</select>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Settings"[39m
+        [33mclass[39m=[32m"grid gap-field"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+            [33mdata-tab-panel[39m=[32m"main"[39m
+            [33mid[39m=[32m"_r_1_-panel-main"[39m
+          [36m>[39m
+            [36m<fieldset[39m
+              [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+              [33mdata-field[39m=[32m"workingDirectory"[39m
+            [36m>[39m
+              [36m<legend[39m
+                [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+              [36m>[39m
+                [0mWorking directory[0m
+              [36m</legend>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                  [33mfor[39m=[32m"_r_2_"[39m
+                [36m>[39m
+                  [0mKind[0m
+                [36m</label>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"relative block min-w-0"[39m
+                [36m>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] 
+hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md 
+text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default 
+disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+                    [33mid[39m=[32m"_r_2_"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"0"[39m
+                    [36m>[39m
+                      [0mfixed[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"1"[39m
+                    [36m>[39m
+                      [0mtemplate[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"2"[39m
+                    [36m>[39m
+                      [0mtemp[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 
+-translate-y-1/2 text-muted"[39m
+                    [33mdata-icon[39m=[32m"chevron"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</fieldset>[39m
+            [36m<fieldset[39m
+              [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+              [33mdata-field[39m=[32m"defaults"[39m
+            [36m>[39m
+              [36m<legend[39m
+                [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+              [36m>[39m
+                [0mDefaults[0m
+              [36m</legend>[39m
+              [36m<fieldset[39m
+                [33maria-describedby[39m=[32m"_r_4_-help"[39m
+                [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+                [33mdata-field[39m=[32m"defaults.byHarness"[39m
+                [33mtabindex[39m=[32m"-1"[39m
+              [36m>[39m
+                [36m<legend[39m
+                  [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+                [36m>[39m
+                  [0mBy harness[0m
+                [36m</legend>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-xs leading-snug text-muted"[39m
+                  [33mid[39m=[32m"_r_4_-help"[39m
+                [36m>[39m
+                  [0mDefaults keyed by their harness; omitted fields inherit only within that harness.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 
+border-l-2 border-default pl-3"[39m
+                  [33mdata-collection-row[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+                  [36m>[39m
+                    [36m<label[39m
+                      [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                      [33mfor[39m=[32m"_r_5_-key"[39m
+                    [36m>[39m
+                      [0mKey[0m
+                    [36m</label>[39m
+                    [36m<input[39m
+                      [33maria-label[39m=[32m"By harness key 1"[39m
+                      [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] 
+hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md 
+text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default 
+disabled:bg-surface-sunken disabled:text-subtle h-9 pointer-coarse:h-11 font-mono text-sm"[39m
+                      [33mid[39m=[32m"_r_5_-key"[39m
+                      [33mvalue[39m=[32m"codex"[39m
+                    [36m/>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-start-2 row-start-1 mt-6"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33maria-label[39m=[32m"Remove by harness codex"[39m
+                      [33mclass[39m=...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/forms/fields/model.test.tsx:869:11
+    867|     );
+    868|     await ready();
+    869|     await waitFor(() =>
+       |           ^
+    870|       expect(within(model()).getByRole('option', {
+    871|         name: `(owner default) (${level === 'owner' ? 'owner-model' : …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/forms/fields/model.test.tsx > catalog field controls > registers loop defaults with Codex choices and the 
+inherited process model
+TestingLibraryElementError: Unable to find role="option" and name "(owner default) (gpt-6-luna)"
+
+Ignored nodes: comments, script, style
+[36m<select[39m
+  [33maria-describedby[39m=[32m"_r_o_-help"[39m
+  [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover 
+bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default 
+placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 
+focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken 
+disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+  [33mid[39m=[32m"_r_o_"[39m
+[36m>[39m
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m>[39m
+    [0m(owner default)[0m
+  [36m</option>[39m
+  [36m<option[39m
+    [33mvalue[39m=[32m"alpha"[39m
+  [36m>[39m
+    [0mDisplay alpha (alpha)[0m
+  [36m</option>[39m
+[36m</select>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<form[39m
+        [33maria-label[39m=[32m"Settings"[39m
+        [33mclass[39m=[32m"grid gap-field"[39m
+        [33mnovalidate[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 gap-field"[39m
+            [33mdata-tab-panel[39m=[32m"main"[39m
+            [33mid[39m=[32m"_r_i_-panel-main"[39m
+          [36m>[39m
+            [36m<fieldset[39m
+              [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+              [33mdata-field[39m=[32m"workingDirectory"[39m
+            [36m>[39m
+              [36m<legend[39m
+                [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+              [36m>[39m
+                [0mWorking directory[0m
+              [36m</legend>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                  [33mfor[39m=[32m"_r_j_"[39m
+                [36m>[39m
+                  [0mKind[0m
+                [36m</label>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"relative block min-w-0"[39m
+                [36m>[39m
+                  [36m<select[39m
+                    [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] 
+hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md 
+text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default 
+disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11"[39m
+                    [33mid[39m=[32m"_r_j_"[39m
+                  [36m>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"0"[39m
+                    [36m>[39m
+                      [0mfixed[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"1"[39m
+                    [36m>[39m
+                      [0mtemplate[0m
+                    [36m</option>[39m
+                    [36m<option[39m
+                      [33mvalue[39m=[32m"2"[39m
+                    [36m>[39m
+                      [0mtemp[0m
+                    [36m</option>[39m
+                  [36m</select>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"size-4 shrink-0 pointer-events-none absolute top-1/2 right-3 
+-translate-y-1/2 text-muted"[39m
+                    [33mdata-icon[39m=[32m"chevron"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</fieldset>[39m
+            [36m<fieldset[39m
+              [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+              [33mdata-field[39m=[32m"defaults"[39m
+            [36m>[39m
+              [36m<legend[39m
+                [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+              [36m>[39m
+                [0mDefaults[0m
+              [36m</legend>[39m
+              [36m<fieldset[39m
+                [33maria-describedby[39m=[32m"_r_l_-help"[39m
+                [33mclass[39m=[32m"grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4"[39m
+                [33mdata-field[39m=[32m"defaults.byHarness"[39m
+                [33mtabindex[39m=[32m"-1"[39m
+              [36m>[39m
+                [36m<legend[39m
+                  [33mclass[39m=[32m"-ml-1 px-1 text-sm font-semibold"[39m
+                [36m>[39m
+                  [0mBy harness[0m
+                [36m</legend>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"text-xs leading-snug text-muted"[39m
+                  [33mid[39m=[32m"_r_l_-help"[39m
+                [36m>[39m
+                  [0mDefaults keyed by their harness; omitted fields inherit only within that harness.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 
+border-l-2 border-default pl-3"[39m
+                  [33mdata-collection-row[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5"[39m
+                  [36m>[39m
+                    [36m<label[39m
+                      [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                      [33mfor[39m=[32m"_r_m_-key"[39m
+                    [36m>[39m
+                      [0mKey[0m
+                    [36m</label>[39m
+                    [36m<input[39m
+                      [33maria-label[39m=[32m"By harness key 1"[39m
+                      [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] 
+hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md 
+text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default 
+disabled:bg-surface-sunken disabled:text-subtle h-9 pointer-coarse:h-11 font-mono text-sm"[39m
+                      [33mid[39m=[32m"_r_m_-key"[39m
+                      [33mvalue[39m=[32m"codex"[39m
+                    [36m/>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-start-2 row-start-1 mt-6"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33maria-label[39m=[32m"Remove by harness codex"[39m
+                      [33mclass[39m=...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/forms/fields/model.test.tsx:869:11
+    867|     );
+    868|     await ready();
+    869|     await waitFor(() =>
+       |           ^
+    870|       expect(within(model()).getByRole('option', {
+    871|         name: `(owner default) (${level === 'owner' ? 'owner-model' : …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 48 skipped (51)
+   Start at  21:36:12
+   Duration  88.97s (transform 35%, environment 27%, import 15%, tests 14%, setup 8%)
+
+Environment  jsdom was created 2 times · 23.51s total, 27% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\web
+

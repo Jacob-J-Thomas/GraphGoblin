@@ -1,0 +1,39 @@
+// Controlled component fixture: real built Fastify app and store; fake controller ports.
+// This establishes UI rendering only, never native lifecycle behavior.
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const fromRoot = p => import(pathToFileURL(resolve(p)).href);
+const { createContainer, loadConfig, buildApp } = await fromRoot('apps/api/dist/index.js');
+const { ShutdownController } = await fromRoot('apps/api/dist/shutdown.js');
+const phase = process.env.QA_PHASE;
+const c = await createContainer(loadConfig(process.env), { startTimers: false });
+await c.start();
+let resolveDrain, rejectDrain, resolveForce, rejectForce;
+const drain = new Promise((a,b) => { resolveDrain=a; rejectDrain=b; });
+const force = new Promise((a,b) => { resolveForce=a; rejectForce=b; });
+const logger = { info(){},warn(){},error(){},debug(){},child(){return this;} };
+const controller = new ShutdownController({
+  beginDrain: async () => {}, waitForDrain: () => drain,
+  forceStop: () => force,
+  drainingRunIds: () => process.env.QA_RUN_ID ? [process.env.QA_RUN_ID] : [],
+  unconfirmedRunIds: () => phase === 'force-failed' ? [process.env.QA_RUN_ID] : [],
+}, phase === 'awaiting-choice' ? 50 : 600000, () => {}, logger);
+if (phase === 'stopped') controller.stopped();
+else if (phase !== 'running') {
+  await controller.request(['forcing','force-failed','exiting'].includes(phase) ? 'force' : 'drain');
+  if (phase === 'drain-failed') rejectDrain(new Error('Controlled drain observation failure'));
+  if (['force-failed','exiting'].includes(phase)) rejectForce(new Error('Controlled cleanup failure'));
+  if (phase === 'ready') resolveDrain();
+  await new Promise(r=>setTimeout(r, phase==='awaiting-choice' ? 90 : 5));
+  if (phase === 'exiting') await controller.request('force');
+}
+const app = await buildApp({ ...c, shutdown:controller, requestShutdown:a=>controller.request(a) }, { logger:false });
+await app.listen({host:'127.0.0.1',port:Number(process.env.GG_PORT)});
+console.log('QA_PHASE_READY '+JSON.stringify(controller.state()));
+// Parent owns this IPC channel; no signal/process-tree termination is needed.
+process.on('message', async msg => {
+  if (msg === 'close') {
+    resolveDrain(); resolveForce();
+    await app.close(); await c.dispose(); process.exit(0);
+  }
+});

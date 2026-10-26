@@ -1,9 +1,10 @@
+import { ShutdownController, type ShutdownAction } from './shutdown.js';
 import { existsSync } from 'node:fs';
 import { validateHarnessDefaults } from '@graphgoblin/domain';
 import { mkdir, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, isAbsolute, relative, sep } from 'node:path';
-import { createCodexAdapters } from '@graphgoblin/adapter-codex';
+import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
   HttpProbes,
@@ -22,7 +23,8 @@ import {
   SqliteLoopRepository,
   SqliteModelCatalog,
   SqliteClassifierModels,
-  SqliteRunRepository,
+  type SqliteRunRepository,
+  SqliteDeliveryRunRepository,
   SqliteSecrets,
   SqliteSessionRepository,
   SqliteSettings,
@@ -122,6 +124,13 @@ export interface Container {
   onClassifierChanged(ownerId: string, id: string): Promise<void>;
   /** Migrate, seed, recover runs, re-arm triggers, and start timers and cron under the data-directory lock. */
   start(): Promise<void>;
+  /** Close independent admission before awaiting startup completion. */
+  prepareShutdown(): void;
+  shutdown: ShutdownController;
+  requestShutdown(action: ShutdownAction): ReturnType<ShutdownController['request']>;
+  waitForShutdown(): Promise<void>;
+  /** Resource finalizer for the composition root, after drain and HTTP close. Also owns failed-start teardown. */
+  dispose(): Promise<void>;
   stop(): Promise<void>;
 }
 
@@ -214,7 +223,7 @@ export async function createContainer(
         ...(config.masterKey ? { masterKey: config.masterKey } : {}),
       }));
 
-    const runs = new SqliteRunRepository(db);
+    const runs = new SqliteDeliveryRunRepository(db);
     const loops = new SqliteLoopRepository(db, clock, ids);
     const sessions = new SqliteSessionRepository(db);
     const events = new SqliteEventStore(db, clock);
@@ -231,7 +240,9 @@ export async function createContainer(
     const schedules = new SqliteScheduleStore(db, clock, ids);
     const endpoints = new SqliteWebhookEndpoints(db, clock, ids);
     const inbound = new SqliteInboundEvents(db);
+    let admissionClosed = false;
     const cron = new CronScheduler(schedules, clock, {
+      admissionOpen: () => !admissionClosed,
       pollIntervalMs: config.timerPollMs,
       logger,
     });
@@ -277,7 +288,7 @@ export async function createContainer(
       },
       modelCatalog: catalog,
       // LLM evaluation uses Codex; all classifier primitives use the owner registry.
-      deciders: overrides.deciders ?? [codex.decider],
+      deciders: overrides.deciders ?? [new CodexDecider(structured)],
       classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
       scripts: overrides.scripts ?? new ProcessScripts(),
@@ -301,7 +312,6 @@ export async function createContainer(
     const settings: EngineSettings = {
       defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,
-      structuredTimeoutMs: 120_000,
       // Harness-scoped Settings defaults are read at run start; GG_DEFAULTS are the fallback.
       ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
     };
@@ -324,6 +334,7 @@ export async function createContainer(
       endpoints,
       inbound,
       manager,
+      eventAdmission: ports.admission.events,
       cron,
       secretsFor,
       clock,
@@ -333,6 +344,19 @@ export async function createContainer(
       polls,
     });
 
+    const prepareShutdown = (): void => {
+      admissionClosed = true;
+      manager.closeIndependentAdmission();
+      cron.stop();
+      polls.stop();
+      triggers.stop();
+    };
+    const shutdown = new ShutdownController(
+      manager,
+      config.shutdownGraceMs,
+      prepareShutdown,
+      logger,
+    );
     let starting: Promise<void> | undefined;
     let stopping: Promise<void> | undefined;
     let disposing: Promise<void> | undefined;
@@ -349,6 +373,7 @@ export async function createContainer(
           handle.close();
         } finally {
           await lock.release();
+          shutdown.stopped();
         }
       })();
       return disposing;
@@ -357,6 +382,17 @@ export async function createContainer(
       stopping ??= (async () => {
         // Direct callers may stop during migration or recovery. Keep ownership until startup
         // finishes, then shut down; otherwise a new owner could recover while this one starts.
+        if (starting && !disposing) prepareShutdown();
+        await starting?.catch(() => undefined);
+        if (starting && !disposing) await shutdown.drain();
+        await dispose();
+      })();
+      return stopping;
+    };
+
+    const finalizeResources = (): Promise<void> => {
+      stopping ??= (async () => {
+        // Resource closure also serializes with startup; it never releases a migrating store.
         await starting?.catch(() => undefined);
         await dispose();
       })();
@@ -411,12 +447,15 @@ export async function createContainer(
             }
             await catalog.seed();
             await manager.start();
-            triggers.start();
-            await triggers.armAll();
+            if (!admissionClosed) {
+              triggers.start();
+              await triggers.armAll();
+            }
             if (overrides.startTimers !== false) {
               timers.start();
-              await cron.start();
-              polls.start();
+              if (!admissionClosed) await cron.start();
+              if (!admissionClosed) polls.start();
+              else cron.stop();
             }
           } catch (error) {
             await dispose();
@@ -425,6 +464,11 @@ export async function createContainer(
         })();
         return starting;
       },
+      dispose: finalizeResources,
+      prepareShutdown,
+      shutdown,
+      requestShutdown: (action) => shutdown.request(action),
+      waitForShutdown: () => shutdown.ready,
       stop,
     };
   } catch (error) {

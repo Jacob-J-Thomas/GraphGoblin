@@ -41,6 +41,9 @@ class DyingAdmission implements TriggerAdmissionPort {
     private readonly dies: (input: RunAdmission) => boolean,
     private readonly phase: 'before' | 'after' = 'after',
   ) {}
+  get events() {
+    return this.inner.events;
+  }
   async create(input: RunAdmission, receiptId?: string): Promise<RunRecord> {
     if (this.phase === 'before' && this.dies(input)) {
       this.died = true;
@@ -375,7 +378,7 @@ describe('child creation across a process death (#320)', () => {
     expect(log.filter((event) => event.type === 'child_run.finished')).toHaveLength(1);
   });
 
-  it('a death between recording the child finish and the node finish records it once', async () => {
+  it('a death before the atomic child and parent finish stores neither and recovers once', async () => {
     const url = await storeUrl();
     let events: DyingEvents | undefined;
     let parentId = '';
@@ -399,14 +402,21 @@ describe('child creation across a process death (#320)', () => {
     parentId = parent.id;
     await vi.waitFor(() => expect(events?.died).toBe(true), { timeout: 10_000 });
     await childSettled(first.runs, parent.id);
+    const before = await first.events.read(parent.id);
+    expect(before.filter((event) => event.type === 'child_run.finished')).toHaveLength(0);
     expect(
-      (await first.events.read(parent.id)).filter((event) => event.type === 'child_run.finished'),
-    ).toHaveLength(1);
+      before.filter((event) => event.type === 'node.finished' && event.nodeId === 'sub'),
+    ).toHaveLength(0);
     first.die();
 
     const { log, children } = await recover(url, parent.id);
     expect(children).toHaveLength(1);
-    expect(log.filter((event) => event.type === 'child_run.finished')).toHaveLength(1);
+    const finishes = log.filter((event) => event.type === 'child_run.finished');
+    expect(finishes).toHaveLength(1);
+    expect(log.find((event) => event.seq === finishes[0]!.seq + 1)).toMatchObject({
+      type: 'node.finished',
+      nodeId: 'sub',
+    });
     expect(log.filter((event) => event.type === 'run.finished')).toHaveLength(1);
   });
 });

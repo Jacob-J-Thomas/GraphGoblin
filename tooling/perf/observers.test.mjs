@@ -104,6 +104,7 @@ test('compact summary removes process paths and distinguishes shell from history
               name: 'inspector',
               shellReadyMs: 10,
               historyReadyMs: 30,
+              firstRowsMs: 20,
               metrics: [],
               beforeRun: { lastEventSeq: 200 },
               afterRun: { lastEventSeq: 300 },
@@ -117,6 +118,7 @@ test('compact summary removes process paths and distinguishes shell from history
   const encoded = JSON.stringify(compact);
   assert.ok(!/private|file:|[a-z]:\//i.test(encoded));
   assert.equal(compact.browserPages[0].historyReadyMs, 30);
+  assert.equal(compact.browserPages[0].firstRowsMs, 20);
   const [locationIndex, samples] = compact.cases[0].topCpuFrames[0];
   assert.equal(
     compact.cpuLocations[locationIndex],

@@ -1,0 +1,49 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 230458ms
+   ❯ awaited subloops across process death (#242) (3)
+     × the built API recovers a child finished while down with one continuation per parent 91923ms
+pnpm.cmd : 
+At line:5 char:3
++   & pnpm.cmd @gateArgs *> "docs/qa/wp-d4-343/round-2/$gateName.log.tx ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  02:06:45
+   Duration  252.48s (tests 92%, transform 5%, import 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

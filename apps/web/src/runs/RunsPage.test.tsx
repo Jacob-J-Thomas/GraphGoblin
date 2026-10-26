@@ -1,8 +1,8 @@
-import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { screen, waitFor, within } from '@testing-library/react';
+import { minimalLoop, samplePin } from '@graphgoblin/contracts/testing';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FakeApi } from '../__fixtures__/fake-api.js';
+import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('RunsPage', () => {
@@ -29,9 +29,14 @@ describe('RunsPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop({ ...minimalLoop(), name: 'alpha' }, { published: true });
-    const parent = api.addRun({ loopId: loop.id, status: 'waiting' });
+    const parent = api.addRun({
+      loopId: loop.id,
+      status: 'waiting',
+      pinned: samplePin({ name: 'alpha' }),
+    });
     const child = api.addRun({
       loopId: 'UNKNOWNLOOP',
+      pinned: samplePin({ name: 'Original deleted loop' }),
       status: 'succeeded',
       parentRunId: parent.id,
       startedAt: undefined,
@@ -46,7 +51,7 @@ describe('RunsPage', () => {
       'href',
       `/runs/${parent.id}`,
     );
-    expect(within(childRow).getByText('UNKNOWNLOOP')).toBeInTheDocument();
+    expect(within(childRow).getByText('Original deleted loop')).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Status'), 'waiting');
     await waitFor(() =>
@@ -82,8 +87,177 @@ describe('RunsPage', () => {
     expect(screen.getByRole('link', { name: child.id })).toBeInTheDocument();
   });
 
+  it('appends filtered pages, retains loaded rows on failure, retries, and resets on filter changes', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    const loop = api.addLoop(minimalLoop());
+    for (let i = 0; i < 101; i++) api.addRun({ loopId: loop.id, status: 'succeeded' });
+    api.addRun({ loopId: loop.id, status: 'failed' });
+    renderApp(`/runs?loop=${loop.id}&status=succeeded&parent=none`, api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    expect(screen.getAllByRole('row')).toHaveLength(101);
+    const loaded = screen.getAllByRole('row')[1]!;
+    let fail = true;
+    api.override('GET /runs', (call) =>
+      call.search.has('cursor') && fail
+        ? problem(503, 'UNAVAILABLE', 'Try again')
+        : api.builtIn(call),
+    );
+    await user.click(more);
+    expect(await screen.findByText(/Try again/)).toBeVisible();
+    expect(loaded).toBeInTheDocument();
+    fail = false;
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(102));
+    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    const pageCalls = api.callsTo('GET', '/runs').filter((call) => call.search.has('cursor'));
+    expect(pageCalls.length).toBeGreaterThan(0);
+    for (const call of pageCalls) {
+      expect(call.search.get('loopId')).toBe(loop.id);
+      expect(call.search.get('status')).toBe('succeeded');
+      expect(call.search.get('parent')).toBe('none');
+    }
+    await user.selectOptions(screen.getByLabelText('Status'), 'failed');
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(2));
+    expect(api.callsTo('GET', '/runs').at(-1)!.search.has('cursor')).toBe(false);
+  });
+
+  it('guards repeated next-page clicks and cancels that request on unmount', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    for (let i = 0; i < 101; i++) api.addRun();
+    let finish!: (response: Response) => void;
+    let nextSignal: AbortSignal | undefined;
+    api.override('GET /runs', (call) => {
+      if (!call.search.has('cursor')) return api.builtIn(call);
+      nextSignal = call.signal;
+      return new Promise<Response>((resolve) => {
+        finish = resolve;
+      });
+    });
+    const view = renderApp('/runs', api);
+    await user.click(await screen.findByRole('button', { name: 'Load more' }));
+    const busy = await screen.findByRole('button', { name: 'Loading more\u2026' });
+    expect(busy).toHaveAttribute('aria-disabled', 'true');
+    await user.click(busy);
+    expect(api.callsTo('GET', '/runs')).toHaveLength(2);
+    view.unmount();
+    expect(nextSignal?.aborted).toBe(true);
+    act(() =>
+      finish(
+        new Response(JSON.stringify({ items: [], nextCursor: null }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+    view.queryClient.clear();
+  });
+
+  it('continues from an empty readable page with a cursor instead of claiming no matches', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    const run = api.addRun();
+    api.override('GET /runs', (call) =>
+      call.search.has('cursor')
+        ? new Response(JSON.stringify({ items: [run], nextCursor: null }), {
+            headers: { 'content-type': 'application/json' },
+          })
+        : new Response(JSON.stringify({ items: [], nextCursor: 'opaque-position' }), {
+            headers: { 'content-type': 'application/json' },
+          }),
+    );
+    renderApp('/runs', api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    expect(screen.queryByText('No runs match.')).not.toBeInTheDocument();
+    await user.click(more);
+    expect(await screen.findByRole('link', { name: run.id })).toBeVisible();
+    expect(await screen.findByText('All runs loaded.')).toBeVisible();
+  });
+
+  it('omits the exhaustion message on an initial page and focuses it after a keyboard append', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    for (let i = 0; i < 101; i++) api.addRun();
+    renderApp('/runs', api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    expect(screen.queryByText('All runs loaded.')).not.toBeInTheDocument();
+    more.focus();
+    await user.keyboard('{Enter}');
+    const end = await screen.findByText('All runs loaded.');
+    await waitFor(() => expect(end).toHaveFocus());
+    expect(end).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('keeps Load more enabled during a background refresh and lets it replace that refresh', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    for (let i = 0; i < 101; i++) api.addRun();
+    const view = renderApp('/runs', api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    let release!: (response: Response) => void;
+    let background: AbortSignal | undefined;
+    api.override('GET /runs', (call) => {
+      if (call.search.has('cursor')) return api.builtIn(call);
+      background = call.signal;
+      return new Promise<Response>((resolve) => {
+        release = resolve;
+      });
+    });
+    let refreshing!: Promise<void>;
+    act(() => {
+      refreshing = view.queryClient.invalidateQueries({ queryKey: ['runs'] });
+    });
+    await waitFor(() => expect(background).toBeDefined());
+    expect(more).toHaveAttribute('aria-disabled', 'false');
+    expect(more).toHaveAttribute('aria-busy', 'false');
+    await user.click(more);
+    expect(background?.aborted).toBe(true);
+    expect(await screen.findByText('All runs loaded.')).toBeVisible();
+    await act(async () => {
+      release(
+        new Response(JSON.stringify({ items: [], nextCursor: null }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+      await refreshing;
+    });
+    view.unmount();
+    view.queryClient.clear();
+  });
+
+  it('does not show exhaustion for an initial single page or forward a hidden before filter', async () => {
+    const api = new FakeApi();
+    const run = api.addRun();
+    renderApp('/runs?before=invalid-hidden-filter', api);
+    expect(await screen.findByRole('link', { name: run.id })).toBeVisible();
+    expect(screen.queryByText('All runs loaded.')).not.toBeInTheDocument();
+    expect(api.callsTo('GET', '/runs')[0]!.search.has('before')).toBe(false);
+  });
+
   it('says when nothing matches', async () => {
     renderApp('/runs?status=failed');
     expect(await screen.findByText('No runs match.')).toBeInTheDocument();
   });
+});
+
+it('keeps the pinned loop name after rename and shows recorded failure diagnostics (#255)', async () => {
+  const api = new FakeApi();
+  const loop = api.addLoop({ ...minimalLoop(), name: 'Renamed loop' });
+  const run = api.addRun({
+    loopId: loop.id,
+    status: 'failed',
+    pinned: samplePin({ name: 'Original loop' }),
+    failure: {
+      code: 'HARNESS_TRANSPORT_FAILED',
+      message: 'Recorded connection diagnostic',
+      resumable: false,
+    },
+  });
+  renderApp('/runs', api);
+  const row = (await screen.findByRole('link', { name: run.id })).closest('tr')!;
+  expect(within(row).getByText('Original loop')).toBeInTheDocument();
+  expect(within(row).queryByText('Renamed loop')).not.toBeInTheDocument();
+  expect(
+    within(row).getByText('HARNESS_TRANSPORT_FAILED: Recorded connection diagnostic'),
+  ).toBeInTheDocument();
 });

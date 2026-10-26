@@ -1,0 +1,619 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/api
+
+ ❯ src/prompt-provenance.test.ts (11 tests | 4 failed) 2638ms
+   ❯ inference recovery contract over the API (11)
+     × blocks promise codex missing-session repair refusal with retriable=false 245ms
+     × blocks iterator codex missing-session repair refusal with retriable=false 210ms
+     × blocks promise codex missing-session repair refusal with retriable=true 187ms
+     × blocks iterator codex missing-session repair refusal with retriable=true 184ms
+ ❯ src/prompt-failure-boundaries.test.ts (10 tests | 10 failed) 2261ms
+   × keeps later authoritative codex evidence at missing over an earlier event 670ms
+   × keeps later authoritative codex evidence at termination over an earlier event 193ms
+   × keeps later authoritative codex evidence at cancel over an earlier event 143ms
+   × keeps later authoritative codex evidence at cleanup over an earlier event 155ms
+   × keeps later authoritative claude evidence at missing over an earlier event 200ms
+   × keeps later authoritative claude evidence at termination over an earlier event 187ms
+   × keeps later authoritative claude evidence at cancel over an earlier event 128ms
+   × keeps later authoritative claude evidence at cleanup over an earlier event 176ms
+   × retains the committed codex repair when its append then throws 196ms
+   × retains the committed claude repair when its append then throws 212ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/prompt-failure ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at missing over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at missing over an earlier 
+event
+AssertionError: expected { …(14) } to match object { status: 'failed', failure: { …(3) } }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+-     "code": "HARNESS_SESSION_MISSING",
++     "code": "HARNESS_NOT_AUTHENTICATED",
+      "inference": {
+        "promptKind": "repair",
+-       "submission": "session-missing",
++       "submission": "definitely-not-submitted",
+      },
+-     "resumable": false,
++     "resumable": true,
+    },
+    "status": "failed",
+  }
+
+ ❯ src/prompt-failure-boundaries.test.ts:65:27
+     63|       await test.idle();
+     64|       const failed = (await test.app.inject({ method: 'GET', url: `/ru…
+     65|       expect.soft(failed).toMatchObject({ status: 'failed', failure: {…
+       |                           ^
+     66|         inference: { promptKind: 'repair', submission: boundary === 'm…
+     67|       const history = (await test.app.inject({ method: 'GET', url: `/r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at missing over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at missing over an earlier 
+event
+AssertionError: expected 'definitely-not-submitted' to be 'session-missing' // Object.is equality
+
+Expected: "session-missing"
+Received: "definitely-not-submitted"
+
+ ❯ src/prompt-failure-boundaries.test.ts:70:10
+     68|         .json<{ items: RunEvent[] }>().items;
+     69|       expect.soft(history.filter(event => event.type === 'harness.subm…
+     70|         .toBe(boundary === 'missing' ? 'session-missing' : 'delivery-u…
+       |          ^
+     71|       const resumed = await test.app.inject({ method: 'POST', url: `/r…
+     72|       await test.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at missing over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at termination over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at missing over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at termination over an 
+earlier event
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ src/prompt-failure-boundaries.test.ts:73:39
+     71|       const resumed = await test.app.inject({ method: 'POST', url: `/r…
+     72|       await test.idle();
+     73|       expect.soft(resumed.statusCode).toBe(409);
+       |                                       ^
+     74|       expect.soft(calls).toBe(2);
+     75|     } finally { await test.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at missing over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at termination over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at missing over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at termination over an 
+earlier event
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/prompt-failure-boundaries.test.ts:74:26
+     72|       await test.idle();
+     73|       expect.soft(resumed.statusCode).toBe(409);
+     74|       expect.soft(calls).toBe(2);
+       |                          ^
+     75|     } finally { await test.close(); }
+     76|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at termination over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at termination over an 
+earlier event
+AssertionError: expected { …(14) } to match object { status: 'failed', failure: { …(3) } }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+-     "code": "HARNESS_TERMINATION_UNCONFIRMED",
++     "code": "HARNESS_NOT_AUTHENTICATED",
+      "inference": {
+        "promptKind": "repair",
+-       "submission": "delivery-uncertain",
++       "submission": "definitely-not-submitted",
+      },
+-     "resumable": false,
++     "resumable": true,
+    },
+    "status": "failed",
+  }
+
+ ❯ src/prompt-failure-boundaries.test.ts:65:27
+     63|       await test.idle();
+     64|       const failed = (await test.app.inject({ method: 'GET', url: `/ru…
+     65|       expect.soft(failed).toMatchObject({ status: 'failed', failure: {…
+       |                           ^
+     66|         inference: { promptKind: 'repair', submission: boundary === 'm…
+     67|       const history = (await test.app.inject({ method: 'GET', url: `/r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at termination over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cancel over an earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at termination over an 
+earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cancel over an earlier 
+event
+AssertionError: expected 'definitely-not-submitted' to be 'delivery-uncertain' // Object.is equality
+
+Expected: "delivery-uncertain"
+Received: "definitely-not-submitted"
+
+ ❯ src/prompt-failure-boundaries.test.ts:70:10
+     68|         .json<{ items: RunEvent[] }>().items;
+     69|       expect.soft(history.filter(event => event.type === 'harness.subm…
+     70|         .toBe(boundary === 'missing' ? 'session-missing' : 'delivery-u…
+       |          ^
+     71|       const resumed = await test.app.inject({ method: 'POST', url: `/r…
+     72|       await test.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cancel over an earlier event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cancel over an earlier 
+event
+AssertionError: expected { …(14) } to match object { status: 'failed', failure: { …(3) } }
+(19 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "failure": {
+-     "code": "HARNESS_TERMINATION_UNCONFIRMED",
+-     "inference": {
+-       "promptKind": "repair",
+-       "submission": "delivery-uncertain",
+-     },
+-     "resumable": false,
+-   },
+-   "status": "failed",
++   "status": "cancelled",
+  }
+
+ ❯ src/prompt-failure-boundaries.test.ts:65:27
+     63|       await test.idle();
+     64|       const failed = (await test.app.inject({ method: 'GET', url: `/ru…
+     65|       expect.soft(failed).toMatchObject({ status: 'failed', failure: {…
+       |                           ^
+     66|         inference: { promptKind: 'repair', submission: boundary === 'm…
+     67|       const history = (await test.app.inject({ method: 'GET', url: `/r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cleanup over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cleanup over an earlier 
+event
+AssertionError: expected { …(14) } to match object { status: 'failed', failure: { …(3) } }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "failure": {
+-     "code": "HARNESS_TERMINATION_UNCONFIRMED",
++     "code": "HARNESS_SESSION_MISSING",
+      "inference": {
+        "promptKind": "repair",
+-       "submission": "delivery-uncertain",
++       "submission": "session-missing",
+      },
+      "resumable": false,
+    },
+    "status": "failed",
+  }
+
+ ❯ src/prompt-failure-boundaries.test.ts:65:27
+     63|       await test.idle();
+     64|       const failed = (await test.app.inject({ method: 'GET', url: `/ru…
+     65|       expect.soft(failed).toMatchObject({ status: 'failed', failure: {…
+       |                           ^
+     66|         inference: { promptKind: 'repair', submission: boundary === 'm…
+     67|       const history = (await test.app.inject({ method: 'GET', url: `/r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative codex evidence at cleanup over an earlier 
+event
+ FAIL  src/prompt-failure-boundaries.test.ts > keeps later authoritative claude evidence at cleanup over an earlier 
+event
+AssertionError: expected 'session-missing' to be 'delivery-uncertain' // Object.is equality
+
+Expected: "delivery-uncertain"
+Received: "session-missing"
+
+ ❯ src/prompt-failure-boundaries.test.ts:70:10
+     68|         .json<{ items: RunEvent[] }>().items;
+     69|       expect.soft(history.filter(event => event.type === 'harness.subm…
+     70|         .toBe(boundary === 'missing' ? 'session-missing' : 'delivery-u…
+       |          ^
+     71|       const resumed = await test.app.inject({ method: 'POST', url: `/r…
+     72|       await test.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed codex repair when its append then throws
+AssertionError: expected { code: 'INTERNAL_ERROR', …(5) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+    "inference": {
+-     "promptKind": "repair",
+-     "submission": "definitely-not-submitted",
+-     "turnId": "01M3Y7RKG09PPS4F7ZFSYCRNRG",
++     "promptKind": "authored",
++     "submission": "delivery-uncertain",
++     "turnId": "01M3Y7RKG0X3G9VH9KC1XKFD14",
+      "visitId": "01M3Y7RKG0EH8KQ5BVQ60ZJGQJ:5",
+    },
+    "resumable": true,
+  }
+
+ ❯ src/prompt-failure-boundaries.test.ts:106:33
+    104|       .json<{ items: RunEvent[] }>().items;
+    105|     const repair = history.filter(event => event.type === 'harness.tur…
+    106|     expect.soft(failed.failure).toMatchObject({ code: 'INTERNAL_ERROR'…
+       |                                 ^
+    107|       inference: { promptKind: 'repair', submission: 'definitely-not-s…
+    108|     expect.soft(fake.cancelled).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed codex repair when its append then throws
+AssertionError: expected [ 'fake-session-1' ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/prompt-failure-boundaries.test.ts:108:33
+    106|     expect.soft(failed.failure).toMatchObject({ code: 'INTERNAL_ERROR'…
+    107|       inference: { promptKind: 'repair', submission: 'definitely-not-s…
+    108|     expect.soft(fake.cancelled).toHaveLength(0);
+       |                                 ^
+    109|     expect(fake.resumed).toHaveLength(0);
+    110|     const resumed = await test.app.inject({ method: 'POST', url: `/run…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed codex repair when its append then throws
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed claude repair when its append then throws
+AssertionError: expected 'The previous turn was interrupted bef…' to be 'Repair exactly: "invalid"' // Object.is 
+equality
+
+Expected: "Repair exactly: "invalid""
+Received: "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you 
+left off and finish it."
+
+ ❯ src/prompt-failure-boundaries.test.ts:113:55
+    111|     await test.idle();
+    112|     expect(resumed.statusCode).toBe(200);
+    113|     expect.soft(fake.resumed[0]?.request.turn.prompt).toBe(repair.prom…
+       |                                                       ^
+    114|     expect.soft(fake.resumed[0]?.request.turn.prompt).toBe('Repair exa…
+    115|     expect((await test.app.inject({ method: 'GET', url: `/runs/${runId…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed codex repair when its append then throws
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed claude repair when its append then throws
+AssertionError: expected 'The previous turn was interrupted bef…' to be 'Repair exactly: "invalid"' // Object.is 
+equality
+
+Expected: "Repair exactly: "invalid""
+Received: "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you 
+left off and finish it."
+
+ ❯ src/prompt-failure-boundaries.test.ts:114:55
+    112|     expect(resumed.statusCode).toBe(200);
+    113|     expect.soft(fake.resumed[0]?.request.turn.prompt).toBe(repair.prom…
+    114|     expect.soft(fake.resumed[0]?.request.turn.prompt).toBe('Repair exa…
+       |                                                       ^
+    115|     expect((await test.app.inject({ method: 'GET', url: `/runs/${runId…
+    116|   } finally { await test.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed claude repair when its append then throws
+AssertionError: expected { code: 'INTERNAL_ERROR', …(5) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+    "inference": {
+-     "promptKind": "repair",
+-     "submission": "definitely-not-submitted",
+-     "turnId": "01M3Y7RKG0T94RV5Q1VH7K4VE0",
++     "promptKind": "authored",
++     "submission": "delivery-uncertain",
++     "turnId": "01M3Y7RKG0D5NDKJTSV4KJCRE6",
+      "visitId": "01M3Y7RKG0YBVSVPVG3XSMY3SC:5",
+    },
+    "resumable": true,
+  }
+
+ ❯ src/prompt-failure-boundaries.test.ts:106:33
+    104|       .json<{ items: RunEvent[] }>().items;
+    105|     const repair = history.filter(event => event.type === 'harness.tur…
+    106|     expect.soft(failed.failure).toMatchObject({ code: 'INTERNAL_ERROR'…
+       |                                 ^
+    107|       inference: { promptKind: 'repair', submission: 'definitely-not-s…
+    108|     expect.soft(fake.cancelled).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/48]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > retains the committed claude repair when its append then throws
+AssertionError: expected [ 'fake-claude-session-1' ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/prompt-failure-boundaries.test.ts:108:33
+    106|     expect.soft(failed.failure).toMatchObject({ code: 'INTERNAL_ERROR'…
+    107|       inference: { promptKind: 'repair', submission: 'definitely-not-s…
+    108|     expect.soft(fake.cancelled).toHaveLength(0);
+       |                                 ^
+    109|     expect(fake.resumed).toHaveLength(0);
+    110|     const resumed = await test.app.inject({ method: 'POST', url: `/run…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/48]⎯
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=false
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=false
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=true
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=true
+AssertionError: expected { …(6) } to match object { …(4) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_SESSION_MISSING",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+-     "adapterCode": "HARNESS_SESSION_MISSING",
++     "adapterCode": "HARNESS_TURN_FAILED",
+    },
+    "inference": {
+      "promptKind": "repair",
+-     "submission": "session-missing",
++     "submission": "delivery-uncertain",
+    },
+-   "resumable": false,
++   "resumable": true,
+  }
+
+ ❯ src/prompt-provenance.test.ts:100:55
+     98|         await test.idle();
+     99|         const failed = await test.app.inject({ method: 'GET', url: `/r…
+    100|         expect.soft(failed.json<RunRecord>().failure).toMatchObject({
+       |                                                       ^
+    101|           code: 'HARNESS_SESSION_MISSING',
+    102|           resumable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/48]⎯
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=false
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "submission": "session-missing",
++   "submission": "delivery-uncertain",
+    "turnId": "01M3Y7RKG0090GGRW7179FC6Q9",
+    "visitId": "01M3Y7RKG0X701BQAM7VP7M7VK:5",
+  }
+
+ ❯ src/prompt-provenance.test.ts:112:12
+    110|         expect
+    111|           .soft(events.filter((event) => event.type === 'harness.submi…
+    112|           .toMatchObject({
+       |            ^
+    113|             submission: 'session-missing',
+    114|             visitId: repair.visitId,
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 7 passed (21)
+   Start at  17:58:26
+   Duration  13.91s (import 44%, tests 37%, transform 19%)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/48]⎯
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=false
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=false
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=true
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=true
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ src/prompt-provenance.test.ts:124:41
+    122|         });
+    123|         await test.idle();
+    124|         expect.soft(resumed.statusCode).toBe(409);
+       |                                         ^
+    125|         expect.soft(calls).toBe(2);
+    126|       } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/48]⎯
+
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=false
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=false
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=true
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=true
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/prompt-provenance.test.ts:125:28
+    123|         await test.idle();
+    124|         expect.soft(resumed.statusCode).toBe(409);
+    125|         expect.soft(calls).toBe(2);
+       |                            ^
+    126|       } finally {
+    127|         await test.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/48]⎯
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=false
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "submission": "session-missing",
++   "submission": "delivery-uncertain",
+    "turnId": "01M3Y7RKG0VFZH7HTGA6EK4RX7",
+    "visitId": "01M3Y7RKG0K7QEGEVSTWAG834X:5",
+  }
+
+ ❯ src/prompt-provenance.test.ts:112:12
+    110|         expect
+    111|           .soft(events.filter((event) => event.type === 'harness.submi…
+    112|           .toMatchObject({
+       |            ^
+    113|             submission: 'session-missing',
+    114|             visitId: repair.visitId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/48]⎯
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks promise codex missing-session 
+repair refusal with retriable=true
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "submission": "session-missing",
++   "submission": "delivery-uncertain",
+    "turnId": "01M3Y7RKG069KQWWGPGR07ESGE",
+    "visitId": "01M3Y7RKG0ERWABKQ8NX62QKGK:5",
+  }
+
+ ❯ src/prompt-provenance.test.ts:112:12
+    110|         expect
+    111|           .soft(events.filter((event) => event.type === 'harness.submi…
+    112|           .toMatchObject({
+       |            ^
+    113|             submission: 'session-missing',
+    114|             visitId: repair.visitId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/48]⎯
+
+ FAIL  src/prompt-provenance.test.ts > inference recovery contract over the API > blocks iterator codex 
+missing-session repair refusal with retriable=true
+AssertionError: expected { …(8) } to match object { submission: 'session-missing', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "submission": "session-missing",
++   "submission": "delivery-uncertain",
+    "turnId": "01M3Y7RKG05P73YGRN4BD8634A",
+    "visitId": "01M3Y7RKG05R2K9912RKTT7J3E:5",
+  }
+
+ ❯ src/prompt-provenance.test.ts:112:12
+    110|         expect
+    111|           .soft(events.filter((event) => event.type === 'harness.submi…
+    112|           .toMatchObject({
+       |            ^
+    113|             submission: 'session-missing',
+    114|             visitId: repair.visitId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/48]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\apps\api
+

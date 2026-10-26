@@ -1,0 +1,6 @@
+import {readFile,writeFile} from 'node:fs/promises';
+let p='.tmp/qa3/e2e-prepare.mjs';let s=await readFile(p,'utf8');s=s.replace("const webRoot = resolve('apps/web');","const webRoot = resolve('.');");
+s=s.replace("await writeFile(scratch+'/server.ts',server);",`let fixture=relocate(await readFile('apps/api/src/testing/thread-history.ts','utf8'),'apps/api/src/testing/thread-history.ts',scratch+'/thread-history.ts').replaceAll('gg-thread-history-','gg-qa-e1-186r2-3-thread-');await writeFile(scratch+'/thread-history.ts',fixture);await writeFile(out+'/e2e-thread-history.ts.txt',fixture);
+server=server.replace('  createThreadHistoryFixture,','').replace("import { existsSync }", "import {createThreadHistoryFixture} from './thread-history.js';\\nimport { existsSync }");
+await writeFile(scratch+'/server.ts',server);`);
+await writeFile(p,s);

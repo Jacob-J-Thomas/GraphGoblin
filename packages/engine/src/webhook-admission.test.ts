@@ -454,6 +454,7 @@ it('marks a removed saved target permanently failed and ignores stale already-ad
     .spyOn(engine.ports.admission, 'create')
     .mockRejectedValueOnce(new Error('retry'));
   const pending = await engine.manager.receiveWebhook(claim, input);
+  await engine.manager.waitForWebhookRecovery();
   engine.ports.loops.versions.delete(version.id);
   engine.ports.clock.advance(5000);
   await engine.manager.retryPendingWebhooks();

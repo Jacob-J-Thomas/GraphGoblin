@@ -1,6 +1,7 @@
+import { readinessFailure } from '@graphgoblin/domain';
 import type { Effort } from '@graphgoblin/contracts';
 import {
-  describeError,
+  harnessFailureSubmission,
   type HarnessEvent,
   type HarnessPort,
   type HarnessPreflight,
@@ -58,7 +59,7 @@ export interface CodexHarnessOptions {
   cliRunner?: CliRunner;
 }
 
-const DEFAULT_MODEL = 'gpt-6-luna';
+export const DEFAULT_MODEL = 'gpt-6-luna';
 const DEFAULT_EFFORT: Effort = 'low';
 
 function abortError(): Error {
@@ -91,13 +92,11 @@ export class CodexHarness implements HarnessPort {
 
   preflight(): Promise<HarnessPreflight> {
     const cli = this.options.codexBinary ? cliFor(this.options.codexBinary) : bundledCli();
-    return preflightCli(cli, this.cliRunner, this.options.preflightTimeoutMs ?? 15_000).catch(
-      (error: unknown) => ({
-        ok: false,
-        authenticated: false,
-        problems: [`preflight failed: ${describeError(error)}`],
-      }),
-    );
+    return preflightCli(
+      cli && this.options.env ? { ...cli, env: this.options.env } : cli,
+      this.cliRunner,
+      this.options.preflightTimeoutMs ?? 15_000,
+    ).catch(() => readinessFailure('codex', 'unknown'));
   }
 
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
@@ -158,6 +157,8 @@ export class CodexHarness implements HarnessPort {
     // The engine reads ids from events; nobody may await this promise, so never leave it unhandled.
     sessionId.catch(() => undefined);
 
+    let accepted = false;
+    let nativeResumeId: string | undefined;
     let announced: string | undefined;
     const announce = (id: string): void => {
       if (announced === id) return;
@@ -165,8 +166,7 @@ export class CodexHarness implements HarnessPort {
       resolveId(id);
       queue.push({ type: 'session', sessionId: id, mode: resumeId ? 'resumed' : 'fresh' });
     };
-    // A resumed session's id is known up front: report it before the CLI even starts.
-    if (resumeId) announce(resumeId);
+    // A requested handle is provenance, not evidence of reuse. Await native thread.started.
 
     const pump = async (): Promise<HarnessResult> => {
       try {
@@ -177,32 +177,62 @@ export class CodexHarness implements HarnessPort {
         });
         for await (const event of streamed.events) {
           for (const out of accumulator.push(event)) {
-            if (out.type === 'session') announce(out.sessionId);
-            else queue.push(out);
+            if (out.type === 'submitted') accepted = true;
+            if (out.type === 'session') {
+              if (resumeId && out.sessionId !== resumeId) {
+                controller.abort();
+                throw Object.assign(new Error('Codex did not resume the requested conversation'), {
+                  code: 'HARNESS_SESSION_MISSING',
+                  submission: 'session-missing',
+                  retriable: false,
+                });
+              }
+              if (resumeId) {
+                nativeResumeId = out.sessionId;
+                resolveId(out.sessionId);
+              } else announce(out.sessionId);
+            } else queue.push(out);
           }
         }
       } catch (error) {
-        if (!controller.signal.aborted) accumulator.fail(describeError(error));
+        // Even cancellation cannot discard higher-ranked terminal evidence from this boundary.
+        accumulator.fail(error);
       } finally {
         signal.removeEventListener('abort', onAbort);
       }
 
-      if (controller.signal.aborted) {
+      const outcome = accumulator.finish();
+      if (
+        controller.signal.aborted &&
+        outcome.failure?.code.toUpperCase() !== 'HARNESS_TERMINATION_UNCONFIRMED' &&
+        outcome.failure?.code.toUpperCase() !== 'HARNESS_SESSION_MISSING'
+      ) {
         queue.close();
         const error = abortError();
         rejectId(error);
         throw error;
       }
-      const outcome = accumulator.finish();
       if (outcome.failure) {
         const { code, message, retriable } = outcome.failure;
         logger?.warn({ code, retriable, sessionId: announced }, `codex turn failed: ${message}`);
-        queue.push({ type: 'error', code, message, retriable });
+        const fallback =
+          !accepted &&
+          [
+            'HARNESS_NOT_INSTALLED',
+            'HARNESS_NOT_AUTHENTICATED',
+            'HARNESS_ARGUMENTS_REJECTED',
+          ].includes(code)
+            ? 'definitely-not-submitted'
+            : 'delivery-uncertain';
+        const submission = harnessFailureSubmission(outcome.failure, fallback, accepted);
+        queue.push({ type: 'error', code, message, retriable, submission });
         queue.close();
-        const error = Object.assign(new Error(message), { code, retriable });
+        const error = Object.assign(new Error(message), { code, retriable, submission });
         rejectId(error);
         throw error;
       }
+      // Initialization alone cannot prove reuse when a missing-session refusal follows it.
+      if (nativeResumeId) announce(nativeResumeId);
       queue.close();
       return {
         finalText: outcome.finalText,

@@ -4,6 +4,7 @@ import {
   type ContextThread,
   type RunRecord,
 } from '@graphgoblin/contracts';
+import type { ReplayState } from '@graphgoblin/domain';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { sql } from 'drizzle-orm';
 import { runs } from './schema.js';
@@ -29,6 +30,7 @@ export const rawRunColumns = {
   createdAt: runs.createdAt,
   startedAt: runs.startedAt,
   finishedAt: runs.finishedAt,
+  finalizedAt: runs.finalizedAt,
   lastEventSeq: runs.lastEventSeq,
   pinned: sql<string | null>`${runs.pinned}`,
 };
@@ -71,6 +73,24 @@ export function decodeRunRecord(row: RawRun): RunRecord {
       `Stored run ${row.id} does not conform to the run record contract`,
     );
   return parsed.data;
+}
+
+/** The writer-recorded replay state is the bounded read's proof: damaged state is damaged history. */
+export function decodeStoredReplayState(runId: string, text: string): ReplayState {
+  const value = decode(runId, 'thread_snapshot_replay_state', text);
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const { strict, openNodeId, ...rest } = value as Record<string, unknown>;
+    if (
+      typeof strict === 'boolean' &&
+      (openNodeId === undefined || typeof openNodeId === 'string') &&
+      Object.keys(rest).length === 0
+    )
+      return openNodeId === undefined ? { strict } : { strict, openNodeId };
+  }
+  throw new UnreadableRunHistoryError(
+    runId,
+    `Stored run ${runId} has an invalid thread_snapshot_replay_state`,
+  );
 }
 
 export function decodeStoredThread(runId: string, field: string, text: string): ContextThread {

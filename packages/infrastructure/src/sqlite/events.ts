@@ -6,7 +6,7 @@ import {
   validateGeneratedEvent,
 } from '@graphgoblin/engine';
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
-import { and, asc, eq, gt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, lt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { runEvents, runs } from './schema.js';
 
@@ -63,11 +63,15 @@ export class SqliteEventStore implements EventStorePort {
   async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
     if (drafts.length === 0) return [];
     const ts = this.clock.now().toISOString();
     const stored = await this.db.transaction(async (tx) => {
+      if (options.requireRun) {
+        const [run] = await tx.select({ id: runs.id }).from(runs).where(eq(runs.id, runId));
+        if (!run) return [];
+      }
       const [current] = await tx
         .select({ max: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
         .from(runEvents)
@@ -109,6 +113,191 @@ export class SqliteEventStore implements EventStorePort {
   }
 
   async read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
+    return (await this.readRows(runId, afterSeq, limit)).map(toEvent);
+  }
+
+  /**
+   * Latest lifecycle marker, including the started/resumed markers that invalidate an older
+   * terminal outcome (RunManager's terminalEvent rule). Finalization can append delivery audit
+   * rows after a terminal event, so the last row alone is insufficient. One statement performs
+   * five MAX seeks using run_events_delivery_idx (run_id, type, seq), then one primary-key
+   * lookup/decoding: bounded work even with arbitrarily much history or delivery bookkeeping.
+   */
+  async lastLifecycleEvent(runId: string): Promise<RunEvent | undefined> {
+    const types = ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'];
+    const latestSeq = sql<number>`max(${sql.join(
+      types.map(
+        (type) => sql`coalesce((select max(${runEvents.seq}) from ${runEvents}
+        where ${runEvents.runId} = ${runId} and ${runEvents.type} = ${type}), 0)`,
+      ),
+      sql`, `,
+    )})`;
+    const [row] = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(and(eq(runEvents.runId, runId), eq(runEvents.seq, latestSeq)))
+      .limit(1);
+    return row ? toEvent(row) : undefined;
+  }
+
+  /** Decode only the requested page: corruption in lookahead must not hide healthy history. */
+  async page(
+    runId: string,
+    afterSeq: number,
+    limit: number,
+  ): Promise<{ items: RunEvent[]; nextAfter: number; hasMore: boolean }> {
+    const rows = await this.readRows(runId, afterSeq, limit + 1);
+    const items = rows.slice(0, limit).map(toEvent);
+    return { items, nextAfter: items.at(-1)?.seq ?? afterSeq, hasMore: rows.length > limit };
+  }
+
+  /** A bounded, sequence-ordered browser window. Timestamps never determine membership. */
+  async window(runId: string, seq: number, direction: 'older' | 'newer', limit: number) {
+    const rows = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          direction === 'older' ? lt(runEvents.seq, seq) : gt(runEvents.seq, seq),
+        ),
+      )
+      .orderBy(direction === 'older' ? desc(runEvents.seq) : asc(runEvents.seq))
+      .limit(limit);
+    if (direction === 'older') rows.reverse();
+    const items = rows.map(toEvent);
+    // The exclusive bounds of the neighbouring pages. An empty page still splits the log at its
+    // seek position, and the side it did not read is bounded by the log's own first or last event,
+    // never by a position outside it, so every continuation it offers is a valid cursor.
+    const edge = async (side: 'first' | 'last') =>
+      (
+        await this.db
+          .select({ seq: runEvents.seq })
+          .from(runEvents)
+          .where(eq(runEvents.runId, runId))
+          .orderBy(side === 'first' ? asc(runEvents.seq) : desc(runEvents.seq))
+          .limit(1)
+      )[0]?.seq;
+    let olderThan: number;
+    let newerThan: number;
+    if (items.length > 0) {
+      olderThan = items[0]!.seq;
+      newerThan = items.at(-1)!.seq;
+    } else if (direction === 'older') {
+      olderThan = seq;
+      newerThan = ((await edge('first')) ?? 1) - 1;
+    } else {
+      olderThan = ((await edge('last')) ?? 0) + 1;
+      newerThan = seq;
+    }
+    const exists = async (bound: number, side: 'older' | 'newer') =>
+      (
+        await this.db
+          .select({ seq: runEvents.seq })
+          .from(runEvents)
+          .where(
+            and(
+              eq(runEvents.runId, runId),
+              side === 'older' ? lt(runEvents.seq, bound) : gt(runEvents.seq, bound),
+            ),
+          )
+          .limit(1)
+      ).length > 0;
+    return {
+      items,
+      hasOlder: await exists(olderThan, 'older'),
+      hasNewer: await exists(newerThan, 'newer'),
+      olderThan,
+      newerThan,
+    };
+  }
+
+  /** Latest matching evidence, independent of the browser window; indexed by run/type/seq. */
+  async latestGate(runId: string): Promise<RunEvent | undefined> {
+    // One indexed type scan, not one SQL round trip per ungated decision. Malformed JSON is
+    // selected too, so decoding reports corruption instead of silently treating it as no gate.
+    const [row] = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          eq(runEvents.type, 'decision.made'),
+          sql`case when json_valid(${runEvents.payload}) then json_type(${runEvents.payload}, '$.gate') is not null else 1 end`,
+        ),
+      )
+      .orderBy(desc(runEvents.seq))
+      .limit(1);
+    return row ? toEvent(row) : undefined;
+  }
+
+  /** Fresh-session choices (#265), the newest `limit` oldest first; one indexed type scan. */
+  async freshSessionChoices(runId: string, limit: number): Promise<RunEvent[]> {
+    const rows = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(
+        and(
+          eq(runEvents.runId, runId),
+          eq(runEvents.type, 'run.resumed'),
+          sql`case when json_valid(${runEvents.payload}) then json_type(${runEvents.payload}, '$.freshSession') is not null else 1 end`,
+        ),
+      )
+      .orderBy(desc(runEvents.seq))
+      .limit(limit);
+    return rows.reverse().map(toEvent);
+  }
+
+  async latest(
+    runId: string,
+    type: RunEvent['type'],
+    before = Number.MAX_SAFE_INTEGER,
+  ): Promise<RunEvent | undefined> {
+    const [row] = await this.db
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        payload: sql<string>`${runEvents.payload}`,
+      })
+      .from(runEvents)
+      .where(and(eq(runEvents.runId, runId), eq(runEvents.type, type), lt(runEvents.seq, before)))
+      .orderBy(desc(runEvents.seq))
+      .limit(1);
+    return row ? toEvent(row) : undefined;
+  }
+
+  private async readRows(runId: string, afterSeq: number, limit?: number): Promise<Row[]> {
     const base = this.db
       .select({
         runId: runEvents.runId,
@@ -122,8 +311,7 @@ export class SqliteEventStore implements EventStorePort {
       .from(runEvents)
       .where(and(eq(runEvents.runId, runId), gt(runEvents.seq, afterSeq)))
       .orderBy(asc(runEvents.seq));
-    const rows = limit ? await base.limit(limit) : await base;
-    return rows.map(toEvent);
+    return limit ? base.limit(limit) : base;
   }
 
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {

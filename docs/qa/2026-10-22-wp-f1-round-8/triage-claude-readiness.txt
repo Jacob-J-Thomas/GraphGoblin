@@ -1,0 +1,70 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/readiness.test.ts (19 tests | 1 failed | 18 skipped) 6245ms
+   ❯ Claude no-turn executable boundary (9)
+     ↓ ready reports ready without exposing CLI bodies
+     ↓ old reports cli-incompatible without exposing CLI bodies
+     ↓ missing-model reports cli-incompatible without exposing CLI bodies
+     ↓ missing-effort reports cli-incompatible without exposing CLI bodies
+     ↓ auth reports auth without exposing CLI bodies
+     ↓ quota reports quota without exposing CLI bodies
+     ↓ transport reports transport without exposing CLI bodies
+     ↓ unknown reports unknown without exposing CLI bodies
+     × hang reports unknown without exposing CLI bodies 6243ms
+   ↓ audited Claude auth evidence (7)
+     ↓ auth-network preserves auth evidence through the executable boundary
+     ↓ quota-network preserves quota evidence through the executable boundary
+     ↓ stdout-quota-warning preserves quota evidence through the executable boundary
+     ↓ auth-empty preserves unknown evidence through the executable boundary
+     ↓ auth-unrecognised preserves unknown evidence through the executable boundary
+     ↓ conflict-auth-stderr preserves auth evidence through the executable boundary
+     ↓ conflict-quota-stderr preserves quota evidence through the executable boundary
+   ↓ probes the actual installed native Claude without a model turn
+   ↓ reports a missing Claude executable as cli-missing
+   ↓ classifies a real installed signed-out Claude in a disposable home as auth
+pnpm.cmd :
+At line:18 char:2
++  pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run $case. ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then
+retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  13:36:13
+   Duration  9.42s (tests 69%, import 17%, transform 14%)
+
+JSON report written to <qa-root>/triage-claude-readiness.json
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f1-
+  │ readiness-precision\packages\infrastructure

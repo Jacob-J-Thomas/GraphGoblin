@@ -1,0 +1,76 @@
+Command: pnpm.cmd --filter @graphgoblin/web exec playwright test --config .tmp/qa3/playwright.config.ts inspector-large-values.spec.ts
+
+Running 6 tests using 1 worker
+
+(node:39000) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39000) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) (1.0m)
+(node:37480) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37480) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 .tmp\qa3\specs\inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 1440 px (#259) (1.2s)
+  x  3 .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) (1.0m)
+(node:29316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29316) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 .tmp\qa3\specs\inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 390 px (#259) (1.3s)
+  ok 5 .tmp\qa3\specs\inspector-large-values.spec.ts:165:1 › the keyboard stays inside an expanded value that a live event replaces (#259) (1.2s)
+  ok 6 .tmp\qa3\specs\inspector-large-values.spec.ts:217:1 › oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259) (3.5s)
+
+
+  1) .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /node\.finished work\b/ })
+
+
+       95 |     // progress drawer shows the harness items: with everything open, nothing widens the document.
+       96 |     const timeline = page.getByRole('list', { name: 'Timeline' });
+    >  97 |     await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+          |                                                                           ^
+       98 |     const diff = page.getByRole('list', { name: 'Patch diff' });
+       99 |     await expect(diff).toBeVisible();
+      100 |     await expect(
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\inspector-large-values.spec.ts:97:75
+
+    Error Context: ..\..\.tmp\qa3\pw-results\inspector-large-values-lar-faef7-s-width-at-1440-px-259-380-\error-context.md
+
+  2) .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /node\.finished work\b/ })
+
+
+       95 |     // progress drawer shows the harness items: with everything open, nothing widens the document.
+       96 |     const timeline = page.getByRole('list', { name: 'Timeline' });
+    >  97 |     await timeline.getByRole('button', { name: /node\.finished work\b/ }).click();
+          |                                                                           ^
+       98 |     const diff = page.getByRole('list', { name: 'Patch diff' });
+       99 |     await expect(diff).toBeVisible();
+      100 |     await expect(
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-186-r2-3\apps\web\.tmp\qa3\specs\inspector-large-values.spec.ts:97:75
+
+    Error Context: ..\..\.tmp\qa3\pw-results\inspector-large-values-lar-0ecd6-ts-width-at-390-px-259-380-\error-context.md
+
+  2 failed
+    .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) 
+    .tmp\qa3\specs\inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) 
+  4 passed (2.3m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 186-r2-3\apps\web
+
+
+Exit: 1

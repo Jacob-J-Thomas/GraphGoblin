@@ -1,0 +1,57 @@
+# #299 [I03/U08] Drain or interrupt deliberately
+
+state: OPEN | milestone: Later | labels: type:epic, area:api, area:engine, area:integrations, backlog, kind:uow, status:approved-held
+parent: #285 [I03] Keep runs correct through waits, edits and shutdown
+sub-issues: #224(OPEN), #319(OPEN), #233(OPEN)
+created: 2026-10-17T19:58:42Z updated: 2026-10-18T23:37:24Z
+
+## Body
+
+Part of #285
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:U08 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome and acceptance
+
+Normal and forced stop are observably distinct, and observation can be cancelled independently.
+
+## Touched components
+
+- run manager
+- scheduler
+- gateway lifecycle
+- shutdown UI
+- API client
+
+## Bolts
+
+- #224 **[I03/U08/B22] Implement normal drain and explicit force-stop** — Normal stop refuses new independent admissions while allowing active parent/child continuations to finish; queued independent work remains recoverable.
+- #319 **[I03/U08/B23] Expose the interactive shutdown choice** — After the configured several-minute grace, explain active work and offer keep waiting or force; keep waiting never starts a hidden kill timer and closing a browser tab is not shutdown.
+- #233 **[I03/U08/B24] Honor client wait cancellation and deadlines** — Abort/deadline interrupts an in-flight request or sleep promptly; cancelling observation does not cancel the underlying run unless explicitly requested.
+
+Each nondeferred bolt is the sole implementation record for its scope. Current UoW completion requires their evidence and applicable owner acceptance; parked children do not block current completion. Publication is not dispatch.
+
+## Specific owner feedback
+
+- Normal shutdown stops new independent admission but lets the active parent/child work reach its result. After a configurable several-minute interactive grace, ask whether to keep waiting or force interruption. Keep waiting has no hidden kill timer. Without UI, normal stop can wait indefinitely; only explicit force-stop interrupts. Queued independent work remains recoverable.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #224 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L328), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L936), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L1293), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L329), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/container.ts#L508)
+
+### Source #233 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/wait.ts#L11), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/resources.ts#L125), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/mcp/src/tools.ts#L212)
+
+
+## Comments (0)

@@ -26,8 +26,13 @@ import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
 import { SqliteLoopRepository } from './loops.js';
 import { SqliteRunRepository } from './runs.js';
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  openStoreBefore,
+  shippedSqlMigrationsFrom,
+} from './testing/shipped-migrations.js';
 
+const DEFAULTS_MIGRATION = '0019_completion_deadline_defaults';
 const NO_DEFAULTS = { owner: { byHarness: {} }, process: { byHarness: {} } };
 const named = (name: string): LoopDefinition =>
   LoopDefinitionSchema.parse({ ...minimalLoop(), name });
@@ -42,6 +47,7 @@ function admissionFor(record: LoopVersionRecord, seed: string): RunAdmission {
     label: `${record.definition.name} ${source === 'draft' ? 'draft ' : ''}v${record.version}`,
     defaults: NO_DEFAULTS,
     classifiers: {},
+    limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
   };
   const run: RunRecord = {
     id: fakeUlid(`run:${seed}`),
@@ -88,7 +94,21 @@ describe('draft snapshots', () => {
       new SqliteEventStore(handle.db, new FakeClock()),
     );
   });
-  afterEach(() => handle.close());
+  const dirs: string[] = [];
+  afterEach(async () => {
+    handle.close();
+    for (const dir of dirs.splice(0))
+      await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  });
+
+  /** A genuine store through 0018 for seeding; reopening its URL applies 0019 and later. */
+  async function storeBeforeDefaults() {
+    const dir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-270-defaults-'));
+    dirs.push(dir);
+    const url = 'file:' + join(dir, 'store.db').replaceAll('\\', '/');
+    const old = await openStoreBefore(url, DEFAULTS_MIGRATION);
+    return { url, old, loops: new SqliteLoopRepository(old.db, new FakeClock(), new FakeIds()) };
+  }
 
   async function draftRun(seed: string) {
     const { loop, draft } = await loops.create('local', named('Snap'));
@@ -100,6 +120,256 @@ describe('draft snapshots', () => {
     const run = await admission.create(admissionFor(snapshot, seed));
     return { loop, draft, snapshot, run };
   }
+
+  it.each([null, 250])(
+    'materializes omitted deadline fields in every stored copy, preserving authored %s',
+    async (authored) => {
+      const store = await storeBeforeDefaults();
+      const old = store.old;
+      const definition = named('Additive defaults');
+      definition.settings.structuredTimeoutMs = authored;
+      definition.settings.runDeadlineSeconds = authored === null ? null : 5;
+      const { loop, draft } = await store.loops.create('local', definition);
+      await store.loops.publish(loop.id);
+      const snapshot: LoopVersionRecord = {
+        ...draft,
+        id: fakeUlid('default-snapshot'),
+        status: 'snapshot',
+      };
+      const intent = admissionFor(snapshot, 'default-copies');
+      intent.run.pinned.limits.structuredTimeoutMs = authored;
+      intent.run.pinned.limits.runDeadlineSeconds = definition.settings.runDeadlineSeconds;
+      // The pinned definition is inserted with pre-field bytes, before its immutability guard applies.
+      const oldDefinition = JSON.stringify(definition);
+      const remove =
+        authored === null
+          ? "json_remove(?, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds')"
+          : '?';
+      await old.client.execute({
+        sql: `INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at) VALUES (?, ?, 1, 'snapshot', ${remove}, ?)`,
+        args: [snapshot.id, loop.id, oldDefinition, FIXTURE_TS],
+      });
+      if (authored === null)
+        await old.client.execute({
+          sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
+          args: [draft.id],
+        });
+      await new SqliteRunRepository(old.db).create(intent.run, intent.initialThread);
+      await new SqliteEventStore(old.db, new FakeClock()).append(intent.run.id, [intent.queued]);
+      await old.client.execute({
+        sql: "INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts) VALUES (?, 'local', ?, 'start', ?, ?, 'pending', ?, 0)",
+        args: [
+          fakeUlid('default-receipt'),
+          loop.id,
+          'a'.repeat(64),
+          fakeUlid('default-inbound'),
+          JSON.stringify(intent),
+        ],
+      });
+      if (authored === null) {
+        await old.client.execute(
+          "UPDATE runs SET pinned = json_remove(pinned, '$.limits.structuredTimeoutMs', '$.limits.runDeadlineSeconds')",
+        );
+        await old.client.execute(
+          "UPDATE run_events SET payload = json_remove(payload, '$.pinned.limits.structuredTimeoutMs', '$.pinned.limits.runDeadlineSeconds')",
+        );
+        await old.client.execute(
+          "UPDATE webhook_receipts SET intent = json_remove(intent, '$.run.pinned.limits.structuredTimeoutMs', '$.run.pinned.limits.runDeadlineSeconds', '$.queued.pinned.limits.structuredTimeoutMs', '$.queued.pinned.limits.runDeadlineSeconds', '$.snapshot.definition.settings.structuredTimeoutMs', '$.snapshot.definition.settings.runDeadlineSeconds')",
+        );
+      }
+      const beforeTrigger = (
+        await old.client.execute(
+          "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
+        )
+      ).rows;
+      old.close();
+      // The store upgrades through the whole shipped suffix, as an installed gateway would.
+      handle.close();
+      handle = openDatabase({ url: store.url });
+      expect(await handle.pendingMigrations()).toBe(
+        await shippedSqlMigrationsFrom(DEFAULTS_MIGRATION),
+      );
+      await handle.migrate();
+      expect(await handle.pendingMigrations()).toBe(0);
+      const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+      const runs = new SqliteRunRepository(handle.db);
+      const events = new SqliteEventStore(handle.db, new FakeClock());
+      const admission = new SqliteTriggerAdmission(handle.db, events);
+      const expected = {
+        structuredTimeoutMs: authored,
+        runDeadlineSeconds: authored === null ? null : 5,
+      };
+      for (const version of [
+        await loops.getVersion(draft.id),
+        await loops.getVersion(snapshot.id),
+        await loops.getLatestPublished(loop.id),
+        await loops.getPublished(loop.id, 1),
+        ...(await loops.listVersions(loop.id)),
+      ])
+        expect(version?.definition.settings).toMatchObject(expected);
+      expect((await runs.get(intent.run.id))?.pinned.limits).toMatchObject(expected);
+      expect((await events.read(intent.run.id))[0]).toMatchObject({ pinned: { limits: expected } });
+      const saved = (await admission.get(fakeUlid('default-receipt')))?.intent;
+      expect(saved?.run.pinned.limits).toMatchObject(expected);
+      expect(saved?.queued.pinned.limits).toMatchObject(expected);
+      expect(saved?.snapshot?.definition.settings).toMatchObject(expected);
+      if (!saved) throw new Error('expected saved admission');
+      expect((await admission.create(saved)).id).toBe(intent.run.id);
+      expect(
+        (await events.read(intent.run.id)).filter((event) => event.type === 'run.queued'),
+      ).toHaveLength(1);
+      // Each persisted JSON spelling now contains the default; readers need no compatibility path.
+      for (const [table, column, path] of [
+        ['loop_versions', 'definition', '$.settings.structuredTimeoutMs'],
+        ['runs', 'pinned', '$.limits.structuredTimeoutMs'],
+        ['run_events', 'payload', '$.pinned.limits.structuredTimeoutMs'],
+        ['webhook_receipts', 'intent', '$.snapshot.definition.settings.structuredTimeoutMs'],
+      ] as const)
+        expect(
+          (
+            await handle.client.execute(
+              `SELECT json_type(${column}, '${path}') AS type FROM ${table}`,
+            )
+          ).rows.every((row) => row['type'] === (authored === null ? 'null' : 'integer')),
+        ).toBe(true);
+      expect(
+        (
+          await handle.client.execute(
+            "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
+          )
+        ).rows,
+      ).toEqual(beforeTrigger);
+      await expect(
+        handle.client.execute({
+          sql: "UPDATE loop_versions SET definition = '{}' WHERE id = ?",
+          args: [snapshot.id],
+        }),
+      ).rejects.toThrow(/LOOP_VERSION_SNAPSHOT_IMMUTABLE/);
+      await handle.migrate();
+      expect((await loops.getVersion(snapshot.id))?.definition.settings).toMatchObject(expected);
+    },
+  );
+
+  it('leaves malformed and invalid values untouched during the additive-default migration', async () => {
+    for (const stored of [
+      '{broken',
+      JSON.stringify({
+        ...named('Invalid'),
+        settings: { ...named('Invalid').settings, structuredTimeoutMs: -1 },
+      }),
+    ]) {
+      const { old, loops: historical } = await storeBeforeDefaults();
+      try {
+        const { draft } = await historical.create('local', named('Damaged defaults'));
+        await old.client.execute({
+          sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
+          args: [stored, draft.id],
+        });
+        // Every shipped migration from 0019 on, as raw SQL: such rows would not pass the upgrade guard.
+        await applyShippedSqlToHistoricalTestFixture(old);
+        expect(
+          (
+            await old.client.execute(
+              'SELECT COUNT(*) AS applied FROM __drizzle_migrations WHERE created_at = 1792818000000',
+            )
+          ).rows[0]?.['applied'],
+        ).toBe(1);
+        expect(
+          (
+            await old.client.execute({
+              sql: 'SELECT definition FROM loop_versions WHERE id = ?',
+              args: [draft.id],
+            })
+          ).rows[0]?.['definition'],
+        ).toBe(stored);
+      } finally {
+        old.close();
+      }
+    }
+  });
+
+  it.each([null, 5])(
+    'migrates authored deadline %s once and preserves damaged JSON',
+    async (deadline) => {
+      const definition = named('Custom limits');
+      definition.settings.maxNodeVisits = 4;
+      definition.settings.runDeadlineSeconds = deadline;
+      const { draft } = await loops.create('local', definition);
+      const snapshot: LoopVersionRecord = {
+        ...draft,
+        id: fakeUlid('limits-snapshot'),
+        status: 'snapshot',
+      };
+      const intent = admissionFor(snapshot, 'limits');
+      const created = await admission.create(intent);
+      await handle.client.execute({
+        sql: "UPDATE runs SET pinned = json_remove(pinned, '$.limits') WHERE id = ?",
+        args: [created.id],
+      });
+      await handle.client.execute({
+        sql: "UPDATE run_events SET payload = json_remove(payload, '$.pinned.limits') WHERE run_id = ?",
+        args: [created.id],
+      });
+      await handle.client.execute({
+        sql: "INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts) VALUES (?, 'local', ?, 'start', ?, ?, 'pending', ?, 0)",
+        args: [
+          fakeUlid('limits-receipt'),
+          draft.loopId,
+          'a'.repeat(64),
+          fakeUlid('limits-inbound'),
+          JSON.stringify({
+            ...intent,
+            run: { ...intent.run, pinned: { ...intent.run.pinned, limits: undefined } },
+            queued: { ...intent.queued, pinned: { ...intent.run.pinned, limits: undefined } },
+          }),
+        ],
+      });
+      const migration = await readFile(
+        new URL('../../drizzle/0017_run_execution_limits.sql', import.meta.url),
+        'utf8',
+      );
+      const apply = async () => {
+        for (const statement of migration.split('--> statement-breakpoint'))
+          await handle.client.execute(statement);
+      };
+      await apply();
+      await apply();
+      expect((await runs.get(created.id))?.pinned.limits).toEqual({
+        structuredTimeoutMs: null,
+        maxNodeVisits: 4,
+        runDeadlineSeconds: deadline,
+      });
+      expect(
+        (await new SqliteEventStore(handle.db, new FakeClock()).read(created.id))[0],
+      ).toMatchObject({
+        pinned: {
+          limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline },
+        },
+      });
+      const saved = (await handle.client.execute('SELECT intent FROM webhook_receipts')).rows[0]?.[
+        'intent'
+      ];
+      if (typeof saved !== 'string') throw new Error('Expected saved admission JSON');
+      expect(parseRunAdmission(JSON.parse(saved)).run.pinned.limits).toEqual({
+        structuredTimeoutMs: null,
+        maxNodeVisits: 4,
+        runDeadlineSeconds: deadline,
+      });
+      await handle.client.execute({
+        sql: 'UPDATE runs SET pinned = ? WHERE id = ?',
+        args: ['{broken', created.id],
+      });
+      await apply();
+      expect(
+        (
+          await handle.client.execute({
+            sql: 'SELECT pinned FROM runs WHERE id = ?',
+            args: [created.id],
+          })
+        ).rows[0]?.['pinned'],
+      ).toBe('{broken');
+    },
+  );
 
   it('are stored with their run, read by id, and kept out of the version history', async () => {
     const { loop, draft, snapshot, run } = await draftRun('history');
@@ -192,7 +462,7 @@ describe('migration 0014 pins existing runs', () => {
 
   /** A store migrated through 0013, the last migration before definition pins. */
   async function storeBeforePins(): Promise<DatabaseHandle> {
-    const dir = await mkdtemp(join(tmpdir(), 'gg-pin-migration-'));
+    const dir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-pin-migration-'));
     dirs.push(dir);
     const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
     const journal = JSON.parse(await readFile(join(source, 'meta/_journal.json'), 'utf8')) as {
@@ -238,7 +508,7 @@ describe('migration 0014 pins existing runs', () => {
             loopId,
             version,
             status,
-            JSON.stringify(named(name)),
+            JSON.stringify({ ...named(name), settings: { maxNodeVisits: 10 } }),
             FIXTURE_TS,
             status === 'published' ? FIXTURE_TS : null,
           ],
@@ -335,6 +605,7 @@ describe('migration 0014 pins existing runs', () => {
           label: 'Release v1',
           defaults: { owner, process: { byHarness: {} } },
           classifiers: {},
+          limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
         },
       });
       // The draft run now pins a frozen copy named by its own id, everywhere it is recorded.
@@ -348,9 +619,13 @@ describe('migration 0014 pins existing runs', () => {
         loopId,
         version: 2,
         status: 'snapshot',
-        definition: named('Draft name'),
+        definition: { ...named('Draft name'), settings: { maxNodeVisits: 10 } },
         createdAt: FIXTURE_TS,
       });
+      expect(
+        LoopDefinitionSchema.parse((await loops.getVersion(runIds.draft))?.definition).settings
+          .runDeadlineSeconds,
+      ).toBeNull();
       expect((await loops.listVersions(loopId)).map((version) => version.id).sort()).toEqual(
         [published, draft].sort(),
       );

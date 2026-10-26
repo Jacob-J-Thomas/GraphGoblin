@@ -1,0 +1,54 @@
+[
+  {
+    "name": "evicted durable failure retains exact code, message, status and thread",
+    "pass": true,
+    "evidence": {
+      "runId": "01M5RX73ZRK4XJN8ASJJ8YJ36J",
+      "total": 711,
+      "retainedFirst": 200,
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Independent QA failure",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "adapterCode": "QA_FAILURE"
+        },
+        "inference": {
+          "visitId": "01M5RX73ZRK4XJN8ASJJ8YJ36J:5",
+          "turnId": "01M5RX741DZ3C6ZEWKAF6GETGW",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-5"
+        }
+      },
+      "lifecycle": {
+        "runId": "01M5RX73ZRK4XJN8ASJJ8YJ36J",
+        "seq": 11,
+        "ts": "2026-10-25T06:50:52.862Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: Independent QA failure",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "adapterCode": "QA_FAILURE"
+          },
+          "inference": {
+            "visitId": "01M5RX73ZRK4XJN8ASJJ8YJ36J:5",
+            "turnId": "01M5RX741DZ3C6ZEWKAF6GETGW",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-5"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "evicted webhook delivery, result and finish agree with full server history",
+    "pass": false,
+    "error": "Error: {\"type\":\"https://graphgoblin.dev/problems/malformed-body\",\"title\":\"malformed body\",\"status\":400,\"code\":\"MALFORMED_BODY\",\"detail\":\"Body cannot be empty when content-type is set to 'application/json'\"}"
+  }
+]

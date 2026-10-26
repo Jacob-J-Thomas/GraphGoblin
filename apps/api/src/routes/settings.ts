@@ -1,4 +1,6 @@
 import { HarnessDefaultsSchema } from '@graphgoblin/contracts';
+import { CODEX_DEFAULT_MODEL } from '@graphgoblin/adapter-codex';
+import { CLAUDE_MODEL } from '@graphgoblin/infrastructure/claude';
 import { validateHarnessDefaults } from '@graphgoblin/domain';
 import {
   ApiKeySchema,
@@ -268,10 +270,21 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       schema: {
         tags: ['settings'],
         summary: 'The model catalog',
-        response: { 200: z.object({ items: z.array(ModelEntrySchema) }) },
+        response: {
+          200: z.object({
+            items: z.array(ModelEntrySchema.extend({ ecosystemDefault: z.boolean() })),
+          }),
+        },
       },
     },
-    async () => ({ items: await repos.catalog.list() }),
+    async () => ({
+      items: (await repos.catalog.list()).map((entry) => ({
+        ...entry,
+        ecosystemDefault:
+          (entry.harness === 'codex' && entry.model === CODEX_DEFAULT_MODEL) ||
+          (entry.harness === 'claude' && entry.model === CLAUDE_MODEL),
+      })),
+    }),
   );
 
   app.put(

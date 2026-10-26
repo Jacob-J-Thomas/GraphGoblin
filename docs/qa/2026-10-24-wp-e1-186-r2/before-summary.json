@@ -1,0 +1,782 @@
+{
+  "schema": 2,
+  "columns": {
+    "specification": [
+      "passes",
+      "items",
+      "itemBytes",
+      "contextBytes",
+      "inference",
+      "grow",
+      "artifacts",
+      "delayMs"
+    ],
+    "correctness": [
+      "ok",
+      "succeeded",
+      "nodeCountsOk",
+      "unexpectedAttempts",
+      "storedEvents",
+      "progress",
+      "expectedProgress",
+      "gates",
+      "passes",
+      "history",
+      "historyValuesOk",
+      "terminal",
+      "replayOk",
+      "browserOk"
+    ],
+    "portTimings": [
+      "portIndex",
+      "count",
+      "totalMs",
+      "meanMs",
+      "p95UpperMs",
+      "maxMs"
+    ],
+    "checkpoints": [
+      "pass",
+      "elapsedMs",
+      "snapshotBytes",
+      "getThreadMs",
+      "snapshotSerializeMs",
+      "heapUsed"
+    ],
+    "browserSamples": [
+      "elapsedMs",
+      "nodes",
+      "sessionStorageBytes",
+      "heapUsed",
+      "longTasks",
+      "longTaskMs"
+    ],
+    "flightSamples": [
+      "replayElapsedMs",
+      "socketBytesWritten",
+      "wireBytesConsumed",
+      "bytesInFlight"
+    ],
+    "topCpuFrames": [
+      "cpuLocationIndex",
+      "samples"
+    ]
+  },
+  "ports": [
+    "runs.get",
+    "events.read",
+    "runs.transition",
+    "events.append",
+    "runs.update",
+    "runs.saveThread",
+    "sessions.upsert"
+  ],
+  "cpuLocations": [
+    ":0 libsql_js::statement::Rows::js_next",
+    ":0 (idle)",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw"
+  ],
+  "measurements": [
+    {
+      "workload": "browser",
+      "aged": 2000,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 157783,
+      "environment": {
+        "timestamp": "2026-10-25T01:22:39.467Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "456fcd613abb05701dcd8bcccfef410541716e68",
+        "hostBusyFraction": 0.811,
+        "freeRamBefore": 34739109888,
+        "freeRamAfter": 33364824064
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 92445.512,
+        "admission": {
+          "count": 2000,
+          "totalMs": 37494.228,
+          "meanMs": 18.747,
+          "p50UpperMs": 20.176,
+          "p95UpperMs": 29.54,
+          "maxMs": 203.884
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1564510,
+          "meanMs": 782.255,
+          "p50UpperMs": 830.145,
+          "p95UpperMs": 1470.653,
+          "maxMs": 1927
+        },
+        "disk": {
+          "bytes": 14958507,
+          "files": 4
+        }
+      },
+      "cases": [
+        0
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "specification": [
+        1000,
+        2,
+        120,
+        512,
+        true,
+        true,
+        false,
+        50
+      ],
+      "wallMs": 168976.538,
+      "msPerPass": 168.977,
+      "cpu": {
+        "user": 48797000,
+        "system": 16953000
+      },
+      "durableAdmissionToStartMs": 14,
+      "awaitedPortMs": 123045.649,
+      "observationMs": 17.042,
+      "residualMs": 45913.848,
+      "maxConcurrentPortCalls": 3,
+      "eventLoopDelayMs": {
+        "mean": 21.165,
+        "max": 9495.904,
+        "p99": 44.204
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 516599,
+        "wallMs": 10.924
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [
+          0,
+          9107,
+          11690.298,
+          1.284,
+          1.693,
+          91.221
+        ],
+        [
+          1,
+          69,
+          703.037,
+          10.189,
+          8.557,
+          460.44
+        ],
+        [
+          2,
+          2,
+          8.922,
+          4.461,
+          6.429,
+          5.883
+        ],
+        [
+          3,
+          12007,
+          42836.108,
+          3.568,
+          5.313,
+          9474.403
+        ],
+        [
+          4,
+          6005,
+          16926.889,
+          2.819,
+          4.391,
+          586.918
+        ],
+        [
+          5,
+          3003,
+          41551.795,
+          13.837,
+          18.342,
+          8837.255
+        ],
+        [
+          6,
+          3000,
+          8559.58,
+          2.853,
+          3.992,
+          2761.645
+        ]
+      ],
+      "otherPorts": {
+        "calls": 1056,
+        "totalMs": 769.02
+      },
+      "checkpoints": [
+        [
+          100,
+          10635.156,
+          52215,
+          0.83,
+          0.157,
+          53451408
+        ],
+        [
+          300,
+          40275.686,
+          155217,
+          0.933,
+          0.239,
+          57690832
+        ],
+        [
+          500,
+          62720.491,
+          258218,
+          1.108,
+          0.446,
+          62175648
+        ],
+        [
+          600,
+          95787.207,
+          309718,
+          1.103,
+          0.617,
+          59919696
+        ],
+        [
+          800,
+          142477.917,
+          412718,
+          1.332,
+          0.657,
+          56141024
+        ],
+        [
+          1000,
+          168432.298,
+          515722,
+          2.211,
+          0.862,
+          69455048
+        ]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        13010,
+        2000,
+        2000,
+        1000,
+        1000,
+        1000,
+        true,
+        1,
+        null,
+        true
+      ],
+      "eventSerialization": {
+        "totalMs": 40.996,
+        "bytes": 4848472,
+        "sha256": "2e6fb43b3bf68f38f77da3afc4d741d6df0a6c70e4c1d5e055aba3bd8729321c",
+        "lateAfter": 11709,
+        "lateSha256": "30c703e590783d3e25e617fb001c31e65839c4f4059ee8099c65819fe0e2c633"
+      },
+      "cpuSamples": 102161,
+      "topCpuFrames": [
+        [
+          0,
+          58103
+        ],
+        [
+          1,
+          26165
+        ],
+        [
+          2,
+          1883
+        ]
+      ],
+      "browser": {
+        "browser": "156.0.4314.42",
+        "channel": "msedge",
+        "headless": true,
+        "warmup": {
+          "passes": 250,
+          "wallMs": 34955.052
+        },
+        "inbound": {
+          "events": 50,
+          "payloadValueBytes": 32768
+        },
+        "pages": [
+          0,
+          1,
+          2
+        ]
+      },
+      "storeGrowthBytes": 9251264,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 1000,
+        "grow": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    }
+  ],
+  "browserPages": [
+    {
+      "case": 0,
+      "name": "events-empty",
+      "durationMs": 1000,
+      "historyReadyMs": null,
+      "historyTargetSeq": null,
+      "historyReadyCount": null,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 506.872,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3526,
+      "serverSeqAfter": 3711,
+      "longTasks": 1,
+      "longTaskMs": 156,
+      "peakHeapUsed": 9150324,
+      "peakNodes": 59,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [
+          437.943,
+          59,
+          0,
+          8670392,
+          1,
+          156
+        ],
+        [
+          658.496,
+          59,
+          0,
+          9087608,
+          1,
+          156
+        ],
+        [
+          922.203,
+          59,
+          0,
+          9107636,
+          1,
+          156
+        ],
+        [
+          1173.878,
+          59,
+          0,
+          9121804,
+          1,
+          156
+        ],
+        [
+          1424.276,
+          59,
+          0,
+          9135972,
+          1,
+          156
+        ],
+        [
+          1522.11,
+          59,
+          0,
+          9150324,
+          1,
+          156
+        ],
+        [
+          1522.11,
+          59,
+          0,
+          9150324,
+          1,
+          156
+        ]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.194,
+        "TaskDuration": 0.258,
+        "LayoutDuration": 0.006,
+        "RecalcStyleDuration": 0.006
+      }
+    },
+    {
+      "case": 0,
+      "name": "inspector",
+      "durationMs": 5000,
+      "historyReadyMs": 2422.12,
+      "historyTargetSeq": 3744,
+      "historyReadyCount": 3991,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 2164.627,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3744,
+      "serverSeqAfter": 4641,
+      "longTasks": 44,
+      "longTaskMs": 3318,
+      "peakHeapUsed": 143002416,
+      "peakNodes": 29799,
+      "peakSessionStorageBytes": 3420384,
+      "samples": [
+        [
+          385.43,
+          68,
+          0,
+          8446148,
+          1,
+          151
+        ],
+        [
+          1412.109,
+          24960,
+          2862800,
+          62046552,
+          7,
+          978
+        ],
+        [
+          1756.551,
+          25379,
+          2908282,
+          70125200,
+          8,
+          1038
+        ],
+        [
+          1926.177,
+          25627,
+          2936396,
+          69795620,
+          9,
+          1200
+        ],
+        [
+          2111.651,
+          25729,
+          2952252,
+          84900228,
+          11,
+          1316
+        ],
+        [
+          2366.552,
+          25915,
+          2975252,
+          93573620,
+          12,
+          1370
+        ],
+        [
+          2661.039,
+          26083,
+          2994680,
+          53591852,
+          13,
+          1430
+        ],
+        [
+          2926.184,
+          26369,
+          3023822,
+          54539260,
+          14,
+          1486
+        ],
+        [
+          3148.387,
+          26439,
+          3036730,
+          62454416,
+          16,
+          1604
+        ],
+        [
+          3433.386,
+          26677,
+          3063706,
+          87919936,
+          17,
+          1663
+        ],
+        [
+          3646.347,
+          26839,
+          3082106,
+          93444076,
+          19,
+          1789
+        ],
+        [
+          3930.778,
+          27139,
+          3111242,
+          103588784,
+          20,
+          1849
+        ],
+        [
+          4176.889,
+          27209,
+          3123786,
+          125044528,
+          22,
+          1967
+        ],
+        [
+          4436.496,
+          27433,
+          3151126,
+          135209388,
+          23,
+          2023
+        ],
+        [
+          4666.253,
+          27595,
+          3169526,
+          142979296,
+          25,
+          2145
+        ],
+        [
+          4981.724,
+          27867,
+          3198668,
+          41193948,
+          26,
+          2208
+        ],
+        [
+          7597.627,
+          29799,
+          3420384,
+          72352044,
+          44,
+          3318
+        ]
+      ],
+      "cdp": {
+        "ScriptDuration": 4.308,
+        "TaskDuration": 6.873,
+        "LayoutDuration": 0.477,
+        "RecalcStyleDuration": 0.126
+      }
+    },
+    {
+      "case": 0,
+      "name": "events",
+      "durationMs": 5000,
+      "historyReadyMs": null,
+      "historyTargetSeq": null,
+      "historyReadyCount": null,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 582.271,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 4732,
+      "serverSeqAfter": 5395,
+      "longTasks": 1,
+      "longTaskMs": 154,
+      "peakHeapUsed": 12400700,
+      "peakNodes": 1071,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [
+          411.883,
+          58,
+          0,
+          8530892,
+          1,
+          154
+        ],
+        [
+          612.926,
+          1071,
+          0,
+          11421776,
+          1,
+          154
+        ],
+        [
+          876.137,
+          1071,
+          0,
+          11448008,
+          1,
+          154
+        ],
+        [
+          1126.688,
+          1071,
+          0,
+          11462184,
+          1,
+          154
+        ],
+        [
+          1379.728,
+          1071,
+          0,
+          11476360,
+          1,
+          154
+        ],
+        [
+          1633.775,
+          1071,
+          0,
+          11490536,
+          1,
+          154
+        ],
+        [
+          1884.792,
+          1071,
+          0,
+          11504804,
+          1,
+          154
+        ],
+        [
+          2137.035,
+          1071,
+          0,
+          11519176,
+          1,
+          154
+        ],
+        [
+          2386.41,
+          1071,
+          0,
+          11533696,
+          1,
+          154
+        ],
+        [
+          2638.51,
+          1071,
+          0,
+          12179188,
+          1,
+          154
+        ],
+        [
+          2893.085,
+          1071,
+          0,
+          12193500,
+          1,
+          154
+        ],
+        [
+          3147.121,
+          1071,
+          0,
+          12207700,
+          1,
+          154
+        ],
+        [
+          3396.612,
+          1071,
+          0,
+          12221900,
+          1,
+          154
+        ],
+        [
+          3647.574,
+          1071,
+          0,
+          12236100,
+          1,
+          154
+        ],
+        [
+          3901.874,
+          1071,
+          0,
+          12251472,
+          1,
+          154
+        ],
+        [
+          4165.853,
+          1071,
+          0,
+          12265772,
+          1,
+          154
+        ],
+        [
+          4416.846,
+          1071,
+          0,
+          12279972,
+          1,
+          154
+        ],
+        [
+          4670.256,
+          1071,
+          0,
+          12343884,
+          1,
+          154
+        ],
+        [
+          4924.026,
+          1071,
+          0,
+          12358084,
+          1,
+          154
+        ],
+        [
+          5590.448,
+          1071,
+          0,
+          12400700,
+          1,
+          154
+        ]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.222,
+        "TaskDuration": 0.409,
+        "LayoutDuration": 0.08,
+        "RecalcStyleDuration": 0.011
+      }
+    }
+  ],
+  "replays": []
+}

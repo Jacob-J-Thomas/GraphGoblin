@@ -1,0 +1,26 @@
+// Public API fixture generation, same valid message/property workload as the audit.
+import {readFile,writeFile} from 'node:fs/promises';import {resolve} from 'node:path';import {createHash} from 'node:crypto';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-4'),api='http://127.0.0.1:5720';
+const sha=v=>createHash('sha256').update(v).digest('hex');
+async function call(path,body){const r=await fetch(api+path,{method:body===undefined?'GET':'POST',headers:{'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});const value=await r.json();if(!r.ok)throw Error(r.status+' '+path+' '+JSON.stringify(value).slice(0,400));return value;}
+const op=(path,value)=>({op:'set',path,value:{kind:'literal',value}}),mut=(id,operations)=>({id,kind:'mutate',label:id,config:{operations}}),wait=id=>({id,kind:'wait',label:id,config:{mode:'input',prompt:'Continue '+id+'?',inputSchema:{type:'object'}}});
+async function create(name,nodes){const all=[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},...nodes,{id:'done',kind:'exit',label:'Done',config:{}}].map((n,i)=>({...n,ui:{x:i*260,y:80}}));const definition={schemaVersion:4,name:'QA R4 '+name+' '+Date.now(),nodes:all,edges:all.slice(1).map((n,i)=>({id:'e'+i,from:{node:all[i].id,port:'out'},to:{node:n.id}}))};const {loop}=await call('/loops',{definition});await call('/loops/'+loop.id+'/publish',{});const {run}=await call('/loops/'+loop.id+'/runs',{input:{}});for(let i=0;i<1200;i++){const current=await call('/runs/'+run.id);if(current.status==='waiting')return run.id;if(current.status==='failed')throw Error(JSON.stringify(current.failure));await new Promise(ok=>setTimeout(ok,50));}throw Error('wait timeout');}
+const messages=Array.from({length:6000},(_,i)=>({id:'m'+i,role:'note',content:'m'+i+' '+('c'.repeat(200)),nodeId:'seed',ts:'2026-10-22T12:00:00.000Z'}));
+const wide={};for(let i=0;i<350000;i++)wide['key'+i]=i;
+const fixture={runs:{},admission:[]};
+const key=await call('/api-keys',{label:'Independent QA #259 round 4',scopes:['*']});await writeFile(resolve(dir,'api-key-metadata.json'),JSON.stringify({created:Boolean(key.token),id:key.key.id,label:key.key.label},null,2));
+for(const width of [1440,390]){
+ const many=await create('6000 messages '+width,[mut('seed',[op('/messages',messages)]),wait('ask'),mut('append',[{op:'append-message',role:'note',content:'live final message'}]),wait('next')]);
+ const wideId=await create('350000 properties '+width,[mut('seed',[op('/vars',wide)]),wait('ask'),mut('change',[op('/vars/key0','CHANGED 🚀\u0000'),op('/vars/key349999','last changed')]),wait('next')]);
+ fixture.runs[width]={many,wide:wideId};
+ const a=await call('/runs/'+many+'/thread'),b=await call('/runs/'+wideId+'/thread');
+ if(a.messages.length!==6000||Object.keys(b.vars).length!==350000)throw Error('API altered admitted fixture');
+ fixture.admission.push({width,messages:a.messages.length,first:a.messages[0].id,last:a.messages.at(-1).id,properties:Object.keys(b.vars).length,messagesSha256:sha(JSON.stringify(a.messages,null,2)),variablesSha256:sha(JSON.stringify(b.vars,null,2))});
+ if(width===1440){await writeFile(resolve(dir,'messages-api.json.txt'),JSON.stringify(a.messages,null,2));await writeFile(resolve(dir,'wide-before-api.json.txt'),JSON.stringify(b.vars,null,2));}
+ await writeFile(resolve(dir,'fixtures.json'),JSON.stringify(fixture,null,2));console.log(JSON.stringify({width,many,wide:wideId,admittedMessages:6000,admittedProperties:350000}));
+}
+const previous=JSON.parse(await readFile(resolve(dir,'../round-2/mutate-thread-before.json'),'utf8')).vars;
+fixture.runs.nested=await create('prior A B A',[mut('seed',[op('/vars', {...previous,change:'A'.repeat(20000)})]),mut('replace',[op('/vars/change','B'.repeat(20000))]),wait('ask')]);
+fixture.runs.boundary50=await create('50 messages',[mut('seed',[op('/messages',messages.slice(0,50))]),wait('ask')]);
+fixture.runs.boundary51=await create('51 messages',[mut('seed',[op('/messages',messages.slice(0,51))]),wait('ask')]);
+await writeFile(resolve(dir,'fixtures.json'),JSON.stringify(fixture,null,2));console.log('All fixtures ready.');

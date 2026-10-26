@@ -1,0 +1,69 @@
+import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { performance } from 'node:perf_hooks';
+const root = process.cwd();
+const out = process.argv[2];
+const dep = (name, app='api') => import(import.meta.resolve(name, pathToFileURL(join(root, 'apps', app, 'package.json'))));
+const { createContainer, loadConfig, buildApp } = await dep('@graphgoblin/api');
+const { FakeHarness, FakeClock } = await dep('@graphgoblin/engine/testing');
+const { SseParser, createGraphGoblinClient, subscribeRunEvents } = await dep('@graphgoblin/api-client','web');
+const dataDir = await mkdtemp(join(tmpdir(),'gg-wp-e1-186-store-'));
+const harness = new FakeHarness();
+const c = await createContainer(loadConfig({ GG_DATA_DIR:dataDir, GG_REQUIRE_API_KEY:'true', GG_MASTER_KEY:Buffer.alloc(32,13).toString('base64'), GG_SWAGGER_UI:'false', GG_WEB_DIST:join(root,'apps/web/dist') }), { harnesses:{codex:harness}, clock:new FakeClock(), startTimers:false });
+await c.start();
+const events=c.repos.events;
+const stats={reads:[],lookups:0,subscriptions:0};
+let readHook;
+const measured={
+ append:(...a)=>events.append(...a),page:(...a)=>events.page(...a),
+ lastLifecycleEvent:async(...a)=>{stats.lookups++;return events.lastLifecycleEvent(...a);},
+ subscribe:(...a)=>{stats.subscriptions++;const stop=events.subscribe(...a);return ()=>{stats.subscriptions--;stop();};},
+ read:async(...a)=>{const page=await events.read(...a);stats.reads.push({after:a[1],limit:a[2],rows:page.length});if(readHook)await readHook(a,page);return page;}
+};
+const app=await buildApp({...c,repos:{...c.repos,events:measured}},{logger:false});
+const base=await app.listen({host:'127.0.0.1',port:5745});
+const {token}=await c.repos.apiKeys.create('local','audit',['*']);
+const {token:otherToken}=await c.repos.apiKeys.create('audit-other-owner','audit other',['*']);
+const client=createGraphGoblinClient({baseUrl:base,apiKey:token});
+const results={head:'389dc14f24fcab33f6c22b0ba14428596fdda539',dataDir,base,cases:[]};
+const headers={authorization:'Bearer '+token};
+const draft={type:'run.woken',nodeId:'wait',reason:'manual'};
+const finished={type:'run.finished',status:'succeeded',outcome:'success',result:'audit-done'};
+const failed={type:'run.failed',failure:{code:'HARNESS_TURN_FAILED',message:'retry',resumable:true}};
+const audit={type:'return.delivered',channel:{kind:'caller'},target:'run.result'};
+const definition={schemaVersion:4,name:'SSE audit',nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},{id:'wait',kind:'wait',label:'Wait',config:{mode:'input',prompt:'Audit'}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'wait'}},{id:'b',from:{node:'wait',port:'out'},to:{node:'done'}}]};
+async function api(path,body){const r=await fetch(base+path,{...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)}),headers:{...headers,'content-type':'application/json'},signal:AbortSignal.timeout(30000)});if(!r.ok)throw new Error(`${path}: ${r.status} ${await r.text()}`);return r.json();}
+async function makeRun(count=0,bytes=0){const {loop}=await api('/loops',{definition});await api(`/loops/${loop.id}/publish`,{});const {run}=await api(`/loops/${loop.id}/runs`,{});await c.manager.waitForIdle();let n=(await events.read(run.id)).length;while(n<count){const size=Math.min(100,count-n);await events.append(run.id,Array.from({length:size},()=>bytes?{...draft,payload:'q'.repeat(bytes)}:draft));n+=size;}return run.id;}
+async function raw(id,after=0,extra={}){const began=performance.now();const r=await fetch(`${base}/runs/${id}/events?after=${after}`,{headers:{...headers,accept:'text/event-stream',...extra},signal:AbortSignal.timeout(15000)});const text=await r.text();const frames=new SseParser().push(text);const data=frames.filter(f=>f.event!=='stream.error'&&f.event!=='stream.complete').flatMap(f=>{try{return [JSON.parse(f.data)];}catch{return [];}});return {status:r.status,ms:performance.now()-began,completions:frames.filter(f=>f.event==='stream.complete').map(f=>({id:f.id,data:JSON.parse(f.data)})),ids:data.map(e=>e.seq),types:data.map(e=>e.type),controls:frames.filter(f=>f.event==='stream.error').map(f=>({id:f.id,problem:JSON.parse(f.data)})),...(r.ok?{}:{body:text})};}
+async function typed(id,after=0){const seen=[],errors=[];let opens=0;const sub=subscribeRunEvents({client,runId:id,after,onEvent:e=>seen.push({seq:e.seq,type:e.type}),onOpen:()=>opens++,onError:(e,attempt)=>errors.push({name:e.name,message:e.message,code:e.code,attempt}),backoff:{initialMs:1,maxMs:1,maxAttempts:2}});let rejected;try{await sub.done;}catch(e){rejected={message:e.message,code:e.code};}return {seen,lastSeq:sub.lastSeq,opens,errors,rejected};}
+async function record(name,fn){try{const value=await fn();results.cases.push({name,...value});console.log(JSON.stringify({name,...value}));}catch(e){results.cases.push({name,error:e.stack});console.log(JSON.stringify({name,error:e.stack}));}await writeFile(join(out,'transport-results.json'),JSON.stringify(results,null,2));}
+try{
+ const ordinary=await makeRun(385);await api(`/runs/${ordinary}/cancel`,{});const log=await events.read(ordinary);const end=log.at(-1).seq;
+ await record('equal timestamp page boundaries',async()=>{const wire=await raw(ordinary);return {expected:end,actual:wire.ids.length,unique:new Set(wire.ids).size,ordered:wire.ids.every((n,i)=>n===i+1),timestampCount:new Set(log.map(e=>e.ts)).size,controls:wire.controls};});
+ for(const after of [end-1,end,end+100])await record('terminal cursor '+after,async()=>{stats.reads=[];stats.lookups=0;return {after,raw:await raw(ordinary,after),client:await typed(ordinary,after),reads:stats.reads,lookups:stats.lookups};});
+ await record('real manager failure then resume through REST',async()=>{
+  harness.script([{error:{code:'HARNESS_TURN_FAILED',message:'audit failure',retriable:false},accepted:true},{finalText:'audit recovered'}]);
+  const def={schemaVersion:4,name:'Audit resumable failure',nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},{id:'infer',kind:'inference',label:'Infer',config:{prompt:{template:'audit'}}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'infer'}},{id:'b',from:{node:'infer',port:'out'},to:{node:'done'}}]};
+  const {loop}=await api('/loops',{definition:def});await api(`/loops/${loop.id}/publish`,{});const {run}=await api(`/loops/${loop.id}/runs`,{});await c.manager.waitForIdle();
+  const before=await api(`/runs/${run.id}`);
+  await api(`/runs/${run.id}/resume`,{});await c.manager.waitForIdle();
+  const after=await api(`/runs/${run.id}`),log=await events.read(run.id);
+  const wire=await raw(run.id),read=await typed(run.id);
+  return {before:{status:before.status,failure:before.failure},after:{status:after.status,lastEventSeq:after.lastEventSeq},markers:log.filter(e=>['run.failed','run.resumed','run.started','run.finished'].includes(e.type)).map(e=>({seq:e.seq,type:e.type})),raw:{count:wire.ids.length,last:wire.ids.at(-1),lastType:wire.types.at(-1),controls:wire.controls},client:read};
+ });
+ const resumed=await makeRun(127);const more=await events.append(resumed,[failed,{type:'run.resumed',actor:{kind:'user',id:'local'}},draft,finished,audit]);await c.handle.client.execute({sql:'UPDATE runs SET status = ? WHERE id = ?',args:['succeeded',resumed]});
+ await record('failed then resumed then finished with audit',async()=>({markers:more.map(e=>({seq:e.seq,type:e.type})),raw:await raw(resumed,126),client:await typed(resumed,126),storedLast:(await events.read(resumed)).at(-1).seq}));
+ await record('cursor after former failure',async()=>({raw:await raw(resumed,more[0].seq),client:await typed(resumed,more[0].seq)}));
+ await record('cursor after current terminal with trailing audits',async()=>({raw:await raw(resumed,more[3].seq),client:await typed(resumed,more[3].seq)}));
+ const corrupt=await makeRun(400);await api(`/runs/${corrupt}/cancel`,{});await c.handle.client.execute({sql:'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = 129',args:['{',corrupt]});
+ await record('later page corruption',async()=>{const wire=await raw(corrupt);return {wire:{count:wire.ids.length,last:wire.ids.at(-1),controls:wire.controls},client:await typed(corrupt)};});
+ const handoff=await makeRun(257);let appended=0;
+ readHook=async(a,page)=>{if(a[0]===handoff&&appended<3){appended++;await events.append(handoff,appended===3?[draft,{type:'run.cancelled'}]:[draft,draft]);}};
+ await record('append during every read and replay-live boundary',async()=>{const wire=await raw(handoff);const stored=await events.read(handoff);return {readHookCalls:appended,expected:stored.length,count:wire.ids.length,ordered:wire.ids.every((seq,i)=>seq===i+1),controls:wire.controls};});readHook=undefined;
+ await record('ownership and cursor validation',async()=>{const checks=[];for(const [query,auth] of [['after=-1',token],['after=1.5',token],['after=NaN',token],['after=0&limit=1001',token],['after=0',otherToken]]){const r=await fetch(`${base}/runs/${ordinary}/events?${query}`,{headers:{authorization:'Bearer '+auth,accept:'text/event-stream'}});checks.push({query,otherOwner:auth===otherToken,status:r.status,body:await r.json()});}return {checks};});
+ const missing=await makeRun(1);await c.handle.client.execute({sql:'UPDATE runs SET status = ? WHERE id = ?',args:['succeeded',missing]});
+ await record('terminal status without terminal marker grace',async()=>{const last=(await events.read(missing)).at(-1).seq;return {raw:await raw(missing,last),client:await typed(missing,last)};});
+ results.subscriptionsAtEnd=stats.subscriptions;
+}finally{readHook=undefined;await app.close();await c.stop();await writeFile(join(out,'transport-results.json'),JSON.stringify(results,null,2));}

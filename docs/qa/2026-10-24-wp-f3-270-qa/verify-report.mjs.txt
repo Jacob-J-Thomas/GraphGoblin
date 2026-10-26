@@ -1,0 +1,17 @@
+﻿import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const git=args=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const head=git(['rev-parse','HEAD']),branch=git(['branch','--show-current']),status=git(['status','--short']),diff=git(['diff','--name-only']);
+assert.equal(head,'f2fce3ae2b61e2a18744be4b73a7ee5ed7f2d00b');assert.equal(branch,'codex-qa-wp-f3-270');assert.equal(diff,'');
+const report=await readFile(resolve(out,'README.md'),'utf8'),files=(await readdir(out)).sort(),missing=[],badLinks=[],userPaths=[],json=[];
+for(const file of files){const s=await stat(resolve(out,file));if(!s.isFile())continue;assert(s.size<=1000000,'oversized artifact '+file);if(file!=='README.md'&&!report.includes(']('+file+')'))missing.push(file);
+ if(/\.(json|txt|md)$/.test(file)){const text=await readFile(resolve(out,file),'utf8');const p=process.env.USERPROFILE;for(let n=1;n<=8;n++)if(text.includes(p.replaceAll('\\','\\'.repeat(n))))userPaths.push(file);if(text.includes(p.replaceAll('\\','/')))userPaths.push(file);if(file.endsWith('.json')){JSON.parse(text.replace(/^\uFEFF/,''));json.push(file);}}
+}
+for(const match of report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){const target=match[1];if(!target.startsWith('http')&&!target.startsWith('#')){try{await stat(resolve(out,target.split('#')[0]))}catch{badLinks.push(target)}}}
+assert.deepEqual(missing,[]);assert.deepEqual(badLinks,[]);assert.deepEqual(userPaths,[]);
+const downloads=[];for(const width of [1440,390]){const data=JSON.parse(await readFile(resolve(out,'ui-export-'+width+'.json'),'utf8'));assert.equal(data.loop.settings.structuredTimeoutMs,500);downloads.push({width,structuredTimeoutMs:500});}const exact=JSON.parse(await readFile(resolve(out,'exact-races.json'),'utf8'));assert.equal(exact.length,4);assert(exact.every(r=>r.status==='PASS'&&r.clockMs===r.whenMs&&r.terminalCount===1));
+const result={status:'PASS',downloads,exactBoundaryCases:exact.map(r=>({whenMs:r.whenMs,cancelTimerRegistration:r.cancelTimerRegistration,outcome:r.run.status,terminalCount:r.terminalCount})),head,branch,productionDiff:diff,gitStatus:status,artifactCount:files.length,linkedEveryArtifact:true,brokenLinks:badLinks,userPathLeaks:userPaths,validJSON:json,maximumArtifactBytes:1000000,hashManifest:'Hashes are sealed after this verification to include the retained verification bytes.'};
+await writeFile(resolve(out,'verification.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));

@@ -1,0 +1,108 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 35575ms
+   ❯ adversarial API invariants (34)
+     × 16: 1000 persisted events stream in sequence without duplicates 20026ms
+ ❯ src/sse-catchup.test.ts (13 tests | 2 failed) 7292ms
+   ❯ durable SSE catch-up (13)
+     × keeps defensive grace for a missing current terminal marker 17ms
+     × keeps defensive grace for a resumed current terminal marker 8ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792891700974,"pid":52524,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5629"}
+{"level":30,"time":1792891700975,"pid":52524,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5629,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-tOiErG","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792891701018,"pid":52524,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792891701027,"pid":52524,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":8.400700000000143,"msg":"request completed"}
+ ❯ src/sse-completion.test.ts (12 tests | 5 failed) 102799ms
+   ❯ authoritative SSE completion (12)
+     × delivers the durable suffix and completes after cursor 0 20017ms
+     × delivers the durable suffix and completes after cursor 128 20011ms
+     × delivers the durable suffix and completes after cursor 131 20009ms
+     × delivers the durable suffix and completes after cursor 132 20004ms
+     × delivers the durable suffix and completes after cursor 232 20007ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 16: 1000 persisted events stream in sequence without duplicates
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:531:3
+    529|     },
+    530|   );
+    531|   it('16: 1000 persisted events stream in sequence without duplicates'…
+       |   ^
+    532|     const t = await app();
+    533|     const def = minimalLoop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > keeps defensive grace for a missing current terminal marker
+ FAIL  src/sse-catchup.test.ts > durable SSE catch-up > keeps defensive grace for a resumed current terminal marker
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/sse-catchup.test.ts:288:31
+    286|         expect(response.body).not.toContain('stream.error');
+    287|         // Both confirmation sites ran: no old/missing outcome incorre…
+    288|         expect(confirmations).toBe(2);
+       |                               ^
+    289|       } finally {
+    290|         await app.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 0
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 128
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 131
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 132
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after cursor 232
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sse-completion.test.ts:78:35
+     76|   });
+     77|
+     78|   it.each([0, 128, 131, 132, 232])(
+       |                                   ^
+     79|     'delivers the durable suffix and completes after cursor %s',
+     80|     async (after) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+
+ Test Files  3 failed | 74 passed | 2 skipped (79)
+      Tests  8 failed | 1384 passed | 11 skipped (1403)
+   Start at  20:22:55
+   Duration  746.92s (tests 77%, import 21%, worker 1%, transform 1%)
+
+    Isolate  79 workers spawned · ~581ms startup each (spawn + environment, per file)
+             at least ~22.36s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.59% ( 2346/2454 )
+Branches     : 92.22% ( 1518/1646 )
+Functions    : 93.22% ( 454/487 )
+Lines        : 97.4% ( 2142/2199 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ 185\apps\api
+

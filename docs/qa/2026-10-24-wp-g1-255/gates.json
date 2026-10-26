@@ -1,0 +1,139 @@
+[
+  {
+    "name": "typecheck",
+    "command": "pnpm.cmd typecheck",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:06:06.407Z",
+    "finished": "2026-10-24T20:08:31.074Z",
+    "log": "typecheck.log.txt"
+  },
+  {
+    "name": "format",
+    "command": "pnpm.cmd format:check",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:06:10.2456914Z",
+    "finished": "2026-10-24T20:33:42.0677723Z",
+    "log": "format-final-output.log.txt",
+    "transcript": "format-terminal.log.txt",
+    "retention": "Final terminal output block and process exit result retained; full filename enumeration is not retained."
+  },
+  {
+    "name": "lint",
+    "command": "pnpm.cmd lint",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:08:31.077Z",
+    "finished": "2026-10-24T20:13:17.326Z",
+    "log": "lint.log.txt"
+  },
+  {
+    "name": "layers",
+    "command": "pnpm.cmd check:layers",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:13:17.329Z",
+    "finished": "2026-10-24T20:13:22.876Z",
+    "log": "layers.log.txt"
+  },
+  {
+    "name": "deps",
+    "command": "pnpm.cmd check:deps",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:13:22.879Z",
+    "finished": "2026-10-24T20:13:49.003Z",
+    "log": "deps.log.txt"
+  },
+  {
+    "name": "docs",
+    "command": "pnpm.cmd check:docs",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:13:49.006Z",
+    "finished": "2026-10-24T20:13:56.392Z",
+    "log": "docs.log.txt"
+  },
+  {
+    "name": "tokens",
+    "command": "pnpm.cmd check:tokens",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:13:56.395Z",
+    "finished": "2026-10-24T20:14:04.110Z",
+    "log": "tokens.log.txt"
+  },
+  {
+    "name": "web-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage",
+    "code": 1,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:14:04.113Z",
+    "finished": "2026-10-24T20:29:28.426Z",
+    "log": "web-coverage.log.txt"
+  },
+  {
+    "name": "domain-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/domain test:coverage",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:30:57.992Z",
+    "finished": "2026-10-24T20:32:02.076Z",
+    "log": "domain-coverage.log.txt"
+  },
+  {
+    "name": "web-coverage-serial",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T20:33:48.567Z",
+    "finished": "2026-10-24T21:30:57.336Z",
+    "log": "web-coverage-serial.log.txt"
+  },
+  {
+    "name": "build",
+    "command": "pnpm.cmd build",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T21:30:57.339Z",
+    "finished": "2026-10-24T21:31:48.521Z",
+    "log": "build.log.txt"
+  },
+  {
+    "name": "browser",
+    "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test -c playwright.evidence.config.ts",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T21:31:48.524Z",
+    "finished": "2026-10-24T21:33:24.164Z",
+    "log": "browser.log.txt"
+  },
+  {
+    "name": "existing-browser",
+    "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/exit-primitives.spec.ts e2e/classifiers.spec.ts e2e/decision-routes.spec.ts",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T21:33:24.167Z",
+    "finished": "2026-10-24T21:38:34.222Z",
+    "log": "existing-browser.log.txt"
+  },
+  {
+    "name": "evidence-format",
+    "command": "pnpm.cmd exec prettier --write docs/qa/2026-10-24-wp-g1-255/REPORT.md docs/qa/2026-10-24-wp-g1-255/NOT-KEPT.md",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T21:50:40.191Z",
+    "finished": "2026-10-24T21:50:53.613Z",
+    "log": "evidence-format.log.txt"
+  },
+  {
+    "name": "evidence-format-check",
+    "command": "pnpm.cmd exec prettier --check docs/qa/2026-10-24-wp-g1-255/REPORT.md docs/qa/2026-10-24-wp-g1-255/NOT-KEPT.md",
+    "code": 0,
+    "node": "v22.14.0",
+    "started": "2026-10-24T21:50:53.616Z",
+    "finished": "2026-10-24T21:51:06.315Z",
+    "log": "evidence-format-check.log.txt"
+  }
+]

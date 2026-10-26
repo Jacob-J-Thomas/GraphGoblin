@@ -45,7 +45,13 @@ Harness models offer only the enable switch. Local models served through LiteLLM
 
 Toggle and model-form refusals use plain sentences: **Harness models can only be enabled or disabled.** (`MODEL_MANAGED_BY_HARNESS`); **LiteLLM is not configured. Adding local models is not available yet.** (`LITELLM_NOT_CONFIGURED`); and **This model is no longer in the catalog.** (`MODEL_NOT_FOUND`). A toggle refused with 404 refreshes the catalog, announces the reason in the section, and focuses its heading if the focused row disappears. LiteLLM creation remains unavailable until the adapter ships.
 
-On upgrade, every old row becomes `harness`, including hand-added rows. Hand-added rows keep their values but cannot be edited/deleted; disable them if unwanted. User-edited seeded names, efforts, and default efforts re-sync from the shipped catalog at startup, while enabled is preserved. Codex entries list `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; Codex maps `max` to `xhigh`. Claude's supported models are `claude-opus-5-5` and `claude-fable-5-1` with `low`, `medium`, `high`, `xhigh`, or `max`. Both seed enabled. Migration `0011_enable_claude_fable` enables existing Fable rows once; subsequent owner disablement is preserved. Catalogue enablement is an owner preference, separate from CLI readiness. When enabled but unavailable, Settings says "Enabled in catalog; Claude harness not ready" and points to Harness preflight. Enabled entries with a ready harness populate Settings defaults. The engine checks catalog membership and supported effort before publication and execution.
+On upgrade, every old row becomes `harness`, including hand-added rows. Hand-added rows keep their values but cannot be edited/deleted; disable them if unwanted. User-edited seeded names, efforts, and default efforts re-sync from the shipped catalog at startup, while enabled is preserved. Codex entries list `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; Codex maps `max` to `xhigh`. Claude's supported models are **Claude Opus 5.5** (`claude-opus-5-5`), **Claude Fable 5.1** (`claude-fable-5-1`), **Claude Sonnet 5.5** (`claude-sonnet-5-5`) and **Claude Haiku 5.5** (`claude-haiku-5-5`), each with `low`, `medium`, `high`, `xhigh`, or `max`. All seed enabled. A Claude model added by a newer GraphGoblin appears enabled at the next start; the switches you already set are kept. Haiku 5.5 was verified on Claude Code 2.1.292, although Claude Code's documentation names 2.1.293 as its minimum; if a Haiku run fails on your CLI, update Claude Code. Migration `0011_enable_claude_fable` enables existing Fable rows once; subsequent owner disablement is preserved. Catalogue enablement is an owner preference, separate from CLI readiness. When a harness is not ready, each of its rows (Claude or Codex) says "Enabled in catalog." (or "Disabled") and "<Harness> readiness: <label>.", for example "Claude readiness: Sign-in needed."; Harness preflight below has the full problem and **Retry preflight**. The engine checks catalog membership and supported effort before publication and execution.
+
+In Settings **Defaults**, Claude choices are gated by readiness: when Claude is not ready, the
+saved choice stays selected as "<name> (saved)" with the short help line "Claude readiness:
+<label>. See Harness preflight below." Codex keeps its enabled catalog choices and shows the
+same help line for Codex when it is not ready. This asymmetry is recorded for a later owner
+decision in the [delivery register, section 9](../delivery/2026-10-18-i01-i07-register.md#9-pending-owner-decisions-and-acceptance).
 
 Scripts that PUT an entry to toggle it must switch to PATCH. For example (replace the base URL with your gateway):
 
@@ -77,7 +83,11 @@ Restart the API after changing process defaults. Resolution is node value, then 
 
 Owner defaults in **Settings** are stored under `defaults`, with the same `{byHarness:{codex?:{model?,effort?},claude?:{model?,effort?}}}` shape as loop and process defaults. They are read when a run starts or resumes. Each model and effort resolves within its selected harness from node, loop, owner, then process. Old `defaultModel`/`defaultEffort` settings require offline conversion; old `GG_DEFAULT_MODEL`/`GG_DEFAULT_EFFORT` environment variables are rejected with instructions to use `GG_DEFAULTS`.
 
-The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden unless already selected. Missing, disabled, or wrong-harness saved models and unsupported saved efforts stay in place with a field warning. Use **Model catalog in Settings** below a picker to return here. Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset. Effort choices follow the selected catalog model, with its default effort shown in the unset choice as guidance only. Leaving effort unset preserves the resolution order above. Without a catalog model selected, the picker offers that harness's supported effort choices. For Claude, the inspector labels effort as requested and reports effective effort as not reported. An unavailable catalog or Claude preflight makes the current choices read-only until recovery; saved values are never substituted.
+The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden unless already selected. Missing, disabled, or wrong-harness saved models and unsupported saved efforts stay in place with a field warning. Use **Model catalog in Settings** below a picker to return here. Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset. Effort choices follow the selected catalog model, with its default effort shown in the unset choice as guidance only. Leaving effort unset preserves the resolution order above. Without a catalog model selected, the picker offers that harness's supported effort choices. For Claude, the inspector labels effort as requested and reports effective effort as not reported. An unavailable catalog or a Claude harness that is not ready makes the current choices read-only until recovery, with the reason and **Retry Claude preflight** under the field; saved values are never substituted and show as "(saved)". A background recheck, such as returning to the window, keeps a ready field editable. A Codex readiness problem appears under the field with **Retry Codex preflight**; Codex choices stay editable.
+
+See [readiness lookup behavior](../09-frontend-and-pwa.md#claude-readiness-and-saved-selections)
+for first load, background rechecks, offline pauses, completed lookup failures, transport wording
+and which operations probe readiness.
 
 ## Configure classifier models
 
@@ -288,4 +298,41 @@ Loop exports are useful for version control but omit runs, secret values, and ar
 
 > After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today. Deleting a loop permanently deletes all its run history; it does not offer selective history maintenance or reclaim shared artifact files.
 
+## Changing a node's Harness
+
+In an inference node, choosing another Harness keeps **(loop default)** values inherited. For an
+explicit model, it selects a compatible enabled loop default, then your Settings default, then the
+harness's built-in default. Supported effort stays; unsupported effort gets a compatible default.
+If the first checks are still loading, the switch waits and says so under Harness. A failed check
+keeps your selection and explains the problem there. Retry the affected check, then choose a model
+or switch again. A catalog failure shows **Validation unavailable**. If the switch left an incompatible value,
+the draft cannot be saved until you correct it after the catalog recovers. Saved incompatible values remain visible for correction.
+See [the editor description](../09-frontend-and-pwa.md#explicit-node-harness-changes-204) for details.
+
 Read [Security and distribution](../11-security-and-distribution.md) for design context. Continue with [Troubleshooting](07-troubleshooting.md).
+
+### Visible execution limits
+
+In the editor's Loop tab, Maximum node visits defaults to 10 and No run deadline is
+selected by default. Settings also lists these defaults. To add a deadline, choose
+Limited and enter seconds (the suggested value is 3600). With no deadline, long waits,
+heartbeats and polling runs continue until an authored exit, Cancel or another explicit
+limit/failure. Choose Unlimited visits explicitly to remove the visit cutoff; its warning
+explains that authored exits and Cancel remain available.
+Marked repeat decisions use Maximum passes; choose Unlimited there for indefinite passes.
+Existing authored gate time checks and node timeouts still apply. The run inspector's
+Execution limits card shows the pinned values and absolute deadline, even after edits.
+An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Settings reads the schema's structured-completion default: null means no completion
+deadline unless the loop sets one. In the Loop tab, Structured completion milliseconds
+defaults to Unlimited. Choose Limited and enter milliseconds (the suggestion is 120000)
+to bound each LLM decision evaluation or output-transform repair through the structured port. The run inspector shows its pinned
+value. Expiry aborts the call and releases capacity with `STRUCTURED_COMPLETION_TIMEOUT`;
+late results cannot change that outcome. Unlimited disables this cutoff, while Cancel
+and independent authored limits remain available.
+
+Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+script/decision nodes. Only a positively unsubmitted transient transport failure retries
+once; uncertain accepted work is never blindly resent.

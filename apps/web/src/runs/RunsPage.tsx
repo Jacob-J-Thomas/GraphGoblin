@@ -1,10 +1,11 @@
+import { HistoryState } from '../components/HistoryState.js';
 import type { ListRunsQuery } from '@graphgoblin/api-client';
 import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops, useRuns } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import { Icon } from '../components/icons/index.js';
-import { QueryState, RunStatusBadge } from '../components/status.js';
+import { RunStatusBadge } from '../components/status.js';
 import {
   Button,
   buttonStyles,
@@ -40,7 +41,6 @@ export function RunsPage() {
   };
   const loopsQuery = useLoops();
   const runsQuery = useRuns(query, 5000);
-  const names = new Map((loopsQuery.data ?? []).map((l) => [l.id, l.name]));
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -114,7 +114,7 @@ export function RunsPage() {
           ) : null}
         </FieldRow>
       </Card>
-      <QueryState query={runsQuery} what="Runs">
+      <HistoryState query={runsQuery} what="Runs">
         {(items) =>
           items.length === 0 ? (
             <p className="text-sm text-muted">No runs match.</p>
@@ -140,10 +140,15 @@ export function RunsPage() {
                         </Link>
                       </Td>
                       <Td label="Loop" className="wrap-anywhere">
-                        {names.get(run.loopId) ?? run.loopId}
+                        {run.pinned.name}
                       </Td>
                       <Td label="Status">
                         <RunStatusBadge status={run.status} />
+                        {run.status === 'failed' && run.failure ? (
+                          <p className="mt-1 text-xs wrap-anywhere text-muted">
+                            {run.failure.code}: {run.failure.message}
+                          </p>
+                        ) : null}
                       </Td>
                       <Td label="Started" className="text-sm whitespace-nowrap text-muted">
                         {formatDateTime(run.startedAt ?? run.createdAt)}
@@ -169,7 +174,7 @@ export function RunsPage() {
             </Card>
           )
         }
-      </QueryState>
+      </HistoryState>
     </Page>
   );
 }

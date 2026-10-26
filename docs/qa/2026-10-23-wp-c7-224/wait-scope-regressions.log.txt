@@ -1,0 +1,741 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/wait-identity.test.ts src/adversarial.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ❯ src/adversarial.test.ts (34 tests | 34 failed) 4103ms
+   ❯ adversarial API invariants (34)
+     × 12: every advertised private route rejects missing and revoked credentials 96ms
+     × ADV-008: a credential without read scope cannot enumerate private resources 81ms
+     × ADV-008: every advertised route against every scope 355ms
+     × ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write"],"status":403}) 89ms
+     × ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:read"],"status":403}) 429ms
+     × ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["secrets:write"],"status":403}) 180ms
+     × ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:read","secrets:write"],"status":403}) 271ms
+     × ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:write"],"status":200}) 1121ms
+     × ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["*"],"status":200}) 67ms
+     × ADV-008: local trusted mode keeps full access without a key 154ms
+     × 12: every mutating route rejects a valid key with no write scopes 63ms
+     × 12/13: API keys cannot bypass signatures; signatures bind exact body bytes 18ms
+     × 13: timestamp window boundary -300001 ms 20ms
+     × 13: timestamp window boundary -299999 ms 141ms
+     × 13: timestamp window boundary 299999 ms 41ms
+     × 13: timestamp window boundary 300001 ms 30ms
+     × 13: byte limit, 61st delivery and deleted endpoint are rejected 19ms
+     × 14: exits cannot chain loops through Events; external Event intake still starts runs 27ms
+     × 15: a draft cron is not armed 114ms
+     × 4: deletion is refused while a version is pinned by an active run 28ms
+     × 16: disconnect during replay validation unsubscribes before headers are sent 25ms
+     × 16: terminal SSE with Last-Event-ID 99999 always closes 27ms
+     × 16: terminal SSE with Last-Event-ID -1 always closes 20ms
+     × 16: terminal SSE with Last-Event-ID not-a-number always closes 26ms
+     × 16: 1000 persisted events stream in sequence without duplicates 20ms
+     × 17: traversal, long paths, and Range cannot disclose files outside static root 141ms
+     × 18: secrets never appear in read responses or invalid-request errors 19ms
+     × 19: malformed JSON, 10 MB bodies, strict unknowns and numeric strings are rejected 19ms
+     × ADV-004 review: a parent started during a DELETE never pins the deleted loop 107ms
+     × ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 156ms
+     × ADV-009: every ULID id route validates before repository lookup 117ms
+     × 8: Codex adapter boundary missing-terminal 27ms
+     × 8: Codex adapter boundary usage-only 30ms
+     × 8: Codex adapter boundary expired-resume 21ms
+ ❯ src/wait-identity.test.ts (34 tests | 34 failed) 4039ms
+   ❯ observed wait identities over real SQLite and API (3)
+     × rejects visit A answers at visit B without mutation, and accepts B once 169ms
+     × resets signal observations on a genuine heartbeat revisit 217ms
+     × cannot lose a timer delivered synchronously by the injected timer port around parking 1392ms
+   ❯ durable wait boundaries (18)
+     × accepts only one racing API answer and rejects retry without changing the log 77ms
+     × keeps the observed identity when SQLite is closed and reopened 24ms
+     × recovers an event-first park and its passed deadline at 50 ms polling 37ms
+     × recovers an event-first park and its passed deadline at 1000 ms polling 85ms
+     × acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 39ms
+     × handles deadline -1000, context 8, polling 50 53ms
+     × handles deadline -1000, context 256000, polling 50 20ms
+     × handles deadline 0, context 8, polling 50 42ms
+     × handles deadline 0, context 256000, polling 50 24ms
+     × handles deadline 1000, context 8, polling 50 29ms
+     × handles deadline 1000, context 256000, polling 50 35ms
+     × handles deadline -1000, context 8, polling 1000 16ms
+     × handles deadline -1000, context 256000, polling 1000 42ms
+     × handles deadline 0, context 8, polling 1000 20ms
+     × handles deadline 0, context 256000, polling 1000 26ms
+     × handles deadline 1000, context 8, polling 1000 52ms
+     × handles deadline 1000, context 256000, polling 1000 41ms
+     × retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 242ms
+   ❯ wait rejection and acknowledgement boundaries (4)
+     × requires an observed token and rejects unknown tokens without mutation 44ms
+     × records one signal answer atomically when two API requests race 95ms
+     × recovers a paused event-first park before its snapshot/status commit without advancing it 84ms
+     × closes and reopens SQLite after the wake but before timer acknowledgement 24ms
+   × a delayed wake acknowledgement cannot replace the next observed wait 42ms
+   × redelivery queues a durable wake after its committed status response was lost 313ms
+   × retry repairs a durable input answer after its status transition failed 236ms
+   × retry repairs a durable signal answer after its status transition failed 41ms
+   × acknowledges timers for unreadable event history and keeps healthy work available 55ms
+   × acknowledges timers for unreadable row history and keeps healthy work available 291ms
+   × reports a paused input wait as INVALID_STATE without consuming its identity 26ms
+   × reports a paused signal wait as INVALID_STATE without consuming its identity 77ms
+   × a paused timer acknowledgement cannot delete a resume re-arm at the same deadline 26ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 68 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 12: every advertised private route rejects missing and revoked credentials
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:64:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: a credential without read scope cannot enumerate private resources
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:96:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:181:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write"],"status":403})
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:read"],"status":403})
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["secrets:write"],"status":403})
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:read","secrets:write"],"status":403})
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:write"],"status":200})
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["*"],"status":200})
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:246:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: local trusted mode keeps full access without a key
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:276:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 12: every mutating route rejects a valid key with no write scopes
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:283:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 12/13: API keys cannot bypass signatures; signatures bind exact body bytes
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:322:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -300001 ms
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -299999 ms
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 299999 ms
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 300001 ms
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:351:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 13: byte limit, 61st delivery and deleted endpoint are rejected
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:367:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 14: exits cannot chain loops through Events; external Event intake still starts runs
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:389:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 15: a draft cron is not armed
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:422:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 4: deletion is refused while a version is pinned by an active run
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:436:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 16: disconnect during replay validation unsubscribes before headers are sent
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:466:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID 99999 always closes
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID -1 always closes
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID not-a-number always closes
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:517:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 16: 1000 persisted events stream in sequence without duplicates
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:530:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 17: traversal, long paths, and Range cannot disclose files outside static root
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:568:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 18: secrets never appear in read responses or invalid-request errors
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:593:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 19: malformed JSON, 10 MB bodies, strict unknowns and numeric strings are rejected
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:619:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a parent started during a DELETE never pins the deleted loop
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:649:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a loop an active run can still start as a subloop cannot be deleted
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:691:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-009: every ULID id route validates before repository lookup
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:720:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/68]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary missing-terminal
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary usage-only
+ FAIL  src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary expired-resume
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ app src/adversarial.test.ts:15:13
+ ❯ src/adversarial.test.ts:751:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/68]⎯
+
+ FAIL  src/wait-identity.test.ts > observed wait identities over real SQLite and API > rejects visit A answers at visit B without mutation, and accepts B once
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:86:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/68]⎯
+
+ FAIL  src/wait-identity.test.ts > observed wait identities over real SQLite and API > resets signal observations on a genuine heartbeat revisit
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:111:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/68]⎯
+
+ FAIL  src/wait-identity.test.ts > observed wait identities over real SQLite and API > cannot lose a timer delivered synchronously by the injected timer port around parking
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:140:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/68]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > accepts only one racing API answer and rejects retry without changing the log
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:196:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/68]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > keeps the observed identity when SQLite is closed and reopened
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:215:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/68]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 50 ms polling
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 1000 ms polling
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:237:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/68]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > acknowledges a due timer while paused and re-arms its original deadline after reopen and resume
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:270:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/68]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 50
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 50
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 50
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 50
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 50
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 50
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 1000
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 1000
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 1000
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 1000
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 1000
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 1000
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:303:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/68]⎯
+
+ FAIL  src/wait-identity.test.ts > durable wait boundaries > retains heartbeat observations through beats and real SQLite reopen, then rejects old signals
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:335:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/68]⎯
+
+ FAIL  src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > requires an observed token and rejects unknown tokens without mutation
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:391:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/68]⎯
+
+ FAIL  src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > records one signal answer atomically when two API requests race
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:410:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/68]⎯
+
+ FAIL  src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > recovers a paused event-first park before its snapshot/status commit without advancing it
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:430:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/68]⎯
+
+ FAIL  src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > closes and reopens SQLite after the wake but before timer acknowledgement
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:460:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/68]⎯
+
+ FAIL  src/wait-identity.test.ts > a delayed wake acknowledgement cannot replace the next observed wait
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:491:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/68]⎯
+
+ FAIL  src/wait-identity.test.ts > redelivery queues a durable wake after its committed status response was lost
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:551:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/68]⎯
+
+ FAIL  src/wait-identity.test.ts > retry repairs a durable input answer after its status transition failed
+ FAIL  src/wait-identity.test.ts > retry repairs a durable signal answer after its status transition failed
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:592:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/68]⎯
+
+ FAIL  src/wait-identity.test.ts > acknowledges timers for unreadable event history and keeps healthy work available
+ FAIL  src/wait-identity.test.ts > acknowledges timers for unreadable row history and keeps healthy work available
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:654:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/68]⎯
+
+ FAIL  src/wait-identity.test.ts > reports a paused input wait as INVALID_STATE without consuming its identity
+ FAIL  src/wait-identity.test.ts > reports a paused signal wait as INVALID_STATE without consuming its identity
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:691:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/68]⎯
+
+ FAIL  src/wait-identity.test.ts > a paused timer acknowledgement cannot delete a resume re-arm at the same deadline
+ReferenceError: Cannot access 'dispose' before initialization
+ ❯ createContainer src/container.ts:356:7
+    354|       manager,
+    355|       config.shutdownGraceMs,
+    356|       dispose,
+       |       ^
+    357|       prepareShutdown,
+    358|       logger,
+ ❯ createTestApp src/testing/test-app.ts:67:21
+ ❯ setup src/wait-identity.test.ts:17:13
+ ❯ src/wait-identity.test.ts:721:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/68]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  68 failed (68)
+   Start at  19:57:16
+   Duration  54.01s (transform 44%, import 37%, tests 17%, worker 3%)
+
+  Transform  transforming modules took 21.45s · 44% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/wait-identity.test.ts src/adversarial.test.ts --maxWorkers=1", "exit": 1, "seconds": 63.3}

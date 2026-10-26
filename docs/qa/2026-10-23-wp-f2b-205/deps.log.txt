@@ -1,0 +1,14 @@
+pnpm check:deps
+pnpm.cmd : $ depcruise packages apps --config .dependency-cruiser.cjs
+At line:2 char:979
++ ... "$qaPath/$($gateJob.name).log.txt"; & pnpm.cmd @gateArgs 2>&1 | Out-F ...
++                                         ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ depcruise pac...ncy-cruiser.cjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+  warn no-orphans: apps/web/test-results/.playwright-artifacts-0/traces/resources/bdd356ac4cb36bfc01fd7a75a7a452bd75ee4210.js
+
+x 2 dependency violations (0 errors, 2 warnings). 915 modules, 3726 dependencies cruised.
+

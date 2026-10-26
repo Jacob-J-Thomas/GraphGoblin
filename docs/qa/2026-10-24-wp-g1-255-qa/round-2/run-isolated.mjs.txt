@@ -1,0 +1,22 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {open,writeFile,readdir,copyFile,stat} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import assert from 'node:assert/strict';
+const out=resolve('docs/qa/2026-10-24-wp-g1-255-qa/round-2');
+const save=(name,value)=>writeFile(join(out,name),JSON.stringify(value,null,2)+'\n');
+assert.match(process.version,/^v22\./);
+const files=['src/editor/EditorPage.device.test.tsx','src/editor/store.test.ts'];
+const refs=['c63db24590d23263a3f7253eda13249f9252ec16','373470f236bb1b7695c4ff0435968b2eb86d5516','95716497d981bae32ff1df0e1325f12e0bb59efe'];
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+await save('failing-file-provenance.json',files.map(file=>({file,blobs:Object.fromEntries(refs.map(ref=>[ref,git('rev-parse',ref+':apps/web/'+file)])),workingFile:git('hash-object','apps/web/'+file)})));
+const coverage=resolve('apps/web/coverage'),entries=await readdir(coverage,{recursive:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error;});
+await save('coverage-output-final.json',{entries,summaryPresent:entries.includes('coverage-summary.json'),note:'Snapshot after full command exit, before isolated reruns; failed coverage does not establish passing coverage thresholds'});
+if(entries.includes('coverage-summary.json'))await copyFile(join(coverage,'coverage-summary.json'),join(out,'coverage-summary.json'));
+for(const file of files){
+ const name=file.includes('EditorPage')?'editor-device':'editor-store',command='pnpm.cmd --filter @graphgoblin/web exec vitest run '+file+' --maxWorkers=1',started=new Date().toISOString();
+ const log=await open(join(out,'isolated-'+name+'.log.txt'),'w');
+ const child=spawn(process.env.ComSpec,['/d','/s','/c',command],{env:process.env,stdio:['ignore',log.fd,log.fd],windowsHide:true});
+ const result=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',(exitCode,signal)=>resolve({exitCode,signal}));});await log.close();
+ await save('isolated-'+name+'-result.json',{command,file,started,completed:new Date().toISOString(),...result,qaProcesses:'Full coverage process exited; gateway and Edge stopped; exactly one isolated rerun per affected file, sequentially'});
+ console.log(name+' '+result.exitCode);
+}

@@ -31,8 +31,8 @@ export async function readAllEvents(
   for (;;) {
     const page = await runs.events(client, runId, { after, limit: pageSize });
     items.push(...page.items);
-    if (page.items.length < pageSize || items.length >= max) {
-      return { runId, items, truncated: page.items.length === pageSize, nextAfter: page.nextAfter };
+    if (!page.hasMore || items.length >= max) {
+      return { runId, items, truncated: page.hasMore, nextAfter: page.nextAfter };
     }
     after = page.nextAfter;
   }
@@ -41,7 +41,7 @@ export async function readAllEvents(
 /** `graphgoblin://runs/{id}/events` and `graphgoblin://runs/{id}/thread`, listing the recent runs. */
 export function registerResources(server: McpServer, client: GraphGoblinClient): void {
   const recent = (suffix: 'events' | 'thread', label: string) => async () => ({
-    resources: (await runs.list(client, { limit: RECENT_RUNS })).map((run) => ({
+    resources: (await runs.list(client, { limit: RECENT_RUNS })).items.map((run) => ({
       uri: `graphgoblin://runs/${run.id}/${suffix}`,
       name: `${label} of run ${run.id} (${run.status})`,
       mimeType: 'application/json',

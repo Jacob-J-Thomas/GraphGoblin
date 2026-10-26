@@ -3,7 +3,12 @@ import type { runs } from './schema.js';
 /** A decoded run row. Its definition pin is present: the decoder refuses rows without one. */
 export type RunRecordRow = Omit<
   typeof runs.$inferSelect,
-  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt' | 'result' | 'pinned'
+  | 'initialThread'
+  | 'threadSnapshot'
+  | 'threadSnapshotSeq'
+  | 'threadSnapshotReplayState'
+  | 'result'
+  | 'pinned'
 > & { result: JsonValue | undefined; pinned: RunPin };
 
 export function runRecordFromRow(row: RunRecordRow): RunRecord {
@@ -27,6 +32,7 @@ export function runRecordFromRow(row: RunRecordRow): RunRecord {
     createdAt: row.createdAt,
     ...(row.startedAt ? { startedAt: row.startedAt } : {}),
     ...(row.finishedAt ? { finishedAt: row.finishedAt } : {}),
+    ...(row.finalizedAt !== null ? { finalizedAt: row.finalizedAt } : {}),
     lastEventSeq: row.lastEventSeq,
   };
 }

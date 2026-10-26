@@ -1,0 +1,10 @@
+{
+    "package":  "playwright-core",
+    "version":  "1.63.0",
+    "source":  "node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js",
+    "sourceSha256":  "549070af3acabb3efcc4f55bfe6210f9f7c2fcf633cf7eaa59bfe60719969171",
+    "dragInterceptionLine":  35434,
+    "rawMouseCallerLine":  35849,
+    "observation":  "Each held-left mouse.move installs and cleans up listeners via page evaluation and toggles Input.setInterceptDrags. Concurrent calls share window.__cleanupDrag and drag-interception state.",
+    "supportedReplacement":  "BrowserContext.newCDPSession and CDPSession.send Input.dispatchMouseEvent with equivalent native mouse parameters. No private Playwright methods are invoked."
+}

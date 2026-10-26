@@ -6,7 +6,9 @@ Runs start from the **Runs** screen. Click **New run** and choose a published lo
 
 In the editor, **Open in Runs** (in the toolbar, and in the notice after a publish) opens New run with that loop already chosen. Until the loop has a published version it is disabled and says why. The editor itself starts no runs.
 
-The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Its browser routes are:
+The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Use **Load more** on Runs or Events to append older history. Runs keeps the selected loop, status and parent filters; changing a filter starts that history. Loaded rows remain visible if a later page fails, and the same button retries it.
+
+Its browser routes are:
 
 <!-- guide-example: run-urls -->
 
@@ -126,7 +128,9 @@ Select an event in **Timeline** to reconstruct the thread at that sequence. Sele
 
 Decision evaluation details show the selected stable port and evaluator-specific observation: a route ID for Expression/LLM, or Choice/Noul/Score evidence for a classifier. LLM confidence is informational. Classifier rejection retains its proposed evidence without claiming a selected route. The corresponding output paths are `portId`, `provenance` and `observation`.
 
-`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value; Exhausted does not wrap or replace it. Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
+`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value, `null` included; Exhausted does not wrap or replace it. When the exit's Returns is None, **Exit evaluation** says that no value was returned by configuration, not by failure, and names the destinations that received nothing, from the exit and from the start request. An exit with no destinations is identified as a quiet exit. **Exit evaluation** also shows the last gate decision: which route it chose on which pass, and whether a limit stopped the repeat.
+
+Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. **Label** names the chosen route as the run's version authored it, and **Criterion** shows the criterion a classifier Choice option or Noul side gave the classifier. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
 
 `decision.made` identifies the evaluator kind, selected option ID, confidence where applicable, and actual resolved provider/model/effort. The option ID is also its output port. LLM confidence is self-reported information, not a calibrated probability. Converted historical events preserve known skip diagnostics; unknown old values display as unknown rather than invented settings. New decisions never try another evaluator.
 
@@ -149,8 +153,11 @@ In PowerShell:
 
 ```powershell
 $runId = '<run-id>'
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume"
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" `
+  -ContentType 'application/json' -Body '{}'
 ```
+
+Windows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The example therefore sends an empty JSON object.
 
 Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_STATE`.
 
@@ -180,7 +187,7 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
   -ContentType 'application/json' -Body '{"nodeId":"summarise"}'
 ```
 
-The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
+The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
 
 > After 1.0: A replay button in the run inspector. Use the API or MCP until then.
 
@@ -214,11 +221,11 @@ curl -N -H 'Accept: text/event-stream' -H 'Last-Event-ID: 12' \
   "http://127.0.0.1:4747/runs/$RUN_ID/events"
 ```
 
-The query's `after` overrides the header when both are supplied. Replay includes events after the cursor, then tails live events. The stream closes after `run.finished`, `run.failed`, or `run.cancelled`; reconnecting beyond a terminal event ends after replay. Without the SSE Accept header, the same route returns an event page with `items` and `nextAfter`.
+The query's `after` overrides the header when both are supplied. Replay includes events after the cursor, then tails live events. Execution ends at `run.finished`, `run.failed`, or `run.cancelled`. The stream stays open through return finalization and settles only on the id-less `stream.complete` control after lifecycle and durable-tail confirmation, including when the terminal cursor was already consumed. EOF alone requires reconnecting from the last received cursor. Without the SSE Accept header, the same route returns an event page with `items` and `nextAfter`.
 
 ## Read returns and child runs
 
-Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none` (no result or deliveries); `destinations` defaults to `caller`. Choose these channels:
+Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none`; `destinations` defaults to `caller`. With `none`, the run has no result and no destination receives anything, including channels added by the start request's `return`. Choose None with no destinations for a deliberate quiet exit. The exit editor shows which of these applies. Choose these channels:
 
 | Channel kind | Delivery                                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -227,7 +234,7 @@ Set the exit's `returns` JSONata expression to produce a payload, and `destinati
 | `file`       | Write `path` in `json`, `markdown`, or `text` format. Relative paths resolve against the run workspace; absolute paths are used as given. |
 | `log`        | Write the result to the API's logger.                                                                                                     |
 
-Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished`; a delivery failure records `return.failed` and does not change the finished status. SSE closes at the terminal event, so read a subsequent JSON event page to check delivery events:
+Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished` and does not change execution status. The inspector's Webhook delivery section and `run.deliveries` show pending, delivered or failed after N attempts, the identity and the last typed error. Webhooks retry eligible failures up to five times, with 10-second deadlines and 2/5/10/20-second delays. Every attempt sends the same `Idempotency-Key`. Receivers must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin does not assume they do. Orderly stop lets an in-flight request finish within its existing deadline and starts no new attempt; pending delivery resumes on the next start with the same identity and budget. Deleting a loop stops its pending deliveries. A timeout, truncated acknowledgement or interrupted process means the effect may have happened. Other return sinks still record `return.failed`. SSE remains open through pending delivery and completes only after durable finalization; a failed delivery also finalizes without changing execution status. Run snapshots expose `finalizedAt` separately from execution status. Fetch the run or read JSON event pages to inspect durable `delivery.*` evidence:
 
 <!-- guide-example: returns-bash -->
 
@@ -262,39 +269,70 @@ A handler failure looks like this inside the run snapshot's `failure` field:
 }
 ```
 
-Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing an external cause, resume when the failure is marked resumable. Publish and start a new run when the correction changes the pinned definition. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.
+Read `code`, `message`, `nodeId`, `resumable`, any `details`, and `inference` submission provenance when present. After fixing an external cause, resume when the failure is marked resumable. Publish and start a new run when the correction changes the pinned definition. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.
 
-| `RunErrorCode`                                                      | Action                                                                                                                                                                     |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                |
-| `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                       |
-| `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                             |
-| `HARNESS_TURN_FAILED`                                               | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                  |
-| `WORKING_DIRECTORY_MISSING`                                         | Check the workspace path and permissions. The current filesystem adapter creates missing directories; filesystem failures can instead report `INTERNAL_ERROR`.             |
-| `SCRIPT_EXIT_CODE`                                                  | Fix the program or its patch output; add a route in a new version for an expected nonzero outcome.                                                                         |
-| `SCRIPT_START_FAILED`                                               | Install or repair the pinned command or its environment, then Resume. A node configuration change needs a new published version and a new run.                             |
-| `SCRIPT_OUTCOME_UNCERTAIN`                                          | Inspect the possible external effect; explicitly Resume or Replay only when you choose to run it again. Cancel leaves it failed.                                           |
-| `SCRIPT_TIMEOUT`                                                    | Resolve the slow program, or increase its timeout in a new version.                                                                                                        |
-| `INFERENCE_TIMEOUT`                                                 | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                  |
-| `OUTPUT_SCHEMA_MISMATCH`                                            | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                     |
-| `ARTIFACT_WRITE_FAILED`                                             | Repair artifact storage, then explicitly resume to continue the recorded provider session with a continuation prompt.                                                      |
-| `SUBLOOP_DEPTH_EXCEEDED`                                            | Reduce nesting or revise the depth setting in a new version.                                                                                                               |
-| `SUBLOOP_NOT_FOUND`                                                 | Publish the referenced child or correct its loop/version reference, then start an appropriate version.                                                                     |
-| `LOOP_UPGRADE_REQUIRED`                                             | An exit still publishes an Event (retired). Use a Subloop call and publish; hand-repair versions and drafts; snapshots need loop deletion or a reset.                      |
-| `EVALUATION_INVALID_RESPONSE` / `EVALUATION_RESULT_REJECTED`        | Correct the provider response, declared option IDs or classifier threshold, then replay or start a new run; no other kind is tried.                                        |
-| `EVALUATION_UNAVAILABLE`                                            | Restore the selected model or credentials before resuming.                                                                                                                 |
-| `EVALUATION_EXPRESSION_FAILED` / `EVALUATION_INVALID_CONFIGURATION` | Correct the expression or configuration and start a replay/new run.                                                                                                        |
-| `EVALUATION_PROVIDER_FAILED`                                        | Restore transient service/network/authentication failures and resume when allowed; deterministic request errors require a corrected new run.                               |
-| `DECIDER_UNAVAILABLE`                                               | Configure Jev's key or use an available strategy in a new version; classifier decisions need their selected evaluator.                                                     |
-| `SECRET_MISSING`                                                    | Create the named secret on the server, then resume.                                                                                                                        |
-| `TEMPLATE_ERROR`                                                    | Correct Liquid syntax and referenced values; timestamp templates must render valid dates.                                                                                  |
-| `EXPRESSION_ERROR`                                                  | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
-| `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
-| `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
-| `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                    |
-| `MAX_NODE_VISITS`                                                   | A node exceeded the safety cap `maxNodeVisits`. Fix unintended cycles or configure enough visits for intentional gates.                                                    |
-| `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
-| `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                |
-| `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
+Non-pinned generic Codex failures permit Resume even when the adapter reports `retriable: false`
+for a lost stream or CLI exit. Generic Claude failures require the adapter's `retriable`
+evidence. Unsupported policy, invalid configuration and rejected arguments remain
+non-resumable for both. Uncertain delivery also requires a usable session: an accepted Codex
+turn can continue its recorded conversation; an inherited ID without authored-task acceptance
+cannot authorize continuation.
+
+| `RunErrorCode`                                                      | Action                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                                                                                         |
+| `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                                                                                                |
+| `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                                                                                                      |
+| `HARNESS_TURN_FAILED`                                               | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                                                                                           |
+| `HARNESS_TRANSPORT_FAILED`                                          | Inspect transport/service connectivity and submission provenance. Only positively unsubmitted transient work retries once automatically.                                                                                                            |
+| `HARNESS_OUTPUT_LIMIT`                                              | A transport/protocol resource bound was exceeded. Inspect output size; GraphGoblin did not accept a silently truncated result.                                                                                                                      |
+| `RUN_DEADLINE_EXCEEDED`                                             | This run reached its pinned elapsed deadline. Start a new run with a longer deadline or No run deadline; the expired run is not resumable.                                                                                                          |
+| `HARNESS_DELIVERY_UNCERTAIN`                                        | Inspect `failure.inference` and the visit's acceptance marker. When eligible, Resume continues only a usable session. An inherited previous/named ID without authored-task acceptance is insufficient; use Replay from the node when non-resumable. |
+| `HARNESS_SESSION_MISSING`                                           | The provider refused the recorded conversation. Resume is unavailable. Inspect the failed run and use Replay from the node for a deliberate attempt; named-session lookup still applies.                                                            |
+| `HARNESS_TERMINATION_UNCONFIRMED`                                   | Stop the remaining owned CLI process and inspect workspace effects before deliberately replaying or starting a new run. Resume is unavailable.                                                                                                      |
+| `WORKING_DIRECTORY_MISSING`                                         | Check the workspace path and permissions. The current filesystem adapter creates missing directories; filesystem failures can instead report `INTERNAL_ERROR`.                                                                                      |
+| `SCRIPT_EXIT_CODE`                                                  | Fix the program or its patch output; add a route in a new version for an expected nonzero outcome.                                                                                                                                                  |
+| `SCRIPT_OUTCOME_UNCERTAIN`                                          | Inspect the possible external effect; explicitly Resume or Replay only when you choose to run it again. Cancel leaves it failed.                                                                                                                    |
+| `SCRIPT_TIMEOUT`                                                    | Resolve the slow program, or increase its timeout in a new version.                                                                                                                                                                                 |
+| `STRUCTURED_COMPLETION_TIMEOUT`                                     | Inspect the configured completion deadline and provider cause; Resume deliberately, or adjust the loop limit and start a new run.                                                                                                                   |
+| `INFERENCE_TIMEOUT`                                                 | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                                                                                           |
+| `OUTPUT_SCHEMA_MISMATCH`                                            | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                                                                                              |
+| `ARTIFACT_WRITE_FAILED`                                             | Repair artifact storage, then explicitly resume to continue the recorded provider session with a continuation prompt.                                                                                                                               |
+| `SUBLOOP_DEPTH_EXCEEDED`                                            | Reduce nesting or revise the depth setting in a new version.                                                                                                                                                                                        |
+| `SUBLOOP_NOT_FOUND`                                                 | Publish the referenced child or correct its loop/version reference, then start an appropriate version.                                                                                                                                              |
+| `LOOP_UPGRADE_REQUIRED`                                             | An exit still publishes an Event (retired). Use a Subloop call and publish; hand-repair versions and drafts; snapshots need loop deletion or a reset.                                                                                               |
+| `EVALUATION_INVALID_RESPONSE` / `EVALUATION_RESULT_REJECTED`        | Correct the provider response, declared option IDs or classifier threshold, then replay or start a new run; no other kind is tried.                                                                                                                 |
+| `EVALUATION_UNAVAILABLE`                                            | Restore the selected model or credentials before resuming.                                                                                                                                                                                          |
+| `EVALUATION_EXPRESSION_FAILED` / `EVALUATION_INVALID_CONFIGURATION` | Correct the expression or configuration and start a replay/new run.                                                                                                                                                                                 |
+| `EVALUATION_PROVIDER_FAILED`                                        | Restore transient service/network/authentication failures and resume when allowed; deterministic request errors require a corrected new run.                                                                                                        |
+| `DECIDER_UNAVAILABLE`                                               | Configure Jev's key or use an available strategy in a new version; classifier decisions need their selected evaluator.                                                                                                                              |
+| `SECRET_MISSING`                                                    | Create the named secret on the server, then resume.                                                                                                                                                                                                 |
+| `TEMPLATE_ERROR`                                                    | Correct Liquid syntax and referenced values; timestamp templates must render valid dates.                                                                                                                                                           |
+| `EXPRESSION_ERROR`                                                  | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                                                                                         |
+| `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                                                                                          |
+| `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                                                                                                       |
+| `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                                                                                             |
+| `MAX_NODE_VISITS`                                                   | Fix unintended cycles, raise maximum visits, or explicitly choose Unlimited for intentional execution.                                                                                                                                              |
+| `RETURN_DELIVERY_FAILED`                                            | Reserved run-failure code. Check `run.deliveries` and `delivery.finished` for webhook outcomes; other sinks use `return.failed`. Delivery never changes execution status.                                                                           |
+| `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                                                                                         |
+| `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                                                                                                       |
 
 Use [Troubleshooting](07-troubleshooting.md) for concrete checks. See [Execution engine](../05-execution-engine.md) and [API, streaming, and MCP](../07-api-and-streaming.md) for design context.
+
+### Visible execution limits
+
+In the editor's Loop tab, Maximum node visits defaults to 10 and No run deadline is
+selected by default. Settings also lists these defaults. To add a deadline, choose
+Limited and enter seconds (the suggested value is 3600). With no deadline, long waits,
+heartbeats and polling runs continue until an authored exit, Cancel or another explicit
+limit/failure. Choose Unlimited visits explicitly to remove the visit cutoff; its warning
+explains that authored exits and Cancel remain available.
+Marked repeat decisions use Maximum passes; choose Unlimited there for indefinite passes.
+Existing authored gate time checks and node timeouts still apply. The run inspector's
+Execution limits card shows the pinned values and absolute deadline, even after edits.
+An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+script/decision nodes. Only a positively unsubmitted transient transport failure retries
+once; uncertain accepted work is never blindly resent.

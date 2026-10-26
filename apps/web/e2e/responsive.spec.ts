@@ -17,6 +17,7 @@ import {
   expect,
   openAdvanced,
   openItem,
+  publishEventLoop,
   publishLoop,
   test,
 } from './fixtures.js';
@@ -244,7 +245,8 @@ for (const theme of ['dark', 'light'] as const) {
       const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
       const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
       const runId = ((await res.json()) as { run: { id: string } }).run.id;
-      await request.post('/events', { data: { type: 'issue.opened', payload: { number: 41 } } });
+      const send = await publishEventLoop(request, ['issue-opened']);
+      await send('issue-opened', { number: 41 });
       return { loopId, runId };
     }
 
@@ -318,7 +320,7 @@ for (const theme of ['dark', 'light'] as const) {
         ['Runs', '/app/runs', 'responsive sweep'],
         ['New run', `/app/runs/new?loop=${loopId}`, 'Start run'],
         ['Run inspector', `/app/runs/${runId}`, 'Input requested'],
-        ['Events', '/app/events', 'issue.opened'],
+        ['Events', '/app/events', 'issue-opened'],
         ['Settings', '/app/settings', 'GPT-5.5'],
         ['404', '/app/nowhere', 'Page not found'],
       ] as const;
@@ -750,7 +752,7 @@ for (const theme of ['dark', 'light'] as const) {
           [`/app/loops/${loopId}/edit`, 'Approve'],
           ['/app/runs', 'responsive sweep'],
           [`/app/runs/${runId}`, 'Input requested'],
-          ['/app/events', 'issue.opened'],
+          ['/app/events', 'issue-opened'],
         ] as const) {
           await page.goto(path);
           expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);

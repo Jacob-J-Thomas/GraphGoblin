@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+const stores=[];
+for(const name of fs.readdirSync(os.tmpdir()).filter(n=>n.startsWith('gg-qa-c7-319-'))){
+ const dir=path.join(os.tmpdir(),name);if(!fs.statSync(dir).isDirectory())continue;
+ let lock;try{lock=JSON.parse(fs.readFileSync(path.join(dir,'graphgoblin.lock'),'utf8'));}catch{}
+ let processState='no lock';
+ if(lock){try{process.kill(lock.pid,0);processState='root PID present';}catch(e){processState=e.code==='ESRCH'?'root PID absent; stale lock':'unknown: '+e.code;}}
+ const files=fs.readdirSync(dir).map(n=>({name:n,bytes:fs.statSync(path.join(dir,n)).isFile()?fs.statSync(path.join(dir,n)).size:null}));
+ const subprocessPidObservations=[];
+ for(const file of ['started','cli.pid','harness.pid'])try{const raw=fs.readFileSync(path.join(dir,file),'utf8').trim();if(!/^\d+$/.test(raw))continue;const pid=Number(raw);let state;try{process.kill(pid,0);state='PID present (identity not revalidated)';}catch(e){state=e.code==='ESRCH'?'PID absent':'unknown: '+e.code;}subprocessPidObservations.push({file,pid,state});}catch{}
+ stores.push({directory:'%USERPROFILE%\\AppData\\Local\\Temp\\'+name,lock:lock?{pid:lock.pid,startedAt:lock.startedAt}:null,processState,subprocessPidObservations,files});
+}
+fs.writeFileSync('docs/qa/2026-10-24-wp-c7-319-qa/stores.json',JSON.stringify({at:new Date().toISOString(),stores},null,2));
+console.log(JSON.stringify(stores.map(s=>({directory:s.directory,state:s.processState}))));

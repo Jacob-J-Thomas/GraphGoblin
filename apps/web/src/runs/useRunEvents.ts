@@ -1,7 +1,6 @@
 import {
   GraphGoblinApiError,
   subscribeRunEvents,
-  TERMINAL_RUN_EVENT_TYPES,
   type RunEventSubscription,
 } from '@graphgoblin/api-client';
 import type { RunEvent } from '@graphgoblin/contracts';
@@ -12,6 +11,7 @@ import { markApiReachable, markApiUnreachable, subscribeApiRecovery } from '../l
 import { useApiKeyStore } from '../api/api-key.js';
 import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
+import { followRunAttempts } from './follow-run-attempts.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
 
 export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
@@ -22,15 +22,11 @@ export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
  * storage, and refetch the run once per event.
  */
 export const EVENT_BATCH_MS = 100;
+// Flush early under bursts: timer throttling must not grow the temporary batch indefinitely.
+const MAX_BATCH_EVENTS = 256;
+const MAX_BATCH_BYTES = 1_048_576;
 // Matches the API's default SSE heartbeat interval (apps/api/src/sse.ts).
 const STREAM_HEARTBEAT_MS = 15_000;
-
-function historyEnded(events: readonly RunEvent[]): boolean {
-  const boundary = events.findLast(
-    (event) => TERMINAL_RUN_EVENT_TYPES.has(event.type) || event.type === 'run.resumed',
-  );
-  return boundary !== undefined && TERMINAL_RUN_EVENT_TYPES.has(boundary.type);
-}
 
 /**
  * Live tail of a run's events through the API client's SSE helper. Resumes after the stored cursor,
@@ -40,18 +36,10 @@ function historyEnded(events: readonly RunEvent[]): boolean {
 export function useRunEvents(
   runId: string,
   onEvents?: () => void,
-  latestSeq?: number,
 ): RunEventLog & { status: StreamStatus; error?: string } {
   const client = useApi();
   const queryClient = useQueryClient();
   const log = useRunEventLog(runId);
-  // A failed outcome can be explicitly resumed. A newer run snapshot re-arms its closed
-  // tail from the saved cursor, including when the next outcome already finished. The cursor
-  // changes again for each historical terminal boundary; ordinary live updates do not reconnect.
-  const terminalCursorToRead =
-    historyEnded(log.events) && latestSeq !== undefined && latestSeq > log.lastSeq
-      ? log.lastSeq
-      : undefined;
   // A new or forgotten API key restarts the stream: one ended by a 401 recovers, and one opened
   // with a key that was just forgotten (here or in another tab) closes.
   const apiKey = useApiKeyStore((s) => s.key);
@@ -61,16 +49,11 @@ export function useRunEvents(
   useEffect(() => {
     const { runs, append } = useRunEventStore.getState();
     const known = runs[runId];
-    if (
-      known &&
-      historyEnded(known.events) &&
-      (latestSeq === undefined || known.lastSeq >= latestSeq)
-    ) {
-      setStatus('finished');
-      return;
-    }
+    // Cached outcomes can be superseded or followed by delivery audits. Resume at the
+    // cached cursor and let the helper's authoritative completion confirm the current tail.
     let active = true;
     let buffer: RunEvent[] = [];
+    let bufferBytes = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const flush = () => {
       clearTimeout(timer);
@@ -78,6 +61,7 @@ export function useRunEvents(
       if (buffer.length === 0) return;
       const batch = buffer;
       buffer = [];
+      bufferBytes = 0;
       append(runId, ...batch);
       if (!active) return;
       setStatus('live');
@@ -88,6 +72,36 @@ export function useRunEvents(
     let inTransportBackoff = false;
     let reportedOutage = false;
     let lastSeq = known?.lastSeq ?? 0;
+    let stopHistory: (() => void) | undefined;
+    const followAttempts = () => {
+      stopHistory?.();
+      stopHistory = followRunAttempts(client, runId, {
+        cursor: () => useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
+        events: () => useRunEventStore.getState().runs[runId]?.events ?? [],
+        changed: () => {
+          if (active) onEvents?.();
+        },
+        append: (events) => {
+          buffer.push(...events);
+          flush();
+        },
+        running: () => {
+          if (active) connect();
+        },
+        finished: () => {
+          if (active) {
+            setError(undefined);
+            setStatus('finished');
+          }
+        },
+        error: (err) => {
+          if (active) {
+            setError(errorMessage(err));
+            setStatus('error');
+          }
+        },
+      });
+    };
     const connect = () => {
       const currentConnection = ++connection;
       const current = () => active && connection === currentConnection;
@@ -107,9 +121,23 @@ export function useRunEvents(
           inTransportBackoff = false;
           markApiReachable();
           setStatus('live');
+          setError(undefined);
         },
         onError: (err, attempt) => {
           if (!current() || attempt === 0) return; // Invalid frames are not connection drops.
+          if (
+            err instanceof GraphGoblinApiError &&
+            (err.code === 'SSE_SLOW_CONSUMER' || err.code === 'SSE_REPLAY_FAILED')
+          ) {
+            inTransportBackoff = false;
+            openedAt = undefined;
+            flush();
+            setError(
+              err.detail ?? 'The reader fell behind; reconnecting from the last received event.',
+            );
+            setStatus('error');
+            return;
+          }
           if (openedAt !== undefined && Date.now() - openedAt >= STREAM_HEARTBEAT_MS)
             reportedOutage = false;
           openedAt = undefined;
@@ -128,13 +156,20 @@ export function useRunEvents(
             { cancelRefetch: false },
           );
         },
-        onEvent: (event) => {
+        onEvent: (event, bytes) => {
           if (!current()) return;
           if (event.seq > lastSeq) {
             lastSeq = event.seq;
             reportedOutage = false;
           }
+          // The transport already has JSON text. Reuse its size rather than serializing here.
+          if (buffer.length && bufferBytes + bytes > MAX_BATCH_BYTES) flush();
           buffer.push(event);
+          bufferBytes += bytes;
+          if (buffer.length >= MAX_BATCH_EVENTS || bufferBytes >= MAX_BATCH_BYTES) {
+            flush();
+            return;
+          }
           timer ??= setTimeout(flush, EVENT_BATCH_MS);
         },
       });
@@ -143,6 +178,9 @@ export function useRunEvents(
           if (!current()) return;
           flush();
           setStatus('finished');
+          // The finalization marker can follow the last delivery event's invalidation.
+          void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
+          followAttempts();
         },
         (err: unknown) => {
           if (!current()) return;
@@ -159,13 +197,13 @@ export function useRunEvents(
     return () => {
       active = false;
       unsubscribe();
+      stopHistory?.();
       flush();
       subscription?.close();
     };
-    // `onEvents` is a notification hook. Snapshot sequences re-arm only a closed terminal tail
-    // through terminalCursorToRead; live snapshot updates must not churn the stream.
+    // `onEvents` is a notification hook; followRunAttempts follows resumed runs from the cursor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, queryClient, runId, apiKey, terminalCursorToRead]);
+  }, [client, queryClient, runId, apiKey]);
 
   return { ...log, status, ...(error ? { error } : {}) };
 }

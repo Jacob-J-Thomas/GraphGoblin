@@ -1,0 +1,827 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fe7f9a73..d51b4c1a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
+-- The run inspector and the Events page lay out large values within a bound: up to 4,096 characters of a result, variable, message, wait prompt, patch value or thread JSON at once (1,024 in diff columns, progress rows and table cells), produced without formatting the whole value, with **Show all** for the whole text in a scrolling region and **Download JSON** for the exact stored value; nothing stored or executed is truncated. The full thread JSON is built only while open, thread reconstruction is remembered per selected event while a live log grows, Node progress rows and the evaluation reasoning excerpt wrap at any character instead of widening the page, which fixes #380, and the thread's messages are laid out fifty at a time with the rest one click away (#259).
++- The run inspector and the Events page lay out large values within a bound: up to 4,096 characters of a result, variable, message, wait prompt, patch value or thread JSON at once (1,024 in diff columns, progress rows and table cells), produced without formatting the whole value, with **Show all** for the whole text in a scrolling region and **Download JSON** for the exact stored value; nothing stored or executed is truncated. The full thread JSON is built only while open, thread reconstruction is remembered per selected event while a live log grows, Node progress rows and the evaluation reasoning excerpt wrap at any character instead of widening the page, which fixes #380, and the thread's messages are laid out fifty at a time with the rest one click away. A run whose recorded events exceed 2,000,000 characters has its thread reconstructed on request (**Reconstruct the thread at event N**) rather than on every selection, and the browser's stored event logs restart from the first event once because they now carry that size (#259).
+ 
+ - Complete finalization of executions that finished before the upgrade with a retired Event return: skip that return with a structured `LOOP_UPGRADE_REQUIRED` warning naming the run, loop and version, finish the other returns, and notify the parent of the recorded execution outcome. **Upgrade:** this does not publish an Event or rewrite history, and does not claim whether an old effect happened. Repair or delete the affected loop before running it again; admission and unfinished pinned executions still refuse the retired definition. No additional migration is needed. (#246)
+ 
+diff --git a/apps/web/e2e/inspector-large-values.spec.ts b/apps/web/e2e/inspector-large-values.spec.ts
+index b11ba690..8e6f0666 100644
+--- a/apps/web/e2e/inspector-large-values.spec.ts
++++ b/apps/web/e2e/inspector-large-values.spec.ts
+@@ -6,6 +6,8 @@ import { approvalLoop, control, expect, test } from './fixtures.js';
+ const LONG = 'v'.repeat(20_000);
+ /** A wait prompt at most 10,000 characters long is what the run contract accepts. */
+ const PROMPT = 'v'.repeat(9_000);
++/** A value that alone puts the run's recorded history above the large-history threshold. */
++const HUGE = 'v'.repeat(2_100_000);
+ 
+ function inferenceLoop(name: string, waitBeforeExit = false) {
+   const source = minimalLoop();
+@@ -211,3 +213,80 @@ test('the keyboard stays inside an expanded value that a live event replaces (#2
+   await expect(showAll).not.toBeFocused();
+   await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
+ });
++
++test('a run with a large history reconstructs the thread at an event on request (#259)', async ({
++  page,
++  request,
++}) => {
++  const instance = await control(request, '/apps');
++  const url = String(instance['url']);
++  const instanceId = instance['instanceId'];
++  const created = await request.post(url + '/loops', {
++    data: { definition: inferenceLoop('Large history', true) },
++  });
++  expect(created.status(), await created.text()).toBe(201);
++  const { loop } = (await created.json()) as { loop: { id: string } };
++  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
++  await control(request, '/harness/script', { instanceId, turns: [{ finalText: HUGE }] });
++  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
++  expect(started.status()).toBe(202);
++  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
++  const run = async () =>
++    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
++  await expect
++    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
++    .toBe('waiting');
++
++  await page.goto(url + '/app/runs/' + runId);
++  const timeline = page.getByRole('list', { name: 'Timeline' });
++  await expect(timeline.getByText('run.waiting')).toBeVisible();
++  // The history is above the threshold: the latest event asks before anything is replayed.
++  const reconstruct = page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ });
++  await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
++  await expect(reconstruct).toBeVisible();
++  await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
++  const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
++  expect(waitSeq).toBeDefined();
++  await reconstruct.click();
++  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
++  await expect(reconstruct).toHaveCount(0);
++
++  // A live event that becomes the selection (the inspector follows the latest event until one is
++  // selected by hand) asks again.
++  const waiting = (await run()).waiting;
++  expect(waiting).toBeDefined();
++  const answered = await request.post(url + '/runs/' + runId + '/input', {
++    data: { waitId: waiting!.waitId, input: { approved: true } },
++  });
++  expect(answered.status(), await answered.text()).toBe(200);
++  await expect(timeline.getByText('run.finished')).toBeVisible();
++  await expect(reconstruct).toBeVisible();
++  const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
++  expect(finishedSeq).toBeDefined();
++  expect(finishedSeq).not.toBe(waitSeq);
++
++  // The first event asks too; the events reconstructed earlier stay shown on return.
++  await timeline.getByRole('button').first().click();
++  await expect(page.getByRole('heading', { name: 'Thread at event 1', exact: true })).toBeVisible();
++  await page.getByRole('button', { name: 'Reconstruct the thread at event 1' }).click();
++  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
++  await timeline.getByRole('button').filter({ hasText: 'run.waiting' }).click();
++  await expect(
++    page.getByRole('heading', { name: `Thread at event ${waitSeq}`, exact: true }),
++  ).toBeVisible();
++  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
++  await expect(reconstruct).toHaveCount(0);
++  await timeline.getByRole('button').last().click();
++  await expect(
++    page.getByRole('button', { name: `Reconstruct the thread at event ${finishedSeq}` }),
++  ).toBeVisible();
++
++  // The log of such a run is not stored: a reload replays it from the first event and asks again.
++  await page.reload();
++  await expect(page.getByRole('list', { name: 'Timeline' }).getByText('run.finished')).toBeVisible({
++    timeout: 20_000,
++  });
++  await expect(
++    page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ }),
++  ).toBeVisible();
++});
+diff --git a/apps/web/src/components/ui/bounded-value.deferred.test.tsx b/apps/web/src/components/ui/bounded-value.deferred.test.tsx
+new file mode 100644
+index 00000000..520d456b
+--- /dev/null
++++ b/apps/web/src/components/ui/bounded-value.deferred.test.tsx
+@@ -0,0 +1,170 @@
++import { act, render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { Suspense } from 'react';
++import { afterEach, describe, expect, it } from 'vitest';
++import { sampleThread } from '@graphgoblin/contracts/testing';
++import { event, queuedFields } from '../../__fixtures__/fake-api.js';
++import { ThreadViewer } from '../../runs/inspector/ThreadViewer.js';
++import { BoundedValue, VALUE_PREVIEW_CHARS } from './bounded-value.js';
++
++// React settles a deferred value within one `act`, which hides the window the tests below are
++// about: the renders between a change and its settled preview. These tests hold that window open
++// the way React itself does: the deferred render suspends. A value whose property getter throws a
++// pending promise while the gate is closed suspends the render that first reads it (the preview),
++// and React keeps the committed urgent render on screen until the promise settles; the host's
++// Suspense fallback never shows for content that was already visible.
++let gate: { promise: Promise<void>; open: () => void } | undefined;
++function closeGate() {
++  let open!: () => void;
++  const promise = new Promise<void>((resolve) => {
++    open = resolve;
++  });
++  gate = { promise, open };
++}
++/**
++ * An object whose `items` are only readable while the gate is open. Each test makes its own: the
++ * preview cache remembers an object once it has been read.
++ */
++function gated<T>(items: T) {
++  return Object.defineProperty({}, 'items', {
++    enumerable: true,
++    get() {
++      // A thrown thenable is how a render suspends.
++      // eslint-disable-next-line @typescript-eslint/only-throw-error
++      if (gate) throw gate.promise;
++      return items;
++    },
++  });
++}
++async function openGate() {
++  const current = gate;
++  gate = undefined;
++  await act(async () => {
++    current?.open();
++    await current?.promise;
++  });
++}
++
++const big = { items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'x'.repeat(40) })) };
++const another = () =>
++  gated(Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })));
++
++function Host({ children }: { children: React.ReactNode }) {
++  return <Suspense fallback={<p>Loading…</p>}>{children}</Suspense>;
++}
++
++describe('BoundedValue while a preview is pending', () => {
++  afterEach(() => {
++    gate = undefined;
++  });
++
++  it('shows the placeholder, keeps the previous controls, and finishes the hand-off on settling', async () => {
++    const user = userEvent.setup();
++    const { rerender } = render(
++      <Host>
++        <BoundedValue value={big} label="Variables" testId="value" />
++      </Host>,
++    );
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
++    // The new value arrives but its preview cannot be read yet: the text says so, the previous
++    // Show all stays mounted, the keyboard is still inside (the text stays focusable), and the
++    // Suspense fallback does not replace what was already shown.
++    const other = another();
++    closeGate();
++    rerender(
++      <Host>
++        <BoundedValue value={other} label="Variables" testId="value" />
++      </Host>,
++    );
++    expect(screen.getByTestId('value')).toHaveTextContent('Preparing the preview…');
++    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toBeInTheDocument();
++    expect(screen.getByTestId('value')).toHaveFocus();
++    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
++    // The preview settles: the hand-off completes on the new value's Show all.
++    await openGate();
++    expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
++    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
++  });
++
++  it('does not take the keyboard back when the reader leaves while the preview is pending', async () => {
++    const user = userEvent.setup();
++    const { rerender } = render(
++      <Host>
++        <BoundedValue value={big} label="Variables" testId="value" />
++        <button type="button">Elsewhere</button>
++      </Host>,
++    );
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
++    const other = another();
++    closeGate();
++    rerender(
++      <Host>
++        <BoundedValue value={other} label="Variables" testId="value" />
++        <button type="button">Elsewhere</button>
++      </Host>,
++    );
++    expect(screen.getByTestId('value')).toHaveFocus();
++    // The reader tabs away during the wait: the text stops being focusable at once, and the
++    // settled preview leaves the keyboard where the reader put it.
++    act(() => screen.getByRole('button', { name: 'Elsewhere' }).focus());
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
++    await openGate();
++    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
++    expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
++  });
++});
++
++describe('ThreadViewer while a selection is being reconstructed', () => {
++  afterEach(() => {
++    gate = undefined;
++  });
++
++  it('keeps the previous thread mounted, with its own identifiers and a note, until the selected one is rebuilt', async () => {
++    // The thread's variables hold a gated object: the preview of the variables at event 3 (a new
++    // object, since the patch copies along its path) reads it in the deferred render.
++    const thread = sampleThread({ vars: { topic: 'hello', wide: gated([1, 2, 3]) } });
++    const events = [
++      event(thread.run.id, 1, 'run.queued', queuedFields({ initialThread: thread })),
++      event(thread.run.id, 2, 'node.started', {
++        nodeId: 'a',
++        kind: 'mutate',
++        attempt: 1,
++        configHash: 'h',
++      }),
++      event(thread.run.id, 3, 'node.finished', {
++        nodeId: 'a',
++        patch: [{ op: 'add', path: '/vars/count', value: 1 }],
++        durationMs: 1,
++      }),
++    ];
++    const { rerender } = render(
++      <Host>
++        <ThreadViewer current={thread} events={events} seq={1} />
++      </Host>,
++    );
++    expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
++    closeGate();
++    rerender(
++      <Host>
++        <ThreadViewer current={thread} events={events} seq={3} />
++      </Host>,
++    );
++    // The previous thread's body stays, under its own event's title, so open disclosures, the
++    // keyboard and the download names keep their place; the note says what is coming.
++    expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
++    expect(screen.queryByText('Thread at event 3')).not.toBeInTheDocument();
++    expect(screen.getByText('Reconstructing the thread at event 3…')).toBeInTheDocument();
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++    expect(screen.queryByText('Patch from a')).not.toBeInTheDocument();
++    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
++    await openGate();
++    expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
++    expect(screen.queryByText(/Reconstructing the thread/)).not.toBeInTheDocument();
++    expect(screen.getByText('Patch from a')).toBeInTheDocument();
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++  });
++});
+diff --git a/apps/web/src/components/ui/bounded-value.test.tsx b/apps/web/src/components/ui/bounded-value.test.tsx
+index 8c42d072..4b3d04bb 100644
+--- a/apps/web/src/components/ui/bounded-value.test.tsx
++++ b/apps/web/src/components/ui/bounded-value.test.tsx
+@@ -177,6 +177,34 @@ describe('BoundedValue', () => {
+     expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
+   });
+ 
++  it('does not replay a finished hand-off when its value returns while the keyboard is elsewhere', async () => {
++    const user = userEvent.setup();
++    const other = {
++      items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
++    };
++    const page = (value: unknown) => (
++      <>
++        <BoundedValue value={value} label="Variables" testId="value" />
++        <button type="button">Timeline</button>
++      </>
++    );
++    const { rerender } = render(page(big));
++    // The first value is expanded with the keyboard inside; the second one's arrival hands the
++    // keyboard to its Show all.
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
++    rerender(page(other));
++    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
++    // The reader moves to the timeline and selects the first value, then the second one again:
++    // the keyboard stays on the timeline both times.
++    act(() => screen.getByRole('button', { name: 'Timeline' }).focus());
++    rerender(page(big));
++    expect(screen.getByRole('button', { name: 'Timeline' })).toHaveFocus();
++    rerender(page(other));
++    expect(screen.getByRole('button', { name: 'Timeline' })).toHaveFocus();
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
++  });
++
+   it('hands the keyboard over when the control it was on disappears with the value', async () => {
+     const user = userEvent.setup();
+     const small = { topic: 'loops' };
+diff --git a/apps/web/src/components/ui/bounded-value.tsx b/apps/web/src/components/ui/bounded-value.tsx
+index e7cdb698..bcf91d7f 100644
+--- a/apps/web/src/components/ui/bounded-value.tsx
++++ b/apps/web/src/components/ui/bounded-value.tsx
+@@ -79,9 +79,12 @@ export function BoundedValue({
+   // The text carries the keyboard across a change of value (focusable, not a tab stop) until the
+   // keyboard moves on.
+   const [holdsFocus, setHoldsFocus] = useState(false);
+-  // The value whose arrival found the keyboard inside: its hand-off is in flight until its
+-  // preview has settled (the effect below).
+-  const [handoffFor, setHandoffFor] = useState<unknown>(undefined);
++  // The value whose arrival found the keyboard inside, boxed so that `undefined` as a value is
++  // distinct from no hand-off: its hand-off is in flight until its preview has settled. A box is
++  // completed once (`completedRef`): a return to the same value later, with the keyboard
++  // elsewhere, must not replay a hand-off that already happened.
++  const [handoff, setHandoff] = useState<{ for: unknown } | undefined>(undefined);
++  const completedRef = useRef<{ for: unknown } | undefined>(undefined);
+   // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
+   // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
+   // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
+@@ -92,7 +95,7 @@ export function BoundedValue({
+       // The text stays focusable in this same commit, so a focused region never loses its
+       // tabindex while it has the focus, and a removed control has somewhere to hand it to.
+       setHoldsFocus(true);
+-      setHandoffFor(value);
++      setHandoff({ for: value });
+     }
+   }
+   const expanded = expandedState && shownValue === value;
+@@ -126,10 +129,12 @@ export function BoundedValue({
+   // tabindex changed). Put the keyboard on the new value's Show all when it has one, else on the
+   // text itself, and keep the text focusable only while it is what holds the keyboard. Until then
+   // the text stays focusable and the previous controls stay mounted, so nothing is lost in the
+-  // urgent commit. A later value that arrives with the keyboard elsewhere leaves `handoffFor`
+-  // behind, so the effect does nothing for it.
++  // urgent commit. A later value that arrives with the keyboard elsewhere leaves `handoff` boxing
++  // the earlier value, so the effect does nothing for it.
+   useLayoutEffect(() => {
+-    if (handoffFor !== value || pending) return;
++    if (handoff === undefined || handoff === completedRef.current) return;
++    if (handoff.for !== value || pending) return;
++    completedRef.current = handoff;
+     const root = rootRef.current;
+     const pre = preRef.current;
+     const inside = root !== null && root.contains(document.activeElement);
+@@ -137,14 +142,19 @@ export function BoundedValue({
+       if (!inside || document.activeElement === pre) showAllRef.current.focus();
+     } else if (!inside) pre?.focus();
+     setHoldsFocus(document.activeElement === pre);
+-  }, [handoffFor, value, pending, large]);
++  }, [handoff, value, pending, large]);
+   return (
+     <div
+       ref={rootRef}
+       className={cn('grid min-w-0 gap-1.5', className)}
+       onFocus={() => setOwnsFocus(true)}
+       onBlur={(event) => {
+-        if (!rootRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
++        if (rootRef.current?.contains(event.relatedTarget)) return;
++        // The reader left (a blur event means the keyboard moved by itself: a control the update
++        // removed fires none). Nothing is owed any more: no pending hand-off, no held text.
++        setOwnsFocus(false);
++        setHandoff(undefined);
++        setHoldsFocus(false);
+       }}
+     >
+       <pre
+diff --git a/apps/web/src/runs/RunInspectorPage.test.tsx b/apps/web/src/runs/RunInspectorPage.test.tsx
+index cebb864b..a5c17ebd 100644
+--- a/apps/web/src/runs/RunInspectorPage.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.test.tsx
+@@ -239,18 +239,19 @@ describe('RunInspectorPage', () => {
+     ).toBeInTheDocument();
+ 
+     // Before the node finished the thread is the initial one.
++    // The thread at a newly selected event is reconstructed in the deferred render (#259).
+     await user.click(within(timeline).getByText(/#3/));
+-    expect(screen.getByLabelText('Variables')).toHaveTextContent('{}');
++    expect(await screen.findByLabelText('Variables')).toHaveTextContent('{}');
+     expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
+ 
+     await user.click(within(timeline).getByText(/#4/));
+-    const diff = screen.getByRole('list', { name: 'Patch diff' });
++    const diff = await screen.findByRole('list', { name: 'Patch diff' });
+     expect(within(diff).getByText('/vars/topic')).toBeInTheDocument();
+     expect(within(diff).getAllByText(/\(absent\)/).length).toBeGreaterThan(0);
+     // The full thread JSON is built only once its disclosure opens (#259).
+     expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
+     await user.click(screen.getByText('Full thread JSON'));
+-    expect(screen.getByTestId('thread-json')).toHaveTextContent('"prep": 1');
++    expect(await screen.findByTestId('thread-json')).toHaveTextContent('"prep": 1');
+ 
+     // A live event arrives.
+     act(() =>
+@@ -666,7 +667,7 @@ describe('RunInspectorPage', () => {
+     await waitFor(() => expect(screen.getByTestId('run-result').textContent?.length).toBe(4_097));
+     expect(screen.getByRole('button', { name: 'Show all of Result' })).toBeInTheDocument();
+     expect(screen.getByRole('button', { name: 'Download Result as JSON' })).toBeInTheDocument();
+-    expect(screen.getByLabelText('Variables').textContent?.length).toBe(4_097);
++    await waitFor(() => expect(screen.getByLabelText('Variables').textContent?.length).toBe(4_097));
+     // Both the result and the variables carry the notice (each holds the 30,000-character value).
+     expect(
+       screen.getAllByText('Showing the first 4,096 characters of a larger value.'),
+@@ -680,7 +681,7 @@ describe('RunInspectorPage', () => {
+     // The full thread JSON is not laid out until its disclosure opens.
+     expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
+     await user.click(screen.getByText('Full thread JSON'));
+-    expect(screen.getByTestId('thread-json').textContent?.length).toBe(4_097);
++    await waitFor(() => expect(screen.getByTestId('thread-json').textContent?.length).toBe(4_097));
+     await user.click(screen.getByRole('button', { name: 'Show all of Full thread JSON' }));
+     expect(JSON.parse(screen.getByTestId('thread-json').textContent).vars.blob).toBe(long);
+   });
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index 78d6f279..22fc6c7a 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -177,6 +177,7 @@ export function RunInspectorPage() {
+               events={log.events}
+               seq={seq}
+               definition={versionQuery.data?.definition}
++              historyBytes={log.bytes}
+             />
+           ) : (
+             <p className="text-sm text-muted">The thread is not available yet.</p>
+diff --git a/apps/web/src/runs/event-store.ts b/apps/web/src/runs/event-store.ts
+index 2455b6fc..554ddbc6 100644
+--- a/apps/web/src/runs/event-store.ts
++++ b/apps/web/src/runs/event-store.ts
+@@ -6,8 +6,24 @@ export interface RunEventLog {
+   events: RunEvent[];
+   /** The highest `seq` received; the SSE subscription resumes after it. */
+   lastSeq: number;
++  /**
++   * Characters of JSON the recorded events amount to, accumulated as they arrive. The inspector
++   * uses it to tell a history whose reconstruction would freeze the page (#259).
++   */
++  bytes: number;
+ }
+ 
++/**
++ * Recorded characters of JSON above which a run's history is "large": replaying it for a newly
++ * selected event, and enumerating the keys of a value it holds, would each freeze the page for
++ * hundreds of milliseconds (a 350,000-property variable measured at 344 to 473 ms), as would
++ * serialising the log into session storage on every append. The inspector reconstructs the thread
++ * at an event of such a run on request only, and the stored copy leaves such a log out, so a
++ * reload replays it from its first event (#259). Ordinary runs record kilobytes to a few hundred
++ * kilobytes.
++ */
++export const LARGE_HISTORY_BYTES = 2_000_000;
++
+ export interface RunEventStoreState {
+   runs: Record<string, RunEventLog>;
+   /** Append events in order; any at or below the cursor are dropped as duplicates. */
+@@ -45,18 +61,20 @@ export const useRunEventStore = create<RunEventStoreState>()(
+       runs: {},
+       append: (runId, ...incoming) =>
+         set((state) => {
+-          const log = state.runs[runId] ?? { events: [], lastSeq: 0 };
++          const log = state.runs[runId] ?? EMPTY;
+           const fresh: RunEvent[] = [];
+           let lastSeq = log.lastSeq;
++          let bytes = log.bytes;
+           for (const event of incoming) {
+             if (event.seq <= lastSeq) continue;
+             fresh.push(event);
+             lastSeq = event.seq;
++            bytes += JSON.stringify(event).length;
+           }
+           if (fresh.length === 0) return state;
+           const runs = {
+             ...state.runs,
+-            [runId]: { events: [...log.events, ...fresh], lastSeq },
++            [runId]: { events: [...log.events, ...fresh], lastSeq, bytes },
+           };
+           const ids = Object.keys(runs);
+           if (ids.length > MAX_RUNS) delete runs[ids[0] as string];
+@@ -77,12 +95,20 @@ export const useRunEventStore = create<RunEventStoreState>()(
+         sessionStorage.removeItem('graphgoblin-run-events');
+         return quotaSafeSessionStorage;
+       }),
+-      partialize: (state) => ({ runs: state.runs }),
++      // Version 1 added `bytes` to each log. A stored log of an earlier version has no size to
++      // carry on from, so it is dropped and the run replays from its first event.
++      version: 1,
++      migrate: () => ({ runs: {} }),
++      partialize: (state) => ({
++        runs: Object.fromEntries(
++          Object.entries(state.runs).filter(([, log]) => log.bytes <= LARGE_HISTORY_BYTES),
++        ),
++      }),
+     },
+   ),
+ );
+ 
+-const EMPTY: RunEventLog = { events: [], lastSeq: 0 };
++const EMPTY: RunEventLog = { events: [], lastSeq: 0, bytes: 0 };
+ 
+ export function useRunEventLog(runId: string): RunEventLog {
+   return useRunEventStore((s) => s.runs[runId] ?? EMPTY);
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+index df614e07..f3388d9b 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.test.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
+ import { describe, expect, it } from 'vitest';
+ import { sampleThread } from '@graphgoblin/contracts/testing';
+ import { event, queuedFields } from '../../__fixtures__/fake-api.js';
++import { LARGE_HISTORY_BYTES } from '../event-store.js';
+ import { MESSAGE_PREVIEW_COUNT, ThreadViewer } from './ThreadViewer.js';
+ 
+ /** A thread of `n` short messages, each naming its position, seeded as the run's first event. */
+@@ -90,3 +91,55 @@ describe('ThreadViewer messages', () => {
+     expect(screen.queryByRole('button', { name: /messages/ })).not.toBeInTheDocument();
+   });
+ });
++
++describe('ThreadViewer with a large history', () => {
++  const started = (runId: string, seq: number) =>
++    event(runId, seq, 'node.started', { nodeId: 'a', kind: 'mutate', attempt: 1, configHash: 'h' });
++
++  it('reconstructs the thread at an event on request only, and remembers the events asked for', async () => {
++    const user = userEvent.setup();
++    const { thread, events } = threadOf(3, 'a');
++    const id = thread.run.id;
++    const all = [...events, started(id, 2), started(id, 3)];
++    const view = (seq: number, history = all) => (
++      <ThreadViewer current={thread} events={history} seq={seq} historyBytes={3_500_000} />
++    );
++    const { rerender } = render(view(1));
++    // Nothing is replayed until asked: the card names the size and the event.
++    expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
++    expect(screen.getByText(/history holds 3\.5 MB of recorded events/)).toBeInTheDocument();
++    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 1' }));
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
++
++    // Another event asks again, at once (no deferred reconstruction, so no "Reconstructing" note).
++    rerender(view(3));
++    expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
++    expect(screen.queryByText(/Reconstructing the thread/)).not.toBeInTheDocument();
++    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++
++    // A return to an event already asked for shows it without asking.
++    rerender(view(1));
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
++
++    // A newly arrived event that becomes the selection asks too: live updates are explicit.
++    rerender(view(4, [...all, started(id, 4)]));
++    expect(
++      screen.getByRole('button', { name: 'Reconstruct the thread at event 4' }),
++    ).toBeInTheDocument();
++    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
++  });
++
++  it('reconstructs automatically at and below the threshold', () => {
++    const { thread, events } = threadOf(3, 'a');
++    render(
++      <ThreadViewer current={thread} events={events} seq={1} historyBytes={LARGE_HISTORY_BYTES} />,
++    );
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
++  });
++});
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.tsx b/apps/web/src/runs/inspector/ThreadViewer.tsx
+index 0d0e8c74..1b603009 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.tsx
+@@ -1,5 +1,5 @@
+ import type { ContextThread, LoopDefinition, RunEvent } from '@graphgoblin/contracts';
+-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
++import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react';
+ import {
+   Alert,
+   Badge,
+@@ -10,6 +10,7 @@ import {
+   Disclosure,
+ } from '../../components/ui/index.js';
+ import { downloadJson } from '../../lib/utils.js';
++import { LARGE_HISTORY_BYTES } from '../event-store.js';
+ import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
+ 
+ /**
+@@ -19,6 +20,7 @@ import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from
+  */
+ export const MESSAGE_PREVIEW_COUNT = 50;
+ const count = (n: number) => n.toLocaleString('en-US');
++const megabytes = (n: number) => `${(n / 1_000_000).toFixed(1)} MB`;
+ 
+ /** A finished node's patch: each operation with the value before and after it. */
+ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
+@@ -80,11 +82,14 @@ export function ThreadViewer({
+   events,
+   seq,
+   definition,
++  historyBytes = 0,
+ }: {
+   current: ContextThread;
+   events: RunEvent[];
+   seq: number;
+   definition?: LoopDefinition | undefined;
++  /** Recorded size of the run's events (`RunEventLog.bytes`); decides the large-history mode. */
++  historyBytes?: number;
+ }) {
+   // The initial thread depends on the first event only; a growing log must not rebuild it.
+   const first = events[0];
+@@ -93,15 +98,30 @@ export function ThreadViewer({
+     [current, first, definition],
+   );
+   const [cache] = useState(createThreadCache);
+-  const replayed = useMemo(() => cache.at(initial, events, seq), [cache, initial, events, seq]);
+-  const selected = events.find((e) => e.seq === seq);
++  // A large history (`LARGE_HISTORY_BYTES`) is reconstructed on request only, so a selection or a
++  // live event costs a constant until the reader asks; the sequences asked for stay prepared while
++  // this viewer lives.
++  const large = historyBytes > LARGE_HISTORY_BYTES;
++  const [prepared, setPrepared] = useState<ReadonlySet<number>>(() => new Set());
++  // A newly selected event is otherwise reconstructed in the deferred render after the urgent one,
++  // so the selection paints (the title and a note) before a thread is rebuilt; the remembered
++  // threads make most selections immediate anyway.
++  const deferredSeq = useDeferredValue(seq);
++  const shownSeq = large ? seq : deferredSeq;
++  const reconstructing = shownSeq !== seq;
++  const ready = !large || prepared.has(shownSeq);
++  const replayed = useMemo(
++    () => (ready ? cache.at(initial, events, shownSeq) : undefined),
++    [ready, cache, initial, events, shownSeq],
++  );
++  const selected = events.find((e) => e.seq === shownSeq);
+   const diff = useMemo(() => {
+-    if (selected?.type !== 'node.finished' || !replayed.ok) return undefined;
+-    const before = cache.at(initial, events, seq - 1);
++    if (selected?.type !== 'node.finished' || !replayed?.ok) return undefined;
++    const before = cache.at(initial, events, shownSeq - 1);
+     return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
+-  }, [selected, cache, initial, events, seq, replayed]);
++  }, [selected, cache, initial, events, shownSeq, replayed]);
+   const [showJson, setShowJson] = useState(false);
+-  const thread = replayed.ok ? replayed.thread : undefined;
++  const thread = replayed?.ok ? replayed.thread : undefined;
+   // Whether every message is laid out. Like a value's expansion, it lasts while the same thread
+   // stays shown: another event's thread starts bounded again (adjusted in the render that sees it).
+   const [allMessagesState, setAllMessagesState] = useState(false);
+@@ -134,10 +154,26 @@ export function ThreadViewer({
+     if (!inside) (showAllRef.current ?? list)?.focus();
+     setHoldsFocus(document.activeElement === list);
+   }, [handoffs]);
+-  if (!replayed.ok || thread === undefined) {
++  if (!ready) {
++    return (
++      <Card title={`Thread at event ${shownSeq}`}>
++        <p className="text-sm text-muted">
++          This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
++          rebuild the thread at an event can take a while, so it happens on request.
++        </p>
++        <p>
++          <Button
++            size="sm"
++            onClick={() => setPrepared((set) => new Set(set).add(shownSeq))}
++          >{`Reconstruct the thread at event ${shownSeq}`}</Button>
++        </p>
++      </Card>
++    );
++  }
++  if (replayed === undefined || !replayed.ok || thread === undefined) {
+     return (
+-      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>
+-        {replayed.ok ? '' : replayed.error}
++      <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
++        {replayed === undefined || replayed.ok ? '' : replayed.error}
+       </Alert>
+     );
+   }
+@@ -152,14 +188,25 @@ export function ThreadViewer({
+           lines={diff}
+         />
+       ) : null}
+-      <Card title={`Thread at event ${seq}`}>
+-        <div className="grid gap-4">
++      <Card title={`Thread at event ${shownSeq}`}>
++        {/* While the newly selected event's thread is rebuilt, the previous one stays mounted (so
++            nothing loses the keyboard or its open state), keeps its own event's identifiers in its
++            title and downloads, and says what is coming. */}
++        {reconstructing ? (
++          <p className="text-sm text-muted" aria-live="polite">
++            Reconstructing the thread at event {seq}…
++          </p>
++        ) : null}
++        <div className="grid gap-4" data-reconstructing={reconstructing ? 'true' : undefined}>
+           <div
+             ref={messagesRef}
+             className="grid gap-2"
+             onFocus={() => setOwnsFocus(true)}
+             onBlur={(event) => {
+-              if (!messagesRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
++              if (messagesRef.current?.contains(event.relatedTarget)) return;
++              // The reader left the section: nothing is owed, and the list stops being focusable.
++              setOwnsFocus(false);
++              setHoldsFocus(false);
+             }}
+           >
+             <h3 className="text-sm font-semibold">Messages ({count(messages.length)})</h3>
+@@ -182,7 +229,7 @@ export function ThreadViewer({
+                   size="sm"
+                   aria-label="Download messages as JSON"
+                   onClick={() =>
+-                    downloadJson(`run-${thread.run.id}-messages-at-${seq}.json`, messages)
++                    downloadJson(`run-${thread.run.id}-messages-at-${shownSeq}.json`, messages)
+                   }
+                 >
+                   Download JSON
+@@ -218,7 +265,7 @@ export function ThreadViewer({
+               value={thread.vars}
+               label="Variables"
+               labelled
+-              fileName={`run-${thread.run.id}-variables-at-${seq}`}
++              fileName={`run-${thread.run.id}-variables-at-${shownSeq}`}
+             />
+           </div>
+           <Disclosure
+@@ -232,7 +279,7 @@ export function ThreadViewer({
+                 value={thread}
+                 label="Full thread JSON"
+                 testId="thread-json"
+-                fileName={`run-${thread.run.id}-thread-at-${seq}`}
++                fileName={`run-${thread.run.id}-thread-at-${shownSeq}`}
+               />
+             ) : null}
+           </Disclosure>
+diff --git a/apps/web/src/runs/projections.test.ts b/apps/web/src/runs/projections.test.ts
+index 527cb90e..d2db9c91 100644
+--- a/apps/web/src/runs/projections.test.ts
++++ b/apps/web/src/runs/projections.test.ts
+@@ -2,7 +2,7 @@ import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
+ import { FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+ import { describe, expect, it, vi } from 'vitest';
+ import { event, queuedFields } from '../__fixtures__/fake-api.js';
+-import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
++import { LARGE_HISTORY_BYTES, quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
+ import {
+   createThreadCache,
+   describeEvent,
+@@ -446,12 +446,46 @@ describe('initial thread and replay failures', () => {
+     expect(tryThreadAt(initialThreadFrom(current, bad), bad, 1).ok).toBe(true);
+   });
+ 
++  it('drops a stored log of the earlier version, which carries no recorded size (#259)', async () => {
++    useRunEventStore.setState({ runs: {} });
++    useRunEventStore.persist.clearStorage();
++    const sized = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
++    sessionStorage.setItem(
++      'graphgoblin-run-events-v4',
++      JSON.stringify({ state: { runs: { [R]: { events: [sized], lastSeq: 1 } } }, version: 0 }),
++    );
++    vi.resetModules();
++    const { useRunEventStore: freshStore } = await import('./event-store.js');
++    await freshStore.persist.rehydrate();
++    expect(freshStore.getState().runs[R]).toBeUndefined();
++    freshStore.getState().append(R, sized);
++    expect(freshStore.getState().runs[R]?.bytes).toBe(JSON.stringify(sized).length);
++    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('"version":1');
++  });
++
+   it('appends batches in order and drops a full session storage copy instead of throwing', () => {
+     const { append } = useRunEventStore.getState();
+     append('batch', ALL[0]!, ALL[1]!, ALL[1]!, ALL[2]!);
+     expect(useRunEventStore.getState().runs['batch']?.events.map((e) => e.seq)).toEqual([1, 2, 3]);
+     append('batch', ALL[0]!);
+     expect(useRunEventStore.getState().runs['batch']?.lastSeq).toBe(3);
++    // The recorded size counts each kept event once, as its JSON (#259).
++    expect(useRunEventStore.getState().runs['batch']?.bytes).toBe(
++      ALL.slice(0, 3).reduce((sum, e) => sum + JSON.stringify(e).length, 0),
++    );
++    // A large history is kept in memory but left out of the stored copy, which other runs keep.
++    const wide = event('wide', 1, 'node.finished', {
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/wide', value: 'w'.repeat(LARGE_HISTORY_BYTES) }],
++      durationMs: 1,
++    });
++    append('wide', wide);
++    expect(useRunEventStore.getState().runs['wide']?.bytes).toBeGreaterThan(LARGE_HISTORY_BYTES);
++    const stored = JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4') ?? '{}') as {
++      state: { runs: Record<string, unknown> };
++    };
++    expect(Object.keys(stored.state.runs)).toContain('batch');
++    expect(Object.keys(stored.state.runs)).not.toContain('wide');
+ 
+     const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+       throw new DOMException('full', 'QuotaExceededError');
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index c4ff5e11..97db69ad 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -81,7 +81,7 @@ The owner's request: move the horizontal and vertical break points of a line to
+ - Timeline from the SSE stream with the cursor stored so reload resumes without gaps.
+ - Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`. The Full thread JSON shown and downloaded at an event is that reconstruction, so its property order follows the replay rather than the API's serialisation of the live thread; the values are the same.
+ - Node progress drawer that shows harness items as they arrive.
+-- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so the page's layout and the text it holds do not grow with the value until the viewer asks for the whole text. One cost JavaScript imposes remains proportional to a value: reading the first property of an object enumerates all of its keys, so a single object with hundreds of thousands of properties costs that enumeration the first time it is previewed; the preview is remembered per value (`cachedJsonPrefix`), so a return to it or a re-render costs a lookup; a changed value is previewed in the deferred render after the urgent one (React's `useDeferredValue`), so selecting an event paints before that enumeration runs; and a live append replays only the new events from the remembered thread, so the parts of the thread the events did not touch keep their identity and their remembered previews. Messages are laid out fifty at a time, the latest first in reading order, with "Show all" and an exact download of all of them one click away, so a thread of thousands of messages does not mount thousands of elements on every selection. Expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
++- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so the page's layout and the text it holds do not grow with the value until the viewer asks for the whole text. One cost JavaScript imposes remains proportional to a value: reading the first property of an object enumerates all of its keys, so a single object with hundreds of thousands of properties costs that enumeration the first time it is previewed; the preview is remembered per value (`cachedJsonPrefix`), so a return to it or a re-render costs a lookup; a changed value is previewed, and a newly selected event's thread reconstructed, in the deferred render after the urgent one (React's `useDeferredValue`; "Preparing the preview…" replaces the text in between, and the previous thread stays mounted under a "Reconstructing the thread at event N…" note so open disclosures and the keyboard keep their place, and keeps its own event's number in its title and download names until the selected one is shown, so nothing is labelled with an event it does not show), so selecting an event paints before that work runs; a pending hand-off of the keyboard is dropped when the reader leaves during the wait; and a live append replays only the new events from the remembered thread, so the parts of the thread the events did not touch keep their identity and their remembered previews. What remains proportional to a pathological value is one reconstruction and one key enumeration per value, on the main thread, so above 2,000,000 characters of recorded events (`RunEventLog.bytes`, summed as the events arrive; ordinary runs record kilobytes to a few hundred kilobytes) the run's history counts as large and the inspector reconstructs the thread at an event only when the reader asks: a card names the history's size and offers "Reconstruct the thread at event N", an event once reconstructed stays so while the inspector is open, and a newly arrived event that becomes the selection asks again, so nothing a selection or a live update does by itself costs more than a constant. Messages are laid out fifty at a time, the latest first in reading order, with "Show all" and an exact download of all of them one click away, so a thread of thousands of messages does not mount thousands of elements on every selection. Expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
+ - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
+ 
+ ## PWA behaviour (Decided)

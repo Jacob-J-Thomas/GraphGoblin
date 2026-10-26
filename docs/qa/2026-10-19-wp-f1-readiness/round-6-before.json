@@ -1,0 +1,503 @@
+{
+  "phase": "before",
+  "node": "v22.14.0",
+  "port": 5624,
+  "cli": "native C# no-turn fixtures; real provider binaries never invoked",
+  "direct": {
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    },
+    "probes": {
+      "claude": {
+        "versionCommands": 1,
+        "commands": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ]
+      },
+      "codex": {
+        "versionCommands": 0,
+        "commands": []
+      }
+    }
+  },
+  "parent": {
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "ownerId": "local",
+        "loopId": "01M5G9HR7D3X92S7403ZBPWBJJ",
+        "versionId": "01M5G9HR7DJ9WJPH9E72YWBKK3",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA effect parent",
+          "label": "QA effect parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5G9HRDEQV3H88M2Q4QC9DHV",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-21T22:33:14.414Z",
+        "lastEventSeq": 1
+      }
+    },
+    "elapsedMs": 23,
+    "admissionProbes": {
+      "claude": {
+        "versionCommands": 0,
+        "commands": []
+      },
+      "codex": {
+        "versionCommands": 0,
+        "commands": []
+      }
+    },
+    "terminal": {
+      "id": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+      "ownerId": "local",
+      "loopId": "01M5G9HR7D3X92S7403ZBPWBJJ",
+      "versionId": "01M5G9HR7DJ9WJPH9E72YWBKK3",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA effect parent",
+        "label": "QA effect parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5G9HRDEQV3H88M2Q4QC9DHV",
+      "status": "failed",
+      "currentNodeId": "child",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5G9HRDEKJQY8E5G0DKD8ZHR:7",
+        "nodeId": "child",
+        "kind": "child",
+        "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+        "startedSeq": 7
+      },
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "subloop child 01M5G9HRFEGERAEQYFXF06MBCG failed: Claude is not signed in.",
+        "nodeId": "child",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+          "childNodeId": "think"
+        }
+      },
+      "createdAt": "2026-10-21T22:33:14.414Z",
+      "startedAt": "2026-10-21T22:33:14.434Z",
+      "finishedAt": "2026-10-21T22:33:14.763Z",
+      "lastEventSeq": 13
+    },
+    "history": [
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 1,
+        "ts": "2026-10-21T22:33:14.414Z",
+        "type": "run.queued",
+        "versionId": "01M5G9HR7DJ9WJPH9E72YWBKK3",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA effect parent",
+          "label": "QA effect parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+            "loopId": "01M5G9HR7D3X92S7403ZBPWBJJ",
+            "versionId": "01M5G9HR7DJ9WJPH9E72YWBKK3",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5G9HRDEQV3H88M2Q4QC9DHV",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-21T22:33:14.414Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "subloopVersions": {
+          "01M5G9HQXR74FHRPCZDM01N3PB": "01M5G9HQXR89MBHQEFAQY87BZE"
+        }
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 2,
+        "ts": "2026-10-21T22:33:14.437Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 3,
+        "ts": "2026-10-21T22:33:14.443Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 4,
+        "ts": "2026-10-21T22:33:14.448Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-21T22:33:14.447Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-21T22:33:14.447Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 5,
+        "ts": "2026-10-21T22:33:14.456Z",
+        "type": "node.started",
+        "nodeId": "mutate",
+        "kind": "mutate",
+        "attempt": 1,
+        "configHash": "a1d4d6ca1f2fb510"
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 6,
+        "ts": "2026-10-21T22:33:14.461Z",
+        "type": "node.finished",
+        "nodeId": "mutate",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/messages/-",
+            "value": {
+              "id": "01M5G9HREWKENSTF092626WEBR",
+              "role": "note",
+              "content": "PARENT_EFFECT_MARKER",
+              "nodeId": "mutate",
+              "ts": "2026-10-21T22:33:14.460Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 7,
+        "ts": "2026-10-21T22:33:14.472Z",
+        "type": "node.started",
+        "nodeId": "child",
+        "kind": "subloop",
+        "attempt": 1,
+        "configHash": "a0dd10be82b609bc"
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 8,
+        "ts": "2026-10-21T22:33:14.486Z",
+        "type": "child_run.started",
+        "nodeId": "child",
+        "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG"
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 9,
+        "ts": "2026-10-21T22:33:14.490Z",
+        "type": "run.waiting",
+        "nodeId": "child",
+        "wait": {
+          "waitId": "01M5G9HRDEKJQY8E5G0DKD8ZHR:7",
+          "nodeId": "child",
+          "kind": "child",
+          "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+          "startedSeq": 7
+        }
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 10,
+        "ts": "2026-10-21T22:33:14.724Z",
+        "type": "run.woken",
+        "nodeId": "child",
+        "reason": "child",
+        "payload": {
+          "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+          "status": "failed",
+          "outcome": null
+        }
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 11,
+        "ts": "2026-10-21T22:33:14.752Z",
+        "type": "node.started",
+        "nodeId": "child",
+        "kind": "subloop",
+        "attempt": 2,
+        "configHash": "a0dd10be82b609bc"
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 12,
+        "ts": "2026-10-21T22:33:14.757Z",
+        "type": "child_run.finished",
+        "nodeId": "child",
+        "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+        "status": "failed"
+      },
+      {
+        "runId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "seq": 13,
+        "ts": "2026-10-21T22:33:14.761Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "subloop child 01M5G9HRFEGERAEQYFXF06MBCG failed: Claude is not signed in.",
+          "nodeId": "child",
+          "resumable": true,
+          "details": {
+            "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+            "childNodeId": "think"
+          }
+        }
+      }
+    ],
+    "childRuns": [
+      {
+        "id": "01M5G9HRFEGERAEQYFXF06MBCG",
+        "ownerId": "local",
+        "loopId": "01M5G9HQXR74FHRPCZDM01N3PB",
+        "versionId": "01M5G9HQXR89MBHQEFAQY87BZE",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA inference child",
+          "label": "QA inference child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+        "invocationId": "01M5G9HRFEHNKEQQQ6P50V3SPT",
+        "status": "failed",
+        "currentNodeId": "think",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "Claude is not signed in.",
+          "nodeId": "think",
+          "resumable": true
+        },
+        "createdAt": "2026-10-21T22:33:14.478Z",
+        "startedAt": "2026-10-21T22:33:14.499Z",
+        "finishedAt": "2026-10-21T22:33:14.714Z",
+        "lastEventSeq": 6
+      }
+    ]
+  },
+  "runs": [
+    {
+      "id": "01M5G9HRFEGERAEQYFXF06MBCG",
+      "ownerId": "local",
+      "loopId": "01M5G9HQXR74FHRPCZDM01N3PB",
+      "versionId": "01M5G9HQXR89MBHQEFAQY87BZE",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA inference child",
+        "label": "QA inference child v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "parentRunId": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+      "invocationId": "01M5G9HRFEHNKEQQQ6P50V3SPT",
+      "status": "failed",
+      "currentNodeId": "think",
+      "iteration": 1,
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Claude is not signed in.",
+        "nodeId": "think",
+        "resumable": true
+      },
+      "createdAt": "2026-10-21T22:33:14.478Z",
+      "startedAt": "2026-10-21T22:33:14.499Z",
+      "finishedAt": "2026-10-21T22:33:14.714Z",
+      "lastEventSeq": 6
+    },
+    {
+      "id": "01M5G9HRDEKJQY8E5G0DKD8ZHR",
+      "ownerId": "local",
+      "loopId": "01M5G9HR7D3X92S7403ZBPWBJJ",
+      "versionId": "01M5G9HR7DJ9WJPH9E72YWBKK3",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA effect parent",
+        "label": "QA effect parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5G9HRDEQV3H88M2Q4QC9DHV",
+      "status": "failed",
+      "currentNodeId": "child",
+      "iteration": 1,
+      "waiting": {
+        "waitId": "01M5G9HRDEKJQY8E5G0DKD8ZHR:7",
+        "nodeId": "child",
+        "kind": "child",
+        "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+        "startedSeq": 7
+      },
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "subloop child 01M5G9HRFEGERAEQYFXF06MBCG failed: Claude is not signed in.",
+        "nodeId": "child",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M5G9HRFEGERAEQYFXF06MBCG",
+          "childNodeId": "think"
+        }
+      },
+      "createdAt": "2026-10-21T22:33:14.414Z",
+      "startedAt": "2026-10-21T22:33:14.434Z",
+      "finishedAt": "2026-10-21T22:33:14.763Z",
+      "lastEventSeq": 13
+    }
+  ],
+  "parentEffect": true,
+  "turnCommands": []
+}

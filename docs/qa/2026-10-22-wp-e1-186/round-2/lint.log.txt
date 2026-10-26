@@ -1,0 +1,61 @@
+pnpm.cmd : $ turbo run lint
+At line:7 char:3
++   & pnpm.cmd @GateArguments *> $capture
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run lint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/adapter-codex:lint: cache hit, replaying logs c501ce8d19a794f3
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/domain:lint: cache hit, replaying logs 510c402f74c5fd05
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: cache hit, replaying logs 0df14f43c5da6690
+@graphgoblin/api:lint: cache miss, executing 03f9e256f243bb2e
+@graphgoblin/mcp:lint: cache miss, executing 6e3133c83ebacd9c
+@graphgoblin/contracts:lint: cache hit, replaying logs 9eb8c81a7ccdf1fc
+@graphgoblin/infrastructure:lint: cache hit, replaying logs 5781627812180c22
+@graphgoblin/api-client:lint: cache miss, executing 5d9495be399fa106
+@graphgoblin/adapter-jev:lint: cache hit, replaying logs ec6532d66183d6cd
+@graphgoblin/web:lint: cache miss, executing 395697c5c1bf0237
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/plugin-codex:lint: cache miss, executing 4fdc0c1be6c6054b
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/mcp:lint: $ eslint .
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/api:lint: $ eslint .
+@graphgoblin/web:lint: $ eslint .
+@graphgoblin/plugin-codex:lint: $ eslint .
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\apps\api\src\sse-catchup.test.ts
+@graphgoblin/api:lint:    66:9   error  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+@graphgoblin/api:lint:   165:60  error  Async method 'isTerminal' has no 'await' expression                                @typescript-eslint/require-await
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\apps\api\src\sse.ts
+@graphgoblin/api:lint:   175:5  error  The value assigned to 'firstPage' is not used in subsequent statements  no-useless-assignment
+@graphgoblin/api:lint:   184:7  error  The value assigned to 'page' is not used in subsequent statements       no-useless-assignment
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: ✖ 4 problems (4 errors, 0 warnings)
+@graphgoblin/api:lint: 
+@graphgoblin/api:lint: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/api#lint:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\apps\api) C:\nvm4w\nodejs\pnpm.cmd run lint 
+exited (1)
+
+ Tasks:    9 successful, 11 total
+Cached:    6 cached, 11 total
+  Time:    1m20.846s 
+Failed:    @graphgoblin/api#lint
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.

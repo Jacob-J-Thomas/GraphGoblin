@@ -19,14 +19,15 @@ export type ThreadReplayEvent =
  * Which completions a replay applies. Once the log has shown a `node.started` (every log the
  * engine writes does), a `node.finished` is applied only when it completes the open visit: the
  * node most recently started and not yet finished (one token, so at most one is open). A second
- * record of the same completion, immediate or delayed, finds no open visit and is applied once.
+ * record of the same completion, immediate or delayed, cannot complete a different open visit
+ * or apply its patch twice.
  * A log without any `node.started` (hand-built fixtures) applies every completion.
  */
 export interface ReplayState {
   /** The visit open at the start of the replayed events. */
   openNodeId?: string | undefined;
   /** Whether a `node.started` was seen before the replayed events. */
-  strict?: boolean;
+  strict: boolean;
 }
 
 /**
@@ -43,11 +44,11 @@ export function replayThread<T extends ReplayableThread>(
   initial: T,
   events: readonly ThreadReplayEvent[],
   uptoSeq?: number,
-  state: ReplayState = {},
+  state: ReplayState = { strict: false },
 ): T {
   let thread = initial;
   let { openNodeId } = state;
-  let strict = state.strict ?? false;
+  let { strict } = state;
   for (const event of events) {
     if (uptoSeq !== undefined && event.seq > uptoSeq) break;
     if (event.type === 'node.started') {
@@ -81,9 +82,12 @@ export function replayThread<T extends ReplayableThread>(
 }
 
 /** The replay state after the event `seq`, for replaying only the events that follow it. */
-export function replayStateAt(events: readonly ThreadReplayEvent[], seq: number): ReplayState {
-  let openNodeId: string | undefined;
-  let strict = false;
+export function replayStateAt(
+  events: readonly ThreadReplayEvent[],
+  seq: number,
+  initial: ReplayState = { strict: false },
+): ReplayState {
+  let { openNodeId, strict } = initial;
   for (const event of events) {
     if (event.seq > seq) break;
     if (event.type === 'node.started') {

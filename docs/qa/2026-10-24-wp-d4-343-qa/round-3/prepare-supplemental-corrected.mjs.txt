@@ -1,0 +1,13 @@
+import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';
+const out='docs/qa/2026-10-24-wp-d4-343-qa/round-3',loc=JSON.parse(await readFile(join(out,'script-location.json'),'utf8')).staging.replace('%USERPROFILE%',process.env.USERPROFILE);
+const src=await readFile(join(out,'acceptance.mjs.txt'),'utf8');
+let helper=src.slice(0,src.indexOf('let s;')).replaceAll('api-results.json','supplemental-corrected-results.json');
+helper=helper.replace("const record={label,pid:child.pid};", "const record={label,pid:child.pid};done.then(async exit=>{record.exit=exit;await writeFile(join(evidence,label+'.log.txt'),(stdout+'\\nSTDERR\\n'+stderr).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replace(/gg_[A-Za-z0-9_-]+/g,'[disposable-key]'));});");
+const extra=await readFile(join(out,'text-cases-corrected.mjs.txt'),'utf8');
+const boot=extra.slice(extra.indexOf("await test('boot-isolation-fresh'"),extra.indexOf('await s.stop();await save();'));
+const tail=`let s;try{s=await instance('supplemental',5858);
+await test('Unicode-codepoint-boundary','512 astral characters admit and retain key; 513 refuse without rows',async()=>{
+ const id=await loop(s,definition('Astral bounds'));const first=await ev(s,id,{dedupeKey:'\\u{1f600}'.repeat(512)});assert.equal(first.status,202);await s.settle();const item=await s.item(first.body.id);assert.equal(item.delivery.state,'admitted');assert.equal(item.runIds.length,1);assert.equal(item.dedupeKey,'\\u{1f600}'.repeat(512));const before=await counts(s);const refused=await ev(s,id,{dedupeKey:'\\u{1f600}'.repeat(513)});assert.equal(refused.status,400);assert.deepEqual(await counts(s),before);return {characters:512,UTF16units:1024,first,item,before,refused,after:await counts(s)};
+});
+`+boot+`await s.stop();await save();}catch(e){results.fatal=e.stack;await save();if(s)await s.stop().catch(()=>{});throw e}`;
+await writeFile(join(out,'supplemental.mjs.txt'),helper+tail);await writeFile(join(loc,'supplemental.mjs'),helper+tail);

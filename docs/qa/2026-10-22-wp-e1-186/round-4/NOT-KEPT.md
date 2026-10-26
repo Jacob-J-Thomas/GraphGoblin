@@ -1,0 +1,17 @@
+# Captures not kept in Git
+
+Original large captures remain only in ignored temporary paths; retained logs contain labelled excerpts. Code and JSON captures below 1,000,000 bytes are kept beside the report. Disposable probe stores are transport fixtures and are not proposed for commit.
+
+| Capture                                                                                                                                                         | Original bytes | SHA-256                                                          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------: | ---------------------------------------------------------------- |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-store-YYeLa9\graphgoblin.db                                                                                       |         487424 | 77be506320c214cc717378e005797d0bb5669e2ffb7befd80d800845b8a4cceb |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-corruption-tbiga1\graphgoblin.db                                                                                  |         262144 | 1086e89676f9e47f8a521b0bf0b22d81e66aeee373f4eb4fe4ef7e0bb32294bf |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-store-8SCL1Q\graphgoblin.db                                                                                       |         512000 | 9002294fed1513dc767ef63ef0806e7dbff8f3949db6db2f28e7bdf3409646c1 |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-corruption-bj7CjC\graphgoblin.db                                                                                  |         262144 | b46123eff94536b3103e37594981a97d44f0fd2a6a4f28ebb3ab5b1e385950c9 |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-inspector-JrLCdP\.last-run.json                                                                        |             45 | 91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903 |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-6oPqEP\.last-run.json                                                                                  |             96 | df75810bead591f76f4c2684e3b03ea48d4c5ca8072e394a983c39bd87c9e56d |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-6oPqEP\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\error-context.md          |         169920 | db718b0514c5c2fbbe025e21cb3a238d68dabcc8514fd8a0698407f881e35c66 |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-6oPqEP\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\trace.zip                 |        2016085 | 06b80c162a3f6479f2d4a888cf3680f9d125f5b47ec0a3f943183ac0654d4d32 |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-qa-alone-PmHRpA\.last-run.json                                                                         |             96 | df75810bead591f76f4c2684e3b03ea48d4c5ca8072e394a983c39bd87c9e56d |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-qa-alone-PmHRpA\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\error-context.md |         169922 | 8129214ef6fac83b24980d2254fd3a1b3c169fb17fc8fcd43c8eac56e48a29d5 |
+| %USERPROFILE%\AppData\Local\Temp\gg-wp-e1-186-r4-browser-qa-alone-PmHRpA\qa-streams-1-200-harness-i-a6f9e-ates-or-a-refetch-per-event-chromium\trace.zip        |        1810406 | adb45519d844ff1e456d93d4e0c8810162da7adf04853d4374f20c4a615b84e5 |

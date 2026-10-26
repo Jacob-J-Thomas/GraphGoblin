@@ -62,7 +62,7 @@ describe('definition-aware draft admission', () => {
     ).toBe(true);
     expect(
       rejectsDraftAdmission(input, {
-        ...issue('HARNESS_UNAVAILABLE', 'config.harness', 'work'),
+        ...issue('HARNESS_READINESS_CLI_MISSING', 'config.harness', 'work'),
         severity: 'warning',
       }),
     ).toBe(false);

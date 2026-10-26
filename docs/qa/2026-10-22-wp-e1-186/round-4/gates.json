@@ -1,0 +1,361 @@
+{
+  "head": "389dc14f24fcab33f6c22b0ba14428596fdda539",
+  "node": "v22.14.0",
+  "sourceFiles": [
+    "CHANGELOG.md",
+    "apps/api/src/edges.test.ts",
+    "apps/api/src/sse-bounds.test.ts",
+    "apps/api/src/sse-catchup.test.ts",
+    "apps/api/src/sse.test.ts",
+    "apps/api/src/sse.ts",
+    "apps/web/src/__fixtures__/fake-api.ts",
+    "apps/web/src/runs/useRunEvents.test.tsx",
+    "apps/web/src/runs/useRunEvents.ts",
+    "docs/07-api-and-streaming.md",
+    "docs/09-frontend-and-pwa.md",
+    "docs/10-testing-and-quality.md",
+    "docs/decisions/ADR-0050-bounded-sse-replay.md",
+    "docs/qa/2026-10-22-wp-e1-186/README.md",
+    "packages/api-client/src/sse.test.ts",
+    "packages/api-client/src/sse.ts",
+    "apps/api/src/sse-completion.test.ts",
+    "packages/api-client/src/sse-completion.test.ts"
+  ],
+  "results": [
+    {
+      "name": "typecheck",
+      "command": "pnpm.cmd typecheck",
+      "code": 2,
+      "started": "2026-10-24T15:24:15.239Z",
+      "ended": "2026-10-24T15:26:26.492Z",
+      "log": ".tmp/r4-typecheck.log.txt"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm.cmd lint",
+      "code": 1,
+      "started": "2026-10-24T15:26:26.496Z",
+      "ended": "2026-10-24T15:28:01.294Z",
+      "log": ".tmp/r4-lint.log.txt"
+    },
+    {
+      "name": "layers",
+      "command": "pnpm.cmd check:layers",
+      "code": 0,
+      "started": "2026-10-24T15:28:01.296Z",
+      "ended": "2026-10-24T15:28:02.260Z",
+      "log": ".tmp/r4-layers.log.txt"
+    },
+    {
+      "name": "deps",
+      "command": "pnpm.cmd check:deps",
+      "code": 0,
+      "started": "2026-10-24T15:28:02.264Z",
+      "ended": "2026-10-24T15:28:23.206Z",
+      "log": ".tmp/r4-deps.log.txt"
+    },
+    {
+      "name": "docs",
+      "command": "pnpm.cmd check:docs",
+      "code": 0,
+      "started": "2026-10-24T15:28:23.209Z",
+      "ended": "2026-10-24T15:28:26.511Z",
+      "log": ".tmp/r4-docs.log.txt"
+    },
+    {
+      "name": "prettier",
+      "command": "pnpm.cmd exec prettier --check CHANGELOG.md apps/api/src/edges.test.ts apps/api/src/sse-bounds.test.ts apps/api/src/sse-catchup.test.ts apps/api/src/sse.test.ts apps/api/src/sse.ts apps/web/src/__fixtures__/fake-api.ts apps/web/src/runs/useRunEvents.test.tsx apps/web/src/runs/useRunEvents.ts docs/07-api-and-streaming.md docs/09-frontend-and-pwa.md docs/10-testing-and-quality.md docs/decisions/ADR-0050-bounded-sse-replay.md docs/qa/2026-10-22-wp-e1-186/README.md packages/api-client/src/sse.test.ts packages/api-client/src/sse.ts apps/api/src/sse-completion.test.ts packages/api-client/src/sse-completion.test.ts",
+      "code": 0,
+      "started": "2026-10-24T15:28:26.513Z",
+      "ended": "2026-10-24T15:28:32.027Z",
+      "log": ".tmp/r4-prettier.log.txt"
+    },
+    {
+      "name": "typecheck-corrected",
+      "command": "pnpm.cmd typecheck",
+      "code": 0,
+      "started": "2026-10-24T15:30:15.215Z",
+      "ended": "2026-10-24T15:31:39.330Z",
+      "log": ".tmp/r4-typecheck-corrected.log.txt"
+    },
+    {
+      "name": "lint-corrected",
+      "command": "pnpm.cmd lint",
+      "code": 0,
+      "started": "2026-10-24T15:31:39.332Z",
+      "ended": "2026-10-24T15:33:30.288Z",
+      "log": ".tmp/r4-lint-corrected.log.txt"
+    },
+    {
+      "name": "prettier-corrected",
+      "command": "pnpm.cmd exec prettier --check CHANGELOG.md apps/api/src/edges.test.ts apps/api/src/sse-bounds.test.ts apps/api/src/sse-catchup.test.ts apps/api/src/sse.test.ts apps/api/src/sse.ts apps/web/src/__fixtures__/fake-api.ts apps/web/src/runs/useRunEvents.test.tsx apps/web/src/runs/useRunEvents.ts docs/07-api-and-streaming.md docs/09-frontend-and-pwa.md docs/10-testing-and-quality.md docs/decisions/ADR-0050-bounded-sse-replay.md docs/qa/2026-10-22-wp-e1-186/README.md packages/api-client/src/sse.test.ts packages/api-client/src/sse.ts apps/api/src/sse-completion.test.ts packages/api-client/src/sse-completion.test.ts",
+      "code": 0,
+      "started": "2026-10-24T15:33:30.292Z",
+      "ended": "2026-10-24T15:33:35.612Z",
+      "log": ".tmp/r4-prettier-corrected.log.txt"
+    },
+    {
+      "name": "coverage-api",
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure=true",
+      "code": 0,
+      "started": "2026-10-24T15:33:35.613Z",
+      "ended": "2026-10-24T15:37:41.070Z",
+      "log": ".tmp/r4-coverage-api.log.txt",
+      "coverage": {
+        "lines": {
+          "total": 1994,
+          "covered": 1950,
+          "skipped": 0,
+          "pct": 97.79
+        },
+        "statements": {
+          "total": 2227,
+          "covered": 2139,
+          "skipped": 0,
+          "pct": 96.04
+        },
+        "functions": {
+          "total": 437,
+          "covered": 411,
+          "skipped": 0,
+          "pct": 94.05
+        },
+        "branches": {
+          "total": 1483,
+          "covered": 1374,
+          "skipped": 0,
+          "pct": 92.65
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    },
+    {
+      "name": "coverage-client",
+      "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage --coverage.reportOnFailure=true",
+      "code": 0,
+      "started": "2026-10-24T15:37:41.073Z",
+      "ended": "2026-10-24T15:38:07.644Z",
+      "log": ".tmp/r4-coverage-client.log.txt",
+      "coverage": {
+        "lines": {
+          "total": 268,
+          "covered": 268,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 307,
+          "covered": 305,
+          "skipped": 0,
+          "pct": 99.34
+        },
+        "functions": {
+          "total": 93,
+          "covered": 93,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 183,
+          "covered": 180,
+          "skipped": 0,
+          "pct": 98.36
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": "Unknown"
+        }
+      }
+    },
+    {
+      "name": "coverage-web",
+      "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 --coverage.reportOnFailure=true",
+      "code": 1,
+      "started": "2026-10-24T15:38:07.646Z",
+      "ended": "2026-10-24T16:12:12.330Z",
+      "log": ".tmp/r4-coverage-web.log.txt",
+      "coverage": {
+        "lines": {
+          "total": 7528,
+          "covered": 7447,
+          "skipped": 0,
+          "pct": 98.92
+        },
+        "statements": {
+          "total": 8711,
+          "covered": 8538,
+          "skipped": 0,
+          "pct": 98.01
+        },
+        "functions": {
+          "total": 2303,
+          "covered": 2268,
+          "skipped": 0,
+          "pct": 98.48
+        },
+        "branches": {
+          "total": 8148,
+          "covered": 7735,
+          "skipped": 0,
+          "pct": 94.93
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    },
+    {
+      "name": "build",
+      "command": "pnpm.cmd build",
+      "code": 0,
+      "started": "2026-10-24T16:12:12.335Z",
+      "ended": "2026-10-24T16:12:43.246Z",
+      "log": ".tmp/r4-build.log.txt"
+    },
+    {
+      "name": "transport-after",
+      "command": "node --experimental-import-meta-resolve .tmp/r4-transport-probe.mjs .tmp/r4-after",
+      "code": 0,
+      "started": "2026-10-24T16:12:43.248Z",
+      "ended": "2026-10-24T16:12:55.851Z",
+      "log": ".tmp/r4-transport-after.log.txt"
+    },
+    {
+      "name": "corruption-after",
+      "command": "node --experimental-import-meta-resolve .tmp/r4-initial-corruption-probe.mjs .tmp/r4-after",
+      "code": 0,
+      "started": "2026-10-24T16:12:55.853Z",
+      "ended": "2026-10-24T16:13:03.634Z",
+      "log": ".tmp/r4-corruption-after.log.txt"
+    },
+    {
+      "name": "typecheck-final",
+      "command": "pnpm.cmd typecheck",
+      "code": 0,
+      "started": "2026-10-24T16:17:08.347Z",
+      "ended": "2026-10-24T16:19:02.517Z",
+      "log": ".tmp/r4-typecheck-final.log.txt"
+    },
+    {
+      "name": "lint-final",
+      "command": "pnpm.cmd lint",
+      "code": 0,
+      "started": "2026-10-24T16:19:02.520Z",
+      "ended": "2026-10-24T16:21:42.763Z",
+      "log": ".tmp/r4-lint-final.log.txt"
+    },
+    {
+      "name": "prettier-final",
+      "command": "pnpm.cmd exec prettier --check CHANGELOG.md apps/api/src/edges.test.ts apps/api/src/sse-bounds.test.ts apps/api/src/sse-catchup.test.ts apps/api/src/sse.test.ts apps/api/src/sse.ts apps/web/src/__fixtures__/fake-api.ts apps/web/src/runs/useRunEvents.test.tsx apps/web/src/runs/useRunEvents.ts docs/07-api-and-streaming.md docs/09-frontend-and-pwa.md docs/10-testing-and-quality.md docs/decisions/ADR-0050-bounded-sse-replay.md docs/qa/2026-10-22-wp-e1-186/README.md packages/api-client/src/sse.test.ts packages/api-client/src/sse.ts apps/api/src/sse-completion.test.ts packages/api-client/src/sse-completion.test.ts apps/web/src/runs/RunInspectorPage.test.tsx",
+      "code": 0,
+      "started": "2026-10-24T16:21:42.765Z",
+      "ended": "2026-10-24T16:21:48.987Z",
+      "log": ".tmp/r4-prettier-final.log.txt"
+    },
+    {
+      "name": "coverage-web-final",
+      "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 --coverage.reportOnFailure=true",
+      "code": 0,
+      "started": "2026-10-24T16:21:48.990Z",
+      "ended": "2026-10-24T17:03:35.822Z",
+      "log": ".tmp/r4-coverage-web-final.log.txt",
+      "coverage": {
+        "lines": {
+          "total": 7528,
+          "covered": 7448,
+          "skipped": 0,
+          "pct": 98.93
+        },
+        "statements": {
+          "total": 8711,
+          "covered": 8539,
+          "skipped": 0,
+          "pct": 98.02
+        },
+        "functions": {
+          "total": 2303,
+          "covered": 2268,
+          "skipped": 0,
+          "pct": 98.48
+        },
+        "branches": {
+          "total": 8148,
+          "covered": 7738,
+          "skipped": 0,
+          "pct": 94.96
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    },
+    {
+      "name": "tokens",
+      "command": "pnpm.cmd check:tokens",
+      "code": 0,
+      "started": "2026-10-24T16:24:26.503Z",
+      "ended": "2026-10-24T16:24:27.856Z",
+      "log": ".tmp/r4-tokens.log.txt"
+    },
+    {
+      "name": "browser",
+      "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/qa.spec.ts --grep \"streams 1,200 harness items\" --output \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-e1-186-r4-browser-6oPqEP\" --retries=0",
+      "code": 1,
+      "started": "2026-10-24T16:24:27.858Z",
+      "ended": "2026-10-24T16:25:13.881Z",
+      "log": ".tmp/r4-browser.log.txt"
+    },
+    {
+      "name": "browser-qa-alone",
+      "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/qa.spec.ts --grep \"streams\" --output \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-e1-186-r4-browser-qa-alone-PmHRpA\" --retries=0",
+      "code": 1,
+      "started": "2026-10-24T16:29:52.153Z",
+      "ended": "2026-10-24T16:31:06.649Z",
+      "log": ".tmp/r4-browser-qa-alone.log.txt"
+    },
+    {
+      "name": "browser-inspector",
+      "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/inspector-large-values.spec.ts --grep \"large values stay bounded\" --output \"%USERPROFILE%\\AppData\\Local\\Temp\\gg-wp-e1-186-r4-browser-inspector-JrLCdP\" --retries=0",
+      "code": 0,
+      "started": "2026-10-24T16:31:06.654Z",
+      "ended": "2026-10-24T16:31:24.243Z",
+      "log": ".tmp/r4-browser-inspector.log.txt"
+    }
+  ],
+  "finalSourceFiles": [
+    "CHANGELOG.md",
+    "apps/api/src/edges.test.ts",
+    "apps/api/src/sse-bounds.test.ts",
+    "apps/api/src/sse-catchup.test.ts",
+    "apps/api/src/sse.test.ts",
+    "apps/api/src/sse.ts",
+    "apps/web/src/__fixtures__/fake-api.ts",
+    "apps/web/src/runs/useRunEvents.test.tsx",
+    "apps/web/src/runs/useRunEvents.ts",
+    "docs/07-api-and-streaming.md",
+    "docs/09-frontend-and-pwa.md",
+    "docs/10-testing-and-quality.md",
+    "docs/decisions/ADR-0050-bounded-sse-replay.md",
+    "docs/qa/2026-10-22-wp-e1-186/README.md",
+    "packages/api-client/src/sse.test.ts",
+    "packages/api-client/src/sse.ts",
+    "apps/api/src/sse-completion.test.ts",
+    "packages/api-client/src/sse-completion.test.ts",
+    "apps/web/src/runs/RunInspectorPage.test.tsx"
+  ],
+  "finalSourceSnapshot": ".tmp/r4-source-frozen.json",
+  "inspectorCorrection": "The original web invocation tested obsolete no-reopen assertions; two updated cases now require cursor confirmation and durable audit catch-up. Production source is unchanged."
+}

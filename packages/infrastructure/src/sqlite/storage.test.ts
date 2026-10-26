@@ -2,7 +2,10 @@ import type { Client } from '@libsql/client';
 import type * as Libsql from '@libsql/client';
 import { rm } from 'node:fs/promises';
 import { SqliteTriggerAdmission } from './admission.js';
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  shippedSqlMigrationCount,
+} from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -171,11 +174,38 @@ describe('SqliteRunRepository', () => {
     expect(updated.outcome).toBe('success');
 
     const next = { ...thread, vars: { changed: true } };
-    await repo.saveThread(run.id, next);
+    // A pre-state snapshot is unsequenced storage, never a new port write.
+    await handle.client.execute({
+      sql: 'UPDATE runs SET thread_snapshot = ? WHERE id = ?',
+      args: [JSON.stringify(next), run.id],
+    });
     expect((await repo.getThread(run.id))?.vars).toEqual({ changed: true });
     expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
-    await repo.saveThread(run.id, next, 7);
-    expect(await repo.getThreadCheckpoint(run.id)).toEqual({ thread: next, seq: 7 });
+    await repo.saveThread(run.id, next, 7, { strict: true, openNodeId: 'work' });
+    expect(await repo.getThreadCheckpoint(run.id)).toEqual({
+      thread: next,
+      seq: 7,
+      replayState: { strict: true, openNodeId: 'work' },
+    });
+    await repo.saveThread(run.id, next, 7, { strict: true });
+    expect((await repo.getThreadCheckpoint(run.id))?.replayState).toEqual({ strict: true });
+    // The stored state is the bounded read's proof, so damage is refused, never trusted.
+    for (const damaged of [
+      '{',
+      'null',
+      '[]',
+      '{"strict":"yes"}',
+      '{"strict":true,"openNodeId":3}',
+      '{"strict":true,"extra":1}',
+    ]) {
+      await handle.client.execute({
+        sql: 'UPDATE runs SET thread_snapshot_replay_state = ? WHERE id = ?',
+        args: [damaged, run.id],
+      });
+      await expect(repo.getThreadCheckpoint(run.id)).rejects.toThrow(
+        /thread_snapshot_replay_state/,
+      );
+    }
     await repo.clearThreadSnapshot(run.id);
     expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
     expect(await repo.getThread(run.id)).toBeUndefined();
@@ -314,8 +344,8 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Fifteen shipped migrations minus this fixture's two historical ledger entries.
-      expect(await current.pendingMigrations()).toBe(13);
+      // All shipped SQL minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 2);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
@@ -860,9 +890,8 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
-      // historical catalog migrations.
-      expect(await current.pendingMigrations()).toBe(12);
+      // All shipped SQL after the fixture's three historical catalog migrations.
+      expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 3);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);

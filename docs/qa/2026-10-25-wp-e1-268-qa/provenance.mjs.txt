@@ -1,0 +1,13 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { join } from 'node:path';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const sha=s=>createHash('sha256').update(s).digest('hex');
+const baseline=execFileSync('git',['show','c923b7d3:packages/engine/src/run-manager.ts']);
+const current=execFileSync('git',['show','HEAD:packages/engine/src/run-manager.ts']);
+const source=await readFile(join(out,'baseline-run-manager.ts.txt'));
+if(!baseline.equals(source))throw Error('Retained baseline is not the exact Git source');
+const record={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),base:execFileSync('git',['rev-parse','c923b7d3'],{encoding:'utf8'}).trim(),baselineSourceSha256:sha(source),headSourceSha256:sha(current),baselineCompiledSha256:sha(await readFile(join(out,'baseline-run-manager.mjs.txt'))),rank1OnlyCompiledSha256:sha(await readFile(join(out,'rank1-run-manager.mjs.txt'))),compilerOptions:{target:'ES2022',module:'ES2022'},method:'Immutable baseline RunManager compiled from Git and supplied at its original module URL by ESM loader; no production source/dist file mutation. Rank-1-only variant changes precisely helper import and finalization call. Current supporting modules match base outside the new helpers (see tested diff). environment.commit in measure summaries remains the pinned checkout head; performance-runs.json supplies runtime variant.',trackedChanges:execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split('\n').filter(Boolean)};
+await writeFile(join(out,'baseline-provenance.json'),JSON.stringify(record,null,2)+'\n');
+console.log('BASELINE_PROVENANCE_PASS');

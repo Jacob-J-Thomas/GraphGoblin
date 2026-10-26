@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {fork,spawn} from 'node:child_process';
+const root=process.env.QA_ROOT,out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa'),src=dirname(fileURLToPath(import.meta.url));
+const data=await mkdtemp(join(tmpdir(),'gg-qa-g1-116-tail-')),port=5872,result={dataDir:data,port,checks:[]},pending=new Map();let token,proc,serial=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const save=(n,v)=>writeFile(join(out,n),JSON.stringify(v,null,2));
+const ctrl=(op,args)=>new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});proc.send({id,op,args});});
+async function api(path,method='GET',body){const r=await fetch('http://127.0.0.1:'+port+path,{method,headers:{Authorization:'Bearer '+token,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});const v=await r.json();assert.ok(r.ok,JSON.stringify(v));return v;}
+async function publish(def){const x=await api('/loops','POST',{definition:def});await api('/loops/'+x.loop.id+'/publish','POST');return x.loop.id;}
+const start=loop=>api('/loops/'+loop+'/runs','POST',{}).then(x=>x.run);
+async function poll(f){for(let i=0;i<300;i++){const x=await f();if(x)return x;await sleep(100);}throw Error('Scenario polling deadline');}
+const status=(id,s)=>poll(async()=>{const r=await api('/runs/'+id);return r.status===s?r:false;});
+async function check(name,f){console.log('CHECK '+name);try{const detail=await f();result.checks.push({name,pass:true,detail});console.log('PASS '+name);}catch(e){result.checks.push({name,pass:false,error:e.stack});console.log('FAIL '+name+' '+e.stack);}await save('tail-results.json',result);}
+try{
+  const cli=spawn(process.execPath,[join(root,'apps/api/dist/main.js'),'--create-api-key','qa-tail-cases'],{env:{...process.env,GG_DATA_DIR:data,GG_PORT:String(port)},windowsHide:true});let stdout='',stderr='';cli.stdout.on('data',d=>stdout+=d);cli.stderr.on('data',d=>stderr+=d);assert.equal(await new Promise(r=>cli.once('exit',r)),0,stderr);token=stdout.match(/gg_[A-Za-z0-9_-]+/)[0];
+  proc=fork(join(src,'server.mjs'),[],{env:{...process.env,QA_ROOT:root,QA_PORT:String(port),QA_DATA:data},execArgv:['--expose-gc'],silent:true,windowsHide:true});let log='';proc.stdout.on('data',d=>log+=d);proc.stderr.on('data',d=>log+=d);proc.on('exit',()=>void writeFile(join(out,'tail-server.log.txt'),log||'(No product log output.)\n'));
+  result.process=await new Promise((resolve,reject)=>{proc.on('message',m=>{if(m.ready)resolve(m);else if(m.id){const p=pending.get(m.id);if(p){pending.delete(m.id);m.error?p.reject(Error(m.error)):p.resolve(m.value);}}});proc.once('exit',c=>reject(Error('Startup exit '+c+' '+log)));});
+  const defs=await ctrl('definitions');await ctrl('start');
+  await check('run.waiting checkpoint accepts the finished wait patch from its tail',async()=>{
+    const loop=await publish(defs.wait),r=await start(loop);const waiting=await status(r.id,'waiting');await ctrl('idle');const state=await ctrl('state',{id:r.id}),boundary=state.events.find(e=>e.type==='run.waiting');await ctrl('checkpoint',{id:r.id,seq:boundary.seq});const before=await ctrl('state',{id:r.id});
+    await api('/runs/'+r.id+'/input','POST',{waitId:waiting.waiting.waitId,input:{answer:42}});await status(r.id,'succeeded');await ctrl('idle');const final=await ctrl('state',{id:r.id});await ctrl('metrics');const actual=await api('/runs/'+r.id+'/thread'),m=await ctrl('metrics');assert.deepEqual(actual,final.oracle);assert.equal(final.snapshotHash,before.snapshotHash);assert.deepEqual(m.reads.map(x=>x.after),[boundary.seq-1]);assert.equal(actual.lastOutput.value.answer,42);await save('waiting-tail.json',{boundary,beforeSnapshot:before.snapshot,final,actual,reads:m.reads});return{checkpoint:boundary.seq,finalSeq:final.record.lastEventSeq,output:actual.lastOutput,reads:m.reads};
+  });
+  const main=await publish(defs.main);
+  await check('resumed unfinished script cancellation excludes its returned patch',async()=>{
+    await ctrl('mode','fail');const r=await start(main);await status(r.id,'failed');await ctrl('idle');await ctrl('mode','hold');await api('/runs/'+r.id+'/resume','POST');await poll(()=>ctrl('held'));await api('/runs/'+r.id+'/cancel','POST');await ctrl('release');await status(r.id,'cancelled');await ctrl('idle');const before=await ctrl('state',{id:r.id}),actual=await api('/runs/'+r.id+'/thread'),after=await ctrl('state',{id:r.id});assert.deepEqual(actual,before.oracle);assert.deepEqual(actual.vars,{prepared:true});assert.equal(actual.counters.nodeVisits.work,2);assert.equal(before.snapshotHash,after.snapshotHash);assert.equal(before.recordHash,after.recordHash);assert.equal(before.eventHash,after.eventHash);await save('cancel-resumed.json',{before,actual,afterHashes:{snapshot:after.snapshotHash,record:after.recordHash,events:after.eventHash}});return{status:before.record.status,vars:actual.vars,visits:actual.counters.nodeVisits};
+  });
+  await check('resume reconciles the tail of a recovery-written run.failed checkpoint',async()=>{
+    await ctrl('mode','fail');const r=await start(main);await status(r.id,'failed');await ctrl('idle');await ctrl('stop');await ctrl('recovery-arm',r.id);await ctrl('delay',false);await ctrl('start');await status(r.id,'failed');await ctrl('idle');const checkpoint=await ctrl('state',{id:r.id});assert.equal(checkpoint.events.find(e=>e.seq===checkpoint.snapshot.thread_snapshot_seq).type,'run.failed');await ctrl('delay',true);await ctrl('mode','success');await api('/runs/'+r.id+'/resume','POST');await status(r.id,'succeeded');await ctrl('idle');const final=await ctrl('state',{id:r.id});await ctrl('metrics');const actual=await api('/runs/'+r.id+'/thread'),metrics=await ctrl('metrics');assert.deepEqual(actual,final.oracle);assert.deepEqual(actual.vars,{prepared:true,completed:true});assert.equal(actual.counters.nodeVisits.work,2);assert.equal(checkpoint.snapshotHash,final.snapshotHash);assert.ok(metrics.reads.some(r=>r.after===0));await save('recovery-tail.json',{checkpoint:checkpoint.snapshot,final,actual,reads:metrics.reads});return{checkpointSeq:checkpoint.snapshot.thread_snapshot_seq,finalSeq:final.record.lastEventSeq,reads:metrics.reads,vars:actual.vars};
+  });
+}catch(e){result.fatal=e.stack;console.log(e.stack);}
+finally{if(proc?.connected){await ctrl('release').catch(()=>{});await ctrl('close').catch(()=>proc.kill());}await save('tail-results.json',result);}

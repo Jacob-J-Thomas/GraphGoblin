@@ -1,0 +1,2251 @@
+[
+  {
+    "name": "hung template: starter",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 201,
+      "ms": 60,
+      "body": {
+        "loop": {
+          "id": "01M5CA2Y440XH4QT9Z3K2QMT6B",
+          "ownerId": "local",
+          "name": "QA template starter 1792488339535",
+          "description": "Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.",
+          "draftVersionId": "01M5CA2Y44YEVAWKRVH73W2GXX",
+          "createdAt": "2026-10-20T09:25:39.588Z",
+          "updatedAt": "2026-10-20T09:25:39.588Z"
+        },
+        "draft": {
+          "id": "01M5CA2Y44YEVAWKRVH73W2GXX",
+          "loopId": "01M5CA2Y440XH4QT9Z3K2QMT6B",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA template starter 1792488339535",
+            "description": "Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Run input and context",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "instructions",
+                "label": "Workflow instructions",
+                "ui": {
+                  "x": 270,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/instruction",
+                      "value": {
+                        "kind": "literal",
+                        "value": "Summarize the input and suggest a next step."
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "assistant",
+                "label": "Assistant",
+                "ui": {
+                  "x": 540,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "done",
+                "label": "Suggested next step",
+                "ui": {
+                  "x": 810,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "outputs.assistant.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-out-instructions",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "instructions",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "instructions-out-assistant",
+                "from": {
+                  "node": "instructions",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "assistant",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "assistant-out-done",
+                "from": {
+                  "node": "assistant",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:25:39.588Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung template: implementation",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 201,
+      "ms": 28,
+      "body": {
+        "loop": {
+          "id": "01M5CA2Y58MHP6J6M7GPB5YSM2",
+          "ownerId": "local",
+          "name": "QA template implementation 1792488339599",
+          "description": "Plan a task, develop a proposed or local change, and verify its evidence with a finite repair loop. Configure a working directory in the editor when needed.",
+          "draftVersionId": "01M5CA2Y58CS7MA360W15JZ8FG",
+          "createdAt": "2026-10-20T09:25:39.624Z",
+          "updatedAt": "2026-10-20T09:25:39.624Z"
+        },
+        "draft": {
+          "id": "01M5CA2Y58CS7MA360W15JZ8FG",
+          "loopId": "01M5CA2Y58MHP6J6M7GPB5YSM2",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA template implementation 1792488339599",
+            "description": "Plan a task, develop a proposed or local change, and verify its evidence with a finite repair loop. Configure a working directory in the editor when needed.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 3,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Run input and context",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "instructions",
+                "label": "Workflow instructions",
+                "ui": {
+                  "x": 270,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/instruction",
+                      "value": {
+                        "kind": "literal",
+                        "value": "Implement the supplied task as one bounded change. Plan first, make the change or propose a patch from supplied source, and verify what can be checked."
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "planner",
+                "label": "Plan the change",
+                "ui": {
+                  "x": 540,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nWrite a focused implementation plan with scope, steps, and concrete verification. If required task/source context is missing, identify it clearly. Read only; do not edit files.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "implementer",
+                "label": "Implement or propose the change",
+                "ui": {
+                  "x": 810,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nPlan:\n{{ outputs.planner.value | json }}\n{% if outputs.verify %}Previous verification:\n{{ outputs.verify.value | json }}\n{% endif %}\nImplement the plan in the configured working directory when source is available. Otherwise provide a concrete proposed patch or change steps and clearly state that no repository files were changed. Record only commands actually run and results actually observed; do not claim unperformed tests passed.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  },
+                  "timeoutSeconds": 900
+                }
+              },
+              {
+                "id": "verify",
+                "label": "Verify the change and evidence",
+                "ui": {
+                  "x": 1080,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nPlan:\n{{ outputs.planner.value | json }}\nImplementation:\n{{ outputs.implementer.value | json }}\n\nInspect the resulting files or proposed patch and any supplied evidence. Return status passed only when the stated task is satisfied by evidence you can assess; changes-needed for a bounded repair, or blocked when verification needs missing information or capabilities. Distinguish verified checks from proposed checks. Return the required JSON status, summary, and checks array.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": [],
+                    "schema": {
+                      "jsonSchema": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["status", "summary", "checks"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["passed", "changes-needed", "blocked"]
+                          },
+                          "summary": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "checks": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "maxItems": 32
+                          }
+                        }
+                      },
+                      "native": true,
+                      "repair": {
+                        "enabled": true,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      }
+                    }
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "verification",
+                "label": "Verification outcome",
+                "ui": {
+                  "x": 1350,
+                  "y": 0
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "outputs.verify.value.status",
+                  "routes": [
+                    {
+                      "id": "passed",
+                      "label": "passed"
+                    },
+                    {
+                      "id": "changes-needed",
+                      "label": "changes-needed"
+                    },
+                    {
+                      "id": "blocked",
+                      "label": "blocked"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Change evidence ready",
+                "ui": {
+                  "x": 1620,
+                  "y": -160
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "outputs.verify.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "blocked",
+                "label": "Verification blocked",
+                "ui": {
+                  "x": 1620,
+                  "y": 160
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "outputs.verify.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry",
+                "label": "Repeat gate",
+                "ui": {
+                  "x": 1080,
+                  "y": 300
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"repeat\"",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "repeat",
+                      "label": "Repeat",
+                      "repeat": true
+                    },
+                    {
+                      "id": "finish",
+                      "label": "Finish"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry-complete",
+                "label": "Complete",
+                "ui": {
+                  "x": 1350,
+                  "y": 300
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "outputs.verify.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry-exhausted",
+                "label": "Limit reached",
+                "ui": {
+                  "x": 1350,
+                  "y": 460
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "outputs.verify.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-out-instructions",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "instructions",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "instructions-out-planner",
+                "from": {
+                  "node": "instructions",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "planner",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "planner-out-implementer",
+                "from": {
+                  "node": "planner",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "implementer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "implementer-out-verify",
+                "from": {
+                  "node": "implementer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "verify",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verify-out-verification",
+                "from": {
+                  "node": "verify",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "verification",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verification-passed-done",
+                "from": {
+                  "node": "verification",
+                  "port": "passed"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verification-blocked-blocked",
+                "from": {
+                  "node": "verification",
+                  "port": "blocked"
+                },
+                "to": {
+                  "node": "blocked",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verification-changes-needed-retry",
+                "from": {
+                  "node": "verification",
+                  "port": "changes-needed"
+                },
+                "to": {
+                  "node": "retry",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-repeat",
+                "from": {
+                  "node": "retry",
+                  "port": "repeat"
+                },
+                "to": {
+                  "node": "implementer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-complete",
+                "from": {
+                  "node": "retry",
+                  "port": "finish"
+                },
+                "to": {
+                  "node": "retry-complete",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-exhausted",
+                "from": {
+                  "node": "retry",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "retry-exhausted",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:25:39.624Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung template: review",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 201,
+      "ms": 27,
+      "body": {
+        "loop": {
+          "id": "01M5CA2Y6564HMFK1GS5ZZCX3G",
+          "ownerId": "local",
+          "name": "QA template review 1792488339630",
+          "description": "Review supplied code or change context, propose or apply focused fixes, and review again with a finite iteration limit. This workflow does not grant merge authority.",
+          "draftVersionId": "01M5CA2Y65N2KYV427N2597AGF",
+          "createdAt": "2026-10-20T09:25:39.653Z",
+          "updatedAt": "2026-10-20T09:25:39.653Z"
+        },
+        "draft": {
+          "id": "01M5CA2Y65N2KYV427N2597AGF",
+          "loopId": "01M5CA2Y6564HMFK1GS5ZZCX3G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA template review 1792488339630",
+            "description": "Review supplied code or change context, propose or apply focused fixes, and review again with a finite iteration limit. This workflow does not grant merge authority.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 3,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Run input and context",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "instructions",
+                "label": "Workflow instructions",
+                "ui": {
+                  "x": 270,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/instruction",
+                      "value": {
+                        "kind": "literal",
+                        "value": "Review the supplied change for correctness, regressions, maintainability, and focused verification. Fix actionable findings within the supplied scope."
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "reviewer",
+                "label": "Review the change",
+                "ui": {
+                  "x": 540,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\n{% if outputs.fixer %}Latest fix and evidence:\n{{ outputs.fixer.value | json }}\n{% endif %}\nReview supplied source/change context and accessible files. Return approved only when this review found no remaining actionable findings and its scope has enough evidence. Missing source or indispensable verification means blocked. Return changes-needed for actionable findings. This approval is a review opinion, not authenticated GitHub approval, CI proof, or permission to merge. Return the required JSON status, summary, and findings array.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": [],
+                    "schema": {
+                      "jsonSchema": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["status", "summary", "findings"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["approved", "changes-needed", "blocked"]
+                          },
+                          "summary": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "maxItems": 32
+                          }
+                        }
+                      },
+                      "native": true,
+                      "repair": {
+                        "enabled": true,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      }
+                    }
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "verdict",
+                "label": "Review outcome",
+                "ui": {
+                  "x": 810,
+                  "y": 0
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "outputs.reviewer.value.status",
+                  "routes": [
+                    {
+                      "id": "approved",
+                      "label": "approved"
+                    },
+                    {
+                      "id": "changes-needed",
+                      "label": "changes-needed"
+                    },
+                    {
+                      "id": "blocked",
+                      "label": "blocked"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "fixer",
+                "label": "Fix or propose focused repairs",
+                "ui": {
+                  "x": 810,
+                  "y": 300
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nReview findings:\n{{ outputs.reviewer.value | json }}\n\nAddress only these actionable findings. Edit accessible source in the configured working directory, or provide a concrete proposed patch when source is supplied as input. Explain what changed and which checks actually ran. Do not invent missing repository details or claim unperformed checks passed.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  },
+                  "timeoutSeconds": 900
+                }
+              },
+              {
+                "id": "retry",
+                "label": "Repeat gate",
+                "ui": {
+                  "x": 540,
+                  "y": 300
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"repeat\"",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "repeat",
+                      "label": "Repeat",
+                      "repeat": true
+                    },
+                    {
+                      "id": "finish",
+                      "label": "Finish"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Review opinion ready",
+                "ui": {
+                  "x": 1080,
+                  "y": -160
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "outputs.reviewer.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "blocked",
+                "label": "Review blocked",
+                "ui": {
+                  "x": 1080,
+                  "y": 160
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "outputs.reviewer.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry-complete",
+                "label": "Complete",
+                "ui": {
+                  "x": 810,
+                  "y": 300
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "outputs.reviewer.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry-exhausted",
+                "label": "Limit reached",
+                "ui": {
+                  "x": 810,
+                  "y": 460
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "outputs.reviewer.value",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-out-instructions",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "instructions",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "instructions-out-reviewer",
+                "from": {
+                  "node": "instructions",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "reviewer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "reviewer-out-verdict",
+                "from": {
+                  "node": "reviewer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "verdict",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verdict-approved-done",
+                "from": {
+                  "node": "verdict",
+                  "port": "approved"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verdict-blocked-blocked",
+                "from": {
+                  "node": "verdict",
+                  "port": "blocked"
+                },
+                "to": {
+                  "node": "blocked",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "verdict-changes-needed-fixer",
+                "from": {
+                  "node": "verdict",
+                  "port": "changes-needed"
+                },
+                "to": {
+                  "node": "fixer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "fixer-out-retry",
+                "from": {
+                  "node": "fixer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "retry",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-repeat",
+                "from": {
+                  "node": "retry",
+                  "port": "repeat"
+                },
+                "to": {
+                  "node": "reviewer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-complete",
+                "from": {
+                  "node": "retry",
+                  "port": "finish"
+                },
+                "to": {
+                  "node": "retry-complete",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-exhausted",
+                "from": {
+                  "node": "retry",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "retry-exhausted",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:25:39.653Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung template: qa",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 201,
+      "ms": 30,
+      "body": {
+        "loop": {
+          "id": "01M5CA2Y75978W9364ZEH73BEF",
+          "ownerId": "local",
+          "name": "QA template qa 1792488339660",
+          "description": "Define acceptance criteria, assess supplied test evidence, and challenge the assessment with one bounded rerun. This worksheet supplies neither authenticated post-merge proof nor enforced isolation.",
+          "draftVersionId": "01M5CA2Y75BNPMJXKJ8MFTEH8K",
+          "createdAt": "2026-10-20T09:25:39.685Z",
+          "updatedAt": "2026-10-20T09:25:39.685Z"
+        },
+        "draft": {
+          "id": "01M5CA2Y75BNPMJXKJ8MFTEH8K",
+          "loopId": "01M5CA2Y75978W9364ZEH73BEF",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA template qa 1792488339660",
+            "description": "Define acceptance criteria, assess supplied test evidence, and challenge the assessment with one bounded rerun. This worksheet supplies neither authenticated post-merge proof nor enforced isolation.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 2,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Run input and context",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "instructions",
+                "label": "Workflow instructions",
+                "ui": {
+                  "x": 270,
+                  "y": 0
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/instruction",
+                      "value": {
+                        "kind": "literal",
+                        "value": "Assess the supplied change and test evidence against explicit acceptance criteria. Report observed results, gaps, and risks honestly."
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "criteria",
+                "label": "Define acceptance criteria",
+                "ui": {
+                  "x": 540,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nWrite concrete acceptance criteria and a feasible test/evidence plan for the supplied task or change. Distinguish required evidence from assumptions. This is an evidence worksheet, not an authenticated post-merge QA pipeline.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "qa",
+                "label": "Assess test evidence",
+                "ui": {
+                  "x": 810,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nAcceptance criteria:\n{{ outputs.criteria.value | json }}\n{% if outputs.adversary %}Previous challenge:\n{{ outputs.adversary.value | json }}\n{% endif %}\nAssess supplied evidence and accessible files. You may perform read-only checks in the configured working directory. Report only observed tests and results. Missing evidence means inconclusive, failed behavior means fail, and pass requires sufficient observed evidence for every criterion. Do not claim enforced isolation, authenticated GitHub proof, or that this worksheet satisfies an automated post-merge gate. Return the required JSON status, summary, and evidence array.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": [],
+                    "schema": {
+                      "jsonSchema": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["status", "summary", "evidence"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["pass", "fail", "inconclusive"]
+                          },
+                          "summary": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "evidence": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "maxItems": 32
+                          }
+                        }
+                      },
+                      "native": true,
+                      "repair": {
+                        "enabled": true,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      }
+                    }
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "adversary",
+                "label": "Challenge the assessment",
+                "ui": {
+                  "x": 1080,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nAcceptance criteria:\n{{ outputs.criteria.value | json }}\nQA assessment:\n{{ outputs.qa.value | json }}\n\nChallenge unsupported conclusions, missing evidence, and invalid test reasoning. Return sound when this assessment is justified by the evidence, unsound when a bounded reassessment can repair it, or inconclusive when essential evidence is missing. Your read-only sandbox is not an enforced evidence-only isolation boundary. This opinion cannot reopen issues, relabel work, approve a merge, or create authenticated proof. Return the required JSON assessment and summary.\n"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never",
+                    "networkAccess": false,
+                    "webSearch": false
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": [],
+                    "schema": {
+                      "jsonSchema": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["assessment", "summary"],
+                        "properties": {
+                          "assessment": {
+                            "type": "string",
+                            "enum": ["sound", "unsound", "inconclusive"]
+                          },
+                          "summary": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      "native": true,
+                      "repair": {
+                        "enabled": true,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      }
+                    }
+                  },
+                  "timeoutSeconds": 300
+                }
+              },
+              {
+                "id": "assessment",
+                "label": "Evidence assessment outcome",
+                "ui": {
+                  "x": 1350,
+                  "y": 0
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "outputs.adversary.value.assessment = 'sound' and outputs.qa.value.status = 'pass' ? 'passed' : (outputs.adversary.value.assessment = 'unsound' ? 'retry' : 'blocked')",
+                  "routes": [
+                    {
+                      "id": "passed",
+                      "label": "passed"
+                    },
+                    {
+                      "id": "retry",
+                      "label": "retry"
+                    },
+                    {
+                      "id": "blocked",
+                      "label": "blocked"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Evidence assessment ready",
+                "ui": {
+                  "x": 1620,
+                  "y": -160
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "blocked",
+                "label": "Evidence missing or failed",
+                "ui": {
+                  "x": 1620,
+                  "y": 160
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry",
+                "label": "Repeat gate",
+                "ui": {
+                  "x": 810,
+                  "y": 300
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"repeat\"",
+                  "maxPasses": 2,
+                  "routes": [
+                    {
+                      "id": "repeat",
+                      "label": "Repeat",
+                      "repeat": true
+                    },
+                    {
+                      "id": "finish",
+                      "label": "Finish"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry-complete",
+                "label": "Complete",
+                "ui": {
+                  "x": 1080,
+                  "y": 300
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retry-exhausted",
+                "label": "Limit reached",
+                "ui": {
+                  "x": 1080,
+                  "y": 460
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-out-instructions",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "instructions",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "instructions-out-criteria",
+                "from": {
+                  "node": "instructions",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "criteria",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "criteria-out-qa",
+                "from": {
+                  "node": "criteria",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "qa",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "qa-out-adversary",
+                "from": {
+                  "node": "qa",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "adversary",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "adversary-out-assessment",
+                "from": {
+                  "node": "adversary",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "assessment",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "assessment-passed-done",
+                "from": {
+                  "node": "assessment",
+                  "port": "passed"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "assessment-retry-retry",
+                "from": {
+                  "node": "assessment",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "retry",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "assessment-blocked-blocked",
+                "from": {
+                  "node": "assessment",
+                  "port": "blocked"
+                },
+                "to": {
+                  "node": "blocked",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-repeat",
+                "from": {
+                  "node": "retry",
+                  "port": "repeat"
+                },
+                "to": {
+                  "node": "qa",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-complete",
+                "from": {
+                  "node": "retry",
+                  "port": "finish"
+                },
+                "to": {
+                  "node": "retry-complete",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "retry-exhausted",
+                "from": {
+                  "node": "retry",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "retry-exhausted",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:25:39.685Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "Codex-only hang deadline",
+    "expected": "Codex unknown after 15-second deadline; Claude ready",
+    "actual": {
+      "status": 200,
+      "ms": 15313,
+      "body": {
+        "items": [
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: publish valid draft",
+    "expected": {
+      "state": "ready",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 1742,
+      "body": {
+        "version": {
+          "id": "01M5CA3D77200B9GX9AEDNXS1E",
+          "loopId": "01M5CA3D77KPQRD3Q27SWSR6DH",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA claude 1792488355036",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer2",
+                "label": "Work 2",
+                "ui": {
+                  "x": 780,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer2",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "infer2",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:25:55.047Z",
+          "publishedAt": "2026-10-20T09:25:56.791Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "auth: publish valid draft",
+    "expected": {
+      "state": "auth",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 2780,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "old: publish valid draft",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 1847,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-model: publish valid draft",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 1675,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-effort: publish valid draft",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 2180,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "quota: publish valid draft",
+    "expected": {
+      "state": "quota",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 3172,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "transport: publish valid draft",
+    "expected": {
+      "state": "transport",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 1495,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "unknown: publish valid draft",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 2360,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hang: publish valid draft",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 21298,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing CLI: publish valid draft",
+    "expected": "422 CLI_MISSING readiness issues",
+    "actual": {
+      "status": 422,
+      "ms": 19,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "final API shutdown",
+    "expected": "stopped",
+    "actual": {
+      "ms": 18,
+      "exit": null,
+      "signal": "SIGTERM",
+      "stopped": true
+    },
+    "pass": true
+  }
+]

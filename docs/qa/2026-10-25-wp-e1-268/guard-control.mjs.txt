@@ -1,0 +1,76 @@
+// Public engine control for rank 3; same long-loop definition and streamed items, fake persistence.
+// It separates fresh-entry CPU from shared-host SQLite/serialization noise. No private access.
+import { Session } from 'node:inspector';
+import { cpus, freemem } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { dependency, definition, root } from '../tooling/perf/common.mjs';
+import { equivalence } from '../tooling/perf/equivalence.mjs';
+const { RunManager } = await dependency('@graphgoblin/engine');
+const { createFakePorts, DEFAULT_TEST_SETTINGS, FakeHarness } = await dependency('@graphgoblin/engine/testing');
+const { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } = await dependency('@graphgoblin/contracts');
+const output = resolve(process.argv[2]);
+await mkdir(output, { recursive: true });
+const hostBefore = cpus().map(({ times }) => times);
+const record = { workload: 'engine-control', command: process.argv.slice(1), environment: { node: process.version, cpu: cpus()[0].model, logicalCpus: cpus().length, freeRamBefore: freemem(), evidence: 'Controlled public RunManager with fake ports; not SQLite/API throughput or native recovery evidence' }, cases: [] };
+class Producer extends FakeHarness {
+  sequence = 0;
+  start(request, signal) {
+    const turn = ++this.sequence;
+    this.script([{ items: [0, 1].map((index) => ({ id: `turn-${turn}-item-${index}`, type: 'message', summary: 'x'.repeat(120) })), finalText: 'OK' }]);
+    return super.start(request, signal);
+  }
+}
+const session = new Session();
+session.connect();
+const post = (method, params = {}) => new Promise((resolve, reject) => session.post(method, params, (error, value) => error ? reject(error) : resolve(value)));
+await post('Profiler.enable');
+await post('Profiler.setSamplingInterval', { interval: 1000 });
+await post('Profiler.start');
+for (const passes of [100, 1000, 10000]) {
+  const ports = createFakePorts();
+  const harness = new Producer();
+  ports.harnesses.codex = harness;
+  const loopId = ports.ids.next();
+  ports.loops.add({ id: ports.ids.next(), loopId, version: 1, status: 'published', createdAt: ports.clock.now().toISOString(), definition: LoopDefinitionSchema.parse(definition(CURRENT_DEFINITION_FORMAT, { passes, contextBytes: 128 })) });
+  const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+  await manager.start();
+  global.gc();
+  const cpuBefore = process.cpuUsage(), at = performance.now(), startUs = Number(process.hrtime.bigint() / 1000n);
+  const admitted = await manager.startRun({ ownerId: 'local', loopId, source: 'manual.api' });
+  await manager.waitForIdle();
+  const endUs = Number(process.hrtime.bigint() / 1000n), cpu = process.cpuUsage(cpuBefore), wallMs = performance.now() - at;
+  manager.stop();
+  const events = ports.events.all(admitted.id), run = await ports.runs.get(admitted.id), thread = await manager.getThread(admitted.id);
+  const comparison = equivalence();
+  for (const event of events) comparison.event(event);
+  const starts = events.filter((event) => event.type === 'node.started' && event.nodeId === 'work');
+  const ok = run.status === 'succeeded' && events.length === 11 * passes + 8 && starts.length === passes && starts.every((event) => event.attempt === 1) && thread.counters.nodeVisits.work === passes && thread.gates.gate.passes === passes && events.at(-1).type === 'run.finished';
+  record.cases.push({ specification: { passes, items: 2, itemBytes: 120, inference: true }, wallMs, cpu, msPerPass: wallMs / passes, events: events.length, correctness: { ok, visits: thread.counters.nodeVisits, gatePasses: thread.gates.gate.passes }, equivalence: comparison.finish(thread, run), profileWindow: { startUs, endUs } });
+  if (!ok) throw new Error('Engine control correctness failed');
+  process.stderr.write('GUARD_CASE ' + passes + ' complete\n');
+}
+const { profile } = await post('Profiler.stop');
+session.disconnect();
+await writeFile(join(output, 'engine.cpuprofile'), JSON.stringify(profile));
+const nodes = new Map(profile.nodes.map((node) => [node.id, node]));
+for (const entry of record.cases) {
+  const hits = new Map();
+  let time = profile.startTime;
+  for (let i = 0; i < profile.samples.length; i++) {
+    time += profile.timeDeltas[i];
+    if (time < entry.profileWindow.startUs || time > entry.profileWindow.endUs) continue;
+    const frame = nodes.get(profile.samples[i]).callFrame;
+    const key = frame.url.replace(pathToFileURL(root).href, '') + ':' + (frame.lineNumber + 1) + ' ' + frame.functionName;
+    hits.set(key, (hits.get(key) ?? 0) + 1);
+  }
+  entry.cpuSamples = { count: [...hits.values()].reduce((a, b) => a + b, 0), guard: [...hits].filter(([key]) => key.includes(' countEntries') || key.includes('fresh-entries.js')), top: [...hits].sort((a, b) => b[1] - a[1]).slice(0, 10) };
+}
+const hostAfter = cpus().map(({ times }) => times);
+let idle = 0, total = 0;
+hostAfter.forEach((times, i) => { for (const key of Object.keys(times)) { const delta = times[key] - hostBefore[i][key]; total += delta; if (key === 'idle') idle += delta; } });
+record.environment.hostBusyFraction = 1 - idle / total;
+record.environment.freeRamAfter = freemem();
+await writeFile(join(output, 'raw-summary.json'), JSON.stringify(record, null, 2));
+await writeFile(join(output, 'summary.json'), JSON.stringify(record, null, 2));

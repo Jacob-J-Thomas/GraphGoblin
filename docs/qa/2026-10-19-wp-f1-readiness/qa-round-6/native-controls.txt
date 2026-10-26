@@ -1,0 +1,233 @@
+Built API ee0f4f40, Node 22.14.0, native tooling/fixtures/readiness-cli.cs; port 5629, disposable store, binary-created key held only in memory.
+Native 202 means admission succeeded. The fixture deliberately refuses the later model turn; that runtime failure is preserved and is not a completion pass.
+
+INVALID INITIAL COLLECTOR CONTROLS (not product failures): DELETE had an empty application/json body, then restart was measured with an admitted run still queued. See collector-corrections.txt.
+{
+  "name": "native-delete-child-during-probe",
+  "pass": false,
+  "deleted": {
+    "status": 400,
+    "ms": 6
+  },
+  "response": {
+    "status": 202,
+    "ms": 979,
+    "body": {
+      "run": {
+        "id": "01M5GPQ7EDS0WRNT9PFKMTPFGF",
+        "ownerId": "local",
+        "loopId": "01M5GPQ7AR64JB0VK3GG3MG5V2",
+        "versionId": "01M5GPQ7ARARSVR6AMS7K3MNX1",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA deleting parent",
+          "label": "QA deleting parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5GPQ7ED6R0CECN7N697NDHW",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-22T02:23:25.133Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  "before": {
+    "runs": 5,
+    "events": 37,
+    "queued": 5,
+    "markerEvents": 1,
+    "snapshots": 1
+  },
+  "after": {
+    "runs": 6,
+    "events": 38,
+    "queued": 6,
+    "markerEvents": 1,
+    "snapshots": 1
+  }
+}
+
+{
+  "name": "native-restart-preserves-admission-results",
+  "pass": false,
+  "oldPid": 57716,
+  "newPid": 21692,
+  "before": {
+    "runs": 6,
+    "events": 38,
+    "queued": 6,
+    "markerEvents": 1,
+    "snapshots": 1
+  },
+  "after": {
+    "runs": 7,
+    "events": 51,
+    "queued": 7,
+    "markerEvents": 3,
+    "snapshots": 1
+  },
+  "http": 200
+}
+
+CORRECTED NATIVE CONTROLS:
+{
+  "name": "corrected-native-delete-child-during-ready-probe",
+  "pass": true,
+  "deleted": {
+    "status": 204,
+    "ms": 74,
+    "body": ""
+  },
+  "response": {
+    "status": 404,
+    "ms": 3119,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/loop-not-found",
+      "title": "loop not found",
+      "status": 404,
+      "code": "LOOP_NOT_FOUND",
+      "detail": "loop 01M5GPZXERFWRH4B66AKAJY0XS was deleted"
+    }
+  },
+  "pendingAtDelete": true,
+  "phaseAtDelete": {
+    "claude": {
+      "callsTotal": 1,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  }
+}
+
+{
+  "name": "corrected-native-restart-after-rejected-admission",
+  "pass": true,
+  "oldPid": 47572,
+  "newPid": 5868,
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "http": 200,
+  "runs": 0
+}
+
+{
+  "name": "native-provider-free-composition-completes",
+  "pass": true,
+  "response": {
+    "status": 202,
+    "ms": 81
+  },
+  "run": {
+    "id": "01M5GQ0SEJ6C5T5GC9N0PEE4J1",
+    "ownerId": "local",
+    "loopId": "01M5GQ0S8ZMR65QXZG328AQ9QT",
+    "versionId": "01M5GQ0S8ZXFB6YFB4GYF1JDWW",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA native no-inference parent",
+      "label": "QA native no-inference parent v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GQ0SEJDMENZW4T69CR6GGN",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-22T02:28:38.482Z",
+    "startedAt": "2026-10-22T02:28:38.540Z",
+    "finishedAt": "2026-10-22T02:28:39.413Z",
+    "lastEventSeq": 17
+  },
+  "children": [
+    {
+      "id": "01M5GQ0SMYPHJYRA3HZEFG7XJK",
+      "status": "succeeded",
+      "version_id": "01M5GQ0RWWEVPDY7GNHNDQZ21P"
+    }
+  ],
+  "probes": {
+    "claude": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "limit": "Control has no inference. It does not satisfy the audit scenario successful-Claude-turn criterion."
+}
+
+{
+  "name": "corrected-api-stop",
+  "pass": true,
+  "exitCode": null,
+  "signalCode": "SIGTERM"
+}

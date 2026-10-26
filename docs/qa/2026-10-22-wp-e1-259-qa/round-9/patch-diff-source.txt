@@ -1,0 +1,18 @@
+export function patchDiff(
+  before: ContextThread,
+  after: ContextThread,
+  patch: JsonPatch,
+): PatchLine[] {
+  const read = (doc: unknown, path: string) => {
+    const hit = getAtPointer(doc, path);
+    return hit.found ? hit.value : undefined;
+  };
+  return patch.map((op) => ({
+    op: op.op,
+    path: op.path,
+    ...('from' in op ? { from: op.from } : {}),
+    before: read(before, op.path),
+    after: read(after, op.path),
+  }));
+}
+

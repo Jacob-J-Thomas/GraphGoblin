@@ -1,0 +1,4254 @@
+[
+  {
+    "name": "initial mixed draft",
+    "expected": 201,
+    "actual": {
+      "status": 201,
+      "ms": 39,
+      "body": {
+        "loop": {
+          "id": "01M5C9VS171MRB603HKYT63RGZ",
+          "ownerId": "local",
+          "name": "QA claude 1792488104952",
+          "draftVersionId": "01M5C9VS186TPHYK0WJYSDYRWE",
+          "createdAt": "2026-10-20T09:21:44.999Z",
+          "updatedAt": "2026-10-20T09:21:44.999Z"
+        },
+        "draft": {
+          "id": "01M5C9VS186TPHYK0WJYSDYRWE",
+          "loopId": "01M5C9VS171MRB603HKYT63RGZ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA claude 1792488104952",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer2",
+                "label": "Work 2",
+                "ui": {
+                  "x": 780,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer2",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "infer2",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:21:44.999Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready publication",
+    "expected": 200,
+    "actual": {
+      "status": 200,
+      "ms": 629,
+      "body": {
+        "version": {
+          "id": "01M5C9VS186TPHYK0WJYSDYRWE",
+          "loopId": "01M5C9VS171MRB603HKYT63RGZ",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA claude 1792488104952",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer2",
+                "label": "Work 2",
+                "ui": {
+                  "x": 780,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer2",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "infer2",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:21:44.999Z",
+          "publishedAt": "2026-10-20T09:21:45.636Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: harness",
+    "expected": {
+      "state": "ready",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 453,
+      "body": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: system",
+    "expected": {
+      "state": "ready",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 597,
+      "body": {
+        "ok": true,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "ready",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "ok",
+            "message": "claude 2.1.287 is installed and logged in"
+          },
+          {
+            "state": "ready",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "ok",
+            "message": "codex 0.160.0 is installed and logged in"
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: validate",
+    "expected": {
+      "state": "ready",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 430,
+      "body": {
+        "issues": [],
+        "publishable": true
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "ready: publish",
+    "expected": {
+      "state": "ready",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 6,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "auth: harness",
+    "expected": {
+      "state": "auth",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 716,
+      "body": {
+        "items": [
+          {
+            "state": "auth",
+            "ok": false,
+            "version": "0.160.0",
+            "authenticated": false,
+            "problems": [
+              "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "auth",
+            "ok": false,
+            "version": "2.1.287",
+            "authenticated": false,
+            "problems": ["Claude is not signed in. Run claude auth login, then retry preflight."],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "auth: system",
+    "expected": {
+      "state": "auth",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 1108,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "auth",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+          },
+          {
+            "state": "auth",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "auth: validate",
+    "expected": {
+      "state": "auth",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 793,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "auth: publish",
+    "expected": {
+      "state": "auth",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 6,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "auth: run",
+    "expected": {
+      "state": "auth",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 590,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_AUTH",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "auth: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_AUTH\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude is not signed in. Run claude auth login, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_AUTH\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex sign-in is missing or invalid. Run codex login, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_AUTH\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude is not signed in. Run claude auth login, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 859,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "old: harness",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 308,
+      "body": {
+        "items": [
+          {
+            "state": "cli-incompatible",
+            "ok": false,
+            "version": "0.100.0",
+            "problems": [
+              "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "cli-incompatible",
+            "ok": false,
+            "version": "2.1.284",
+            "authenticated": true,
+            "problems": [
+              "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+            ],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "old: system",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 509,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "cli-incompatible",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "state": "cli-incompatible",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "old: validate",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 293,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "old: publish",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "old: run",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 418,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "old: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 366,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-model: harness",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 248,
+      "body": {
+        "items": [
+          {
+            "state": "cli-incompatible",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "cli-incompatible",
+            "ok": false,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [
+              "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+            ],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-model: system",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 252,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "cli-incompatible",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "state": "cli-incompatible",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-model: validate",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 284,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-model: publish",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "missing-model: run",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 282,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-model: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 269,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-effort: harness",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 321,
+      "body": {
+        "items": [
+          {
+            "state": "cli-incompatible",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "cli-incompatible",
+            "ok": false,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [
+              "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+            ],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-effort: system",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 282,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "cli-incompatible",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "state": "cli-incompatible",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-effort: validate",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 262,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-effort: publish",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "missing-effort: run",
+    "expected": {
+      "state": "cli-incompatible",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 278,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing-effort: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_CLI_INCOMPATIBLE\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 291,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "quota: harness",
+    "expected": {
+      "state": "quota",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 591,
+      "body": {
+        "items": [
+          {
+            "state": "quota",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "quota",
+            "ok": false,
+            "version": "2.1.287",
+            "problems": [
+              "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "quota: system",
+    "expected": {
+      "state": "quota",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 777,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "quota",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          },
+          {
+            "state": "quota",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "quota: validate",
+    "expected": {
+      "state": "quota",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 1081,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "quota: publish",
+    "expected": {
+      "state": "quota",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 4,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "quota: run",
+    "expected": {
+      "state": "quota",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 511,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_QUOTA",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "quota: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_QUOTA\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_QUOTA\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_QUOTA\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 500,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "transport: harness",
+    "expected": {
+      "state": "transport",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 489,
+      "body": {
+        "items": [
+          {
+            "state": "transport",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "transport",
+            "ok": false,
+            "version": "2.1.287",
+            "problems": [
+              "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "transport: system",
+    "expected": {
+      "state": "transport",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 651,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "transport",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          },
+          {
+            "state": "transport",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "transport: validate",
+    "expected": {
+      "state": "transport",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 1450,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "transport: publish",
+    "expected": {
+      "state": "transport",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "transport: run",
+    "expected": {
+      "state": "transport",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 1456,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_TRANSPORT",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "transport: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_TRANSPORT\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_TRANSPORT\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_TRANSPORT\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 1115,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "unknown: harness",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 1733,
+      "body": {
+        "items": [
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "2.1.287",
+            "problems": [
+              "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "unknown: system",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 1922,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "unknown",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+          },
+          {
+            "state": "unknown",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "unknown: validate",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 2461,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "unknown: publish",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "unknown: run",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 2470,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "unknown: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_UNKNOWN\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_UNKNOWN\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_UNKNOWN\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 3446,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hang: harness",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 21671,
+      "body": {
+        "items": [
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "0.160.0",
+            "problems": [
+              "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "2.1.287",
+            "problems": [
+              "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hang: system",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 20392,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "unknown",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+          },
+          {
+            "state": "unknown",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hang: validate",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 200,
+      "ms": 20496,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hang: publish",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "hang: run",
+    "expected": {
+      "state": "unknown",
+      "oneProbePerHarness": true
+    },
+    "actual": {
+      "status": 422,
+      "ms": 20333,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hang: MCP run",
+    "expected": "HARNESS_NOT_READY HTTP 422; one probe each; no turn",
+    "actual": {
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "GraphGoblin API error HARNESS_NOT_READY (HTTP 422): Harness readiness checks failed. Fix the listed problems, then start the run again.\nerrors: [\n  {\n    \"code\": \"HARNESS_READINESS_UNKNOWN\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer0\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_UNKNOWN\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer1\",\n    \"path\": \"config.harness\",\n    \"message\": \"Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\"\n  },\n  {\n    \"code\": \"HARNESS_READINESS_UNKNOWN\",\n    \"severity\": \"warning\",\n    \"nodeId\": \"infer2\",\n    \"path\": \"config.harness\",\n    \"message\": \"Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.\"\n  }\n]"
+          }
+        ],
+        "isError": true
+      },
+      "ms": 21200,
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung Claude concurrent Codex completion",
+    "expected": "Codex login status invoked before Claude timeout",
+    "actual": {
+      "claude": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ],
+      "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+    },
+    "pass": true
+  },
+  {
+    "name": "hung drafts: create",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 201,
+      "ms": 13,
+      "body": {
+        "loop": {
+          "id": "01M5CA0ME43DG3BE7BH12RWM4Y",
+          "ownerId": "local",
+          "name": "QA codex 1792488264126",
+          "draftVersionId": "01M5CA0ME41BSZTNB8V8CQZBD1",
+          "createdAt": "2026-10-20T09:24:24.132Z",
+          "updatedAt": "2026-10-20T09:24:24.132Z"
+        },
+        "draft": {
+          "id": "01M5CA0ME41BSZTNB8V8CQZBD1",
+          "loopId": "01M5CA0ME43DG3BE7BH12RWM4Y",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA codex 1792488264126",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:24:24.132Z"
+        },
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung drafts: save",
+    "expected": "200; zero probes; no CLI wait",
+    "actual": {
+      "status": 200,
+      "ms": 15,
+      "body": {
+        "draft": {
+          "id": "01M5CA0ME41BSZTNB8V8CQZBD1",
+          "loopId": "01M5CA0ME43DG3BE7BH12RWM4Y",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA codex 1792488264126",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:24:24.132Z"
+        },
+        "draftToken": "0613694f145b15e4",
+        "issues": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung drafts: import",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 201,
+      "ms": 13,
+      "body": {
+        "loop": {
+          "id": "01M5CA0MFA9J7GAD12PQWGSZXS",
+          "ownerId": "local",
+          "name": "QA codex 1792488264126",
+          "draftVersionId": "01M5CA0MFAAEN4C92G8M0WW5H9",
+          "createdAt": "2026-10-20T09:24:24.170Z",
+          "updatedAt": "2026-10-20T09:24:24.170Z"
+        },
+        "draft": {
+          "id": "01M5CA0MFAAEN4C92G8M0WW5H9",
+          "loopId": "01M5CA0MFA9J7GAD12PQWGSZXS",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA codex 1792488264126",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-luna",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:24:24.170Z"
+        },
+        "issues": [],
+        "notices": []
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "hung drafts: template",
+    "expected": "201; zero probes; no CLI wait",
+    "actual": {
+      "status": 404,
+      "ms": 48,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/template-not-found",
+        "title": "template not found",
+        "status": 404,
+        "code": "TEMPLATE_NOT_FOUND",
+        "detail": "This template is not registered."
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "hung drafts: explicit validation",
+    "expected": "one Codex probe",
+    "actual": {
+      "status": 200,
+      "ms": 15548,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [],
+        "codex": ["--version", "exec --help", "exec resume --help", "login status"]
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "disabled catalog draft",
+    "expected": "MODEL_DISABLED; no probes",
+    "actual": {
+      "status": 201,
+      "ms": 18,
+      "body": {
+        "loop": {
+          "id": "01M5CA13TYGB79EQN6Y5PZFHWY",
+          "ownerId": "local",
+          "name": "QA claude 1792488279891",
+          "draftVersionId": "01M5CA13TYG16E0T1RZ7GZ7MVD",
+          "createdAt": "2026-10-20T09:24:39.902Z",
+          "updatedAt": "2026-10-20T09:24:39.902Z"
+        },
+        "draft": {
+          "id": "01M5CA13TYG16E0T1RZ7GZ7MVD",
+          "loopId": "01M5CA13TYGB79EQN6Y5PZFHWY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA claude 1792488279891",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer0",
+                "label": "Work 0",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "infer1",
+                "label": "Work 1",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "No provider turn"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer0",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "infer0",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer1",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer1",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-20T09:24:39.902Z"
+        },
+        "issues": [
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "message": "The selected model is disabled",
+            "nodeId": "infer0",
+            "path": "config.model"
+          },
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "message": "The selected model is disabled",
+            "nodeId": "infer1",
+            "path": "config.model"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "disabled catalog validation",
+    "expected": "MODEL_DISABLED",
+    "actual": {
+      "status": 200,
+      "ms": 7,
+      "body": {
+        "issues": [
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "message": "The selected model is disabled",
+            "nodeId": "infer0",
+            "path": "config.model"
+          },
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "message": "The selected model is disabled",
+            "nodeId": "infer1",
+            "path": "config.model"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "disabled catalog publication",
+    "expected": "422 MODEL_DISABLED",
+    "actual": {
+      "status": 422,
+      "ms": 8,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.model",
+            "message": "The selected model is disabled"
+          },
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.model",
+            "message": "The selected model is disabled"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "removed catalog draft",
+    "expected": "400 MODEL_NOT_IN_CATALOG; no probes",
+    "actual": {
+      "status": 400,
+      "ms": 14,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+        "title": "evaluation invalid configuration",
+        "status": 400,
+        "code": "EVALUATION_INVALID_CONFIGURATION",
+        "detail": "invalid evaluator or model configuration",
+        "errors": [
+          {
+            "code": "MODEL_NOT_IN_CATALOG",
+            "severity": "error",
+            "nodeId": "infer0",
+            "path": "config.model",
+            "message": "The selected model is not in the catalog"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "removed catalog validation",
+    "expected": "MODEL_NOT_IN_CATALOG",
+    "actual": {
+      "status": 200,
+      "ms": 2101,
+      "body": {
+        "issues": [
+          {
+            "code": "MODEL_NOT_IN_CATALOG",
+            "severity": "error",
+            "message": "The selected model is not in the catalog",
+            "nodeId": "infer0",
+            "path": "config.model"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "harness catalog deletion prohibited",
+    "expected": "MODEL_MANAGED_BY_HARNESS",
+    "actual": {
+      "status": 409,
+      "ms": 5,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/model-managed-by-harness",
+        "title": "model managed by harness",
+        "status": 409,
+        "code": "MODEL_MANAGED_BY_HARNESS",
+        "detail": "Harness models can only be enabled or disabled"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "CLI diagnostic precedence",
+    "expected": "syntax incompatible; connection and HTTP 500 transport",
+    "actual": [
+      {
+        "text": "error: unknown option '--network-access'",
+        "state": "cli-incompatible"
+      },
+      {
+        "text": "error: unexpected argument '--network' found",
+        "state": "cli-incompatible"
+      },
+      {
+        "text": "Failed to connect to authentication server: ECONNREFUSED",
+        "state": "transport"
+      },
+      {
+        "text": "API Error: 500 Internal server error",
+        "state": "transport"
+      },
+      {
+        "text": "stream disconnected before completion: authentication token refresh timed out",
+        "state": "transport"
+      }
+    ],
+    "pass": true
+  },
+  {
+    "name": "package Codex prerelease",
+    "expected": "ready",
+    "actual": {
+      "state": "ready",
+      "ok": true,
+      "version": "0.161.0-alpha",
+      "authenticated": true,
+      "problems": []
+    },
+    "pass": true
+  },
+  {
+    "name": "package Codex missing-resume-json",
+    "expected": "cli-incompatible naming --json",
+    "actual": {
+      "state": "cli-incompatible",
+      "ok": false,
+      "problems": [
+        "Codex CLI 0.160.0 does not list --json for exec resume. Update the Codex CLI, then retry preflight."
+      ],
+      "version": "0.160.0"
+    },
+    "pass": true
+  },
+  {
+    "name": "built API shutdown",
+    "expected": "process stops within 12s",
+    "actual": {
+      "ms": 59,
+      "exit": null,
+      "signal": "SIGTERM",
+      "stopped": true
+    },
+    "pass": true
+  },
+  {
+    "name": "same-store restart",
+    "expected": "loop persists and API key accepted",
+    "actual": {
+      "status": 200,
+      "name": "QA claude 1792488104952"
+    },
+    "pass": true
+  },
+  {
+    "name": "missing CLI: harness",
+    "expected": "cli-missing or HARNESS_READINESS_CLI_MISSING; no turn",
+    "actual": {
+      "status": 200,
+      "ms": 26,
+      "body": {
+        "items": [
+          {
+            "state": "cli-missing",
+            "ok": false,
+            "problems": [
+              "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight."
+            ],
+            "harness": "codex"
+          },
+          {
+            "state": "cli-missing",
+            "ok": false,
+            "problems": [
+              "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing CLI: system",
+    "expected": "cli-missing or HARNESS_READINESS_CLI_MISSING; no turn",
+    "actual": {
+      "status": 200,
+      "ms": 29,
+      "body": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.14.0"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "ok",
+            "message": "<profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store is writable"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "read from <profile>\\AppData\\Local\\Temp\\gg-wp-f1-qa-c4ddc9c2f4cc402a9304f4dbd593be41\\store\\master.key"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "ok",
+            "message": "reachable and migrated"
+          },
+          {
+            "state": "cli-missing",
+            "id": "harness.codex",
+            "label": "Harness codex",
+            "status": "fail",
+            "message": "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight."
+          },
+          {
+            "state": "cli-missing",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "fail",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "ok",
+            "message": "API key set (secret \"jev-api-key\")"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the model catalog"
+          },
+          {
+            "id": "default-model.claude",
+            "label": "Claude default model",
+            "status": "ok",
+            "message": "Exact Claude model and effort are configured"
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing CLI: validate",
+    "expected": "cli-missing or HARNESS_READINESS_CLI_MISSING; no turn",
+    "actual": {
+      "status": 200,
+      "ms": 27,
+      "body": {
+        "issues": [
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+            "nodeId": "infer0",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "message": "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight.",
+            "nodeId": "infer1",
+            "path": "config.harness"
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+            "nodeId": "infer2",
+            "path": "config.harness"
+          }
+        ],
+        "publishable": false
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "missing CLI: publish",
+    "expected": "cli-missing or HARNESS_READINESS_CLI_MISSING; no turn",
+    "actual": {
+      "status": 409,
+      "ms": 7,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/no-draft",
+        "title": "no draft",
+        "status": 409,
+        "code": "NO_DRAFT",
+        "detail": "the loop has no draft to publish"
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": false
+  },
+  {
+    "name": "missing CLI: run",
+    "expected": "cli-missing or HARNESS_READINESS_CLI_MISSING; no turn",
+    "actual": {
+      "status": 422,
+      "ms": 18,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "nodeId": "infer0",
+            "path": "config.harness",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "nodeId": "infer1",
+            "path": "config.harness",
+            "message": "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight."
+          },
+          {
+            "code": "HARNESS_READINESS_CLI_MISSING",
+            "severity": "warning",
+            "nodeId": "infer2",
+            "path": "config.harness",
+            "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+          }
+        ]
+      },
+      "probes": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "name": "final API shutdown",
+    "expected": "stopped",
+    "actual": {
+      "ms": 97,
+      "exit": null,
+      "signal": "SIGTERM",
+      "stopped": true
+    },
+    "pass": true
+  }
+]

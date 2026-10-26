@@ -1,0 +1,27 @@
+import {spawn} from 'node:child_process';
+import {writeFile,readFile,mkdir} from 'node:fs/promises';
+import {resolve} from 'node:path';
+const out=resolve('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2');
+await mkdir(out,{recursive:true});
+const jobs={build:'pnpm.cmd build',typecheck:'pnpm.cmd typecheck',lint:'pnpm.cmd lint',format:'pnpm.cmd format:check',layers:'pnpm.cmd check:layers',deps:'pnpm.cmd check:deps',web:'pnpm.cmd --filter @graphgoblin/web test:coverage',api:'pnpm.cmd --filter @graphgoblin/api test:coverage',infrastructure:'pnpm.cmd --filter @graphgoblin/infrastructure test:coverage',docs:'pnpm.cmd check:docs',tokens:'pnpm.cmd check:tokens'};
+const fallback={build:'node_modules\\.bin\\turbo.cmd run build',typecheck:'node_modules\\.bin\\turbo.cmd run typecheck',lint:'node_modules\\.bin\\turbo.cmd run lint',format:'node_modules\\.bin\\prettier.cmd --check .',layers:'node tooling/scripts/check-layers.mjs',deps:'node_modules\\.bin\\depcruise.cmd packages apps --config .dependency-cruiser.cjs',web:'..\\..\\node_modules\\.bin\\vitest.cmd run --coverage',api:'..\\..\\node_modules\\.bin\\vitest.cmd run --coverage',infrastructure:'..\\..\\node_modules\\.bin\\vitest.cmd run --coverage',docs:'node tooling/scripts/gen-docs.mjs --check',tokens:'node tooling/scripts/check-design-tokens.mjs'};
+const norm=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+const record=[];
+async function run(name,cmd,cwd=process.cwd()){
+ const started=new Date().toISOString();let log='';
+ const p=spawn(process.env.ComSpec,['/d','/s','/c',cmd],{cwd,env:{...process.env,PATH:process.env.APPDATA+'\\nvm\\v22.14.0;'+process.env.PATH,GG_E2E_BROWSER_CHANNEL:'msedge'},windowsHide:true});
+ p.stdout.on('data',b=>log+=b.toString());p.stderr.on('data',b=>log+=b.toString());
+ const code=await new Promise(r=>{p.on('error',e=>{log+=String(e);r(-1)});p.on('close',r)});
+ await writeFile(out+'/'+name+'.log.txt',norm('Command: '+cmd+'\nCWD: '+cwd+'\nStarted: '+started+'\n'+log+'\nExit: '+code+'\n'));
+ record.push({name,command:cmd,cwd:norm(cwd),started,finished:new Date().toISOString(),code,lock:log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')});
+ await writeFile(out+'/gates-'+process.argv[2]+'.json',JSON.stringify(record,null,2));
+ console.log(JSON.stringify(record.at(-1)));return log;
+}
+for(const name of process.argv.slice(2)){
+ const log=await run(name,jobs[name]);
+ if(log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')){
+  const cwd=['web','api'].includes(name)?resolve('apps/'+name):name==='infrastructure'?resolve('packages/infrastructure'):process.cwd();
+  await run(name+'-direct',fallback[name],cwd);
+ }
+}
+await writeFile(out+'/gates.mjs.txt',await readFile(import.meta.filename,'utf8'));

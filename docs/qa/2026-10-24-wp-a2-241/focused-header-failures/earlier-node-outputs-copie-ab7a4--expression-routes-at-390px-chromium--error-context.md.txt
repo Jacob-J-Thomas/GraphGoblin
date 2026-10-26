@@ -1,0 +1,181 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: earlier-node-outputs.spec.ts >> copied output references drive scripts and expression routes at 390px
+- Location: e2e\earlier-node-outputs.spec.ts:8:3
+
+# Error details
+
+```
+Error: expect(locator).toBeInViewport() failed
+
+Locator:  getByTestId('node-check')
+Expected: in viewport
+Received: viewport ratio 0.9999997615814209
+Timeout:  10000ms
+
+Call log:
+  - Expect "toBeInViewport" getByTestId('node-check') with timeout 10000ms
+  - waiting for getByTestId('node-check')
+    22 × locator resolved to <div data-testid="node-check" class="rounded-lg border bg-surface-raised text-xs text-default border-default shadow-2">…</div>
+       - unexpected value "viewport ratio 0.9999997615814209"
+
+```
+
+```yaml
+- text: Decision Check 43 check Yes No
+```
+
+# Test source
+
+```ts
+  1   | import type { ContextThread } from '@graphgoblin/contracts';
+  2   | import { closeNode, expect, manualTriggerConfig, openNode, test } from './fixtures.js';
+  3   | 
+  4   | for (const viewport of [
+  5   |   { width: 1440, height: 900 },
+  6   |   { width: 390, height: 844 },
+  7   | ]) {
+  8   |   test(`copied output references drive scripts and expression routes at ${viewport.width}px`, async ({
+  9   |     page,
+  10  |     request,
+  11  |     context,
+  12  |   }) => {
+  13  |     await page.setViewportSize(viewport);
+  14  |     const definition = {
+  15  |       schemaVersion: 4,
+  16  |       name: `Output references ${viewport.width}`,
+  17  |       nodes: [
+  18  |         {
+  19  |           id: 'start',
+  20  |           label: 'Start',
+  21  |           kind: 'trigger',
+  22  |           config: manualTriggerConfig(),
+  23  |           ui: { x: 0, y: 80 },
+  24  |         },
+  25  |         {
+  26  |           id: 'producer-id',
+  27  |           label: 'Produce 42',
+  28  |           kind: 'script',
+  29  |           config: { command: 'node', args: ['-e', 'console.log(42)'] },
+  30  |           ui: { x: 260, y: 80 },
+  31  |         },
+  32  |         {
+  33  |           id: 'consumer',
+  34  |           label: 'Add one',
+  35  |           kind: 'script',
+  36  |           config: { command: 'node', args: ['-e', 'console.log(Number(process.argv[1]) + 1)', ''] },
+  37  |           ui: { x: 520, y: 80 },
+  38  |         },
+  39  |         {
+  40  |           id: 'check',
+  41  |           label: 'Check 43',
+  42  |           kind: 'decision',
+  43  |           config: {
+  44  |             kind: 'expression',
+  45  |             jsonata: '"no"',
+  46  |             routes: [
+  47  |               { id: 'yes', label: 'Yes' },
+  48  |               { id: 'no', label: 'No' },
+  49  |             ],
+  50  |           },
+  51  |           ui: { x: 780, y: 80 },
+  52  |         },
+  53  |         {
+  54  |           id: 'done',
+  55  |           label: 'Done',
+  56  |           kind: 'exit',
+  57  |           config: { returns: 'outputs.consumer.value' },
+  58  |           ui: { x: 1040, y: 80 },
+  59  |         },
+  60  |         {
+  61  |           id: 'wrong',
+  62  |           label: 'Wrong value',
+  63  |           kind: 'exit',
+  64  |           config: { outcome: 'failure' },
+  65  |           ui: { x: 1040, y: 260 },
+  66  |         },
+  67  |       ],
+  68  |       edges: [
+  69  |         ['start', 'out', 'producer-id'],
+  70  |         ['producer-id', 'out', 'consumer'],
+  71  |         ['consumer', 'out', 'check'],
+  72  |         ['check', 'yes', 'done'],
+  73  |         ['check', 'no', 'wrong'],
+  74  |       ].map(([from, port, to], i) => ({
+  75  |         id: `e${i}`,
+  76  |         from: { node: from, port },
+  77  |         to: { node: to },
+  78  |       })),
+  79  |     };
+  80  |     const created = await request.post('/loops', { data: { definition } });
+  81  |     expect(created.status()).toBe(201);
+  82  |     const { loop } = (await created.json()) as { loop: { id: string } };
+  83  |     await page.goto(`/app/loops/${loop.id}/edit`);
+  84  |     await expect(page.locator('.react-flow__node')).toHaveCount(definition.nodes.length);
+  85  |     await page.evaluate(() => document.fonts.ready);
+  86  |     // Initial zoom preserves readability; explicitly fit this wide graph before authoring.
+  87  |     await page.getByRole('button', { name: 'Fit View', exact: true }).click();
+> 88  |     await expect(page.getByTestId('node-check')).toBeInViewport({ ratio: 1 });
+      |                                                  ^ Error: expect(locator).toBeInViewport() failed
+  89  |     await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+  90  |       origin: new URL(page.url()).origin,
+  91  |     });
+  92  |     let dialog = await openNode(page, 'consumer');
+  93  |     const argument = dialog.locator('[data-field="args.2"]');
+  94  |     const toggle = argument.getByRole('button', { name: 'Earlier node outputs (2)' });
+  95  |     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  96  |     await toggle.focus();
+  97  |     await page.keyboard.press('Enter');
+  98  |     await argument
+  99  |       .getByRole('button', { name: 'Copy reference for Produce 42 (producer-id)' })
+  100 |       .click();
+  101 |     await expect(argument.getByRole('status')).toHaveText(
+  102 |       'Copied {{ outputs["producer-id"].value }}',
+  103 |     );
+  104 |     await dialog.getByLabel('Args 3', { exact: true }).click();
+  105 |     await page.keyboard.press('ControlOrMeta+V');
+  106 |     await expect(dialog.getByLabel('Args 3', { exact: true })).toHaveText(
+  107 |       '{{ outputs["producer-id"].value }}',
+  108 |     );
+  109 |     await closeNode(page);
+  110 | 
+  111 |     dialog = await openNode(page, 'check');
+  112 |     const expression = dialog.locator('[data-field="jsonata"]');
+  113 |     await expression.getByRole('button', { name: 'Earlier node outputs (3)' }).click();
+  114 |     await expression.getByRole('button', { name: 'Copy reference for Add one (consumer)' }).click();
+  115 |     const editor = expression.locator('.cm-content');
+  116 |     await editor.click();
+  117 |     await page.keyboard.press('ControlOrMeta+A');
+  118 |     await page.keyboard.press('ControlOrMeta+V');
+  119 |     await page.keyboard.insertText(' = 43 ? "yes" : "no"');
+  120 |     await expect(editor).toHaveText('outputs.consumer.value = 43 ? "yes" : "no"');
+  121 |     // Wrapping the notes/reference must not introduce horizontal scrolling at phone width.
+  122 |     expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+  123 |       true,
+  124 |     );
+  125 |     await closeNode(page);
+  126 |     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  127 |     await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  128 |     await expect(page.getByText('Published version 1.')).toBeVisible();
+  129 |     await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  130 |     await page.getByRole('button', { name: 'Start run' }).click();
+  131 |     await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  132 |     const runId = new URL(page.url()).pathname.split('/').at(-1)!;
+  133 |     const response = await request.get(`/runs/${runId}/thread`);
+  134 |     expect(response.ok()).toBe(true);
+  135 |     const thread = (await response.json()) as ContextThread;
+  136 |     expect(thread.outputs['producer-id']?.value).toBe(42);
+  137 |     expect(thread.outputs['consumer']?.value).toBe(43);
+  138 |     expect(thread.outputs['check']?.value).toMatchObject({ portId: 'yes' });
+  139 |     const run = await request.get(`/runs/${runId}`);
+  140 |     expect(await run.json()).toMatchObject({ status: 'succeeded', result: 43 });
+  141 |   });
+  142 | }
+  143 | 
+```

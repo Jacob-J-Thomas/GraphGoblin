@@ -1,0 +1,29 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure=true
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --cov ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...tOnFailure=true:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 %WORKTREE%/apps/web
+      Coverage enabled with v8
+
+
+ Test Files  118 passed (118)
+      Tests  1482 passed (1482)
+   Start at  12:49:29
+   Duration  1183.14s (tests 48%, environment 28%, import 11%, setup 11%, transform 1%, worker 1%)
+
+Environment  jsdom was created 118 times · 643.06s total, 28% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98% ( 8026/8189 )
+Branches     : 94.77% ( 7151/7545 )
+Functions    : 98.45% ( 2168/2202 )
+Lines        : 98.92% ( 6982/7058 )
+================================================================================

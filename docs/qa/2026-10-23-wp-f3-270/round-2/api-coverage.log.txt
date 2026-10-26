@@ -1,0 +1,186 @@
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "test:coverage", "--coverage.reportOnFailure"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+$ vitest run --coverage --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792822854979,"pid":8652,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5611"}
+{"level":30,"time":1792822854980,"pid":8652,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5611,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-ambXDJ","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792822855198,"pid":8652,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792822855206,"pid":8652,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.305299999999988,"msg":"request completed"}
+ ❯ src/nested-readiness.test.ts (19 tests | 1 failed) 83918ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the codex executable fixture through public nested admission 20028ms
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 62363ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20101ms
+ ❯ src/main.test.ts (9 tests | 3 failed | 4 skipped) 240111ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 60485ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60323ms
+     × releases ownership after a real occupied-port listen failure 60161ms
+ ❯ src/templates/catalog-package.test.ts (4 tests | 1 failed) 28656ms
+   × ships only declared starting-point assets and removes stale files on rebuild 20019ms
+ ❯ src/structured-deadline.test.ts (7 tests | 2 failed) 23314ms
+   × API route completion handles late with the configured completion deadline 2521ms
+   × API route completion handles cancel with the configured completion deadline 3860ms
+ ❯ src/subloop-restart.test.ts (3 tests | 2 failed) 384818ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180274ms
+     × the built API recovers a child finished while down with one continuation per parent 115232ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:49:3
+     47|   }, 60_000);
+     48|
+     49|   it('serves authenticated requests using a binary-created key and ref…
+       |   ^
+     50|     const f = await fixture();
+     51|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:101:3
+     99|   }, 60_000);
+    100|
+    101|   it('releases ownership after a real occupied-port listen failure', a…
+       |   ^
+    102|     const f = await fixture();
+    103|     await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the codex executable fixture through public nested admission
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/nested-readiness.test.ts:440:40
+    438|   });
+    439|
+    440|   it.each(['claude', 'codex'] as const)(
+       |                                        ^
+    441|     'uses the %s executable fixture through public nested admission',
+    442|     async (id) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/structured-deadline.test.ts > API route completion handles late with the configured completion deadline
+ FAIL  src/structured-deadline.test.ts > API route completion handles cancel with the configured completion deadline
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/structured-deadline.test.ts:244:10
+    242|     if (mode !== 'fast')
+    243|       await expect
+    244|         .poll(
+       |          ^
+    245|           () =>
+    246|             logger.lines.filter((line) => line.msg === 'late structure…
+
+Caused by: Error: Matcher did not succeed in time.
+ ❯ src/structured-deadline.test.ts:238:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates/catalog-package.test.ts:49:1
+     47| }
+     48|
+     49| it('ships only declared starting-point assets and removes stale files …
+       | ^
+     50|   const root = await temporaryRoot();
+     51|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/triggers/github-recipe.test.ts:144:3
+    142| }
+    143| describe('documented GitHub polling recipe with a controlled local CLI…
+    144|   it('curates all pages, drains five then the tail, and retains seen k…
+       |   ^
+    145|     const fixtureData = await fixture();
+    146|     const { first, clock, id } = fixtureData;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  6 failed | 59 passed | 2 skipped (67)
+      Tests  10 failed | 1318 passed | 8 skipped (1336)
+   Start at  01:20:03
+   Duration  713.31s (tests 75%, import 19%, transform 6%)
+
+    Isolate  67 workers spawned · ~3.10s startup each (spawn + environment, per file)
+             at least ~15.76s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.61% ( 2001/2071 )
+Branches     : 93.23% ( 1295/1389 )
+Functions    : 94.74% ( 397/419 )
+Lines        : 97.94% ( 1814/1852 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\api
+
+
+{"command": ["pnpm.cmd", "--filter", "@graphgoblin/api", "test:coverage", "--coverage.reportOnFailure"], "exitCode": 1, "seconds": 727.797}

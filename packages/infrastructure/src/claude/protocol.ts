@@ -51,10 +51,11 @@ export function installedClaudeVersion(text: string): string | undefined {
 /** Newer releases must still advertise every capability required by the launch policy. */
 export function verifyInstalledCapabilities(versionText: string, helpText: string): string {
   const version = installedClaudeVersion(versionText);
+  // Each message is one detail sentence; preflight appends the next step.
   if (!version)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      'Claude CLI version unknown: required capability version identification is unavailable',
+      'Claude CLI version could not be identified.',
     );
   const parts = version.split('.').map(Number);
   const minimum = MINIMUM_CLAUDE_VERSION.split('.').map(Number);
@@ -62,14 +63,14 @@ export function verifyInstalledCapabilities(versionText: string, helpText: strin
   if (difference !== undefined && difference < 0)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      `Claude CLI ${version}: required capability minimum version ${MINIMUM_CLAUDE_VERSION} is unavailable`,
+      `Claude CLI ${version} is older than the minimum version ${MINIMUM_CLAUDE_VERSION}.`,
     );
   const advertisedFlags = helpText.split(/\s+/).map((token) => token.replace(/,$/, ''));
   const missing = REQUIRED_FLAGS.filter((flag) => !advertisedFlags.includes(flag));
   if (missing.length)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      `Claude CLI ${version}: required capabilities unavailable: ${missing.join(', ')}`,
+      `Claude CLI ${version} does not list required options: ${missing.join(', ')}.`,
     );
   return version;
 }
@@ -174,6 +175,11 @@ function usageFrom(value: unknown): Usage {
 function nativeFailure(category: unknown, status?: unknown): ClaudeHarnessError {
   if (category === 'authentication_failed' || status === 401 || status === 403)
     return new ClaudeHarnessError('HARNESS_NOT_AUTHENTICATED', 'Claude authentication failed');
+  if (category === 'quota_exceeded' || category === 'usage_limit')
+    return new ClaudeHarnessError(
+      'HARNESS_QUOTA_EXHAUSTED',
+      'Claude account quota exhausted; check the account allowance and retry when it resets',
+    );
   if (category === 'rate_limit' || status === 429)
     return new ClaudeHarnessError(
       'HARNESS_QUOTA_EXHAUSTED',
@@ -183,7 +189,13 @@ function nativeFailure(category: unknown, status?: unknown): ClaudeHarnessError 
   const transient =
     category === 'server_error' ||
     (typeof status === 'number' && Number.isInteger(status) && status >= 500 && status <= 599);
-  return new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed', transient);
+  return new ClaudeHarnessError(
+    transient ? 'HARNESS_TRANSPORT_FAILED' : 'HARNESS_TURN_FAILED',
+    transient
+      ? 'Claude connection or provider service failed; check connectivity and retry'
+      : 'Claude turn failed',
+    transient,
+  );
 }
 export interface ClaudePolicyEvidence extends ClaudePolicy {
   advertisedPluginCount: number;
@@ -197,8 +209,9 @@ export interface ClaudeAccumulatorOptions {
   resumeId?: string;
   schema?: JsonSchema;
 }
-/** Only verified init metadata can announce a session; no new delivery-proof/recovery contract. */
+/** Init identifies the session; only assistant content or a successful result proves consumption. */
 export class ClaudeAccumulator {
+  private submitted = false;
   private id: string | undefined;
   private bootstrapId: string | undefined;
   private completed: HarnessResult | undefined;
@@ -229,7 +242,10 @@ export class ClaudeAccumulator {
     if (!this.id) throw protocolError(record);
     if (record.type === 'assistant' && record.error !== undefined)
       throw nativeFailure(record.error);
-    if (record.type === 'assistant') return this.assistant(record);
+    if (record.type === 'assistant') {
+      const events = this.assistant(record);
+      return events.length ? [...this.accepted('claude.assistant'), ...events] : events;
+    }
     if (record.type === 'user') return this.toolResults(record);
     if (record.type === 'result') return this.complete(record);
     // Other post-init records carry no stored execution evidence, including future status events.
@@ -364,7 +380,7 @@ export class ClaudeAccumulator {
         structuredOutputCarrier: this.options.schema === undefined ? null : 'StructuredOutput',
         authMethod: this.evidence.authMethod,
         inputTransport: 'text',
-        promptDeliveryProof: 'unsupported',
+        promptDeliveryProof: 'assistant-or-result',
         requestedModel: this.options.model,
         requestedEffort: this.options.effort ?? null,
         effectiveEffort: null,
@@ -379,6 +395,11 @@ export class ClaudeAccumulator {
       { type: 'session', sessionId: this.id, mode: this.options.mode },
       { type: 'item', item },
     ];
+  }
+  private accepted(marker: 'claude.assistant' | 'claude.result'): HarnessEvent[] {
+    if (this.submitted) return [];
+    this.submitted = true;
+    return [{ type: 'submitted', marker }];
   }
   private item(item: Omit<HarnessItem, 'id'>, id?: string): HarnessEvent {
     if (this.items.length >= 10000)
@@ -549,6 +570,6 @@ export class ClaudeAccumulator {
       items: this.items,
       ...(this.options.schema ? { structured } : {}),
     };
-    return [{ type: 'usage', usage }, { type: 'turn-complete' }];
+    return [...this.accepted('claude.result'), { type: 'usage', usage }, { type: 'turn-complete' }];
   }
 }

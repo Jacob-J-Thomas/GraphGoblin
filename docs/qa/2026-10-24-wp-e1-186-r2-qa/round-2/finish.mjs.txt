@@ -1,0 +1,14 @@
+import{readFile,writeFile,readdir}from'node:fs/promises';
+import{execFileSync}from'node:child_process';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',brief=process.env.USERPROFILE+'/.claude/codex-runs/GraphGoblin/briefs/i01-i07';
+for(const [source,name]of[['COMMON.md','COMMON'],['QA-COMMON.md','QA-COMMON'],...['186','303','259','255','278'].map(n=>['issues/'+n+'.md','issue-'+n])]){
+ const raw=await readFile(brief+'/'+source,'utf8');await writeFile(out+'/requirements-'+name+'.txt',raw.replace(/^\uFEFF/,'').replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));
+}
+await writeFile(out+'/requirements-ADR-0050.txt',await readFile('docs/decisions/ADR-0050-bounded-sse-replay.md','utf8'));
+let excerpts='';for(const [path,a,b]of[['apps/web/src/runs/RunInspectorPage.tsx',199,209],['apps/web/src/runs/inspector/ExecutionEvidence.tsx',30,45],['packages/infrastructure/src/sqlite/events.ts',192,221],['apps/api/src/run-history.ts',1,27]]){const lines=(await readFile(path,'utf8')).split('\n');excerpts+=path+'\n'+lines.slice(a-1,b).map((l,i)=>(a+i)+': '+l).join('\n')+'\n\n';}await writeFile(out+'/source-excerpts.txt',excerpts);
+const ctl=async(path,b={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)});return{status:r.status,body:await r.json()};};
+const stopped=await ctl('/stop');let closed=false;for(let i=0;i<100;i++){try{await fetch('http://127.0.0.1:6150/healthz');}catch{closed=true;break;}await new Promise(r=>setTimeout(r,100));}
+const receiver=await fetch('http://127.0.0.1:6154/stop');let receiverClosed=false;for(let i=0;i<100;i++){try{await fetch('http://127.0.0.1:6154/');}catch{receiverClosed=true;break;}await new Promise(r=>setTimeout(r,100));}
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const state={head:git('rev-parse','HEAD'),branch:git('branch','--show-current'),trackedDiff:git('diff','--name-only','HEAD'),gitStatus:git('status','--short'),principalGateway:{pid:10360,stop:stopped,healthConnectionClosed:closed},receiver:{stopStatus:receiver.status,connectionClosed:receiverClosed},restartProcesses:'54096 and 46152 both exited 0, see restart-results.json',browserJobs:'All QA browser scripts, including the extra sweep and its isolated diagnostic, completed and called browser.close().',directories:'No directory deletion requested. Temporary stores, coverage, built output and ignored scratch remain for orchestrator cleanup.',d015:'Native descendants from standard process tests may remain; native inventory/forced tree cleanup not available.'};
+await writeFile(out+'/final-state.json',JSON.stringify(state,null,2).replaceAll(process.env.USERPROFILE,'%USERPROFILE%'));console.log(JSON.stringify(state));

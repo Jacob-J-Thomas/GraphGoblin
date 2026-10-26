@@ -21,7 +21,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
     shellDefinition:
       'navigation start to visible heading and actionable link or Events state, then two animation frames',
     historyDefinition:
-      'navigation start until Timeline items or heading count reaches the pre-navigation server cursor',
+      'navigation start until acknowledgement and rendered Timeline tail reach the pre-navigation server cursor',
     sampleIntervalMs: 250,
     processIds: [],
     pages: [],
@@ -74,6 +74,8 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
           entries: window.__perf.longTasks,
           nodes: document.querySelectorAll('*').length,
           timelineItems: document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0,
+          timelineNodes:
+            document.querySelector('ol[aria-label="Timeline"]')?.querySelectorAll('*').length ?? 0,
           sessionStorageBytes: Object.values(sessionStorage).reduce(
             (sum, value) => sum + value.length * 2,
             0,
@@ -101,6 +103,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
       const timer = setInterval(tick, 250);
       tick();
       let shellReadyMs,
+        firstRowsMs = null,
         historyReadyMs = null,
         historyReadyCount = null;
       const observedMs = name === 'events-empty' ? Math.min(1000, durationMs) : durationMs;
@@ -117,13 +120,26 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
         );
         shellReadyMs = performance.now() - began;
         if (name === 'inspector') {
+          await page
+            .getByRole('list', { name: 'Timeline', exact: true })
+            .getByRole('listitem')
+            .first()
+            .waitFor();
+          firstRowsMs = performance.now() - began;
           await page.waitForFunction((target) => {
             const count = document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0;
             const heading = [...document.querySelectorAll('h1,h2,h3')]
               .map((h) => h.textContent)
               .find((text) => /^Timeline \(/.test(text ?? ''));
             const reported = Number(/^Timeline \((\d+) events/.exec(heading ?? '')?.[1] ?? 0);
-            return Math.max(count, reported) >= target;
+            const buttons = [...document.querySelectorAll('ol[aria-label="Timeline"] button')];
+            const last = buttons.at(-1);
+            const renderedTail = Number(
+              last?.getAttribute('data-seq') ??
+                last?.querySelector('span')?.textContent?.replace('#', '') ??
+                0,
+            );
+            return Math.max(count, reported) >= target && renderedTail >= target;
           }, beforeRun.lastEventSeq);
           historyReadyMs = performance.now() - began;
           historyReadyCount = await page
@@ -146,6 +162,7 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
         name,
         path,
         shellReadyMs,
+        firstRowsMs,
         historyReadyMs,
         historyTargetSeq: name === 'inspector' ? beforeRun.lastEventSeq : null,
         historyReadyCount,

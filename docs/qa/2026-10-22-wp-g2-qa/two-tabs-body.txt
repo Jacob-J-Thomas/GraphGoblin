@@ -1,0 +1,12 @@
+try {
+ await start();const seed=JSON.parse(await readFile(join(out,'seed.json'),'utf8'));
+ browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}}),a=await context.newPage(),b=await context.newPage();
+ await check('two-tabs-explicit-activation','Open two real Edge tabs; activate each before navigation and clicking Load more, using existing timeouts','Both tabs independently load100 then105 unique rows with identical order',async()=>{
+  const url=base+'/app/runs?loop='+seed.paging;
+  await a.bringToFront();await a.goto(url);await count(a,100);await b.bringToFront();await b.goto(url);await count(b,100);
+  await a.bringToFront();await a.getByRole('button',{name:'Load more',exact:true}).click();await count(a,105);
+  await b.bringToFront();await b.getByRole('button',{name:'Load more',exact:true}).click();await count(b,105);
+  const ai=await a.locator('tbody tr td:first-child a').allTextContents(),bi=await b.locator('tbody tr td:first-child a').allTextContents();assert.equal(new Set(ai).size,105);assert.deepEqual(ai,bi);return{tabRows:[105,105],unique:[new Set(ai).size,new Set(bi).size],sameOrder:true}
+ });
+}catch(e){await rec({id:'two-tabs-harness',result:'FAIL',actual:clean(e.stack)});process.exitCode=1}
+finally{await browser?.close().catch(()=>{});await stop();console.log('TWO_TABS_DONE')}

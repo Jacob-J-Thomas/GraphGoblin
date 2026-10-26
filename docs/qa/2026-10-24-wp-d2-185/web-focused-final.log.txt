@@ -1,0 +1,95 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/web
+
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > loads the pinned definition for fallback gate counts before any decision event 585ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold 314ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows Claude requested effort and states that effective effort is not reported 175ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > streams the timeline, replays the thread at any event, and shows the patch diff 931ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed command in progress while the run is still running 189ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed tool call without its provider diagnostics 167ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and reports logs that do not replay 408ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > resumes the stream after the stored cursor on reload 305ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > renders the input form from the wait node schema and submits input 735ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > sends a signal to a run waiting for one, and describes timer waits 680ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > cancels, pauses, and resumes runs 802ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > keeps the keyboard order: loop, parent run, child runs, then the run controls 381ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > explains a deleted child while preserving the parent inspector history 238ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links an available child from a child-finished event 337ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows failures, results, parent links, and stream errors 56ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links a subloop failure to the child run that failed (#251) 34ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > confirms a finished succeeded cursor and catches up delivery audits while retaining the result 77ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > confirms a finished exhausted cursor and catches up delivery audits while retaining the result 82ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259) 516ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > says a quiet exit returned nothing by configuration, at the top and in its details 172ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > names the exit and start-request destinations that a None return left empty 54ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > shows a null return as the result rather than as nothing 135ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > does not claim a None configuration when an expression exit recorded no value 164ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > keeps the last gate pass and stopping limit beside the exit outcome 85ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > confirms cached terminal history with the server before reporting completion 73ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes an oversized single event immediately without dropping its payload 47ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_SLOW_CONSUMER reason during retry and clears it when the stream reopens 10ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_REPLAY_FAILED reason during retry and clears it when the stream reopens 6ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the batching timer runs 13ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > leaves an accepted clean close on the stream backoff without reporting an outage 7ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts only if the last connection failure was a transport failure 6ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > re-arms an outage on cursor progress rather than acceptance or replay alone 12ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 15000 ms open 14ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 20000 ms open 5ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports rapid two-second drops once and does not restart again on recovery 53ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 0 ms 24ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 2000 ms 14ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports transport failure while online and clears it on an accepted stream 3ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts a stream in backoff on recovery with its cursor and cleans up 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > does not report HTTP refusals or malformed event frames as transport failures 2ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers a cold offline Loops query on the online event without navigation 209ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Loops when the API returns with the browser still online 24ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers loop details when the API returns with the browser still online 16ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Runs when the API returns with the browser still online 14ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers run inspector when the API returns with the browser still online 15ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers run thread when the API returns with the browser still online 9ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Events when the API returns with the browser still online 14ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings defaults when the API returns with the browser still online 6ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings models when the API returns with the browser still online 8ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings secrets when the API returns with the browser still online 8ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings API keys when the API returns with the browser still online 6ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings preflight when the API returns with the browser still online 8ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Loops query 161ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline loop details query 154ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Runs query 163ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline run inspector query 158ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline run thread query 153ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Events query 153ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings defaults query 141ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings models query 154ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings secrets query 155ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings API keys query 153ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings preflight query 158ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 400 failures at one retry 90ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 401 failures at one retry 72ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 404 failures at one retry 75ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 500 failures at one retry 77ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > caps retries if reconnect still cannot reach the API, then recovers on the next event 230ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > does not refetch inactive failures or fresh successful queries, and removes its listener 102ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers after Query observes an offline-to-online transition 154ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps a cached-data fetch in flight on reconnect without cancelling or starting another request 313ms
+ ✓ src/runs/follow-run-attempts.test.ts > catches up across historical terminals in pages and reconnects for authoritative completion 19ms
+ ✓ src/runs/follow-run-attempts.test.ts > checks a resumable failure, catches up, then opens a new live tail 6ms
+ ✓ src/runs/follow-run-attempts.test.ts > does not poll non-resumable failed 2ms
+ ✓ src/runs/follow-run-attempts.test.ts > does not poll non-resumable cancelled 3ms
+ ✓ src/runs/follow-run-attempts.test.ts > reports read errors and a non-advancing page 4ms
+ ✓ src/runs/follow-run-attempts.test.ts > cancels an in-flight read (page=false) without publishing or reporting an error 2ms
+ ✓ src/runs/follow-run-attempts.test.ts > cancels an in-flight read (page=true) without publishing or reporting an error 2ms
+ ✓ src/runs/follow-run-attempts.test.ts > recovers observation after a transport loss with bounded backoff, preserving the cursor 4ms
+ ✓ src/runs/follow-run-attempts.test.ts > exposes a permanent HTTP refusal without retrying it 3ms
+ ✓ src/runs/follow-run-attempts.test.ts > delegates completion that overtakes the captured run snapshot to SSE 5ms
+ ✓ src/runs/follow-run-attempts.test.ts > reports a final page that cannot reach the observed run cursor 3ms
+
+ Test Files  4 passed (4)
+      Tests  82 passed (82)
+   Start at  21:56:01
+   Duration  152.78s (transform 53%, environment 22%, import 12%, tests 7%, setup 6%)
+
+  Transform  transforming modules took 79.17s · 53% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

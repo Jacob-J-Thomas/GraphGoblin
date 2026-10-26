@@ -31,6 +31,10 @@ Execution sizes can be changed with `--passes=100,1000,10000`, `--items=2`,
 with an initial hold of at least 1,000 ms), and `--browser-ms=5000` (per page). `--setup-timeout-ms=600000` is the API import/setup ceiling, adjustable separately from workload sizing.
 `--out=.tmp/my-measurement` selects an evidence directory; otherwise it is a new
 directory under the system temp folder. Use a **new output directory for each invocation**.
+`--port=5740` binds the worker API to an assigned loopback port instead of a free
+ephemeral port; `--store-prefix=gg-wp-e1-186-` names its disposable store directory.
+Use the same observation options for a before/after pair. Worker cleanup uses the
+public raw run-reference enumeration so retired run-decoding APIs are not required.
 The gate and per-node visit limits remain at or below 10,000. Initialization runs
 once outside the context-growth cycle. An allowed repeat increments the one-based
 gate count; the Nth work visit ends through Limit reached.
@@ -82,6 +86,42 @@ post-run thread HTTP read have two-minute limits. These bounds preserve a finite
 failed measurement on a stalled host; they do not set product latency targets.
 
 ## Controlled rerun protocol
+
+### Hot-path controls (#268)
+
+The additive `append` workload isolates SQL phases without modifying the repository being
+measured. Use the same commands with `--item-pause-ms=0` and `--item-pause-ms=10`:
+
+```powershell
+node tooling/perf/measure.mjs append --passes=10 --items=100 --item-bytes=256 --item-pause-ms=0 --profile=inspector --port=5812 --store-prefix=gg-wp-e1-268- --out=.tmp/append-burst
+node tooling/perf/measure.mjs append --passes=10 --items=100 --item-bytes=256 --item-pause-ms=10 --profile=inspector --port=5812 --store-prefix=gg-wp-e1-268- --out=.tmp/append-paced
+```
+
+Each run observes transaction begin, sequence lookup, insert, run sequence update and commit
+through a client injected into a separate public SQLite event repository. Timings are inclusive
+of the normal serialized-client scheduling. Fake item pacing applies to each streamed item;
+it is separate from the pre-existing fake completion delay. The exit returns a controlled object
+to caller/log. A raw HTTP live reader and an explicit delivery-tail reconnect must together
+match the exact stored payload hash. `liveReplayComplete` records whether the original stream
+included all delivery audits, so the reconnect does not conceal an early close. A public
+`clearFinalized` plus container close/reopen checks idempotent recovery on the real file-backed
+store; it does not simulate a native process kill.
+
+All execution workloads additionally record `events.finalizationRead` spans and equivalence
+digests. `compare.mjs` re-reads completed disposable stores through public repositories opened
+read-only, compares normalized event sequences/state, and checks checkpoint equivalence with
+full replay. Run it with Node's parent-resolution flag:
+
+```powershell
+node --experimental-import-meta-resolve tooling/perf/compare.mjs before/raw-summary.json after/raw-summary.json equivalence.json
+```
+
+The controlled comparison sorts keys, consistently renames generated ULIDs and excludes clock
+observations (`ts`, creation/start/finish/receipt timestamps, duration and elapsed seconds).
+Application values and ordering remain compared. Raw SSE hashes are separate exact-byte
+checks. Use the same workload inputs and record host conditions; these are not universal
+latency guarantees. The retained #268 report distinguishes its rank-1-only measurement from
+the subsequent visit-count change and identifies the unreproduced metadata candidate.
 
 Use **inspector mode throughout**, a quiet host, and at least two trials per
 workload. Run each fresh/aged pair back to back, reversing order for trial 2:
@@ -163,3 +203,7 @@ only `replay --passes=100`, `browser --passes=100`, and `readiness`.
 See [the measured baseline](../../docs/qa/2026-10-18-sustained-run-measurements.md)
 for results, load conditions, attribution limits, and the finite follow-on list.
 Short observer tests run with tooling's normal tests; measurements never do.
+
+Browser observations additionally record firstRowsMs (first rows observed after the shell readiness check), Timeline descendant node count per sample and its peak. The workload, readiness cursor target, sampling interval and existing tests are unchanged. The first-row value is an observation upper bound, not a mutation timestamp or Web Vital. Round-2 evidence pairs the same aged browser workload before/after windowing.
+
+Loaded-history readiness also checks that the rendered Timeline tail reaches the pre-navigation target. This is equivalent to the old item/heading criterion for an unbounded Timeline, and prevents a paused or empty row window from qualifying solely through its live acknowledgement. Heap, DOM, storage sampling and first-row observation are unchanged.

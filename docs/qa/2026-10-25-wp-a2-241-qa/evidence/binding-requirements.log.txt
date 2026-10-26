@@ -1,0 +1,527 @@
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\COMMON.md
+# Common brief for the 2026-10-18 GraphGoblin batch (intents I01 to I07)
+
+Every work-package brief in this folder starts by pointing you here. Read this file completely, then the package brief, then the orientation material in the order the brief lists. You are one worker among several running at the same time in separate git worktrees of the same repository.
+
+## 1. Orientation (read in this order)
+
+1. `AGENTS.md` at the worktree root. Its rules are binding.
+2. `docs/README.md`, then `docs/15-issue-workflow.md`.
+3. `docs/architecture/README.md`: the structural map of the code (packages, data, storage, API, web, adapters, triggers, one traced loop).
+4. The roadmap decision ledger: `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues\278.md`, sections "Owner decision ledger", "Shared completion standard" and "Engineering parameters". The owner's latest explicit decisions govern; historical comments are evidence, not a competing specification.
+5. The issue bodies your brief names, in `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues\<number>.md` (bolt, its UoW parent, and its intent). The "Acceptance criteria", "Verification", "Scope limits" and "Specific owner feedback" sections are the requirements. "Evidence provenance" links describe an older baseline (`c379f80`): reproduce on the current code before relying on them.
+6. The numbered docs and source files the brief lists.
+
+## 2. Hard rules (from AGENTS.md and the owner)
+
+- **Coverage:** every package stays above 90% lines and 90% branches. `pnpm test:coverage` fails otherwise. Never lower a threshold or add an exclusion beyond generated code. Keep denominators truthful.
+- **Types:** `pnpm typecheck` type-checks test files and fixtures too. Fix types; do not cast to `any`, do not add `@ts-expect-error` to hide a real problem.
+- **Imports:** relative imports use explicit `.js` extensions (NodeNext). Reach other packages only through their `@graphgoblin/*` entry points. Zod 4: `.prefault({})` for object defaults whose fields have defaults.
+- **Dependencies:** permissive licences only (MIT, Apache-2.0, BSD, ISC); `pnpm check:licenses` enforces `tooling/license-allowlist.json`; every new dependency gets a line in `docs/research/licenses.md`. Prefer no new dependency.
+- **Docs in sync:** a behaviour change updates the relevant numbered doc under `docs/`; a decision change adds an ADR under `docs/decisions/` (next free number); a node-schema or route change requires `pnpm docs:generate` and the regenerated `docs/reference/*` committed; every user-visible or contract change gets a bullet under `## Unreleased` in `CHANGELOG.md` ending with the issue number in parentheses, for example `(#263)`. Upgrade notes for the owner's instance go in that bullet as **Upgrade:**.
+- **Clean design over backward compatibility (ADR-0020):** no compatibility schemas, deprecated input paths, tolerant parsing of old data shapes, or dual code paths. Change the contract to its clean shape. When stored data must change, the owner resets by hand; say so in the CHANGELOG upgrade note.
+- **Test quality (owner decision, #278 "Test quality"):** test through supported public or component interfaces. Private-method access, reflection, invasive casts, monkey-patching the component under test, and test-only production exports are defects, not tests. Legitimate dependency injection through public constructors or ports, fake clocks, malformed external inputs, and real storage/process/network fault injection are valid. A regression test must demonstrably fail on the current code before your fix and pass after it; say so in the report. No retry-to-green: a test that passes only on retry is a failure to resolve. Do not rerun whole suites repeatedly without a new reason.
+- **Evidence first:** for a bolt marked "Evidence-dependent admission" or any human-reported defect, reproduce or measure on the current code before writing a corrective change. If you cannot reproduce, preserve the report, write down exactly what you tested and stop at a documented negative result. Do not manufacture a change to satisfy an old report, and never call the report disproven.
+- **Native and live claims:** process shutdown, restart, signal and subprocess behaviour require disposable real-process evidence (spawn the built app or a script in a temp data directory), not invocations of captured callbacks. Fake-harness results never establish live-provider behaviour. Live provider turns are out of scope for Codex workers unless the brief says otherwise.
+- **Engineering parameters:** unsettled numbers (grace periods, retry counts, byte bounds, thresholds) are yours to choose and justify in code comments and docs. Never describe one as owner-approved.
+- **Owner environment:** never touch the owner's running app on ports 4747/4748, its store under the user's home (`~/.graphgoblin` or any `GG_DATA_DIR` outside your worktree), or the main checkout at `%USERPROFILE%\source\repos\GraphGoblin` outside your own worktree. Use disposable data directories inside your worktree or the system temp directory, and alternate ports (the e2e server and the API tests pick free ports; for manual runs use 5600 to 5699). Never upgrade or reconfigure the owner's runtime, Node, pnpm, Codex or Claude installation.
+- **Scope:** implement only the bolts in your brief. Something outside scope that looks wrong goes into your report under "Observed outside scope", with file and line; do not fix it.
+- **Git and attribution:** commits carry no assistant attribution of any kind (no Co-Authored-By, no "Generated with", no model names). Never push. Never merge, rebase, stash or switch branches. Codex workers do not commit at all (the sandbox keeps `.git` read-only); leave changes in the worktree and the orchestrator commits after review. Claude workers commit on their worktree branch with clear messages that name the issue, for example `Pin draft run definitions at start (#247)`.
+- **Codex sandbox specifics:** work only in the current worktree and branch; never create symbolic links or junctions to any directory outside the worktree; if dependencies are missing, stop and report instead of linking another checkout's `node_modules`; do not try to delete directories (report `coverage/` or report folders for the orchestrator to remove); work alone in your thread (no sub-agents); in Windows PowerShell call `pnpm.cmd`, in Git Bash call `pnpm`.
+- **GitHub:** workers never post comments, edit issues, open PRs or change labels. The orchestrator does. Everything you want recorded goes into your report.
+
+## 3. Environment
+
+- Windows 11, PowerShell is the default shell; Git Bash is available. The default `node` is v23.10.0. The supported gate runtime is Node 22 at `%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node.exe` (dependency-cruiser refuses Node 23). Run every gate with Node 22 first on PATH:
+  - PowerShell: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` then `pnpm.cmd ...`
+  - Git Bash: `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` then `pnpm ...`
+- Tests, lint and typecheck need no prior build (the `development` export condition resolves TypeScript source). Node at runtime loads `dist/`, so `pnpm build` before starting an app or the browser suite.
+- Browser suite: `pnpm build`, then from `apps/web`: `pnpm exec playwright test` (Microsoft Edge channel by default on Windows; no browser download). Run a single spec with `pnpm exec playwright test e2e/<name>.spec.ts`. The suite takes 10 to 15 minutes; run only the specs relevant to your change unless the brief says otherwise. Six tests in `claude-harness.spec.ts`, `model-picker.spec.ts` and related model-picker flows are known to fail on current main (tracked under #205/#241); do not fix them unless your brief owns them, and list them separately in your report.
+- Turbo caches `typecheck`, `lint` and `test:coverage` results. Because `test:coverage` has no dependency inputs (#127), a cache hit can hide a regression in a dependency. When you need certainty for a package, run `pnpm exec turbo run test:coverage --force --filter=@graphgoblin/<name>` or `pnpm --filter @graphgoblin/<name> test:coverage` directly.
+- Other workers are editing the repository at the same time. `WAVE.md` in this folder lists who owns which files right now. Keep edits to files owned by another package small and additive, and name every such edit in your report.
+
+## 4. Gates before you report
+
+Run with Node 22 on PATH, from the worktree root:
+
+```
+pnpm typecheck
+pnpm lint
+pnpm format:check          # fix with: pnpm format
+pnpm check:layers
+pnpm check:deps
+pnpm --filter @graphgoblin/<each changed package> test:coverage
+pnpm check:docs            # only if a node schema or route changed; regenerate with pnpm docs:generate
+pnpm check:licenses        # only if dependencies changed
+pnpm check:tokens          # only if apps/web source changed
+```
+
+Then the browser specs relevant to any `apps/web` change (after `pnpm build`). Report every gate with its exact command and result. A gate you could not run is reported as not run, with the reason.
+
+## 5. Report shape (end your run with exactly these sections)
+
+1. **Branch and worktree:** branch name, worktree path, base commit, and either the commit list (Claude workers) or "uncommitted; ready for orchestrator commit" (Codex workers).
+2. **Per bolt:** for each issue number, each acceptance criterion with the evidence that satisfies it (test name and file, command output, or measurement), or "unresolved" with the reason. Research bolts end with a clearly labelled "confirmed", "not reproduced" or "measured" result.
+3. **Files changed:** grouped by package; every edit to a file owned by another package in `WAVE.md` called out.
+4. **Tests:** names of new or changed tests; which regression tests failed before the fix (quote the failure); coverage summary for each changed package.
+5. **Gates:** each command and its result.
+6. **Docs:** numbered docs, ADRs, CHANGELOG lines and generated references updated.
+7. **Decisions and parameters:** every engineering choice with its justification.
+8. **Caveats and open items:** what is left undone, what needs the orchestrator or the owner, anything observed outside scope.
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\QA-COMMON.md
+# Common instructions for independent QA (2026-10-18 batch)
+
+You test a reviewed work package against the running product and its public interfaces. You are not the implementer or the reviewer. You change no production code; you may add failing regression tests as `test.todo` or clearly skipped tests with the exact reason, and you write a QA report. Read `COMMON.md` first, then the package brief, then the bolt issue bodies (the `qa:touched-systems` scope applies: enumerate every system the change touches and test each with positive and negative cases).
+
+## Setup
+
+- Work in the worktree and branch you are given. With Node 22 first on PATH: `pnpm install --frozen-lockfile` if needed, `pnpm build`, then start a disposable instance: a temporary data directory (inside the worktree or the system temp folder), a free port in 5600 to 5699, an API key created by the binary, the fake harness unless the brief authorises live turns. Never touch ports 4747/4748, the owner's store or the main checkout.
+- Browser testing uses Playwright on Microsoft Edge (`GG_E2E_BROWSER_CHANNEL=msedge`), either through the repository's e2e server (`apps/web/e2e/server.ts`) or a Playwright script against your disposable instance.
+
+## What to test
+
+1. Every acceptance criterion of every bolt in the package, through the UI, the REST API, the MCP tools or the CLI as appropriate: positive case, negative case, and the failure, concurrency, cancellation and restart cases the criterion implies. Restart means stopping the process and starting a new one on the same data directory.
+2. The systems the change touches beyond the bolts' own surface: adjacent routes, inspector views, settings, MCP tools, exports, the CHANGELOG's upgrade note (does it describe what an operator must do?).
+3. Adversarial inputs: boundary sizes, malformed payloads, rapid repeated actions, stale clients, reloads mid-flow, two tabs, narrow viewport, keyboard-only navigation for any UI change.
+4. Native claims (shutdown, restart, subprocess): verify with the real built process, never by reading the code.
+
+## Record
+
+Write `docs/qa/2026-10-18-<package>.md` in the worktree with: build revision, environment (data directory, port, browser), the systems enumerated, a table of every check (system, case, steps, expected, actual, pass/fail, evidence such as a response body, a screenshot path under `docs/qa/2026-10-18-<package>/`, or a log excerpt), every defect with severity (blocker, major, minor) and reproduction steps, and the list of criteria you could not test with the reason. Fake-only evidence is labelled fake-only. Do not call a human-reported defect disproven if you could not reproduce it; record what you tested.
+
+## Report shape
+
+1. **Verdict:** pass, pass with minor defects, or fail, with the revision tested.
+2. **Defects:** numbered, severity, steps, expected, actual, evidence.
+3. **Coverage of criteria:** per bolt, per criterion: tested and passed, tested and failed, or not testable (why).
+4. **Report path and evidence folder.**
+5. **Observations outside scope.**
+
+Codex QA workers: work alone in your thread, never commit, never delete directories (list them for the orchestrator), and finish with this report.
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues/241.md
+# #241 [I01/U01/B04] Restore mandatory functional browser gates
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:chore, area:web, backlog, kind:bolt, status:approved-held
+parent: #292 [I01/U01] Restore dependable gates
+sub-issues: -
+created: 2026-10-17T00:01:11Z updated: 2026-10-18T23:35:07Z
+
+## Body
+
+Part of #292
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B04 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Restore mandatory functional browser gates
+
+## Acceptance criteria
+
+- [ ] CI actually runs the intended functional browser suite; an intentional UI regression fails it. Provider-free checks remain deterministic and paid checks remain separately identified.
+
+- [ ] Run the real browser gate in CI; a pass only after retry remains a flaky failure to resolve, not a clean gate. Do not introduce recurring paid-provider jobs.
+
+## Verification
+
+Inspect executed CI jobs; seeded regression; browser results and skips enumerated.
+
+## Dependencies
+
+- #67 â€” B03
+- #279 â€” implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#241
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #241 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/claude-harness.spec.ts#L77), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/model-picker.spec.ts#L28), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/live.spec.ts#L36)
+
+
+## Comments (0)
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues/292.md
+# #292 [I01/U01] Restore dependable gates
+
+state: OPEN | milestone: Later | labels: type:epic, area:web, area:installer, backlog, kind:uow, status:approved-held
+parent: #283 [I01] Make automated delivery evidence trustworthy
+sub-issues: #263(OPEN), #127(OPEN), #67(OPEN), #241(OPEN)
+created: 2026-10-17T19:58:27Z updated: 2026-10-18T23:37:09Z
+
+## Body
+
+Part of #283
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:U01 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome and acceptance
+
+The agreed runtime and dependency-aware gates reliably execute the intended assertions.
+
+## Touched components
+
+- tooling
+- workspace exports/configuration
+- web browser suite
+- CI
+
+## Bolts
+
+- #263 **[I01/U01/B01] Align the verified development runtime** â€” Document and use one supported runtime baseline across local instructions and CI.
+- #127 **[I01/U01/B02] Invalidate checks after dependency changes** â€” After warming caches, direct and transitive dependency source changes rerun affected consumers and reveal a deliberately introduced behavioral/type regression.
+- #67 **[I01/U01/B03] Remove the two-tab test race** â€” The test uses observable completion/state rather than timing guesses, retains its conflict assertions and passes under bounded concurrent load.
+- #241 **[I01/U01/B04] Restore mandatory functional browser gates** â€” CI actually runs the intended functional browser suite; an intentional UI regression fails it. Provider-free checks remain deterministic and paid checks remain separately identified.
+
+Each nondeferred bolt is the sole implementation record for its scope. Current UoW completion requires their evidence and applicable owner acceptance; parked children do not block current completion. Publication is not dispatch.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #127 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/37831911183)
+
+### Source #241 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/claude-harness.spec.ts#L77), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/model-picker.spec.ts#L28), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/live.spec.ts#L36)
+
+### Source #263 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/package.json#L1), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/.nvmrc#L1), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/AGENTS.md#L17)
+
+
+## Comments (0)
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\issues/280.md
+# #280 Accepted Claude cutover boundary â€” read-only dependency tracker
+
+state: OPEN | milestone: Later | labels: type:epic, area:engine, backlog, status:approved-held
+parent: #278 GraphGoblin roadmap â€” owner-approved intents, UoWs and bolts
+sub-issues: #131(OPEN), #132(OPEN), #133(OPEN), #134(OPEN), #136(OPEN), #138(OPEN), #139(OPEN), #141(OPEN), #142(OPEN), #143(OPEN), #144(OPEN), #145(OPEN), #146(OPEN), #148(OPEN), #149(OPEN), #153(OPEN)
+created: 2026-10-17T19:58:00Z updated: 2026-10-18T16:20:58Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:X-CUT -->
+
+**Owner-approved plan, 2026-10-17. Implementation is held.** The owner explicitly authorized publishing the agreed backlog and said not to start implementation. This issue has no pickup gate; release requires a later owner dispatch decision.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Gate condition
+
+Read-only acceptance tracker for Claude's #164/#165/#168 shared cutover and included #118/#152 work, with #97/#98 related. Do not edit, reparent, relabel, comment on, add inverse blocking relations to, or take over those issues/PRs. Record the accepted target SHA and relevant contract evidence here when provided. The later reset/no-conversion policy applies to subsequent approved cleanup, not interference with the protected #275 cutover. Current-format durability and clearly consented history deletion remain required.
+
+This is a coordination/acceptance record, not an implementation task or authorization to modify protected work.
+
+## Observed merge; acceptance remains pending
+
+PR #275 merged independently during roadmap publication at 2026-10-17T20:08:24Z, with merge commit `d305836c9d5286ba0b6e4f316b042f94170b7294`. The publication made no PR changes. Merge alone is not owner acceptance: this gate remains open until the relevant baseline and contract evidence are accepted. No protected issue is closed or altered by this observation.
+
+
+## Parked retirement checks
+
+These are unprotected reports whose disposition depends on the accepted removal of configured templates and support scripts. They are not Claude assignments. Native parentage groups them here for visibility; **this baseline-acceptance gate does not wait for these children to close**. Once the baseline is accepted, each report receives its own evidence-backed removal/survival decision. No verification or implementation has been started by the cleanup.
+
+| Report | Finding to check |
+| --- | --- |
+| #131 | Template gallery: reconcile readiness after harness capabilities change |
+| #132 | Templates: bound repeated harness preflight work during catalog loading |
+| #133 | Templates: distinguish binding violations from unavailable storage reads |
+| #134 | Report installed template package faults consistently as service unavailable |
+| #136 | Templates: distinguish checkout failures from GitHub access diagnostics |
+| #138 | Templates: support standalone pnpm installations without package metadata |
+| #139 | Templates: clear stale trigger labels when early cancellation consumes an attempt |
+| #141 | Review workspaces: isolate fetched PR refs from shared FETCH_HEAD |
+| #142 | Review CI waits: bound GitHub API polling and recover from rate limits |
+| #143 | QA template: bound merged-PR discovery and remember scan progress |
+| #144 | QA report finalization should recover when its exact marker already exists |
+| #145 | QA proof workspace writes must recover safely from partial creation |
+| #146 | Review template: budget the local gate and CI wait within the support timeout |
+| #148 | Editor: show neutral readiness while template origin metadata is unavailable |
+| #149 | QA rework journal and history must share the authenticated visit key |
+| #153 | Test maximum implementation settings against authority history capacity |
+
+
+## Comments (1)
+
+### Jacob-J-Thomas at 2026-10-18T16:20:58Z
+
+**Cutover baseline merged to main and applied to the owner's store (2026-10-18).**
+
+- **Target SHA:** `dcd90e60cd95ebd123adf0fa9d14384be02711e7`. That is the merge of #338, which brought `feat/format-4-integration` into main. It contains #275 (cutover), #277 (#171), #336, #337, and every #164/#165/#168/#118/#152 PR listed in #338.
+- **Acceptance:** the owner directed on 2026-10-18 that work merges to main when checks pass, and that their real store is upgraded at the same time.
+- **Checks on #338:** Gates, Template image and routing passed. Earlier local gates on the same tree also passed:
+  - coverage for all 12 packages (3,955 tests);
+  - the full browser suite (347 passed; the only failures are the 6 known #205 failures, which also fail on main);
+  - upgrade acceptance.
+- **Owner store cutover** (option B, ADR-0039), using the `graphgoblin-upgrade` tool from that SHA:
+  - **Inspect:** 10 loops, 58 versions and 7 drafts; 926 pending items, 0 invalid, 0 blockers and 0 disarms.
+  - **`--approve-generated`:** 926 approved and 0 unresolved.
+  - **Resolved plan hash:** `d7e18c62â€¦7423`.
+  - **Apply:** 65 definitions upgraded, 36 runs and 33 artifact files deleted, nothing disarmed, and the read-back was verified. A verified local backup was taken.
+- **Instance:** 4747 runs the new build on the upgraded store and passes its readiness check.
+- **Issues closed:** #164, #165, #168, #171, #118 and #152. #166 stays open for one owner choice (F4).
+
+ABSENT: issues/400.md
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\wp-a2.md
+# WP-A2: remove the two-tab test race, then make the browser suite a mandatory CI gate
+
+Bolts: #67 (B03), then #241 (B04). Intent I01 #283, UoW #292. Implementer: GPT-6.1 Sol. Reviewer: Claude Opus 5.5. You are a Codex worker: do not commit.
+
+Read first: `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\COMMON.md`, then `WAVE.md`, then issues `67.md` (including its two historical comments), `241.md`, `292.md`, `283.md`, then `docs/10-testing-and-quality.md`, `apps/web/playwright.config.ts`, `apps/web/e2e/global-setup.ts`, `apps/web/e2e/server.ts`, `apps/web/e2e/drafts.spec.ts`, `apps/web/e2e/fixtures.ts`, `.github/workflows/ci.yml` and `.github/workflows/routing-perf.yml` (the only workflow that installs a browser today).
+
+## Facts already established
+
+- CI runs no browser suite. `docs/10` lists "Playwright E2E on the built app" as CI gate 13, which is currently untrue. `routing-perf.yml` shows a working pattern for installing Edge on ubuntu (`playwright install --with-deps msedge`).
+- `playwright.config.ts` sets `retries: process.env['CI'] ? 1 : 0`, `workers: 1`, `fullyParallel: false`, Edge channel on Windows.
+- The two-tab test is `apps/web/e2e/drafts.spec.ts` line 25, "two tabs editing one draft: the stale tab is asked to reload or overwrite". The #67 comment of 2026-10-05 says a reorder was not a demonstrated fix: the second tab sometimes never renders its heading, 55.6 s against a 60 s timeout under load, 7 to 11 s alone. Two other tests flaked once under load then: `actions.spec.ts` "revocation closes before a held key-list refresh" and "Settings confirms model removal".
+- Six browser tests fail on current main; they involve `claude-harness.spec.ts`, `model-picker.spec.ts` and model-picker flows and are associated with #205 (model and effort controls). The orchestrator is running the full suite on main now; your own run will show them too.
+
+## Task 1: #67 reproduce, then remove the race
+
+1. Build (`pnpm build` with Node 22 on PATH) and run the drafts spec alone: `pnpm exec playwright test e2e/drafts.spec.ts --trace on` from `apps/web`. Then reproduce under load: run it with `--repeat-each 10 --trace on` while the machine is busy (start `pnpm exec turbo run test:coverage --force --filter=@graphgoblin/web` in a second shell, or another CPU-heavy command), and keep the trace of every slow or failed run. Read the trace of a slow run before naming a cause: what is the second tab waiting on (service worker install or claim, IndexedDB open or upgrade for device drafts, the server request, React hydration, a `beforeunload` or `visibilitychange` effect)? Report the evidence with timings.
+2. Fix the test so it waits on observable completion or state (an explicit ready marker the app already exposes, a settled network request, a stored draft token, the conflict dialog itself) rather than timing guesses or arbitrary sleeps. Keep every conflict assertion: the stale tab must still be asked to reload or overwrite, and the chosen resolution must still be verified. Distinguish intentional timing assertions from synchronization sleeps in a comment.
+3. If the trace proves a product defect (for example two tabs serializing on an IndexedDB lock or a service worker claim) rather than a test defect, describe it precisely in the report with the trace location. Fix it only if the change is small, clearly within the two-tab flow and provable by the same test; otherwise leave the product unchanged and report it as an out-of-scope finding for the orchestrator.
+4. Finite concurrency check after the fix: `--repeat-each 10` under the same load, plus one run with `--workers 2` to show it is not order-dependent. Zero failures and zero retries is the bar. Report the per-run durations.
+5. Re-run the two other historically flaky tests under the same load and report whether they flake; fix only if the cause is the same as the two-tab race.
+
+## Task 2: #241 the browser gate in CI
+
+1. Add a `browser` job to `.github/workflows/ci.yml` (do not change the `gates` job's steps; WP-A1 and WP-B3 edit those): ubuntu-latest, pnpm and Node 22 like the gates job, `pnpm install --frozen-lockfile`, install one browser the suite can use on Linux (Chromium via `playwright install --with-deps chromium`, or Edge like `routing-perf.yml`; choose one, set `GG_E2E_BROWSER_CHANNEL` accordingly and justify), `pnpm build`, then run the whole functional suite from `apps/web` with `--retries=0` so a pass only after retry is impossible. Upload `test-results` and the Playwright report as artifacts on failure. A reasonable `timeout-minutes` (the suite takes 10 to 15 minutes locally).
+2. Enumerate skips truthfully: list every spec or test that is skipped or conditional (`live.spec.ts` behind `LIVE=1`, anything behind a provider login or an installed CLI) in a job summary step and in `docs/10-testing-and-quality.md`. Provider-free checks must be deterministic; paid or live checks stay separately identified and are never run in CI. Do not add recurring paid-provider jobs.
+3. Reconcile `playwright.config.ts` with the gate (retries, channel selection by environment) without changing local Windows behaviour. If `retries` stays non-zero for local trace capture, the CI job must still fail on any flaky test (Playwright's `--fail-on-flaky-tests` or `--retries=0`); say which.
+4. Prove the gate catches a UI regression: temporarily break one user-visible behaviour the suite asserts (for example a heading text or a button label), run the affected spec, record the failure, and revert. The seeded break must not remain in the tree.
+5. Update `docs/10-testing-and-quality.md`: the CI gates list must describe what CI actually runs after your change, including the browser job and its skip list. Add CHANGELOG bullets for #67 and #241.
+6. The six known failures: run the full suite once after `pnpm build` and list every failing test with its assertion and the product behaviour it expects. Classify each: (a) the test expects behaviour that #205 (model and effort controls outside Advanced) is meant to deliver, (b) the test is stale against accepted current behaviour, or (c) something else. Do not skip, delete or weaken any of them. The orchestrator sequences #205 before the browser job can be green; your job is to make the job correct and to report the classification.
+
+## Shared files (see WAVE.md)
+
+`.github/workflows/ci.yml`: you add the browser job only. `docs/10-testing-and-quality.md`: you own the CI gates section; WP-A1 adds a caching note and WP-B3 edits the historical conversion paragraph; keep edits local. `CHANGELOG.md`: your bullets at the top of Unreleased.
+
+## Gates
+
+COMMON.md section 4 with Node 22 on PATH, plus `pnpm build`, the drafts spec repeated runs, and one full browser suite run. Lint and typecheck cover `apps/web/e2e`.
+
+## Report
+
+COMMON.md shape, with: the trace-backed cause of the slow second tab; before/after durations for the repeated runs; the exact CI job you added and why the browser choice; the skip list; the seeded regression evidence; the classified list of currently failing tests.
+SOURCE: %USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\WAVE.md
+# Current wave: who owns what (updated by the orchestrator)
+
+## Wave of 2026-10-23 evening (base `main` at `88d6118d` or later; all Sol implementations, the orchestrator reviews, register D-037)
+
+| Package | Bolt | Worktree branch | Ports | Primary files owned |
+| --- | --- | --- | --- | --- |
+| WP-D4 | #343 | `codex-wp-d4-343` | 5750 to 5759 | `apps/api/src/routes/triggers.ts` (`POST /events`, `GET /events` targeted-delivery states), `apps/api/src/triggers/trigger-service.ts` (`ingestEvent` and the new targeted path), the targeted-Event receipt store in `packages/infrastructure` and migration `0018` if needed, `packages/engine/src/run-manager.ts` **admission region only**, ADR-0048, docs/07 events routes, docs/08 Inbound Events, guide 04 |
+| WP-C7 | #224 | `codex-wp-c7-224` | 5760 to 5769 | `apps/api/src/main.ts` (signals), `apps/api/src/container.ts` (stop and dispose), `packages/engine/src/run-manager.ts` **stop, `waitForIdle` and the shutdown region only**, `packages/infrastructure/src/process/scripts.ts` kill path, migration `0019` if needed, ADR-0049, docs/05 shutdown, docs/11 signals, guide 07 |
+| WP-E1 | #186 | `codex-wp-e1-186` | 5740 to 5749 | `apps/api/src/sse.ts` and its test, `packages/api-client/src/sse.ts`, `apps/web/src/runs/useRunEvents.ts` (minimal), ADR-0050, docs/07 event stream, docs/10 measurements |
+| WP-F3 | #270 | `codex-wp-f3-270` | 5780 to 5789 | `packages/engine/src/ports.ts` (`StructuredPort` signal and timeout), the decision handler's structured call, `packages/adapter-codex/src/decider.ts` and `CodexStructured`, `apps/api/src/container.ts` **structured wiring only**, docs/05 and docs/06 structured completion |
+| WP-F2b | #205 | `codex-wp-f2b-205` | 5790 to 5799 | `apps/web/src/forms/fields/model.tsx`, `apps/web/src/editor/NodeEditorDialog.tsx` and node config form layout, form introspection for Advanced placement, docs/09 editor, guide 02 |
+| WP-G2 | #240 | `codex-wp-g2-240` | 5920 to 5929 | `apps/web/src/events/EventsPage.tsx`, the events query in `apps/web/src/api/queries.ts`, `GET /events` parameters in `apps/api/src/routes/triggers.ts` (**additive**; WP-D4 owns the route file), docs/09 Events |
+| WP-G1 | #116 | `codex-wp-g1-116` | 5930 to 5939 | the thread-reconciliation owner (domain or engine, new file), `packages/engine/src/run-manager.ts` **`getThread` and snapshot handling only**, `packages/infrastructure/src/sqlite/runs.ts` thread snapshot reads, `apps/api/src/routes/runs.ts` thread and run reads, `apps/mcp/src/tools.ts` run and thread tools, `apps/web/src/runs/projections.ts`, `event-store.ts`, `useRunEvents.ts` (**minimal, additive**; WP-E1 owns it), ADR-0053, docs/05, docs/07, docs/09 |
+| WP-F4 | #33 | `codex-wp-f4-33` | 5940 to 5949 | `packages/contracts/src/nodes.ts` **`SessionPolicySchema` and the inference session field only**, `packages/engine/src/handlers/inference.ts` and `inference-turn.ts` session selection, `HarnessSessionRepository` in `packages/engine/src/ports.ts`, the SQLite sessions store, both adapters' resume paths, the editor's session-policy control (WP-F2b owns the model and effort fields), migration `0020` only if stored state must change, ADR-0052, docs/03, docs/05, docs/06, editor guide |
+
+Shared hot spots: `packages/engine/src/run-manager.ts` is edited by WP-D4 (admission), WP-C7 (stop and shutdown) and WP-G1 (`getThread` and snapshots) in different regions; `apps/web/src/runs/useRunEvents.ts` by WP-E1 and WP-G1 (both minimal); `apps/api/src/container.ts` by WP-C7 (stop) and WP-F3 (structured wiring); `apps/api/src/routes/triggers.ts` by WP-D4 and WP-G2 (additive). Keep edits inside your region, add helpers in new files, never reformat code you do not own, and name every line range you touched outside your files in your report. `CHANGELOG.md`: one bullet per bolt at the top of `## Unreleased`, ending with `(#n)`. Not yours this wave: PR #375 (#320, #321) and PR #355 (#266, #188) wait for the owner.
+
+## Wave of 2026-10-22 (base `main` at `dbf850861329be21410407e8282fa80373caf593`)
+
+| Package | Bolts | Model | Worktree branch | Primary files owned |
+| --- | --- | --- | --- | --- |
+| WP-G1 (#245) | #245 | Sol | `codex-wp-g1-245-replay-seed` | `packages/engine/src/run-manager.ts` **replay region (about lines 866 to 955) and `getThread` only**, `apps/web/src/runs/projections.ts`, `apps/api/src/routes/runs.ts` replay and thread routes, docs/05 replay, docs/09 inspector reconstruction rule, guide 03 replay |
+| WP-E1 (#259) | #259 (and the #380 overflow defect on the same surface) | Fable (orchestrator, D-026) | `wp-e1-259-large-values` (PR #382, done; Sol review and QA) | `apps/web/src/runs/inspector/ThreadViewer.tsx`, `ProgressDrawer.tsx`, `apps/web/src/runs/RunInspectorPage.tsx` (Result card), `apps/web/src/events/EventsPage.tsx` (payload cell), `apps/web/src/components/ui/bounded-value.tsx`, `projections.ts` (`createThreadCache`), docs/09 inspector rendering bounds |
+| WP-E1 (#186), round 1 | #186 server and transport half (round 2, history browsing, after PR #367 merges) | Sol | `codex-wp-e1-186` (launches when a slot frees) | `apps/api/src/sse.ts` and its test, `packages/api-client/src/sse.ts`, `apps/web/src/runs/useRunEvents.ts` (minimal, additive), `ADR-0047`, docs/07 streaming, docs/09 hook error state, docs/10 measurements, `docs/qa/2026-10-22-wp-e1-186-*` |
+| WP-G1 (#245) | #245 | Sol (done; Fable review approved; Sol QA running) | `codex-wp-g1-245-replay-seed` (PR #383) | as above |
+
+Ten pull requests are under final audit and must not be edited by anyone but the orchestrator: `opus-wp-b3-reset-and-retire`, `opus-wp-g4-exit-evidence`, `codex-wp-g2-paging-summaries`, `codex-wp-f1-readiness-precision`, `codex-wp-d2-webhook-retry`, `wp-d1-320`, `codex-wp-f4-prompt-provenance`, `codex-wp-f2b-harness-switch`, `codex-wp-f3-unlimited-mode`, `codex-wp-d1-child-recovery`. They touch `run-manager.ts` (limits, recovery, finalisation), `sse.ts`, `useRunEvents.ts`, paging consumers and the inspector's evaluation panels; new work keeps clear of those regions and expects to re-merge `main` after they land.
+
+## Wave of 2026-10-18 (history)
+
+Base for every package: `main` at `cfae6966029fe181c2064637c6ca8b2dfc31da37` unless the brief says otherwise. All packages below run at the same time.
+
+| Package | Bolts | Model | Worktree branch | Primary files owned |
+| --- | --- | --- | --- | --- |
+| WP-A1 | #263, #127, #114 | Sol | `codex-wp-a1-runtime-gates` | `.nvmrc`, root `package.json` engines, `turbo.json`, `.github/workflows/ci.yml` (runtime and cache steps only), `AGENTS.md` runtime paragraph, `docs/guide/01-install-and-first-run.md`, `docs/02-architecture.md` runtime row, `Dockerfile` NODE_IMAGE, `tooling/scripts/install*`, lockfile for the #114 dependency |
+| WP-A2 | #67, #241 | Sol | `codex-wp-a2-browser-gates` | `apps/web/e2e/drafts.spec.ts` (two-tab test) and its helpers, `apps/web/playwright.config.ts`, `.github/workflows/ci.yml` (new browser job only), `docs/10-testing-and-quality.md` CI section |
+| WP-B1 (done, in review) | #223, #318 | Sol | `codex-wp-b1-durable-events` (committed; also edited `packages/infrastructure/src/sqlite/runs.ts` lines 1, 5, 106-107, 171-197, 269-274, 278-285, 298-307 for raw run enumeration and decoding, and reshaped `RunManager.recover()` with a per-run try/catch) | `packages/infrastructure/src/sqlite/events.ts`, `packages/contracts/src/run.ts` event schemas, `packages/engine/src/run-manager.ts` **failure-recording and recovery regions only** (`fail`, `recordFailure`, `recover`), `apps/api/src/main.ts` startup reporting |
+| WP-B3 | #266, #188 | Opus | `worktree-agent-<id>` (Claude) | `packages/infrastructure/src/sqlite/upgrade*.ts`, `readiness.ts`, `db.ts` format guard, `tooling/scripts/upgrade*.mjs`, `freeze-upgrade-*.mjs`, `upgrade.acceptance.mjs`, `.github/workflows/ci.yml` ("Offline upgrade acceptance" step only), `apps/web/src/drafts/**` conversion paths, API import/upgrade routes, `docs/guide/08-offline-upgrade.md`, new ADR |
+| WP-C1 | #247 | Opus | `worktree-agent-<id>` (Claude) | `packages/engine/src/run-manager.ts` **run start, definition resolution and admission regions**, `packages/infrastructure/src/sqlite/loops.ts`, `runs.ts` (definition pin columns), `packages/contracts/src/run.ts` run/definition identity fields, `apps/api/src/routes/runs.ts` start endpoints, `apps/mcp/src/tools.ts` start tools, `docs/05-execution-engine.md`, `docs/03-domain-model.md`, ADR-0008 successor |
+| WP-C2 (done, in review) | #272, #226, #257 | Sol | `codex-wp-c2-wait-identity` (committed `cbe9a99`; input body is now `{ waitId, input }`, signal `{ waitId, payload? }`, 409 `WAIT_MISMATCH`; also moved `TerminalEvent`/`lastFinishedNode` helpers out of `run-manager.ts` and touched the SQLite `transition` guard) | `packages/engine/src/handlers/wait.ts`, `heartbeat.ts`, `packages/engine/src/run-manager.ts` **wake, input and timer regions only**, `packages/infrastructure/src/scheduler/timer-service.ts`, `timers.ts`, `apps/api/src/routes/runs.ts` input endpoint, `apps/mcp/src/tools.ts` input tool, `packages/api-client` input method, `apps/web/src/runs/inspector/WaitPanel.tsx`, `docs/04-node-catalog.md` wait/heartbeat |
+| WP-E1a | #190 | Sol | `codex-wp-e1a-sustained-measurements` | new measurement scripts (`tooling/perf/` or `PERF=1` suites), `docs/qa/2026-10-18-sustained-run-measurements.md`, `docs/10` performance section; no product code |
+| WP-A4 | #274, #250 | Sol | `codex-wp-a4-licenses-examples` | `tooling/scripts/licenses.mjs` and test, `tooling/license-allowlist.json` comments, `docs/guide/02-build-a-loop.md` and `03-run-and-observe.md` examples, new `apps/api` example test, `docs/11` licensing paragraph |
+| WP-A3 | #316 | Sol | `codex-wp-a3-test-inventory` | done: reviewed and corrected, PR #346 open (CI running) |
+| WP-A4 | #274, #250 | Sol | `codex-wp-a4-licenses-examples` | committed `daefae5`; reviewed; Sol applying fixes (guide 02/03 prose, `guide-examples.test.ts`, new `apps/mcp` test, docs/11 bullet restore) |
+| WP-C4 (done, in review) | #227, #233 | Sol | `codex-wp-c4-patch-wait-client` (committed `031c0d0`; overlaps WP-C2 in `apps/mcp/src/tools.ts` and `packages/api-client/src/resources.ts`) | `packages/domain/src/patch.ts`, `packages/engine/src/handlers/script.ts` and `mutate.ts` protected-location checks, `packages/api-client/src/wait.ts`, `sse.ts` signal propagation, `apps/mcp/src/tools.ts` `wait_for_run` only, `docs/03`, `docs/04`, `docs/07` |
+| WP-D3 | #232, #117 | Sol | `codex-wp-d3-utf8-probe-bounds` | `packages/infrastructure/src/process/scripts.ts`, `output-capture.ts`, `packages/infrastructure/src/http/probes.ts`, `apps/api/src/triggers/poll-probe.ts` consumer, docs/04 script output, docs/08 probe limits, docs/11 |
+| WP-F1 | #179 | Sol | `codex-wp-f1-readiness-precision` | `packages/infrastructure/src/claude/environment.ts`, `process.ts`, `errors.ts` (readiness states; `models.ts` belongs to WP-F2a), `packages/adapter-codex` readiness, `apps/api/src/preflight.ts`, `model-issues.ts`, settings routes and web readiness display, docs/06 readiness table, guide 07 |
+| WP-A5a (done, in review) | #317 | Sol | `codex-wp-a5a-invasive-tests` (committed `f1b9d78`, `da5e5df`) | test files named in the inventory's V/U rows across adapter-jev, engine, infrastructure, apps/api, apps/web; removes test-only exports `hasPath`, `PwaTestHook`, `ICON_NAMES`, `EMPTY_HISTORY`, `describeRoute`, `routeBackwardEdges`, `labelOf`; new disposable API subprocess harness in `apps/api` tests |
+| WP-F2a | #206 | Opus | `worktree-agent-<id>` (Claude) | `packages/infrastructure/src/claude/models.ts`, `policy.ts`, `apps/api/src/model-issues.ts`, settings catalog rows, `docs/06-harness-integration.md`, `docs/guide/06-settings-and-secrets.md` |
+
+Shared hot spots and the rule for them:
+
+- `packages/engine/src/run-manager.ts` is edited by WP-B1, WP-C1 and WP-C2 in different regions. Keep your edits inside your region, add new helpers in new files where possible, never reformat or reorder code you do not own, and name every line range you touched in your report.
+- `apps/api/src/routes/runs.ts` and `apps/mcp/src/tools.ts`: WP-C1 owns start, WP-C2 owns input. Additive edits only.
+- `.github/workflows/ci.yml`: WP-A1 owns the setup/runtime/cache steps, WP-A2 adds a browser job, WP-B3 removes the offline-upgrade step. Do not reorder other steps.
+- `CHANGELOG.md` `## Unreleased`: everyone appends a bullet; put yours at the top of the list, one bullet per bolt, ending with `(#n)`.
+- `AGENTS.md`: WP-A1 owns the runtime paragraph; WP-B3 owns the migration/reset sentence in Rules. Nobody else edits it.
+## Owner decision ledger
+
+### Authority and vocabulary
+
+The owner approved the final plan and its priority order in this conversation, then explicitly authorized GitHub publication only. Latest explicit human input supersedes older model proposals, historical issue text and old compatibility assumptions. The hierarchy is intents â†’ UoWs â†’ bolts; campaigns/phases are not additional delivery layers.
+
+### Dispatch hold
+
+Do not start implementation. Every runnable bolt remains parked with no aidlc-ready, human-in-the-loop or approval gate labels. Plan approval is recorded in the body; a later explicit dispatch decision releases the hold. Deferred work stays parked and is not made implementation-ready by this publication.
+
+### Protected work
+
+Leave #38, #97, #98, #118, #152, #164, #165, #166, #168, #169, #171, #173 and newly observed related #341, and PRs #275/#277/#340 unchanged, including closed records. Preserve their native/inverse parent, sub-issue, dependency and duplicate relationships. #280/#281 reference external acceptance without adding inverse links. Do not redirect or message Claude.
+
+### Owner environment
+
+Never restart, reconfigure, write to or start runs on the owner app at ports 4747/4748, its store or checkout. Eventual verification uses a separate instance, alternate port and disposable data. No implementation, reset, provider call or installer execution is part of this publication.
+
+### Accepted delivery
+
+Retain completed #9, #11, #21, #26, #28â€“31, #99, #158â€“161 and #170. #9 is completed, not not-planned. Prior evidence and owner acceptance remain distinct; this update does not claim new live smoke tests. #32 is accepted as sufficient at its delivered scope; repository-specific QA loops are owner-led usage/testing with no new product follow-up.
+
+### Current UI
+
+The owner is happy with the current UI. Keep cards minimal. Optional toasts/skeletons are #210; light-mode repair is #211, System theme selection is #172, and mascot work is #10. Broad JSON-editing/Advanced refinements wait for concrete needs; direct model/effort visibility is the explicit exception in #205.
+
+### Decision configuration
+
+Evaluation method is primary at the top of decision configuration and controls field visibility. Classifiers alone expose Choice/Noul/Score answer types; LLM decisions use freeform instructions and structured result validation; expressions use snippets with only relevant options. This is captured outside protected #97/#98/#164, not imposed by editing their active scope.
+
+### Authoring follow-ups
+
+Use one visible effort dropdown and keep model/effort out of Advanced. Connections belong on the canvas for all node kinds after conformance is verified. Undo/Redo stay at fixed positions. Prevent equivalent duplicate loop names including import/copy. Preserve saved geometry; readable default spacing follows more serious bugs.
+
+### Human defect reports
+
+An AI model must reproduce human-reported defects before a corrective implementation; explicitly flag inability to reproduce. Missing reproduction is not disproof. Owner product review is required, especially #125/#221. The decision-output screenshot was captured after reload, when attempted connections appeared.
+
+### Pre-1.0 data
+
+Prefer clean current-format code and explicit operator resets over historical conversions. Preserve current-format durability. Old stores/imports/device drafts refuse clearly; startup never silently wipes data. Existing damaged history may be deleted explicitly or manually repaired; automatic historical preservation/repair is not required. Apply future cleanup after the currently protected cutover/editor boundary.
+
+### Definition lifetime
+
+All executions, including draft runs, retain the original immutable definition through their entire lifetime, waits, resume and restart. Only new executions use subsequent edits. This is settled, not a fresh product question.
+
+### Child composition
+
+Always await child/subloop completion and pass its configured exit output back to the parent, or no output if none is configured. A child exit is not a parent exit. Child failures follow ordinary parent-node failure rules. Future parallel branches must also join/wait, but branching/merging is deferred.
+
+### Shutdown
+
+Stop new independent admission while active parent/child work can finish and queued work stays recoverable. After a configurable several-minute interactive grace, explain active work and offer keep waiting or force. Waiting has no hidden kill timer. Without UI, normal stop waits indefinitely if necessary; explicit force interrupts. Browser tab closure is not shutdown.
+
+### Waits and heartbeats
+
+Durable timers and observed-wait identities prevent lost/cross-visit wakes. Past wall-clock waits become eligible after restart; paused runs stay paused. Heartbeat counts reset on a genuine visit and persist across its beats/retries/restart. The natural competing-wake race remains an investigation, not a proven defect.
+
+### External effects
+
+Use stable child/delivery identities. Do not blindly repeat uncertain non-idempotent scripts; require explicit retry. Eligible outbound-webhook retries are bounded and preserve identity; recipient deduplication is not assumed.
+
+#343 adds durable POC Event intake: require one stable loop ID and unambiguous entry; retain webhook URL targeting; durably save accepted admission and recover it without duplicate runs. Independent targeted requests may execute concurrently within configured capacity. This admission guarantee is not universal exactly-once external effects.
+
+#345 is parked pre-1.0: a configured-but-missing outbound signing secret prevents the request and produces a safe visible delivery failure. Deliberately unsigned delivery remains supported. No repeated attempt while that required configuration remains missing.
+
+### Sessions and limits
+
+- Context modes are fresh/isolated with authored task and selected inputs; current main-loop context supplied deliberately; or an independent conversation owned by this node within this execution. A fresh provider session can still receive selected loop context.
+- Persistent memory means previous visits during one execution, not separate executions. Isolate node/run/harness identities, replay forks and children. Outputs enter the main thread only through the normal configured output behavior.
+- An explicitly chosen reset-after-N-visits policy is valid. It must be visible and optional, never an imposed hidden ten-visit reset, and must not erase the main-loop context.
+- Preserve prompt-delivery provenance: definitely unsubmitted work retains its authored prompt; uncertain accepted work is not blindly resent; a missing provider conversation requires an explicit fresh-session recovery choice.
+
+Loop guardrails are visible, disableable controls for loop execution (iterations/node visits and optional elapsed deadlines). Do not impose cost/token/subscription budgets or substitute provider-turn ceilings. Users may author their own usage-aware script/decision nodes. Quota exhaustion currently fails explicitly; only positively identified transient failures safe to repeat receive bounded retries. Future same-model allowance waiting/resumption is #335.
+
+### Model selections
+
+Explicit provider switches choose a valid configured compatible default or supported ecosystem default when none exists (#204). Model and reasoning effort remain directly visible with one effort control (#205). #206 is the separate high-priority pre-1.0 Sonnet/Haiku bolt, verified against installed capability and actual isolated turns.
+
+#262 is parked post-1.0, including its authoring-validation test changes. Unavailable means user-disabled or removed from GraphGoblin support, not quota/authentication/transient failure. Warn before disabling a referenced model, identify affected loops, and unpublish affected published loops if confirmed. GraphGoblin retirement requires an explicit tested compatible successor and clean upgrade of definitions/settings for new executions. Running definitions/models and historical evidence remain unchanged. Runtime failures never silently substitute a model.
+
+#335 is post-1.0 same-model usage-exhaustion recovery; it replaces the fallback-model candidate. No model-substitution capability is scheduled.
+
+### Sustained execution
+
+Sustained loops are central to the POC. Start #190/#268 measurements early alongside gate reliability; prioritize bounded streaming #186. Measure before targeted optimization; no general RunManager rewrite or invented latency SLA. Critical state/finalization fixes accompany runtime changes rather than waiting behind UI polish.
+
+### History deletion
+
+Only specifically user-confirmed delete-ready history is eligible for automatic cleanup. Age/terminal status is not consent; failed runs need no special rule. Protect active/required retained data. Cleanup is pressure-driven and off by default with ample storage, with a subtle visible warning. Explicit loop deletion must clearly cover any associated history it removes.
+
+### Test quality
+
+Review maintained unit, integration, regression, browser and restart/concurrency evidence through supported component/public methods. Private-method access, reflection, invasive casts and monkey-patching the tested component are errors. Legitimate public dependency injection, fake clocks, malformed external inputs and real storage faults remain valid. Keep coverage protections and truthful denominators; no fake-only claim of native integration success.
+
+### Paid validation
+
+Existing subscriptions may be used for bounded real Codex/Claude validation through installed logins. Jev uses its existing API path. An API key may be discussed only if actually required; do not add direct API adapters solely for tests, export credentials, schedule recurring paid jobs or infer unbounded quota approval.
+
+### Recovery/evidence UI
+
+Resume/Replay eligibility must be truthful. Preserve useful loopback-node capabilities/evidence when decisions replace them (#129); nothing is dropped without an equivalent. Pinned execution metadata, complete paging, raw values and explicit finalization must agree across API/MCP/browser.
+
+### Later priorities
+
+MacOS follows most POC development but precedes final distribution preparation. Installer/setup #34â€“36/#39 are final pre-1.0 checks. #100 is a high-priority post-1.0 deferral just ahead of #25. Mobile is separately parked. Accessibility follows adoption after 1.0. Light mode is low pre-1.0 priority; mascot follows pressing work; guidance/navigation is mostly near 1.0.
+
+### Installation
+
+Detect existing harnesses and offer normal externally usable installations when missing. The lightweight Windows launcher is early usable product work; a full installer is separate. HTTP MCP is started only when applicable, and stdio remains client-owned.
+
+### Historic proposals
+
+Historical comments remain attributable history, not a second operative specification. The current approved body and this ledger supersede contradictory old caps, silent session fallbacks, compatibility requirements, scheduling and approval statements. Do not edit or erase human comments. Protected active issues remain unchanged and are reconciled only at the explicit external acceptance gate.
+
+## Shared completion standard
+
+- Exercise supported public/component interfaces; do not access private state, use reflection to bypass encapsulation, monkey-patch the component under test or add test-only production exports.
+- Use appropriate unit, real storage/process/API integration and browser evidence. Regression tests must demonstrate faulty behavior on the applicable baseline and corrected behavior after the change.
+- Human reports require reproduction before a corrective implementation; if unreproduced, preserve the report and evidence and request owner disposition rather than guessing a fix.
+- Test relevant positive, negative, cancellation, concurrency and restart cases; a fake or controlled failure fixture is identified as such.
+- Keep strict coverage and quality protections; no lowering thresholds, arbitrary exclusions, suppressed assertions, retry-to-green or repeated broad suites without cause.
+- Update changed contracts, generated references, relevant behavior docs and ADRs within the bolt. Residual documentation polish can remain later.
+- Default proposed delivery routing is GPT-6.1 Sol xhigh implementation, opposite-vendor Claude review and independent QA per repository workflow. No agent is launched by this plan.
+- UI bolts require owner product acceptance. Architecture/cutover plans require owner approval. All these gates are proposed metadata, never self-applied plan-approved labels.
+- Only isolated workspaces, alternate ports and disposable data may be used. Never operate on owner port 4747 or its store.
+- Research/diagnostic bolts can end with an evidence-backed no-change result; conditional corrective bolts require the reproduction or measurement they depend on.
+
+## Engineering parameters
+
+Existing accepted configuration is retained when applicable. Unsettled numeric grace periods, execution defaults, retry/backoff values, storage-pressure thresholds and performance budgets are engineering parameters to document and justify in their owning bolt; no invented number is represented as owner-approved.
+

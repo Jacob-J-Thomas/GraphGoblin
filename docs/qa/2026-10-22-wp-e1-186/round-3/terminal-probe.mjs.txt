@@ -1,0 +1,90 @@
+import { mkdtemp, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { get } from 'node:http';
+import { performance } from 'node:perf_hooks';
+const phase = process.argv[2];
+if (!['before', 'after'].includes(phase)) throw new Error('Specify before or after');
+const root = process.cwd();
+const dep = (name) => import(import.meta.resolve(name, pathToFileURL(join(root, 'apps/api/package.json')).href));
+const { createContainer, loadConfig, buildApp } = await dep('@graphgoblin/api');
+const { FakeHarness } = await dep('@graphgoblin/engine/testing');
+const { CURRENT_DEFINITION_FORMAT } = await dep('@graphgoblin/contracts');
+const output = resolve('docs/qa/2026-10-22-wp-e1-186/round-3');
+await mkdir(output, { recursive: true });
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-e1-186-r3-'));
+const portable = (s) => s.replaceAll(process.env.USERPROFILE.replaceAll('\\', '\\\\'), '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%').replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+const c = await createContainer(loadConfig({
+  GG_DATA_DIR: dataDir, GG_DB_URL: `file:${join(dataDir, 'graphgoblin.db')}`,
+  GG_REQUIRE_API_KEY: 'false', GG_SWAGGER_UI: 'false',
+  GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
+}), { harnesses: { codex: new FakeHarness() }, startTimers: false });
+await c.start();
+const events = c.repos.events;
+let reads = 0, rows = 0, lookups = 0;
+const store = {
+  append: (...args) => events.append(...args),
+  page: (...args) => events.page(...args),
+  subscribe: (...args) => events.subscribe(...args),
+  lastLifecycleEvent: (...args) => { lookups++; return events.lastLifecycleEvent(...args); },
+  read: async (...args) => { reads++; const page = await events.read(...args); rows += page.length; return page; },
+};
+const app = await buildApp({ ...c, repos: { ...c.repos, events: store } }, { logger: false });
+const result = { phase, node: process.version, dataDir, events: 42102, observations: [], largeCaptures: [] };
+try {
+  const definition = {
+    schemaVersion: CURRENT_DEFINITION_FORMAT, name: 'Bounded terminal confirmation probe',
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: 'Hold' } },
+      { id: 'done', kind: 'exit', label: 'Done', config: {} },
+    ],
+    edges: [
+      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },
+      { id: 'b', from: { node: 'wait', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+  const made = await app.inject({ method: 'POST', url: '/loops', payload: { definition } });
+  if (made.statusCode !== 201) throw new Error(made.body);
+  const loopId = made.json().loop.id;
+  const published = await app.inject({ method: 'POST', url: `/loops/${loopId}/publish` });
+  if (published.statusCode !== 200) throw new Error(published.body);
+  const started = await app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} });
+  if (started.statusCode !== 202) throw new Error(started.body);
+  const runId = started.json().run.id;
+  await c.manager.waitForIdle();
+  let n = (await c.repos.runs.get(runId)).lastEventSeq;
+  while (n < 42101) {
+    const count = Math.min(100, 42101 - n);
+    await events.append(runId, Array.from({ length: count }, () => ({ type: 'run.woken', nodeId: 'wait', reason: 'manual', payload: 'q'.repeat(256) })));
+    n += count;
+  }
+  await events.append(runId, [{ type: 'run.cancelled' }]);
+  await c.repos.runs.transition(runId, ['waiting'], { status: 'cancelled', waiting: undefined, finishedAt: new Date().toISOString() });
+  const base = await app.listen({ host: '127.0.0.1', port: 5745 });
+  for (let round = 1; round <= 3; round++) for (const after of [42102, 42202]) {
+    reads = 0; rows = 0; lookups = 0;
+    const start = performance.now();
+    const observed = await new Promise((resolve, reject) => {
+      const req = get(`${base}/runs/${runId}/events?after=${after}`, { headers: { accept: 'text/event-stream' } }, (res) => {
+        let body = '';
+        res.setEncoding('utf8'); res.on('data', (chunk) => { body += chunk; });
+        res.once('error', reject);
+        res.once('end', () => resolve({ round, after, status: res.statusCode, elapsedMs: performance.now() - start, eventIds: [...body.matchAll(/^id: (\d+)$/gm)].map(m => Number(m[1])), controls: (body.match(/^event: stream.error$/gm) ?? []).length, reads, rows, lifecycleLookups: lookups }));
+      });
+      req.on('error', reject);
+      req.setTimeout(120000, () => req.destroy(new Error('Probe timeout')));
+    });
+    if (observed.status !== 200 || observed.eventIds.length || observed.controls) throw new Error(JSON.stringify(observed));
+    result.observations.push(observed); console.log(JSON.stringify(observed));
+  }
+} finally {
+  await app.close(); await c.stop();
+  for (const name of await readdir(dataDir)) {
+    const path = join(dataDir, name), info = await stat(path);
+    if (info.isFile() && info.size > 1000000) result.largeCaptures.push({ path, bytes: info.size, sha256: createHash('sha256').update(await readFile(path)).digest('hex') });
+  }
+  await writeFile(join(output, `terminal-${phase}.json`), portable(JSON.stringify(result, null, 2)) + '\n');
+}

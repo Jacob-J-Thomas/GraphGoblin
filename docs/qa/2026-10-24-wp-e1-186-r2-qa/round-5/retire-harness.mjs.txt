@@ -1,0 +1,19 @@
+import { readdir,readFile,rename,writeFile,stat } from 'node:fs/promises';
+import { resolve,join,relative,sep } from 'node:path';
+import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
+const base=resolve('apps/web/.tmp/qa5');
+const records=[];
+const paths=[join(base,'playwright.config.ts')];
+for(const folder of ['e2e','testing'])for(const name of await readdir(join(base,folder)))if(name.endsWith('.ts'))paths.push(join(base,folder,name));
+for(const before of paths) {
+  const after=resolve(before+'.mjs.txt');
+  assert(before.startsWith(base+sep)&&after.startsWith(base+sep),'Retirement escaped the exact QA scratch root');
+  assert((await stat(before)).isFile(),'Only regular QA scratch files may be retired');
+  const bytes=await readFile(before),sha256=createHash('sha256').update(bytes).digest('hex');
+  await rename(before,after);
+  assert.equal(createHash('sha256').update(await readFile(after)).digest('hex'),sha256);
+  records.push({before:relative(resolve('.'),before),after:relative(resolve('.'),after),bytes:bytes.length,sha256});
+}
+await writeFile('docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/retired-harness.json',JSON.stringify({scope:'Only completed QA runtime copies under apps/web/.tmp/qa5; no original source or directory deleted/moved. File bytes unchanged. The preparation script recreates executable copies for reproduction.',records},null,2));
+console.log(JSON.stringify({retired:records.length}));

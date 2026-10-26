@@ -1,0 +1,83 @@
+[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-268/packages/engine
+
+ ❯ src/hot-paths.test.ts (7 tests | 2 failed) 906ms
+   × finalization reads bounded pages and yields, preserving the entire return-producing log 178ms
+   × a failed finalization page leaves delivery pending and recovery delivers exactly once 71ms
+pnpm.cmd : 
+At line:2 char:464
++ ... manager.ts; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hot-paths.test.ts > finalization reads bounded pages and yields, preserving the entire return-producing log
+AssertionError: expected 1 to be greater than 2
+ ❯ src/hot-paths.test.ts:56:24
+     54|   const run = await f.manager.startRun({ ownerId: 'local', loopId: f.l…
+     55|   await f.manager.waitForIdle();
+     56|   expect(reads.length).toBeGreaterThan(2);
+       |                        ^
+     57|   expect(reads.every((limit) => limit !== undefined && limit <= 256)).…
+     58|   expect(timerRan).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/hot-paths.test.ts > a failed finalization page leaves delivery pending and recovery delivers exactly once
+AssertionError: expected [ { …(6) }, { …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "channel": {
++       "kind": "caller",
++     },
++     "runId": "00000000000000000000000001",
++     "seq": 615,
++     "target": "run.result",
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "return.delivered",
++   },
++   {
++     "channel": {
++       "kind": "log",
++     },
++     "runId": "00000000000000000000000001",
++     "seq": 616,
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "return.delivered",
++   },
++ ]
+
+ ❯ src/hot-paths.test.ts:91:91
+     89|   await f.manager.waitForIdle();
+     90|   expect((await f.ports.runs.get(run.id))?.status).toBe('succeeded');
+     91|   expect(f.ports.events.all(run.id).filter((event) => event.type === '…
+       |                                                                                           ^
+     92|   expect(await f.ports.runs.listRecoveryCandidates()).toContainEqual({…
+     93|   refusePage = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  04:22:33
+   Duration  12.00s (transform 66%, import 26%, tests 8%)
+
+  Transform  transforming modules took 7.51s · 66% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 268\packages\engine
+

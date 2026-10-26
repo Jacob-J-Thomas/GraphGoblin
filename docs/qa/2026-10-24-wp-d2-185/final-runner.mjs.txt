@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+import { spawn, execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+const root = process.cwd(), dir = root+'/docs/qa/2026-10-24-wp-d2-185';
+const mode=process.argv[2];
+const checks=['typecheck','lint','format:check','check:layers','check:deps','check:docs','check:tokens'].map(s=>[s.replace(':','-'),'pnpm.cmd '+s]);
+const coverage=['api-client','api','mcp','web'].map(s=>['coverage-'+s,'pnpm.cmd --filter @graphgoblin/'+s+' test:coverage --maxWorkers=2 --coverage.reportOnFailure']);
+const delivery=[['build','pnpm.cmd build'],['browser','pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/webhook-delivery.spec.ts'],['native','node "%TEMP%/gg-wp-d2-185-reproduce.mjs" --verify']];
+const jobs=mode==='checks'?checks:mode==='coverage'?coverage:mode==='coverage-tail'?coverage.slice(2):delivery;
+if (mode==='checks') {
+ const files=execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split(/\r?\n/).concat(['apps/api/src/finalization.test.ts','docs/decisions/ADR-0057-execution-and-delivery-finalization.md']);
+ fs.writeFileSync(dir+'/source-manifest.json',JSON.stringify(Object.fromEntries(files.map(p=>[p,createHash('sha256').update(fs.readFileSync(p)).digest('hex')])),null,2)+'\n');
+}
+for(const [name,command] of jobs) {
+ console.log('START '+command);
+ const fd=fs.openSync(dir+'/final-'+name+'.log.txt','w'), begin=Date.now();
+ const child=spawn(process.env.ComSpec||'cmd.exe',['/d','/s','/c',command],{cwd:root,windowsHide:true,env:process.env,stdio:['ignore',fd,fd]});
+ const code=await new Promise((ok,no)=>{child.on('error',no);child.on('exit',ok);});fs.closeSync(fd);
+ fs.appendFileSync(dir+'/final-results.jsonl',JSON.stringify({command,code,elapsedMs:Date.now()-begin,log:'final-'+name+'.log.txt',node:process.version})+'\n');
+ console.log('END '+name+' '+code);
+ if(mode==='delivery'&&name==='build'&&code!==0)break;
+}

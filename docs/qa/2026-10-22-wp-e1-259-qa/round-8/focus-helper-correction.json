@@ -1,0 +1,6 @@
+{
+  "original": "outside timeline and run control are untouched",
+  "mistake": "The helper activated Reconstruct via native DOM click while retaining timeline focus, then expected no hand-off. Explicit activation deliberately hands focus to the reconstructed thread. This does not test a return to a prepared thread.",
+  "correction": "Prepare both events with ordinary button activation. Put the keyboard outside, then return via a timeline button without activating Reconstruct. Separately test a live card while the timeline owns focus.",
+  "retention": "Original script, log and two interrupted rows are retained. Only interrupted outside-focus and A/B/A assertions continue; completed cases are not rerun."
+}

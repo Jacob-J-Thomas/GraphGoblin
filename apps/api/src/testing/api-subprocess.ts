@@ -33,11 +33,10 @@ export function listening(port: number): Promise<boolean> {
   });
 }
 
-async function freePort(first: number, last: number): Promise<number> {
-  const count = last - first + 1;
+async function freePort(start = 5600, count = 100): Promise<number> {
   const offset = Math.floor(Math.random() * count);
   for (let index = 0; index < count; index++) {
-    const port = first + ((offset + index) % count);
+    const port = start + ((offset + index) % count);
     const server = createServer();
     const available = await new Promise<boolean>((resolve, reject) => {
       server.once('error', (error: NodeJS.ErrnoException) =>
@@ -47,7 +46,7 @@ async function freePort(first: number, last: number): Promise<number> {
     });
     if (available) return port;
   }
-  throw new Error(`No disposable API port is free in ${first}-${last}`);
+  throw new Error(`No disposable API port is free in ${start}-${start + count - 1}`);
 }
 
 function launch(env: NodeJS.ProcessEnv, args: string[]) {
@@ -120,7 +119,7 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
 }
 
 export async function createApiProcessFixture(
-  options: { directoryPrefix?: string; portRange?: readonly [number, number] } = {},
+  options: { prefix?: string; portStart?: number; portCount?: number } = {},
 ) {
   try {
     await access(entry);
@@ -129,10 +128,15 @@ export async function createApiProcessFixture(
       cause,
     });
   }
-  const port = await freePort(...(options.portRange ?? [5600, 5699]));
-  const dataDir = await mkdtemp(join(tmpdir(), options.directoryPrefix ?? 'gg-api-process-'));
+  const dataDir = await mkdtemp(
+    join(tmpdir(), options.prefix ?? process.env.GG_TEST_STORE_PREFIX ?? 'gg-api-process-'),
+  );
   const databaseFile = join(dataDir, 'graphgoblin.db');
   const lockPath = join(dataDir, 'graphgoblin.lock');
+  const port = await freePort(
+    options.portStart ?? Number(process.env.GG_TEST_PORT_START ?? 5600),
+    options.portCount ?? Number(process.env.GG_TEST_PORT_COUNT ?? 100),
+  );
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(
       ([name]) =>
@@ -190,6 +194,10 @@ export async function createApiProcessFixture(
       try {
         await Promise.all(children.map((child) => child.dispose()));
       } finally {
+        // libsql can retain closed native connections/statements until collection. On Windows
+        // those handles keep observer stores busy even after close(); API Vitest exposes gc,
+        // as it does for the other file-backed SQLite fixtures. Release them before removal.
+        globalThis.gc?.();
         // Native handles can take a moment to release on Windows; cleanup is best effort.
         await rm(dataDir, { recursive: true, force: true, maxRetries: 10 }).catch(() => undefined);
       }

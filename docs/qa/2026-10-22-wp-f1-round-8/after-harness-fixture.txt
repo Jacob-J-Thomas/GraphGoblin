@@ -1,0 +1,58 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > uses a fresh empty prerequisite directory and removes it after inspection 52ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing success disposition 38ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing unconfirmed disposition 65ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > creates the prerequisite directory under a system temporary directory of 226 characters (#102) 151ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > tries a fresh prerequisite directory name after a name collision and never removes the existing one 7ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after four name collisions 35ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after a creation fault 7ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > checks the installed capability/auth prerequisites and exposes explicit model support and policies 67ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > executes Fable through strict native model verification with its requested effort 162ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > checks auth before every start and resume, uses the same env, and maps current port events/result 106ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses api_key before a model starts and hides raw status 59ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses api_key_helper before a model starts and hides raw status 54ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses oauth_token before a model starts and hides raw status 26ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses third_party before a model starts and hides raw status 46ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses none before a model starts and hides raw status 46ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses unknown before a model starts and hides raw status 4ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > fails unsupported request/capabilities/session IDs before any CLI launch 3ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > validates structured results through the existing schema contract 5ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > handles the native schema carrier without extending CLI execution tools or promoting carrier content 7ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > rejects malformed/incomplete/out-of-order streams and abnormal exit without final success evidence 12ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > converts private transport failures to typed fixed diagnostics 56ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > preserves the CLI version, safe refusal name and recovery hint in result and error events 202ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > aborts during auth without starting a model and makes cancel idempotent 118ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > cancels an in-flight turn, reacts to the caller signal and never starts already aborted requests 49ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.284 independently of account login 72ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.285 independently of account login 79ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.287 independently of account login 88ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports a missing capability and failed login together without starting a turn 40ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports the detected version when the hidden max-turns capability probe fails and still checks login 50ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > returns fixed preflight problems for missing binary, unsupported platform/version/flags and bad auth 220ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > validates positive process bounds 16ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > requires resolved settings and preserves explicit effort and process bounds 41ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TIMEOUT safely 42ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_OUTPUT_LIMIT safely 16ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely 11ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely 3ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > does not cancel a completed session or generate a replacement session on resume mismatch 4ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for cancel and after completion 7ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for signal and after completion 32ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > reports unconfirmed timeout termination before ordinary timeout handling 11ms
+ ✓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate undefined instead of final-text fallback 339ms
+ ✓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate null instead of final-text fallback 174ms
+ ✓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate { ok: 'wrong' } instead of final-text fallback 212ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from auth stderr classification 76ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from quota stderr classification 29ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from transport stderr classification 2ms
+
+ Test Files  1 passed (1)
+      Tests  46 passed (46)
+   Start at  13:17:25
+   Duration  12.07s (transform 48%, import 26%, tests 25%)
+
+  Transform  transforming modules took 5.64s · 48% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

@@ -1,0 +1,99 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/mcp
+
+ ❯ src/webhook-delivery.test.ts (2 tests | 2 failed) 11532ms
+   × exposes pending and final HTTP 200 delivery through REST, api-client and MCP 7775ms
+   × exposes pending and final HTTP 400 delivery through REST, api-client and MCP 3738ms
+pnpm.cmd : 
+At line:28 char:1
++ pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/webhook-delive ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/webhook-delivery.test.ts > exposes pending and final HTTP 200 delivery through REST, api-client and MCP
+ FAIL  src/webhook-delivery.test.ts > exposes pending and final HTTP 400 delivery through REST, api-client and MCP
+GraphGoblinApiError: STORED_EVENT_INVALID: Stored history could not be read; repair the reported run history.
+ ❯ connect ../../packages/api-client/src/sse.ts:256:27
+    254|               throw new Fatal(new RunEventParseError(frame, cause));
+    255|             }
+    256|             const error = new GraphGoblinApiError(problem);
+       |                           ^
+    257|             // Controls never advance lastSeq. Corrupt history needs r…
+    258|             // failures follow the same retry policy as an equivalent …
+ ❯ run ../../packages/api-client/src/sse.ts:291:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+GraphGoblinApiError: STORED_EVENT_INVALID: Stored history could not be read; repair the reported run history.
+ ❯ connect ../../packages/api-client/src/sse.ts:256:27
+    254|               throw new Fatal(new RunEventParseError(frame, cause));
+    255|             }
+    256|             const error = new GraphGoblinApiError(problem);
+       |                           ^
+    257|             // Controls never advance lastSeq. Corrupt history needs r…
+    258|             // failures follow the same retry policy as an equivalent …
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:105:5
+ ❯ run ../../packages/api-client/src/sse.ts:291:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 500, code: 'STORED_EVENT_INVALID', detail: 'Stored history could not be read; repair the 
+reported run history.', errors: undefined, problem: { type: 'urn:graphgoblin:problem:STORED_EVENT_INVALID', title: 
+'Event replay failed', status: 500, code: 'STORED_EVENT_INVALID', detail: 'Stored history could not be read; repair 
+the reported run history.' } }
+This error originated in "src/webhook-delivery.test.ts" test file. It doesn't mean the error was thrown inside the 
+file itself, but while it was running.
+The last test to run before this error was "exposes pending and final HTTP 200 delivery through REST, api-client and 
+MCP". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+GraphGoblinApiError: STORED_EVENT_INVALID: Stored history could not be read; repair the reported run history.
+ ❯ connect ../../packages/api-client/src/sse.ts:256:27
+    254|               throw new Fatal(new RunEventParseError(frame, cause));
+    255|             }
+    256|             const error = new GraphGoblinApiError(problem);
+       |                           ^
+    257|             // Controls never advance lastSeq. Corrupt history needs r…
+    258|             // failures follow the same retry policy as an equivalent …
+ ❯ process.processTicksAndRejections node:internal/process/task_queues:105:5
+ ❯ run ../../packages/api-client/src/sse.ts:291:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 500, code: 'STORED_EVENT_INVALID', detail: 'Stored history could not be read; repair the 
+reported run history.', errors: undefined, problem: { type: 'urn:graphgoblin:problem:STORED_EVENT_INVALID', title: 
+'Event replay failed', status: 500, code: 'STORED_EVENT_INVALID', detail: 'Stored history could not be read; repair 
+the reported run history.' } }
+This error originated in "src/webhook-delivery.test.ts" test file. It doesn't mean the error was thrown inside the 
+file itself, but while it was running.
+The last test to run before this error was "exposes pending and final HTTP 400 delivery through REST, api-client and 
+MCP". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+     Errors  2 errors
+   Start at  19:54:58
+   Duration  111.12s (transform 75%, import 14%, tests 11%)
+
+  Transform  transforming modules took 82.30s · 75% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ 185\apps\mcp
+

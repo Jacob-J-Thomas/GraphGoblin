@@ -1,0 +1,23 @@
+// QA-only: adapt the kept round-1 probes, then rerun them against this exact build.
+import { readFile, writeFile, copyFile, mkdtemp } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+const prior = join(process.cwd(), 'docs/qa/2026-10-24-wp-d4-343-qa');
+const out = join(prior, 'round-2');
+const staging = await mkdtemp(join(tmpdir(), 'gg-qa-d4-343-2-scripts-'));
+for (const name of ['server', 'acceptance', 'lifecycle', 'inflight', 'webhook-protected']) {
+  let source = await readFile(join(prior, name + '.mjs.txt'), 'utf8');
+  source = source.replaceAll("docs/qa/2026-10-24-wp-d4-343-qa'", "docs/qa/2026-10-24-wp-d4-343-qa/round-2'")
+    .replaceAll('gg-qa-d4-343-', 'gg-qa-d4-343-2-')
+    .replaceAll('9dcf40fa7cc478fcd5b75ebb92cd464d2fb548c2', 'a20eaab0df7b89edf2aed3035cdd790bd6be23af');
+  if (name === 'acceptance') {
+    const additions = await readFile(join(out, 'extra-cases.mjs.txt'), 'utf8');
+    source = source.replace(' // Leave an isolated representative set', additions + '\n // Leave an isolated representative set');
+    // Keep a historical metadata-free row in the real store, without response interception.
+    source = source.replace(" await writeFile(join(runtime,'browser-auth.json')", " await s.sql(\"INSERT INTO inbound_events (id,owner_id,type,payload,source,received_at,run_ids) VALUES ('00000000000000000000000001','local','qa-legacy','{}','api',?,'[]')\",[new Date().toISOString()]);\n await writeFile(join(runtime,'browser-auth.json')");
+  }
+  await writeFile(join(out, name + '.mjs.txt'), source);
+  await writeFile(join(staging, name + '.mjs'), source);
+}
+await writeFile(join(out, 'script-location.json'), JSON.stringify({ staging: staging.replaceAll(process.env.USERPROFILE, '%USERPROFILE%') }, null, 2));
+console.log(staging);

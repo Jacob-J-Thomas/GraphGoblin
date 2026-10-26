@@ -364,13 +364,13 @@ describe('killTree', () => {
     return child;
   }
 
-  it('does nothing without a pid', () => {
+  it('does nothing without a pid', async () => {
     const child = fakeChild(undefined);
-    killTree(child, 'win32');
+    expect(await killTree(child, 'win32')).toBe(true);
     expect(child.killed_).toBe(false);
   });
 
-  it('uses taskkill on Windows and falls back to kill when taskkill is missing', () => {
+  it('uses taskkill on Windows and reports root-only fallback when taskkill is missing', async () => {
     const calls: unknown[][] = [];
     const killer = new EventEmitter();
     const spawnImpl = ((...args: unknown[]) => {
@@ -378,16 +378,17 @@ describe('killTree', () => {
       return killer;
     }) as unknown as typeof spawn;
     const child = fakeChild(1234);
-    killTree(child, 'win32', spawnImpl);
+    const pending = killTree(child, 'win32', spawnImpl);
     expect(calls[0]?.[0]).toBe('taskkill');
     expect(calls[0]?.[1]).toEqual(['/pid', '1234', '/T', '/F']);
     killer.emit('error', new Error('no taskkill'));
+    expect(await pending).toBe(false);
     expect(child.killed_).toBe(true);
   });
 
-  it('signals the process group on POSIX and falls back to kill on failure', () => {
+  it('signals the process group on POSIX and reports root-only fallback on failure', async () => {
     const child = fakeChild(999_999_999);
-    killTree(child, 'linux');
+    expect(await killTree(child, 'linux')).toBe(false);
     expect(child.killed_).toBe(true);
   });
 });

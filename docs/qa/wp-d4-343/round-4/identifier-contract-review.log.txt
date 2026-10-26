@@ -1,0 +1,19 @@
+packages/contracts/src/common.ts:4:export const UlidSchema = z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/, 'must be a ULID');
+packages/contracts/src/common.ts:5:export type Ulid = z.infer<typeof UlidSchema>;
+packages/contracts/src/common.ts:8:export const SlugSchema = z
+packages/contracts/src/common.ts:14:export type Slug = z.infer<typeof SlugSchema>;
+packages/contracts/src/nodes.ts:11:  SlugSchema,
+packages/contracts/src/nodes.ts:14:  UlidSchema,
+packages/contracts/src/nodes.ts:45:const RouteLabelSchema = SlugSchema.refine((s) => s !== 'in', 'a route may not be named "in"');
+packages/contracts/src/nodes.ts:66:  z.strictObject({ kind: z.literal('signal-count'), name: SlugSchema }),
+packages/contracts/src/nodes.ts:111:    eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
+packages/contracts/src/nodes.ts:150:  z.strictObject({ policy: z.literal('resume-named'), key: SlugSchema }),
+packages/contracts/src/nodes.ts:214:  mcpServers: z.array(SlugSchema.meta({ control: 'capability-mcpServers' })).optional(),
+packages/contracts/src/nodes.ts:215:  plugins: z.array(SlugSchema.meta({ control: 'capability-plugins' })).optional(),
+packages/contracts/src/nodes.ts:216:  skills: z.array(SlugSchema.meta({ control: 'capability-skills' })).optional(),
+packages/contracts/src/nodes.ts:474:    .record(SlugSchema, ExpressionSchema)
+packages/contracts/src/nodes.ts:505:    .strictObject({ lastOutput: z.boolean().default(true), var: SlugSchema.optional() })
+packages/contracts/src/nodes.ts:515:      map: z.record(SlugSchema, ExpressionSchema).optional(),
+packages/contracts/src/nodes.ts:543:      loopId: UlidSchema,
+packages/contracts/src/nodes.ts:609:    name: SlugSchema.meta(field('Signal name to wait for.')),
+packages/contracts/src/nodes.ts:696:  id: SlugSchema,

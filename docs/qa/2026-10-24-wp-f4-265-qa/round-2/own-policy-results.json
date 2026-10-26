@@ -1,0 +1,466 @@
+[
+  {
+    "case": "codex-no-reset",
+    "status": "PASS",
+    "runId": "01M5R2N23WMX7GPQPCFZ6NA9KD",
+    "steps": "Valid schema -> visit 1 fresh -> delete provider record -> visit 2 missing -> explicit fresh choice -> visit 3",
+    "expectedModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "resume"
+    ],
+    "actualModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "resume"
+    ],
+    "calls": [
+      {
+        "n": 1,
+        "harness": "codex",
+        "mode": "fresh",
+        "id": "ca76f445-a1ff-4217-8f9d-65e644dfa06b",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-no-reset]",
+        "plan": {}
+      },
+      {
+        "n": 2,
+        "harness": "codex",
+        "mode": "resume",
+        "id": "ca76f445-a1ff-4217-8f9d-65e644dfa06b",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-no-reset]",
+        "plan": {}
+      },
+      {
+        "n": 3,
+        "harness": "codex",
+        "mode": "fresh",
+        "id": "0849c678-0342-4178-845d-3c1afc52ad2c",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-no-reset]",
+        "plan": {}
+      },
+      {
+        "n": 4,
+        "harness": "codex",
+        "mode": "resume",
+        "id": "0849c678-0342-4178-845d-3c1afc52ad2c",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-no-reset]",
+        "plan": {}
+      }
+    ],
+    "configuredPolicyBefore": {
+      "policy": "resume-own"
+    },
+    "configuredPolicyAfter": {
+      "policy": "resume-own"
+    },
+    "completedVisits": 3,
+    "logicalVisits": 3,
+    "choiceCount": 1,
+    "sessionRecords": [
+      {
+        "runId": "01M5R2N23WMX7GPQPCFZ6NA9KD",
+        "nodeId": "worker",
+        "attempt": 2,
+        "harness": "codex",
+        "sessionId": "0849c678-0342-4178-845d-3c1afc52ad2c",
+        "status": "finished",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:39.109Z"
+      },
+      {
+        "runId": "01M5R2N23WMX7GPQPCFZ6NA9KD",
+        "nodeId": "worker",
+        "attempt": 1,
+        "harness": "codex",
+        "sessionId": "0849c678-0342-4178-845d-3c1afc52ad2c",
+        "status": "finished",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:39.387Z"
+      }
+    ],
+    "choice": {
+      "runId": "01M5R2N23WMX7GPQPCFZ6NA9KD",
+      "seq": 25,
+      "ts": "2026-10-24T23:06:39.020Z",
+      "type": "run.resumed",
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5R2N160ZXXNMT0DP32PM5Y7"
+      },
+      "freshSession": {
+        "visitId": "01M5R2N23WMX7GPQPCFZ6NA9KD:20",
+        "harness": "codex",
+        "sessionId": "ca76f445-a1ff-4217-8f9d-65e644dfa06b",
+        "origin": "resume-own",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 24,
+        "priorContextCarried": false,
+        "prompt": "R2 authored task [codex-no-reset]"
+      }
+    }
+  },
+  {
+    "case": "codex-reset-2",
+    "status": "PASS",
+    "runId": "01M5R2N3NQ4VXRGQQMTF6ZSQAN",
+    "steps": "Valid schema -> visit 1 fresh -> delete provider record -> visit 2 missing -> explicit fresh choice -> visit 3",
+    "expectedModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "fresh"
+    ],
+    "actualModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "fresh"
+    ],
+    "calls": [
+      {
+        "n": 5,
+        "harness": "codex",
+        "mode": "fresh",
+        "id": "ffef573c-f73c-4083-8cfe-86177f7426d1",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-reset-2]",
+        "plan": {}
+      },
+      {
+        "n": 6,
+        "harness": "codex",
+        "mode": "resume",
+        "id": "ffef573c-f73c-4083-8cfe-86177f7426d1",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-reset-2]",
+        "plan": {}
+      },
+      {
+        "n": 7,
+        "harness": "codex",
+        "mode": "fresh",
+        "id": "ca0f8e9e-3513-44cf-a2c6-e131d3d32258",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-reset-2]",
+        "plan": {}
+      },
+      {
+        "n": 8,
+        "harness": "codex",
+        "mode": "fresh",
+        "id": "f6be7621-4643-4381-aafd-07087ce961e3",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "prompt": "R2 authored task [codex-reset-2]",
+        "plan": {}
+      }
+    ],
+    "configuredPolicyBefore": {
+      "policy": "resume-own",
+      "resetAfterVisits": 2
+    },
+    "configuredPolicyAfter": {
+      "policy": "resume-own",
+      "resetAfterVisits": 2
+    },
+    "completedVisits": 3,
+    "logicalVisits": 3,
+    "choiceCount": 1,
+    "sessionRecords": [
+      {
+        "runId": "01M5R2N3NQ4VXRGQQMTF6ZSQAN",
+        "nodeId": "worker",
+        "attempt": 2,
+        "harness": "codex",
+        "sessionId": "ca0f8e9e-3513-44cf-a2c6-e131d3d32258",
+        "status": "finished",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:40.133Z"
+      },
+      {
+        "runId": "01M5R2N3NQ4VXRGQQMTF6ZSQAN",
+        "nodeId": "worker",
+        "attempt": 1,
+        "harness": "codex",
+        "sessionId": "f6be7621-4643-4381-aafd-07087ce961e3",
+        "status": "finished",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:40.441Z"
+      }
+    ],
+    "choice": {
+      "runId": "01M5R2N3NQ4VXRGQQMTF6ZSQAN",
+      "seq": 25,
+      "ts": "2026-10-24T23:06:40.093Z",
+      "type": "run.resumed",
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5R2N160ZXXNMT0DP32PM5Y7"
+      },
+      "freshSession": {
+        "visitId": "01M5R2N3NQ4VXRGQQMTF6ZSQAN:20",
+        "harness": "codex",
+        "sessionId": "ffef573c-f73c-4083-8cfe-86177f7426d1",
+        "origin": "resume-own",
+        "model": "gpt-6-luna",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 24,
+        "priorContextCarried": false,
+        "prompt": "R2 authored task [codex-reset-2]"
+      }
+    }
+  },
+  {
+    "case": "claude-no-reset",
+    "status": "PASS",
+    "runId": "01M5R2N4M030SYBESEYQWNBJ1T",
+    "steps": "Valid schema -> visit 1 fresh -> delete provider record -> visit 2 missing -> explicit fresh choice -> visit 3",
+    "expectedModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "resume"
+    ],
+    "actualModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "resume"
+    ],
+    "calls": [
+      {
+        "n": 9,
+        "harness": "claude",
+        "mode": "fresh",
+        "id": "0933b6e1-b96e-40ca-aa73-568ca9b50fca",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-no-reset]",
+        "plan": {}
+      },
+      {
+        "n": 10,
+        "harness": "claude",
+        "mode": "resume",
+        "id": "0933b6e1-b96e-40ca-aa73-568ca9b50fca",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-no-reset]",
+        "plan": {}
+      },
+      {
+        "n": 11,
+        "harness": "claude",
+        "mode": "fresh",
+        "id": "07b025bc-54e5-4113-8053-862c188ec3ef",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-no-reset]",
+        "plan": {}
+      },
+      {
+        "n": 12,
+        "harness": "claude",
+        "mode": "resume",
+        "id": "07b025bc-54e5-4113-8053-862c188ec3ef",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-no-reset]",
+        "plan": {}
+      }
+    ],
+    "configuredPolicyBefore": {
+      "policy": "resume-own"
+    },
+    "configuredPolicyAfter": {
+      "policy": "resume-own"
+    },
+    "completedVisits": 3,
+    "logicalVisits": 3,
+    "choiceCount": 1,
+    "sessionRecords": [
+      {
+        "runId": "01M5R2N4M030SYBESEYQWNBJ1T",
+        "nodeId": "worker",
+        "attempt": 2,
+        "harness": "claude",
+        "sessionId": "07b025bc-54e5-4113-8053-862c188ec3ef",
+        "status": "finished",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:41.097Z"
+      },
+      {
+        "runId": "01M5R2N4M030SYBESEYQWNBJ1T",
+        "nodeId": "worker",
+        "attempt": 1,
+        "harness": "claude",
+        "sessionId": "07b025bc-54e5-4113-8053-862c188ec3ef",
+        "status": "finished",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:41.330Z"
+      }
+    ],
+    "choice": {
+      "runId": "01M5R2N4M030SYBESEYQWNBJ1T",
+      "seq": 25,
+      "ts": "2026-10-24T23:06:41.049Z",
+      "type": "run.resumed",
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5R2N160ZXXNMT0DP32PM5Y7"
+      },
+      "freshSession": {
+        "visitId": "01M5R2N4M030SYBESEYQWNBJ1T:20",
+        "harness": "claude",
+        "sessionId": "0933b6e1-b96e-40ca-aa73-568ca9b50fca",
+        "origin": "resume-own",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 24,
+        "priorContextCarried": false,
+        "prompt": "R2 authored task [claude-no-reset]"
+      }
+    }
+  },
+  {
+    "case": "claude-reset-2",
+    "status": "PASS",
+    "runId": "01M5R2N5DJBRP2AGERQEQCG93P",
+    "steps": "Valid schema -> visit 1 fresh -> delete provider record -> visit 2 missing -> explicit fresh choice -> visit 3",
+    "expectedModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "fresh"
+    ],
+    "actualModes": [
+      "fresh",
+      "resume",
+      "fresh",
+      "fresh"
+    ],
+    "calls": [
+      {
+        "n": 13,
+        "harness": "claude",
+        "mode": "fresh",
+        "id": "031bdc66-31e1-4283-a1e1-acdff72b4bc1",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-reset-2]",
+        "plan": {}
+      },
+      {
+        "n": 14,
+        "harness": "claude",
+        "mode": "resume",
+        "id": "031bdc66-31e1-4283-a1e1-acdff72b4bc1",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-reset-2]",
+        "plan": {}
+      },
+      {
+        "n": 15,
+        "harness": "claude",
+        "mode": "fresh",
+        "id": "3d6f13f9-9b88-4bc0-9194-c23e06ec500e",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-reset-2]",
+        "plan": {}
+      },
+      {
+        "n": 16,
+        "harness": "claude",
+        "mode": "fresh",
+        "id": "bcb15a2b-461e-4560-9d6e-62f68ea57830",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "prompt": "R2 authored task [claude-reset-2]",
+        "plan": {}
+      }
+    ],
+    "configuredPolicyBefore": {
+      "policy": "resume-own",
+      "resetAfterVisits": 2
+    },
+    "configuredPolicyAfter": {
+      "policy": "resume-own",
+      "resetAfterVisits": 2
+    },
+    "completedVisits": 3,
+    "logicalVisits": 3,
+    "choiceCount": 1,
+    "sessionRecords": [
+      {
+        "runId": "01M5R2N5DJBRP2AGERQEQCG93P",
+        "nodeId": "worker",
+        "attempt": 2,
+        "harness": "claude",
+        "sessionId": "3d6f13f9-9b88-4bc0-9194-c23e06ec500e",
+        "status": "finished",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:41.855Z"
+      },
+      {
+        "runId": "01M5R2N5DJBRP2AGERQEQCG93P",
+        "nodeId": "worker",
+        "attempt": 1,
+        "harness": "claude",
+        "sessionId": "bcb15a2b-461e-4560-9d6e-62f68ea57830",
+        "status": "finished",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "updatedAt": "2026-10-24T23:06:42.094Z"
+      }
+    ],
+    "choice": {
+      "runId": "01M5R2N5DJBRP2AGERQEQCG93P",
+      "seq": 25,
+      "ts": "2026-10-24T23:06:41.803Z",
+      "type": "run.resumed",
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5R2N160ZXXNMT0DP32PM5Y7"
+      },
+      "freshSession": {
+        "visitId": "01M5R2N5DJBRP2AGERQEQCG93P:20",
+        "harness": "claude",
+        "sessionId": "031bdc66-31e1-4283-a1e1-acdff72b4bc1",
+        "origin": "resume-own",
+        "model": "claude-opus-5-5",
+        "effort": "low",
+        "nodeId": "worker",
+        "failureSeq": 24,
+        "priorContextCarried": false,
+        "prompt": "R2 authored task [claude-reset-2]"
+      }
+    }
+  }
+]

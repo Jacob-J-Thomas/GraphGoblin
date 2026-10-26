@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {historyCursor} from '../../apps/api/dist/run-history.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const ctl=async(path,b={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection'),source=JSON.parse(await readFile('.tmp/qa186r2/run.json','utf8')).runId;
+const checks=[],examples=[];let requests=0,edges=0,pages=0;
+const digest=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,2000)});}await writeFile(out+'/cursors-results.json',JSON.stringify({checks,requests,edges,pages,examples},null,2));}
+for(const count of [1,2,1003]){
+ const run=await ctl('/seed',{source,count}),all=(await ctl('/oracle',{runId:run.id,full:true})).events;
+ assert.equal(all.length,count);
+ const get=async query=>{requests++;const r=await fetch(c.url+'/runs/'+run.id+'/events?'+query,{headers:{authorization:'Bearer '+c.keys.reader}});assert.equal(r.status,200);return r.json();};
+ for(const limit of [1,2,500]){
+  const validate=async p=>{pages++;assert.deepEqual(p.items,all.filter(e=>e.seq>=p.items[0]?.seq&&e.seq<=p.items.at(-1)?.seq));assert.ok(p.items.length<=limit);if(p.items.length)assert.equal(p.nextAfter,p.items.at(-1).seq);
+   for(const [key,direction] of [['olderCursor','older'],['newerCursor','newer']])if(p[key]){
+    const cursor=JSON.parse(Buffer.from(p[key],'base64url').toString());assert.equal(cursor.runId,run.id);assert.equal(cursor.direction,direction);
+    const expected=direction==='older'?all.filter(e=>e.seq<cursor.seq).slice(-limit):all.filter(e=>e.seq>cursor.seq).slice(0,limit);
+    const next=await get('cursor='+p[key]+'&limit='+limit);assert.deepEqual(next.items,expected);edges++;
+   }
+  };
+  for(const around of [...new Set([0,1,limit,count,count+10])])await check(`full traversal total=${count} limit=${limit} around=${around}`,async()=>{
+   const root=await get('around='+around+'&limit='+limit);assert.deepEqual(root.items,all.filter(e=>e.seq<=around).slice(-limit));
+   if(around===0){assert.equal(root.nextAfter,0);examples.push({count,limit,query:'around=0',response:root});}
+   const found=[...root.items];await validate(root);
+   for(const [key,front] of [['olderCursor',true],['newerCursor',false]]){
+    let p=root,n=0;
+    while(p[key]){assert.ok(++n<=count+1);p=await get('cursor='+p[key]+'&limit='+limit);await validate(p);if(front)found.unshift(...p.items);else found.push(...p.items);}
+   }
+   assert.deepEqual(found,all);assert.equal(new Set(found.map(e=>e.seq)).size,count);
+   return {runId:run.id,count,first:found[0]?.seq,last:found.at(-1)?.seq,sha256:digest(found),root:{nextAfter:root.nextAfter,size:root.items.length}};
+  });
+  for(const seek of [count,count+10])await check(`empty newer split total=${count} limit=${limit} seq=${seek}`,async()=>{
+   const root=await get('cursor='+historyCursor({runId:run.id,seq:seek,direction:'newer'})+'&limit='+limit);assert.deepEqual(root.items,[]);assert.equal(root.nextAfter,seek);assert.equal(root.newerCursor,null);assert.ok(root.olderCursor);await validate(root);
+   let p=root,collected=[];while(p.olderCursor){p=await get('cursor='+p.olderCursor+'&limit='+limit);await validate(p);collected.unshift(...p.items);}
+   assert.deepEqual(collected,all);examples.push({count,limit,query:'newer at '+seek,response:root});return {first:collected[0].seq,last:collected.at(-1).seq,nextAfter:root.nextAfter,sha256:digest(collected)};
+  });
+ }
+}
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass),requests,pages,edges}));

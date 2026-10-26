@@ -1,0 +1,30 @@
+pnpm.cmd : $ vitest run --coverage
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/web test:coverage 2>&1 | Tee-Object -F ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-g2-240/apps/web
+      Coverage enabled with v8
+
+ ❯ src/forms/json-sections.test.tsx (39 tests | 1 failed) 118789ms
+   ❯ section JSON mode (29)
+     × keeps parent revalidation in the parent edit without adding undo steps or losing redo 21644ms
+ ❯ src/editor/routing-review.test.ts (23 tests | 1 failed) 187980ms
+   ❯ routing review regressions (23)
+     × seeded sparse graphs preserve geometry and keep detours below twelve bends 80445ms
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 1 failed) 73734ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20321ms
+ ❯ src/editor/DecisionAuthoring.test.tsx (23 tests | 2 failed) 252607ms
+   × guides Expression to Classifier setup with field instructions and diagnostic details 21438ms
+   ❯ decision authoring checkpoint (13)
+     × restores set-aside device ownership across reload with unfinished ID "review" 20134ms
+ ❯ src/editor/harness-switch.test.tsx (30 tests | 1 failed) 187322ms
+   × holds validation and publication after a failed cached catalog refresh until recovery 9874ms
+ ❯ src/runs/inspector/ThreadViewer.test.tsx (9 tests | 1 failed) 59500ms
+   ❯ ThreadViewer with a large history (6)
+     × asks again for an event whose reconstruction the viewer no longer remembers 20343ms
+ ❯ src/editor/model-pickers.test.tsx (1 test | 1 failed) 21958ms
+   × registers the node and loop pickers and forwards exact server validation warnings 21955ms

@@ -1,0 +1,20 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+import {join} from 'node:path';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-d2-185-qa');
+const checks=[];
+for(const folder of ['', 'supplement','restart-ui']){
+ const dir=join(out,folder),obs=JSON.parse(await readFile(join(dir,'observations.json'),'utf8'));
+ for(const name of await readdir(dir))if(name.endsWith('-streams.json')){
+  const label=name.slice(0,-'-streams.json'.length),run=obs[label+'-final']?.rest;
+  const streams=JSON.parse(await readFile(join(dir,name),'utf8'));
+  for(const stream of streams){
+   const seq=[...stream.text.matchAll(/\nid: (\d+)\n/g)].map(m=>Number(m[1]));
+   const complete=[...stream.text.matchAll(/event: stream.complete\ndata: ([^\n]+)/g)].map(m=>JSON.parse(m[1]));
+   const expected=seq.at(-1)??stream.after;
+   checks.push({case:folder+'/'+label,after:stream.after,pass:complete.length===1&&complete[0].after===expected&&seq.every((v,i)=>i===0||v>seq[i-1])&&(!run||Date.parse(stream.completeAt)>=Date.parse(run.finalizedAt)),completionControls:complete.length,cursor:complete[0]?.after,expectedCursor:expected,eventCount:seq.length,completeAt:stream.completeAt,finalizedAt:run?.finalizedAt});
+  }
+ }
+ if(obs.restartRawEOF)checks.push({case:'restart EOF',pass:obs.restartRawEOF.every(s=>s.settled&&!s.text.includes('event: stream.complete')),streams:obs.restartRawEOF.length});
+}
+const result={checks,passed:checks.filter(c=>c.pass).length,failed:checks.filter(c=>!c.pass).length};
+await writeFile(join(out,'stream-evidence-audit.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({passed:result.passed,failed:result.failed}));if(result.failed)process.exitCode=1;

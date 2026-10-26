@@ -1,0 +1,56 @@
+pnpm.cmd : $ vitest run --maxWorkers=1 src/claude/process.test.ts -t 'kills the descendant that a long-lived child 
+started'
+At line:21 char:2
++  pnpm.cmd --filter @graphgoblin/infrastructure test --maxWorkers=1 $c ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --... child started':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 5559ms
+   ❯ owned native Claude process transport (5)
+     × kills the descendant that a long-lived child started 5556ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // 
+Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir 
+'<USERPROFILE>\AppData\Local\Temp\gg-wp-f4-round10-cbec9a4ac48b48308177f7568cb508e9\fixtures\gg-claude-process-7tzmyZ'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:44:31
+   Duration  8.66s (tests 67%, import 18%, transform 15%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\infrastructure
+

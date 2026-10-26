@@ -1,0 +1,68 @@
+import {readFile,writeFile} from 'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5';
+let text=await readFile(out+'/README.md','utf8');
+text=text.replace('**IN PROGRESS.**','**FAIL (required infrastructure gate); targeted round-5 browser fixes pass.**');
+const a=text.indexOf('## 2. Defects'),b=text.indexOf('## 3. Coverage of criteria');
+const findings=`## 2. Defects
+
+No new #186 production defect was established. All targeted fixes pass. The infrastructure gate is red and is not waived; the complete Edge command also retains its original QA fixture failure alongside the corrected diagnostic.
+
+### QA-R5-VERIFY-001 — major verification blocker — D-015 native termination and cleanup
+
+Reproduction: with Node 22 on this Windows sandbox, run \`pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2\`. Expected: native cancellation stops the owned child/descendant work and permits cleanup, and the configured package gate passes. Actual: **6 failed / 801 passed tests**, **4 failed / 52 passed files**, with seven error entries because one case also fails cleanup. No fresh coverage summary was emitted. [Complete log](infrastructure-coverage.log.txt).
+
+| Case | Steps / expected | Actual | Result / cause |
+| --- | --- | --- | --- |
+| adversarial 6/QA-LIMIT-001 | Abort a real child/grandchild; both stop and directory cleanup succeeds | EBUSY removing the disposable process-tree directory | FAIL; native stop/cleanup boundary, D-015-limited |
+| Claude process: deadline and output overflow | Exercise both stopping triggers; owned work stops and resources close | EBUSY removing the disposable directory | FAIL; native stop/cleanup boundary, D-015-limited |
+| Claude process: already aborted and running cancellation | No spawn for an aborted signal; cancel a running fake executable and clean it | EBUSY during cleanup of the running-process case | FAIL; native stop/cleanup boundary, D-015-limited |
+| Claude process: descendant | Cancel the parent and require the descendant marker to stop changing | Marker grows from \`xxx\` to \`xxxxxx\`; cleanup also reports EBUSY | FAIL; descendant continued after cancellation, D-015-limited |
+| Claude readiness: hang | Deadline yields the expected did-not-answer message | Returns check process did not confirm that it stopped | FAIL; stop confirmation unavailable, not an ordinary timing retry |
+| ProcessScripts: incomplete UTF-8 cancellation | Cancel a real process with partial output; PID must no longer exist | \`process.kill(pid, 0)\` still succeeds | FAIL; child remains detectable, D-015-limited |
+
+These four failing test files are unchanged by the comparison against \`9a3eded1\`. The observations are consistent with the brief's D-015 process-tree-control limit; they do not establish a new #186 regression. The controlled native shutdown/force/restart Edge cases passed for their tested executables. Arbitrary descendant termination remains unestablished. No native gate was retried to green or repaired by a production change.
+
+### QA-R5-HARNESS-001 — minor, resolved diagnostic — golden fixture relocation
+
+Steps: run the full Edge command. Expected: #170 I1 reads the tracked current golden JSON and exercises placement/save/reload. Actual: the QA copy's relative URL resolves under \`apps/web/packages\`, producing ENOENT before the product check. The original full result is **420 passed / 1 failed / 1 LIVE skip**, zero retries. Correcting only that QA fixture URL and running I1 exactly once alone gives **1 passed**. [Failure context](edge-full-golden-path-error-context.md.txt), [full log](edge-full.log.txt), [correction](golden-path-correction.json), [isolated log](isolated-golden.log.txt). The full command remains recorded as failed.
+
+### QA-R5-HARNESS-002 — minor, resolved — completed scratch copies entered lint
+
+Steps: run \`pnpm.cmd lint\` while the QA-only runtime copies still have TypeScript extensions under \`apps/web/.tmp/qa5\`. Expected: repository source lint passes. Actual: 66 project-service parsing errors, all pointing at those extra copies outside the web tsconfig. Retiring only those completed copies to text preserves every byte and leaves production/tests/configuration untouched; a second exact \`pnpm.cmd lint\` passes all 11 tasks. [Initial result](lint.log.txt), [byte-preserving retirement](retired-harness.json), [passing result](lint-after-retirement.log.txt). No lint or coverage rule was relaxed.
+
+### QA-R5-OBS-001 — minor intermittent wait failure — untouched responsive case
+
+The interrupted exploratory attempt's unchanged \`responsive dark > screens and transient states fit at 360, 768, 1024, and 1440 px\` times out after 10 seconds waiting for \`responsive sweep\` following the scripted API outage. Read-only extraction shows successful \`/loops\` responses initially contain 171 records including that seed; after the second outage they contain 10 records without it. This explains the immediate missing-label assertion; the underlying state change is unresolved. All captured URLs in these excerpts use the disposable browser listeners. The later complete run passes this case, and the required **exactly one once-alone diagnostic passes** (32.6 s test / 42.2 s suite). Neither pass erases the earlier failure, and the observation is not called disproven. [Original context](exploratory-responsive-error-context.md.txt), [response excerpts](exploratory-responsive-network.json), [extraction script](inspect-responsive-trace.mjs.txt), [once-alone result](isolated-responsive.log.txt), [all browser cases](browser-cases.md). No out-of-scope fix was made.
+
+### Other minor QA setup failures
+
+[The setup ledger](qa-setup-attempts.json) retains the native argument quoting, relocated dependency resolution, file-URL extension, overbroad temp-prefix replacement, Fetch response-method, and snapshot-selector failures. They are separate from product results. The invalid pulse expectation is preserved in [its audit](invalid-harness-assertion-audit.json) and [diff](invalid-harness-adaptations.diff.txt); the corrected assertion audit passes for all 52 specs. The exploratory attempt has no final full-suite result because it was interrupted; the two available failure contexts are explicitly retained rather than invented into a complete result.
+
+`;
+if(a<0||b<0)throw new Error('Defect anchors missing');text=text.slice(0,a)+findings+text.slice(b);
+const p=text.indexOf('## 4. Report path and evidence folder'),q=text.indexOf('## 5. Observations outside scope');
+text=text.slice(0,p)+`## 4. Report path and evidence folder
+
+Report: \`docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/README.md\`. Evidence: this \`round-5/\` folder. [Artifact manifest](artifact-manifest.json) records retained byte counts and SHA-256. [NOT-KEPT](NOT-KEPT.md) and [its inventory](not-kept-inventory.json) record every Playwright output folder and oversized capture with exact size and SHA-256; no unretained capture is cited as report evidence. The retained response excerpts and error contexts support the observations above.
+
+All text is UTF-8 without BOM; local user paths are normalized to \`%USERPROFILE%\`. Logs retain their messages with ANSI formatting removed and user paths normalized. Images retain their original bytes. [Final verification](report-verification.json) checks links, artifacts, encoding, unchanged tracked/index state and exact HEAD. Root format passed before final report assembly; [the final scoped format check](final-format-check.log.txt) validates the finished QA Markdown. Every retained artifact is linked below. No production code, original test, earlier-round report, index entry or commit was changed.
+
+`+text.slice(q);
+const obs=text.indexOf('## 5. Observations outside scope');
+text=text.slice(0,obs)+`## 5. Observations outside scope
+
+The six native infrastructure failures remain **D-015** verification limits in unchanged files, with the failed gate preserved. The responsive wait failure has an observed API-list state change but an unresolved underlying cause; its complete-run and once-alone passes remain separate evidence. The existing tooling coverage command passes 85 Node tests but emits no line/branch percentages, so those percentages are not certified here.
+
+API coverage passes 1,456 tests with 11 pre-existing skips (two wholly skipped files): live-provider smoke and opt-in performance modes are disabled, and Linux-only signal cases do not run on this Windows host. The complete Edge run's sole skip is the explicitly disabled LIVE test. This round does not supply live-provider/session-recall evidence, a fresh before/after heap pair, cross-browser coverage, arbitrary forced descendant-stop acceptance, owner product acceptance or integrated I01–I07 acceptance.
+
+The ignored scratch/build/coverage outputs and disposable stores remain for the orchestrator. Native-failure stores may retain open handles or descendants under D-015. No independent-QA recursive directory deletion was issued. No observation outside scope was fixed or posted to GitHub.
+`;
+text=text.replace('**D-015:** this sandbox cannot establish native process-tree termination. Graceful','**D-015:** descendant-tree termination remains limited. Graceful');
+await writeFile(out+'/README.md',text);
+const setup=JSON.parse(await readFile(out+'/qa-setup-attempts.json','utf8'));
+setup.attempts.push(
+{attempt:'complete-suite golden path',severity:'minor QA harness',outcome:'Original failure retained; corrected input path passes exactly once alone',evidence:['edge-full.log.txt','edge-full-golden-path-error-context.md.txt','isolated-golden.log.txt']},
+{attempt:'root lint scratch contamination',severity:'minor QA harness',outcome:'66 QA-only parser errors; exact root lint passes after byte-preserving retirement',evidence:['lint.log.txt','retired-harness.json','lint-after-retirement.log.txt']},
+{attempt:'exploratory responsive wait',severity:'minor intermittent observation',outcome:'Original 10 s timeout retained; complete run and exactly one isolated diagnostic pass; API list changes from 171 items with seed to 10 without; underlying cause unresolved',evidence:['exploratory-responsive-error-context.md.txt','exploratory-responsive-network.json','isolated-responsive.log.txt']}
+);
+await writeFile(out+'/qa-setup-attempts.json',JSON.stringify(setup,null,2));

@@ -1,0 +1,163 @@
+// Derive the check tables and complete artifact index from the retained evidence.
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+const dir='docs/qa/2026-10-22-wp-e1-259-qa/';
+async function read(name){try{return await readFile(dir+name,'utf8');}catch{return '';}}
+async function json(name){return JSON.parse(await read(name));}
+const main=await json('browser-results.json'),extra=await json('extra-results.json'),full=await json('full-thread-results.json'),live=await json('live-results.json'),restart=await json('restart-results.json'),perf=await json('performance.json'),prefix=await json('prefix-results.json'),memory=await json('prefix-memory.json');
+const esc=x=>String(x??'').replaceAll('|','\\|').replaceAll('\n','<br>').replaceAll('\r','');
+const n=x=>Number(x).toFixed(1);
+function summary(a){
+ if(a.fullExact!==undefined)return `4,096-character preview; ${a.fullChars} full characters; semantic equality=${a.semanticExact}; API byte equality=${a.downloadByteExact}; ${a.downloadBytes} download bytes; new requests on opening=${a.requestsAfterOpen.length}`;
+ if(Array.isArray(a)){if(a[0]?.previewChars)return a.map(summary).join('; ');return `${a.length} comparisons/items passed`;}
+ if(a.previewChars!==undefined)return `${a.previewChars}-character preview; full ${a.prettyChars??a.fullChars}; expand ${n(a.expanded?.ms??0)} ms, collapse ${n(a.collapsed?.ms??0)} ms; ${a.collapsedWidth?.document??a.width?.document??'bounded'} px; ${a.download?`${a.download.bytes} download bytes, SHA-256 equal`:'exact expanded text'}`;
+ if(a.before?.previewChars!==undefined)return `Before: ${summary(a.before)}; After: ${summary(a.after)}`;
+ if(a.expectedLength!==undefined)return `JSON ${a.expectedLength} characters; ${a.expectedLength>1024?'1,024-character prefix and exact expansion/download':'complete; no expansion controls'}; page ${a.width.document} px`;
+ if(a.before?.document!==undefined)return `document before/after ${a.before.document}/${a.after.document} px; click ${n(a.t.ms)} ms`;
+ if(a.length===2048)return `2,048 characters exact; document ${a.width.document} px; selection ${n(a.latency.ms)} ms`;
+ if(a.restoredExpansion!==undefined)return `A expanded=${a.expandedA}; B collapsed=${a.collapsedB}; returning A expanded=${a.restoredExpansion}; ${a.visibleChars} characters`;
+ if(a.fullExact!==undefined)return `4,096-character preview; ${a.fullChars} full characters; semantic equality=${a.semanticExact}; API byte equality=${a.downloadByteExact}; ${a.downloadBytes} download bytes; new requests on opening=${a.requestsAfterOpen.length}`;
+ if(a.pauseMs!==undefined)return `Pause ${n(a.pauseMs)} ms; Resume ${n(a.resumeMs)} ms${a.cancelMs!==undefined?`; Cancel ${n(a.cancelMs)} ms`:''}; page ${a.width?.document??1440} px`;
+ if(a.eventsBefore!==undefined)return `${a.eventsBefore} -> ${a.eventsAfter} events; ${a.heading} unchanged; ${a.selectedChars} selected characters unchanged`;
+ return JSON.stringify(a).slice(0,400);
+}
+function steps(id){if(/result,/.test(id))return 'Open inference run; expand; Shift+Tab/PageDown; download; collapse';if(/Node progress/.test(id))return 'Open inference run; measure width; expand Node progress; measure again';if(/generic progress/.test(id))return 'Expand both progress previews; focus/scroll; collapse';if(/nested variable/.test(id))return 'Open mutate run at current wait; expand Variables; download; collapse';if(/message/.test(id))return 'Expand/collapse stored 50,000-character message';if(/patch/.test(id))return 'Select replace node.finished; expand/collapse both sides';if(/full thread/.test(id))return 'Select current run.waiting; open disclosure; expand; download; collapse; close';if(/prompt/.test(id))return 'Expand/collapse Prompt; type into answer; select timeline event';if(/reasoning/.test(id))return 'Select decision.made; inspect excerpt and page width';if(/Events|exact /.test(id))return 'Open Events; compare prefix to API JSON; expand/download/collapse where large';if(/expansion/.test(id))return 'Expand A; select B; return to A';return 'Run the named scripted API/browser sequence';}
+function table(items,evidence){let s='| System / case | Steps | Expected | Actual | Result | Evidence |\n| --- | --- | --- | --- | --- | --- |\n';for(const row of items){let actual=row.pass?summary(row.actual):row.error;let passed=row.pass;if(row.actual?.restoredExpansion){passed=false;actual=summary(row.actual);}if(row.actual?.downloadByteExact===false){passed=false;actual=summary(row.actual);}const expected=/expansion/.test(row.id)?'Changed selection starts collapsed; other values remain independent':/full thread/.test(row.id)?'Lazy text; exact full JSON and API-formatted download bytes; fit viewport':'Exact bounded preview/full value; controls work; fit viewport';s+=`| ${esc(row.id)} | ${esc(steps(row.id))} | ${expected} | ${esc(actual)} | ${passed?'PASS':'FAIL'} | [results](${evidence}) |\n`;}return s;}
+let out=`# 1. Verdict
+
+**FAIL** at **a52299c685bd3a08ba4962f6eb90ea5962eccc5f**. Ordinary controls, exact JSON contents, storage preservation and the #380 width regression pass the exercised workloads. Returning to a previously expanded event restores its complete multi-megabyte presentation without a new Show all action (QA-259-01). Full-thread downloads also fail the requested byte comparison with the API's pretty JSON because property order differs (QA-259-02).
+
+Independent QA only: production code and maintained tests were unchanged; no staging, commits, branch switches or GitHub mutations. The actual QA branch is **codex-qa-wp-e1-259**, at the exact requested PR head; the PR source branch is **wp-e1-259-large-values**. Base: **f69646b7956ea7b90e9cc91d861ddb703ff826cd**. Only this QA directory was added. See [environment](environment.log.txt).
+
+# 2. Defects
+
+## QA-259-01 — major — returning to an event restores unbounded expansion
+
+1. Open the mutate fixture run and select the replace node.finished event (A).
+2. Choose Show all of Variables. The full Variables JSON contains **2,322,721 characters**.
+3. Select the seed node.finished event (B). Its Variables value starts collapsed.
+4. Return to A. Do not choose Show all again.
+
+Expected: the changed selected value starts with its 4,096-character preview. Actual: Show less is already displayed and all **2,322,721 characters** are rendered again. Reproduced at **1440 and 390 px**. This bypasses bounded presentation during ordinary timeline navigation. The measured explicit expansion of this value also produced long tasks of **891/892 ms**, so restoring it has a material rendering cost; those expansion measurements do not establish an exact re-selection stall duration.
+
+Evidence: the two failed expansion-reset checks in [primary results](browser-results.json), the final observational reproduction in [supplemental results](full-thread-results.json), [390 px screenshot](restored-expansion-390.png), and the replayable [supplemental script](extra-browser.mjs.txt). Adjacent positive cases pass: expanding one component does not expand another, A -> B initially collapses, and a genuinely new latest reconstruction collapses after a live append.
+
+## QA-259-02 — minor — full-thread text/download differs in object property order
+
+1. Select the mutate run's current run.waiting event, open Full thread JSON, and choose Show all.
+2. Download Full thread JSON.
+3. Compare its UTF-8 bytes with JSON.stringify(GET /runs/{id}/thread value, null, 2).
+
+Expected under this brief: identical bytes. Actual at both widths: the reconstructed thread puts **lastOutput after counters**, while the API value puts **lastOutput before gates**. Both parse to identical JSON values. The same discrepancy exists in the expanded text. No stored value was modified.
+
+Download SHA-256: **8c957d29c9f25b0a615e32887b91786006fd0ef79ef232c6e1836deea332f1cd**. API-formatted value SHA-256: **e2aafd2a43b2d95a9320f481b4a91c349bd1804407ad0e2e13a863163ae290e7**. First difference at character **2,378,822**; full text length **2,379,185**.
+
+Evidence: [comparison](thread-comparison.json), [full-thread results](full-thread-results.json), [1440 px download](thread-1440.json), [390 px download](thread-390.json), [API thread](mutate-thread-before.json), and [comparison script](analyze-thread.mjs.txt). Result, Variables and Events downloads match their API values byte for byte under the same formatting convention.
+
+# 3. Coverage of criteria
+
+## Environment and scope
+
+- Windows 11; Node **v22.14.0** first on PATH; pnpm; built web app served by the built API/container over a real SQLite file store.
+- Headless installed Microsoft Edge **155.0.4283.62** through Playwright; **1440 x 900** and **390 x 844**.
+- API **127.0.0.1:5720**; loopback fake controls **127.0.0.1:5721**. Disposable data: system-temp/**gg-qa-e1-jR04hz**. The built API minted a QA API key; its token is excluded from evidence.
+- **Fake-only provider evidence**: FakeHarness inference/progress and an injected fake decision port. Real loop validation, mutate handlers, run execution, HTTP, SQLite, web bundle, browser and native process restart. No live provider turn.
+- Systems enumerated: bounded prefix serializer; Result; Messages; Variables; both Patch diff columns; full-thread disclosure; reconstruction cache/live selection; progress drawer; wait prompt and input form; decision details; Events payload table/accessibility; downloads; ordinary run controls; session persistence and restart; frontend docs/CHANGELOG.
+- Required orientation and review claims were read. The worktree register predates this review; a read-only GitHub connector recovered the current register's round-4 claim after gh returned HTTP 401. Claims are preserved separately in [review claims](review-claims.txt), [PR metadata/body](pr-382-claims.json), and [#380](issue-380.json). They are not counted as QA results. [Measured #259 inputs](measured-inputs.txt) informed loaded-value synchronization and the timings below.
+
+## Criterion disposition
+
+| Criterion | Disposition | Evidence / limit |
+| --- | --- | --- |
+| #259: bounded previews and ordinary inspector controls | **FAILED on re-selection**; other exercised paths pass | QA-259-01; primary matrix and CDP timings |
+| #259: exact full values accessible | JSON contents **passed**; requested full-thread byte equality **failed** | QA-259-02; other downloads match |
+| #259: no stored-data modification or execution-context truncation | **Passed** | Original API thread/events/run values match before/after viewing and after native restart; 2,118,337 compact bytes in the nested object and the full 50,000-character message persist |
+| #259: large nested values, expansion and navigation | **Passed except restored expansion** | Main and supplemental Edge matrices |
+| #380: long-line Node progress fits both widths | **Passed** | Before/after document widths 1440/1440 and 390/390; original four Edge tests pass |
+| Live appends, earlier selection, switching runs, session reset, reload | **Passed** | Live matrix; two similar logs switched A/B/A; cleared session/reload; native restart |
+| Keyboard and accessible semantics | **Passed** for the requested DOM/keyboard checks | Tab reaches both actions, expanded pre is role=region/tabindex=0, Shift+Tab focuses it and PageDown scrolls; collapsed Events pre is unnamed and row name contains payload text |
+| Full-thread JSON only opens on demand | **Passed for observable DOM/network behavior** | No thread-json DOM while closed; no new requests during disclosure expansion; content removed on close. The API thread object is fetched during initial inspector load |
+| One expansion independent; changed value collapses | **Partially failed** | Independent controls and genuinely new live values pass; A/B/A fails |
+| A 16 KiB stored progress summary | **Not testable through the current contract** | The fake accepts a 16,384-character item, but the engine projects the stored summary to 2,000 characters. The public run-event schema rejects summaries over 2,000; the browser tested that stored projection |
+
+## Fixtures and exactness convention
+
+The [fixture script](fixtures.mjs.txt) creates all data through public REST routes and scripts the injected fakes through their public interface. It stores a 20,000-character result, a **2,118,337-byte compact nested object** (12 nested array/object levels over 512 records), a 50,000-character message, a 20,000-character replacement on each diff side, a 1 MiB Events string payload, a 10,000-character wait prompt, and a 2,048-character reasoning excerpt. The fake was scripted with 16 KiB and 20,000-character item summaries; both persisted progress summaries are **2,000 characters**, because of the existing progress projection/contract. Their full JSON progress values are 2,081 and 2,077 characters and their previews are 1,024 characters. The 16 KiB stored-summary UI case is therefore not claimed. [Contract/projection results](progress-contract.json) preserve both observed lengths and public-schema boundary checks at 2,000 / 2,001 / 16,384 characters. API snapshots are indexed below.
+
+For JSON downloads, the comparison oracle is **UTF-8 JSON.stringify(the parsed API value, null, 2)**. This matches the product's advertised pretty JSON format; the HTTP transport's compact whitespace is not the oracle. The raw downloaded files are retained unchanged. Escaping and property order are included in byte comparisons. Array holes serialize to null before the API receives JSON; the stored/API nulls are the oracle.
+
+Show all/Show less exist on large Result, Variables, message, diff, generic progress, full-thread, prompt and payload values. Direct Download JSON exists on **Result, Variables, full-thread and Events payloads**. Message/diff/progress/prompt components provide exact expanded text without a direct download action; messages and changed variable values are also accessible in thread downloads. The contract-bounded reasoning excerpt is shown completely and wraps, with no expansion/download control. These availability limits were recorded rather than treating missing actions as exercised downloads.
+
+## Primary browser matrix
+
+These are the final independently scripted checks after selector corrections. The final primary run has **21 passed / 4 failed**; its four failures are the two defects at two widths. An expanded value's focus and scrolling are checked before downloading. [Replay script](browser.mjs.txt), [execution log](browser-final.log.txt), [network](browser-network.json), [browser errors](browser-errors.json).
+
+${table(main,'browser-results.json')}
+## Additional exactness and boundary matrix
+
+The twenty Events cases below cover escapes, controls, Unicode, lone high/low surrogates and a valid pair at the 1,024-character quoting-chunk boundary, long keys, nulls/holes and payloads immediately below/at/above the 1,024-character display boundary. All twenty pass. API responses are preserved in [exact events](exact-events.json).
+
+${table(extra.filter(x=>/exact (controls|pair|lone|unicode|long-key|holes|below|at-bound|above)/.test(x.id)),'extra-results.json')}
+The corrected loaded-history full-thread checks and the independent reset reproduction are recorded separately:
+
+${table(full,'full-thread-results.json')}
+## Prefix work and memory
+
+The exported serializer passed **${prefix.checks}/${prefix.checks}** comparisons across **${prefix.cases}** independently generated values/keys and 15 bounds (0, 1, 2, 3, 5, 12, 1023, 1024, 1025, 2048, 4095, 4096, 4097, 8192, 100000). Each result is retained in [prefix results](prefix-results.json); [script](prefix-checks.mjs.txt). The unchanged public utility is compiled with TypeScript for this isolated check; it is not monkey-patched.
+
+For a Variables value whose full pretty JSON is **${memory.valuePrettyChars} characters**, isolated Node 22 measurements, after GC and excluding fixture/compiler setup:
+
+| Prefix limit | Elapsed | Additional heap at call return | Actual prefix | Exact |
+| --- | --- | --- | --- | --- |
+${memory.measurements.map(x=>`| ${x.limit} | ${n(x.elapsedMs)} ms | ${x.allocatedHeapBytes} bytes | ${x.prefixChars} characters | ${x.exact} |`).join('\n')}
+
+[Memory measurements](prefix-memory.json) establish bounded prefix work on this fixture, not a retained-heap ceiling or a browser heap benchmark. The full API value remains present by design.
+
+## Responsiveness measurements
+
+The following CDP measurements start after scrolling the target into view and dispatch real mouse/text input, with the **2,322,721-character Variables value expanded**. Wall time includes UI/server completion. Event Timing input delay measures event dispatch delay separately. Long tasks use PerformanceObserver's standard 50 ms threshold. Shared-host measurements are workload observations, not an owner-approved latency SLA.
+
+| Width | Timeline selection | Pause | Resume | Text input | Max Event Timing input delay | Max long task across load/expansion/interactions |
+| --- | --- | --- | --- | --- | --- | --- |
+${perf.measurements.map(x=>`| ${x.width.window} px | ${n(x.selection.wallMs)} ms | ${n(x.pause.wallMs)} ms | ${n(x.resume.wallMs)} ms | ${n(x.inputMs)} ms | ${n(Math.max(0,...x.events.map(e=>e.inputDelay)))} ms | ${Math.max(0,...x.tasks.map(t=>t.duration))} ms |`).join('\n')}
+
+The maximum long tasks include full-value layout after an explicit expansion. The controls' measured click/paint records and CDP scripting/layout/task deltas are retained in [performance data](performance.json), with [script](performance.mjs.txt). Earlier Playwright auto-wait/scroll-inclusive live timings reached about 2.2 seconds; those observations are preserved below and are distinct from input delay. No routine rendering SLA is inferred from them.
+
+## Live, concurrency, cancellation and sessions
+
+${table(live,'live-results.json')}
+The live fixture advances real wait/mutate nodes through 8 -> 16 events while event 6 stays selected. A second tab follows the latest event independently. Two additional similar runs are switched A/B/A, reloaded and tested after clearing session storage. The [live fixture snapshot](live-fixture.json) preserves the emitted events and final thread. Fake-only provider scope applies.
+
+## Native stop/restart and preservation checks
+
+The original Node process stopped cleanly, and a new Node process reopened the same SQLite data directory. The recovered fake harness reports **0 started / 0 resumed turns**. Fifteen original run/thread/events values match their pre-view snapshots. The latest UI and full-thread region keyboard checks also pass. [Restart log](restart.log.txt), [startup log](server-restart.log.txt), [script](restart-check.mjs.txt).
+
+| System / case | Steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${restart.results.map(x=>`| ${esc(x.name+' '+(x.suffix??''))} | Stop process; restart same store; GET/inspect | Original value / correct UI | ${x.beforeSha256?'Before/after SHA-256 equal':esc(JSON.stringify(x))} | ${x.pass?'PASS':'FAIL'} | [results](restart-results.json) |`).join('\n')}
+
+## Gates and maintained regression tests
+
+- pnpm build: **exit 0**, 11 successful tasks, web bundle rebuilt; [build log](build.log.txt). The log's final shared-cache IO warning did not change the exit status.
+- pnpm typecheck, pnpm lint, pnpm check:layers, pnpm check:deps, pnpm check:tokens: **exit 0**; exact commands/results in [gate summary](gates-summary.log.txt) and their individual logs below.
+- pnpm --filter @graphgoblin/web test:coverage: **exit 1; 1,484 passed / 14 failed, 113 passed / 6 failed files, 566.28 seconds**; see [coverage log](coverage.log.txt) and gate summary for the fresh uncached package run. It did not produce a passing coverage qualification; no percentage from the review claim is substituted. Failures are in DecisionAuthoring, EditorPage, NodeEditorDialog, routing-review, TriggerEditor and ClassifierModelsSection. Their code paths were not changed by this candidate, but load causation or baseline equivalence has not been independently established here. No threshold/exclusion changes and no whole-suite retry.
+- pnpm format:check: **exit 2**; [format log](format.log.txt) records 58 raw QA JSON style warnings and an EBUSY error from checking its own still-open output log. Raw QA JSON artifacts retain download/API bytes rather than being reformatted. **pnpm exec prettier --check <all files in git diff base..HEAD>: exit 0**; [production-file formatting check](format-production.log.txt) checks every file changed by the candidate separately.
+- pnpm check:docs and pnpm check:licenses: **not run / not applicable**; this candidate changes no route/schema or dependency.
+- The existing inspector-large-values Edge spec passed **4/4**, with retries=0, against the same 5720/5721 disposable instance; [log](e2e.log.txt). The [config](playwright.config.mjs.txt) disables the normal server bootstrap and reuses the disposable instance, and the QA controls translate its /apps and /harness/script requests to the same fake. The four cases are result/progress and wait-prompt regressions at each width.
+- Maintained test sources were unchanged. The additional focused run passed **7/7 files, 65/65 tests, exit 0**; [focused test log](focused-tests.log.txt). Exact command: pnpm --filter @graphgoblin/web exec vitest run src/components/ui/bounded-value.test.tsx src/lib/pretty-json-prefix.test.ts src/runs/RunInspectorPage.test.tsx src/runs/inspector/ProgressDrawer.test.tsx src/runs/inspector/WaitPanel.test.tsx src/runs/projections.test.ts src/events/EventsPage.test.tsx. It is separate from the failed coverage gate. Independent regression probes are retained as scripts; the reset probes fail on the tested head. No baseline implementation/fix test cycle was performed by QA.
+
+## Test-harness corrections and limits
+
+The first primary attempt had two locator mistakes: Result also names its enclosing section, and a decision row's accessible name does not include the node ID. A second attempt used a locator anchored to Show all after its label had changed to Show less; that attempt was interrupted. The corrected primary run retains the same two product failures. A supplemental 1440 px attempt read full JSON before history finished loading; the corrected check selects the known current run.waiting event before inspecting content. Its focus field was captured after downloading, when Shift+Tab returns to Show less; the dedicated native-restart check instead verifies keyboard focus/scroll from Show less into the full-thread region. The first performance attempt encountered QA-259-01 on returning to the expanded value; the corrected performance probe recognizes either current expansion state. The first custom Playwright configuration resolved its test directory from the filtered package's cwd and found no tests; the corrected absolute-root config ran 4/4. An additional progress screenshot attempt waited for the nonexistent run.succeeded event; the corrected capture waits for node.finished work. No product code or assertion was weakened to close those harness errors. Initial logs/results are indexed below.
+
+An actual screen-reader application was not exercised; the requested accessible names, roles, keyboard path and scroll behavior were tested through Edge's accessible tree and keyboard. A 16 KiB stored progress summary is not testable through the 2,000-character event contract; its normal persisted projection was exercised instead. No sustained-load benchmark, baseline branch performance comparison, live-provider behavior, exhaustive cache-eviction profiling, or exotic non-JSON JavaScript object behavior is claimed. Historical #190 shell-ready timings are not reused as current loaded-history evidence. Re-selection automatically restoring expansion remains unresolved. Direct download actions absent on the surfaces listed above were not testable.
+
+# 4. Report path and evidence folder
+
+Report: **docs/qa/2026-10-22-wp-e1-259-qa/README.md**. Evidence folder: this directory. Every retained artifact is linked below; raw JSON download files are byte-preserved. Scripts are stored as .mjs.txt and executable copies were run from system temp. Logs are .log.txt. Local user paths are stripped. The disposable store and temporary executable/output directories are retained for orchestrator cleanup; QA deleted no directories.
+
+## Artifact index
+
+`;
+const files=(await readdir(dir)).filter(x=>x!=='README.md').sort();for(const f of files)out+=`- [${f}](${encodeURIComponent(f)})\n`;
+out+=`\n# 5. Observations outside scope\n\n- Full-value expansion is an explicit expensive operation on the 2 MiB fixture (up to 892 ms long tasks). Bounded prefixes and settled controls have the measured behavior above; no claim is made about arbitrarily large explicit expansions.\n- The root formatting command also inspects this report's raw evidence. Those artifact-only formatting failures are separated from candidate-source formatting.\n- The QA branch name differs from the PR source branch while its HEAD matches exactly. No branch was switched.\n- No changes were made to other bolts, owner ports 4747/4748, the owner store or the main checkout.\n`;
+await writeFile(dir+'README.md',out);console.log(JSON.stringify({report:dir+'README.md',artifactCount:files.length,mainChecks:main.length,mainFailures:main.filter(x=>!x.pass).length,liveChecks:live.length,restartChecks:restart.results.length,prefixChecks:prefix.checks}));

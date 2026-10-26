@@ -8,8 +8,15 @@ import {
   type RunEvent,
 } from '@graphgoblin/contracts';
 import { Card } from '../../components/ui/index.js';
-import { Fragment } from 'react';
-import { answerDescription, describeEvent, observationDescription } from '../projections.js';
+import { Fragment, useId } from 'react';
+import {
+  answerDescription,
+  describeEvent,
+  formatProbability,
+  nodeName,
+  observationDescription,
+  routeName,
+} from '../projections.js';
 
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
@@ -89,7 +96,18 @@ function truthThreshold(definition: LoopDefinition | undefined, nodeId: string |
     ? (node.config.truthThreshold ?? 0.5)
     : undefined;
 }
-function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; prefix?: string }) {
+function ClassifierDetails({
+  answer,
+  prefix = '',
+  definition,
+  nodeId,
+}: {
+  answer: ClassifierAnswer;
+  prefix?: string;
+  definition?: LoopDefinition | undefined;
+  nodeId?: string | undefined;
+}) {
+  const probabilitiesId = useId();
   return (
     <>
       {answer.type === 'score' ? (
@@ -107,20 +125,24 @@ function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; 
         </ul>
       ) : null}
       {answer.type !== 'noul' && answer.probabilities ? (
-        <ul
-          aria-label={
-            answer.type === 'score'
+        <>
+          {/* A visible heading names the percentages as probabilities (#123) and labels the list. */}
+          <p id={probabilitiesId} className="mt-2 text-sm font-medium">
+            {answer.type === 'score'
               ? `${prefix}${prefix ? 'rubric' : 'Rubric'} index probabilities`
-              : `${prefix}Alternative probabilities`
-          }
-          className="mt-2 grid gap-1 text-sm"
-        >
-          {Object.entries(answer.probabilities).map(([key, value]) => (
-            <li key={key}>
-              <code>{key}</code>: {value}
-            </li>
-          ))}
-        </ul>
+              : `${prefix}Alternative probabilities`}
+          </p>
+          <ul aria-labelledby={probabilitiesId} className="mt-1 grid gap-1 text-sm">
+            {Object.entries(answer.probabilities).map(([key, value]) => (
+              <li key={key}>
+                <code>
+                  {answer.type === 'choice' && nodeId ? routeName(definition, nodeId, key) : key}
+                </code>
+                : <span title={String(value)}>{formatProbability(value)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
       {answer.type !== 'noul' && answer.probabilities === null ? (
         <p className="mt-2 text-sm text-muted">Alternative probabilities: not recorded.</p>
@@ -154,9 +176,56 @@ function DecisionAcceptance({
             : config.minConfidence === undefined
               ? 'No minimum configured in run version'
               : confidence === null
-                ? `Not recorded; run-version minimum ${config.minConfidence}`
-                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${config.minConfidence}`}
+                ? `Not recorded; run-version minimum ${formatProbability(config.minConfidence)}`
+                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${formatProbability(config.minConfidence)}`}
       </dd>
+    </>
+  );
+}
+/**
+ * The chosen route as authored in the immutable run version: its readable label and, for a
+ * classifier Choice option or Noul side, the criterion the classifier was given. A refused repeat
+ * keeps its observed route here while Selected port says Limit reached (#129).
+ */
+function ChosenRoute({
+  event,
+  definition,
+  definitionLoading,
+}: {
+  event: Extract<RunEvent, { type: 'decision.made' }>;
+  definition: LoopDefinition | undefined;
+  definitionLoading: boolean;
+}) {
+  const node = definition?.nodes.find((n) => n.id === event.nodeId);
+  const config = node?.kind === 'decision' ? node.config : undefined;
+  const chosen = event.gate?.limit ? event.gate.repeatRouteId : event.portId;
+  const rows: { id: string; label: string; criteria?: string }[] = !config
+    ? []
+    : config.kind !== 'classifier'
+      ? config.routes
+      : config.answer.type === 'choice'
+        ? config.answer.options
+        : config.answer.type === 'noul'
+          ? [config.answer.true, config.answer.false]
+          : config.answer.bands;
+  const row = rows.find((candidate) => candidate.id === chosen);
+  return (
+    <>
+      <dt>Label</dt>
+      {/* Labels may be 120 characters without a break opportunity: wrap them, never widen. */}
+      <dd className="min-w-0 wrap-anywhere">
+        {!definition && definitionLoading
+          ? 'Loading run-version configuration…'
+          : !config
+            ? 'Not recorded (decision configuration unavailable)'
+            : (row?.label ?? 'Not in the run-version configuration')}
+      </dd>
+      {row?.criteria !== undefined ? (
+        <>
+          <dt>Criterion</dt>
+          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">{row.criteria}</dd>
+        </>
+      ) : null}
     </>
   );
 }
@@ -177,16 +246,20 @@ function ObservationDetails({
       {answer?.type === 'noul' ? (
         <>
           <dt>True probability</dt>
-          <dd>{answer.trueProbability ?? 'Not recorded'}</dd>
+          <dd>{formatProbability(answer.trueProbability)}</dd>
           <dt>True-probability threshold</dt>
-          <dd>{threshold ?? 'Unknown (run version unavailable)'}</dd>
+          <dd>
+            {threshold === undefined
+              ? 'Unknown (run version unavailable)'
+              : formatProbability(threshold)}
+          </dd>
         </>
       ) : null}
       {confidence !== null || provenance.kind !== 'expression' ? (
         <>
           <dt>{provenance.kind === 'llm' ? 'Self-reported confidence' : 'Confidence'}</dt>
           <dd>
-            {confidence ?? 'Not recorded'}
+            {formatProbability(confidence)}
             {provenance.kind === 'llm' ? (
               <span className="ml-1 text-muted">
                 (reported by the evaluator; informational only, not a calibrated classifier score)
@@ -199,7 +272,11 @@ function ObservationDetails({
       (provenance.kind === 'llm' || observation.reasoning !== null) ? (
         <>
           <dt>Reasoning excerpt</dt>
-          <dd className="whitespace-pre-wrap">{observation.reasoning ?? 'Not recorded'}</dd>
+          {/* The excerpt is bounded by the contract; it still wraps at any character so one long
+              token never widens the page (#259). */}
+          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">
+            {observation.reasoning ?? 'Not recorded'}
+          </dd>
         </>
       ) : null}
     </>
@@ -210,26 +287,32 @@ export function EvaluationDetails({
   event,
   definition,
   definitionLoading = false,
+  exitReturns,
 }: {
   event: RunEvent | undefined;
   definition?: LoopDefinition | undefined;
   definitionLoading?: boolean;
+  /** Why the run recorded no value, or why the history cannot show that (projections.ts). */
+  exitReturns?: string | undefined;
 }) {
   if (!event || !['decision.made', 'exit.evaluated', 'run.failed'].includes(event.type))
     return null;
   const rejection = rejectedEvaluation(event);
   if (event.type === 'run.failed' && !rejection) return null;
   return (
-    <Card title="Evaluation details">
-      <p>{describeEvent(event)}</p>
+    <Card title="Evaluation details" bodyClassName="min-w-0 wrap-anywhere">
+      <p>{describeEvent(event, definition)}</p>
+      {'nodeId' in event ? (
+        <p className="text-sm text-muted">Node: {nodeName(definition, event.nodeId)}</p>
+      ) : null}
       {event.type === 'exit.evaluated' ? (
         <p>
-          Exit outcome: {event.outcome}. This exit is terminal. See the run result for the returned
-          value.
+          Exit outcome: {event.outcome}. This exit is terminal.{' '}
+          {exitReturns ?? 'See the run result for the returned value.'}
         </p>
       ) : event.type === 'decision.made' ? (
         <>
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+          <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
             <dt>
               {event.observation.kind === 'route'
                 ? 'Route ID'
@@ -266,6 +349,11 @@ export function EvaluationDetails({
             <dd>
               <code>{event.portId}</code>
             </dd>
+            <ChosenRoute
+              event={event}
+              definition={definition}
+              definitionLoading={definitionLoading}
+            />
             {event.gate ? (
               <>
                 <dt>Previous passes</dt>
@@ -274,10 +362,10 @@ export function EvaluationDetails({
                 <dd>{event.gate.passes}</dd>
                 <dt>Repeat route</dt>
                 <dd>
-                  <code>{event.gate.repeatRouteId}</code>
+                  <code>{routeName(definition, event.nodeId, event.gate.repeatRouteId)}</code>
                 </dd>
                 <dt>Maximum passes</dt>
-                <dd>{event.gate.maxPasses}</dd>
+                <dd>{event.gate.maxPasses ?? 'Unlimited'}</dd>
                 <dt>Maximum run time</dt>
                 <dd>
                   {event.gate.maxRunTimeSeconds === undefined
@@ -309,7 +397,11 @@ export function EvaluationDetails({
             />
           </dl>
           {event.observation.kind === 'classifier' ? (
-            <ClassifierDetails answer={event.observation.answer} />
+            <ClassifierDetails
+              answer={event.observation.answer}
+              definition={definition}
+              nodeId={event.nodeId}
+            />
           ) : null}
           {event.diagnostics.length ? (
             <ul aria-label="Evaluation diagnostics" className="mt-2 grid gap-2 text-sm">
@@ -329,7 +421,7 @@ export function EvaluationDetails({
               Classifier result rejected by the confidence gate. No decision was accepted and no
               route was selected.
             </p>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
               <dt>Proposed answer</dt>
               <dd>{answerDescription(rejection.answer)}</dd>
               <ObservationDetails
@@ -341,11 +433,15 @@ export function EvaluationDetails({
                 )}
               />
               <dt>Minimum confidence</dt>
-              <dd>{rejection.minConfidence}</dd>
+              <dd>{formatProbability(rejection.minConfidence)}</dd>
               <Identity value={rejection.provenance} />
             </dl>
           </section>
-          <ClassifierDetails answer={rejection.answer} />
+          <ClassifierDetails
+            answer={rejection.answer}
+            definition={definition}
+            nodeId={event.type === 'run.failed' ? event.failure.nodeId : undefined}
+          />
         </>
       ) : null}
     </Card>

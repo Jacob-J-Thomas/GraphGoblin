@@ -1,0 +1,47 @@
+node : (node:29008) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+At line:5 char:1
++ node docs/qa/2026-10-22-wp-d2-round-5/startup-regression.mjs *> round ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:29008) Ex...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:122
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: API must start with healthy and damaged pending runs: LibsqlBatchError: SQLITE_ERROR:
+SQLITE_ERROR: malformed JSON
+    at Sqlite3Client.migrate (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-webhook-ret
+ry/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:307:31) {
+  code: 'SQLITE_ERROR',
+  extendedCode: 'SQLITE_ERROR',
+  rawCode: 1,
+  statementIndex: 1,
+  [cause]: SqliteError: malformed JSON
+      at convertError (%WORKTREE%\node_modules
+\.pnpm\libsql@0.5.29\node_modules\libsql\index.js:59:12)
+      at Statement.run (%WORKTREE%\node_module
+s\.pnpm\libsql@0.5.29\node_modules\libsql\index.js:335:13)
+      at executeStmt (file:///%WORKTREE%/node_
+modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:549:34)
+      at Sqlite3Client.migrate (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-webhook-r
+etry/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:300:37) {
+    code: 'SQLITE_ERROR',
+    rawCode: 1
+  }
+}
+
+
+1 !== null
+
+    at file:///%WORKTREE%/docs/qa/2026-10-22-w
+p-d2-round-5/startup-regression.mjs:38:12 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: null,
+  operator: 'strictEqual'
+}
+
+Node.js v22.14.0

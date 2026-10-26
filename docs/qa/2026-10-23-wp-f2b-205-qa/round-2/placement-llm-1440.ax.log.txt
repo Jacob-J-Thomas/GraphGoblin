@@ -1,0 +1,210 @@
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - link "Loops":
+    - /url: /app/loops
+  - text: /
+  - heading "QA205 2 llm codex" [level=1]
+  - text: draft only All changes saved
+  - button "Undo" [disabled]
+  - button "Redo" [disabled]
+  - link "Open in Runs" [disabled]
+  - text: "Publish the loop first: runs start from a published version. Ready to publish"
+  - button "Publish"
+- complementary "Palette":
+  - button "Hide palette" [expanded]
+  - heading "Palette" [level=2]
+  - navigation "Node palette":
+    - button "Add Trigger node": Trigger Starts a run
+    - button "Add Decision node": Decision Chooses a route and can limit repeats
+    - button "Add Inference node": Inference Hands work to a harness
+    - button "Add Script node": Script Runs a program
+    - button "Add Mutate node": Mutate Changes the context thread
+    - button "Add Subloop node": Subloop Runs another loop
+    - button "Add Wait node": Wait Parks until input, time, or a signal
+    - button "Add Heartbeat node": Heartbeat Polls on an interval
+    - button "Add Exit node": Exit Finishes with an outcome and return value
+- main:
+  - application:
+    - img:
+      - group "start out to work"
+    - img:
+      - group "work Yes (yes) to done": "Yes"
+    - img:
+      - group "work No (no) to done": "No"
+    - group "Trigger Start (start)": Trigger Start start out
+    - group "Decision Work (work)": Decision Work work Yes No
+    - group "Exit Done (done)": Exit Done done
+    - img
+    - button "Zoom In":
+      - img
+    - button "Zoom Out":
+      - img
+    - button "Fit View":
+      - img
+    - button "Toggle Interactivity":
+      - img
+    - link "React Flow attribution":
+      - /url: https://reactflow.dev?utm_source=attribution
+      - text: React Flow
+- complementary "Loop settings":
+  - heading "Loop settings" [level=2]
+  - button "Hide loop settings" [expanded]
+  - region "Loop settings":
+    - text: Name
+    - textbox "Name": QA205 2 llm codex
+    - text: Description
+    - textbox "Description"
+    - heading "Settings" [level=3]
+    - paragraph: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Visits and passes can be explicitly set to Unlimited; cancellation remains available.
+    - form "Loop settings form":
+      - group "Working directory":
+        - text: Working directory Kind
+        - combobox "Kind":
+          - option "fixed"
+          - option "template"
+          - option "temp" [selected]
+      - group "Defaults":
+        - text: Defaults
+        - group "By harness":
+          - text: By harness
+          - paragraph: Defaults keyed by their harness; omitted fields inherit only within that harness.
+          - button "Add entry"
+          - status
+      - text: Maximum node visits
+      - spinbutton "Maximum node visits": "10"
+      - combobox "Maximum node visits mode":
+        - option "Limited" [selected]
+        - option "Unlimited"
+      - paragraph: Fresh entries per node. Default 10; unlimited removes this cutoff.
+      - text: Run deadline seconds
+      - combobox "Run deadline seconds mode":
+        - option "Limited"
+        - option "No run deadline" [selected]
+      - paragraph: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+      - paragraph: No deadline; set one to stop a forgotten run.
+      - text: Subloop depth limit
+      - spinbutton "Subloop depth limit": "8"
+    - heading "Variables" [level=3]
+    - paragraph: Each variable maps a name to a JSON Schema.
+    - form "Variables form":
+      - group "Variables":
+        - text: Variables
+        - button "Add entry"
+        - status
+- dialog "Edit decision work":
+  - banner:
+    - heading "Edit decision work" [level=2]
+    - button "Close"
+  - region "Node properties":
+    - text: Node id
+    - textbox "Node id": work
+    - text: Label
+    - textbox "Label": Work
+    - group:
+      - form "work config":
+        - radiogroup "Decision kind":
+          - text: Decision kind
+          - radio "expression"
+          - text: expression Return one declared route ID from a JSONata expression.
+          - radio "llm" [checked]
+          - text: llm Give Codex Liquid instructions and readable routes. Confidence is informational.
+          - radio "classifier"
+          - text: classifier Ask a configured classifier for Choice, Noul or Score.
+        - tablist "Node configuration":
+          - tab "Settings" [selected]
+          - tab "Context"
+        - tabpanel "Settings":
+          - text: Instructions Liquid
+          - textbox "Instructions"
+          - text: "Preview (sample thread): QA choose"
+          - button "Earlier node outputs (1)"
+          - paragraph: Liquid instructions rendered against the full thread.
+          - 'button "Edit as JSON: Routes"': Edit as JSON
+          - group "Routes":
+            - text: Routes
+            - paragraph: At least 2 items.
+            - paragraph: Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.
+            - group "Routes 1":
+              - text: Routes 1 Id
+              - textbox "Id": "yes"
+              - paragraph: Stable route id and output port; changing display order does not change the route.
+              - text: Label
+              - textbox "Label": "Yes"
+              - paragraph: Unique readable route label, shown on the canvas and in Connections.
+              - text: Repeat route
+              - switch "Repeat route"
+              - paragraph: Only one route can repeat. Connect it back to earlier work in this gate.
+            - button "Move routes 1 up" [disabled]: ↑
+            - button "Move routes 1 down": ↓
+            - button "Remove routes 1"
+            - group "Routes 2":
+              - text: Routes 2 Id
+              - textbox "Id": "no"
+              - paragraph: Stable route id and output port; changing display order does not change the route.
+              - text: Label
+              - textbox "Label": "No"
+              - paragraph: Unique readable route label, shown on the canvas and in Connections.
+              - text: Repeat route
+              - switch "Repeat route"
+              - paragraph: Only one route can repeat. Connect it back to earlier work in this gate.
+            - button "Move routes 2 up": ↑
+            - button "Move routes 2 down" [disabled]: ↓
+            - button "Remove routes 2"
+            - button "Add routes"
+            - status
+          - text: "Harness:"
+          - code: codex
+          - text: Model
+          - combobox "Model":
+            - option "Default (gpt-6-luna)" [selected]
+            - option "GPT-5.5 (gpt-5.5)"
+            - option "GPT-5.6 Luna (gpt-5.6-luna)"
+            - option "GPT-5.6 Sol (gpt-5.6-sol)"
+            - option "GPT-5.6 Terra (gpt-5.6-terra)"
+            - option "GPT-6 Astra (gpt-6-astra)"
+            - option "GPT-6 Luna (gpt-6-luna)"
+            - option "GPT-6 Sol (gpt-6-sol)"
+            - option "GPT-6.1 Sol (gpt-6.1-sol)"
+          - paragraph: "Default model: gpt-6-luna."
+          - paragraph: Inherit or explicitly select the model.
+          - link "Model catalog in Settings":
+            - /url: /app/settings
+          - text: Effort
+          - combobox "Effort":
+            - option "Default (low)" [selected]
+            - option "minimal"
+            - option "low"
+            - option "medium"
+            - option "high"
+            - option "xhigh"
+            - option "max"
+          - paragraph: "Default effort: low."
+          - paragraph: Inherit or explicitly select reasoning effort.
+    - region "Connections":
+      - heading "Connections" [level=3]
+      - list:
+        - listitem:
+          - text: "Yes"
+          - code: (yes)
+          - text: →
+          - code: done
+          - button "Remove edge yes"
+        - listitem:
+          - text: "No"
+          - code: (no)
+          - text: →
+          - code: done
+          - button "Remove edge no"
+  - contentinfo:
+    - button "Delete node"
+    - button "Done"

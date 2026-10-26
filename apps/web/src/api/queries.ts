@@ -11,14 +11,26 @@ import {
   system,
   templates,
   type ListRunsQuery,
+  type ListEventsQuery,
 } from '@graphgoblin/api-client';
 import type {
   ClassifierModelSummary,
   LoopDefinitionInput,
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
-import { HarnessPreflightSchema } from '@graphgoblin/contracts';
-import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+import {
+  TERMINAL_RUN_STATUSES,
+  HarnessDefaultsSchema,
+  HarnessPreflightSchema,
+} from '@graphgoblin/contracts';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from './context.js';
 
@@ -45,6 +57,7 @@ export const keys = {
   thread: (id: string) => ['runs', 'thread', id] as const,
   settings: ['settings'] as const,
   catalog: ['model-catalog'] as const,
+  modelDefaults: ['process-model-defaults'] as const,
   /** Classifier summaries: their configured state follows the secrets they reference. */
   classifiers: ['classifier-models'] as const,
   secrets: ['secrets'] as const,
@@ -55,9 +68,9 @@ export const keys = {
     ['cron-preview', expression, timezone] as const,
 };
 
-export function useLoops() {
+export function useLoops(refetchInterval: number | false = false) {
   const client = useApi();
-  return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client) });
+  return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client), refetchInterval });
 }
 
 export function useTemplates() {
@@ -99,16 +112,36 @@ export function useLoopVersion(loopId: string, versionId: string, enabled = true
 
 export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | false = false) {
   const client = useApi();
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: keys.runs(query),
-    queryFn: () => runs.list(client, query),
+    initialPageParam: query.cursor,
+    queryFn: ({ pageParam, signal }) =>
+      runs.list(
+        client,
+        {
+          ...query,
+          ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+        },
+        { signal },
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     refetchInterval,
   });
 }
 
 export function useRun(id: string) {
   const client = useApi();
-  return useQuery({ queryKey: keys.run(id), queryFn: () => runs.get(client, id) });
+  return useQuery({
+    queryKey: keys.run(id),
+    queryFn: () => runs.get(client, id),
+    refetchInterval: (query) =>
+      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending') ||
+      (query.state.data !== undefined &&
+        TERMINAL_RUN_STATUSES.includes(query.state.data.status) &&
+        query.state.data.finalizedAt === undefined)
+        ? 1000
+        : false,
+  });
 }
 
 export function useRunThread(id: string) {
@@ -119,6 +152,29 @@ export function useRunThread(id: string) {
 export function useSettings() {
   const client = useApi();
   return useQuery({ queryKey: keys.settings, queryFn: () => settings.get(client) });
+}
+
+export function useProcessModelDefaults() {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.modelDefaults,
+    queryFn: async () => HarnessDefaultsSchema.parse(await system.modelDefaults(client)),
+  });
+}
+
+/** Defaults may change in Settings or outside this tab. Refresh both levels together. */
+export async function refreshModelDefaults(queryClient: QueryClient): Promise<void> {
+  const queries = [keys.settings, keys.modelDefaults];
+  // A request begun before this event may hold older Settings. Replace it, including a first
+  // load, without reverting authoritative data just written by the Settings mutation.
+  await Promise.all(
+    queries.map((queryKey) =>
+      queryClient.cancelQueries({ queryKey, exact: true }, { silent: true, revert: false }),
+    ),
+  );
+  await Promise.all(
+    queries.map((queryKey) => queryClient.invalidateQueries({ queryKey, exact: true })),
+  );
 }
 
 export function useModelCatalog() {
@@ -252,17 +308,124 @@ export function usePreflight() {
 }
 
 const PENDING_EVENT_REFRESH_MS = 2_000;
+// A single newest row is enough for an availability notice; never count or scan history.
+const NEW_EVENT_CHECK_MS = 2_000;
+type InboundPage = Awaited<ReturnType<typeof events.list>>;
+/** A loaded page remembers which of its rows anchors its background re-reads. */
+type LoadedInboundPage = InboundPage & { anchor?: string | undefined };
+type InboundRefresh = { scope: object; generation: symbol };
+// Query identities belong to a QueryClient and survive observer/filter remounts. Weak keys
+// expire with the cached query; an evicted/re-created scope cannot accept an old response.
+const inboundRefreshes = new WeakMap<object, symbol>();
 
-export function useInboundEvents() {
+export function useInboundEvents(query: ListEventsQuery = {}) {
   const client = useApi();
-  return useQuery({
-    queryKey: keys.events,
-    queryFn: () => events.list(client),
+  const cache = useQueryClient();
+  const queryKey = [...keys.events, query];
+  const currentRefresh = (ticket: InboundRefresh | undefined) =>
+    ticket !== undefined &&
+    cache.getQueryCache().find({ queryKey, exact: true }) === ticket.scope &&
+    inboundRefreshes.get(ticket.scope) === ticket.generation;
+  const manualRefresh = useMutation({
+    mutationKey: [...keys.events, 'refresh', query],
+    networkMode: 'always',
+    mutationFn: async (ticket: InboundRefresh) => {
+      const page = await events.list(client, query);
+      if (!currentRefresh(ticket)) return false;
+      // Only the latest explicit Refresh may replace this snapshot. Check again after
+      // cancellation, since a newer Refresh can start during that asynchronous boundary.
+      await cache.cancelQueries({ queryKey, exact: true });
+      if (!currentRefresh(ticket)) return false;
+      cache.setQueryData<InfiniteData<InboundPage>>(queryKey, {
+        pages: [page],
+        pageParams: [query.cursor],
+      });
+      return true;
+    },
+  });
+  const history = useInfiniteQuery({
+    queryKey,
+    enabled: !(manualRefresh.isPending && currentRefresh(manualRefresh.variables)),
+    initialPageParam: query.cursor,
+    queryFn: async ({ pageParam, signal }): Promise<LoadedInboundPage> => {
+      const loaded = cache.getQueryData<InfiniteData<LoadedInboundPage>>(queryKey);
+      const index = loaded?.pageParams.indexOf(pageParam) ?? -1;
+      const previous = loaded?.pages[index];
+      const from = Math.max(0, previous?.items.findIndex(({ id }) => id === previous.anchor) ?? 0);
+      const head = previous?.items[from];
+      const request = { ...query };
+      if (head && previous) {
+        delete request.cursor;
+        request.anchor = head.id;
+        request.limit = previous.items.length - from;
+      } else if (pageParam !== undefined) {
+        delete request.anchor;
+        request.cursor = pageParam;
+      }
+      const page = await events.list(client, request, { signal });
+      if (!previous) return page;
+      // Receipt recovery may update existing rows, but background reads must never replace
+      // membership or paging boundaries. Only a successful manual refresh replaces them.
+      // Re-read at each loaded head (inclusive), not the moving live head: otherwise an
+      // arrival displaces the last pending row beyond both reads. One bounded page per
+      // loaded page also handles tied timestamps without decoding cursors or scanning.
+      const updates = new Map(page.items.map((event) => [event.id, event]));
+      return {
+        ...previous,
+        items: previous.items.map((event) => updates.get(event.id) ?? event),
+        // Only a deleted anchor reads as empty: the next loaded row anchors the next read.
+        anchor: page.items.length === 0 ? previous.items[from + 1]?.id : head?.id,
+      };
+    },
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
     refetchInterval: (query) =>
-      query.state.data?.some((event) => event.delivery?.state === 'pending')
+      query.state.data?.pages.some((page) =>
+        page.items.some((event) => event.delivery?.state === 'pending'),
+      )
         ? PENDING_EVENT_REFRESH_MS
         : false,
   });
+  const newest = useQuery({
+    queryKey: ['newest-inbound-event', query],
+    queryFn: ({ signal }) =>
+      events.list(
+        client,
+        {
+          ...(query.type ? { type: query.type } : {}),
+          ...(query.before ? { before: query.before } : {}),
+          limit: 1,
+        },
+        { signal },
+      ),
+    enabled: history.data !== undefined,
+    refetchInterval: NEW_EVENT_CHECK_MS,
+  });
+  const first = history.data?.pages[0]?.items[0];
+  const latest = newest.data?.items[0];
+  const newerAvailable =
+    latest !== undefined &&
+    (first === undefined ||
+      latest.receivedAt > first.receivedAt ||
+      (latest.receivedAt === first.receivedAt && latest.id > first.id));
+  return {
+    ...history,
+    newerAvailable,
+    newerCheckFailed: newest.isError,
+    isRefreshing: manualRefresh.isPending && currentRefresh(manualRefresh.variables),
+    refreshFailed: manualRefresh.isError && currentRefresh(manualRefresh.variables),
+    hasRefreshed:
+      manualRefresh.isSuccess && manualRefresh.data && currentRefresh(manualRefresh.variables),
+    refresh: () => {
+      const scope = cache.getQueryCache().find({ queryKey, exact: true });
+      if (!scope) return;
+      const generation = Symbol();
+      inboundRefreshes.set(scope, generation);
+      manualRefresh.mutate({ scope, generation });
+    },
+  };
 }
 
 /** The control enables this only once its expression and zone have stopped changing. */

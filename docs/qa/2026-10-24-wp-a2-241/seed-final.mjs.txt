@@ -1,0 +1,64 @@
+// From the repository root: node --input-type=module - < this-file prepare|clean
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { cp, mkdtemp, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
+import { join, relative, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+
+const evidence = resolve('docs/qa/2026-10-24-wp-a2-241');
+const metadataPath = join(evidence, 'seed-final.json');
+const source = resolve('apps/web/dist');
+const normalize = (path) => path.replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+async function files(root) {
+  const entries = await readdir(root, { withFileTypes: true });
+  return (await Promise.all(entries.map(async (entry) => entry.isDirectory()
+    ? files(join(root, entry.name)) : [join(root, entry.name)]))).flat();
+}
+if (process.argv[2] === 'prepare') {
+  const scratch = await mkdtemp(join(tmpdir(), 'gg-wp-a2-241-seed-'));
+  await cp(source, scratch, { recursive: true });
+  const needle = '`The draft changed on the server`';
+  const replacement = '`Seeded conflict notice regression`';
+  const candidates = [];
+  for (const path of await files(join(scratch, 'assets'))) {
+    if (!path.endsWith('.js')) continue;
+    const bytes = await readFile(path);
+    if (bytes.toString().includes(needle)) candidates.push({ path, bytes });
+  }
+  assert.equal(candidates.length, 1, 'Exactly one bundle must contain the visible notice');
+  const { path, bytes } = candidates[0];
+  const text = bytes.toString();
+  assert.equal(text.split(needle).length - 1, 1, 'Replace exactly one string literal');
+  const seeded = Buffer.from(text.replace(needle, replacement));
+  assert.equal(seeded.toString().split('\n').length, text.split('\n').length);
+  await writeFile(path, seeded);
+  const artifact = relative(scratch, path).replaceAll('\\', '/');
+  const metadata = {
+    scratch: normalize(scratch), artifact,
+    needle, replacement, replacements: 1,
+    original: { bytes: bytes.length, sha256: hash(bytes) },
+    seeded: { bytes: seeded.length, sha256: hash(seeded) },
+    normalBuildUnchangedBefore: hash(await readFile(join(source, artifact))) === hash(bytes),
+  };
+  await writeFile(metadataPath, JSON.stringify(metadata, null, 2) + '\n');
+  console.log(JSON.stringify(metadata));
+} else if (process.argv[2] === 'clean') {
+  const metadata = JSON.parse(await readFile(metadataPath, 'utf8'));
+  const scratch = resolve(metadata.scratch.replaceAll('%USERPROFILE%', process.env.USERPROFILE));
+  assert.ok(scratch.startsWith(join(tmpdir(), 'gg-wp-a2-241-seed-')));
+  metadata.normalBuildUnchangedAfter = hash(await readFile(join(source, metadata.artifact))) === metadata.original.sha256;
+  assert.equal(metadata.normalBuildUnchangedAfter, true);
+  const discarded = [];
+  for (const path of await files(scratch)) {
+    assert.ok(resolve(path).startsWith(scratch + '\\'));
+    const bytes = await readFile(path);
+    discarded.push({ artifact: relative(scratch, path).replaceAll('\\', '/'), bytes: bytes.length, sha256: hash(bytes) });
+    await unlink(path);
+  }
+  await writeFile(join(evidence, 'seed-final-discarded-files.json'), JSON.stringify(discarded, null, 2) + '\n');
+  metadata.scratchFilesRemoved = true;
+  metadata.emptyDirectoriesLeftForOrchestrator = true;
+  await writeFile(metadataPath, JSON.stringify(metadata, null, 2) + '\n');
+  console.log(JSON.stringify(metadata));
+} else throw new Error('Expected prepare or clean');

@@ -319,9 +319,42 @@
               },
               "maxNodeVisits": {
                 "default": 10,
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 10000
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 10000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "runDeadlineSeconds": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "structuredTimeoutMs": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "subloopDepthLimit": {
                 "default": 8,
@@ -920,9 +953,16 @@
                               "maxLength": 100000
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -1058,9 +1098,16 @@
                               ]
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -1185,9 +1232,16 @@
                               "maximum": 1
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -1564,6 +1618,24 @@
                               "required": [
                                 "policy",
                                 "key"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "policy": {
+                                  "type": "string",
+                                  "const": "resume-own"
+                                },
+                                "resetAfterVisits": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "policy"
                               ],
                               "additionalProperties": false
                             }
@@ -4291,6 +4363,14 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_TRANSPORT_FAILED",
+              "HARNESS_OUTPUT_LIMIT",
+              "RUN_DEADLINE_EXCEEDED",
+              "STRUCTURED_COMPLETION_TIMEOUT",
+              "RUN_INTERRUPTED_BY_STOP",
+              "SCRIPT_TERMINATION_UNCONFIRMED",
+              "HARNESS_DELIVERY_UNCERTAIN",
+              "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
@@ -4371,6 +4451,127 @@
             "required": [
               "visitId",
               "state"
+            ],
+            "additionalProperties": false
+          },
+          "inference": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "retry": {
+                "type": "object",
+                "properties": {
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "resumeSessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "harness",
+                  "prompt"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "visitId",
+              "turnId",
+              "submission",
+              "promptKind"
+            ],
+            "additionalProperties": false
+          },
+          "missingSession": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "resume-previous",
+                  "resume-named",
+                  "resume-own",
+                  "current-visit"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effort": {
+                "type": "string",
+                "enum": [
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              }
+            },
+            "required": [
+              "visitId",
+              "harness",
+              "origin",
+              "model",
+              "effort"
             ],
             "additionalProperties": false
           }
@@ -4585,6 +4786,51 @@
                 ],
                 "additionalProperties": false
               },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "maxNodeVisits": {
+                    "default": 10,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 10000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "runDeadlineSeconds": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "structuredTimeoutMs": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
               "classifiers": {
                 "type": "object",
                 "propertyNames": {
@@ -4645,6 +4891,7 @@
               "name",
               "label",
               "defaults",
+              "limits",
               "classifiers"
             ],
             "additionalProperties": false
@@ -4696,6 +4943,138 @@
           "result": {
             "$ref": "#/components/schemas/JsonValueInput"
           },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "channel": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "maxLength": 128
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "inFlight": {
+                  "type": "boolean"
+                },
+                "acknowledgement": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "unknown",
+                    "not_sent",
+                    "rejected"
+                  ]
+                },
+                "effectMayHaveHappened": {
+                  "type": "boolean"
+                },
+                "acknowledgementUncertain": {
+                  "type": "boolean"
+                },
+                "nextAttemptAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "lastError": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_destination",
+                        "http",
+                        "connection_refused",
+                        "timeout",
+                        "transport",
+                        "interrupted",
+                        "historical_failure"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "acknowledgement": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "not_sent",
+                        "rejected"
+                      ]
+                    },
+                    "httpStatus": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "retryable",
+                    "acknowledgement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "status",
+                "attempts",
+                "maxAttempts",
+                "inFlight",
+                "acknowledgement",
+                "effectMayHaveHappened",
+                "acknowledgementUncertain"
+              ],
+              "additionalProperties": false
+            }
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -4707,6 +5086,11 @@
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
           },
           "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "finalizedAt": {
             "type": "string",
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
@@ -4733,6 +5117,646 @@
       },
       "RunEventInput": {
         "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.queued"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempted"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempt_finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
           {
             "type": "object",
             "properties": {
@@ -4871,6 +5895,51 @@
                     ],
                     "additionalProperties": false
                   },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "maxNodeVisits": {
+                        "default": 10,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 10000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "runDeadlineSeconds": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "structuredTimeoutMs": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
                   "classifiers": {
                     "type": "object",
                     "propertyNames": {
@@ -4931,6 +6000,7 @@
                   "name",
                   "label",
                   "defaults",
+                  "limits",
                   "classifiers"
                 ],
                 "additionalProperties": false
@@ -5197,6 +6267,79 @@
                 "required": [
                   "kind",
                   "id"
+                ],
+                "additionalProperties": false
+              },
+              "freshSession": {
+                "type": "object",
+                "properties": {
+                  "visitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "resume-previous",
+                      "resume-named",
+                      "resume-own",
+                      "current-visit"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "effort": {
+                    "type": "string",
+                    "enum": [
+                      "minimal",
+                      "low",
+                      "medium",
+                      "high",
+                      "xhigh",
+                      "max"
+                    ]
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  },
+                  "failureSeq": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "priorContextCarried": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "prompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "visitId",
+                  "harness",
+                  "origin",
+                  "model",
+                  "effort",
+                  "nodeId",
+                  "failureSeq",
+                  "priorContextCarried"
                 ],
                 "additionalProperties": false
               }
@@ -6074,6 +7217,143 @@
               },
               "type": {
                 "type": "string",
+                "const": "harness.turn"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "resumeSessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "harness",
+              "promptKind",
+              "prompt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "harness.submission"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing",
+                  "submitted"
+                ]
+              },
+              "marker": {
+                "type": "string",
+                "enum": [
+                  "claude.assistant",
+                  "claude.result",
+                  "codex.turn.started",
+                  "fake.accepted"
+                ]
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "submission"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
                 "const": "harness.session"
               },
               "nodeId": {
@@ -6873,7 +8153,62 @@
                 "const": "return.delivered"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannelInput"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "target": {
                 "type": "string",
@@ -6911,7 +8246,62 @@
                 "const": "return.failed"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannelInput"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "error": {
                 "type": "string",
@@ -7043,9 +8433,16 @@
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
           },
           "maxPasses": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 10000
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "maxRunTimeSeconds": {
             "type": "integer",
@@ -7888,9 +9285,42 @@
               },
               "maxNodeVisits": {
                 "default": 10,
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 10000
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 10000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "runDeadlineSeconds": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "structuredTimeoutMs": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "subloopDepthLimit": {
                 "default": 8,
@@ -7903,6 +9333,8 @@
               "workingDirectory",
               "defaults",
               "maxNodeVisits",
+              "runDeadlineSeconds",
+              "structuredTimeoutMs",
               "subloopDepthLimit"
             ],
             "additionalProperties": false
@@ -8520,9 +9952,16 @@
                               "maxLength": 100000
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -8658,9 +10097,16 @@
                               ]
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -8789,9 +10235,16 @@
                               "maximum": 1
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -9174,6 +10627,24 @@
                               "required": [
                                 "policy",
                                 "key"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "policy": {
+                                  "type": "string",
+                                  "const": "resume-own"
+                                },
+                                "resetAfterVisits": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "policy"
                               ],
                               "additionalProperties": false
                             }
@@ -11995,6 +13466,14 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_TRANSPORT_FAILED",
+              "HARNESS_OUTPUT_LIMIT",
+              "RUN_DEADLINE_EXCEEDED",
+              "STRUCTURED_COMPLETION_TIMEOUT",
+              "RUN_INTERRUPTED_BY_STOP",
+              "SCRIPT_TERMINATION_UNCONFIRMED",
+              "HARNESS_DELIVERY_UNCERTAIN",
+              "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
@@ -12075,6 +13554,127 @@
             "required": [
               "visitId",
               "state"
+            ],
+            "additionalProperties": false
+          },
+          "inference": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "retry": {
+                "type": "object",
+                "properties": {
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "resumeSessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "harness",
+                  "prompt"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "visitId",
+              "turnId",
+              "submission",
+              "promptKind"
+            ],
+            "additionalProperties": false
+          },
+          "missingSession": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "resume-previous",
+                  "resume-named",
+                  "resume-own",
+                  "current-visit"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effort": {
+                "type": "string",
+                "enum": [
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              }
+            },
+            "required": [
+              "visitId",
+              "harness",
+              "origin",
+              "model",
+              "effort"
             ],
             "additionalProperties": false
           }
@@ -12295,6 +13895,56 @@
                 ],
                 "additionalProperties": false
               },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "maxNodeVisits": {
+                    "default": 10,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 10000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "runDeadlineSeconds": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "structuredTimeoutMs": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "maxNodeVisits",
+                  "runDeadlineSeconds",
+                  "structuredTimeoutMs"
+                ],
+                "additionalProperties": false
+              },
               "classifiers": {
                 "type": "object",
                 "propertyNames": {
@@ -12355,6 +14005,7 @@
               "name",
               "label",
               "defaults",
+              "limits",
               "classifiers"
             ],
             "additionalProperties": false
@@ -12406,6 +14057,138 @@
           "result": {
             "$ref": "#/components/schemas/JsonValue"
           },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "channel": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "maxLength": 128
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "inFlight": {
+                  "type": "boolean"
+                },
+                "acknowledgement": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "unknown",
+                    "not_sent",
+                    "rejected"
+                  ]
+                },
+                "effectMayHaveHappened": {
+                  "type": "boolean"
+                },
+                "acknowledgementUncertain": {
+                  "type": "boolean"
+                },
+                "nextAttemptAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "lastError": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_destination",
+                        "http",
+                        "connection_refused",
+                        "timeout",
+                        "transport",
+                        "interrupted",
+                        "historical_failure"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "acknowledgement": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "not_sent",
+                        "rejected"
+                      ]
+                    },
+                    "httpStatus": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "retryable",
+                    "acknowledgement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "status",
+                "attempts",
+                "maxAttempts",
+                "inFlight",
+                "acknowledgement",
+                "effectMayHaveHappened",
+                "acknowledgementUncertain"
+              ],
+              "additionalProperties": false
+            }
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -12417,6 +14200,11 @@
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
           },
           "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "finalizedAt": {
             "type": "string",
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
@@ -12443,6 +14231,646 @@
       },
       "RunEvent": {
         "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.queued"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempted"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempt_finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
           {
             "type": "object",
             "properties": {
@@ -12587,6 +15015,56 @@
                     ],
                     "additionalProperties": false
                   },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "maxNodeVisits": {
+                        "default": 10,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 10000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "runDeadlineSeconds": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "structuredTimeoutMs": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxNodeVisits",
+                      "runDeadlineSeconds",
+                      "structuredTimeoutMs"
+                    ],
+                    "additionalProperties": false
+                  },
                   "classifiers": {
                     "type": "object",
                     "propertyNames": {
@@ -12647,6 +15125,7 @@
                   "name",
                   "label",
                   "defaults",
+                  "limits",
                   "classifiers"
                 ],
                 "additionalProperties": false
@@ -12913,6 +15392,79 @@
                 "required": [
                   "kind",
                   "id"
+                ],
+                "additionalProperties": false
+              },
+              "freshSession": {
+                "type": "object",
+                "properties": {
+                  "visitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "origin": {
+                    "type": "string",
+                    "enum": [
+                      "resume-previous",
+                      "resume-named",
+                      "resume-own",
+                      "current-visit"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "effort": {
+                    "type": "string",
+                    "enum": [
+                      "minimal",
+                      "low",
+                      "medium",
+                      "high",
+                      "xhigh",
+                      "max"
+                    ]
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  },
+                  "failureSeq": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "priorContextCarried": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "prompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "visitId",
+                  "harness",
+                  "origin",
+                  "model",
+                  "effort",
+                  "nodeId",
+                  "failureSeq",
+                  "priorContextCarried"
                 ],
                 "additionalProperties": false
               }
@@ -13790,6 +16342,143 @@
               },
               "type": {
                 "type": "string",
+                "const": "harness.turn"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "resumeSessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "harness",
+              "promptKind",
+              "prompt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "harness.submission"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing",
+                  "submitted"
+                ]
+              },
+              "marker": {
+                "type": "string",
+                "enum": [
+                  "claude.assistant",
+                  "claude.result",
+                  "codex.turn.started",
+                  "fake.accepted"
+                ]
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "submission"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
                 "const": "harness.session"
               },
               "nodeId": {
@@ -14595,7 +17284,63 @@
                 "const": "return.delivered"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannel"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path",
+                      "format"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "target": {
                 "type": "string",
@@ -14633,7 +17378,63 @@
                 "const": "return.failed"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannel"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path",
+                      "format"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "error": {
                 "type": "string",
@@ -14765,9 +17566,16 @@
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
           },
           "maxPasses": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 10000
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "maxRunTimeSeconds": {
             "type": "integer",
@@ -15313,6 +18121,334 @@
     }
   },
   "paths": {
+    "/system/model-defaults": {
+      "get": {
+        "summary": "Process model and effort defaults, before loop and owner overrides",
+        "tags": [
+          "system"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "byHarness": {
+                      "default": {},
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "enum": [
+                          "codex",
+                          "claude"
+                        ]
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "model": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "effort": {
+                            "type": "string",
+                            "enum": [
+                              "minimal",
+                              "low",
+                              "medium",
+                              "high",
+                              "xhigh",
+                              "max"
+                            ]
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "byHarness"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/shutdown": {
+      "get": {
+        "summary": "Observe gateway drain and force-stop state",
+        "tags": [
+          "system"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "controlToken": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices",
+                    "controlToken"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Drain, keep waiting, or explicitly force-stop the gateway",
+        "tags": [
+          "system"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "drain",
+                      "wait",
+                      "force"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "header",
+            "name": "x-graphgoblin-shutdown-token",
+            "required": false
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "controlToken": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices",
+                    "controlToken"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "draining",
+                        "awaiting-choice",
+                        "forcing",
+                        "drain-failed",
+                        "force-failed",
+                        "exiting",
+                        "ready",
+                        "stopped"
+                      ]
+                    },
+                    "graceMs": {
+                      "type": "number"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "choiceAt": {
+                      "type": "string"
+                    },
+                    "activeRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unconfirmedRunIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "wait",
+                          "force"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "controlToken": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "phase",
+                    "graceMs",
+                    "activeRunIds",
+                    "unconfirmedRunIds",
+                    "choices",
+                    "controlToken"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Liveness check",
@@ -15400,6 +18536,18 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "unknown",
+                              "ready",
+                              "cli-missing",
+                              "cli-incompatible",
+                              "auth",
+                              "quota",
+                              "transport"
+                            ]
+                          },
                           "id": {
                             "type": "string"
                           },
@@ -15459,6 +18607,18 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "unknown",
+                              "ready",
+                              "cli-missing",
+                              "cli-incompatible",
+                              "auth",
+                              "quota",
+                              "transport"
+                            ]
+                          },
                           "ok": {
                             "type": "boolean"
                           },
@@ -15596,8 +18756,8 @@
                           }
                         },
                         "required": [
+                          "state",
                           "ok",
-                          "authenticated",
                           "problems",
                           "harness"
                         ],
@@ -15633,7 +18793,90 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/LoopRecord"
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "ownerId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "currentVersionId": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "draftVersionId": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "latestRun": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                                  },
+                                  "status": {
+                                    "$ref": "#/components/schemas/RunStatus"
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "status",
+                                  "createdAt"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "runCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ownerId",
+                          "name",
+                          "createdAt",
+                          "updatedAt",
+                          "latestRun",
+                          "runCount"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -16538,6 +19781,16 @@
         "parameters": [
           {
             "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "in": "query",
+            "name": "at",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string",
               "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
             },
@@ -16589,6 +19842,24 @@
           },
           {
             "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740990
+            },
+            "in": "query",
+            "name": "around",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string",
               "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
             },
@@ -16615,11 +19886,88 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    },
+                    "olderCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "newerCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
                     "items",
-                    "nextAfter"
+                    "nextAfter",
+                    "hasMore"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{id}/observation": {
+      "get": {
+        "summary": "Latest durable inspector evidence, independent of the retained history window",
+        "tags": [
+          "runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lifecycle": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "exit": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "gate": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "finished": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "cancelled": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "cancelRequested": {
+                      "$ref": "#/components/schemas/RunEvent"
+                    },
+                    "freshSessionChoices": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RunEvent"
+                      }
+                    }
+                  },
+                  "required": [
+                    "freshSessionChoices"
                   ],
                   "additionalProperties": false
                 }
@@ -16697,6 +20045,63 @@
         "tags": [
           "runs"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunRecord"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{id}/recover-session": {
+      "post": {
+        "summary": "Explicitly start a fresh session for the observed missing-session failure",
+        "tags": [
+          "runs"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  },
+                  "failureSeq": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "nodeId",
+                  "failureSeq"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "parameters": [
           {
             "schema": {
@@ -17876,6 +21281,9 @@
                           },
                           "enabled": {
                             "type": "boolean"
+                          },
+                          "ecosystemDefault": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -17885,7 +21293,8 @@
                           "displayName",
                           "efforts",
                           "defaultEffort",
-                          "enabled"
+                          "enabled",
+                          "ecosystemDefault"
                         ],
                         "additionalProperties": false
                       }
@@ -18427,7 +21836,7 @@
     },
     "/events": {
       "post": {
-        "summary": "Publish an inbound event; fires matching event triggers",
+        "summary": "Accept an external Event for one explicit published loop and event trigger",
         "tags": [
           "events"
         ],
@@ -18438,6 +21847,15 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "loopId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "triggerNodeId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
                   "type": {
                     "type": "string",
                     "minLength": 1,
@@ -18448,12 +21866,16 @@
                   },
                   "dedupeKey": {
                     "type": "string",
-                    "maxLength": 512
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "description": "Optional literal request key: 1 to 512 characters of well-formed Unicode, excluding U+0000 (NUL). Whitespace is significant."
                   }
                 },
                 "required": [
+                  "loopId",
                   "type"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -18745,6 +22167,29 @@
                       ],
                       "additionalProperties": false
                     },
+                    "admissionId": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "object",
+                      "properties": {
+                        "loopId": {
+                          "type": "string"
+                        },
+                        "versionId": {
+                          "type": "string"
+                        },
+                        "triggerNodeId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "loopId",
+                        "versionId",
+                        "triggerNodeId"
+                      ],
+                      "additionalProperties": false
+                    },
                     "delivery": {
                       "type": "object",
                       "properties": {
@@ -18798,7 +22243,7 @@
         }
       },
       "get": {
-        "summary": "Stored inbound events, newest first",
+        "summary": "Stored inbound events, newest first with stable paging",
         "tags": [
           "events"
         ],
@@ -18814,11 +22259,33 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
             },
             "in": "query",
             "name": "before",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "in": "query",
+            "name": "anchor",
+            "required": false,
+            "description": "Re-read a page starting at this event, inclusive; mutually exclusive with cursor."
+          },
+          {
+            "schema": {
+              "maxLength": 256,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque inbound-event cursor, at most 256 base64url characters."
           },
           {
             "schema": {
@@ -19123,6 +22590,29 @@
                             ],
                             "additionalProperties": false
                           },
+                          "admissionId": {
+                            "type": "string"
+                          },
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "loopId": {
+                                "type": "string"
+                              },
+                              "versionId": {
+                                "type": "string"
+                              },
+                              "triggerNodeId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "loopId",
+                              "versionId",
+                              "triggerNodeId"
+                            ],
+                            "additionalProperties": false
+                          },
                           "delivery": {
                             "type": "object",
                             "properties": {
@@ -19166,10 +22656,17 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ],
                   "additionalProperties": false
                 }

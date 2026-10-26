@@ -1,0 +1,108 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawn,execFileSync} from 'node:child_process';
+import {once} from 'node:events';
+import {createRequire} from 'node:module';
+const root=process.cwd(),out=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-2');
+const {chromium}=createRequire(path.join(root,'apps/web/package.json'))('@playwright/test');
+const clean=s=>String(s).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const save=(name,v)=>fs.writeFileSync(path.join(out,name),clean(JSON.stringify(v,null,2))+'\n');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const wait=async(f,ms=20000)=>{const at=Date.now();while(Date.now()-at<ms){if(await f())return;await sleep(50);}throw new Error('Race/history wait timed out');};
+const resume=process.argv.includes('--resume-loops');
+const results={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),started:new Date().toISOString(),checks:resume?JSON.parse(fs.readFileSync(path.join(out,'races-history-attempt.json'),'utf8')).checks:[]};
+if(results.head!=='cc1c3fceca4f9ed914915fd1e2a2e2fbde6cecd1')throw new Error('Wrong HEAD');
+const browser=await chromium.launch({channel:'msedge',headless:true});let child,page;
+try{for(const width of [1440,390]){
+ const baseState=JSON.parse(fs.readFileSync(path.join(out,`width-${width}.json`),'utf8'));
+ const data=baseState.dataDir.replace('%USERPROFILE%',process.env.USERPROFILE),base=baseState.base;
+ const env={...process.env,GG_HOST:'127.0.0.1',GG_PORT:new URL(base).port,GG_DATA_DIR:data,GG_DB_URL:`file:${path.join(data,'graphgoblin.db').replaceAll('\\','/')}`,GG_REQUIRE_API_KEY:'true',GG_LOG_LEVEL:'silent',GG_WEB_DIST:path.join(root,'apps/web/dist')};
+ delete env.GG_JEV_API_KEY;delete env.JEV_API_KEY;delete env.GG_MASTER_KEY;
+ const token=execFileSync(process.execPath,['apps/api/dist/main.js','--create-api-key','qa-races'],{env,encoding:'utf8'}).match(/\bgg_[A-Za-z0-9_-]+/u)[0];
+ let ready=false;child=spawn(process.execPath,['--input-type=module','-'],{cwd:path.join(root,'apps/web'),env,stdio:['pipe','pipe','pipe','ipc'],windowsHide:true});
+ child.stdout.on('data',b=>{fs.appendFileSync(path.join(out,`race-server-${width}.log.txt`),clean(b));if(String(b).includes('"ready":true'))ready=true;});
+ child.stderr.on('data',b=>fs.appendFileSync(path.join(out,`race-server-${width}.log.txt`),clean(b)));
+ child.stdin.end(fs.readFileSync(path.join(out,'server.mjs.txt')));await wait(()=>ready,60000);
+ const api=async(url,body)=>{const res=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{Authorization:`Bearer ${token}`,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});return{status:res.status,body:await res.json()};};
+ // Service workers are blocked only in this controlled transport-fault context.
+ const ctx=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});
+ await ctx.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),token);page=await ctx.newPage();
+ const snapshot=async()=>({url:page.url(),rows:await page.locator('tbody tr').allTextContents(),ids:await page.locator('[data-testid^="payload-"]').evaluateAll(a=>a.map(x=>x.getAttribute('data-testid').slice(8))),status:await page.locator('[role="status"]').allTextContents(),focus:await page.evaluate(()=>({text:document.activeElement?.textContent,name:document.activeElement?.getAttribute('aria-label')})),busy:await page.getByRole('button',{name:'Refresh',exact:true}).getAttribute('aria-busy')});
+ const refresh=()=>page.getByRole('button',{name:'Refresh',exact:true});
+ const note=(name,pass,v)=>{save(`${width}-${name}.json`,v);results.checks.push({width,name,pass,evidence:`${width}-${name}.json`});save('races-history-results.json',results);console.log(JSON.stringify({width,name,pass}));};
+ const goto=async(q)=>{await page.goto(base+'/app/events'+q);await wait(async()=>await page.locator('tbody tr').count()===100);};
+ const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ const before='2099-01-01T00:00:00.000Z';const query=`?type=qa-main&before=${encodeURIComponent(before)}&keep=reader`;
+ const errorBody={type:'https://graphgoblin.dev/problems/qa-unavailable',title:'qa unavailable',status:503,code:'QA_UNAVAILABLE',detail:'QA controlled history-read failure'};
+ async function holdRefresh(match){
+  let release,held,requests=0;const released=new Promise(r=>release=r);let isHeld=false;
+  const handler=async route=>{const u=new URL(route.request().url());if(u.pathname!=='/events'||u.searchParams.has('limit')||u.searchParams.has('cursor')||!match(u)){await route.continue();return;}requests++;const response=await route.fetch();held={url:u.pathname+u.search,status:response.status(),body:await response.json()};isHeld=true;await released;await route.fulfill({response});};
+  await page.route('**/events**',handler);
+  return {waitHeld:()=>wait(()=>isHeld),release:async()=>{release();await sleep(500);await page.unroute('**/events**',handler);},details:()=>({requests,held})};
+ }
+ // Distinct filter navigation through real same-document browser history.
+ if (!(resume && width===1440)) {
+ await goto(query);await page.getByRole('button',{name:'Clear type filter'}).click();await wait(async()=>await page.locator('tbody tr').count()===100&&!new URL(page.url()).searchParams.has('type'));
+ let hold=await holdRefresh(u=>!u.searchParams.has('type'));
+ await refresh().click();await hold.waitHeld();const oldResponse=hold.details();
+ await page.goBack();await wait(async()=>new URL(page.url()).searchParams.get('type')==='qa-main'&&await page.locator('tbody tr').count()===100);
+ const changed=await snapshot();await hold.release();await sleep(1000);let after=await snapshot();
+ let truth=await api('/events?type=qa-main&before='+encodeURIComponent(before));
+ note('race-filter-navigation',equal(after.ids,truth.body.items.map(x=>x.id))&&after.url===changed.url,{held:oldResponse,afterFilterChange:changed,afterLateResponse:after,expected:truth});
+ // Clear type while the old-filter Refresh is still in flight.
+ await goto(query);await page.getByRole('button',{name:'Load more'}).click();await wait(async()=>await page.locator('tbody tr').count()===200);
+ hold=await holdRefresh(u=>u.searchParams.get('type')==='qa-main');
+ const old=await snapshot();await refresh().click();await hold.waitHeld();const during=await snapshot();
+ await page.getByRole('button',{name:'Clear type filter'}).click();await wait(async()=>await page.locator('tbody tr').count()===100&&!new URL(page.url()).searchParams.has('type'));
+ const cleared=await snapshot();await hold.release();await sleep(1000);after=await snapshot();truth=await api('/events?before='+encodeURIComponent(before));
+ note('race-clear-type-inflight',equal(during.ids,old.ids)&&equal(after.ids,truth.body.items.map(x=>x.id))&&after.focus.text==='Refresh'&&new URL(after.url).searchParams.get('keep')==='reader',{before:old,during,afterClear:cleared,afterLateResponse:after,expected:truth,held:hold.details()});
+ // A restrictive before value ensures the old and cleared datasets are visibly different.
+ const main=await api('/events?type=qa-main');const cutoff=main.body.items[30].receivedAt;
+ await goto(`?type=qa-main&before=${encodeURIComponent(cutoff)}&keep=reader`);
+ hold=await holdRefresh(u=>u.searchParams.get('before')===cutoff);
+ await refresh().click();await hold.waitHeld();const beforeClearBefore=await snapshot();
+ await page.getByRole('button',{name:'Clear before filter'}).click();await wait(async()=>!new URL(page.url()).searchParams.has('before')&&await page.locator('tbody tr').count()===100);
+ const afterClearBefore=await snapshot();await hold.release();await sleep(1000);after=await snapshot();truth=await api('/events?type=qa-main');
+ note('race-clear-before-inflight',equal(after.ids,truth.body.items.map(x=>x.id))&&after.focus.text==='Refresh'&&new URL(after.url).searchParams.get('type')==='qa-main',{before:beforeClearBefore,afterClear:afterClearBefore,afterLateResponse:after,expected:truth,held:hold.details()});
+ // Two quick activations: one pending request, old rows held, one successful replacement.
+ await goto(query);await page.getByRole('button',{name:'Load more'}).click();await wait(async()=>await page.locator('tbody tr').count()===200);
+ hold=await holdRefresh(u=>u.searchParams.get('type')==='qa-main');const doubleBefore=await snapshot();
+ await refresh().dblclick({delay:30});await hold.waitHeld();const doubleDuring=await snapshot();
+ await hold.release();await wait(async()=>await page.locator('tbody tr').count()===100&&(await refresh().getAttribute('aria-busy'))==='false');after=await snapshot();
+ note('race-rapid-refresh',hold.details().requests===1&&equal(doubleBefore.ids,doubleDuring.ids)&&after.status.some(x=>x.includes('Showing the newest events.')),{before:doubleBefore,during:doubleDuring,after,transport:hold.details()});
+ // Real minimal trigger/exit runs seed both HistoryState consumers; no inference node.
+ const definition={schemaVersion:4,name:`QA shared history ${width}`,nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'e1',from:{node:'start',port:'out'},to:{node:'done'}}]};
+ const created=await api('/loops',{definition});if(created.status!==201)throw new Error(JSON.stringify(created));const loop=created.body.loop.id;
+ const published=await api(`/loops/${loop}/publish`,{});if(published.status!==200)throw new Error(JSON.stringify(published));
+ const runIds=[];for(let i=0;i<101;i++){const x=await api(`/loops/${loop}/runs`,{});if(x.status!==202)throw new Error(JSON.stringify(x));runIds.push(x.body.run.id);}
+ await wait(async()=>{const x=await api(`/runs?loopId=${loop}&status=succeeded&limit=500`);return x.body.items?.length===101;},60000);
+ save(`${width}-history-seed.json`,{created,published,loop,runIds});
+ for(const [kind,url]of[['runs','/app/runs'],['loop-history',`/app/runs?loop=${loop}`]]){
+  let mode='initial';
+  const fault=async route=>{const u=new URL(route.request().url());if(u.pathname==='/runs'&&((mode==='append'&&u.searchParams.has('cursor'))||(mode==='initial')||(mode==='refetch'&&!u.searchParams.has('cursor')))){await route.fulfill({status:503,contentType:'application/problem+json',body:JSON.stringify(errorBody)});}else await route.continue();};
+  await page.route('**/runs**',fault);await page.goto(base+url);
+  await wait(async()=>(await page.locator('body').innerText()).includes('Could not load runs'));
+  const cold={url:page.url(),rows:await page.locator('tbody tr').count(),body:await page.locator('body').innerText()};
+  mode='none';await page.reload();await wait(async()=>await page.locator('tbody tr').count()===100);
+  const successful=await page.locator('tbody tr').allTextContents();mode='refetch';
+  await wait(async()=>(await page.locator('body').innerText()).includes('Could not load runs'),18000);
+  const refetch={rows:await page.locator('tbody tr').count(),body:await page.locator('body').innerText()};
+  mode='none';await page.reload();await wait(async()=>await page.locator('tbody tr').count()===100);mode='append';
+  await page.getByRole('button',{name:'Load more'}).click();await wait(async()=>(await page.locator('body').innerText()).includes('Could not load runs'));
+  const append={rows:await page.locator('tbody tr').count(),texts:await page.locator('tbody tr').allTextContents(),body:await page.locator('body').innerText()};
+  mode='none';await page.getByRole('button',{name:'Load more'}).click();await wait(async()=>await page.locator('tbody tr').count()===101);
+  const recovered={rows:await page.locator('tbody tr').count(),status:await page.locator('[role="status"]').allTextContents(),url:page.url()};
+  note(`history-${kind}-errors`,cold.rows===0&&refetch.rows===0&&append.rows===100&&equal(append.texts,successful)&&recovered.rows===101,{controlledError:errorBody,cold,successfulRows:successful,refetch,append,recovered});
+  await page.screenshot({path:path.join(out,`${width}-${kind}-history.png`)});await page.unroute('**/runs**',fault);
+ }
+ }
+ // Loops overview uses QueryState rather than HistoryState; its error must remain visible too.
+ await page.goto(base+'/app/loops');await wait(async()=>await page.locator('tbody tr').count()>0);
+ const loopsBefore=await page.locator('body').innerText();
+ const loopsFault=route=>new URL(route.request().url()).pathname==='/loops' ? route.fulfill({status:503,contentType:'application/problem+json',body:JSON.stringify(errorBody)}) : route.continue();
+ await page.route('**/loops',loopsFault);await page.reload();await wait(async()=>(await page.locator('body').innerText()).includes('Could not load loops'));
+ note('loops-overview-error',true,{before:loopsBefore,after:await page.locator('body').innerText(),controlledError:errorBody});
+ await page.unroute('**/loops',loopsFault);await ctx.close();
+ const done=once(child,'exit');child.send('stop');await done;child=undefined;
+ }}catch(e){results.fatal=clean(e.stack);if(page&&!page.isClosed()){save('race-fatal-page.json',{url:page.url(),body:await page.locator('body').innerText()});await page.screenshot({path:path.join(out,'race-fatal-page.png')});}console.error(e);process.exitCode=1;}
+finally{if(child&&child.exitCode===null){child.send('stop');await Promise.race([once(child,'exit'),sleep(10000)]);if(child.exitCode===null)child.kill();}await browser.close();results.finished=new Date().toISOString();save('races-history-results.json',results);}

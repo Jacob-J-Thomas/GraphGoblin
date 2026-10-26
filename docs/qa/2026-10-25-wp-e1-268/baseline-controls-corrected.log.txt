@@ -1,0 +1,39 @@
+[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-268/packages/engine
+
+ ❯ src/hot-paths.test.ts (6 tests | 1 failed) 729ms
+   × finalization reads bounded pages and yields, preserving the entire return-producing log 118ms
+pnpm.cmd : 
+At line:2 char:137
++ ... econds 5 }; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/hot-paths.test.ts > finalization reads bounded pages and yields, preserving the entire return-producing log
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  04:09:06
+   Duration  4.59s (import 45%, transform 38%, tests 17%)
+
+AssertionError: expected 1 to be greater than 2
+ ❯ src/hot-paths.test.ts:56:24
+     54|   const run = await f.manager.startRun({ ownerId: 'local', loopId: f.l…
+     55|   await f.manager.waitForIdle();
+     56|   expect(reads.length).toBeGreaterThan(2);
+       |                        ^
+     57|   expect(reads.every((limit) => limit !== undefined && limit <= 256)).…
+     58|   expect(timerRan).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 268\packages\engine
+

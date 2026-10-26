@@ -1,0 +1,36 @@
+﻿import { readFile, writeFile, readdir, stat, access } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
+const dir='docs/qa/2026-10-22-wp-e1-186/round-3', errors=[];
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const userName=process.env.USERPROFILE.split(/[\\/]/).at(-1);
+const files=(await readdir(dir)).filter(n=>n!=='artifact-manifest.json');
+const artifacts=[];
+for(const name of files){
+ const p=`${dir}/${name}`;if(!(await stat(p)).isFile())continue;
+ const b=await readFile(p),s=b.toString('utf8');artifacts.push({path:name,bytes:b.length,sha256:sha(b)});
+ if(b.length>1000000)errors.push(`Capture over limit: ${name}`);
+ if(s.includes(userName))errors.push(`User path leak: ${name}`);
+ if(name.endsWith('.json'))try{JSON.parse(s);}catch{errors.push(`Invalid JSON: ${name}`);}
+}
+for(const path of [`${dir}/REPORT.md`,`${dir}/NOT-KEPT.md`,'docs/qa/2026-10-22-wp-e1-186/README.md']){
+ const s=await readFile(path,'utf8');if(/\bPending\b|assertions are pending|being collected/.test(s))errors.push(`Incomplete report: ${path}`);
+ for(const m of s.matchAll(/\]\(([^)]+)\)/g)){const p=m[1].split('#')[0];if(!p||/^[a-z]+:/i.test(p))continue;try{await access(resolve(dirname(path),p));}catch{errors.push(`Missing link ${p} in ${path}`);}}
+}
+for(const f of JSON.parse(await readFile(`${dir}/source-frozen.json`,'utf8')))if(sha(await readFile(f.path))!==f.sha256)errors.push(`Tested source changed: ${f.path}`);
+const restoration=JSON.parse(await readFile(`${dir}/format-restoration.json`,'utf8')); if(!restoration.restored||!restoration.candidateSourceUnchanged)errors.push('Formatter restoration incomplete'); for(const f of restoration.files)if(sha(await readFile(f.path))!==f.committedSha256)errors.push(`Incidental file drift: ${f.path}`);
+const qa=JSON.parse(await readFile(`${dir}/independent-qa-integrity.json`,'utf8'));if(!qa.unchanged||qa.altered.length)errors.push('Independent QA modified');
+try{execFileSync('git',['diff','--quiet','HEAD','--','docs/qa/2026-10-24-wp-e1-186-qa']);}catch{errors.push('Independent QA differs from HEAD');}
+for(const phase of ['before','after']){
+ const r=JSON.parse(await readFile(`${dir}/terminal-${phase}.json`,'utf8'));
+ if(r.events!==42102||r.observations.length!==6)errors.push(`Wrong ${phase} workload`);
+ for(const o of r.observations)if(o.status!==200||o.eventIds.length||o.controls||o.reads!==(phase==='before'?331:2)||o.rows!==(phase==='before'?42102:0)||o.lifecycleLookups!==(phase==='before'?0:1))errors.push(`Bad ${phase} observation: ${o.round}/${o.after}`);
+}
+const plan=JSON.parse(await readFile(`${dir}/query-plan.json`,'utf8'));if(plan.indexSeeks!==5||plan.plan.some(r=>/^SCAN /i.test(String(r.detail))))errors.push('SQL plan is not bounded');
+const originalQa=JSON.parse(await readFile(`${dir}/original-qa-manifest-integrity.json`,'utf8'));if(originalQa.canonicalMatches!==originalQa.checked||originalQa.unexpected.length||originalQa.restoredQa.some(r=>!r.matchesOriginal))errors.push('Original QA canonical manifest mismatch');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();if(head!=='3289c122cdaa985d90d1c48e7d10bb8b5c830d58')errors.push('HEAD changed');
+try{execFileSync('git',['diff','--cached','--quiet']);}catch{errors.push('Index is not empty');}
+if(process.argv.includes('--manifest'))await writeFile(`${dir}/artifact-manifest.json`,JSON.stringify({head,node:process.version,artifacts},null,2)+'\n');
+else{const expected=JSON.parse(await readFile(`${dir}/artifact-manifest.json`,'utf8'));for(const f of expected.artifacts)if(sha(await readFile(`${dir}/${f.path}`))!==f.sha256)errors.push(`Manifest mismatch: ${f.path}`);}
+console.log(JSON.stringify({head,artifacts:artifacts.length,protectedQaFiles:qa.files,errors},null,2));if(errors.length)process.exitCode=1;

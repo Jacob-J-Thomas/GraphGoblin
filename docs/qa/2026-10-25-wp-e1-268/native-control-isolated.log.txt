@@ -1,0 +1,33 @@
+[Portable log copy: local user path replaced with %USERPROFILE%; original bytes listed in NOT-KEPT.md.]
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-268/packages/infrastructure
+
+ ❯ src/adversarial.test.ts (20 tests | 1 failed | 19 skipped) 5449ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 5447ms
+pnpm.cmd : 
+At line:2 char:137
++ ... econds 5 }; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-0n2mG6'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 skipped (20)
+   Start at  04:41:43
+   Duration  11.61s (tests 49%, import 32%, transform 20%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 268\packages\infrastructure
+

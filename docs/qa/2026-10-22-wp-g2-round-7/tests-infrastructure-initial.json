@@ -1,0 +1,431 @@
+{
+  "total": 716,
+  "passed": 656,
+  "failed": 60,
+  "pending": 0,
+  "filesTotal": 48,
+  "filesFailed": 6,
+  "failures": [
+    {
+      "file": "packages/infrastructure/src/adversarial.test.ts",
+      "title": "adversarial infrastructure invariants (forks pool) 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "failures": [
+        "Error: Test timed out in 30000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/adversarial.test.ts:225:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/claude/process.test.ts",
+      "title": "owned native Claude process transport kills on deadline and output overflow",
+      "failures": [
+        "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-Gylq0s'"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/claude/process.test.ts",
+      "title": "owned native Claude process transport does not spawn for an already aborted signal and cancels a running process",
+      "failures": [
+        "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-3nWklF'"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/claude/process.test.ts",
+      "title": "owned native Claude process transport kills the descendant that a long-lived child started",
+      "failures": [
+        "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality\n    at <worktree>/packages/infrastructure/src/claude/process.test.ts:146:46\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20",
+        "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-Ulhwcb'"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/process/scripts.test.ts",
+      "title": "ProcessScripts kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "failures": [
+        "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:194:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/process/scripts.test.ts",
+      "title": "ProcessScripts kills the process tree on timeout",
+      "failures": [
+        "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:237:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/process/scripts.test.ts",
+      "title": "ProcessScripts kills the process when the signal aborts, including when already aborted",
+      "failures": [
+        "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:248:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.delivered receipts byte for byte ({\"channel\":{\"kind\":\"webhook\"}})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.failed receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"}})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.failed receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"error\":42})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.delivered receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"target\":17})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.delivered receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"unexpectedEvidence\":\"keep-this-damaged-record\"})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.delivered receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"target\":null})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.failed receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\",\"secretRef\":17},\"error\":\"failed\"})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.failed receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\",\"extra\":true},\"error\":\"failed\"})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.failed receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"error\":\"failed\",\"target\":\"unexpected\"})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.delivered receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"target\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.failed receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\"},\"error\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration preserves shape-damaged return.delivered receipts byte for byte ({\"channel\":{\"kind\":\"webhook\",\"url\":\"https://example.test\",\"secretRef\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}})",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:95:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":[\"corrupt\"]}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":\"corrupt\"}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":17}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":[null]}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":[17]}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":[true]}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "migration isolates a damaged pending returnDefaults ({\"defaults\":[{\"kind\":\"webhook\"}]}) alongside a healthy run",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:160:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "one-off migration converts historical webhook outcomes without retrying or changing other sinks",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:268:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "one-off migration queues only the current unfinished return, including invocation defaults (succeeded)",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:338:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "one-off migration queues only the current unfinished return, including invocation defaults (running)",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:338:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "one-off migration queues only the current unfinished return, including invocation defaults (resumed)",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:338:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/delivery-runs.test.ts",
+      "title": "one-off migration queues only the current unfinished return, including invocation defaults (receipted)",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at migrateHistoricalReturns (<worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:50:3)\n    at <worktree>/packages/infrastructure/src/sqlite/delivery-runs.test.ts:338:5\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/upgrade.test.ts",
+      "title": "definitions-only format-4 cutover blocks ordinary queued runs without cancelling them",
+      "failures": [
+        "Error: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at Object.chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2869:10\n    at Array.forEach (<anonymous>)\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2866:10\n    at <worktree>/packages/infrastructure/src/sqlite/upgrade.test.ts:205:54\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/upgrade.test.ts",
+      "title": "definitions-only format-4 cutover blocks ordinary running runs without cancelling them",
+      "failures": [
+        "Error: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at Object.chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2869:10\n    at Array.forEach (<anonymous>)\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2866:10\n    at <worktree>/packages/infrastructure/src/sqlite/upgrade.test.ts:205:54\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: omitted optionals",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: empty optionals",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: ASCII maxima",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: astral maxima",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: short embedded NUL",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: URL normalization preserves stored chan…",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: failure ASCII maximum",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: failure astral maximum",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: empty failure",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: astral target 2049",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: astral secret 65",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: astral error 2001",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: target 4097 code points",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: ASCII target overflow",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: ASCII secret overflow",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: ASCII error overflow",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: NUL target overflow",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: NUL secret overflow",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: NUL error overflow",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: invalid URL",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: numeric target",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "frozen receipt contract: unknown evidence",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:67:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "commits receipt conversion, structure and migration ledger atomically",
+      "failures": [
+        "Error: expected [Function] to throw error including 'injected migration failure' but got 'The shipped migration ledger is incom…'\n    at _Assertion.__VITEST_REJECTS__ (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.C4tKZ0yW.js:2463:33)\n    at _Assertion.propertyGetter (file:///<worktree>/node_modules/.pnpm/chai@6.3.0/node_modules/chai/index.js:1607:27)\n    at Reflect.get (<anonymous>)\n    at Object.proxyGetter [as get] (file:///<worktree>/node_modules/.pnpm/chai@6.3.0/node_modules/chai/index.js:1696:22)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:97:33\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "preserves damaged receipt invalid JSON",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:134:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "preserves damaged receipt invalid envelope timestamp",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:134:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "preserves damaged receipt unexpected envelope field",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:134:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts",
+      "title": "preserves damaged receipt unexpected node id",
+      "failures": [
+        "DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent\n    at guardDatabaseUpgrade (<worktree>/packages/infrastructure/src/sqlite/upgrade.ts:149:11)\n    at Object.migrate (<worktree>/packages/infrastructure/src/sqlite/db.ts:208:28)\n    at <worktree>/packages/infrastructure/src/sqlite/webhook-receipt-upgrade.test.ts:134:3\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    }
+  ]
+}

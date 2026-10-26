@@ -1,16 +1,14 @@
-import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
-import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  LoopDefinitionSchema,
+  type JsonValue,
+  type ReturnChannel,
+  type RunEvent,
+} from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { event, queuedFields } from '../__fixtures__/fake-api.js';
-import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
-import {
-  describeEvent,
-  initialThreadFrom,
-  nodeActivity,
-  patchDiff,
-  threadAt,
-  tryThreadAt,
-} from './projections.js';
+import { MAX_HISTORY_BYTES, quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
+import { describeEvent, exitReturnSummary, lastGateSummary, nodeActivity } from './projections.js';
 
 const R = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const actor = { kind: 'user' as const, id: 'local' };
@@ -83,25 +81,6 @@ describe('run projections', () => {
       );
     },
   );
-
-  it('replays absolute gate counts and describes the limit separately from the chosen route', () => {
-    const initial = sampleThread();
-    const entry = event(R, 1, 'decision.made', {
-      nodeId: 'check',
-      ...expressionEvidence('repeat'),
-      portId: 'limit-reached',
-      gate: {
-        previousPasses: 3,
-        passes: 3,
-        repeatRouteId: 'repeat',
-        maxPasses: 3,
-        elapsedSeconds: 1,
-        limit: 'max-passes',
-      },
-    });
-    expect(describeEvent(entry)).toContain('passes 3 → 3 of 3; Limit reached (max-passes)');
-    expect(threadAt(initial, [entry], 1).gates['check']).toEqual({ passes: 3 });
-  });
   it('omits missing optional Score confidence but retains missing required LLM and Choice confidence', () => {
     const provenance = {
       kind: 'classifier' as const,
@@ -193,7 +172,7 @@ describe('run projections', () => {
         }),
       ),
     ).toBe(
-      'Answered true (true probability 0.72) with classifier via typesafe (jev-latest) with confidence 0.83',
+      'Answered true (true probability 72%) with classifier via typesafe (jev-latest) with confidence 83%',
     );
     expect(
       describeEvent(
@@ -236,7 +215,7 @@ describe('run projections', () => {
         }),
       ),
     ).toBe(
-      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 0.91',
+      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 91%',
     );
   });
 
@@ -291,7 +270,7 @@ describe('run projections', () => {
     freshStore.setState({ runs: {} });
   });
   it('describes every event type', () => {
-    const lines = ALL.map(describeEvent);
+    const lines = ALL.map((entry) => describeEvent(entry));
     expect(lines).toContain('attempt 1');
     expect(lines).toContain('by user local');
     expect(lines).toContain('w waits for input');
@@ -305,26 +284,6 @@ describe('run projections', () => {
     expect(lines).toContain('succeeded (success)');
     expect(lines).toContain('b, 1 change, 1 ms');
     expect(lines[0]).toBe('');
-  });
-
-  it('reconstructs the thread at any event and diffs a patch', () => {
-    const current = sampleThread({ run: { ...sampleThread().run, iteration: 2 } });
-    const initial = initialThreadFrom(current);
-    expect(initial).toMatchObject({ messages: [], vars: {}, run: { iteration: 1 } });
-    const at9 = threadAt(initial, ALL, 9);
-    expect(at9.run.iteration).toBe(2);
-    expect(at9.counters.nodeVisits).toEqual({ a: 1 });
-    const withTopic = { ...initial, vars: { topic: 'old', count: 1 } };
-    const before = threadAt(withTopic, ALL, 9);
-    const after = threadAt(withTopic, ALL, 10);
-    expect(after.vars['topic']).toBe('x');
-    const finished = ALL[9] as Extract<RunEvent, { type: 'node.finished' }>;
-    expect(patchDiff(before, after, finished.patch)).toEqual([
-      { op: 'replace', path: '/vars/topic', before: 'old', after: 'x' },
-    ]);
-    expect(
-      patchDiff(before, after, [{ op: 'move', from: '/vars/a', path: '/vars/b' }])[0],
-    ).toMatchObject({ from: '/vars/a', before: undefined });
   });
 
   it('groups node activity for the progress drawer', () => {
@@ -347,82 +306,146 @@ describe('run projections', () => {
   });
 });
 
-describe('initial thread and replay failures', () => {
-  it('seeds fallback gates from the pinned definition at pass one, while preserving recorded fork seeds', () => {
-    const definition = LoopDefinitionSchema.parse({
-      ...minimalLoop(),
-      nodes: [
-        ...minimalLoop().nodes,
-        {
-          id: 'gate',
-          kind: 'decision',
-          label: 'Gate',
-          config: {
-            kind: 'expression',
-            jsonata: '"repeat"',
-            routes: [
-              { id: 'repeat', label: 'Repeat', repeat: true },
-              { id: 'done', label: 'Done' },
-            ],
-            maxPasses: 3,
-          },
-        },
-        {
-          id: 'ordinary',
-          kind: 'decision',
-          label: 'Ordinary',
-          config: {
-            kind: 'expression',
-            jsonata: '"done"',
-            routes: [
-              { id: 'repeat', label: 'Repeat' },
-              { id: 'done', label: 'Done' },
-            ],
-          },
-        },
-      ],
+/** Gate and return evidence at the top of the run (#129). */
+describe('exit evidence summaries', () => {
+  const gate = (
+    portId: string,
+    previousPasses: number,
+    limit: 'max-passes' | 'max-run-time' | null,
+    maxPasses: number | null = 3,
+  ) =>
+    event(R, previousPasses, 'decision.made', {
+      ...expressionEvidence(limit ? 'again' : portId),
+      portId: limit ? 'limit-reached' : portId,
+      nodeId: 'gate',
+      gate: {
+        previousPasses,
+        passes: previousPasses + (portId === 'again' && !limit ? 1 : 0),
+        repeatRouteId: 'again',
+        maxPasses,
+        maxRunTimeSeconds: 60,
+        elapsedSeconds: limit === 'max-run-time' ? 61 : 1,
+        limit,
+      },
     });
-    const current = sampleThread({ gates: { gate: { passes: 3 }, obsolete: { passes: 9 } } });
-    const initial = initialThreadFrom(
-      current,
-      [event(R, 1, 'run.queued', queuedFields())],
-      definition,
-    );
-    expect(initial.gates).toEqual({ gate: { passes: 1 } });
-    const fork = sampleThread({ gates: { gate: { passes: 2 } } });
+
+  it('summarizes the latest gate decision, its pass and any stopping limit', () => {
     expect(
-      initialThreadFrom(
-        current,
-        [event(R, 1, 'run.queued', queuedFields({ initialThread: fork }))],
-        definition,
+      lastGateSummary([
+        event(R, 1, 'decision.made', { nodeId: 'pick', ...expressionEvidence('a') }),
+      ]),
+    ).toBeUndefined();
+    expect(lastGateSummary([gate('again', 1, null)])).toBe(
+      'Last gate decision: gate chose again on pass 1 of 3.',
+    );
+    expect(lastGateSummary([gate('again', 1, null), gate('done', 2, null)])).toBe(
+      'Last gate decision: gate chose done on pass 2 of 3.',
+    );
+    expect(lastGateSummary([gate('again', 1, null), gate('again', 3, 'max-passes')])).toBe(
+      'Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
+    );
+    expect(lastGateSummary([gate('again', 2, 'max-run-time')])).toBe(
+      'Last gate decision: gate chose again on pass 2 of 3; maximum run time stopped the repeat, so it took Limit reached.',
+    );
+    // An Unlimited gate records no pass bound (#243).
+    expect(lastGateSummary([gate('done', 12, null, null)])).toBe(
+      'Last gate decision: gate chose done on pass 12 (unlimited passes).',
+    );
+    expect(lastGateSummary([gate('again', 4, 'max-run-time', null)])).toBe(
+      'Last gate decision: gate chose again on pass 4 (unlimited passes); maximum run time stopped the repeat, so it took Limit reached.',
+    );
+  });
+
+  const exitDefinition = (destinations: ReturnChannel[], returns = 'none') =>
+    LoopDefinitionSchema.parse({
+      ...minimalLoop(),
+      nodes: minimalLoop().nodes.map((node) =>
+        node.kind === 'exit' ? { ...node, config: { returns, destinations } } : node,
       ),
-    ).toBe(fork);
+    });
+  const finishedRun = (result?: JsonValue) => [
+    event(R, 1, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }),
+    event(R, 2, 'run.finished', {
+      status: 'succeeded',
+      outcome: 'success',
+      ...(result === undefined ? {} : { result }),
+    }),
+  ];
+
+  it('stays silent until an exit finished the run, and when it returned a value, null included', () => {
+    expect(exitReturnSummary([], undefined)).toBeUndefined();
+    expect(exitReturnSummary(finishedRun().slice(0, 1), undefined)).toBeUndefined();
+    expect(exitReturnSummary(finishedRun('done'), exitDefinition([]))).toBeUndefined();
+    expect(exitReturnSummary(finishedRun(null), exitDefinition([]))).toBeUndefined();
   });
 
-  it('starts from the thread recorded on run.queued, seed included', () => {
-    const seeded = sampleThread();
-    const events = [
-      event(R, 1, 'run.queued', queuedFields({ initialThread: seeded })),
-      ...ALL.slice(1),
-    ];
-    expect(initialThreadFrom(sampleThread({ messages: [] }), events)).toBe(seeded);
-    // Without the field (older logs) it falls back to empty collections.
-    expect(initialThreadFrom(seeded, ALL).messages).toEqual([]);
+  it('asserts Returns None only when the pinned exit configuration establishes it (#129)', () => {
+    // A run recorded by an older build omitted a null result (CHANGELOG, format 4): with an
+    // expression exit, or without the definition, the history cannot show a no-value configuration.
+    expect(exitReturnSummary(finishedRun(), undefined)).toBe(
+      'No value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.',
+    );
+    expect(exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }], 'null'))).toBe(
+      'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
+    );
+    expect(exitReturnSummary(finishedRun(), exitDefinition([], '$count(outputs)'))).toBe(
+      'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
+    );
+    const renamed = LoopDefinitionSchema.parse({
+      ...exitDefinition([]),
+      nodes: exitDefinition([]).nodes.map((node) =>
+        node.kind === 'exit' ? { ...node, id: 'finish' } : node,
+      ),
+      edges: exitDefinition([]).edges.map((edge) =>
+        edge.to.node === 'done' ? { ...edge, to: { ...edge.to, node: 'finish' } } : edge,
+      ),
+    });
+    expect(exitReturnSummary(finishedRun(), renamed)).toBe(
+      'No value was recorded for this run. The pinned definition has no exit node done, so the exit’s Returns setting cannot be shown.',
+    );
   });
 
-  it('reports a patch that does not apply instead of throwing', () => {
-    const current = sampleThread();
-    const bad = [
-      event(R, 1, 'run.queued', queuedFields()),
-      event(R, 2, 'node.finished', {
-        nodeId: 'a',
-        patch: [{ op: 'replace', path: '/outputs/missing', value: 1 }],
-        durationMs: 1,
-      }),
-    ];
-    const result = tryThreadAt(initialThreadFrom(current, bad), bad, 2);
-    expect(result.ok).toBe(false);
-    expect(tryThreadAt(initialThreadFrom(current, bad), bad, 1).ok).toBe(true);
+  it('explains a None return by configuration, naming the destinations that received nothing', () => {
+    const configuration = 'This is the exit’s configuration, not a failure.';
+    expect(exitReturnSummary(finishedRun(), exitDefinition([]))).toBe(
+      `Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. ${configuration}`,
+    );
+    expect(
+      exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }, { kind: 'log' }])),
+    ).toBe(
+      `No value was returned: Returns is None, so no destination received anything (caller, log from the exit). ${configuration}`,
+    );
+    // The start request's extra destinations are skipped too; a duplicate is named once.
+    expect(
+      exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }]), [
+        { kind: 'caller' },
+        { kind: 'webhook', url: 'https://example.test/hook' },
+      ]),
+    ).toBe(
+      `No value was returned: Returns is None, so no destination received anything (caller from the exit; webhook from the start request). ${configuration}`,
+    );
+    expect(exitReturnSummary(finishedRun(), exitDefinition([]), [{ kind: 'log' }])).toBe(
+      `No value was returned: Returns is None, so no destination received anything (log from the start request). ${configuration}`,
+    );
+  });
+});
+
+describe('initial thread and replay failures', () => {
+  it('drops a stored log of the earlier version, which carries no recorded size (#259)', async () => {
+    useRunEventStore.setState({ runs: {} });
+    useRunEventStore.persist.clearStorage();
+    const sized = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
+    sessionStorage.setItem(
+      'graphgoblin-run-events-v4',
+      JSON.stringify({ state: { runs: { [R]: { events: [sized], lastSeq: 1 } } }, version: 0 }),
+    );
+    vi.resetModules();
+    const { useRunEventStore: freshStore } = await import('./event-store.js');
+    await freshStore.persist.rehydrate();
+    expect(freshStore.getState().runs[R]).toBeUndefined();
+    freshStore.getState().append(R, sized);
+    expect(freshStore.getState().runs[R]?.bytes).toBe(JSON.stringify(sized).length * 2);
+    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('"version":2');
   });
 
   it('appends batches in order and drops a full session storage copy instead of throwing', () => {
@@ -431,6 +454,32 @@ describe('initial thread and replay failures', () => {
     expect(useRunEventStore.getState().runs['batch']?.events.map((e) => e.seq)).toEqual([1, 2, 3]);
     append('batch', ALL[0]!);
     expect(useRunEventStore.getState().runs['batch']?.lastSeq).toBe(3);
+    // The recorded size counts each kept event once, as its JSON (#259).
+    expect(useRunEventStore.getState().runs['batch']?.bytes).toBe(
+      ALL.slice(0, 3).reduce((sum, e) => sum + JSON.stringify(e).length * 2, 0),
+    );
+    // A large history is kept in memory but left out of the stored copy, which other runs keep.
+    const wide = event('wide', 1, 'node.finished', {
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/wide', value: 'w'.repeat(MAX_HISTORY_BYTES) }],
+      durationMs: 1,
+    });
+    append('wide', wide);
+    expect(useRunEventStore.getState().runs['wide']?.bytes).toBeLessThan(MAX_HISTORY_BYTES);
+    expect(useRunEventStore.getState().runs['wide']?.uncached).toEqual([
+      {
+        seq: 1,
+        type: 'node.finished',
+        uncached: true,
+        // The description's parts name the node when shown and carry no patch value.
+        description: [{ node: 'a' }, ', 1 change, 1 ms'],
+      },
+    ]);
+    const stored = JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4') ?? '{}') as {
+      state: { runs: Record<string, unknown> };
+    };
+    expect(Object.keys(stored.state.runs)).toContain('batch');
+    expect(Object.keys(stored.state.runs)).toContain('wide');
 
     const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('full', 'QuotaExceededError');

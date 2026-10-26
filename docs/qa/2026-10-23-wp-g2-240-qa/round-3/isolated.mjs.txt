@@ -1,0 +1,17 @@
+import fs from 'node:fs';import path from 'node:path';import {spawn,execFileSync} from 'node:child_process';
+const root=process.cwd(),out=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-3');
+if(!process.version.startsWith('v22.'))throw new Error('Node 22 required');
+const gates=JSON.parse(fs.readFileSync(path.join(out,'gates.json'),'utf8'));if(gates.length!==11)throw new Error('Full gate sequence has not ended');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();if(head!=='987b70f72b71b132a19918978d03d8ea09bef040')throw new Error('Head changed');
+const changed=execFileSync('git',['diff','--name-only','74e78bb212a58af15d5c1792fa599ec8a6f4bbad','HEAD','--'],{encoding:'utf8'}).split(/\r?\n/);
+const cases=[['infrastructure','src/adversarial.test.ts'],['infrastructure','src/sqlite/upgrade.test.ts'],['infrastructure','src/process/scripts.test.ts'],['infrastructure','src/claude/process.test.ts'],['infrastructure','src/claude/readiness.test.ts']];
+if(process.argv.includes('--client-templates'))cases.push(['api-client','src/templates.test.ts']);
+const clean=s=>String(s).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const results=[];const save=()=>fs.writeFileSync(path.join(out,'isolated-results.json'),clean(JSON.stringify({head,mode:'One file at a time, maxWorkers=1, no coverage instrumentation, after all full gates and browser scripts ended. Host remains shared; no claim that other users/processes were idle.',results},null,2)));
+for(const [pkg,file]of cases){const repoPath='packages/'+pkg+'/'+file;if(changed.includes(repoPath))throw new Error('Refusing unchanged-file isolated classification for changed file '+repoPath);
+ const command='pnpm.cmd --filter @graphgoblin/'+pkg+' exec vitest run '+file+' --maxWorkers=1',log='isolated-'+pkg+'-'+file.replaceAll('/','-')+'.log.txt',at=Date.now();let lock=false;
+ const code=await new Promise(resolve=>{const child=spawn('cmd.exe',['/d','/s','/c',command],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});for(const p of[child.stdout,child.stderr])p.on('data',b=>{const s=clean(b);if(s.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK'))lock=true;fs.appendFileSync(path.join(out,log),s);});child.on('close',resolve);});
+ const body=fs.readFileSync(path.join(out,log),'utf8').replace(/\u001b\[[0-9;]*m/g,'');results.push({package:pkg,file,repoPath,unchangedAgainstBase:true,command,code,ms:Date.now()-at,coverage:false,lock,files:body.match(/^\s*Test Files\s+(.+)$/m)?.[1]??null,tests:body.match(/^\s*Tests\s+(.+)$/m)?.[1]??null,log});save();console.log(JSON.stringify(results.at(-1)));
+ if(code!==0&&lock){console.log('Store lock: stop for the user-authorized direct-binary fallback.');break;}
+}
+console.log('ISOLATED_FINISHED');

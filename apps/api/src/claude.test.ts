@@ -6,6 +6,8 @@ import {
   claudeModelCapabilities,
   claudePolicy,
   CLAUDE_FABLE_MODEL,
+  CLAUDE_HAIKU_MODEL,
+  CLAUDE_SONNET_MODEL,
 } from '@graphgoblin/infrastructure/claude';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 import { loadConfig } from './config.js';
@@ -30,6 +32,7 @@ const definition = (model = 'claude-opus-5-5', extra: Record<string, unknown> = 
 beforeEach(async () => {
   claude = new FakeHarness([], 'claude');
   claude.preflightResult = {
+    state: 'ready',
     ok: true,
     version: '2.1.285',
     authenticated: true,
@@ -69,12 +72,12 @@ describe('Claude public integration', () => {
         expect.objectContaining({
           harness: 'claude',
           ok: false,
-          problems: ['Claude preflight failed'],
+          problems: [expect.stringMatching(/readiness could not be confirmed/)],
         }),
       ]),
     });
   });
-  it.each(['claude-opus-5-5', CLAUDE_FABLE_MODEL])(
+  it.each(claudeModelCapabilities().map((entry) => entry.model))(
     'runs exact %s inference and preserves normal output/usage',
     async (model) => {
       claude.script([
@@ -121,6 +124,7 @@ describe('Claude public integration', () => {
   });
   it('blocks unavailable Claude publication without substituting Codex', async () => {
     claude.preflightResult = {
+      state: 'unknown',
       ok: false,
       authenticated: false,
       problems: ['Claude account login required'],
@@ -139,7 +143,9 @@ describe('Claude public integration', () => {
     });
     expect(validated.json()).toMatchObject({
       publishable: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: 'HARNESS_UNAVAILABLE' })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: 'HARNESS_READINESS_UNKNOWN' }),
+      ]),
     });
     expect(
       (await t.app.inject({ method: 'POST', url: '/loops/' + id + '/publish' })).statusCode,
@@ -189,6 +195,135 @@ describe('Claude public integration', () => {
     expect(corrected.statusCode, corrected.body).toBe(200);
     expect(corrected.json()).toMatchObject({ publishable: true });
   });
+  it.each([CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL])(
+    'keeps the saved %s model and each supported effort identical through reopen and the harness request',
+    async (model) => {
+      const catalogEntry = await t.container.repos.catalog.findOne('claude', model);
+      expect(catalogEntry).toMatchObject({ enabled: true, source: 'harness' });
+      const efforts = claudeModelCapabilities().find((entry) => entry.model === model)!.efforts;
+      expect(catalogEntry?.efforts).toEqual(efforts);
+      for (const [index, effort] of efforts.entries()) {
+        claude.script([{ finalText: 'Synthetic result.' }]);
+        const authored = definition(model, { effort });
+        const loopId = await t.publishLoop(authored);
+        const reopened = await t.app.inject({ method: 'GET', url: '/loops/' + loopId });
+        expect(
+          reopened
+            .json<{
+              current: { definition: { nodes: { id: string; config?: unknown }[] } };
+            }>()
+            .current.definition.nodes.find((node) => node.id === 'infer')?.config,
+        ).toMatchObject({ harness: 'claude', model, effort });
+        const started = await t.app.inject({
+          method: 'POST',
+          url: '/loops/' + loopId + '/runs',
+          payload: { input: null },
+        });
+        expect(started.statusCode, started.body).toBe(202);
+        await t.idle();
+        expect(claude.started).toHaveLength(index + 1);
+        expect(claude.started[index]).toMatchObject({ model, effort });
+      }
+    },
+  );
+  it.each([CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL])(
+    'refuses an unsupported %s effort at authoring and never sends it',
+    async (model) => {
+      const created = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: definition(model, { effort: 'minimal' }) },
+      });
+      expect(created.statusCode).toBe(400);
+      expect(created.body).toContain('EFFORT_UNSUPPORTED');
+      const loopId = await t.publishLoop(definition(model));
+      for (const [method, url] of [
+        ['PUT', '/loops/' + loopId + '/draft'],
+        ['POST', '/loops/' + loopId + '/validate'],
+      ] as const) {
+        const refused = await t.app.inject({
+          method,
+          url,
+          payload: { definition: definition(model, { effort: 'minimal' }) },
+        });
+        expect(refused.statusCode).toBe(method === 'PUT' ? 400 : 200);
+        expect(refused.body).toContain('EFFORT_UNSUPPORTED');
+      }
+      // Inherited owner defaults are checked against the same model entry.
+      const defaults = await t.app.inject({
+        method: 'PUT',
+        url: '/settings',
+        payload: { defaults: { byHarness: { claude: { model, effort: 'minimal' } } } },
+      });
+      expect(defaults.statusCode).toBe(400);
+      expect(defaults.body).toContain('EFFORT_UNSUPPORTED');
+      expect(claude.started).toEqual([]);
+    },
+  );
+  it('applies owner enable and disable switches to the new Claude models', async () => {
+    claude.script([{ finalText: 'Synthetic result.' }]);
+    const settings = await t.app.inject({
+      method: 'PUT',
+      url: '/settings',
+      payload: {
+        defaults: { byHarness: { claude: { model: CLAUDE_HAIKU_MODEL, effort: 'low' } } },
+      },
+    });
+    expect(settings.statusCode, settings.body).toBe(200);
+    const inherited = singleNodeLoop('claude-inherited', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'Infer',
+      config: {
+        harness: 'claude',
+        harnessOptions: { sandbox: 'read-only', approval: 'never' },
+        prompt: { template: 'Return synthetic result.' },
+      },
+    });
+    const loopId = await t.publishLoop(inherited);
+    for (const model of [CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL]) {
+      const disabled = await t.app.inject({
+        method: 'PATCH',
+        url: '/model-catalog/claude/' + model,
+        payload: { enabled: false },
+      });
+      expect(disabled.json()).toMatchObject({ model, enabled: false });
+    }
+    for (const candidate of [definition(CLAUDE_SONNET_MODEL), inherited]) {
+      const validation = await t.app.inject({
+        method: 'POST',
+        url: '/loops/' + loopId + '/validate',
+        payload: { definition: candidate },
+      });
+      expect(validation.json()).toMatchObject({
+        publishable: false,
+        issues: expect.arrayContaining([expect.objectContaining({ code: 'MODEL_DISABLED' })]),
+      });
+    }
+    const listed = await t.app.inject({ method: 'GET', url: '/model-catalog' });
+    expect(
+      listed
+        .json<{ items: { model: string; enabled: boolean }[] }>()
+        .items.filter((entry) => [CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL].includes(entry.model))
+        .map((entry) => entry.enabled),
+    ).toEqual([false, false]);
+    const enabled = await t.app.inject({
+      method: 'PATCH',
+      url: '/model-catalog/claude/' + CLAUDE_HAIKU_MODEL,
+      payload: { enabled: true },
+    });
+    expect(enabled.statusCode).toBe(200);
+    const started = await t.app.inject({
+      method: 'POST',
+      url: '/loops/' + loopId + '/runs',
+      payload: { input: null },
+    });
+    expect(started.statusCode, started.body).toBe(202);
+    await t.idle();
+    expect(claude.started).toEqual([
+      expect.objectContaining({ model: CLAUDE_HAIKU_MODEL, effort: 'low' }),
+    ]);
+  });
   it('parses only explicit owner executable configuration without installation fallback', () => {
     expect(loadConfig({ GG_CLAUDE_BINARY: 'C:/owned/claude.exe' }).claudeBinary).toBe(
       'C:/owned/claude.exe',
@@ -198,6 +333,7 @@ describe('Claude public integration', () => {
   });
   it('keeps missing optional Claude a warning, but fails configured Claude readiness', async () => {
     claude.preflightResult = {
+      state: 'unknown',
       ok: false,
       authenticated: false,
       problems: ['Claude is not installed'],

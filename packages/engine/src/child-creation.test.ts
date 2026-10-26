@@ -111,7 +111,7 @@ describe('child creation and finish across a process death (#320)', () => {
     expect(parent).toMatchObject({ status: 'succeeded', result: { result: 'child done' } });
   });
 
-  it('a death after the child finish is recorded and before the node completes records it once', async () => {
+  it('a death before the atomic child finish and node completion records it once', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });
     const child = e.publish(scriptChild('finish-once child'));
     const loop = e.publish(parentLoop('finish-once parent', child.loopId));
@@ -126,7 +126,7 @@ describe('child creation and finish across a process death (#320)', () => {
     expect(await e.ports.runs.listChildren(parentId)).toHaveLength(1);
   });
 
-  it('a death after a failed child finish is recorded and before the parent fails records it once', async () => {
+  it('a death before the atomic child finish and parent failure records it once', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });
     e.ports.scripts.respondWith(() => result(3));
     const child = e.publish(scriptChild('fail-once child'));
@@ -230,7 +230,11 @@ describe('child creation and finish across a process death (#320)', () => {
       await recovered.start();
       await recovered.waitForIdle();
       expect((await recovered.getRun(parentId))?.status).toBe('failed');
-      expect(ofType(e, parentId, 'child_run.finished')).toHaveLength(2);
+      // The lost atomic append stored no first finish. Only the new outcome is consumed.
+      expect(ofType(e, parentId, 'child_run.finished')).toHaveLength(1);
+      const childFailure = e.events(kid!.id).findLast((event) => event.type === 'run.failed')!;
+      const wake = e.events(parentId).findLast((event) => event.type === 'run.woken');
+      expect(wake).toMatchObject({ payload: { childFinishedSeq: childFailure.seq } });
       expect(await e.ports.runs.listChildren(parentId)).toHaveLength(1);
     } finally {
       recovered.stop();

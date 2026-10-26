@@ -1,0 +1,93 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/adapter-codex
+
+ ❯ src/harness.test.ts (29 tests | 4 failed) 248ms
+   ❯ CodexHarness.start (15)
+     × preserves typed missing-session metadata at promise with retriable=false 19ms
+     × preserves typed missing-session metadata at iterator with retriable=false 5ms
+     × preserves typed missing-session metadata at promise with retriable=true 2ms
+     × preserves typed missing-session metadata at iterator with retriable=true 3ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run src/harn ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/harness.test.ts > CodexHarness.start > preserves typed missing-session metadata at promise with 
+retriable=false
+ FAIL  src/harness.test.ts > CodexHarness.start > preserves typed missing-session metadata at iterator with 
+retriable=false
+AssertionError: expected { type: 'error', …(4) } to match object { type: 'error', …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_SESSION_MISSING",
++   "code": "HARNESS_TURN_FAILED",
+    "retriable": false,
+-   "submission": "session-missing",
++   "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/harness.test.ts:60:27
+     58|     const session = harness.resume('missing-id', request(), new AbortC…
+     59|     const events = await drain(session);
+     60|     expect(events.at(-1)).toMatchObject({ type: 'error', code: 'HARNES…
+       |                           ^
+     61|       submission: 'session-missing', retriable });
+     62|     await expect(session.result).rejects.toMatchObject({ code: 'HARNES…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/harness.test.ts > CodexHarness.start > preserves typed missing-session metadata at promise with 
+retriable=true
+ FAIL  src/harness.test.ts > CodexHarness.start > preserves typed missing-session metadata at iterator with 
+retriable=true
+AssertionError: expected { type: 'error', …(4) } to match object { type: 'error', …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_SESSION_MISSING",
+-   "retriable": true,
+-   "submission": "session-missing",
++   "code": "HARNESS_TURN_FAILED",
++   "retriable": false,
++   "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/harness.test.ts:60:27
+     58|     const session = harness.resume('missing-id', request(), new AbortC…
+     59|     const events = await drain(session);
+     60|     expect(events.at(-1)).toMatchObject({ type: 'error', code: 'HARNES…
+       |                           ^
+     61|       submission: 'session-missing', retriable });
+     62|     await expect(session.result).rejects.toMatchObject({ code: 'HARNES…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 25 passed (29)
+   Start at  17:57:43
+   Duration  11.93s (transform 69%, import 28%, tests 2%)
+
+  Transform  transforming modules took 7.50s · 69% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\adapter-codex
+

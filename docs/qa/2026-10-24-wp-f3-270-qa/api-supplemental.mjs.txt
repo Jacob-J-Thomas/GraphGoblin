@@ -1,0 +1,53 @@
+import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+const root=process.cwd(), out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const {singleNodeLoop}=await import(pathToFileURL(resolve(root,'packages/engine/dist/testing/index.js')).href);
+const base='http://127.0.0.1:5880', results=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function api(path,body,method=body===undefined?'GET':'POST',headers={}) {
+  const res=await fetch(base+path,{method,headers:{'content-type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
+  const raw=await res.text(); let data; try{data=JSON.parse(raw)}catch{data=raw}
+  return {status:res.status,data};
+}
+async function ok(path,body,method,headers) { const r=await api(path,body,method,headers); assert(r.status<300,JSON.stringify(r));return r.data; }
+async function poll(fn,predicate,ms=5000) { const start=Date.now();let v;do{v=await fn();if(predicate(v))return v;await sleep(10)}while(Date.now()-start<ms);throw new Error('poll timed out: '+JSON.stringify(v)); }
+const terminal=r=>['succeeded','failed','cancelled'].includes(r.status);
+const read=id=>ok('/runs/'+id);
+async function snapshot(id) {return {run:await read(id),thread:await ok('/runs/'+id+'/thread'),events:await ok('/runs/'+id+'/events?limit=1000')};}
+const terminalEvents=s=>s.events.items.filter(e=>['run.failed','run.finished','run.cancelled'].includes(e.type));
+async function runCase(name,fn) { const t=Date.now();try { const data=await fn();results.push({name,status:'PASS',elapsedMs:Date.now()-t,...data}); } catch(e) {results.push({name,status:'FAIL',elapsedMs:Date.now()-t,error:String(e),stack:e.stack});} await writeFile(resolve(out,'api-supplemental.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(results.at(-1))); }
+const routeNode={id:'work',kind:'decision',label:'Route',config:{kind:'llm',harness:'codex',model:{mode:'inherit'},effort:{mode:'inherit'},instructions:'Choose a route',routes:[{id:'yes',label:'Yes'},{id:'no',label:'No'}]}};
+const mutateNode={id:'work',kind:'mutate',label:'Quick',config:{operations:[{op:'delete',path:'/vars/absent'}]}};
+function definition(name,node=routeNode,limit=500) {const d=singleNodeLoop(name,node);d.settings={structuredTimeoutMs:limit,runDeadlineSeconds:null};if(node.kind==='decision')for(const port of ['yes','no'])d.edges.push({id:port,from:{node:'work',port},to:{node:'done'}});return d;}
+async function create(def,publish=true){const c=await ok('/loops',{definition:def});if(publish)await ok('/loops/'+c.loop.id+'/publish',{});return c;}
+async function start(id){return (await ok('/loops/'+id+'/runs',{})).run;}
+const obs=()=>ok('/qa/observations');
+async function called(n){return poll(obs,o=>o.calls.length>n).then(o=>o.calls[n]);}
+async function release(call,value,error){await ok('/qa/release',{id:call.id,value,error});await sleep(60);}
+
+await runCase('configured-500ms-decision-capacity-late',async()=>{
+ await ok('/qa/config',{mode:'stall'});const n=(await obs()).calls.length;
+ const c=await create(definition('QA supplemental 500ms deadline'));const r=await start(c.loop.id), call=await called(n);
+ const q=await create(definition('QA supplemental queue release',mutateNode));const next=await start(q.loop.id);assert.equal(next.status,'queued');
+ await poll(()=>read(r.id),terminal);const before=await snapshot(r.id), observation=(await obs()).calls[n];
+ const elapsed=observation.abortedAt-call.at;
+ assert.equal(before.run.failure.code,'STRUCTURED_COMPLETION_TIMEOUT');assert.equal(before.run.failure.details.timeoutMs,500);
+ assert.match(before.run.failure.message,/500 ms/);assert.equal(before.run.failure.details.provenance.provider,'codex');assert.equal(before.run.failure.details.provenance.model,'gpt-6-luna');assert.equal(before.run.failure.details.provenance.effort,'low');
+ assert.equal(observation.aborted,true);assert(elapsed>=450&&elapsed<2000,'unexpected deadline '+elapsed);
+ const finished=await poll(()=>read(next.id),terminal);assert.equal(finished.status,'succeeded');
+ await release(call,{route:'yes',confidence:1,reasoning:'LATE'});const after=await snapshot(r.id);
+ assert.deepEqual(after.thread,before.thread);assert.deepEqual(after.run.failure,before.run.failure);assert.equal(terminalEvents(after).length,1);assert(!after.events.items.some(e=>e.type==='decision.made'));
+ return {elapsedFromCompletionStartMs:elapsed,call,observation,before,after,queued:next,next:finished};
+});
+await runCase('API-boundaries-export-import',async()=>{
+ const invalid=[];for(const value of [-1,0,0.5,'500',true,31536000001]) {const r=await api('/loops',{definition:definition('QA supplemental invalid '+String(value),mutateNode,value)});invalid.push({value,...r});assert.equal(r.status,400);assert.match(JSON.stringify(r.data),/structuredTimeoutMs/);}
+ const accepted=[];for(const value of [null,1,31536000000]){const c=await create(definition('QA supplemental bound '+String(value),mutateNode,value));assert.equal(c.draft.definition.settings.structuredTimeoutMs,value);accepted.push(c);}
+ const c=await create(definition('QA supplemental export finite',mutateNode,500));const exported=await ok('/loops/'+c.loop.id+'/export');assert.equal(exported.loop.settings.structuredTimeoutMs,500);
+ exported.loop.name='QA supplemental imported finite';const imported=await ok('/loops/import',exported);assert.equal(imported.draft.definition.settings.structuredTimeoutMs,500);
+ const legacy=definition('QA supplemental pre-field saved loop',mutateNode);delete legacy.settings.structuredTimeoutMs;const omitted=await create(legacy);assert.equal(omitted.draft.definition.settings.structuredTimeoutMs,null);
+ const badDraft=await api('/loops/'+c.loop.id+'/draft',{definition:definition('QA supplemental export finite',mutateNode,0)},'PUT');assert.equal(badDraft.status,400);
+ exported.loop.settings.structuredTimeoutMs=0;const badImport=await api('/loops/import',exported);assert.equal(badImport.status,400);
+ return {invalid,accepted:accepted.map(c=>({id:c.loop.id,settings:c.draft.definition.settings})),exported,imported,omitted,badDraft,badImport};
+});

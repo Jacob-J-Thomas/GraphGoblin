@@ -1,0 +1,82 @@
+"""Run after capture writers, report formatting and normalization have finished."""
+from pathlib import Path
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+repo = Path.cwd()
+root = repo / 'docs/qa/wp-d4-343/round-4'
+expected = '63160ef0727a62e1fe10c2a9f5cf4d73d65ea843'
+git = lambda *args: subprocess.check_output(['git', *args], cwd=repo).decode('utf-8').strip()
+digest = lambda data: hashlib.sha256(data).hexdigest()
+read = lambda name: json.loads((root / name).read_text(encoding='utf-8'))
+checks = []
+def require(name, condition):
+    if not condition:
+        raise AssertionError(name)
+    checks.append(name)
+
+head = git('rev-parse', 'HEAD')
+branch = git('branch', '--show-current')
+require('expected HEAD and branch', head == expected and branch == 'codex-wp-d4-343')
+require('index unchanged', git('diff', '--cached', '--name-only') == '')
+subprocess.run(['git', 'diff', '--check'], cwd=repo, check=True)
+sources = git('diff', '--name-only').splitlines()
+require('twelve scoped tracked changes', len(sources) == 12)
+require('independent QA untouched', not any(p.startswith('docs/qa/2026-10-24-wp-d4-343-qa/') for p in sources))
+require('admission comparison unchanged', 'packages/infrastructure/src/sqlite/admission.ts' not in sources)
+require('Node 22', subprocess.check_output(['node', '--version']).decode().startswith('v22.'))
+before = read('before-reproduction-results.json')
+after = read('after-reproduction-results.json')
+require('all three baseline checks fail', len(before['checks']) == 3 and all(c['status'] == 'FAIL' for c in before['checks']))
+require('all three built checks pass', len(after['checks']) == 3 and all(c['status'] == 'PASS' for c in after['checks']))
+require('NUL Event baseline accepted and corrupt on retry', before['nulFacts']['first']['status'] == 202 and before['nulFacts']['retry']['body']['dedupeKey'] == 'before' and before['nulFacts']['runs'] == [])
+require('NUL Event refuses without writes', after['nulFacts']['first']['status'] == 400 and after['nulFacts']['first']['body']['errors'][0]['path'] == '/dedupeKey' and after['nulFacts']['before'] == after['nulFacts']['after'] and after['nulFacts']['receipt'] == [] and after['nulFacts']['runs'] == [])
+require('NUL webhook refuses without writes', after['webhookNulFacts']['first']['status'] == 422 and after['webhookNulFacts']['first']['body']['code'] == 'KEY_INVALID' and after['webhookNulFacts']['before'] == after['webhookNulFacts']['after'])
+require('baseline starvation through three sweeps', len(before['facts']['after']) == 3 and all(rows[1]['status'] == 'pending' for rows in before['facts']['after']))
+require('first-sweep healthy admission despite persistent metadata failure', after['facts']['after'][0][1]['status'] == 'admitted' and all(rows[0]['status'] == 'pending' and rows[0]['attempts'] == 1 for rows in after['facts']['after']))
+core = read('core-gates.json')
+coverage = read('coverage-gates.json')
+isolated = read('isolated-diagnostics.json')
+require('six core gates pass', len(core) == 6 and all(g['exitCode'] == 0 for g in core))
+require('full package failures retained', [g['exitCode'] for g in coverage] == [0, 0, 1, 1, 0])
+require('seven distinct isolated diagnostics', len(isolated) == 7 and len({g['command'] for g in isolated}) == 7)
+for package in ('contracts', 'engine', 'infrastructure', 'api', 'api-client'):
+    total = read(f'coverage-{package}-summary.json')['total']
+    require(package + ' line and branch coverage above 90', total['lines']['pct'] > 90 and total['branches']['pct'] > 90)
+schema = json.loads((repo / 'packages/api-client/openapi.json').read_text(encoding='utf-8'))
+key = schema['paths']['/events']['post']['requestBody']['content']['application/json']['schema']['properties']['dedupeKey']
+require('generated request key description and bounds', key['minLength'] == 1 and key['maxLength'] == 512 and 'U+0000' in key['description'])
+report = (root / 'REPORT.md').read_text(encoding='utf-8')
+require('report has no unfinished diagnostic placeholders', 'PENDING' not in report)
+require('eight COMMON report sections', len(re.findall(r'^## [1-8]\. ', report, flags=re.M)) == 8)
+for path in root.iterdir():
+    if not path.is_file() or path.name in ('MANIFEST.json', 'VALIDATION.json'):
+        continue
+    data = path.read_bytes()
+    require('capture/artifact bounded: ' + path.name, len(data) <= 1_000_000)
+    text = data.decode('utf-8')
+    require('profile normalized: ' + path.name, re.search(r'C:[/\\]+Users[/\\]+' + re.escape(Path.home().name), text, flags=re.I) is None)
+    if path.suffix == '.json':
+        json.loads(text)
+reviewed = ['packages/infrastructure/src/sqlite/admission.ts', 'packages/infrastructure/src/sqlite/runs.ts', 'packages/domain/src/poll-items.ts', 'packages/contracts/src/common.ts', 'packages/contracts/src/nodes.ts']
+record = lambda path, name: {'file': name, 'bytes': path.stat().st_size, 'sha256': digest(path.read_bytes())}
+manifest = {
+    'head': head, 'branch': branch,
+    'patch_sha256': digest(subprocess.check_output(['git', 'diff', '--binary'], cwd=repo)),
+    'source_files': [record(repo / name, name) for name in sources],
+    'reviewed_unchanged': [record(repo / name, name) for name in reviewed],
+    'artifacts': [record(p, p.name) for p in sorted(root.iterdir()) if p.is_file() and p.name not in ('MANIFEST.json', 'VALIDATION.json')],
+    'excluded_self_records': ['MANIFEST.json', 'VALIDATION.json'],
+}
+manifest_data = (json.dumps(manifest, indent=2) + '\n').encode('utf-8')
+(root / 'MANIFEST.json').write_bytes(manifest_data)
+for entry in manifest['artifacts']:
+    require('manifest hash: ' + entry['file'], digest((root / entry['file']).read_bytes()) == entry['sha256'])
+result = {'head': head, 'branch': branch, 'manifest_sha256': digest(manifest_data), 'source_files': len(sources), 'artifacts': len(manifest['artifacts']), 'checks_passed': len(checks), 'checks': checks}
+(root / 'VALIDATION.json').write_bytes((json.dumps(result, indent=2) + '\n').encode('utf-8'))
+print(json.dumps({k: v for k, v in result.items() if k != 'checks'}))

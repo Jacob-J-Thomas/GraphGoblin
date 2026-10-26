@@ -1,0 +1,4 @@
+// At the normal 390x844 viewport the Variables section is below the timeline. Retain that run,
+// then capture a 390x3000 viewport so the same layout width and the placeholder are visible.
+import {readFile,writeFile} from 'node:fs/promises';import {resolve} from 'node:path';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-5');let source=await readFile(resolve(dir,'paint.mjs.txt'),'utf8');source=source.replace('for(const width of [1440,390])','for(const width of [390])').replace('height:width===390?844:900','height:3000').replace("'paint-'+kind+'-'+width","'visible-paint-'+kind+'-'+width").replaceAll("'paint-results.json'","'visible-paint-results.json'");await writeFile(resolve(dir,'visible-paint.mjs.txt'),source);

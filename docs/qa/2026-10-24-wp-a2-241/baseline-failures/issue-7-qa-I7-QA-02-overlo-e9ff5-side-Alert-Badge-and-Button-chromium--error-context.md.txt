@@ -1,0 +1,262 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: issue-7-qa.spec.ts >> I7-QA-02: overlong text stays inside Alert, Badge, and Button
+- Location: e2e\issue-7-qa.spec.ts:161:1
+
+# Error details
+
+```
+Error: expect(locator).toContainText(expected) failed
+
+Locator: getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' })
+Expected substring: "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toContainText" getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' }) with timeout 10000ms
+  - waiting for getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' })
+
+```
+
+```yaml
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - heading "Run 01M3Y7RKG093PFE9M0QGQG3HK5" [level=1]
+  - text: failed at ask
+  - link "loop":
+    - /url: /app/loops/01M3Y7RKG093PFE9M0QGQG3HK3/edit
+  - link "child runs":
+    - /url: /app/runs?parent=01M3Y7RKG093PFE9M0QGQG3HK5
+- alert:
+  - paragraph: "Failed: HARNESS_DELIVERY_UNCERTAIN"
+  - text: "harness turn failed: WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW (resumable)"
+- region "Execution limits":
+  - heading "Execution limits" [level=2]
+  - paragraph: "Maximum node visits: 10. Run deadline: none."
+  - paragraph: Limits are pinned for this run. Gate pass limits and node watchdogs follow its pinned definition.
+- region "Timeline (11 events, complete)":
+  - heading "Timeline (11 events, complete)" [level=2]
+  - list "Timeline":
+    - listitem:
+      - button "#1 run.queued":
+        - text: "#1"
+        - code: run.queued
+    - listitem:
+      - button "#2 run.started attempt 1":
+        - text: "#2"
+        - code: run.started
+        - text: attempt 1
+    - listitem:
+      - button "#3 node.started start (trigger) attempt 1":
+        - text: "#3"
+        - code: node.started
+        - text: start (trigger) attempt 1
+    - listitem:
+      - button "#4 node.finished start → out, 2 changes, 1 ms":
+        - text: "#4"
+        - code: node.finished
+        - text: start → out, 2 changes, 1 ms
+    - listitem:
+      - button "#5 node.started ask (inference) attempt 1":
+        - text: "#5"
+        - code: node.started
+        - text: ask (inference) attempt 1
+    - listitem:
+      - button "#6 harness.turn ask":
+        - text: "#6"
+        - code: harness.turn
+        - text: ask
+    - listitem:
+      - button "#7 harness.session ask":
+        - text: "#7"
+        - code: harness.session
+        - text: ask
+    - listitem:
+      - button "#8 node.progress ask":
+        - text: "#8"
+        - code: node.progress
+        - text: ask
+    - listitem:
+      - button "#9 harness.submission ask":
+        - text: "#9"
+        - code: harness.submission
+        - text: ask
+    - listitem:
+      - button "#10 harness.submission ask":
+        - text: "#10"
+        - code: harness.submission
+        - text: ask
+    - listitem:
+      - 'button "#11 run.failed HARNESS_DELIVERY_UNCERTAIN: harness turn failed: WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"':
+        - text: "#11"
+        - code: run.failed
+        - text: "HARNESS_DELIVERY_UNCERTAIN: harness turn failed: WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+- region "Thread at event 11":
+  - heading "Thread at event 11" [level=2]
+  - heading "Messages (0)" [level=3]
+  - list "Messages"
+  - heading "Variables" [level=3]
+  - text: "{}"
+  - button "Full thread JSON"
+- button "Node progress (1 nodes)"
+```
+
+# Test source
+
+```ts
+  73  |   try {
+  74  |     await page.emulateMedia({ reducedMotion: 'no-preference' });
+  75  |     await page.goto(`/app/runs/${runId}`);
+  76  |     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
+  77  |     await expect(page.getByText(/events, live/)).toBeVisible();
+  78  |     // With motion allowed the glyph and the live dot pulse, so the measurement sees them.
+  79  |     await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
+  80  |     await expect.poll(async () => (await motion(page)).animations).toContain('gg-pulse');
+  81  | 
+  82  |     await page.emulateMedia({ reducedMotion: 'reduce' });
+  83  |     await expect.poll(async () => (await motion(page)).animations).toEqual([]);
+  84  |     const pulses = page.locator('.animate-pulse-soft');
+  85  |     await expect.poll(() => pulses.count()).toBeGreaterThanOrEqual(2);
+  86  |     for (const pulse of await pulses.all()) {
+  87  |       await expect(pulse).toHaveCSS('animation-name', 'none');
+  88  |       await expect(pulse).toHaveCSS('opacity', '1');
+  89  |     }
+  90  |     // Transitions stay collapsed to an instant change.
+  91  |     const still = await motion(page);
+  92  |     expect(still.transitions.length).toBeGreaterThan(0);
+  93  |     for (const seconds of still.transitions) expect(seconds).toBeLessThanOrEqual(0.00001);
+  94  | 
+  95  |     // A fresh load under reduced motion never starts the pulse at all.
+  96  |     await page.addInitScript(() => {
+  97  |       const started: string[] = [];
+  98  |       Object.assign(window, { pulseStarts: started });
+  99  |       document.addEventListener(
+  100 |         'animationstart',
+  101 |         (event) => {
+  102 |           if (event.animationName === 'gg-pulse') started.push(event.animationName);
+  103 |         },
+  104 |         true,
+  105 |       );
+  106 |     });
+  107 |     await page.reload();
+  108 |     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
+  109 |     await expect(page.getByText(/events, live/)).toBeVisible();
+  110 |     await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
+  111 |     expect((await motion(page)).animations).toEqual([]);
+  112 |     for (const pulse of await pulses.all()) {
+  113 |       await expect(pulse).toHaveCSS('animation-name', 'none');
+  114 |       await expect(pulse).toHaveCSS('opacity', '1');
+  115 |     }
+  116 |     expect(await page.evaluate(() => window.pulseStarts)).toEqual([]);
+  117 |     // Every assertion above saw a run that was still running: the harness held it.
+  118 |     expect(await runStatus(request, runId)).toBe('running');
+  119 |   } finally {
+  120 |     // Release the held turn; the run ends now rather than in 24 days.
+  121 |     await request.post(`/runs/${runId}/cancel`);
+  122 |     await expect.poll(() => runStatus(request, runId)).toBe('cancelled');
+  123 |   }
+  124 | });
+  125 | 
+  126 | const pageOverflows = (page: Page) =>
+  127 |   page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  128 | 
+  129 | test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and the lists', async ({
+  130 |   page,
+  131 |   request,
+  132 | }) => {
+  133 |   const name = 'W'.repeat(120);
+  134 |   const loopId = await publishLoop(request, approvalLoop(name));
+  135 |   await request.post(`/loops/${loopId}/runs`, { data: {} });
+  136 |   for (const viewport of [
+  137 |     { width: 1440, height: 900 },
+  138 |     { width: 720, height: 450 },
+  139 |   ]) {
+  140 |     await page.setViewportSize(viewport);
+  141 |     await page.goto(`/app/loops/${loopId}/edit`);
+  142 |     const heading = page.getByRole('heading', { level: 1, name });
+  143 |     await expect(heading).toBeVisible();
+  144 |     await expect(heading).toHaveAttribute('title', name);
+  145 |     // Cut short with an ellipsis, inside the page, with every action still on screen.
+  146 |     expect(await heading.evaluate((h) => h.scrollWidth > h.clientWidth)).toBe(true);
+  147 |     expect(await pageOverflows(page), `editor at ${viewport.width}`).toBe(false);
+  148 |     await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeInViewport();
+  149 |     await expect(
+  150 |       page.getByRole('button', { name: /^(Show|Hide) loop settings$/ }),
+  151 |     ).toBeInViewport();
+  152 |     await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
+  153 |     for (const path of ['/app/loops', '/app/runs']) {
+  154 |       await page.goto(path);
+  155 |       await expect(page.locator('td', { hasText: name }).first()).toBeVisible();
+  156 |       expect(await pageOverflows(page), `${path} at ${viewport.width}`).toBe(false);
+  157 |     }
+  158 |   }
+  159 | });
+  160 | 
+  161 | test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ page, request }) => {
+  162 |   const word = 'W'.repeat(350);
+  163 |   await control(request, '/harness/script', {
+  164 |     turns: [{ matchPrompt: 'LONG FAILURE', error: { code: 'TURN_FAILED', message: word } }],
+  165 |   });
+  166 |   const loopId = await publishLoop(request, slowLoop('qa long text', 'LONG FAILURE'));
+  167 |   const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  168 |   const runId = ((await res.json()) as { run: { id: string } }).run.id;
+  169 | 
+  170 |   // Alert: a real failure whose message is one 350-character word.
+  171 |   await page.goto(`/app/runs/${runId}`);
+  172 |   const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' });
+> 173 |   await expect(alert).toContainText(word);
+      |                       ^ Error: expect(locator).toContainText(expected) failed
+  174 |   expect(await alert.evaluate((a) => a.scrollWidth <= a.clientWidth)).toBe(true);
+  175 |   expect(await pageOverflows(page)).toBe(false);
+  176 | 
+  177 |   // Badge and Button: the editor's own, copied into the side panel with overlong labels.
+  178 |   await page.goto(`/app/loops/${loopId}/edit`);
+  179 |   const panel = page
+  180 |     .getByRole('complementary', { name: 'Loop settings' })
+  181 |     .locator('.overflow-auto')
+  182 |     .first();
+  183 |   await expect(panel).toBeVisible();
+  184 |   const fits = await panel.evaluate((region) => {
+  185 |     const copy = (selector: string, text: string) =>
+  186 |       [...document.querySelectorAll(selector)]
+  187 |         .find((el) => el.textContent === text)!
+  188 |         .cloneNode(true) as HTMLElement;
+  189 |     const badge = copy('span.rounded-full', 'published v1');
+  190 |     const button = copy('button', 'Publish');
+  191 |     badge.lastElementChild!.textContent = 'long badge '.repeat(45);
+  192 |     button.lastElementChild!.textContent = 'long action '.repeat(45);
+  193 |     region.append(badge, button);
+  194 |     const edge = region.getBoundingClientRect().right;
+  195 |     return [badge, button].map((el) => {
+  196 |       const label = el.lastElementChild!;
+  197 |       return {
+  198 |         inside: el.getBoundingClientRect().right <= edge + 0.5,
+  199 |         cutShort: label.scrollWidth > label.clientWidth,
+  200 |         ellipsis: getComputedStyle(label).textOverflow,
+  201 |       };
+  202 |     });
+  203 |   });
+  204 |   for (const element of fits) {
+  205 |     expect(element).toEqual({ inside: true, cutShort: true, ellipsis: 'ellipsis' });
+  206 |   }
+  207 |   expect(await pageOverflows(page)).toBe(false);
+  208 | });
+  209 | 
+```

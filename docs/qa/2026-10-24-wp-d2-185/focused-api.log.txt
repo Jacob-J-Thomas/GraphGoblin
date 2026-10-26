@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-185/apps/api
+
+ ❯ src/sse-completion.test.ts (12 tests | 5 failed) 102913ms
+   ❯ authoritative SSE completion (12)
+     × delivers the durable suffix and completes after cursor 0 20112ms
+     × delivers the durable suffix and completes after cursor 128 20012ms
+     × delivers the durable suffix and completes after cursor 131 20002ms
+     × delivers the durable suffix and completes after cursor 132 20017ms
+     × delivers the durable suffix and completes after cursor 232 20011ms
+pnpm.cmd : 
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/finalization.t ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 0
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 128
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 131
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 132
+ FAIL  src/sse-completion.test.ts > authoritative SSE completion > delivers the durable suffix and completes after 
+cursor 232
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sse-completion.test.ts:78:35
+     76|   });
+     77|
+     78|   it.each([0, 128, 131, 132, 232])(
+       |                                   ^
+     79|     'delivers the durable suffix and completes after cursor %s',
+     80|     async (after) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  5 failed | 51 passed (56)
+   Start at  20:28:21
+   Duration  121.05s (tests 84%, import 13%, transform 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ 185\apps\api
+

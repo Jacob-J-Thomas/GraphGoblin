@@ -1,0 +1,31 @@
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+const req=createRequire(resolve('apps/web/package.json'));const {chromium}=req('@playwright/test');
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa'),api='http://127.0.0.1:5720';
+const fixture=JSON.parse(await readFile(resolve(dir,'fixtures.json'),'utf8'));
+async function call(path,body){const r=await fetch(api+path,{method:body===undefined?'GET':'POST',headers:{'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});const v=await r.json();if(!r.ok)throw new Error(`${r.status} ${path}`);return v;}
+const seed=await call('/runs/'+fixture.runs.mutate);const {run}=await call('/loops/'+seed.loopId+'/runs',{input:{}});for(let i=0;i<160;i++){if((await call('/runs/'+run.id)).status==='waiting')break;await new Promise(r=>setTimeout(r,100));}
+const key=await call('/api-keys',{label:'Independent QA E1',scopes:['*']});
+const browser=await chromium.launch({channel:'msedge',headless:true}),ctx=await browser.newContext();
+if(key.token)await ctx.addInitScript(token=>localStorage.setItem('graphgoblin-api-key',token),key.token);
+await ctx.addInitScript(()=>{
+ window.__qa={tasks:[],events:[],clicks:[]};new PerformanceObserver(l=>window.__qa.tasks.push(...l.getEntries().map(x=>({start:x.startTime,duration:x.duration})))).observe({type:'longtask',buffered:true});
+ new PerformanceObserver(l=>window.__qa.events.push(...l.getEntries().map(x=>({name:x.name,start:x.startTime,inputDelay:x.processingStart-x.startTime,processing:x.processingEnd-x.processingStart,duration:x.duration,interactionId:x.interactionId})))).observe({type:'event',durationThreshold:16,buffered:true});
+ document.addEventListener('click',e=>{const r={label:e.target?.closest('button')?.getAttribute('aria-label')||e.target?.closest('button')?.textContent,inputDelay:performance.now()-e.timeStamp};window.__qa.clicks.push(r);requestAnimationFrame(()=>requestAnimationFrame(()=>r.nextPaintMs=performance.now()-e.timeStamp));},{capture:true,passive:true});
+});
+const page=await ctx.newPage(),cdp=await ctx.newCDPSession(page);await cdp.send('Performance.enable');page.setDefaultTimeout(12000);
+const measurements=[];
+async function click(locator,wait){await locator.scrollIntoViewIfNeeded();const box=await locator.boundingBox();if(!box)throw new Error('no box');const before=await cdp.send('Performance.getMetrics'),t=performance.now();await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',x:box.x+box.width/2,y:box.y+box.height/2,button:'left',clickCount:1});await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:box.x+box.width/2,y:box.y+box.height/2,button:'left',clickCount:1});await wait();const wallMs=performance.now()-t;await page.waitForTimeout(100);const after=await cdp.send('Performance.getMetrics');const metrics={};for(const name of ['ScriptDuration','LayoutDuration','RecalcStyleDuration','TaskDuration'])metrics[name]=(after.metrics.find(x=>x.name===name)?.value-before.metrics.find(x=>x.name===name)?.value)*1000;return {wallMs,metrics,lastClick:await page.evaluate(()=>window.__qa.clicks.at(-1))};}
+for(const width of [1440,390]){
+ await page.setViewportSize({width,height:width===390?844:900});await page.goto(api+'/app/runs/'+run.id);const timeline=page.getByRole('list',{name:'Timeline',exact:true});await timeline.getByRole('button',{name:/run\.waiting/}).click();await page.getByRole('button',{name:'Show all of Variables',exact:true}).click();
+ const variableChars=await page.getByLabel('Variables',{exact:true}).evaluate(e=>e.textContent.length);
+ const select=timeline.getByRole('button',{name:/node\.finished seed\b/});const selection=await click(select,()=>page.waitForFunction(()=>document.querySelector('[aria-label="Timeline"] button[aria-current="true"]')?.textContent.includes('node.finished')&&document.querySelector('[aria-label="Timeline"] button[aria-current="true"]')?.textContent.includes('seed')));
+ // Restore latest event, expand the 2 MiB variable, then operate controls and the form.
+ await timeline.getByRole('button',{name:/run\.waiting/}).click();if(await page.getByRole('button',{name:'Show all of Variables',exact:true}).count())await page.getByRole('button',{name:'Show all of Variables',exact:true}).click();
+ const pause=await click(page.getByRole('button',{name:'Pause',exact:true}),()=>page.getByRole('button',{name:'Resume',exact:true}).waitFor());
+ const resume=await click(page.getByRole('button',{name:'Resume',exact:true}),()=>page.getByRole('button',{name:'Pause',exact:true}).waitFor());
+ const input=page.getByRole('textbox',{name:/answer/i});await input.scrollIntoViewIfNeeded();const box=await input.boundingBox();await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',x:box.x+10,y:box.y+10,button:'left',clickCount:1});await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:box.x+10,y:box.y+10,button:'left',clickCount:1});const start=performance.now();await cdp.send('Input.insertText',{text:'typed-'+width});await page.waitForFunction(s=>[...document.querySelectorAll('input')].some(e=>e.value===s),'typed-'+width);const inputMs=performance.now()-start;
+ const performanceData=await page.evaluate(()=>({...window.__qa,width:{window:innerWidth,document:document.documentElement.scrollWidth}}));measurements.push({width,variableChars,selection,pause,resume,inputMs,...performanceData});console.log(JSON.stringify({width,selectionMs:selection.wallMs,pauseMs:pause.wallMs,resumeMs:resume.wallMs,inputMs,maxTask:Math.max(0,...performanceData.tasks.map(x=>x.duration))}));
+}
+await writeFile(resolve(dir,'performance.json'),JSON.stringify({browser:browser.version(),node:process.version,runId:run.id,keyCreated:!!key.token,measurements},null,2));await browser.close();

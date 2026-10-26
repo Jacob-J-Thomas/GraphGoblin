@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-265/apps/api
+
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed | 2 skipped) 181236ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 181233ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  15:23:54
+   Duration  263.34s (tests 71%, transform 25%, import 4%)
+
+  Transform  transforming modules took 64.48s · 25% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 265\apps\api
+System.Management.Automation.RemoteException

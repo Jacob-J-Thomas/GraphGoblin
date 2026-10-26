@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-25-wp-e1-268-qa');
+const protocol=JSON.parse(await readFile(join(out,'performance-runs.json'),'utf8'));
+const temp=protocol.temp.replace('%USERPROFILE%',process.env.USERPROFILE);
+const raw=JSON.parse(await readFile(join(temp,'append-before/raw-summary.json'),'utf8'));
+await writeFile(join(out,'append-before-summary.json'),JSON.stringify(raw,null,2)+'\n');
+const dep=name=>import(import.meta.resolve(name,pathToFileURL(join(root,'apps/api/package.json')).href));
+const {createContainer,loadConfig}=await dep('@graphgoblin/api');
+const {FakeHarness}=await dep('@graphgoblin/engine/testing');
+async function boot(){const c=await createContainer(loadConfig({GG_DATA_DIR:raw.dataDir,GG_SWAGGER_UI:'false',GG_REQUIRE_API_KEY:'false',GG_MASTER_KEY:Buffer.alloc(32,9).toString('base64')}),{harnesses:{codex:new FakeHarness()},startTimers:false});await c.start();await c.manager.waitForIdle();return c;}
+async function capture(c){return {run:await c.repos.runs.get(raw.cases[0].runId),thread:await c.manager.getThread(raw.cases[0].runId),events:await c.repos.events.read(raw.cases[0].runId)};}
+const c=await boot(),before=await capture(c);await c.repos.runs.clearFinalized(before.run.id);await c.stop();
+await new Promise(r=>setTimeout(r,20));const d=await boot(),after=await capture(d),pending=await d.repos.runs.listRecoveryCandidates();await d.stop();
+assert.deepEqual(before.events,after.events);assert.deepEqual(before.thread,after.thread);assert.deepEqual(pending,[]);
+const changedKeys=[...new Set([...Object.keys(before.run),...Object.keys(after.run)])].filter(k=>JSON.stringify(before.run[k])!==JSON.stringify(after.run[k]));
+assert.deepEqual(changedKeys,['finalizedAt']);
+const withoutAck=({finalizedAt,...rest})=>rest;assert.deepEqual(withoutAck(before.run),withoutAck(after.run));
+const result={status:'pass',diagnosis:'Tooling recovery control compares the whole RunRecord byte-for-byte, including finalizedAt. clearFinalized deliberately removes the acknowledgement and recovery records a new timestamp. Durable events, reconstructed thread, and all other RunRecord fields remain equal.',changedKeys,beforeRun:before.run,afterRun:after.run,eventCount:after.events.length,thread:after.thread,pending,workerClaim:raw.cases[0].recovery};
+await writeFile(join(out,'recovery-comparator-diagnosis.json'),JSON.stringify(result,null,2)+'\n');console.log('RECOVERY_DIAGNOSIS_PASS',changedKeys.join(','));

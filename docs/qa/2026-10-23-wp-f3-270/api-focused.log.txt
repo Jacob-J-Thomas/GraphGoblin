@@ -1,0 +1,46 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f3-270/apps/api
+
+ ❯ src/structured-deadline.test.ts (7 tests | 1 failed) 28920ms
+   × API route completion handles fast with the configured completion deadline 4244ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/structured-deadline.test.ts > API route completion handles fast with the configured completion deadline
+AssertionError: expected false to be true // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- true
++ false
+System.Management.Automation.RemoteException
+ ❯ src/structured-deadline.test.ts:195:51
+    193|     expect(started.statusCode).toBe(202);
+    194|     const id = started.json<{ run: RunRecord }>().run.id;
+    195|     await expect.poll(() => signal !== undefined).toBe(true);
+       |                                                   ^
+    196|     if (mode === 'cancel')
+    197|       expect(
+System.Management.Automation.RemoteException
+Caused by: Error: Matcher did not succeed in time.
+ ❯ src/structured-deadline.test.ts:195:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  19:15:32
+   Duration  212.50s (transform 73%, tests 14%, import 13%)
+
+  Transform  transforming modules took 152.24s · 73% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-
+  │ 270\apps\api
+System.Management.Automation.RemoteException

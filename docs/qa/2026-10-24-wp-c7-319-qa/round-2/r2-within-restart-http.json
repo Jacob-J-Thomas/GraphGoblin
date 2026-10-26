@@ -1,0 +1,228 @@
+[
+  {
+    "at": "2026-10-25T00:40:33.907Z",
+    "path": "/runs/01M5R80E8FFMA3VWENGJ2P2J50",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "id": "01M5R80E8FFMA3VWENGJ2P2J50",
+      "ownerId": "local",
+      "loopId": "01M5R80E5PQWFVMS4H176VFYE9",
+      "versionId": "01M5R80E5PQWFVMS4H176VFYEA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Wait within draining",
+        "label": "Wait within draining v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5R80E8FFMA3VWENGJ2P2J51",
+      "status": "failed",
+      "currentNodeId": "hold",
+      "iteration": 1,
+      "failure": {
+        "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+        "message": "Script process tree termination was not confirmed; stop the process before restarting",
+        "nodeId": "hold",
+        "resumable": false,
+        "details": {
+          "interruptedByStop": true
+        }
+      },
+      "createdAt": "2026-10-25T00:40:13.839Z",
+      "startedAt": "2026-10-25T00:40:13.919Z",
+      "finishedAt": "2026-10-25T00:40:20.334Z",
+      "lastEventSeq": 6
+    }
+  },
+  {
+    "at": "2026-10-25T00:40:33.971Z",
+    "path": "/runs/01M5R80E8FFMA3VWENGJ2P2J50/events",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "runId": "01M5R80E8FFMA3VWENGJ2P2J50",
+          "seq": 1,
+          "ts": "2026-10-25T00:40:13.839Z",
+          "type": "run.queued",
+          "versionId": "01M5R80E5PQWFVMS4H176VFYEA",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Wait within draining",
+            "label": "Wait within draining v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5R80E8FFMA3VWENGJ2P2J50",
+              "loopId": "01M5R80E5PQWFVMS4H176VFYE9",
+              "versionId": "01M5R80E5PQWFVMS4H176VFYEA",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5R80E8FFMA3VWENGJ2P2J51",
+              "source": "manual.api",
+              "caller": {
+                "kind": "api-key",
+                "id": "01M5R7ZTY953BXG5FG6DAYE909"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-25T00:40:13.839Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "01M5R80E8FFMA3VWENGJ2P2J50",
+          "seq": 2,
+          "ts": "2026-10-25T00:40:13.926Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "01M5R80E8FFMA3VWENGJ2P2J50",
+          "seq": 3,
+          "ts": "2026-10-25T00:40:13.934Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "01M5R80E8FFMA3VWENGJ2P2J50",
+          "seq": 4,
+          "ts": "2026-10-25T00:40:13.948Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-25T00:40:13.943Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-25T00:40:13.943Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 3
+        },
+        {
+          "runId": "01M5R80E8FFMA3VWENGJ2P2J50",
+          "seq": 5,
+          "ts": "2026-10-25T00:40:13.973Z",
+          "type": "node.started",
+          "nodeId": "hold",
+          "kind": "script",
+          "attempt": 1,
+          "configHash": "d697ed20b2da4ee5"
+        },
+        {
+          "runId": "01M5R80E8FFMA3VWENGJ2P2J50",
+          "seq": 6,
+          "ts": "2026-10-25T00:40:20.330Z",
+          "type": "run.failed",
+          "failure": {
+            "code": "SCRIPT_TERMINATION_UNCONFIRMED",
+            "message": "Script process tree termination was not confirmed; stop the process before restarting",
+            "nodeId": "hold",
+            "resumable": false,
+            "details": {
+              "interruptedByStop": true
+            }
+          }
+        }
+      ],
+      "nextAfter": 6,
+      "hasMore": false
+    }
+  },
+  {
+    "at": "2026-10-25T00:40:33.988Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-25T00:40:33.984Z",
+      "choiceAt": "2026-10-25T00:40:34.784Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "e42e7932-8726-4b27-be86-249e5ee3026a:1:draining"
+    }
+  }
+]

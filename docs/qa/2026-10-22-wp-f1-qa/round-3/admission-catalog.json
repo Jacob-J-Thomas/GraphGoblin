@@ -1,0 +1,474 @@
+[
+  {
+    "system": "REST / MCP / catalog",
+    "case": "Ready API admission",
+    "steps": "Publish ready fake Codex loop; start; wait for fixture refusal",
+    "expected": "202; exactly one Codex admission probe; fake refuses execution, no provider turn",
+    "actual": {
+      "admitted": {
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M5JK0PAKZJ2Q078N4FMKWT59",
+            "ownerId": "local",
+            "loopId": "01M5JK0K2G0YD2HGH8173EQ2EJ",
+            "versionId": "01M5JK0K2G9R492W57WRFB52XX",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Ready admission control",
+              "label": "Ready admission control v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M5JK0PAK2SPJH7P63ESKXE8A",
+            "status": "queued",
+            "iteration": 1,
+            "createdAt": "2026-10-22T19:57:09.843Z",
+            "lastEventSeq": 1
+          }
+        }
+      },
+      "finished": {
+        "status": 200,
+        "body": {
+          "id": "01M5JK0PAKZJ2Q078N4FMKWT59",
+          "ownerId": "local",
+          "loopId": "01M5JK0K2G0YD2HGH8173EQ2EJ",
+          "versionId": "01M5JK0K2G9R492W57WRFB52XX",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Ready admission control",
+            "label": "Ready admission control v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5JK0PAK2SPJH7P63ESKXE8A",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex Exec exited with code 2: Independent QA fixture refuses model turns\r\n",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            }
+          },
+          "createdAt": "2026-10-22T19:57:09.843Z",
+          "startedAt": "2026-10-22T19:57:12.463Z",
+          "finishedAt": "2026-10-22T19:57:13.029Z",
+          "lastEventSeq": 6
+        }
+      },
+      "calls": {
+        "claude": [],
+        "codex": [
+          "2026-10-22T19:57:10.2135301Z|--version",
+          "2026-10-22T19:57:10.9179862Z|exec --help",
+          "2026-10-22T19:57:11.8132779Z|exec resume --help",
+          "2026-10-22T19:57:12.2496637Z|login status",
+          "2026-10-22T19:57:12.7007400Z|exec --experimental-json --model gpt-6-luna --sandbox workspace-write --cd <user-path> --skip-git-repo-check --config model_reasoning_effort=\"high\" --config sandbox_workspace_write.network_access=false --config web_search=\"disabled\" --config approval_policy=\"never\""
+        ]
+      }
+    },
+    "pass": true
+  },
+  {
+    "system": "REST / MCP / catalog",
+    "case": "Ready MCP admission",
+    "steps": "Call public start_run; wait for fixture refusal",
+    "expected": "runId; one no-turn Codex probe; fake refuses execution",
+    "actual": {
+      "admitted": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"runId\": \"01M5JK0YASJSYSEDRZKAW9DPBW\",\n  \"loopId\": \"01M5JK0K2G0YD2HGH8173EQ2EJ\",\n  \"versionId\": \"01M5JK0K2G9R492W57WRFB52XX\",\n  \"definition\": \"Ready admission control v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Ready admission control\",\n    \"label\": \"Ready admission control v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "runId": "01M5JK0YASJSYSEDRZKAW9DPBW",
+          "loopId": "01M5JK0K2G0YD2HGH8173EQ2EJ",
+          "versionId": "01M5JK0K2G9R492W57WRFB52XX",
+          "definition": "Ready admission control v1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Ready admission control",
+            "label": "Ready admission control v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "status": "queued",
+          "next": "Call wait_for_run with this runId to wait for the result."
+        }
+      },
+      "finished": {
+        "status": 200,
+        "body": {
+          "id": "01M5JK0YASJSYSEDRZKAW9DPBW",
+          "ownerId": "local",
+          "loopId": "01M5JK0K2G0YD2HGH8173EQ2EJ",
+          "versionId": "01M5JK0K2G9R492W57WRFB52XX",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Ready admission control",
+            "label": "Ready admission control v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5JK0YASDW0E65EM8ZGWEH9B",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: Codex Exec exited with code 2: Independent QA fixture refuses model turns\r\n",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            }
+          },
+          "createdAt": "2026-10-22T19:57:18.041Z",
+          "startedAt": "2026-10-22T19:57:20.258Z",
+          "finishedAt": "2026-10-22T19:57:20.661Z",
+          "lastEventSeq": 6
+        }
+      },
+      "calls": {
+        "claude": [],
+        "codex": [
+          "2026-10-22T19:57:18.4680483Z|--version",
+          "2026-10-22T19:57:18.8214318Z|exec --help",
+          "2026-10-22T19:57:19.5956081Z|exec resume --help",
+          "2026-10-22T19:57:20.1124860Z|login status",
+          "2026-10-22T19:57:20.5914288Z|exec --experimental-json --model gpt-6-luna --sandbox workspace-write --cd <user-path> --skip-git-repo-check --config model_reasoning_effort=\"high\" --config sandbox_workspace_write.network_access=false --config web_search=\"disabled\" --config approval_policy=\"never\""
+        ]
+      }
+    },
+    "pass": true
+  },
+  {
+    "system": "REST / MCP / catalog",
+    "case": "Disabled catalog identity",
+    "steps": "Disable known model; save, validate and publish; restore enabled",
+    "expected": "Save 200 with zero probes; MODEL_DISABLED; publish 422",
+    "actual": {
+      "saved": {
+        "status": 200,
+        "body": {
+          "draft": {
+            "id": "01M5JK1177CN2X77HW9GZ0KNMG",
+            "loopId": "01M5JK0K2G0YD2HGH8173EQ2EJ",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Ready admission control",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": ["ui", "api", "mcp"]
+                  }
+                },
+                {
+                  "id": "infer",
+                  "label": "Infer",
+                  "ui": {
+                    "x": 260,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "codex",
+                    "model": "gpt-6-luna",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "Fixture refuses this command; no provider call"
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "workspace-write",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e2",
+                  "from": {
+                    "node": "infer",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-10-22T19:57:20.999Z"
+          },
+          "draftToken": "5f8b54a78e3f7e71",
+          "issues": [
+            {
+              "code": "MODEL_DISABLED",
+              "severity": "warning",
+              "message": "The selected model is disabled",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ]
+        }
+      },
+      "valid": {
+        "status": 200,
+        "body": {
+          "issues": [
+            {
+              "code": "MODEL_DISABLED",
+              "severity": "warning",
+              "message": "The selected model is disabled",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ],
+          "publishable": false
+        }
+      },
+      "pub": {
+        "status": 422,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/loop-invalid",
+          "title": "loop invalid",
+          "status": 422,
+          "code": "LOOP_INVALID",
+          "detail": "the draft has structural errors",
+          "errors": [
+            {
+              "code": "MODEL_DISABLED",
+              "severity": "warning",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model is disabled"
+            }
+          ]
+        }
+      },
+      "calls": {
+        "claude": [],
+        "codex": []
+      }
+    },
+    "pass": true
+  },
+  {
+    "system": "REST / MCP / catalog",
+    "case": "Removed model and managed-row deletion",
+    "steps": "Validate copied missing identity; attempt deletion of managed harness catalog row",
+    "expected": "MODEL_NOT_IN_CATALOG; managed row deletion refused",
+    "actual": {
+      "unknown": {
+        "status": 200,
+        "body": {
+          "issues": [
+            {
+              "code": "MODEL_NOT_IN_CATALOG",
+              "severity": "error",
+              "message": "The selected model is not in the catalog",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ],
+          "publishable": false
+        }
+      },
+      "deletion": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/model-managed-by-harness",
+          "title": "model managed by harness",
+          "status": 409,
+          "code": "MODEL_MANAGED_BY_HARNESS",
+          "detail": "Harness models can only be enabled or disabled"
+        }
+      }
+    },
+    "pass": true
+  },
+  {
+    "system": "REST / MCP / catalog",
+    "case": "Codex-only command deadline",
+    "steps": "Hang Codex auth status with Claude ready",
+    "expected": "Codex unknown after 15s command deadline; Claude ready; bounded response",
+    "actual": {
+      "elapsedMs": 16967,
+      "result": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "state": "unknown",
+              "ok": false,
+              "version": "0.160.0-beta.1",
+              "problems": [
+                "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+              ],
+              "harness": "codex"
+            },
+            {
+              "state": "ready",
+              "ok": true,
+              "version": "2.1.287",
+              "authenticated": true,
+              "problems": [],
+              "authMethod": "claude.ai",
+              "supportedPolicies": [
+                {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": ["Read", "Glob", "Grep"],
+                  "authMethod": "claude.ai",
+                  "boundary": "builtin-tools",
+                  "network": "unconfined"
+                },
+                {
+                  "sandbox": "danger-full-access",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                  "authMethod": "claude.ai",
+                  "boundary": "unconfined",
+                  "network": "unconfined"
+                }
+              ],
+              "models": [
+                {
+                  "model": "claude-opus-5-5",
+                  "efforts": ["low", "medium", "high", "xhigh", "max"]
+                },
+                {
+                  "model": "claude-fable-5-1",
+                  "efforts": ["low", "medium", "high", "xhigh", "max"]
+                }
+              ],
+              "harness": "claude"
+            }
+          ]
+        }
+      }
+    },
+    "pass": true
+  }
+]

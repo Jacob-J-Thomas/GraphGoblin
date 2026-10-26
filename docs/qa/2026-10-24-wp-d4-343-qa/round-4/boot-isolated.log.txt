@@ -1,0 +1,29 @@
+node : node:internal/modules/run_main:122
+At line:19 char:606
++ ... $env:PATH"; node "$runtime/boot-isolated.mjs" *> "$d/boot-isolated.lo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/run_main:122:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: 
+{"status":500,"body":{"type":"https://graphgoblin.dev/problems/internal-error","title":"internal 
+error","status":500,"code":"INTERNAL_ERROR","detail":"something went wrong on the server"},"ms":4}
+
+500 !== 200
+
+    at s.qa (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-4-scripts-739c9969711a486b9e84ad321df0deef/boot-iso
+lated.mjs:45:71)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-d4-343-4-scripts-739c9969711a486b9e84ad321df0deef/boot-iso
+lated.mjs:75:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 500,
+  expected: 200,
+  operator: 'strictEqual'
+}
+
+Node.js v22.14.0

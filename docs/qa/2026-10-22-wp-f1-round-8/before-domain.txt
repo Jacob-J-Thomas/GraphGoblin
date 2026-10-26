@@ -1,0 +1,85 @@
+
+ RUN  v5.0.3 <worktree>/packages/domain
+
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies Failed to connect to authentication server: ECONNREFUSED without returning its body 3ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies stream disconnected before completion: authentication token refresh timed out without returning its body 1ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies Invalid API key ? Please run /login without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies API Error: 500 Internal server error without returning its body 0ms
+ × src/readiness.test.ts > no-turn readiness diagnostics > classifies API Error: 401 Authentication failed; check network settings. without returning its body 10ms
+   → expected 'transport' to be 'auth' // Object.is equality
+ × src/readiness.test.ts > no-turn readiness diagnostics > classifies HTTP 429 Too Many Requests; network request failed. without returning its body 1ms
+   → expected 'transport' to be 'quota' // Object.is equality
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies ETIMEDOUT without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies EAI_AGAIN without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies quota exhausted without returning its body 49ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies HTTP/1.1 429 without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies status:403 without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies {"status_code":503} without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies 401 unauthorized without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies unknown option --effort without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies error: unknown option '--network-access' without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies error: unexpected argument '--network' found without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies ECONNRESET network without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > classifies unrecognized failure without returning its body 0ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > gives every state an action without model entitlement claims 7ms
+ ✓ src/readiness.test.ts > no-turn readiness diagnostics > writes one capitalised detail sentence and one action for each failed state 5ms
+ ✓ src/readiness.test.ts > does not treat CLI version numbers as HTTP failure codes 0ms
+ ✓ src/readiness.test.ts > describes transport without assuming a connection failure 0ms
+pnpm.cmd :
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/domain exec vitest run src/readiness.t ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/readiness.test.ts > no-turn readiness diagnostics > classifies API Error: 401 Authentication failed; check
+network settings. without returning its body
+AssertionError: expected 'transport' to be 'auth' // Object.is equality
+
+Expected: "auth"
+Received: "transport"
+
+ ❯ src/readiness.test.ts:26:35
+     24|     ['unrecognized failure', 'unknown'],
+     25|   ])('classifies %s without returning its body', (text, state) => {
+     26|     expect(cliFailureState(text)).toBe(state);
+       |                                   ^
+     27|   });
+     28|   it('gives every state an action without model entitlement claims', (…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/readiness.test.ts > no-turn readiness diagnostics > classifies HTTP 429 Too Many Requests; network request
+failed. without returning its body
+AssertionError: expected 'transport' to be 'quota' // Object.is equality
+
+Expected: "quota"
+Received: "transport"
+
+ ❯ src/readiness.test.ts:26:35
+     24|     ['unrecognized failure', 'unknown'],
+     25|   ])('classifies %s without returning its body', (text, state) => {
+     26|     expect(cliFailureState(text)).toBe(state);
+       |                                   ^
+     27|   });
+     28|   it('gives every state an action without model entitlement claims', (…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 20 passed (22)
+   Start at  12:58:34
+   Duration  6.95s (transform 77%, import 21%, tests 1%)
+
+  Transform  transforming modules took 4.59s · 77% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f1-
+  │ readiness-precision\packages\domain

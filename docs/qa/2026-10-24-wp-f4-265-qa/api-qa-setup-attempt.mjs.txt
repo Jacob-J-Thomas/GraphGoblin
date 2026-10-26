@@ -1,0 +1,240 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { readFile, writeFile, mkdtemp, unlink, readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { resolve, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { setTimeout as delay } from 'node:timers/promises';
+const root = process.cwd();
+const out = resolve(root, 'docs/qa/2026-10-24-wp-f4-265-qa');
+const req = createRequire(resolve(root, 'apps/api/package.json'));
+const enginePackage = resolve(root, 'apps/api/node_modules/@graphgoblin/engine');
+const engineExports = JSON.parse(await readFile(join(enginePackage, 'package.json'), 'utf8')).exports;
+const { singleNodeLoop } = await import(new URL(engineExports['./testing'].import, pathToFileURL(enginePackage + '/')));
+const checks = [], traffic = [], instances = [];
+const normalize = s => s.replaceAll(process.env.USERPROFILE, '%USERPROFILE%');
+async function save(name, value) { await writeFile(join(out, name), normalize(JSON.stringify(value, null, 2))); }
+async function until(fn, description) { const start = Date.now(); for (;;) { const value = await fn(); if (value) return value; assert.ok(Date.now() - start < 30000, description); await delay(35); } }
+async function check(id, steps, expected, fn) {
+  try { const actual = await fn(); checks.push({ id, steps, expected, status: 'PASS', actual }); console.log('PASS ' + id); }
+  catch (error) { checks.push({ id, steps, expected, status: 'FAIL', actual: error.stack }); console.log('FAIL ' + id + ': ' + error.message); }
+  await save('api-results.json', checks); await save('api-traffic.json', traffic);
+}
+class Gateway {
+  constructor(data, port) { this.data = data; this.port = port; this.calls = []; this.messages = []; }
+  async start() {
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.toUpperCase().startsWith('GG_') && !['JEV_API_KEY', 'NODE_V8_COVERAGE'].includes(k)));
+    Object.assign(env, { GG_DATA_DIR: this.data, GG_DB_URL: 'file:' + join(this.data, 'graphgoblin.db').replaceAll('\\', '/'), GG_PORT: String(this.port), GG_REQUIRE_API_KEY: 'true', GG_SWAGGER_UI: 'false', GG_MASTER_KEY: Buffer.alloc(32, 26).toString('base64'), GG_WEB_DIST: resolve(root, 'apps/web/dist'), GG_LOG_LEVEL: 'silent' });
+    const fixture = join(out, 'gateway.mjs.txt');
+    this.child = spawn(process.execPath, ['--input-type=module', '-e', "import fs from 'node:fs'; await import('data:text/javascript;base64,'+fs.readFileSync(process.argv[1]).toString('base64'))", fixture], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    this.child.stdout.on('data', x => { this.log = (this.log ?? '') + x; });
+    this.child.stderr.on('data', x => { this.log = (this.log ?? '') + x; });
+    this.child.on('message', m => { this.messages.push(m); if (m.type === 'call') this.calls.push(m.call); });
+    const ready = await until(() => { const m = this.messages.findLast(x => x.type === 'ready'); if (this.child.exitCode !== null) throw Error('Fixture exited: ' + this.log); return m; }, 'gateway ready');
+    this.token = ready.token; this.reader = ready.reader;
+    return this;
+  }
+  async control(type, rest = {}) { const requestId = Math.random().toString(); this.child.send({ type, requestId, ...rest }); return until(() => this.messages.find(x => x.requestId === requestId), type); }
+  async stop() { if (this.child.exitCode !== null) return; const closed = once(this.child, 'close'); this.child.send({ type: 'stop' }); await closed; }
+  async exit() { const closed = once(this.child, 'close'); this.child.send({ type: 'exit' }); await closed; }
+  async restart() { this.messages = []; return this.start(); }
+  async api(path, body, expected = 200, token = this.token) {
+    const method = body === undefined ? 'GET' : 'POST';
+    const r = await fetch('http://127.0.0.1:' + this.port + path, { method, headers: { authorization: 'Bearer ' + token, ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    const data = await r.json(); traffic.push({ port: this.port, method, path, body, status: r.status, response: data });
+    if (expected !== null) assert.equal(r.status, expected, path + ' ' + JSON.stringify(data));
+    return { status: r.status, data };
+  }
+  async run(id) { return (await this.api('/runs/' + id)).data; }
+  async events(id) { return (await this.api('/runs/' + id + '/events?limit=1000')).data.items; }
+  async status(id, status) { return until(async () => { const r = await this.run(id); return r.status === status && r; }, 'run ' + id + ' status=' + status); }
+  async publish(definition) { const { data } = await this.api('/loops', { definition }, 201); await this.api('/loops/' + data.loop.id + '/publish', {}); return data.loop.id; }
+  async launch(def) { const loop = await this.publish(def); return (await this.api('/loops/' + loop + '/runs', {}, 202)).data.run; }
+  async snapshot(id, label) { const snapshot = { run: await this.run(id), events: await this.events(id), sessions: (await this.api('/runs/' + id + '/sessions')).data, thread: (await this.api('/runs/' + id + '/thread')).data }; await save(label + '.json', snapshot); return snapshot; }
+}
+const config = (family, policy, extra = {}) => ({ harness: family, model: family === 'claude' ? 'claude-opus-5-5' : 'gpt-6-luna', effort: 'low', session: { policy, ...extra }, harnessOptions: { sandbox: 'read-only', approval: 'never' }, prompt: { template: 'Authored task: preserve exactly [QA-265]' } });
+function graph(family, policy, reset = false) {
+  const def = singleNodeLoop('QA ' + family + ' ' + policy + (reset ? ' reset' : '') + ' ' + Math.random(), { id: 'worker', kind: 'inference', label: 'Worker', config: config(family, policy, reset ? { resetAfterVisits: 1 } : policy === 'resume-named' ? { key: 'qa-conversation-' + Math.floor(Math.random()*1e9) } : {}) });
+  const edge = (id, node, port, to) => ({ id, from: { node, port }, to: { node: to } });
+  def.nodes.push({ id: 'hold', kind: 'wait', label: 'Hold', config: { mode: 'input', prompt: 'QA remove fake provider file', exposeTo: ['api'] } });
+  if (policy === 'resume-own') {
+    def.nodes.push({ id: 'again', kind: 'decision', label: 'Again', config: { kind: 'expression', jsonata: '"repeat"', maxPasses: 2, routes: [{ id: 'repeat', label: 'Repeat', repeat: true }, { id: 'finish', label: 'Finish' }] } });
+    def.edges = [edge('e1','start','out','worker'), edge('e2','worker','out','again'), edge('e3','again','repeat','hold'), edge('e4','hold','out','worker'), edge('e5','again','limit-reached','done'), edge('e6','again','finish','done')];
+  } else {
+    const warmConfig = config(family, policy === 'resume-named' ? 'resume-named' : 'fresh', policy === 'resume-named' ? { key: def.nodes[1].config.session.key } : {});
+    warmConfig.prompt.template = 'Earlier unrelated provider context';
+    def.nodes.push({ id: 'warm', kind: 'inference', label: 'Warm', config: warmConfig });
+    def.edges = [edge('e1','start','out','warm'), edge('e2','warm','out','hold'), edge('e3','hold','out','worker'), edge('e4','worker','out','done')];
+  }
+  return def;
+}
+async function removed(g, family, policy, reset = false, plans = []) {
+  await g.control('plans', { plans });
+  const before = g.calls.length;
+  const run = await g.launch(graph(family, policy, reset));
+  const waiting = await g.status(run.id, 'waiting');
+  const old = g.calls[before].id;
+  await unlink(join(g.data, 'fake-provider', old));
+  await g.api('/runs/' + run.id + '/input', { waitId: waiting.waiting.waitId, input: 'continue' });
+  const failed = await g.status(run.id, policy === 'fresh' || reset ? 'succeeded' : 'failed');
+  const history = await g.events(run.id);
+  const failureSeq = history.findLast(x => x.type === 'run.failed')?.seq;
+  return { run, old, failed, failureSeq, before, payload: { nodeId: 'worker', failureSeq } };
+}
+async function recover(g, c, concurrent = false) {
+  const path = '/runs/' + c.run.id;
+  await g.api(path + '/resume', {}, 409);
+  const snapshot = await g.snapshot(c.run.id, 'before-' + c.run.id);
+  assert.equal(snapshot.run.failure.code, 'HARNESS_SESSION_MISSING');
+  assert.ok(snapshot.run.failure.message.includes(c.old));
+  const announced = snapshot.events.filter(x => x.type === 'harness.session');
+  assert.equal(announced.length, 1); assert.equal(announced[0].mode, 'fresh');
+  if (concurrent) {
+    const choices = await Promise.all([g.api(path + '/recover-session', c.payload, null), g.api(path + '/recover-session', c.payload, null)]);
+    assert.deepEqual(choices.map(x => x.status).sort(), [200, 409]);
+  } else await g.api(path + '/recover-session', c.payload);
+  await g.status(c.run.id, 'succeeded');
+  await g.api(path + '/recover-session', c.payload, 409);
+  const after = await g.snapshot(c.run.id, 'after-' + c.run.id);
+  const choices = after.events.filter(x => x.type === 'run.resumed');
+  assert.equal(choices.length, 1);
+  const choice = choices[0];
+  assert.equal(choice.actor.kind, 'api-key'); assert.ok(choice.actor.id); assert.ok(choice.ts);
+  assert.deepEqual(choice.freshSession, { ...snapshot.run.failure.missingSession, ...c.payload, priorContextCarried: false, prompt: 'Authored task: preserve exactly [QA-265]' });
+  const calls = g.calls.slice(c.before);
+  assert.deepEqual(calls.map(x => x.mode), ['fresh', 'resume', 'fresh']);
+  assert.equal(calls[2].prompt, choice.freshSession.prompt);
+  assert.equal(calls[2].model, choice.freshSession.model); assert.equal(calls[2].effort, choice.freshSession.effort);
+  assert.notEqual(calls[2].id, c.old);
+  assert.equal(after.events.filter(x => x.type === 'run.succeeded').length, 1);
+  return { runId: c.run.id, failure: snapshot.run.failure, choice, calls, terminal: after.run.status, modes: after.events.filter(x => x.type === 'harness.session').map(x => x.mode) };
+}
+let g;
+try {
+  g = new Gateway(await mkdtemp(join(tmpdir(), 'gg-qa-f4-265-')), 6040); instances.push(g); await g.start();
+  for (const family of ['codex', 'claude']) for (const [policy, reset] of [['fresh',false],['resume-previous',false],['resume-named',false],['resume-own',false],['resume-own',true]]) {
+    await check(family + '-' + policy + (reset ? '-reset' : ''), 'Remove physical fake provider conversation at input wait; continue; inspect failure; Resume; choose fresh twice and concurrently', 'Fresh/reset succeeds without reuse; inherited/own fails clearly; exactly one explicit choice restarts exact task', async () => {
+      const c = await removed(g, family, policy, reset);
+      if (policy === 'fresh' || reset) {
+        await g.api('/runs/' + c.run.id + '/recover-session', { nodeId: 'worker', failureSeq: 1 }, 409);
+        await g.api('/runs/' + c.run.id + '/resume', {}, 409);
+        const snap = await g.snapshot(c.run.id, 'fresh-reset-' + c.run.id);
+        assert.deepEqual(g.calls.slice(c.before).map(x => x.mode), ['fresh','fresh']);
+        return { runId: c.run.id, status: snap.run.status, calls: g.calls.slice(c.before) };
+      }
+      return recover(g, c, true);
+    });
+  }
+  await check('refusals', 'Observed missing-session run: wrong node/seq, malformed body, non-inference, absent run, missing scope; compare events before/after', '400/403/404/409 and zero choice events', async () => {
+    const c = await removed(g, 'codex', 'resume-previous');
+    const path = '/runs/' + c.run.id + '/recover-session';
+    for (const body of [{ nodeId:'warm', failureSeq:c.failureSeq },{ nodeId:'hold', failureSeq:c.failureSeq },{ ...c.payload, failureSeq:c.failureSeq-1 },{ ...c.payload, failureSeq:c.failureSeq+1 }]) await g.api(path, body, 409);
+    for (const body of [{}, { ...c.payload, failureSeq:0 },{ ...c.payload, failureSeq:1.5 },{ ...c.payload, model:'substitute' },{ ...c.payload, nodeId:'a'.repeat(1000) }]) await g.api(path, body, 400);
+    await g.api(path, c.payload, 403, g.reader);
+    await g.api('/runs/01AAAAAAAAAAAAAAAAAAAAAAAA/recover-session', c.payload, 404);
+    assert.equal((await g.events(c.run.id)).filter(x => x.type === 'run.resumed').length, 0);
+    assert.equal((await g.run(c.run.id)).status,'failed');
+    return { runId:c.run.id, refusals:12, snapshot:await g.snapshot(c.run.id,'refusals') };
+  });
+  await check('decline-and-before-choice-restart', 'Fail inherited session; exit gateway; reopen same SQLite directory; refuse Resume then explicitly recover', 'Same failure and sequence survives; run stays failed until chosen', async () => {
+    const c = await removed(g, 'claude', 'resume-previous');
+    const before = await g.snapshot(c.run.id,'restart-before');
+    await g.exit(); await g.restart();
+    const after = await g.snapshot(c.run.id,'restart-before-reopened');
+    assert.deepEqual(after.run.failure,before.run.failure);
+    assert.equal(after.run.status,'failed');
+    return recover(g,c);
+  });
+  await check('choice-commit-restart', 'Exit from public event subscription after run.resumed SQLite commit, before status update/provider start; reopen', 'Exactly one durable choice, one fresh recovery turn and one completion', async () => {
+    const c = await removed(g,'codex','resume-own');
+    await g.control('arm-choice-crash',{runId:c.run.id});
+    const closed=once(g.child,'close');
+    try { await g.api('/runs/'+c.run.id+'/recover-session',c.payload); assert.fail('expected connection closure'); } catch(error) { assert.ok(/fetch failed|socket|other side closed/.test(error.message),error.message); }
+    await closed; await g.restart(); await g.status(c.run.id,'succeeded');
+    const snap=await g.snapshot(c.run.id,'choice-commit-restart');
+    assert.equal(snap.events.filter(x=>x.type==='run.resumed').length,1);
+    assert.equal(snap.events.filter(x=>x.type==='run.succeeded').length,1);
+    assert.deepEqual(g.calls.slice(c.before).map(x=>x.mode),['fresh','resume','fresh']);
+    return {runId:c.run.id,events:snap.events,calls:g.calls.slice(c.before)};
+  });
+  await check('mid-node-restart', 'Choose fresh; fake yields durable session and submitted marker then exits; reopen same store', 'Continue accepted recovered session, no blind authored resubmission; complete once', async () => {
+    const c=await removed(g,'claude','resume-previous');
+    await g.control('plans',{plans:[{crashAfterAccepted:true}]});
+    const closed=once(g.child,'close');
+    await g.api('/runs/'+c.run.id+'/recover-session',c.payload);
+    await closed; await g.restart(); await g.status(c.run.id,'succeeded');
+    const snap=await g.snapshot(c.run.id,'mid-node-restart');
+    assert.equal(snap.events.filter(x=>x.type==='run.resumed').length,1);
+    assert.equal(snap.events.filter(x=>x.type==='run.succeeded').length,1);
+    const calls=g.calls.slice(c.before);
+    assert.deepEqual(calls.map(x=>x.mode),['fresh','resume','fresh','resume']);
+    assert.equal(calls[2].id,calls[3].id); assert.notEqual(calls[2].prompt,calls[3].prompt);
+    return {runId:c.run.id,calls,events:snap.events};
+  });
+  await check('init-then-missing-no-false-resume', 'Fake announces requested resumed handle then returns missing-session refusal', 'No durable harness.session resumed event', async()=>{
+    const c=await removed(g,'codex','resume-previous',false,[{}, {initThenMissing:true}]);
+    const snap=await g.snapshot(c.run.id,'init-then-missing');
+    assert.equal(snap.events.filter(x=>x.type==='harness.session'&&x.mode==='resumed').length,0);
+    return recover(g,c);
+  });
+  await check('ordinary-failure-resume', 'Proven pre-send transient refusal in fresh inference; recover-session refuses; plain Resume', 'Saved exact authored prompt retried under existing policy', async()=>{
+    await g.control('plans',{plans:[{error:'HARNESS_TRANSPORT_FAILED',submission:'definitely-not-submitted'}]});
+    const def=singleNodeLoop('Ordinary failure '+Math.random(),{id:'worker',kind:'inference',label:'Worker',config:config('codex','fresh')});
+    const before=g.calls.length, run=await g.launch(def); await g.status(run.id,'failed');
+    const events=await g.events(run.id); const seq=events.findLast(x=>x.type==='run.failed').seq;
+    await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq:seq},409);
+    await g.api('/runs/'+run.id+'/resume',{}); await g.status(run.id,'succeeded');
+    assert.equal(g.calls[before].prompt,g.calls[before+1].prompt);
+    return {runId:run.id,calls:g.calls.slice(before),snapshot:await g.snapshot(run.id,'ordinary-resume')};
+  });
+  await check('uncertain-inherited-refuses-fresh-recovery', 'Inherited handle with no task acceptance returns uncertain failure', 'No recover-session authorization; no blind retry', async()=>{
+    await g.control('plans',{plans:[{}, {error:'HARNESS_TRANSPORT_FAILED',submission:'delivery-uncertain'}]});
+    const def=graph('claude','resume-previous'); const run=await g.launch(def); const waiting=await g.status(run.id,'waiting');
+    await g.api('/runs/'+run.id+'/input',{waitId:waiting.waiting.waitId,input:'continue'}); await g.status(run.id,'failed');
+    const snap=await g.snapshot(run.id,'uncertain-inherited');
+    await g.api('/runs/'+run.id+'/recover-session',{nodeId:'worker',failureSeq:snap.events.findLast(x=>x.type==='run.failed').seq},409);
+    await g.api('/runs/'+run.id+'/resume',{},409); return snap.run.failure;
+  });
+  await check('subloop-parent-recovery', 'Parent awaits child; child input wait then missing inherited session; parent Resume before and after child recovery', 'Parent refuses until own child explicitly recovers, reuses child and completes',async()=>{
+    const childLoop=await g.publish(graph('codex','resume-previous'));
+    const parent=await g.launch(singleNodeLoop('Parent '+Math.random(),{id:'sub',kind:'subloop',label:'Child',config:{loopRef:{loopId:childLoop}}}));
+    const children=await until(async()=>{const a=(await g.api('/runs/'+parent.id+'/children')).data.items;return a.length&&a;},'child created');
+    const child=children[0]; const waiting=await g.status(child.id,'waiting');
+    const sessions=(await g.api('/runs/'+child.id+'/sessions')).data.items;
+    const old=sessions[0].sessionId; await unlink(join(g.data,'fake-provider',old));
+    await g.api('/runs/'+child.id+'/input',{waitId:waiting.waiting.waitId,input:'go'}); await g.status(child.id,'failed'); await g.status(parent.id,'failed');
+    await g.api('/runs/'+parent.id+'/resume',{},409);
+    const history=await g.events(child.id); await g.api('/runs/'+child.id+'/recover-session',{nodeId:'worker',failureSeq:history.findLast(x=>x.type==='run.failed').seq});
+    await g.status(child.id,'succeeded'); await g.api('/runs/'+parent.id+'/resume',{}); await g.status(parent.id,'succeeded');
+    assert.equal((await g.api('/runs/'+parent.id+'/children')).data.items.length,1);
+    return {parent:await g.snapshot(parent.id,'subloop-parent'),child:await g.snapshot(child.id,'subloop-child')};
+  });
+  await check('cancel-instead-of-recover', 'Cancel a missing-session failed run then try stale recovery', 'Cancellation wins and recovery refuses',async()=>{
+    const c=await removed(g,'codex','resume-previous'); await g.api('/runs/'+c.run.id+'/cancel',{}); await g.status(c.run.id,'cancelled');
+    await g.api('/runs/'+c.run.id+'/recover-session',c.payload,409); return await g.snapshot(c.run.id,'cancelled');
+  });
+  // Leave two independently failed runs available to the Edge script in a distinct gateway.
+  const ui = new Gateway(await mkdtemp(join(tmpdir(),'gg-qa-f4-265-ui-')),6041); instances.push(ui); await ui.start();
+  const u1=await removed(ui,'codex','resume-previous'); const u2=await removed(ui,'claude','resume-own');
+  await save('ui-setup.json',{port:6041,dataDir:ui.data,runIds:[u1.run.id,u2.run.id],payloads:[u1.payload,u2.payload]});
+  // Secret kept only in a temp file for the browser process; never retained as evidence.
+  await writeFile(join(ui.data,'browser-key.json'),JSON.stringify({token:ui.token,reader:ui.reader}));
+  await check('draining-refuses-recovery', 'Request public gateway drain then recover a failed missing-session run', '503 admission closed; no run.resumed recorded',async()=>{
+    const c=await removed(g,'codex','resume-previous'); await g.api('/system/shutdown',{action:'drain'},202);
+    const reply=await g.api('/runs/'+c.run.id+'/recover-session',c.payload,503);
+    assert.equal((await g.events(c.run.id)).filter(x=>x.type==='run.resumed').length,0);
+    return reply;
+  });
+  await save('stores.json',instances.map(x=>({port:x.port,dataDir:x.data,pid:x.child.pid})));
+  await save('provider-calls.json',instances.map(x=>({port:x.port,calls:x.calls})));
+  await save('api-results.json',checks); await save('api-traffic.json',traffic);
+  console.log('UI_READY 6041 '+u1.run.id+' '+u2.run.id);
+  // IPC shutdown of only this fixture's children; browser and gates can run independently.
+  process.stdin.resume(); process.stdin.on('data',async()=>{for(const x of instances) await x.stop(); process.exit(0);});
+} catch(error) {
+  console.error(error.stack); await save('api-results.json',checks); await save('api-traffic.json',traffic);
+  for(const x of instances) {try{await x.stop();}catch{}}
+  process.exitCode=1;
+}

@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-33/packages/infrastructure
+
+ ✓ src/claude/process.test.ts > owned native Claude process transport > streams stdout, sends stdin and never retains stderr content 1264ms
+ ✓ src/claude/process.test.ts > owned native Claude process transport > reports missing executable without exposing raw native errors 14ms
+ × src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow 17250ms
+   → EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-y1COQw'
+ × src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process 5746ms
+   → EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-9UKdyf'
+ × src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started 9307ms
+   → expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+   → EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-9yL3U4'
+pnpm.cmd : 
+At line:2 char:329
++ ... on.log.txt; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-y1COQw'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: 
+'%USERPROFILE%\AppData\Local\Temp\gg-claude-process-y1COQw' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-9UKdyf'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: 
+'%USERPROFILE%\AppData\Local\Temp\gg-claude-process-9UKdyf' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // 
+Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-9yL3U4'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: 
+'%USERPROFILE%\AppData\Local\Temp\gg-claude-process-9yL3U4' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  04:29:21
+   Duration  50.16s (tests 71%, transform 22%, import 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f4-
+  │ 33\packages\infrastructure
+

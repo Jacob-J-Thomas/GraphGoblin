@@ -1,0 +1,11 @@
+import { readFile, writeFile, copyFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const path='apps/web/.tmp/qa5/e2e/issue-170-qa.spec.ts';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5';
+const original=await readFile(path,'utf8');
+const next=original.replace("'../../../packages/contracts/src/__golden__/loop-every-field.json'",JSON.stringify(pathToFileURL(resolve('packages/contracts/src/__golden__/loop-every-field.json')).href));
+if(next===original)throw new Error('QA golden path precondition failed');
+await writeFile(path,next);
+await writeFile(out+'/golden-path-correction.json',JSON.stringify({source:path,scope:'QA-only test input path; assertions unchanged',before:'../../../packages/contracts/src/__golden__/loop-every-field.json',after:'file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-5/packages/contracts/src/__golden__/loop-every-field.json'},null,2));
+await copyFile('apps/web/.tmp/qa5/edge-full-results/issue-170-qa-I1-current-go-0fe4e-ment-and-edited-save-reload-chromium/error-context.md',out+'/edge-full-golden-path-error-context.md.txt');

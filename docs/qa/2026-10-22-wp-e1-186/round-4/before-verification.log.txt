@@ -1,0 +1,36 @@
+node : node:internal/modules/run_main:122
+At line:3 char:1
++ node .tmp/r4-verify.mjs before *> .tmp/r4-before-verification.log.txt
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/run_main:122:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: append during every read and replay-live boundary
++ actual - expected
+
++ 'TimeoutError: The operation was aborted due to timeout\n' +
++   '    at new DOMException (node:internal/per_context/domexception:53:5)\n' +
++   '    at Timeout._onTimeout (node:internal/abort_controller:155:9)\n' +
++   '    at listOnTimeout (node:internal/timers:594:17)\n' +
++   '    at process.processTimers (node:internal/timers:529:7)'
+- undefined
+
+    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/.tmp/r4-verify.mjs:8:43
+    at ModuleJob.run (node:internal/modules/esm/module_job:271:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:578:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:116:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'TimeoutError: The operation was aborted due to timeout\n' +
+    '    at new DOMException (node:internal/per_context/domexception:53:5)\n' +
+    '    at Timeout._onTimeout (node:internal/abort_controller:155:9)\n' +
+    '    at listOnTimeout (node:internal/timers:594:17)\n' +
+    '    at process.processTimers (node:internal/timers:529:7)',
+  expected: undefined,
+  operator: 'strictEqual'
+}
+
+Node.js v22.14.0

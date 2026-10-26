@@ -1,0 +1,458 @@
+# #283 [I01] Make automated delivery evidence trustworthy
+
+state: OPEN | milestone: Later | labels: type:epic, area:web, area:api, area:contracts, area:installer, backlog, kind:intent, status:approved-held
+parent: #278 GraphGoblin roadmap â€” owner-approved intents, UoWs and bolts
+sub-issues: #292(OPEN), #293(OPEN), #294(OPEN)
+created: 2026-10-17T19:58:06Z updated: 2026-10-18T23:37:58Z
+
+## Body
+
+Part of #278
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:I01 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome
+
+Passing checks reliably cover the code and behavior being delivered, including executable examples.
+
+## Priority
+
+1 in the approved next-intent order.
+
+## Units of work
+
+- #292 **U01: Restore dependable gates** â€” The agreed runtime and dependency-aware gates reliably execute the intended assertions.
+- #293 **U02: Review and repair test quality** â€” The finite audit's violations are corrected or explicitly unresolved; no private implementation access is needed to demonstrate behavior.
+- #294 **U03: Verify supporting checks and examples** â€” Supporting gates and examples fail on real violations and match shipped behavior.
+
+## Intent acceptance
+
+A controlled regression is caught by the intended gate; finite test-quality findings and provider evidence tiers remain auditable.
+
+## Source issue coverage
+
+#67, #114, #127, #241, #250, #263, #264, #274
+
+Conditional investigation/measurement bolts require their evidence before corrective implementation. Do not count a negative investigation as a successful fix.
+
+## Approved review refinements
+
+Use a finite public-interface test-quality inventory, meaningful unit/integration/regression coverage, actual browser/native boundary evidence where necessary, and preserved coverage protections. Eliminate cached false passes and retry-to-green; legitimate injected external boundaries remain valid. See the updated canonical bolt criteria.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #114 â€” historical evidence
+
+Source links: [source 1](https://github.com/advisories/GHSA-67mh-4wv8-2f99)
+
+### Source #127 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/37831911183)
+
+### Source #241 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/claude-harness.spec.ts#L77), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/model-picker.spec.ts#L28), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/e2e/live.spec.ts#L36)
+
+### Source #250 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/02-build-a-loop.md#L154), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/02-build-a-loop.md#L177), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/02-build-a-loop.md#L1)
+
+### Source #263 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/package.json#L1), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/.nvmrc#L1), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/AGENTS.md#L17)
+
+### Source #264 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/AGENTS.md#L23), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/10-testing-and-quality.md#L1), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/tooling/package.json#L16), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/tooling/vitest.shared.mjs#L1)
+
+### Source #274 â€” historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/tooling/scripts/licenses.mjs#L18), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/tooling/scripts/licenses.mjs#L12), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/tooling/scripts/licenses.test.mjs#L15)
+
+
+## Comments (0)
+> ## Shared completion standard
+  
+  - Exercise supported public/component interfaces; do not access private state, use reflection to bypass encapsulation, monkey-patch the component under test or add test-only production exports.
+  - Use appropriate unit, real storage/process/API integration and browser evidence. Regression tests must demonstrate faulty behavior on the applicable baseline and corrected behavior after the change.
+  - Human reports require reproduction before a corrective implementation; if unreproduced, preserve the report and evidence and request owner disposition rather than guessing a fix.
+  - Test relevant positive, negative, cancellation, concurrency and restart cases; a fake or controlled failure fixture is identified as such.
+  - Keep strict coverage and quality protections; no lowering thresholds, arbitrary exclusions, suppressed assertions, retry-to-green or repeated broad suites without cause.
+  - Update changed contracts, generated references, relevant behavior docs and ADRs within the bolt. Residual documentation polish can remain later.
+  - Default proposed delivery routing is GPT-6.1 Sol xhigh implementation, opposite-vendor Claude review and independent QA per repository workflow. No agent is launched by this plan.
+  - UI bolts require owner product acceptance. Architecture/cutover plans require owner approval. All these gates are proposed metadata, never self-applied plan-approved labels.
+  - Only isolated workspaces, alternate ports and disposable data may be used. Never operate on owner port 4747 or its store.
+  - Research/diagnostic bolts can end with an evidence-backed no-change result; conditional corrective bolts require the reproduction or measurement they depend on.
+  
+  ## Engineering parameters
+  
+  Existing accepted configuration is retained when applicable. Unsettled numeric grace periods, execution defaults, retry/backoff values, storage-pressure thresholds and performance budgets are engineering parameters to document and justify in their owning bolt; no invented number is represented as owner-approved.
+  
+  ## Integrated acceptance
+  
+> ## Engineering parameters
+  
+  Existing accepted configuration is retained when applicable. Unsettled numeric grace periods, execution defaults, retry/backoff values, storage-pressure thresholds and performance budgets are engineering parameters to document and justify in their owning bolt; no invented number is represented as owner-approved.
+  
+  ## Integrated acceptance
+  
+  - **Restart and shutdown with nested work:** Active parent/child work drains normally, explicit force yields truthful recoverable state, no stale wake crosses a visit and no child or uncertain script is silently duplicated. Dependencies: #318, #247, #272, #226, #224, #242, #251, #320, #321.
+  - **Sustained observable execution:** The measured long-running workload remains observable and controllable with pinned definitions and intended session/limit behavior; resource/latency evidence includes the tested workload and remaining limits. Dependencies: #190, #186, #259, #268, #243, #33, #116, #185.
+  - **User-approved retention:** Only explicitly approved history is cleaned under simulated pressure; active/required references and paging remain consistent after interruption. Dependencies: #187, #322, #231.
+  - **Authoring to execution:** An owner-reviewed graph saves/publishes the intended version, preserves connections/inputs and runs with the selected available provider; later edits affect only new executions. Dependencies: #247, #204, #205, #206, #64, #125, #221, #237, #207, #209, #273, #235.
+  - **Current-format fresh start:** Current examples work from a clean store, valid current data reopens, old formats refuse clearly and explicit reset has precisely bounded scope. Dependencies: #223, #318, #230, #234, #266, #188, #250.
+  
+  ## Later intents â€” all parked
+| WP-A2   | #67, #241                  | Sol             | Opus     | Sol                                | `codex-wp-a2-browser-gates`                                                                                               | follow-up applied `f9efab0`; #67 (+ #341 expectations) **merged** PR #350 as `8cc61b8` (2026-10-19); #241 held as draft PR #351 (main merged `78f8797`) until #204/#205 land and WP-A1 (`.nvmrc` 22) merges                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| WP-A2 (#241)                                                       | #241                   | draft #351; head `78f8797`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | complete (Sol)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Opus approved the design, hold                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | pending #204/#205                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | red Browser (known #205 set)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | pending                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | held until #204 and #205 land                                                                                                                                                                                                                                                                                                                                                                                                                  | not required                                                                                                                                                                                                                              | open                                                                                   | pending                      | none                                                                                                                                        |
+- **Launched (D-037, Sol):** #319 (interactive shutdown choice), #265 (missing-session recovery), #255 (exact values and execution context), and #241 (PR #351 restacked: the Edge browser suite as a CI gate, with #400).
+- **#186:** paging, backpressure, typed failure and cursor recovery lossless; an interleaved A/B on 41,001 events showed base 3,526 ms total with a 2,569 ms stall against head 3,315 ms with 181 ms, so round 1's slower numbers were host load. Blocking: the held live queue counted every event appended during the whole replay, failing fast readers of active runs; fixed ports in tests. The reviewer also found three browser specs failing on `main` since #244, filed as **#400**.
+### WP-A1 (#263, #127, #114) and WP-A2 (#67, #241) â€” implementer findings awaiting review
+WP-A1: Node 23 now refuses install (`ERR_PNPM_UNSUPPORTED_ENGINE`, wanted `^22`); a domain adversarial test relied on `module.registerHooks`, which exists only on Node 23+, so the pre-dispatch "green" Node 22 baseline was partly cache replay (I01 evidence); turbo `transit` task makes dependency sources invalidate dependent checks (seeded regression: `1 cached` replay before, 78 real failures after; unrelated control still cached); esbuild 0.18.20 remains dev-only via drizzle-kit's legacy loader with no compatible fix, `audit --audit-level=high` passes. Forced full gate failed four coverage tasks under load; reviewer triages. WP-A2: two-tab test now waits on tab activation and observable reconciliation (70/70, zero retries; historical exact failure not reproduced, stated honestly); browser CI job added with zero retries; full suite 341/15/1 classified as six #205, three stale #341 expectations, six load/selector cases; both narrow Claude tests also assert the pre-#204 "incompatible model retained" behaviour and must be rewritten by #204/#205.
+### WP-A2 (#67, #241) â€” Opus review of `309195b`: approve #67, approve #241's design and hold its merge
+Triage: every unit failure is load (branch, base and main have byte-identical web test inputs; each failing file passes alone); the two-tab and modal flows pass 42/42 with zero retries under load; `cron.spec.ts:220` is a latent race (substring match becomes ambiguous once the sr-only live region fills after its 350 ms settle timer); the six (a) failures reproduce alone and belong to #205 (two also assert the pre-#204 "incompatible model retained" behaviour); the three (b) failures are stale against the accepted #341 implementation (`5f7909d`, `d2d3291`), so updating them is legitimate test maintenance. Blocking for the package: QA report must move into `docs/qa/`; the cron `exact: true` fix; docs/10 still mentions a nightly live job; the job needs a step-level timeout so failure artifacts upload; CHANGELOG conflict. Non-blocking: eslint must ignore `playwright-report/**`; browser job should use `node-version-file`; static skip summary; "retained traces" overclaim; main has no branch protection (required checks are an owner decision at #241 closure). Sequencing accepted: split #67 into its own PR now; open #241 as a draft to get the first Ubuntu run; land the follow-up fixes and the stale #341 expectations; #204/#205 fix the six model tests; then rebase, one green first-attempt run, merge. Disposition: follow-up sent to the Sol thread (`wp-a2-2.md`).
+- 2026-10-18 baseline on main `cfae696`, Node 22.14.0: `pnpm check` exit 0 in 9m07s; coverage web 98.03% statements / 94.86% branches; other packages cached (see D-004). Browser suite on main (Edge, after `pnpm build`), run while eight workers loaded the machine: 342 passed, 14 failed, 1 skipped in 57.8 min. Six failures are the known #205 set (`claude-harness.spec.ts:159` Ã—2, `model-picker.spec.ts:28` Ã—2, `:94`, `:151`). Eight more failed on timeouts or performance budgets under that load (`earlier-node-outputs.spec.ts:8` Ã—2, `form-controls.spec.ts:130`, `responsive.spec.ts:301` and `:864`, `edge-routes.spec.ts:248`, `routing.spec.ts:472` Ã—2) and are re-run alone on a quiet machine before being classified; WP-A2 (#241) owns the classification. Log: scratchpad `baseline-e2e-main.log` of the orchestrating session.
+- **CP-61 (2026-10-24):** **Fifteenth merge:** hygiene PR #395 (`4df00b06`, **D-039**). **D-038** (parked work does not hold a drain). Round-1 reviews of the six wave pull requests and of #33 and #116 are recorded in section 7; fix rounds running for #343, #224, #186, #270, #116 and #240; Sol QA running for #205; #33 waits for QA. Filed #398 (fixed by the orchestrator in PR #399, audit running) and #400.
+e7dad992 refactor(web): schema-driven forms on tokens, fields.tsx split per field family
+commit e41008dbbaaa65e4e702226e39909fb0718ecba6
+Author: Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com>
+Date:   Thu Oct 22 20:05:49 2026 -0500
+
+    Report typed harness readiness precisely, probe once per operation and never on draft saves (#179)
+    
+    Readiness is typed (ready, cli-missing, cli-incompatible, auth, quota, transport, unknown) with authenticated set only when confirmed; explicit status evidence outranks incidental network wording; Claude no-turn probes consult recognised stdout evidence and explicit sign-out text even on exit 0; one probe per operation, shared across its nodes, never on draft saves; a manual trigger start checks the pinned parent and recursive subloop definitions before queuing (D-017). Part of #179. Three-round adversarial audit; SIGN-OFF at 98320485e6211c2c0e1959ed7e8936b507d8d4a1 for target main at 9c196547d8209b5f13909d20e612be1659bf7d3e; main moved by register commits only since (D-031).
+
+diff --git a/apps/web/src/settings/sections/DefaultsSection.tsx b/apps/web/src/settings/sections/DefaultsSection.tsx
+index 31d05f73..7132f78d 100644
+--- a/apps/web/src/settings/sections/DefaultsSection.tsx
++++ b/apps/web/src/settings/sections/DefaultsSection.tsx
+@@ -1,8 +1,15 @@
+ import { settings } from '@graphgoblin/api-client';
+-import { EffortSchema, HarnessIdSchema, JsonValueSchema } from '@graphgoblin/contracts';
++import {
++  EffortSchema,
++  HarnessIdSchema,
++  JsonValueSchema,
++  type ModelCatalogEntry,
++} from '@graphgoblin/contracts';
+ import { useMutation, useQueryClient } from '@tanstack/react-query';
+ import { useApi } from '../../api/context.js';
+ import { keys, useModelCatalog, usePreflight, useSettings } from '../../api/queries.js';
++import { harnessReadiness, readinessLine, type HarnessReadiness } from '../../api/readiness.js';
++import { Icon } from '../../components/icons/index.js';
+ import { QueryState } from '../../components/status.js';
+ import { Card, FieldGroup, FieldRow, HelpText, Label, Select } from '../../components/ui/index.js';
+ import { inheritedClaudeEfforts } from '../../forms/fields/model.js';
+@@ -20,6 +27,58 @@ interface SaveDefaults {
+   values: HarnessDefaults;
+ }
+ 
++/**
++ * One short line under a harness's defaults: the saved model's catalog problem first, then the
++ * harness's readiness. The full readiness problem and its next step are in Harness preflight.
++ */
++function defaultsHelp({
++  harness,
++  saved,
++  catalogLoading,
++  catalogKnown,
++  entry,
++  readiness,
++}: {
++  harness: string;
++  saved: string;
++  catalogLoading: boolean;
++  catalogKnown: boolean;
++  entry: ModelCatalogEntry | undefined;
++  readiness: HarnessReadiness;
++}): { text: string; tone: 'muted' | 'warn' } | undefined {
++  if (saved && catalogLoading) return { text: 'Checking…', tone: 'muted' };
++  if (saved && !catalogKnown)
++    return {
++      text: 'Could not load the model catalog. The saved default stays until you change it.',
++      tone: 'warn',
++    };
++  if (saved && !entry)
++    return {
++      text: 'Not in the model catalog. Choose another default before publishing or running.',
++      tone: 'warn',
++    };
++  if (entry?.enabled === false)
++    return {
++      text: 'Disabled in the model catalog. Enable it or choose another default.',
++      tone: 'warn',
++    };
++  // Without a saved model nothing waits on the first check.
++  if (readiness.state === 'checking')
++    return saved ? { text: readinessLine(harness, readiness), tone: 'muted' } : undefined;
++  if (readiness.state !== 'ready')
++    return {
++      text: `${readinessLine(harness, readiness)} See Harness preflight below.`,
++      tone: 'warn',
++    };
++  if (
++    saved &&
++    harness === 'claude' &&
++    !readiness.item?.models?.some((model) => model.model === saved)
++  )
++    return { text: 'Not listed by the Claude adapter. Choose another default.', tone: 'warn' };
++  return undefined;
++}
++
+ /** Owner defaults are independent for each harness; changing one preserves every other entry. */
+ export function DefaultsSection() {
+   const client = useApi();
+@@ -81,38 +140,39 @@ export function DefaultsSection() {
+                   (entry) => entry.harness === harness,
+                 );
+                 const selectedEntry = entries.find((entry) => entry.model === selectedModel);
+-                const preflight = preflightQuery.data?.find((item) => item.harness === harness);
+-                const capability = preflight?.models?.find((item) => item.model === selectedModel);
+-                const claudeUnknown =
+-                  harness === 'claude' &&
+-                  (!preflightQuery.data ||
+-                    !preflight?.ok ||
+-                    !preflight.authenticated ||
+-                    !preflight.models ||
+-                    !capability);
+-                const stale = Boolean(
+-                  selectedModel && catalogQuery.data && (!selectedEntry?.enabled || claudeUnknown),
++                // A background recheck keeps the last result, so a ready harness keeps its choices.
++                const readiness = harnessReadiness(preflightQuery, harness);
++                const listed = readiness.item?.models;
++                // Claude choices are the adapter's listed models, offered only while Claude is ready.
++                const availableEntries = entries.filter(
++                  (entry) =>
++                    entry.enabled &&
++                    (harness !== 'claude' ||
++                      (readiness.state === 'ready' &&
++                        listed?.some((model) => model.model === entry.model))),
+                 );
++                const catalogKnown = catalogQuery.data !== undefined && !catalogQuery.isError;
++                const savedOption = !selectedEntry
++                  ? `${selectedModel} (${catalogKnown ? 'not in catalog' : 'saved'})`
++                  : `${selectedEntry.displayName} (${selectedEntry.enabled ? 'saved' : 'disabled'})`;
++                const help = defaultsHelp({
++                  harness,
++                  saved: selectedModel,
++                  catalogLoading: catalogQuery.data === undefined && catalogQuery.isFetching,
++                  catalogKnown,
++                  entry: selectedEntry,
++                  readiness,
++                });
+                 const helpId = `default-model-${harness}-help`;
+                 const effortHelpId = `default-effort-${harness}-help`;
+                 const modelLabel =
+                   harness === 'codex' ? 'Default model' : `Default model (${harness})`;
+                 const effortLabel =
+                   harness === 'codex' ? 'Default effort' : `Default effort (${harness})`;
+-                const staleMessage =
+-                  harness === 'claude' && claudeUnknown
+-                    ? 'Claude CLI preflight is not ready. Keep this saved value or choose (server default) until it passes.'
+-                    : 'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.';
+-                const availableEntries = entries.filter((entry) => {
+-                  if (!entry.enabled) return false;
+-                  if (harness !== 'claude') return true;
+-                  if (preflight?.ok !== true || !preflight.authenticated) return false;
+-                  return preflight?.models?.some((model) => model.model === entry.model);
+-                });
+                 const effortOptions =
+                   selectedEntry?.efforts ??
+                   (harness === 'claude'
+-                    ? inheritedClaudeEfforts(availableEntries, preflight?.models)
++                    ? inheritedClaudeEfforts(availableEntries, listed)
+                     : EffortSchema.options);
+                 return (
+                   <section key={harness} aria-label={`${harness} defaults`} className="grid gap-2">
+@@ -124,7 +184,7 @@ export function DefaultsSection() {
+                           id={`default-model-${harness}`}
+                           value={selectedModel}
+                           disabled={save.isPending}
+-                          aria-describedby={stale ? helpId : undefined}
++                          aria-describedby={help ? helpId : undefined}
+                           onChange={(e) =>
+                             save.mutate({
+                               harness,
+@@ -134,15 +194,8 @@ export function DefaultsSection() {
+                         >
+                           <option value="">(server default)</option>
+                           {selectedModel &&
+-                          (!availableEntries.some((entry) => entry.model === selectedModel) ||
+-                            !selectedEntry?.enabled) ? (
+-                            <option value={selectedModel}>
+-                              {selectedEntry
+-                                ? `${selectedEntry.displayName} (${claudeUnknown ? 'access not verified' : selectedEntry.enabled ? 'unavailable' : 'disabled'})`
+-                                : catalogQuery.data
+-                                  ? `${selectedModel} (not in catalog)`
+-                                  : selectedModel}
+-                            </option>
++                          !availableEntries.some((entry) => entry.model === selectedModel) ? (
++                            <option value={selectedModel}>{savedOption}</option>
+                           ) : null}
+                           {availableEntries.map((entry) => (
+                             <option key={entry.model} value={entry.model}>
+@@ -150,7 +203,6 @@ export function DefaultsSection() {
+                             </option>
+                           ))}
+                         </Select>
+-                        {stale ? <HelpText id={helpId}>{staleMessage}</HelpText> : null}
+                       </FieldGroup>
+                       <FieldGroup className="w-[200px]">
+                         <Label htmlFor={`default-effort-${harness}`}>{effortLabel}</Label>
+@@ -185,6 +237,14 @@ export function DefaultsSection() {
+                         ) : null}
+                       </FieldGroup>
+                     </FieldRow>
++                    {help ? (
++                      <HelpText id={helpId} tone={help.tone}>
++                        {help.tone === 'warn' ? (
++                          <Icon name="alert" className="mr-1 inline size-3.5 align-text-bottom" />
++                        ) : null}
++                        {help.text}
++                      </HelpText>
++                    ) : null}
+                   </section>
+                 );
+               })}
+commit 50e59c686605d1d58d8e65db2b0236cb14b22648
+Author: Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com>
+Date:   Fri Oct 23 00:49:45 2026 -0500
+
+    Explicit harness switch keeps inheritance, picks compatible defaults and holds publication while a catalog lookup fails (#204) (#378)
+    
+    * Type harness readiness, verify CLI capabilities without turns, reuse probes per operation and show precise readiness in the UI (#179)
+    
+    * Apply the #179 review (classification and operation scope): signed-out Claude is auth, transport before auth keywords, drafts never probe readiness, concurrent harness probes, minimal fixture set, evidence folder
+    
+    * Write readiness problems as one detail sentence and one action (#179)
+    
+    Claude and Codex probe problems no longer repeat the generic state text after a
+    specific detail, name the harness with a capital letter, name the failed version
+    or option for both CLIs, and end with retrying preflight instead of reloading
+    the page. Probe-only messages describe the check; turn messages are unchanged.
+    
+    * Show readiness labels, Retry preflight and rechecking in the web app (#179)
+    
+    Harness preflight badges show labels with the state in data-state, Retry preflight
+    refetches, and a background refetch keeps the last result with a muted
+    Rechecking... instead of flipping badges. Defaults give Codex and Claude one short
+    readiness line and label an unoffered saved model (saved). The model picker keeps a
+    ready Claude field editable during a focus refetch, notes a known Codex failure
+    with Retry Codex preflight, and drops the model availability wording. The policy
+    field and catalog rows use the same vocabulary for both harnesses. Browser specs,
+    docs 06/09, guide 07, the CHANGELOG and the owner QA steps follow.
+    
+    * Open Advanced before checking the focus-refetch model field (#179)
+    
+    * Tighten catalog row notes and warn on a known Claude failure in the picker (#179)
+    
+    Catalog rows of a not-ready harness say the enablement and the readiness label on two
+    short lines, without repeating the pointer on every row. The picker shows a known
+    Claude readiness failure in the warning tone, like the policy field, and its retry
+    buttons take their own width.
+    
+    * Describe the readiness labels and retry controls in the settings guide (#179)
+    
+    * Apply the visual-round review and the confirmation items: transport wording, quota fallback regression, classification order, QA steps (#179)
+    
+    * Create the Codex probe directory with mkdir and align the Claude probe-failure expectations with the readiness wording (#179)
+    
+    * Record the WP-F1 independent QA report and its evidence (#179)
+    
+    * Describe readiness lookup phases, the Defaults asymmetry and the isolated start commands in the docs and owner steps (#179)
+    
+    * Choose a compatible configured or ecosystem default when a node's harness changes explicitly (#204)
+    
+    * Keep inheriting nodes inheriting, resolve switch defaults loop then Settings then ecosystem, and wait for the first readiness check (#204)
+    
+    * Manual run admission probes every harness the pinned definition and its pinned subloop children can execute, once per operation, before any parent effect (#179)
+    
+    * Record the independent QA of #179 round 6 at ee0f4f40 (nested admission, concurrency, pinning, limits, webhook and scheduled behaviour)
+    
+    * WP-F2b recipe and report: the independent QA records the result; no owner acceptance gate (register D-024)
+    
+    * Editor: a failed model or classifier catalog lookup holds publication even when cached choices remain (Validation unavailable, Publish disabled) and recovery keeps the authored values (#204)
+    
+    * Record the independent QA of #204: round 1 at 013be37a (QA-204-01 found) and round 2 at 18890113 (26 served checks, 16 collector cases, 41 component tests and web coverage passed; QA-204-01 closed)
+    
+    * Record the independent QA round 3 of #204: the replayable evidence regenerated on 541fddd4 (26 served checks, 16 collector cases, 41 component tests and web coverage passed)
+    
+    * Carry the WP-F2b round-3 QA logs as .log.txt (#204, D-030)
+    
+    The round-3 record cites six log files that *.log keeps out of git; they are
+    carried under the .log.txt name with local user paths removed and the record's
+    links follow. The artefact manifest's hashes are regenerated by the QA thread
+    on the head to be signed off.
+    
+    * Rank explicit status evidence first in readiness classification; never invent a sign-out (#179)
+    
+    Round 8 after the final audit. The no-turn classifier now orders CLI-syntax
+    errors, then explicit HTTP or API status (401 and 403 as auth, 429 as quota,
+    5xx as transport), then connection wording, then quota and auth keywords, so
+    incidental network advice cannot override a 401 or a 429. The Claude harness
+    consults a recognised stdout failure when stderr is absent or classifies as
+    unknown, and recognised stderr stays primary on conflicting diagnostics; turn
+    output is untouched. An empty or unrecognised login result on exit 0 is
+    unknown without an authenticated fact for both harnesses (Codex requires a
+    positive Logged in line; Claude requires a recognised account method), while
+    explicit sign-out evidence still yields auth. Sixteen regressions failed
+    before the fix; docs/06 and guide 07 describe the precedence and the states;
+    the auditor's five cases pass for both harnesses.
+    
+    * Clear a cancelled harness switch's waiting notice, settle the failed-lookup count before measuring, and note the client rebuild (#204)
+    
+    A concurrent field edit cancels the pending switch; the attempt now clears
+    its own waiting notice when it finishes, and an older attempt leaves a newer
+    attempt's notice alone (two component regressions). The served check for
+    the all-failed case waits for every initial lookup's retry to finish before
+    counting switch-induced requests. The CHANGELOG gains the Upgrade note:
+    rebuild the API and the web app together for the required ecosystemDefault
+    catalog field; no store change. Round-4 evidence under
+    docs/qa/2026-10-22-wp-f2b-round-4/.
+    
+    * Carry the WP-F2b QA round 5 record (#204, D-030)
+    
+    * Carry the WP-F2b QA round 4 record and regenerate the round 3 manifest against the committed tree (#204, D-030)
+    
+    * Record the WP-F2b QA citations that were never kept, repoint the round 4 script name, and regenerate the round 3 manifest from committed bytes (#204, D-030)
+    
+    * Mount the whole editor in the harness-change dialog tests, which depend on its mount-time lookups (#204)
+
+diff --git a/apps/web/src/forms/fields/model.tsx b/apps/web/src/forms/fields/model.tsx
+index c191731a..7e52f63b 100644
+--- a/apps/web/src/forms/fields/model.tsx
++++ b/apps/web/src/forms/fields/model.tsx
+@@ -1,15 +1,23 @@
+ import {
+   EffortSchema,
++  HarnessDefaultsSchema,
+   HarnessIdSchema,
+   InferenceConfigSchema,
+   type ClaudeModelCapability,
+   type ModelCatalogEntry,
++  type HarnessId,
+ } from '@graphgoblin/contracts';
+ import { createContext, use, useId } from 'react';
++import { QueryObserver, useQueryClient } from '@tanstack/react-query';
+apps/web/src/runs\follow-run-attempts.test.ts:46:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:72:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:89:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:109:    const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:129:    const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:153:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:180:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:212:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\follow-run-attempts.test.ts:237:  const stop = followRunAttempts(createAppClient('http://test', read), id, o);
+apps/web/src/runs\useRunEvents.test.tsx:48:function mountStream(client = createAppClient('http://graphgoblin.test')) {
+apps/web/src/runs\useRunEvents.test.tsx:328:      const view = mountStream(createAppClient('http://graphgoblin.test', fetch));
+apps/web/src/runs\inspector\DeliveryPanel.test.tsx:33:          message: 'Webhook returned HTTP 429.',
+packages/engine/src\testing\fakes.ts:830:          message: 'Webhook returned HTTP 400.',
+eb480a4a fix(web): recover when the API returns while online, and check for new builds while the app is open (#55, #56)

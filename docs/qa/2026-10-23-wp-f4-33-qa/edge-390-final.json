@@ -1,0 +1,96 @@
+{
+  "invalidResults": [
+    {
+      "value": "0",
+      "ariaInvalid": "true",
+      "description": [
+        {
+          "id": "_r_d_-help",
+          "text": "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+          "visible": true
+        },
+        {
+          "id": "_r_d_-draft-error",
+          "text": "Too small: expected number to be >0",
+          "visible": true
+        }
+      ],
+      "snapshot": "- dialog \"Edit inference worker\":\n  - banner:\n    - heading \"Edit inference worker\" [level=2]\n    - button \"1 issue on worker\"\n    - button \"Close\"\n  - region \"Node properties\":\n    - text: Node id\n    - textbox \"Node id\": worker\n    - text: Label\n    - textbox \"Label\": Worker\n    - group:\n      - form \"worker config\":\n        - tablist \"Node configuration\":\n          - tab \"Settings 1 error\" [selected]\n          - tab \"Context\"\n        - tabpanel \"Settings 1 error\":\n          - radiogroup \"Harness\":\n            - text: Harness\n            - radio \"codex\" [checked]\n            - text: codex\n            - radio \"claude\"\n            - text: claude\n          - paragraph: Harness that runs the session.\n          - group \"Session\":\n            - text: Session Policy\n            - combobox \"Policy\":\n              - option \"fresh\"\n              - option \"resume-previous\"\n              - option \"resume-named\"\n              - option \"resume-own\" [selected]\n            - paragraph: Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.\n            - text: Reset after visits\n            - spinbutton \"Reset after visits\" [invalid]: \"0\"\n            - paragraph: \"Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.\"\n            - alert: \"Too small: expected number to be >0\"\n          - group \"Prompt\":\n            - text: Prompt\n            - paragraph: Liquid template rendered against the thread.\n            - text: Template Liquid\n            - textbox \"Template\"\n            - text: \"Preview (sample thread): Authored selected input Loops within loops turn.\"\n            - button \"Earlier node outputs (1)\"\n          - radiogroup \"Sandbox\":\n            - text: Sandbox\n            - radio \"read-only\"\n            - text: read-only\n            - radio \"workspace-write\" [checked]\n            - text: workspace-write\n            - radio \"danger-full-access\"\n            - text: danger-full-access\n          - paragraph: Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n          - button \"Advanced 2 set\"\n    - region \"Connections\":\n      - heading \"Connections\" [level=3]\n      - list:\n        - listitem:\n          - text: out →\n          - code: done\n          - button \"Remove edge b\"\n  - contentinfo:\n    - button \"Delete node\"\n    - button \"Done\""
+    },
+    {
+      "value": "-1",
+      "ariaInvalid": "true",
+      "description": [
+        {
+          "id": "_r_d_-help",
+          "text": "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+          "visible": true
+        },
+        {
+          "id": "_r_d_-draft-error",
+          "text": "Too small: expected number to be >0",
+          "visible": true
+        }
+      ],
+      "snapshot": "- dialog \"Edit inference worker\":\n  - banner:\n    - heading \"Edit inference worker\" [level=2]\n    - button \"1 issue on worker\"\n    - button \"Close\"\n  - region \"Node properties\":\n    - text: Node id\n    - textbox \"Node id\": worker\n    - text: Label\n    - textbox \"Label\": Worker\n    - group:\n      - form \"worker config\":\n        - tablist \"Node configuration\":\n          - tab \"Settings 1 error\" [selected]\n          - tab \"Context\"\n        - tabpanel \"Settings 1 error\":\n          - radiogroup \"Harness\":\n            - text: Harness\n            - radio \"codex\" [checked]\n            - text: codex\n            - radio \"claude\"\n            - text: claude\n          - paragraph: Harness that runs the session.\n          - group \"Session\":\n            - text: Session Policy\n            - combobox \"Policy\":\n              - option \"fresh\"\n              - option \"resume-previous\"\n              - option \"resume-named\"\n              - option \"resume-own\" [selected]\n            - paragraph: Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.\n            - text: Reset after visits\n            - spinbutton \"Reset after visits\" [invalid]: \"-1\"\n            - paragraph: \"Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.\"\n            - alert: \"Too small: expected number to be >0\"\n          - group \"Prompt\":\n            - text: Prompt\n            - paragraph: Liquid template rendered against the thread.\n            - text: Template Liquid\n            - textbox \"Template\"\n            - text: \"Preview (sample thread): Authored selected input Loops within loops turn.\"\n            - button \"Earlier node outputs (1)\"\n          - radiogroup \"Sandbox\":\n            - text: Sandbox\n            - radio \"read-only\"\n            - text: read-only\n            - radio \"workspace-write\" [checked]\n            - text: workspace-write\n            - radio \"danger-full-access\"\n            - text: danger-full-access\n          - paragraph: Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n          - button \"Advanced 2 set\"\n    - region \"Connections\":\n      - heading \"Connections\" [level=3]\n      - list:\n        - listitem:\n          - text: out →\n          - code: done\n          - button \"Remove edge b\"\n  - contentinfo:\n    - button \"Delete node\"\n    - button \"Done\""
+    },
+    {
+      "value": "1.5",
+      "ariaInvalid": "true",
+      "description": [
+        {
+          "id": "_r_d_-help",
+          "text": "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+          "visible": true
+        },
+        {
+          "id": "_r_d_-draft-error",
+          "text": "Invalid input: expected int, received number",
+          "visible": true
+        }
+      ],
+      "snapshot": "- dialog \"Edit inference worker\":\n  - banner:\n    - heading \"Edit inference worker\" [level=2]\n    - button \"1 issue on worker\"\n    - button \"Close\"\n  - region \"Node properties\":\n    - text: Node id\n    - textbox \"Node id\": worker\n    - text: Label\n    - textbox \"Label\": Worker\n    - group:\n      - form \"worker config\":\n        - tablist \"Node configuration\":\n          - tab \"Settings 1 error\" [selected]\n          - tab \"Context\"\n        - tabpanel \"Settings 1 error\":\n          - radiogroup \"Harness\":\n            - text: Harness\n            - radio \"codex\" [checked]\n            - text: codex\n            - radio \"claude\"\n            - text: claude\n          - paragraph: Harness that runs the session.\n          - group \"Session\":\n            - text: Session Policy\n            - combobox \"Policy\":\n              - option \"fresh\"\n              - option \"resume-previous\"\n              - option \"resume-named\"\n              - option \"resume-own\" [selected]\n            - paragraph: Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.\n            - text: Reset after visits\n            - spinbutton \"Reset after visits\" [invalid]: \"1.5\"\n            - paragraph: \"Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.\"\n            - alert: \"Invalid input: expected int, received number\"\n          - group \"Prompt\":\n            - text: Prompt\n            - paragraph: Liquid template rendered against the thread.\n            - text: Template Liquid\n            - textbox \"Template\"\n            - text: \"Preview (sample thread): Authored selected input Loops within loops turn.\"\n            - button \"Earlier node outputs (1)\"\n          - radiogroup \"Sandbox\":\n            - text: Sandbox\n            - radio \"read-only\"\n            - text: read-only\n            - radio \"workspace-write\" [checked]\n            - text: workspace-write\n            - radio \"danger-full-access\"\n            - text: danger-full-access\n          - paragraph: Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n          - button \"Advanced 2 set\"\n    - region \"Connections\":\n      - heading \"Connections\" [level=3]\n      - list:\n        - listitem:\n          - text: out →\n          - code: done\n          - button \"Remove edge b\"\n  - contentinfo:\n    - button \"Delete node\"\n    - button \"Done\""
+    },
+    {
+      "value": "9007199254740992",
+      "ariaInvalid": "true",
+      "description": [
+        {
+          "id": "_r_d_-help",
+          "text": "Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.",
+          "visible": true
+        },
+        {
+          "id": "_r_d_-draft-error",
+          "text": "Too big: expected int to be <=9007199254740991; Too big: expected number to be <=9007199254740991",
+          "visible": true
+        }
+      ],
+      "snapshot": "- dialog \"Edit inference worker\":\n  - banner:\n    - heading \"Edit inference worker\" [level=2]\n    - button \"1 issue on worker\"\n    - button \"Close\"\n  - region \"Node properties\":\n    - text: Node id\n    - textbox \"Node id\": worker\n    - text: Label\n    - textbox \"Label\": Worker\n    - group:\n      - form \"worker config\":\n        - tablist \"Node configuration\":\n          - tab \"Settings 1 error\" [selected]\n          - tab \"Context\"\n        - tabpanel \"Settings 1 error\":\n          - radiogroup \"Harness\":\n            - text: Harness\n            - radio \"codex\" [checked]\n            - text: codex\n            - radio \"claude\"\n            - text: claude\n          - paragraph: Harness that runs the session.\n          - group \"Session\":\n            - text: Session Policy\n            - combobox \"Policy\":\n              - option \"fresh\"\n              - option \"resume-previous\"\n              - option \"resume-named\"\n              - option \"resume-own\" [selected]\n            - paragraph: Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.\n            - text: Reset after visits\n            - spinbutton \"Reset after visits\" [invalid]: \"9007199254740992\"\n            - paragraph: \"Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.\"\n            - alert: \"Too big: expected int to be <=9007199254740991; Too big: expected number to be <=9007199254740991\"\n          - group \"Prompt\":\n            - text: Prompt\n            - paragraph: Liquid template rendered against the thread.\n            - text: Template Liquid\n            - textbox \"Template\"\n            - text: \"Preview (sample thread): Authored selected input Loops within loops turn.\"\n            - button \"Earlier node outputs (1)\"\n          - radiogroup \"Sandbox\":\n            - text: Sandbox\n            - radio \"read-only\"\n            - text: read-only\n            - radio \"workspace-write\" [checked]\n            - text: workspace-write\n            - radio \"danger-full-access\"\n            - text: danger-full-access\n          - paragraph: Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n          - button \"Advanced 2 set\"\n    - region \"Connections\":\n      - heading \"Connections\" [level=3]\n      - list:\n        - listitem:\n          - text: out →\n          - code: done\n          - button \"Remove edge b\"\n  - contentinfo:\n    - button \"Delete node\"\n    - button \"Done\""
+    }
+  ],
+  "final": {
+    "harness": "codex",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "session": {
+      "policy": "resume-own"
+    },
+    "prompt": {
+      "template": "Authored selected input {{ messages.last.content }}"
+    },
+    "input": [],
+    "harnessOptions": {
+      "sandbox": "workspace-write",
+      "approval": "never"
+    },
+    "output": {
+      "captureTranscript": "artifact",
+      "toMessages": "final",
+      "transforms": []
+    }
+  },
+  "snapshot": "- dialog \"Edit inference worker\":\n  - banner:\n    - heading \"Edit inference worker\" [level=2]\n    - button \"Close\"\n  - region \"Node properties\":\n    - text: Node id\n    - textbox \"Node id\": worker\n    - text: Label\n    - textbox \"Label\": Worker\n    - group:\n      - form \"worker config\":\n        - tablist \"Node configuration\":\n          - tab \"Settings\" [selected]\n          - tab \"Context\"\n        - tabpanel \"Settings\":\n          - radiogroup \"Harness\":\n            - text: Harness\n            - radio \"codex\" [checked]\n            - text: codex\n            - radio \"claude\"\n            - text: claude\n          - paragraph: Harness that runs the session.\n          - group \"Session\":\n            - text: Session Policy\n            - combobox \"Policy\":\n              - option \"fresh\"\n              - option \"resume-previous\"\n              - option \"resume-named\"\n              - option \"resume-own\" [selected]\n            - paragraph: Fresh starts an isolated provider conversation with your authored task and selected inputs. Supply current main-loop context deliberately through the prompt, Context input transforms or context files. Resume-own keeps only this node's conversation in this run and harness; its optional reset never clears loop context. Previous and named keep their shared-session behavior.\n            - text: Reset after visits\n            - spinbutton \"Reset after visits\"\n            - paragraph: \"Optional: after N completed visits, the next visit starts this node's conversation fresh. Blank means no automatic reset. Main-loop context is kept.\"\n          - group \"Prompt\":\n            - text: Prompt\n            - paragraph: Liquid template rendered against the thread.\n            - text: Template Liquid\n            - textbox \"Template\"\n            - text: \"Preview (sample thread): Authored selected input Loops within loops turn.\"\n            - button \"Earlier node outputs (1)\"\n          - radiogroup \"Sandbox\":\n            - text: Sandbox\n            - radio \"read-only\"\n            - text: read-only\n            - radio \"workspace-write\" [checked]\n            - text: workspace-write\n            - radio \"danger-full-access\"\n            - text: danger-full-access\n          - paragraph: Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n          - button \"Advanced 2 set\"\n    - region \"Connections\":\n      - heading \"Connections\" [level=3]\n      - list:\n        - listitem:\n          - text: out →\n          - code: done\n          - button \"Remove edge b\"\n  - contentinfo:\n    - button \"Delete node\"\n    - button \"Done\"",
+  "scrollWidth": 390,
+  "viewport": 390
+}

@@ -1,0 +1,13 @@
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$evidence = Join-Path (Get-Location) 'docs/qa/wp-d4-343/round-4'
+$results = @()
+foreach ($gate in @('typecheck', 'lint', 'check:layers', 'check:deps', 'check:docs', 'check:migrations')) {
+  $label = $gate.Replace(':', '-')
+  $started = [DateTimeOffset]::UtcNow
+  & pnpm.cmd $gate *> (Join-Path $evidence ($label + '-final.log.txt'))
+  $code = $LASTEXITCODE
+  $results += [pscustomobject]@{ command = "pnpm.cmd $gate"; exitCode = $code; started = $started.ToString('o'); finished = [DateTimeOffset]::UtcNow.ToString('o'); log = "$label-final.log.txt" }
+  $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $evidence 'core-gates.json')
+  Write-Output "$gate exit $code"
+}
+if ($results.Where({ $_.exitCode -ne 0 }).Count) { exit 1 }

@@ -1,0 +1,23 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts src/shutdown.test.ts src/shutdown-startup.test.ts --maxWorkers=1 --reporter=verbose
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+ ✓ src/shutdown-startup.test.ts > a stop requested during startup leaves independent queued work unstarted on the same store 9969ms
+ ✓ src/shutdown.test.ts > keeps input and status reachable while refusing independent starts during drain 1748ms
+ ✓ src/shutdown.test.ts > offers a choice after grace, waits without a kill timer, and explicitly forces a parked run 1163ms
+ ✓ src/shutdown.test.ts > requires authentication for shutdown observation and force control 184ms
+ ✓ src/shutdown-controller.test.ts > retains observation and ownership intent after unconfirmed native cleanup 230ms
+ ✓ src/shutdown-controller.test.ts > does not publish ready until drain and force cleanup both finish: drain-first 12ms
+ ✓ src/shutdown-controller.test.ts > does not publish ready until drain and force cleanup both finish: force-first 6ms
+
+ Test Files  3 passed (3)
+      Tests  7 passed (7)
+   Start at  20:20:22
+   Duration  39.28s (tests 36%, import 35%, transform 29%)
+
+     Import  229 modules were evaluated 434 times · 12.97s total, 35% of tracked time
+             ~6.13s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-controller.test.ts src/shutdown.test.ts src/shutdown-startup.test.ts --maxWorkers=1 --reporter=verbose", "exit": 0, "seconds": 44.35}

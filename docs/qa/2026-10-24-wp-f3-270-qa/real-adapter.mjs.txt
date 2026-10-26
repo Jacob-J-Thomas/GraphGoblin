@@ -1,0 +1,19 @@
+﻿import {createRequire} from 'node:module';import{mkdtemp,writeFile}from'node:fs/promises';import{tmpdir}from'node:os';import{resolve,join}from'node:path';import{pathToFileURL}from'node:url';import assert from'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const req=createRequire(resolve(root,'apps/api/package.json'));
+const {CodexHarness,CodexStructured}=await import(pathToFileURL(resolve(root,'packages/adapter-codex/dist/index.js')).href);
+const {createTestEngine,singleNodeLoop}=await import(pathToFileURL(resolve(root,'packages/engine/dist/testing/index.js')).href);
+const scratch=await mkdtemp(join(tmpdir(),'gg-qa-f3-270-real-'));
+const native=new CodexHarness({model:'gpt-6-luna',effort:'low'}),sessions=[];
+const harness={id:'codex',preflight:()=>native.preflight(),start(request,signal){const session=native.start(request,signal),row={at:Date.now(),request,abortedAt:null,cancelCalls:0,settledAt:null};sessions.push(row);signal.addEventListener('abort',()=>{row.abortedAt=Date.now();row.reason=String(signal.reason)},{once:true});return{...session,result:session.result.then(x=>{row.settledAt=Date.now();row.result='fulfilled';return x},e=>{row.settledAt=Date.now();row.result='rejected';row.error={code:e.code,name:e.name,message:e.message};throw e}),cancel(){row.cancelCalls++;return session.cancel()}};},resume(){throw Error('Real QA permits exactly one start; resume not authorized');}};
+const e=await createTestEngine({maxConcurrentRuns:1});e.ports.structured=new CodexStructured(harness,{workingDirectory:scratch});
+const watchdog=setTimeout(()=>{console.error('QA watchdog 30000ms');process.exit(2)},30000);
+let record;
+try{
+ const preflight=await native.preflight();
+ const d=singleNodeLoop('Independent single real Codex deadline',{id:'repair',kind:'mutate',label:'Repair',config:{operations:[{op:'coerce',source:'/vars/value',target:'/vars/value',jsonSchema:{type:'number'},repair:{enabled:true,maxAttempts:1,prompt:'Return only the JSON number 7. Do not use tools or explain.'}}]}});d.settings={structuredTimeoutMs:500};
+ const start=Date.now();const run=await e.runToIdle(e.publish(d).loopId);
+ const by=Date.now()+12000;while(sessions.some(s=>!s.settledAt)&&Date.now()<by)await new Promise(r=>setTimeout(r,25));
+ record={node:process.version,model:'gpt-6-luna',effort:'low',preflight,scratch,run,durationMs:Date.now()-start,sessions,events:e.events(run.id),thread:await e.manager.getThread(run.id),providerOutputVerified:false};
+ assert.equal(sessions.length,1);assert.equal(run.failure?.code,'STRUCTURED_COMPLETION_TIMEOUT');assert(sessions[0].abortedAt);assert.equal(sessions[0].cancelCalls,1);assert(sessions[0].settledAt,'native SDK result did not settle');record.status='PASS';
+}catch(error){record={...record,status:'FAIL',error:String(error),sessions};process.exitCode=1;}finally{e.manager.stop();clearTimeout(watchdog);await writeFile(resolve(out,'real-adapter.json'),JSON.stringify(record,null,2));console.log(JSON.stringify(record));}

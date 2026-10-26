@@ -1,0 +1,44 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-d4-343-qa/round-2');
+const ready=JSON.parse(await readFile(join(out,'browser-ready.json'),'utf8'));
+const auth=JSON.parse(await readFile(ready.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const results={checks:[],http:[]};
+const call=async(method,path,body)=>{const r=await fetch(auth.url+path,{method,headers:{authorization:'Bearer '+auth.key,...(body!==undefined?{'content-type':'application/json'}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});const b=await r.json();if(path!='/__qa')results.http.push({method,path,status:r.status,body:b});return {status:r.status,body:b}};
+const sql=async(sql,args=[])=>{const r=await call('POST','/__qa',{op:'sql',sql,args});assert.equal(r.status,200);return r.body};
+const qa=async(op,more={})=>{const r=await call('POST','/__qa',{op,...more});assert.equal(r.status,200);return r.body};
+const test=async(id,fn)=>{const c={id};try{c.actual=await fn();c.status='PASS'}catch(e){c.status='FAIL';c.error=e.stack}results.checks.push(c);await writeFile(join(out,'diagnostics-results.json'),JSON.stringify(results,null,2));console.log(id,c.status,c.error??'')};
+// Remove only our leaked SQL fault triggers after the initial failed probe.
+for(const name of ['qa_pair_x','qa_pair_meta','qa_boot_metadata'])await sql('DROP TRIGGER IF EXISTS '+name);
+await qa('sweep',{ms:300001});await qa('settle');
+for(const [label,key] of [['space',' '],['one','x'],['512','z'.repeat(512)],['nul','left\u0000right']])await test('key-'+label,async()=>{
+ const rs=[];for(let i=0;i<2;i++)rs.push(await call('POST','/events',{loopId:ready.targets[0],type:'ready',dedupeKey:key,payload:{diagnostic:true,i}}));
+ await qa('settle');const id=rs[0].body.id;const receipt=await sql("SELECT id,status,hex(request_key) AS keyHex,json_extract(intent,'$.run.id') AS runId FROM event_receipts WHERE inbound_id=?",[id]);
+ const run=await sql('SELECT id,initial_thread FROM runs WHERE id=?',[receipt[0].runId]);
+ const trigger=JSON.parse(run[0].initial_thread).invocation.trigger;
+ const item=(await call('GET','/events?limit=500')).body.items.find(e=>e.id===id);
+ const facts={key,rs,receipt,trigger,item,keyReturnedExactly:rs.every(r=>r.body.dedupeKey===key),oneRun:item.runIds.length===1,envelopeExact:trigger.dedupeKey===key};
+ assert.equal(rs[0].status,202);assert.equal(rs[1].status,202);assert.equal(rs[0].body.id,rs[1].body.id);assert.equal(rs[0].body.admissionId,rs[1].body.admissionId);assert.equal(facts.oneRun,true);assert.equal(facts.envelopeExact,true);
+ return facts;
+});
+// Controlled local SQLite fault proves same-ledger behavior separately from webhook isolation.
+await test('same-ledger-sweep-metadata-fault',async()=>{
+ const def=name=>({schemaVersion:4,name,nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'event',eventType:'diag'}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'e',from:{node:'start',port:'out'},to:{node:'done'}}]});
+ const loops=[];for(const name of ['Diag bad','Diag healthy']){const r=await call('POST','/loops',{definition:def(name)});assert.equal(r.status,201);loops.push(r.body.loop.id);assert.equal((await call('POST','/loops/'+r.body.loop.id+'/publish')).status,200)}
+ await sql(`CREATE TRIGGER qa_diag_all BEFORE INSERT ON runs WHEN NEW.loop_id IN ('${loops[0]}','${loops[1]}') BEGIN SELECT RAISE(ABORT,'QA fault'); END`);
+ const receipts=[];for(let i=0;i<2;i++){receipts.push((await call('POST','/events',{loopId:loops[i],type:'diag',dedupeKey:'diagnostic-'+i})).body);await qa('settle')}
+ await sql('DROP TRIGGER qa_diag_all');
+ await sql(`CREATE TRIGGER qa_diag_bad BEFORE INSERT ON runs WHEN NEW.loop_id='${loops[0]}' BEGIN SELECT RAISE(ABORT,'QA fault'); END`);
+ await sql(`CREATE TRIGGER qa_diag_meta BEFORE UPDATE ON event_receipts WHEN OLD.inbound_id='${receipts[0].id}' BEGIN SELECT RAISE(ABORT,'QA metadata fault'); END`);
+ const before=await sql('SELECT inbound_id,status,attempts,next_attempt_at FROM event_receipts WHERE loop_id IN (?,?)',loops);
+ await qa('sweep',{ms:300001});await qa('settle');const after=await sql('SELECT inbound_id,status,attempts,next_attempt_at FROM event_receipts WHERE loop_id IN (?,?)',loops);
+ await sql('DROP TRIGGER qa_diag_meta');
+ // Ordinary per-receipt failure must allow the healthy recipient through.
+ await qa('sweep',{ms:300001});await qa('settle');const ordinary=await sql('SELECT inbound_id,status,attempts FROM event_receipts WHERE loop_id IN (?,?)',loops);
+ await sql('DROP TRIGGER qa_diag_bad');
+ results.sweepFacts={loops,receipts,before,after,ordinary};
+ assert.equal(ordinary.find(r=>r.inbound_id===receipts[1].id).status,'admitted');
+ return results.sweepFacts;
+});
+await writeFile(join(out,'diagnostics-results.json'),JSON.stringify(results,null,2));

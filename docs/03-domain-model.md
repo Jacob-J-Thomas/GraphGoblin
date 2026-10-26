@@ -22,7 +22,12 @@
 
 ## Loop definition (Decided shape, Draft details)
 
-Stored as JSON in `loop_versions.definition`, validated by `contracts`.
+Stored as JSON in `loop_versions.definition`, validated by `contracts`. Migration
+`0019_completion_deadline_defaults` materializes omitted `structuredTimeoutMs` and
+`runDeadlineSeconds` as null in drafts, published versions, immutable run snapshots,
+run pins, queued events and saved admission intents. Exports and API reads then include
+these defaults without a compatibility reader. Explicit authored limits are preserved.
+See ADR-0051.
 
 ```ts
 type LoopDefinition = {
@@ -85,6 +90,34 @@ provide only model and effort. Definitions containing `settings.defaults.harness
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
 Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
 
+## Inference context and session identity (#33)
+
+Provider conversation selection is independent of authored loop-context selection:
+
+- `session: { policy: "fresh" }` (the unchanged default) starts an isolated provider
+  conversation with the authored task and selected inputs. Use the prompt template,
+  input transforms and context files to deliberately supply current main-loop context.
+- `session: { policy: "resume-own", resetAfterVisits?: number }` opts into this node's
+  independent conversation within this execution and harness. Other nodes, runs,
+  replay forks and subloop children do not inherit its handle. Outputs enter the
+  shared thread only through the existing output configuration.
+- `resume-previous` still selects the latest session for the run and harness;
+  `resume-named` still selects the loop/key and harness, including across runs.
+  These existing shared policies are unchanged.
+
+`resetAfterVisits` is optional, with no default: positive safe integers from 1 to
+9,007,199,254,740,991. Visits 1 through N share a provider conversation; visit N+1
+starts fresh. Only durably completed logical visits advance this count; retries,
+repairs and interrupted recovery stay inside their visit. A reset changes only
+this node's provider conversation, preserving main-loop context and other nodes.
+There is no hidden ten-visit reset, provider-turn ceiling or token cap.
+
+The existing session rows retain `(runId, nodeId, attempt, harness)` identity.
+Attempts restart on each visit, so own continuity selects the exact final attempt
+of the latest durable `node.finished`, not the largest attempt or newest timestamp.
+The log supplies completed-visit/reset counts and open-turn provenance across restart.
+No row schema or stored data rewrite is needed. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
 ## Versioning (Decided)
 
 - Upgrade migration `0005` rewrites stored version definitions once, removing only
@@ -124,6 +157,19 @@ future attempt to execute it fails with `SUBLOOP_NOT_FOUND`.
 longer exists, using the same run-owned cleanup. It is an offline maintenance operation for
 the later format-4 cutover; the current offline upgrade is unchanged. See
 [ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
+
+## Webhook delivery records (#246)
+
+The run record's optional `deliveries` array tracks outbound webhooks independently of
+execution status. Each item carries `id`, webhook `channel`, `status` (pending/delivered/failed),
+`attempts`, `maxAttempts`, `inFlight`, `acknowledgement`, `effectMayHaveHappened`,
+`acknowledgementUncertain` (sticky across later rejections and success), optional
+`nextAttemptAt` and typed `lastError`. The journal's `delivery.queued`, `delivery.attempted`,
+`delivery.attempt_finished` and `delivery.finished` events each contain a complete snapshot.
+The API projects the latest snapshot per identity from these durable events, without a second
+status column or table. An absent array means no webhook has been queued. Interrupted or timed
+out acknowledgements are unknown; a later success cannot erase earlier uncertainty. Migration
+0015 converts completed historical webhook return events once (ADR-0043).
 
 ## Context thread (Draft - to be co-designed)
 
@@ -188,7 +234,11 @@ type Invocation = {
   id: string;
   source:
     'manual.ui' | 'manual.api' | 'manual.mcp' | 'cron' | 'webhook' | 'event' | 'poll' | 'subloop';
-  caller?: { kind: 'user' | 'api-key' | 'mcp-client' | 'run'; id: string; label?: string };
+  caller?: {
+    kind: 'user' | 'api-key' | 'mcp-client' | 'system' | 'run';
+    id: string;
+    label?: string;
+  };
   trigger: {
     nodeId: string;
     kind: TriggerKind;
@@ -218,7 +268,7 @@ engine-owned region. Usage roll-up remains an engine operation.
 | `currentNodeId?`, `iteration`                          | Where the token is                                                                                                                                                                                               |
 | `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
 | `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                                                                                                                                         |
-| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`                                                                                                                                   |
+| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean; details?: unknown; inference?: PromptProvenance }`                                                                                  |
 | `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
 | `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
 | `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
@@ -229,44 +279,53 @@ A child run's `waiting` parent is woken only through the park it observed: the w
 
 A `failure` carried up from a subloop child has the child's `code` and `resumable`, the parent's subloop node as `nodeId`, and `details: { childRunId, childNodeId?, childDetails? }` naming where it happened (#251, 05). A child that finished through a Failure exit has `outcome: failure` and no `failure`; its parent receives it as data.
 
+`failure.inference` contains `visitId`, `turnId`, `promptKind` (`authored`, `repair`, or
+`continuation`), `submission` (`definitely-not-submitted`, `delivery-uncertain`, or
+`session-missing`), and optional `sessionId`. The ID may be an inherited previous/named/own
+conversation; it does not by itself establish acceptance of this visit's authored task.
+See [inference recovery](05-execution-engine.md#inference-submission-and-recovery).
+
 ## Run events (Decided kinds, Draft payloads)
 
 Script execution records `script.dispatched { nodeId, visitId, dispatchId }` before calling the process runner. A script failure's optional `script` provenance records `{ visitId, dispatchId?, state, exitCode? }`, where `state` is `definitely-not-started`, `outcome-uncertain`, or `completed`. `SCRIPT_START_FAILED` and `SCRIPT_OUTCOME_UNCERTAIN` are resumable failures; the latter requires an explicit retry choice because the previous attempt may already have produced its effect (05).
 
-Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.
+Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and typed fields. Transcripts and other output payloads use artifact references. `harness.turn.prompt` is an exception: the whole rendered prompt is stored inline, without a schema size limit or automatic artifact offloading. It can enlarge the event log; it shares the run's private access and deletion boundary. `run.queued.initialThread` is also inline (05).
 
-| Type                                                                 | Payload                                                                                               |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                   |
-| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                     |
-| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
-| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
-| `run.failed`                                                         | failure object                                                                                        |
-| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                 |
-| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                   |
-| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                          |
-| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                        |
-| `harness.usage`                                                      | tokens as reported by the harness, informational                                                      |
-| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics |
-| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                              |
-| `signal.received`, `input.received`                                  | name, payload reference                                                                               |
-| `heartbeat.beat`                                                     | beat number, probe result summary                                                                     |
-| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                 |
-| `return.delivered`, `return.failed`                                  | channel, target, status                                                                               |
+| Type                                                                 | Payload                                                                                                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                                                   |
+| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                                                     |
+| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                                                 |
+| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                                                |
+| `run.failed`                                                         | failure object                                                                                                                        |
+| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                                                 |
+| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                                                   |
+| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                                                          |
+| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                                                        |
+| `harness.turn`                                                       | nodeId, visitId, turnId, harness, promptKind, exact inline prompt, optional resumeSessionId; durable before invoking the adapter      |
+| `harness.submission`                                                 | nodeId, visitId, turnId, submission (`submitted` on acceptance, otherwise one of the three failure classes), optional positive marker |
+| `harness.usage`                                                      | tokens as reported by the harness, informational                                                                                      |
+| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics                                 |
+| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                                                              |
+| `signal.received`, `input.received`                                  | name, payload reference                                                                                                               |
+| `heartbeat.beat`                                                     | beat number, probe result summary                                                                                                     |
+| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                                                 |
+| `return.delivered`, `return.failed`                                  | channel, target, status                                                                                                               |
 
 ## Other entities (Decided)
 
-| Entity              | Purpose                                                                                                                                                                                                                                                                                  |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `harness_sessions`  | `(runId, nodeId, attempt)` to harness session id, status, model, effort. Written before the subprocess starts.                                                                                                                                                                           |
-| `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                                            |
-| `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header and scheme, nullable replay window (null for body signing), enabled. |
-| `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.                                                           |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<kind>@<waitId>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                       |
-| `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                                         |
-| `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                                               |
-| `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                                      |
-| `settings`          | Owner-level defaults.                                                                                                                                                                                                                                                                    |
+| Entity              | Purpose                                                                                                                                                                                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `harness_sessions`  | `(runId, nodeId, attempt)` to harness session id, status, model, effort. Written before the subprocess starts.                                                                                                                                                                                                                       |
+| `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                                                                                        |
+| `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header and scheme, nullable replay window (null for body signing), enabled.                                             |
+| `inbound_events`    | External Events and webhook deliveries: type, JSON payload, request dedupe key, source, received time, and started run IDs. Historical rows keep their original source and links.                                                                                                                                                    |
+| `event_receipts`    | Targeted Event delivery ledger: owner/loop/version/trigger, inbound link, recipient-scoped request key, authored node key, pending/admitted/failed/deduplicated state, frozen run intent and identity, attempts, retry time and safe failure code. Saved before acknowledgement; historical inbound rows have no fabricated receipt. |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<kind>@<waitId>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                                                                   |
+| `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                                                                                     |
+| `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                                                                                           |
+| `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                                                                                  |
+| `settings`          | Owner-level defaults.                                                                                                                                                                                                                                                                                                                |
 
 Body-signed webhooks also keep `webhook_receipts`: a unique owner/loop/trigger/content hash, inbound-event link, filtered/deduplicated/pending/admitted/failed state, frozen admission intent, attempts, next-attempt time and safe failure code. Pending admissions retain target pins. The admission port commits run identity, initial thread, subloop pins, queued event and receipt link together; notifications follow commit. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md).
 
@@ -285,3 +344,5 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 `/gates` is engine-owned; authored mutation patches cannot alter counts. Graph validation reports a noncyclic repeat at its precise `config.*.repeat` path (`REPEAT_ROUTE_NOT_CYCLIC`), and an unconnected Limit reached at `config.maxPasses` (`PORT_UNCONNECTED`). Schema validation identifies missing limits and extra repeat markers directly.
+
+Targeted external Events pin one published loop version and one matching Event trigger before acknowledgement (ADR-0048). Their immutable invocation retains `source: 'event'`, `caller: {kind: 'system', id: 'event:<inboundEventId>'}` and `trigger.eventType`; the inbound record exposes the exact target and a stable admission identity while run creation is pending. A keyed retry refers to that original invocation, rather than creating a caller or repinning the latest version.

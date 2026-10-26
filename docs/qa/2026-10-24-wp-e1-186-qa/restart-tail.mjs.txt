@@ -1,0 +1,17 @@
+let browser;
+try {
+ await boot();const runId=previous.browserLiveRunId;results.runId=runId;
+ const webUrl=pathToFileURL(join(root,'apps/web/package.json'));
+ const testUrl=import.meta.resolve('@playwright/test',webUrl);
+ const {chromium}=await import(import.meta.resolve('playwright',testUrl));browser=await chromium.launch({channel:'msedge',headless:true});
+ const context=await browser.newContext({viewport:{width:390,height:900}});await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),token);
+ const page=await context.newPage();page.setDefaultTimeout(120000);const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('/events?'))requests.push(r.url());});
+ async function inspect(label,expected){await page.waitForFunction(n=>document.querySelector('ol[aria-label="Timeline"]')?.children.length===n,expected,{timeout:120000});const value=await page.evaluate(()=>{const ids=[...document.querySelector('ol[aria-label="Timeline"]').children].map(x=>Number(x.querySelector('button span').textContent.replace('#','')));return {count:ids.length,last:ids.at(-1),gaps:ids.filter((x,i)=>x!==i+1).length,duplicates:ids.filter((x,i)=>i&&x<=ids[i-1]).length,documentWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth};});await page.screenshot({path:join(out,'restart-'+label+'-390.png')});console.log('QA_RESTART_CHECK '+label+' '+value.count);results.cases.push({name:label,expected,...value,pass:value.count===expected&&!value.gaps&&!value.duplicates});await save();}
+ await page.goto(base+'/app/runs/'+runId,{waitUntil:'domcontentloaded'});const before=await api('/runs/'+runId);await inspect('before-kill',before.lastEventSeq);
+ const clientResult=clientRead(runId,20000);
+ const exited=new Promise(r=>child.once('exit',(code,signal)=>r({code,signal})));const oldPid=child.pid;child.kill();results.nativeExit={pid:oldPid,...await exited};await boot();
+ await call('burst',{runId,count:100});let current=await api('/runs/'+runId);await inspect('after-restart',current.lastEventSeq);
+ await api('/runs/'+runId+'/cancel',{});current=await api('/runs/'+runId);await inspect('terminal',current.lastEventSeq);results.client=await clientResult;results.requests=requests;results.errors=errors;
+ await page.reload({waitUntil:'domcontentloaded'});await inspect('reload',current.lastEventSeq);
+ results.pass=results.cases.every(x=>x.pass)&&!results.client.rejected&&!results.client.gaps&&results.client.last===current.lastEventSeq&&!errors.length;
+}catch(e){results.error=e.stack;console.error(e.stack);}finally{await browser?.close();if(child?.connected)await call('close').catch(e=>{results.closeError=e.stack;child.kill();});results.finished=new Date().toISOString();await save();console.log('QA_RESTART_FINISHED');}

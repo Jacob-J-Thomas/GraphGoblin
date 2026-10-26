@@ -1,0 +1,61 @@
+import { spawn } from 'node:child_process';
+import { readFile, writeFile, mkdir, mkdtemp, access } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createRequire } from 'node:module';
+export { readFile, writeFile, access, join, resolve, spawn };
+export const root=process.cwd(), out=resolve('docs/qa/2026-10-24-wp-c7-319-qa');
+export const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+export function ok(value,msg='assertion failed'){if(!value)throw new Error(msg);}
+export const clean=s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%');
+export async function save(name,data){await writeFile(join(out,name),clean(typeof data==='string'?data:JSON.stringify(data,null,2)));}
+export async function until(fn,timeout=30000){const end=Date.now()+timeout;let last;do{try{last=await fn();if(last)return last;}catch(e){last=e.message;}await sleep(75);}while(Date.now()<end);throw new Error('Timed out: '+JSON.stringify(last));}
+export const records=[];
+export async function check(name,fn){const start=Date.now();try{const evidence=await fn();records.push({name,status:'PASS',ms:Date.now()-start,evidence});}catch(e){records.push({name,status:'FAIL',ms:Date.now()-start,error:e.stack});}await save(process.env.QA_RESULTS??'lifecycle-results.json',records);console.log(name+': '+records.at(-1).status);}
+const inherited=Object.fromEntries(['PATH','SystemRoot','WINDIR','ComSpec','PATHEXT','TEMP','TMP','APPDATA','LOCALAPPDATA','USERPROFILE','ProgramFiles','ProgramFiles(x86)','ProgramData','PROCESSOR_ARCHITECTURE'].filter(k=>process.env[k]).map(k=>[k,process.env[k]]));
+export const gateways=[];
+export async function boot(name,{directory,port=6070,env={},script,runId}={}){
+ const dir=directory??await mkdtemp(join(tmpdir(),'gg-qa-c7-319-'+name+'-'));
+ const base={...inherited,GG_DATA_DIR:dir,GG_HOST:'127.0.0.1',GG_PORT:String(port),GG_WEB_DIST:resolve('apps/web/dist'),GG_REQUIRE_API_KEY:'true',GG_SHUTDOWN_GRACE_MS:'800',GG_TIMER_POLL_MS:'50',GG_MAX_CONCURRENT_RUNS:'1',...env};
+ let key;
+ if(!directory){
+  const c=spawn(process.execPath,[resolve('apps/api/dist/main.js'),'--create-api-key','Independent QA'],{cwd:root,env:base,windowsHide:true,stdio:['ignore','pipe','pipe']});let text='';c.stdout.on('data',b=>text+=b);c.stderr.on('data',b=>text+=b);await new Promise((r,j)=>{c.on('error',j);c.on('exit',code=>code===0?r():j(new Error(text)));});key=text.split(/\r?\n/).find(s=>s.startsWith('  '))?.trim();ok(key,'CLI did not mint a key');await writeFile(join(dir,'qa-key'),key);
+ }else key=(await readFile(join(dir,'qa-key'),'utf8')).trim();
+ const args=script?['--input-type=module']:[resolve('apps/api/dist/main.js')];
+ const child=spawn(process.execPath,args,{cwd:root,env:base,windowsHide:true,stdio:script?['pipe','pipe','pipe','ipc']:['ignore','pipe','pipe']});
+ let logs='';child.stdout.on('data',b=>logs+=b);child.stderr.on('data',b=>logs+=b);
+ if(script)child.stdin.end(script);
+ const g={name,dir,base,key,child,origin:'http://127.0.0.1:'+port,trace:[],exit:null,closed:false,script};gateways.push(g);
+ child.on('exit',(code,signal)=>{g.exit={code,signal};g.closed=true;});
+ await until(()=>g.closed?Promise.reject(new Error(logs)):logs.includes(script?'QA_PHASE_READY':'GraphGoblin API listening'),60000);
+ g.call=async(path,method='GET',body,token,apiKey=key)=>{
+  const r=await fetch(g.origin+path,{method,headers:{authorization:'Bearer '+apiKey,...(body===undefined?{}:{'content-type':'application/json'}),...(token===undefined?{}:{'x-graphgoblin-shutdown-token':token})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});
+  const text=await r.text();let value;try{value=JSON.parse(text);}catch{value=text;}
+  const entry={at:new Date().toISOString(),path,method,...(body?{request:body}:{}),...(token?{controlToken:token}:{}),status:r.status,body:value};
+  if(path!=='/api-keys')g.trace.push(entry);
+  return entry;
+ };
+ g.flush=async()=>{await save(name+'-gateway.log.txt',logs);await save(name+'-http.json',g.trace);};
+ g.close=async()=>{
+  if(!g.closed){
+   for(const f of ['release','fake-release'])await writeFile(join(dir,f),'release');
+   if(script)child.send('close');
+   else{await g.call('/system/shutdown','POST',{action:'drain'}).catch(()=>{});const s=await g.call('/system/shutdown').catch(()=>null);if(s?.body.phase==='force-failed')await g.call('/system/shutdown','POST',{action:'force'});}
+   await until(async()=>{if(g.closed)return true;if(!script){const s=await g.call('/system/shutdown').catch(()=>null);if(s?.body.phase==='force-failed')await g.call('/system/shutdown','POST',{action:'force'});}return g.closed;},30000);
+  }
+  await g.flush();
+ };
+ return g;
+}
+export function definition(name,work=[]){const nodes=[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},...work,{id:'done',kind:'exit',label:'Done',config:{}}];return{schemaVersion:4,name,nodes,edges:nodes.slice(1).map((n,i)=>({id:'edge'+i,from:{node:nodes[i].id,port:'out'},to:{node:n.id}}))};}
+export async function publish(g,def){const r=await g.call('/loops','POST',{definition:def});ok(r.status===201,JSON.stringify(r));const id=r.body.loop.id;const p=await g.call('/loops/'+id+'/publish','POST');ok(p.status===200,JSON.stringify(p));return id;}
+export async function start(g,id){const r=await g.call('/loops/'+id+'/runs','POST',{});ok(r.status===202,JSON.stringify(r));return r.body.run.id;}
+export async function run(g,id){return (await g.call('/runs/'+id)).body;}
+export async function hold(g,name='Held QA work'){
+ const code=`const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(join(g.dir,'started'))},String(process.pid));const t=setInterval(()=>{if(fs.existsSync(${JSON.stringify(join(g.dir,'release'))}))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);`;
+ const id=await publish(g,definition(name,[{id:'hold',kind:'script',label:'Held script',config:{command:process.execPath,args:['-e',code]}}]));const runId=await start(g,id);await until(()=>access(join(g.dir,'started')).then(()=>true,()=>false));return{id,runId};
+}
+export async function edge(){const {chromium}=createRequire(resolve('apps/web/package.json'))('@playwright/test');return chromium.launch({channel:'msedge',headless:true});}
+export async function context(browser,g,{width=1440,theme='dark',key=g.key}={}){const c=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'});await c.addInitScript(({key,theme})=>{localStorage.setItem('graphgoblin-api-key',key);localStorage.setItem('graphgoblin-theme',theme);},{key,theme});return c;}
+export async function keyboardTo(page,locator){for(let n=0;n<100;n++){if(await locator.evaluate(el=>el===document.activeElement))return n;await page.keyboard.press('Tab');}throw new Error('Keyboard target unreachable');}
+export async function screenshot(page,name){await page.screenshot({path:join(out,name)});return name;}

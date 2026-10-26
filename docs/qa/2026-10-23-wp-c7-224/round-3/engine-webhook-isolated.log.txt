@@ -1,0 +1,50 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/engine exec vitest run src/webhook-admission.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/engine
+
+ ❯ src/webhook-admission.test.ts (16 tests | 1 failed) 1162ms
+   × marks a removed saved target permanently failed and ignores stale already-admitted sweep rows 49ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/webhook-admission.test.ts > marks a removed saved target permanently failed and ignores stale already-admitted sweep rows
+AssertionError: expected { …(11) } to match object { …(2) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "failureCode": "WEBHOOK_TARGET_REMOVED",
+-   "status": "failed",
++   "failureCode": "WEBHOOK_ADMISSION_RETRY",
++   "status": "pending",
+  }
+
+ ❯ src/webhook-admission.test.ts:460:64
+    458|   engine.ports.clock.advance(5000);
+    459|   await engine.manager.retryPendingWebhooks();
+    460|   expect(await engine.ports.admission.get(pending.receipt.id)).toMatch…
+       |                                                                ^
+    461|     failureCode: 'WEBHOOK_TARGET_REMOVED',
+    462|     status: 'failed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  07:48:21
+   Duration  7.29s (transform 47%, import 36%, tests 17%)
+
+  Transform  transforming modules took 3.16s · 47% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\engine
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/webhook-admission.test.ts --maxWorkers=1", "exit": 1, "seconds": 9.37}

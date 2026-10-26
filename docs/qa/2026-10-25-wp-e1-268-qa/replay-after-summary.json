@@ -1,0 +1,4070 @@
+{
+  "schema": 2,
+  "workload": "replay",
+  "command": [
+    "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-e1-268\\tooling\\perf\\measure.mjs",
+    "replay",
+    "--passes=100",
+    "--items=2",
+    "--profile=inspector",
+    "--port=6190",
+    "--store-prefix=gg-qa-e1-268-",
+    "--out=%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\replay-after"
+  ],
+  "output": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\replay-after",
+  "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-268-runs-2EK3tk\\replay-after\\gg-qa-e1-268-6diG9z",
+  "aged": 0,
+  "environment": {
+    "measurePid": 32676,
+    "launcherPid": 46528,
+    "timestamp": "2026-10-25T11:46:06.120Z",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+    "logicalCpus": 12,
+    "ramBytes": 68662202368,
+    "freeRamBefore": 27392262144,
+    "node": "v22.14.0",
+    "profileMode": "inspector",
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "loadAverage": [
+      0,
+      0,
+      0
+    ],
+    "commit": "07fa8456a70e786116e8dd0e7907686bda6b5078",
+    "loadConditions": "Unspecified; record concurrent activity externally and inspect hostBusyFraction/free RAM.",
+    "freeRamAfter": 27587051520,
+    "hostBusyFraction": 0.7076044489134856
+  },
+  "cases": [
+    {
+      "runId": "01M5SE3T29YTER3WP2NZVTPKY4",
+      "profileWindow": {
+        "startUs": 677089626666,
+        "endUs": 677094222464
+      },
+      "specification": {
+        "passes": 100,
+        "items": 2,
+        "itemBytes": 256,
+        "contextBytes": 128,
+        "inference": true,
+        "grow": false,
+        "artifacts": false,
+        "itemPauseMs": 0,
+        "returnControl": false,
+        "delayMs": 0
+      },
+      "wallMs": 4599.744,
+      "msPerPass": 45.99744,
+      "cpu": {
+        "user": 2671000,
+        "system": 1375000
+      },
+      "durableAdmissionToStartMs": 29,
+      "timings": {
+        "loops.getVersion": {
+          "count": 4,
+          "totalMs": 2.9503000000008797,
+          "meanMs": 0.7375750000002199,
+          "p50UpperMs": 0.652683435371441,
+          "p95UpperMs": 1.0511531995000598,
+          "maxMs": 0.956300000000283
+        },
+        "settings.ownerDefaults": {
+          "count": 1,
+          "totalMs": 0.5871999999999389,
+          "meanMs": 0.5871999999999389,
+          "p50UpperMs": 0.5933485776104008,
+          "p95UpperMs": 0.5933485776104008,
+          "maxMs": 0.5871999999999389
+        },
+        "admission.create": {
+          "count": 1,
+          "totalMs": 15.551300000000083,
+          "meanMs": 15.551300000000083,
+          "p50UpperMs": 16.674540931185085,
+          "p95UpperMs": 16.674540931185085,
+          "maxMs": 15.551300000000083
+        },
+        "runs.get": {
+          "count": 608,
+          "totalMs": 703.8565000000144,
+          "meanMs": 1.1576587171052868,
+          "p50UpperMs": 1.0511531995000598,
+          "p95UpperMs": 1.8621820132595264,
+          "maxMs": 5.630900000000111
+        },
+        "events.read": {
+          "count": 6,
+          "totalMs": 45.554100000001654,
+          "meanMs": 7.592350000000276,
+          "p50UpperMs": 7.7787964060071175,
+          "p95UpperMs": 13.780612339822383,
+          "maxMs": 12.638600000000224
+        },
+        "runs.getThreadCheckpoint": {
+          "count": 1,
+          "totalMs": 0.663300000000163,
+          "meanMs": 0.663300000000163,
+          "p50UpperMs": 0.7179517789085851,
+          "p95UpperMs": 0.7179517789085851,
+          "maxMs": 0.663300000000163
+        },
+        "runs.getInitialThread": {
+          "count": 1,
+          "totalMs": 0.35649999999986903,
+          "meanMs": 0.35649999999986903,
+          "p50UpperMs": 0.36842278384511773,
+          "p95UpperMs": 0.36842278384511773,
+          "maxMs": 0.35649999999986903
+        },
+        "runs.transition": {
+          "count": 2,
+          "totalMs": 6.883100000000468,
+          "meanMs": 3.441550000000234,
+          "p50UpperMs": 3.2989690295920613,
+          "p95UpperMs": 3.991752525806395,
+          "maxMs": 3.721400000000358
+        },
+        "events.append": {
+          "count": 1005,
+          "totalMs": 1743.2282999999989,
+          "meanMs": 1.7345555223880587,
+          "p50UpperMs": 1.6928927393268418,
+          "p95UpperMs": 2.999062754174601,
+          "maxMs": 17.943699999999808
+        },
+        "runs.update": {
+          "count": 403,
+          "totalMs": 829.7061999999873,
+          "meanMs": 2.0588243176178347,
+          "p50UpperMs": 2.048400214585479,
+          "p95UpperMs": 3.2989690295920613,
+          "maxMs": 6.546500000000378
+        },
+        "runs.saveThread": {
+          "count": 202,
+          "totalMs": 226.49630000000116,
+          "meanMs": 1.1212688118811938,
+          "p50UpperMs": 1.0511531995000598,
+          "p95UpperMs": 2.048400214585479,
+          "maxMs": 4.755600000000413
+        },
+        "modelCatalog.list": {
+          "count": 100,
+          "totalMs": 50.6950000000038,
+          "meanMs": 0.506950000000038,
+          "p50UpperMs": 0.49037072529785186,
+          "p95UpperMs": 0.7897469567994436,
+          "maxMs": 0.7593999999999141
+        },
+        "workspace.resolve": {
+          "count": 1,
+          "totalMs": 1.462500000000091,
+          "meanMs": 1.462500000000091,
+          "p50UpperMs": 1.5389933993880383,
+          "p95UpperMs": 1.5389933993880383,
+          "maxMs": 1.462500000000091
+        },
+        "sessions.upsert": {
+          "count": 300,
+          "totalMs": 381.3717999999858,
+          "meanMs": 1.271239333333286,
+          "p50UpperMs": 1.156268519450066,
+          "p95UpperMs": 2.048400214585479,
+          "maxMs": 5.2150000000001455
+        },
+        "events.finalizationRead": {
+          "count": 5,
+          "totalMs": 44.73700000000281,
+          "meanMs": 8.947400000000561,
+          "p50UpperMs": 9.412343651268614,
+          "p95UpperMs": 13.780612339822383,
+          "maxMs": 12.64719999999943
+        },
+        "runs.markFinalized": {
+          "count": 1,
+          "totalMs": 1.7389000000002852,
+          "meanMs": 1.7389000000002852,
+          "p50UpperMs": 1.8621820132595264,
+          "p95UpperMs": 1.8621820132595264,
+          "maxMs": 1.7389000000002852
+        }
+      },
+      "awaitedPortMs": 4055.8382999999976,
+      "observationMs": 5.622300000002724,
+      "residualMs": 538.2833999999993,
+      "maxConcurrentPortCalls": 1,
+      "checkpoints": [
+        {
+          "pass": 10,
+          "elapsedMs": 609.2799999999997,
+          "snapshotBytes": 1193,
+          "snapshotSerializeMs": 0.07420000000001892,
+          "getThreadMs": 0.8114000000005035,
+          "rss": 150773760,
+          "heapTotal": 79515648,
+          "heapUsed": 47466840,
+          "external": 2940298,
+          "arrayBuffers": 84594
+        },
+        {
+          "pass": 20,
+          "elapsedMs": 1033.1254,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.02070000000003347,
+          "getThreadMs": 0.441899999999805,
+          "rss": 150421504,
+          "heapTotal": 79515648,
+          "heapUsed": 47781592,
+          "external": 2940098,
+          "arrayBuffers": 84394
+        },
+        {
+          "pass": 30,
+          "elapsedMs": 1448.6017000000002,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.021499999999832653,
+          "getThreadMs": 0.552599999999984,
+          "rss": 150482944,
+          "heapTotal": 79777792,
+          "heapUsed": 46754432,
+          "external": 2939888,
+          "arrayBuffers": 84184
+        },
+        {
+          "pass": 40,
+          "elapsedMs": 1892.8280999999997,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.018200000000433647,
+          "getThreadMs": 0.4317000000000917,
+          "rss": 151588864,
+          "heapTotal": 79777792,
+          "heapUsed": 46764824,
+          "external": 2939888,
+          "arrayBuffers": 84184
+        },
+        {
+          "pass": 50,
+          "elapsedMs": 2272.5479000000005,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.030399999999644933,
+          "getThreadMs": 0.6665000000002692,
+          "rss": 150536192,
+          "heapTotal": 79777792,
+          "heapUsed": 45142000,
+          "external": 2939888,
+          "arrayBuffers": 84184
+        },
+        {
+          "pass": 60,
+          "elapsedMs": 2837.5545,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.02750000000014552,
+          "getThreadMs": 0.5416000000004715,
+          "rss": 151662592,
+          "heapTotal": 80564224,
+          "heapUsed": 46065184,
+          "external": 2940288,
+          "arrayBuffers": 84584
+        },
+        {
+          "pass": 70,
+          "elapsedMs": 3297.6558999999997,
+          "snapshotBytes": 1194,
+          "snapshotSerializeMs": 0.01929999999993015,
+          "getThreadMs": 0.3010000000003856,
+          "rss": 153346048,
+          "heapTotal": 81088512,
+          "heapUsed": 45748936,
+          "external": 2939888,
+          "arrayBuffers": 84184
+        },
+        {
+          "pass": 80,
+          "elapsedMs": 3685.6787000000004,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.019500000000334694,
+          "getThreadMs": 0.3283000000001266,
+          "rss": 151658496,
+          "heapTotal": 81088512,
+          "heapUsed": 45168688,
+          "external": 2940318,
+          "arrayBuffers": 84174
+        },
+        {
+          "pass": 90,
+          "elapsedMs": 4104.6384,
+          "snapshotBytes": 1195,
+          "snapshotSerializeMs": 0.026899999999841384,
+          "getThreadMs": 0.47879999999986467,
+          "rss": 153501696,
+          "heapTotal": 81350656,
+          "heapUsed": 44977528,
+          "external": 2940318,
+          "arrayBuffers": 84174
+        },
+        {
+          "pass": 100,
+          "elapsedMs": 4500.664900000001,
+          "snapshotBytes": 1198,
+          "snapshotSerializeMs": 0.026400000000649015,
+          "getThreadMs": 0.5139999999992142,
+          "rss": 154095616,
+          "heapTotal": 81350656,
+          "heapUsed": 56239464,
+          "external": 2939908,
+          "arrayBuffers": 84204
+        }
+      ],
+      "samples": [
+        {
+          "label": "before",
+          "elapsedMs": 0.6759999999999309,
+          "rss": 148189184,
+          "heapTotal": 78204928,
+          "heapUsed": 38152400,
+          "external": 2944157,
+          "arrayBuffers": 75966,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 4096,
+          "walBytes": 412032
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 258.4472000000005,
+          "rss": 149450752,
+          "heapTotal": 78991360,
+          "heapUsed": 47759680,
+          "external": 2939898,
+          "arrayBuffers": 84194,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 4096,
+          "walBytes": 1363752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 514.6680999999999,
+          "rss": 150278144,
+          "heapTotal": 79253504,
+          "heapUsed": 54490288,
+          "external": 2939908,
+          "arrayBuffers": 84204,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 4096,
+          "walBytes": 2360792
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 768.7754000000004,
+          "rss": 150482944,
+          "heapTotal": 79515648,
+          "heapUsed": 47799016,
+          "external": 2939888,
+          "arrayBuffers": 84184,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 4096,
+          "walBytes": 3526752
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1029.8103,
+          "rss": 150396928,
+          "heapTotal": 79515648,
+          "heapUsed": 47461080,
+          "external": 2939898,
+          "arrayBuffers": 84194,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 356352,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1288.6022000000003,
+          "rss": 151375872,
+          "heapTotal": 79515648,
+          "heapUsed": 46306320,
+          "external": 2939888,
+          "arrayBuffers": 84184,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 356352,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1538.8618000000006,
+          "rss": 150335488,
+          "heapTotal": 79777792,
+          "heapUsed": 43497304,
+          "external": 2939908,
+          "arrayBuffers": 84174,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 356352,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 1791.1859999999997,
+          "rss": 151138304,
+          "heapTotal": 79777792,
+          "heapUsed": 52695688,
+          "external": 2939908,
+          "arrayBuffers": 84204,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 446464,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2041.1770000000006,
+          "rss": 151973888,
+          "heapTotal": 79777792,
+          "heapUsed": 48452464,
+          "external": 2939898,
+          "arrayBuffers": 84194,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 446464,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2292.8238,
+          "rss": 150605824,
+          "heapTotal": 79777792,
+          "heapUsed": 46985672,
+          "external": 2939888,
+          "arrayBuffers": 84184,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 524288,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2551.9168,
+          "rss": 151871488,
+          "heapTotal": 80564224,
+          "heapUsed": 51642696,
+          "external": 2939898,
+          "arrayBuffers": 84194,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 524288,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 2806.9921999999997,
+          "rss": 151322624,
+          "heapTotal": 80564224,
+          "heapUsed": 43954504,
+          "external": 2939908,
+          "arrayBuffers": 84174,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 524288,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3061.5198,
+          "rss": 152891392,
+          "heapTotal": 81088512,
+          "heapUsed": 50370616,
+          "external": 2939888,
+          "arrayBuffers": 84184,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 524288,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3313.7949,
+          "rss": 153346048,
+          "heapTotal": 81088512,
+          "heapUsed": 47704032,
+          "external": 2939888,
+          "arrayBuffers": 84184,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 610304,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3565.9412,
+          "rss": 152444928,
+          "heapTotal": 81088512,
+          "heapUsed": 46871304,
+          "external": 2939888,
+          "arrayBuffers": 84184,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 610304,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 3823.9457,
+          "rss": 153931776,
+          "heapTotal": 81088512,
+          "heapUsed": 57573256,
+          "external": 2939908,
+          "arrayBuffers": 84204,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 696320,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 4077.0406000000003,
+          "rss": 152899584,
+          "heapTotal": 81350656,
+          "heapUsed": 56351680,
+          "external": 2939908,
+          "arrayBuffers": 84204,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 696320,
+          "walBytes": 4136512
+        },
+        {
+          "label": "sample",
+          "elapsedMs": 4343.5914,
+          "rss": 153440256,
+          "heapTotal": 81350656,
+          "heapUsed": 54716888,
+          "external": 2939908,
+          "arrayBuffers": 84204,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 696320,
+          "walBytes": 4136512
+        },
+        {
+          "label": "after-before-gc",
+          "elapsedMs": 4599.8281,
+          "rss": 154750976,
+          "heapTotal": 81612800,
+          "heapUsed": 47024664,
+          "external": 2939878,
+          "arrayBuffers": 84174,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 778240,
+          "walBytes": 4136512
+        },
+        {
+          "label": "after-gc",
+          "elapsedMs": 4616.275699999999,
+          "rss": 154808320,
+          "heapTotal": 81874944,
+          "heapUsed": 40670728,
+          "external": 2940278,
+          "arrayBuffers": 76182,
+          "writableBytes": 0,
+          "socketBytesWritten": 0,
+          "openResponses": 0,
+          "dbBytes": 778240,
+          "walBytes": 4136512
+        }
+      ],
+      "eventLoopDelayMs": {
+        "mean": 15.510998486486487,
+        "max": 28.000255,
+        "p99": 25.493503
+      },
+      "eventSerialization": {
+        "count": 2,
+        "totalMs": 3.180399999999281,
+        "meanMs": 1.5901999999996406,
+        "p50UpperMs": 0.25163771862927237,
+        "p95UpperMs": 2.999062754174601,
+        "maxMs": 2.947699999998804,
+        "bytes": 421194,
+        "pageSize": 1000,
+        "sha256": "4820c707f048b8e686a6943c3bee74444c4471be94a430be210793a76f012190",
+        "lateAfter": 997,
+        "lateSha256": "9dca0fa11bf5054c38afd95e96b33cbac38725ed0f23d5adf3f7b6b3bf289f04"
+      },
+      "storageBefore": {
+        "bytes": 448995,
+        "files": 4
+      },
+      "storageAfter": {
+        "bytes": 4947619,
+        "files": 4
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "correctness": {
+        "entries": {
+          "start": 1,
+          "work": 100,
+          "gate": 100,
+          "done": 1
+        },
+        "completed": {
+          "start": 1,
+          "work": 100,
+          "gate": 100,
+          "done": 1
+        },
+        "types": {
+          "run.queued": 1,
+          "run.started": 1,
+          "node.started": 202,
+          "node.finished": 202,
+          "harness.turn": 100,
+          "harness.session": 100,
+          "harness.submission": 100,
+          "node.progress": 200,
+          "harness.usage": 100,
+          "decision.made": 100,
+          "exit.evaluated": 1,
+          "run.finished": 1
+        },
+        "expectedVisits": {
+          "start": 1,
+          "work": 100,
+          "gate": 100,
+          "done": 1
+        },
+        "nodeCountsOk": true,
+        "unexpectedAttempts": 0,
+        "succeeded": true,
+        "storedEvents": 1108,
+        "appendEvents": 1107,
+        "progress": 200,
+        "expectedProgress": 200,
+        "gates": 100,
+        "passes": 100,
+        "visits": {
+          "start": 1,
+          "work": 100,
+          "gate": 100,
+          "done": 1
+        },
+        "history": 0,
+        "historyValuesOk": true,
+        "terminal": 1,
+        "returnsOk": true,
+        "ok": true,
+        "replayOk": true
+      },
+      "equivalence": {
+        "eventsSha256": "9c87f1fce24514bc548c10c41534b11b09d19de29625d30b78feca68d41e20bc",
+        "stateSha256": "210de264a16bdb2eecc3a05d48319f2568eddf791931ce0071fcb6065e0578d6",
+        "normalization": "Sorted keys; generated ULIDs retain identity relationships; ts/at/createdAt/startedAt/finishedAt/receivedAt/durationMs/elapsedSeconds are clock observations."
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1556,
+        "wallMs": 50.30159999999887
+      },
+      "queueDuring": {
+        "wallMs": 0.8983000000002903,
+        "latency": {
+          "count": 16,
+          "totalMs": 8.39909999999918,
+          "meanMs": 0.5249437499999487,
+          "p50UpperMs": 0.5933485776104008,
+          "p95UpperMs": 0.8687216524793882,
+          "maxMs": 0.8472999999999047
+        }
+      },
+      "replays": {
+        "first": {
+          "after": 0,
+          "pauseMs": 0,
+          "initialPauseMs": 0,
+          "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+          "firstMs": 18.270000000000437,
+          "totalMs": 90.50540000000001,
+          "sha256": "4820c707f048b8e686a6943c3bee74444c4471be94a430be210793a76f012190",
+          "events": 1108,
+          "lastSeq": 1108,
+          "gaps": 0,
+          "receivedBytes": 462642,
+          "wireBytesConsumed": 470325,
+          "reads": 32,
+          "before": {
+            "label": "baseline",
+            "elapsedMs": 0,
+            "rss": 154398720,
+            "heapTotal": 79253504,
+            "heapUsed": 40697680,
+            "external": 2939416,
+            "arrayBuffers": 76015,
+            "writableBytes": 0,
+            "socketBytesWritten": 0,
+            "openResponses": 0,
+            "dbBytes": 778240,
+            "walBytes": 4136512
+          },
+          "afterMemory": {
+            "label": "sample",
+            "elapsedMs": 0,
+            "rss": 154271744,
+            "heapTotal": 79253504,
+            "heapUsed": 47372704,
+            "external": 3112402,
+            "arrayBuffers": 256698,
+            "writableBytes": 0,
+            "socketBytesWritten": 470325,
+            "openResponses": 0,
+            "dbBytes": 778240,
+            "walBytes": 4136512,
+            "maxWritableBytes": 0,
+            "maxRss": 155496448,
+            "maxHeap": 48020320,
+            "eventLoopDelayMs": {
+              "mean": 14.321436444444444,
+              "p99": 22.085631,
+              "max": 22.085631
+            },
+            "repositoryTimings": {
+              "runs.get": {
+                "count": 3,
+                "totalMs": 5.324799999998504,
+                "meanMs": 1.7749333333328348,
+                "p50UpperMs": 1.5389933993880383,
+                "p95UpperMs": 2.4785642596484303,
+                "maxMs": 2.37329999999929
+              },
+              "events.read": {
+                "count": 11,
+                "totalMs": 49.663000000000466,
+                "meanMs": 4.5148181818182245,
+                "p50UpperMs": 5.3130226118483135,
+                "p95UpperMs": 7.071633096370106,
+                "maxMs": 6.837199999999939
+              },
+              "events.finalizationRead": {
+                "count": 11,
+                "totalMs": 49.7670999999973,
+                "meanMs": 4.5242818181815725,
+                "p50UpperMs": 5.3130226118483135,
+                "p95UpperMs": 7.071633096370106,
+                "maxMs": 6.843999999999141
+              },
+              "events.lastLifecycleEvent": {
+                "count": 1,
+                "totalMs": 0.6817000000010012,
+                "meanMs": 0.6817000000010012,
+                "p50UpperMs": 0.7179517789085851,
+                "p95UpperMs": 0.7179517789085851,
+                "maxMs": 0.6817000000010012
+              }
+            }
+          },
+          "observations": [
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155496448,
+              "heapTotal": 79253504,
+              "heapUsed": 48020320,
+              "external": 3120563,
+              "arrayBuffers": 264859,
+              "writableBytes": 0,
+              "socketBytesWritten": 162815,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 0,
+              "maxRss": 155496448,
+              "maxHeap": 48020320,
+              "eventLoopDelayMs": {
+                "mean": 15.7196288,
+                "p99": 22.085631,
+                "max": 22.085631
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 3.8034999999981665,
+                  "meanMs": 1.9017499999990832,
+                  "p50UpperMs": 1.5389933993880383,
+                  "p95UpperMs": 2.4785642596484303,
+                  "maxMs": 2.37329999999929
+                },
+                "events.read": {
+                  "count": 5,
+                  "totalMs": 28.323200000000725,
+                  "meanMs": 5.664640000000145,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 7.071633096370106,
+                  "maxMs": 6.7502000000004045
+                },
+                "events.finalizationRead": {
+                  "count": 5,
+                  "totalMs": 28.38720000000285,
+                  "meanMs": 5.67744000000057,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 7.071633096370106,
+                  "maxMs": 6.758900000000722
+                }
+              },
+              "receivedBytes": 266816,
+              "wireBytesConsumed": 271342,
+              "receivedEvents": 640,
+              "replayElapsedMs": 57.56550000000061,
+              "bytesInFlight": 0
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 154255360,
+              "heapTotal": 79253504,
+              "heapUsed": 46894600,
+              "external": 3111971,
+              "arrayBuffers": 256267,
+              "writableBytes": 0,
+              "socketBytesWritten": 470269,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 0,
+              "maxRss": 155496448,
+              "maxHeap": 48020320,
+              "eventLoopDelayMs": {
+                "mean": 15.539053714285714,
+                "p99": 22.085631,
+                "max": 22.085631
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.324799999998504,
+                  "meanMs": 1.7749333333328348,
+                  "p50UpperMs": 1.5389933993880383,
+                  "p95UpperMs": 2.4785642596484303,
+                  "maxMs": 2.37329999999929
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 49.663000000000466,
+                  "meanMs": 4.5148181818182245,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 7.071633096370106,
+                  "maxMs": 6.837199999999939
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 49.7670999999973,
+                  "meanMs": 4.5242818181815725,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 7.071633096370106,
+                  "maxMs": 6.843999999999141
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.6817000000010012,
+                  "meanMs": 0.6817000000010012,
+                  "p50UpperMs": 0.7179517789085851,
+                  "p95UpperMs": 0.7179517789085851,
+                  "maxMs": 0.6817000000010012
+                }
+              },
+              "receivedBytes": 462642,
+              "wireBytesConsumed": 470325,
+              "receivedEvents": 1108,
+              "replayElapsedMs": 91.98409999999967,
+              "bytesInFlight": 0
+            }
+          ],
+          "eventLoopDelayMs": {
+            "mean": 14.321436444444444,
+            "p99": 22.085631,
+            "max": 22.085631
+          },
+          "socketBytesWritten": 470325,
+          "maxBytesInFlight": 0
+        },
+        "late": {
+          "after": 997,
+          "pauseMs": 0,
+          "initialPauseMs": 0,
+          "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+          "firstMs": 12.309199999999691,
+          "totalMs": 16.173500000000786,
+          "sha256": "9dca0fa11bf5054c38afd95e96b33cbac38725ed0f23d5adf3f7b6b3bf289f04",
+          "events": 111,
+          "lastSeq": 1108,
+          "gaps": 0,
+          "receivedBytes": 46326,
+          "wireBytesConsumed": 47304,
+          "reads": 4,
+          "before": {
+            "label": "baseline",
+            "elapsedMs": 0,
+            "rss": 154488832,
+            "heapTotal": 79777792,
+            "heapUsed": 40883256,
+            "external": 3112836,
+            "arrayBuffers": 76016,
+            "writableBytes": 0,
+            "socketBytesWritten": 0,
+            "openResponses": 0,
+            "dbBytes": 778240,
+            "walBytes": 4136512
+          },
+          "afterMemory": {
+            "label": "sample",
+            "elapsedMs": 0,
+            "rss": 154988544,
+            "heapTotal": 79777792,
+            "heapUsed": 44184568,
+            "external": 2989496,
+            "arrayBuffers": 133792,
+            "writableBytes": 0,
+            "socketBytesWritten": 47304,
+            "openResponses": 0,
+            "dbBytes": 778240,
+            "walBytes": 4136512,
+            "maxWritableBytes": 0,
+            "maxRss": 154988544,
+            "maxHeap": 44184568,
+            "eventLoopDelayMs": {
+              "mean": 10.825728,
+              "p99": 13.426687,
+              "max": 13.426687
+            },
+            "repositoryTimings": {
+              "runs.get": {
+                "count": 3,
+                "totalMs": 4.050199999997858,
+                "meanMs": 1.3500666666659527,
+                "p50UpperMs": 1.39908490853458,
+                "p95UpperMs": 1.6928927393268418,
+                "maxMs": 1.552799999999479
+              },
+              "events.read": {
+                "count": 3,
+                "totalMs": 7.154199999999037,
+                "meanMs": 2.384733333333012,
+                "p50UpperMs": 0.44579156845259255,
+                "p95UpperMs": 6.42875736033646,
+                "maxMs": 6.316899999999805
+              },
+              "events.finalizationRead": {
+                "count": 3,
+                "totalMs": 7.183999999999287,
+                "meanMs": 2.394666666666429,
+                "p50UpperMs": 0.44579156845259255,
+                "p95UpperMs": 6.42875736033646,
+                "maxMs": 6.33849999999984
+              },
+              "events.lastLifecycleEvent": {
+                "count": 1,
+                "totalMs": 0.8887000000013359,
+                "meanMs": 0.8887000000013359,
+                "p50UpperMs": 0.955593817727327,
+                "p95UpperMs": 0.955593817727327,
+                "maxMs": 0.8887000000013359
+              }
+            }
+          },
+          "observations": [],
+          "eventLoopDelayMs": {
+            "mean": 10.825728,
+            "p99": 13.426687,
+            "max": 13.426687
+          },
+          "socketBytesWritten": 47304,
+          "maxBytesInFlight": 0
+        },
+        "slow": {
+          "after": 0,
+          "pauseMs": 50,
+          "initialPauseMs": 1000,
+          "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+          "firstMs": 1008.3046999999988,
+          "totalMs": 1445.2622999999985,
+          "sha256": "4820c707f048b8e686a6943c3bee74444c4471be94a430be210793a76f012190",
+          "events": 1108,
+          "lastSeq": 1108,
+          "gaps": 0,
+          "receivedBytes": 462642,
+          "wireBytesConsumed": 470325,
+          "reads": 8,
+          "before": {
+            "label": "baseline",
+            "elapsedMs": 0,
+            "rss": 154992640,
+            "heapTotal": 80039936,
+            "heapUsed": 40868392,
+            "external": 2989930,
+            "arrayBuffers": 76016,
+            "writableBytes": 0,
+            "socketBytesWritten": 0,
+            "openResponses": 0,
+            "dbBytes": 778240,
+            "walBytes": 4136512
+          },
+          "afterMemory": {
+            "label": "sample",
+            "elapsedMs": 0,
+            "rss": 156016640,
+            "heapTotal": 80039936,
+            "heapUsed": 47917848,
+            "external": 3117553,
+            "arrayBuffers": 261849,
+            "writableBytes": 0,
+            "socketBytesWritten": 470325,
+            "openResponses": 0,
+            "dbBytes": 778240,
+            "walBytes": 4136512,
+            "maxWritableBytes": 16839,
+            "maxRss": 156016640,
+            "maxHeap": 51518232,
+            "eventLoopDelayMs": {
+              "mean": 10.975307851851852,
+              "p99": 15.040511,
+              "max": 16.670719
+            },
+            "repositoryTimings": {
+              "runs.get": {
+                "count": 3,
+                "totalMs": 5.500699999998687,
+                "meanMs": 1.8335666666662291,
+                "p50UpperMs": 2.048400214585479,
+                "p95UpperMs": 2.2532402360440273,
+                "maxMs": 2.1383999999998196
+              },
+              "events.read": {
+                "count": 11,
+                "totalMs": 56.59450000000288,
+                "meanMs": 5.144954545454808,
+                "p50UpperMs": 5.844324873033145,
+                "p95UpperMs": 9.412343651268614,
+                "maxMs": 9.002399999999398
+              },
+              "events.finalizationRead": {
+                "count": 11,
+                "totalMs": 56.72370000000228,
+                "meanMs": 5.156700000000208,
+                "p50UpperMs": 5.844324873033145,
+                "p95UpperMs": 9.412343651268614,
+                "maxMs": 9.012800000000425
+              },
+              "events.lastLifecycleEvent": {
+                "count": 1,
+                "totalMs": 0.8557999999993626,
+                "meanMs": 0.8557999999993626,
+                "p50UpperMs": 0.8687216524793882,
+                "p95UpperMs": 0.8687216524793882,
+                "maxMs": 0.8557999999993626
+              }
+            }
+          },
+          "observations": [
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155746304,
+              "heapTotal": 80039936,
+              "heapUsed": 50544016,
+              "external": 3177909,
+              "arrayBuffers": 322311,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155746304,
+              "maxHeap": 50544016,
+              "eventLoopDelayMs": {
+                "mean": 11.975884800000001,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 39.460000000000946,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155746304,
+              "heapTotal": 80039936,
+              "heapUsed": 50577152,
+              "external": 3178338,
+              "arrayBuffers": 322740,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155746304,
+              "maxHeap": 50577152,
+              "eventLoopDelayMs": {
+                "mean": 11.658971428571428,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 66.81390000000101,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155746304,
+              "heapTotal": 80039936,
+              "heapUsed": 50617688,
+              "external": 3178767,
+              "arrayBuffers": 323169,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155746304,
+              "maxHeap": 50617688,
+              "eventLoopDelayMs": {
+                "mean": 11.3311744,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 98.15719999999965,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155746304,
+              "heapTotal": 80039936,
+              "heapUsed": 50648720,
+              "external": 3179196,
+              "arrayBuffers": 323598,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155746304,
+              "maxHeap": 50648720,
+              "eventLoopDelayMs": {
+                "mean": 11.356317538461537,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 129.28820000000087,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155750400,
+              "heapTotal": 80039936,
+              "heapUsed": 50679896,
+              "external": 3179625,
+              "arrayBuffers": 324027,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155750400,
+              "maxHeap": 50679896,
+              "eventLoopDelayMs": {
+                "mean": 11.301888,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 160.93940000000111,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155750400,
+              "heapTotal": 80039936,
+              "heapUsed": 50718160,
+              "external": 3180054,
+              "arrayBuffers": 324456,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155750400,
+              "maxHeap": 50718160,
+              "eventLoopDelayMs": {
+                "mean": 11.257628444444444,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 190.50900000000001,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155750400,
+              "heapTotal": 80039936,
+              "heapUsed": 50749184,
+              "external": 3180483,
+              "arrayBuffers": 324885,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155750400,
+              "maxHeap": 50749184,
+              "eventLoopDelayMs": {
+                "mean": 11.232987428571429,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 222.67339999999967,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155750400,
+              "heapTotal": 80039936,
+              "heapUsed": 50780128,
+              "external": 3180912,
+              "arrayBuffers": 325314,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155750400,
+              "maxHeap": 50780128,
+              "eventLoopDelayMs": {
+                "mean": 11.177642666666666,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 254.65760000000046,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50810880,
+              "external": 3181341,
+              "arrayBuffers": 325743,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50810880,
+              "eventLoopDelayMs": {
+                "mean": 11.233810962962963,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 286.6149999999998,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50841632,
+              "external": 3181770,
+              "arrayBuffers": 326172,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50841632,
+              "eventLoopDelayMs": {
+                "mean": 11.165422933333334,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 317.70330000000104,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50872352,
+              "external": 3182199,
+              "arrayBuffers": 326601,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50872352,
+              "eventLoopDelayMs": {
+                "mean": 11.190396121212121,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 349.7363999999998,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50903016,
+              "external": 3182628,
+              "arrayBuffers": 327030,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50903016,
+              "eventLoopDelayMs": {
+                "mean": 11.123825777777778,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 379.90600000000086,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50933680,
+              "external": 3183057,
+              "arrayBuffers": 327459,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50933680,
+              "eventLoopDelayMs": {
+                "mean": 11.074218666666667,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 411.0601999999999,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50964344,
+              "external": 3183486,
+              "arrayBuffers": 327888,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50964344,
+              "eventLoopDelayMs": {
+                "mean": 11.021165714285715,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 442.8101999999999,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 50995008,
+              "external": 3183915,
+              "arrayBuffers": 328317,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 50995008,
+              "eventLoopDelayMs": {
+                "mean": 11.055104,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 473.8517000000011,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 51025688,
+              "external": 3184344,
+              "arrayBuffers": 328746,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 51025688,
+              "eventLoopDelayMs": {
+                "mean": 11.011180936170213,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 504.6990999999998,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 51056408,
+              "external": 3184773,
+              "arrayBuffers": 329175,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 51056408,
+              "eventLoopDelayMs": {
+                "mean": 10.97203712,
+                "p99": 14.082047,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 535.741,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 51087136,
+              "external": 3185202,
+              "arrayBuffers": 329604,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 51087136,
+              "eventLoopDelayMs": {
+                "mean": 10.92928724528302,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 567.0763000000006,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 51117848,
+              "external": 3185631,
+              "arrayBuffers": 330033,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 51117848,
+              "eventLoopDelayMs": {
+                "mean": 10.905014857142856,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 598.6153000000013,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 51148568,
+              "external": 3186060,
+              "arrayBuffers": 330462,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 51148568,
+              "eventLoopDelayMs": {
+                "mean": 10.911674576271185,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 630.0667000000012,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155754496,
+              "heapTotal": 80039936,
+              "heapUsed": 51179288,
+              "external": 3186489,
+              "arrayBuffers": 330891,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155754496,
+              "maxHeap": 51179288,
+              "eventLoopDelayMs": {
+                "mean": 10.937905548387096,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 661.0123000000003,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155758592,
+              "heapTotal": 80039936,
+              "heapUsed": 51210008,
+              "external": 3186918,
+              "arrayBuffers": 331320,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155758592,
+              "maxHeap": 51210008,
+              "eventLoopDelayMs": {
+                "mean": 10.921007261538461,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 691.2819,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155758592,
+              "heapTotal": 80039936,
+              "heapUsed": 51240728,
+              "external": 3187347,
+              "arrayBuffers": 331749,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155758592,
+              "maxHeap": 51240728,
+              "eventLoopDelayMs": {
+                "mean": 10.913912470588235,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 723.994200000001,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155762688,
+              "heapTotal": 80039936,
+              "heapUsed": 51271448,
+              "external": 3187776,
+              "arrayBuffers": 332178,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155762688,
+              "maxHeap": 51271448,
+              "eventLoopDelayMs": {
+                "mean": 10.907186478873239,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 755.4152000000013,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155762688,
+              "heapTotal": 80039936,
+              "heapUsed": 51302168,
+              "external": 3188205,
+              "arrayBuffers": 332607,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155762688,
+              "maxHeap": 51302168,
+              "eventLoopDelayMs": {
+                "mean": 10.908533621621622,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 787.1766000000007,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155762688,
+              "heapTotal": 80039936,
+              "heapUsed": 51333656,
+              "external": 3188634,
+              "arrayBuffers": 333036,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155762688,
+              "maxHeap": 51333656,
+              "eventLoopDelayMs": {
+                "mean": 10.89158316883117,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 818.5105999999996,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155762688,
+              "heapTotal": 80039936,
+              "heapUsed": 51364312,
+              "external": 3189063,
+              "arrayBuffers": 333465,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155762688,
+              "maxHeap": 51364312,
+              "eventLoopDelayMs": {
+                "mean": 10.91075888607595,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 849.7643000000007,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155762688,
+              "heapTotal": 80039936,
+              "heapUsed": 51395360,
+              "external": 3189492,
+              "arrayBuffers": 333894,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155762688,
+              "maxHeap": 51395360,
+              "eventLoopDelayMs": {
+                "mean": 10.913442341463416,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 880.5894000000008,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155766784,
+              "heapTotal": 80039936,
+              "heapUsed": 51426080,
+              "external": 3189921,
+              "arrayBuffers": 334323,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155766784,
+              "maxHeap": 51426080,
+              "eventLoopDelayMs": {
+                "mean": 10.91680376470588,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 912.4876000000004,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155766784,
+              "heapTotal": 80039936,
+              "heapUsed": 51456792,
+              "external": 3190350,
+              "arrayBuffers": 334752,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155766784,
+              "maxHeap": 51456792,
+              "eventLoopDelayMs": {
+                "mean": 10.918260363636364,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 944.130000000001,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155766784,
+              "heapTotal": 80039936,
+              "heapUsed": 51487512,
+              "external": 3190779,
+              "arrayBuffers": 335181,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155766784,
+              "maxHeap": 51487512,
+              "eventLoopDelayMs": {
+                "mean": 10.925922461538462,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 24.70230000000265,
+                  "meanMs": 6.175575000000663,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.117700000000696
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 24.76720000000023,
+                  "meanMs": 6.1918000000000575,
+                  "p50UpperMs": 5.3130226118483135,
+                  "p95UpperMs": 8.55667604660783,
+                  "maxMs": 8.126599999999598
+                }
+              },
+              "receivedBytes": 0,
+              "wireBytesConsumed": 0,
+              "receivedEvents": 0,
+              "replayElapsedMs": 975.8450000000012,
+              "bytesInFlight": 212936
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155770880,
+              "heapTotal": 80039936,
+              "heapUsed": 51518232,
+              "external": 3191208,
+              "arrayBuffers": 335610,
+              "writableBytes": 16594,
+              "socketBytesWritten": 212936,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16594,
+              "maxRss": 155770880,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 10.946452210526315,
+                "p99": 13.385727,
+                "max": 14.082047
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 5,
+                  "totalMs": 33.70470000000205,
+                  "meanMs": 6.74094000000041,
+                  "p50UpperMs": 7.7787964060071175,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 5,
+                  "totalMs": 33.780000000000655,
+                  "meanMs": 6.756000000000131,
+                  "p50UpperMs": 7.7787964060071175,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                }
+              },
+              "receivedBytes": 64206,
+              "wireBytesConsumed": 65536,
+              "receivedEvents": 155,
+              "replayElapsedMs": 1019.0645000000004,
+              "bytesInFlight": 147400
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 45255824,
+              "external": 3021861,
+              "arrayBuffers": 166181,
+              "writableBytes": 16839,
+              "socketBytesWritten": 393356,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.006037333333333,
+                "p99": 14.082047,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 4.125499999998283,
+                  "meanMs": 2.0627499999991414,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 8,
+                  "totalMs": 51.69970000000285,
+                  "meanMs": 6.462462500000356,
+                  "p50UpperMs": 6.42875736033646,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 8,
+                  "totalMs": 51.8046000000013,
+                  "meanMs": 6.475575000000163,
+                  "p50UpperMs": 6.42875736033646,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                }
+              },
+              "receivedBytes": 64206,
+              "wireBytesConsumed": 65536,
+              "receivedEvents": 155,
+              "replayElapsedMs": 1044.1962000000003,
+              "bytesInFlight": 327820
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 45296240,
+              "external": 3022290,
+              "arrayBuffers": 166610,
+              "writableBytes": 16839,
+              "socketBytesWritten": 393356,
+              "openResponses": 1,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.04134144,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 128606,
+              "wireBytesConsumed": 131072,
+              "receivedEvents": 309,
+              "replayElapsedMs": 1083.8604000000014,
+              "bytesInFlight": 262284
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47466704,
+              "external": 3112831,
+              "arrayBuffers": 257127,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.02671588118812,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 128606,
+              "wireBytesConsumed": 131072,
+              "receivedEvents": 309,
+              "replayElapsedMs": 1102.6683000000012,
+              "bytesInFlight": 339253
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47507608,
+              "external": 3113260,
+              "arrayBuffers": 257556,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.009852952380951,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 193222,
+              "wireBytesConsumed": 196608,
+              "receivedEvents": 464,
+              "replayElapsedMs": 1135.8172000000013,
+              "bytesInFlight": 273717
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47548008,
+              "external": 3113689,
+              "arrayBuffers": 257985,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.000439626168225,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 193222,
+              "wireBytesConsumed": 196608,
+              "receivedEvents": 464,
+              "replayElapsedMs": 1164.5703000000012,
+              "bytesInFlight": 273717
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47588344,
+              "external": 3114118,
+              "arrayBuffers": 258414,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.009675636363637,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 257616,
+              "wireBytesConsumed": 262144,
+              "receivedEvents": 618,
+              "replayElapsedMs": 1198.1182000000008,
+              "bytesInFlight": 208181
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47628680,
+              "external": 3114547,
+              "arrayBuffers": 258843,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.012694088495575,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 257616,
+              "wireBytesConsumed": 262144,
+              "receivedEvents": 618,
+              "replayElapsedMs": 1227.7115000000013,
+              "bytesInFlight": 208181
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47669016,
+              "external": 3114976,
+              "arrayBuffers": 259272,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.001008551724137,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 322013,
+              "wireBytesConsumed": 327680,
+              "receivedEvents": 772,
+              "replayElapsedMs": 1259.8248000000003,
+              "bytesInFlight": 142645
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47709352,
+              "external": 3115405,
+              "arrayBuffers": 259701,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 10.998448403361344,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 322013,
+              "wireBytesConsumed": 327680,
+              "receivedEvents": 772,
+              "replayElapsedMs": 1289.1051000000007,
+              "bytesInFlight": 142645
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47749632,
+              "external": 3115834,
+              "arrayBuffers": 260130,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.006556327868854,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 386410,
+              "wireBytesConsumed": 393216,
+              "receivedEvents": 926,
+              "replayElapsedMs": 1322.4350000000013,
+              "bytesInFlight": 77109
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47789952,
+              "external": 3116263,
+              "arrayBuffers": 260559,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 11.003970064516128,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 386410,
+              "wireBytesConsumed": 393216,
+              "receivedEvents": 926,
+              "replayElapsedMs": 1352.398000000001,
+              "bytesInFlight": 77109
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47830288,
+              "external": 3116692,
+              "arrayBuffers": 260988,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 10.984832,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 450986,
+              "wireBytesConsumed": 458752,
+              "receivedEvents": 1080,
+              "replayElapsedMs": 1385.4867000000013,
+              "bytesInFlight": 11573
+            },
+            {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 156016640,
+              "heapTotal": 80039936,
+              "heapUsed": 47870536,
+              "external": 3117121,
+              "arrayBuffers": 261417,
+              "writableBytes": 0,
+              "socketBytesWritten": 470325,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 16839,
+              "maxRss": 156016640,
+              "maxHeap": 51518232,
+              "eventLoopDelayMs": {
+                "mean": 10.979422523076924,
+                "p99": 15.040511,
+                "max": 16.670719
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 5.500699999998687,
+                  "meanMs": 1.8335666666662291,
+                  "p50UpperMs": 2.048400214585479,
+                  "p95UpperMs": 2.2532402360440273,
+                  "maxMs": 2.1383999999998196
+                },
+                "events.read": {
+                  "count": 11,
+                  "totalMs": 56.59450000000288,
+                  "meanMs": 5.144954545454808,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.002399999999398
+                },
+                "events.finalizationRead": {
+                  "count": 11,
+                  "totalMs": 56.72370000000228,
+                  "meanMs": 5.156700000000208,
+                  "p50UpperMs": 5.844324873033145,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 9.012800000000425
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8557999999993626,
+                  "meanMs": 0.8557999999993626,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8557999999993626
+                }
+              },
+              "receivedBytes": 450986,
+              "wireBytesConsumed": 458752,
+              "receivedEvents": 1080,
+              "replayElapsedMs": 1415.2883000000002,
+              "bytesInFlight": 11573
+            }
+          ],
+          "eventLoopDelayMs": {
+            "mean": 10.975307851851852,
+            "p99": 15.040511,
+            "max": 16.670719
+          },
+          "socketBytesWritten": 470325,
+          "maxBytesInFlight": 339253
+        },
+        "reconnect": {
+          "interrupted": {
+            "after": 0,
+            "pauseMs": 0,
+            "initialPauseMs": 0,
+            "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+            "firstMs": 12.79240000000027,
+            "totalMs": 28.371900000000096,
+            "sha256": "f85b60f10a8a04f9ca76a5ec004123bfa1c552348c6644687fb97b5651850c1c",
+            "events": 384,
+            "lastSeq": 384,
+            "gaps": 0,
+            "receivedBytes": 160010,
+            "wireBytesConsumed": 162815,
+            "reads": 10,
+            "before": {
+              "label": "baseline",
+              "elapsedMs": 0,
+              "rss": 156102656,
+              "heapTotal": 80302080,
+              "heapUsed": 40943728,
+              "external": 3117987,
+              "arrayBuffers": 76016,
+              "writableBytes": 0,
+              "socketBytesWritten": 0,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512
+            },
+            "afterMemory": {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 155127808,
+              "heapTotal": 80302080,
+              "heapUsed": 50759960,
+              "external": 3161528,
+              "arrayBuffers": 305824,
+              "writableBytes": 0,
+              "socketBytesWritten": 196342,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 0,
+              "maxRss": 156102656,
+              "maxHeap": 50759960,
+              "eventLoopDelayMs": {
+                "mean": 11.137024,
+                "p99": 14.352383,
+                "max": 14.352383
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 2,
+                  "totalMs": 2.985899999997855,
+                  "meanMs": 1.4929499999989275,
+                  "p50UpperMs": 1.2718953713950725,
+                  "p95UpperMs": 1.8621820132595264,
+                  "maxMs": 1.7969999999986612
+                },
+                "events.read": {
+                  "count": 4,
+                  "totalMs": 23.314799999998286,
+                  "meanMs": 5.8286999999995714,
+                  "p50UpperMs": 6.42875736033646,
+                  "p95UpperMs": 7.071633096370106,
+                  "maxMs": 6.656199999999444
+                },
+                "events.finalizationRead": {
+                  "count": 4,
+                  "totalMs": 23.362300000000687,
+                  "meanMs": 5.840575000000172,
+                  "p50UpperMs": 6.42875736033646,
+                  "p95UpperMs": 7.071633096370106,
+                  "maxMs": 6.6762999999991735
+                }
+              }
+            },
+            "observations": [],
+            "eventLoopDelayMs": {
+              "mean": 11.137024,
+              "p99": 14.352383,
+              "max": 14.352383
+            },
+            "socketBytesWritten": 196342,
+            "maxBytesInFlight": 33527
+          },
+          "reconnected": {
+            "after": 384,
+            "pauseMs": 0,
+            "initialPauseMs": 0,
+            "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+            "firstMs": 11.204400000000533,
+            "totalMs": 56.34109999999964,
+            "sha256": "4820c707f048b8e686a6943c3bee74444c4471be94a430be210793a76f012190",
+            "events": 724,
+            "lastSeq": 1108,
+            "gaps": 0,
+            "receivedBytes": 302645,
+            "wireBytesConsumed": 307746,
+            "reads": 21,
+            "before": {
+              "label": "baseline",
+              "elapsedMs": 0,
+              "rss": 155328512,
+              "heapTotal": 80039936,
+              "heapUsed": 40992280,
+              "external": 3161962,
+              "arrayBuffers": 76016,
+              "writableBytes": 0,
+              "socketBytesWritten": 0,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512
+            },
+            "afterMemory": {
+              "label": "sample",
+              "elapsedMs": 0,
+              "rss": 154263552,
+              "heapTotal": 80302080,
+              "heapUsed": 54686488,
+              "external": 3284837,
+              "arrayBuffers": 429133,
+              "writableBytes": 0,
+              "socketBytesWritten": 307746,
+              "openResponses": 0,
+              "dbBytes": 778240,
+              "walBytes": 4136512,
+              "maxWritableBytes": 0,
+              "maxRss": 156254208,
+              "maxHeap": 54686488,
+              "eventLoopDelayMs": {
+                "mean": 11.029617777777778,
+                "p99": 14.467071,
+                "max": 14.467071
+              },
+              "repositoryTimings": {
+                "runs.get": {
+                  "count": 3,
+                  "totalMs": 4.222399999998743,
+                  "meanMs": 1.4074666666662476,
+                  "p50UpperMs": 1.5389933993880383,
+                  "p95UpperMs": 2.048400214585479,
+                  "maxMs": 1.8894000000000233
+                },
+                "events.read": {
+                  "count": 8,
+                  "totalMs": 34.42500000000109,
+                  "meanMs": 4.303125000000136,
+                  "p50UpperMs": 4.390927778387035,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 8.783699999999953
+                },
+                "events.finalizationRead": {
+                  "count": 8,
+                  "totalMs": 34.513700000001336,
+                  "meanMs": 4.314212500000167,
+                  "p50UpperMs": 4.830020556225739,
+                  "p95UpperMs": 9.412343651268614,
+                  "maxMs": 8.79490000000078
+                },
+                "events.lastLifecycleEvent": {
+                  "count": 1,
+                  "totalMs": 0.8042000000004919,
+                  "meanMs": 0.8042000000004919,
+                  "p50UpperMs": 0.8687216524793882,
+                  "p95UpperMs": 0.8687216524793882,
+                  "maxMs": 0.8042000000004919
+                }
+              }
+            },
+            "observations": [
+              {
+                "label": "sample",
+                "elapsedMs": 0,
+                "rss": 156254208,
+                "heapTotal": 80302080,
+                "heapUsed": 48420168,
+                "external": 3120565,
+                "arrayBuffers": 264861,
+                "writableBytes": 0,
+                "socketBytesWritten": 163324,
+                "openResponses": 1,
+                "dbBytes": 778240,
+                "walBytes": 4136512,
+                "maxWritableBytes": 0,
+                "maxRss": 156254208,
+                "maxHeap": 48420168,
+                "eventLoopDelayMs": {
+                  "mean": 10.7569152,
+                  "p99": 12.705791,
+                  "max": 12.705791
+                },
+                "repositoryTimings": {
+                  "runs.get": {
+                    "count": 2,
+                    "totalMs": 3.3426999999992404,
+                    "meanMs": 1.6713499999996202,
+                    "p50UpperMs": 1.5389933993880383,
+                    "p95UpperMs": 2.048400214585479,
+                    "maxMs": 1.8894000000000233
+                  },
+                  "events.read": {
+                    "count": 4,
+                    "totalMs": 22.423900000001595,
+                    "meanMs": 5.605975000000399,
+                    "p50UpperMs": 4.390927778387035,
+                    "p95UpperMs": 9.412343651268614,
+                    "maxMs": 8.783699999999953
+                  },
+                  "events.finalizationRead": {
+                    "count": 4,
+                    "totalMs": 22.484700000002704,
+                    "meanMs": 5.621175000000676,
+                    "p50UpperMs": 4.830020556225739,
+                    "p95UpperMs": 9.412343651268614,
+                    "maxMs": 8.79490000000078
+                  }
+                },
+                "receivedBytes": 214362,
+                "wireBytesConsumed": 218028,
+                "receivedEvents": 512,
+                "replayElapsedMs": 39.98199999999997,
+                "bytesInFlight": 0
+              }
+            ],
+            "eventLoopDelayMs": {
+              "mean": 11.029617777777778,
+              "p99": 14.467071,
+              "max": 14.467071
+            },
+            "socketBytesWritten": 307746,
+            "maxBytesInFlight": 0
+          },
+          "ok": true
+        }
+      },
+      "cpuSamples": {
+        "count": 2873,
+        "top": [
+          [
+            ":0 libsql_js::statement::Rows::js_next",
+            1418
+          ],
+          [
+            ":0 (idle)",
+            278
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+            127
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:426 columns",
+            95
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+            67
+          ],
+          [
+            ":0 (program)",
+            67
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:83 ",
+            47
+          ],
+          [
+            ":3 ",
+            40
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:559 rowFromSql",
+            40
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:70 buildQueryFromSourceParams",
+            35
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+            32
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+            23
+          ],
+          [
+            ":0 (garbage collector)",
+            23
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/domain/dist/json-schema.js:73 stableHash",
+            15
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:504 executeStmt",
+            14
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:149 ",
+            13
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1723 inst._zod.parse",
+            12
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/query-builders/select.js:71 SQLiteSelectQueryBuilderBase",
+            12
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:34 runChecks",
+            11
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:361 iterate",
+            11
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:283 sql",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/engine/dist/run-manager.js:1615 execute",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:97 inst._zod.run",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:57 ",
+            10
+          ],
+          [
+            "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/dialect.js:116 buildSelection",
+            10
+          ]
+        ]
+      }
+    }
+  ],
+  "boot": {
+    "base": "http://127.0.0.1:6190",
+    "bootMs": 733.5945999999999,
+    "pid": 45672
+  },
+  "idleSqlQueue": {
+    "wallMs": 1.7541999999998552,
+    "latency": {
+      "count": 16,
+      "totalMs": 16.748799999999846,
+      "meanMs": 1.0467999999999904,
+      "p50UpperMs": 1.0511531995000598,
+      "p95UpperMs": 1.6928927393268418,
+      "maxMs": 1.620600000000195
+    }
+  },
+  "cpuProfile": {
+    "samples": 4698,
+    "top": [
+      [
+        ":0 libsql_js::statement::Rows::js_next",
+        1529
+      ],
+      [
+        ":0 (idle)",
+        1303
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+        134
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:426 columns",
+        102
+      ],
+      [
+        ":0 (garbage collector)",
+        94
+      ],
+      [
+        ":0 internalModuleStat",
+        81
+      ],
+      [
+        ":0 (program)",
+        77
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+        71
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:83 ",
+        51
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:559 rowFromSql",
+        51
+      ],
+      [
+        ":0 getNearestParentPackageJSON",
+        49
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1199 inst._zod.parse",
+        48
+      ],
+      [
+        ":3 ",
+        45
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:70 buildQueryFromSourceParams",
+        40
+      ],
+      [
+        ":0 lstat",
+        33
+      ],
+      [
+        "node:internal/modules/cjs/loader:1444 wrapSafe",
+        25
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+        24
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:149 ",
+        22
+      ],
+      [
+        ":0 readFileUtf8",
+        21
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:1723 inst._zod.parse",
+        17
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/infrastructure/dist/sqlite/events.js:17 toEvent",
+        16
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:34 runChecks",
+        15
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js:97 inst._zod.run",
+        15
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/packages/domain/dist/json-schema.js:73 stableHash",
+        15
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:504 executeStmt",
+        14
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:371 next",
+        13
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:361 iterate",
+        13
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/query-builders/select.js:71 SQLiteSelectQueryBuilderBase",
+        12
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sql/sql.js:283 sql",
+        11
+      ],
+      [
+        "file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-268/node_modules/.pnpm/find-my-way@9.9.0/node_modules/find-my-way/lib/node.js:209 _compilePrefixMatch",
+        11
+      ]
+    ]
+  }
+}

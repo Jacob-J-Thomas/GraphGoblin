@@ -1,0 +1,25 @@
+import{readFile,writeFile,readdir,rename}from'node:fs/promises';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-3';
+async function walk(dir){const files=[];for(const e of await readdir(dir,{withFileTypes:true})){const p=dir+'/'+e.name;if(e.isDirectory())files.push(...await walk(p));else files.push(p);}return files;}
+const mappings=[];for(const p of await walk(out)){if(p.endsWith('-context.md')||p.endsWith('/error-context.md')){await rename(p,p+'.txt');mappings.push([p.slice(out.length+1),p.slice(out.length+1)+'.txt']);}else if(p.endsWith('.ts.txt')){const next=p.replace(/\.ts\.txt$/,'.ts.mjs.txt');await rename(p,next);mappings.push([p.slice(out.length+1),next.slice(out.length+1)]);}}
+let report=await readFile(out+'/README.md','utf8');for(const [old,next]of mappings)report=report.replaceAll(old,next);
+report=report.replace('### Required Edge failures outside this feature\'s established defects','### QA-R3-TEST-002 - minor - unchanged failure-code assertion is stale; known stream assertion also fails');
+report=report.replace('### Required infrastructure gate and environment limit',`### Required API gate failure - native worker crash in an unchanged file
+
+The complete API coverage command failed with **one unhandled worker error**: exit **3221225477 (0xC0000005)** while running unchanged **src/classifiers.test.ts**. It reported **82 passed / 2 skipped files** and **1,422 passed / 11 skipped tests**, with an incomplete 1,464-test total. Its emitted percentages (lines **96.72%**, branches **91.37%**) do not make that failed run valid acceptance evidence. The one once-alone diagnostic **pnpm.cmd --filter @graphgoblin/api exec vitest run src/classifiers.test.ts** passed **40/40 tests**. Both results stand; no full gate rerun or attribution of the native crash to #186 is claimed. [Original gate](api.log.txt), [one isolated diagnostic](classifiers-isolated.log.txt).
+
+### Required infrastructure gate and environment limit`);
+report=report.replace('See [complete infrastructure output](infrastructure.log.txt) and the gate table.',`The gate failed **6 tests / 800 passed**, **4 failed / 52 passed files**, and emitted no coverage summary. Failures: ProcessScripts real child/grandchild abort cleanup EBUSY; Claude deadline/overflow cleanup EBUSY; aborted/running cancellation cleanup EBUSY; descendant marker continued from 7 to 10 characters plus EBUSY cleanup; readiness hang returned unconfirmed-stop wording; incomplete-UTF-8 cancellation left the child detectable. These are the recorded native termination/cleanup boundary, not six established #186 regressions. There was no ordinary timing failure in an untouched infrastructure test, so no such retry was applicable. See [complete infrastructure output](infrastructure.log.txt) and the gate table.`);
+const percentages=[];for(const n of ['web','api','api-client','domain','infrastructure']){const log=await readFile(out+'/'+n+'.log.txt','utf8');const l=/Lines\s*:\s*([\d.]+)%\s*\(\s*(\d+\/\d+)\s*\)/.exec(log),b=/Branches\s*:\s*([\d.]+)%\s*\(\s*(\d+\/\d+)\s*\)/.exec(log);percentages.push(`| ${n} | ${l?l[1]+'% ('+l[2]+')':'not emitted'} | ${b?b[1]+'% ('+b[2]+')':'not emitted'} | ${n==='api'?'FAILED; worker crash, incomplete suite':n==='infrastructure'?'FAILED; native termination/cleanup':'PASS'} |`);}
+report=report.replace('### Required Edge specs',`### Coverage summaries
+
+| Package | Lines | Branches | Gate qualification |
+|---|---:|---:|---|
+${percentages.join('\n')}
+
+### Required Edge specs`);
+report=report.replace('A fresh before/after memory benchmark was not repeated in this focused regression round;', 'A fresh before/after memory benchmark was not repeated because this round targets the recorded regression/merge changes;');
+report=report.replace('Infrastructure native cancellation/cleanup failures require D-015-capable verification.', 'The API worker crash remains a failed full gate despite its isolated 40-test pass. Infrastructure native cancellation/cleanup failures require D-015-capable verification.');
+await writeFile(out+'/README.md',report);
+await writeFile(out+'/final-verification.json',JSON.stringify({state:'pending final artifact checks',originalGatewayPid:26776,originalGatewayExitCode:0},null,2));
+report=await readFile(out+'/README.md','utf8');const links=new Set([...report.matchAll(/\]\(([^)]+)\)/g)].map(x=>x[1]));const missing=[];for(const p of await walk(out)){const rel=p.slice(out.length+1);if(rel!=='README.md'&&!links.has(rel))missing.push(`- [${rel}](${rel})`);}report=report.replace('\n## 5. Observations outside scope','\n'+missing.join('\n')+'\n\n## 5. Observations outside scope');await writeFile(out+'/README.md',report);

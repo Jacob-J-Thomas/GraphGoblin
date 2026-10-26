@@ -1,0 +1,45 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts --maxWorkers=1 -t 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/adversarial.test.ts (20 tests | 1 failed | 19 skipped) 30245ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30242ms
+pnpm.cmd : 
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 skipped (20)
+   Start at  14:05:05
+   Duration  42.74s (tests 73%, transform 14%, import 13%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ <user-path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=46.2

@@ -1,0 +1,59 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network preserves auth for both harnesses 9195ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > quota-network preserves quota for both harnesses 5600ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > stdout-quota-warning preserves quota for both harnesses 3714ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-empty preserves unknown for both harnesses 2457ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-unrecognised preserves unknown for both harnesses 2086ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stdout preserves auth for both harnesses 2206ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stderr preserves auth for both harnesses 2332ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > ready preserves ready for both harnesses 2077ms
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth preserves auth for both harnesses 648ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+pnpm.cmd :
+At line:2 char:85
++ ... v:LIVE="0"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/re ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth preserves
+auth for both harnesses
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Codex is not signed in. Run codex login, then retry preflight.",
++   "Codex sign-in is missing or invalid. Run codex login, then retry preflight.",
+  ]
+
+ ❯ src/readiness-evidence.test.ts:103:33
+    101|         }
+    102|         if (state === 'auth')
+    103|           expect(item.problems).toEqual([problem(item.harness)]);
+       |                                 ^
+    104|         if (scenario === 'ready' || scenario === 'auth')
+    105|           expect(item.authenticated).toBe(scenario === 'ready');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  18:19:12
+   Duration  62.35s (tests 50%, transform 35%, import 15%)
+
+  Transform  transforming modules took 21.31s · 35% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ [local-path]
+  │ readiness-precision\apps\api

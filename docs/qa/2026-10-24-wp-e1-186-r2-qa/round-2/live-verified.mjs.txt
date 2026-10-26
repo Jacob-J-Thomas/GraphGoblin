@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',checks=[],requests=[],samples=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection');
+await ctl('/idle');
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
+await context.addInitScript(token=>localStorage.setItem('graphgoblin-api-key',token),c.keys.admin);
+const page=await context.newPage();page.on('request',q=>{if(q.headers().accept==='text/event-stream')requests.push(q.url());});
+const run=await ctl('/start',{passes:250,delay:50,items:3,payload:32,script:Array.from({length:252},(_,i)=>({finalText:'verified-'+i+' '+ 'x'.repeat(40000),delayMs:50,items:Array.from({length:3},(_,j)=>({id:'v-'+i+'-'+j,type:'reasoning',summary:'Verified progress '+i+' '+j}))}))});
+const cache=()=>page.evaluate(id=>{const raw=sessionStorage.getItem('graphgoblin-run-events-v4');return {bytes:(raw?.length??0)*2,log:JSON.parse(raw??'{}').state?.runs?.[id]};},run.id);
+const until=async(fn,msg)=>{for(let i=0;i<600;i++){if(await fn())return;await sleep(250);}throw Error(msg);};
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,2500)});}await writeFile(out+'/live-verified-results.json',JSON.stringify({runId:run.id,checks,samples,requests},null,2));}
+await page.goto(c.url+'/app/runs/'+run.id);const list=page.getByRole('list',{name:'Timeline',exact:true});await list.waitFor();const cdp=await context.newCDPSession(page);
+await check('bounded heavy history while actual run executes',async()=>{
+ await until(async()=>(await cache()).log?.lastSeq>700,'no 700th event');let x=await cache();assert.ok(x.log.bytes<=1048576);assert.ok(x.log.events.length<512);
+ const before=await (await fetch(c.url+'/runs/'+run.id,{headers:{authorization:'Bearer '+c.keys.reader}})).json();assert.equal(before.status,'running');
+ await page.getByRole('button',{name:'Load older',exact:true}).click();await until(async()=>!(await page.getByRole('button',{name:'Go to event',exact:true}).isDisabled()),'read not done');
+ x=await cache();const frozen=x.log;
+ await until(async()=>(await cache()).log.lastSeq>=frozen.lastSeq+20,'live ack no advance');const newer=(await cache()).log;assert.deepEqual(newer.events,frozen.events);assert.equal(newer.mode,'history');
+ return {runStatus:before.status,frozenFirst:frozen.events[0].seq,frozenLast:frozen.events.at(-1).seq,ackBefore:frozen.lastSeq,ackAfter:newer.lastSeq,rows:frozen.events.length,bytes:frozen.bytes};
+});
+await check('reload during execution freezes membership and monotonic complete-event cursor',async()=>{
+ const x=(await cache()).log,n=requests.length;assert.equal(x.mode,'history');await page.reload();await list.waitFor();await until(()=>requests.length>n,'no reopen');
+ const after=Number(new URL(requests[n]).searchParams.get('after')),log=(await cache()).log;
+ assert.ok(after>=x.lastSeq);assert.ok(after<=log.lastSeq);assert.equal(log.mode,'history');assert.deepEqual(log.events,x.events);
+ return {snapshotAck:x.lastSeq,reopenedAfter:after,observedAck:log.lastSeq,windowFirst:log.events[0].seq,windowLast:log.events.at(-1).seq};
+});
+await check('same workload reaches thousands, follows exact suffix and remains byte bounded',async()=>{
+ await page.getByRole('button',{name:'Follow live',exact:true}).click();await until(async()=>(await cache()).log.mode==='live','not live');
+ for(let i=0;i<10;i++){const x=await cache(),heap=await cdp.send('Runtime.getHeapUsage');assert.ok(x.log.events.length+x.log.uncached.length<=512);assert.ok(x.log.bytes<=1048576);const rows=await list.getByRole('listitem').count();assert.ok(rows<=80);samples.push({ack:x.log.lastSeq,count:x.log.events.length,retainedUTF16Bytes:x.log.bytes,persistedUTF16Bytes:x.bytes,rows,dom:await list.locator('*').count(),heapUsed:heap.usedSize});await sleep(500);}
+ await ctl('/idle');const all=await ctl('/oracle',{runId:run.id,full:true});await writeFile('.tmp/qa186r2/verified-heavy-full.json',JSON.stringify(all));await until(async()=>(await cache()).log.lastSeq===all.last,'no tail');
+ const x=await cache();assert.ok(all.total>3000);assert.deepEqual(x.log.events,all.events.slice(-x.log.events.length));assert.equal(x.log.mode,'live');assert.ok(x.log.bytes<=1048576);const scroll=await list.evaluate(e=>({top:e.scrollTop,height:e.clientHeight,total:e.scrollHeight}));assert.ok(scroll.top+scroll.height>=scroll.total-8);return {total:all.total,retained:x.log.events.length,bytes:x.log.bytes,sessionBytes:x.bytes,first:x.log.events[0].seq,last:x.log.lastSeq,scroll};
+});
+await check('legacy cache migration with stopped old page starts SSE at zero',async()=>{
+ await page.goto(c.url+'/healthz');
+ await page.evaluate(id=>{sessionStorage.clear();sessionStorage.setItem('graphgoblin-run-events-v4',JSON.stringify({version:1,state:{runs:{[id]:{lastSeq:999999,events:[{seq:999999,type:'run.started',attempt:1,runId:id,ts:new Date().toISOString()}]}}}}));sessionStorage.setItem('graphgoblin-run-events-v3','old');},run.id);
+ const n=requests.length;await page.goto(c.url+'/app/runs/'+run.id);await list.waitFor();await until(()=>requests.length>n,'no SSE');assert.equal(new URL(requests[n]).searchParams.get('after'),'0');await until(async()=>(await cache()).log?.lastSeq>100,'no history');assert.equal(await page.evaluate(()=>sessionStorage.getItem('graphgoblin-run-events-v3')),null);return {oldSentinel:999999,reopen:requests[n],observedAck:(await cache()).log.lastSeq};
+});
+await context.close();await browser.close();
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass)}));

@@ -68,6 +68,7 @@ export interface WebhookReceipt {
 }
 /** Narrow durable webhook admission; not a general message queue. */
 export interface TriggerAdmissionPort {
+  events: EventAdmissionPort;
   create(input: RunAdmission, receiptId?: string): Promise<RunRecord>;
   /** Atomic items-only key admission. Undefined means consumed/reserved, without ID reuse. */
   createPollItem(input: RunAdmission): Promise<RunRecord | undefined>;
@@ -228,4 +229,72 @@ export function pollAdmissionIdentity(input: RunAdmission): { nodeId: string; de
   if (invocation.source !== 'poll' || kind !== 'poll' || !dedupeKey?.trim())
     throw new AdmissionConflictError();
   return { nodeId, dedupeKey };
+}
+
+/** Targeted external Events have their own receipt ledger; webhook repeat semantics stay separate. */
+export interface EventClaim {
+  id: string;
+  ownerId: string;
+  loopId: string;
+  versionId: string;
+  triggerNodeId: string;
+  inbound: WebhookInbound;
+  /** Only an authored node expression adds cross-request payload dedupe. */
+  nodeDedupeKey?: string;
+  /**
+   * The request named no entry. Its keyed retry then matches this loop and type on any entry,
+   * inside the claim, so a publication that replaces the entry ID cannot open a second delivery.
+   */
+  implicitEntry?: true;
+}
+export type EventFailureCode =
+  | 'EVENT_INTENT_CONFLICT'
+  | 'EVENT_TARGET_REMOVED'
+  | 'EVENT_ADMISSION_RETRY'
+  | 'EVENT_ADMISSION_EXHAUSTED';
+export interface EventReceipt extends EventClaim {
+  status: 'pending' | 'admitted' | 'failed' | 'deduplicated';
+  intent?: RunAdmission;
+  attempts: number;
+  nextAttemptAt?: string;
+  failureCode?: EventFailureCode;
+}
+export interface EventAdmissionPort {
+  claim(
+    input: EventClaim,
+    intent: RunAdmission,
+  ): Promise<{ receipt: EventReceipt; duplicate: boolean }>;
+  find(
+    ownerId: string,
+    loopId: string,
+    type: string,
+    key: string,
+    nodeId?: string,
+  ): Promise<EventReceipt[]>;
+  get(id: string): Promise<EventReceipt | undefined>;
+  create(intent: RunAdmission, receiptId: string): Promise<RunRecord>;
+  /** Due receipts in id order, after `afterId` when given, so recovery can page past a stuck head. */
+  due(
+    now: string,
+    limit: number,
+    afterId?: string,
+  ): Promise<Pick<EventReceipt, 'id' | 'attempts'>[]>;
+  failed(id: string, code: EventFailureCode, nextAttemptAt?: string): Promise<void>;
+  hasPendingPin(loopId: string): Promise<boolean>;
+}
+export function assertEventClaim(input: EventClaim, intent: RunAdmission): void {
+  const { invocation } = intent.initialThread;
+  if (
+    input.ownerId !== input.inbound.ownerId ||
+    input.ownerId !== intent.run.ownerId ||
+    input.loopId !== intent.run.loopId ||
+    input.versionId !== intent.run.versionId ||
+    input.triggerNodeId !== invocation.trigger.nodeId ||
+    invocation.source !== 'event' ||
+    invocation.trigger.kind !== 'event' ||
+    (input.nodeDedupeKey !== undefined && input.nodeDedupeKey !== invocation.trigger.dedupeKey) ||
+    invocation.trigger.eventType !== input.inbound.type ||
+    stableStringify(invocation.trigger.payload) !== stableStringify(input.inbound.payload)
+  )
+    throw new AdmissionConflictError();
 }

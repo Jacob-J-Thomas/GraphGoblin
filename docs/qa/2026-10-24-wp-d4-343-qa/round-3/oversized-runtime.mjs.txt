@@ -1,0 +1,19 @@
+import {readFile,readdir,stat,writeFile} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+const out=resolve('docs/qa/2026-10-24-wp-d4-343-qa/round-3');
+const roots=new Set();
+for(const name of ['api-results.json','text-results.json','selector-results.json','lifecycle-results.json','hard-kill-results.json','sweep-isolated-results.json','supplemental-results.json','supplemental-corrected-results.json','gates-finished.json','script-location.json']){
+ try{const r=JSON.parse(await readFile(join(out,name),'utf8'));const p=r.runtime??r.coverage??r.staging;if(p)roots.add(resolve(p.replace('%USERPROFILE%',process.env.USERPROFILE)))}catch{}
+}
+const allowed=resolve(tmpdir(),'gg-qa-d4-343-3-').toLowerCase();
+const records=[];
+async function walk(dir){for(const e of await readdir(dir,{withFileTypes:true}).catch(()=>[])){const p=join(dir,e.name);if(e.isSymbolicLink())continue;if(e.isDirectory()){await walk(p);continue}const s=await stat(p).catch(()=>null);if(!s||s.size<=1000000)continue;const hash=createHash('sha256');for await(const b of createReadStream(p))hash.update(b);records.push({file:p.replaceAll(process.env.USERPROFILE,'%USERPROFILE%'),bytes:s.size,sha256:hash.digest('hex')})}}
+for(const dir of roots){if(!dir.toLowerCase().startsWith(allowed))throw Error('Out-of-scope runtime root');await walk(dir)}
+await writeFile(join(out,'oversized-runtime.json'),JSON.stringify({roots:[...roots].map(p=>p.replaceAll(process.env.USERPROFILE,'%USERPROFILE%')),files:records},null,2));
+let md='# Captures and disposable outputs not kept\n\nAll files retained in the QA evidence folder are at most 1,000,000 bytes. The following oversized generated outputs remain in the disposable runtime directories and were not copied into this evidence folder. No manual directory deletion was issued. Transient V8 profiles removed by the test runner are not cited as evidence.\n\n';
+md+='| Disposable file | Bytes | SHA-256 |\n| --- | ---: | --- |\n';for(const r of records)md+=`| ${r.file} | ${r.bytes} | ${r.sha256} |\n`;
+if(!records.length)md+='| No oversized remaining file | - | - |\n';
+await writeFile(join(out,'NOT-KEPT.md'),md);console.log(records.length+' oversized generated outputs recorded');

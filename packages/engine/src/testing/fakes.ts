@@ -1,8 +1,10 @@
+import { InMemoryEventAdmission } from './event-admission.js';
 /**
  * In-memory fakes for every engine port. Deterministic ids and clock. Used by the engine's own
  * tests and by API and E2E tests through `@graphgoblin/engine/testing`.
  */
 import type {
+  PromptSubmission,
   ContextThread,
   ClassifierBinding,
   ClassifierPrimitive,
@@ -16,8 +18,14 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
-import { isTerminal, stableStringify } from '@graphgoblin/domain';
+import {
+  isTerminal,
+  stableStringify,
+  type ReplayState,
+  type ThreadCheckpoint,
+} from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -145,13 +153,17 @@ export class CapturingLogger implements Logger {
 export class InMemoryEventStore implements EventStorePort {
   private readonly logs = new Map<string, RunEvent[]>();
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
-  constructor(private readonly clock: ClockPort) {}
+  constructor(
+    private readonly clock: ClockPort,
+    private readonly runRepository?: RunRepository,
+  ) {}
 
   async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
+    if (options.requireRun && !(await this.runRepository?.get(runId))) return [];
     const log = this.logs.get(runId) ?? [];
     if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
       return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
@@ -225,7 +237,7 @@ export class InMemoryRunRepository implements RunRepository {
   readonly runs = new Map<string, RunRecord>();
   private readonly initial = new Map<string, ContextThread>();
   private readonly threads = new Map<string, ContextThread>();
-  private readonly checkpoints = new Map<string, number>();
+  private readonly checkpoints = new Map<string, { seq: number; replayState: ReplayState }>();
   private readonly finalized = new Set<string>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
@@ -299,10 +311,14 @@ export class InMemoryRunRepository implements RunRepository {
   }
   markFinalized(runId: string): Promise<void> {
     this.finalized.add(runId);
+    const run = this.runs.get(runId);
+    if (run) run.finalizedAt = new Date().toISOString();
     return Promise.resolve();
   }
   clearFinalized(runId: string): Promise<void> {
     this.finalized.delete(runId);
+    const run = this.runs.get(runId);
+    if (run) delete run.finalizedAt;
     return Promise.resolve();
   }
   listRunReferences(
@@ -327,16 +343,21 @@ export class InMemoryRunRepository implements RunRepository {
   getThread(runId: string): Promise<ContextThread | undefined> {
     return Promise.resolve(this.threads.get(runId));
   }
-  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
+  saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
     this.threads.set(runId, thread);
-    if (seq === undefined) this.checkpoints.delete(runId);
-    else this.checkpoints.set(runId, seq);
+    this.checkpoints.set(runId, { seq, replayState });
     return Promise.resolve();
   }
-  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined> {
+  getThreadCheckpoint(runId: string, atOrBefore?: number): Promise<ThreadCheckpoint | undefined> {
     const thread = this.threads.get(runId);
-    const seq = this.checkpoints.get(runId);
-    return Promise.resolve(thread && seq !== undefined ? { thread, seq } : undefined);
+    const checkpoint = this.checkpoints.get(runId);
+    const kept = checkpoint && (atOrBefore === undefined || checkpoint.seq <= atOrBefore);
+    return Promise.resolve(thread && kept ? { thread, ...checkpoint } : undefined);
   }
   /** Test helper: drop the thread snapshot to force replay. */
   dropThreadSnapshot(runId: string): void {
@@ -406,6 +427,22 @@ export class InMemorySessionRepository implements HarnessSessionRepository {
       .sort((a, b) => b.attempt - a.attempt);
     return Promise.resolve(rows[0]);
   }
+  forNodeAttempt(
+    runId: string,
+    nodeId: string,
+    attempt: number,
+    harness: HarnessId,
+  ): Promise<HarnessSessionRecord | undefined> {
+    return Promise.resolve(
+      this.rows.find(
+        (r) =>
+          r.runId === runId &&
+          r.nodeId === nodeId &&
+          r.attempt === attempt &&
+          r.harness === harness,
+      ),
+    );
+  }
   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
       .filter((r) => r.runId === runId && r.harness === harness && r.sessionId)
@@ -433,6 +470,12 @@ export interface ScriptedTurn {
   usage?: Partial<Usage>;
   /** Simulate a harness-level failure. */
   error?: { code: string; message: string; retriable?: boolean };
+  /** Explicit transport evidence. Default failed scripts are uncertain. */
+  submission?: PromptSubmission;
+  /** Omit even initialization/session evidence. */
+  announceSession?: boolean;
+  /** Positive acceptance marker, independent of initialization. */
+  accepted?: boolean;
   /** Delay before completing, in fake-clock-independent real milliseconds; lets tests cancel mid-turn. */
   delayMs?: number;
 }
@@ -449,6 +492,7 @@ export class FakeHarness implements HarnessPort {
   readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
   readonly cancelled: string[] = [];
   preflightResult: HarnessPreflight = {
+    state: 'ready',
     ok: true,
     version: 'fake',
     authenticated: true,
@@ -502,7 +546,10 @@ export class FakeHarness implements HarnessPort {
     const usage: Usage = { ...ZERO_USAGE, ...turn.usage };
     const items = turn.items ?? [{ id: 'i1', type: 'message', summary: turn.finalText ?? 'OK' }];
     const events: HarnessEvent[] = [
-      { type: 'session', sessionId, mode },
+      ...(turn.announceSession === false ? [] : [{ type: 'session' as const, sessionId, mode }]),
+      ...((turn.accepted ?? !turn.error)
+        ? [{ type: 'submitted' as const, marker: 'fake.accepted' as const }]
+        : []),
       ...items.map((item) => ({ type: 'item', item }) as const),
     ];
     if (turn.error) {
@@ -511,6 +558,11 @@ export class FakeHarness implements HarnessPort {
         code: turn.error.code,
         message: turn.error.message,
         retriable: turn.error.retriable ?? false,
+        submission:
+          turn.submission ??
+          (turn.error.code === 'HARNESS_SESSION_MISSING'
+            ? 'session-missing'
+            : 'delivery-uncertain'),
       });
     } else {
       events.push({ type: 'usage', usage }, { type: 'turn-complete' });
@@ -771,13 +823,40 @@ export class FakeProbes implements HttpProbePort {
 }
 
 export class FakeDelivery implements ReturnDeliveryPort {
-  readonly webhooks: { url: string; payload: JsonValue; secret?: string }[] = [];
+  readonly webhooks: { url: string; payload: JsonValue; secret?: string; deliveryId: string }[] =
+    [];
   readonly logged: { runId: string; payload: JsonValue }[] = [];
   failWebhooks = false;
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void> {
-    if (this.failWebhooks) return Promise.reject(new Error('webhook endpoint returned 503'));
-    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}) });
-    return Promise.resolve();
+  responder?: (
+    deliveryId: string,
+    attempt: number,
+  ) => WebhookAttemptResult | Promise<WebhookAttemptResult>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult> {
+    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}), deliveryId });
+    if (this.responder)
+      return Promise.resolve(
+        this.responder(
+          deliveryId,
+          this.webhooks.filter((call) => call.deliveryId === deliveryId).length,
+        ),
+      );
+    if (this.failWebhooks)
+      return Promise.resolve({
+        ok: false,
+        error: {
+          code: 'http',
+          message: 'Webhook returned HTTP 400.',
+          httpStatus: 400,
+          retryable: false,
+          acknowledgement: 'rejected',
+        },
+      });
+    return Promise.resolve({ ok: true });
   }
   log(runId: string, payload: JsonValue): void {
     this.logged.push({ runId, payload });
@@ -808,7 +887,6 @@ export class InMemorySecrets implements SecretsPort {
 export const DEFAULT_TEST_SETTINGS: EngineSettings = {
   defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
   maxConcurrentRuns: 4,
-  structuredTimeoutMs: 5000,
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
@@ -904,6 +982,7 @@ export type AdmissionWrite =
   | 'create.parent';
 
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+  readonly events: InMemoryEventAdmission;
   readonly receipts = new Map<string, WebhookReceipt>();
   readonly inbound = new Map<string, WebhookClaim['inbound']>();
   /** Resolved endpoint provenance for preserved inbound-only claims in the testing adapter. */
@@ -913,11 +992,28 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   >();
   constructor(
     private readonly runs: InMemoryRunRepository,
-    private readonly events: InMemoryEventStore,
+    private readonly eventStore: InMemoryEventStore,
     private readonly loops: InMemoryLoopRepository,
     private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
-  ) {}
-  async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
+  ) {
+    this.events = new InMemoryEventAdmission(
+      (intent, committed) => this.create(intent, undefined, committed),
+      (owner, loop, node, key) =>
+        runs.hasTriggerKey(owner, loop, node, key) ||
+        [...this.receipts.values()].some(
+          (r) =>
+            r.ownerId === owner &&
+            r.loopId === loop &&
+            r.triggerNodeId === node &&
+            this.inbound.get(r.inboundId)?.dedupeKey === key,
+        ),
+    );
+  }
+  async create(
+    authored: RunAdmission,
+    receiptId?: string,
+    onCommitted?: () => void,
+  ): Promise<RunRecord> {
     const input = parseRunAdmission(authored);
     const receipt = receiptId ? this.receipts.get(receiptId) : undefined;
     if (
@@ -944,7 +1040,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     const parentId = input.run.parentRunId;
     if (link && (!parentId || !this.runs.runs.has(parentId))) throw new AdmissionConflictError();
     if (link && !created) {
-      const recorded = this.events
+      const recorded = this.eventStore
         .all(parentId!)
         .some(
           (event) =>
@@ -961,9 +1057,9 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (run) {
       const thread = await this.runs.getInitialThread(run.id);
       if (!thread || (input.snapshot && !existing)) throw new AdmissionConflictError();
-      assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
+      assertAdmissionIdentity(input, run, thread, this.eventStore.all(run.id)[0]);
     } else {
-      if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
+      if (this.eventStore.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
       if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
@@ -971,7 +1067,9 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       if (link) this.beforeWrite('create.parent');
     }
     const parentLink =
-      link && created ? this.events.prepareNext(parentId!, link, input.run.createdAt) : undefined;
+      link && created
+        ? this.eventStore.prepareNext(parentId!, link, input.run.createdAt)
+        : undefined;
     // Prepare every write (including injected failures) before installing any state. No await
     // separates installation and publication, so listeners see the complete transaction.
     const admitted = receipt ? structuredClone(receipt) : undefined;
@@ -987,9 +1085,9 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (created) {
       if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
-      this.events.commitQueued(queuedEvent(input));
+      this.eventStore.commitQueued(queuedEvent(input));
       if (parentLink) {
-        this.events.commitNext(parentLink);
+        this.eventStore.commitNext(parentLink);
         this.runs.runs.set(parentId!, {
           ...this.runs.runs.get(parentId!)!,
           lastEventSeq: parentLink.seq,
@@ -1000,8 +1098,9 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       this.receipts.set(admitted.id, admitted);
       this.inbound.set(linked.id, linked);
     }
-    if (created) this.events.notifyCommitted(queuedEvent(input));
-    if (parentLink) this.events.notifyCommitted(parentLink);
+    onCommitted?.();
+    if (created) this.eventStore.notifyCommitted(queuedEvent(input));
+    if (parentLink) this.eventStore.notifyCommitted(parentLink);
     return run;
   }
   async createPollItem(authored: RunAdmission): Promise<RunRecord | undefined> {
@@ -1015,7 +1114,19 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
         receipt.triggerNodeId === nodeId &&
         receipt.intent?.initialThread.invocation.trigger.dedupeKey === dedupeKey,
     );
-    if (reserved || this.runs.hasTriggerKey(input.run.ownerId, input.run.loopId, nodeId, dedupeKey))
+    const pendingEvent = [...this.events.receipts.values()].some(
+      (r) =>
+        r.status === 'pending' &&
+        r.ownerId === input.run.ownerId &&
+        r.loopId === input.run.loopId &&
+        r.triggerNodeId === nodeId &&
+        r.intent?.initialThread.invocation.trigger.dedupeKey === dedupeKey,
+    );
+    if (
+      reserved ||
+      pendingEvent ||
+      this.runs.hasTriggerKey(input.run.ownerId, input.run.loopId, nodeId, dedupeKey)
+    )
       return undefined;
     return this.create(input);
   }
@@ -1023,15 +1134,23 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     const frozen = parseRunAdmission(intent);
     assertWebhookClaim(input, frozen);
     const keySeen =
-      !!input.inbound.dedupeKey &&
-      ([...this.receipts.values()].some(
-        (receipt) =>
-          receipt.ownerId === input.ownerId &&
-          receipt.loopId === input.loopId &&
-          receipt.triggerNodeId === input.triggerNodeId &&
-          (this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey ||
-            receipt.intent?.initialThread.invocation.trigger.dedupeKey === input.inbound.dedupeKey),
+      input.inbound.dedupeKey !== undefined &&
+      ([...this.events.receipts.values()].some(
+        (r) =>
+          r.ownerId === input.ownerId &&
+          r.loopId === input.loopId &&
+          r.triggerNodeId === input.triggerNodeId &&
+          r.intent?.initialThread.invocation.trigger.dedupeKey === input.inbound.dedupeKey,
       ) ||
+        [...this.receipts.values()].some(
+          (receipt) =>
+            receipt.ownerId === input.ownerId &&
+            receipt.loopId === input.loopId &&
+            receipt.triggerNodeId === input.triggerNodeId &&
+            (this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey ||
+              receipt.intent?.initialThread.invocation.trigger.dedupeKey ===
+                input.inbound.dedupeKey),
+        ) ||
         [...this.inbound.values()].some((inbound) => {
           const scope = this.inboundScopes.get(inbound.id);
           return (
@@ -1153,8 +1272,8 @@ export interface FakePorts extends EnginePorts {
 /** Build a complete set of fake ports wired together. */
 export function createFakePorts(options: { secrets?: Record<string, string> } = {}): FakePorts {
   const clock = new FakeClock();
-  const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
+  const events = new InMemoryEventStore(clock, runs);
   const loops = new InMemoryLoopRepository();
   const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();

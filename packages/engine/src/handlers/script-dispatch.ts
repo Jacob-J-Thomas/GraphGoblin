@@ -83,7 +83,12 @@ export function classifyScriptFailure(
       evidence.pending?.dispatchId,
     )
   ) {
-    return uncertain(lastNode.nodeId, evidence).toFailure();
+    const uncertainty = uncertain(lastNode.nodeId, evidence).toFailure();
+    // Stop/deadline policy remains non-resumable even when the script's external effect is
+    // uncertain. Keep both the authoritative cause and its dispatch evidence.
+    if (failure.code === 'RUN_INTERRUPTED_BY_STOP' || failure.code === 'RUN_DEADLINE_EXCEEDED')
+      return { ...failure, script: uncertainty.script };
+    return uncertainty;
   }
   return failure;
 }

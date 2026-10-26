@@ -21,8 +21,12 @@ import { createApiProcessFixture, eventually } from './testing/api-subprocess.js
 const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] = [];
 afterEach(async () => {
   for (const fixture of fixtures.splice(0)) {
+    const started = performance.now();
     await fixture.dispose();
     await expect(access(fixture.dataDir)).rejects.toMatchObject({ code: 'ENOENT' });
+    process.stdout.write(
+      `child admission disposal after observer close: ${performance.now() - started}ms\n`,
+    );
   }
 }, 60_000);
 
@@ -55,8 +59,7 @@ describe('child admission across a real API kill (#320)', () => {
     async (delay) => {
       const landings: string[] = [];
       const fixture = await createApiProcessFixture({
-        directoryPrefix: 'gg-wp-d1-api-',
-        portRange: [5910, 5919],
+        prefix: 'gg-wp-d1-int-api-',
       });
       fixtures.push(fixture);
       const token = await fixture.createKey();

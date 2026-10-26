@@ -1,0 +1,33 @@
+packages/contracts build$ tsc -b tsconfig.build.json
+packages/contracts build: Done
+packages/domain build$ tsc -b tsconfig.build.json
+packages/domain build: Done
+packages/engine build$ tsc -b tsconfig.build.json
+packages/engine build: Done
+packages/adapter-jev build$ tsc -b tsconfig.build.json
+packages/infrastructure build$ tsc -b tsconfig.build.json
+packages/adapter-codex build$ tsc -b tsconfig.build.json
+packages/adapter-jev build: Done
+packages/adapter-codex build: Done
+packages/infrastructure build: src/sqlite/event-admission.ts(51,63): error TS2769: No overload matches this call.
+packages/infrastructure build:   Overload 1 of 3, '(left: SQLiteColumn<{ name: "node_key"; tableName: "event_receipts"; dataType: "string"; columnType: "SQLiteText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; ... 5 more ...; generated: undefined; }, {}, { ...; }>, right: string | SQLWrapper): SQL<...>', gave the following error.
+packages/infrastructure build:     Argument of type 'string | undefined' is not assignable to parameter of type 'string | SQLWrapper'.
+packages/infrastructure build:       Type 'undefined' is not assignable to type 'string | SQLWrapper'.
+packages/infrastructure build:   Overload 2 of 3, '(left: Aliased<string | undefined>, right: string | SQLWrapper | undefined): SQL<unknown>', gave the following error.
+packages/infrastructure build:     Argument of type 'SQLiteColumn<{ name: "node_key"; tableName: "event_receipts"; dataType: "string"; columnType: "SQLiteText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, { ...; }>' is not assignable to parameter of type 'Aliased<string | undefined>'.
+packages/infrastructure build:       Type 'SQLiteColumn<{ name: "node_key"; tableName: "event_receipts"; dataType: "string"; columnType: "SQLiteText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, { ...; }>' is missing the following properties from type 'Aliased<string | undefined>': sql, fieldAlias
+packages/infrastructure build:   Overload 3 of 3, '(left: never, right: unknown): SQL<unknown>', gave the following error.
+packages/infrastructure build:     Argument of type 'SQLiteColumn<{ name: "node_key"; tableName: "event_receipts"; dataType: "string"; columnType: "SQLiteText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, { ...; }>' is not assignable to parameter of type 'never'.
+packages/infrastructure build: Failed
+pnpm.cmd : [ELIFECYCLE] Command failed with exit code 1.
+At line:16 char:1
++ pnpm.cmd --filter @graphgoblin/api... build *> docs/qa/wp-d4-343/buil ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([ELIFECYCLE] Co...th exit code 1.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\packages\infrastructure
+

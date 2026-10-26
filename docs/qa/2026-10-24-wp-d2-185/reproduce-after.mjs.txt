@@ -1,0 +1,133 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { createServer } from 'node:http';
+const { createGraphGoblinClient, runs, subscribeRunEvents, waitForRun } = await import(pathToFileURL(resolve('packages/api-client/dist/index.js')));
+const { createMcpServer } = await import(pathToFileURL(resolve('apps/mcp/dist/server.js')));
+const requireMcp = createRequire(resolve('apps/mcp/package.json'));
+const { Client } = await import(pathToFileURL(requireMcp.resolve('@modelcontextprotocol/sdk/client/index.js')));
+const { InMemoryTransport } = await import(pathToFileURL(requireMcp.resolve('@modelcontextprotocol/sdk/inMemory.js')));
+const requireWeb = createRequire(resolve('apps/web/package.json'));
+const { chromium } = requireWeb('@playwright/test');
+const delay = ms => new Promise(ok => setTimeout(ok, ms));
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-185-'));
+const baseUrl = 'http://127.0.0.1:5800';
+const counts = new Map(), pending = new Map(), released = new Set();
+const receiver = createServer((req, res) => {
+  req.resume(); req.on('end', () => {
+    const n = (counts.get(req.url) ?? 0) + 1; counts.set(req.url, n);
+    if (req.url === '/retry' && n === 1) return res.writeHead(503).end();
+    if (released.has(req.url)) return res.writeHead(req.url === '/failure' ? 400 : 200).end();
+    pending.set(req.url, res);
+  });
+});
+await new Promise(ok => receiver.listen(5801, '127.0.0.1', ok));
+let child, apiLog = '';
+async function start() {
+  child = spawn(process.execPath, ['apps/api/dist/main.js'], { cwd: process.cwd(), windowsHide: true,
+    env: { ...process.env, GG_DATA_DIR: dataDir, GG_DB_URL: 'file:' + join(dataDir, 'graphgoblin.db').replaceAll(String.fromCharCode(92), '/'), GG_WEB_DIST: resolve('apps/web/dist'), GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'), GG_PORT: '5800', GG_REQUIRE_API_KEY: 'false', GG_LOG_LEVEL: 'warn' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  child.stdout.on('data', b => { apiLog += b; }); child.stderr.on('data', b => { apiLog += b; });
+  for (let n = 0; n < 300; n++) {
+    if (child.exitCode !== null) throw Error('API exited: ' + apiLog);
+    try { if ((await fetch(baseUrl + '/healthz')).ok) return; } catch {}
+    await delay(50);
+  }
+  throw Error('API did not start: ' + apiLog);
+}
+async function stop() {
+  if (child && child.exitCode === null) { const exited = once(child, 'exit'); child.kill('SIGKILL'); await exited; }
+}
+const client = createGraphGoblinClient({ baseUrl });
+const server = createMcpServer({ client, pollMs: 50 });
+const [ct, st] = InMemoryTransport.createLinkedPair(); await server.connect(st);
+const mcp = new Client({ name: '185-public-reproduction', version: '1' }); await mcp.connect(ct);
+const browser = await chromium.launch({ channel: 'msedge', headless: true }), page = await browser.newPage();
+const subscriptions = [], failures = [];
+async function json(path, body) {
+  const response = await fetch(baseUrl + path, body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const result = await response.json(); if (!response.ok) throw Error(JSON.stringify(result)); return result;
+}
+async function make(kind) {
+  const { loop } = await json('/loops', { definition: { schemaVersion: 4, name: '185 ' + kind,
+    nodes: [{ id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'trigger.payload', destinations: kind === 'none' ? [] : [{ kind: 'webhook', url: 'http://127.0.0.1:5801/' + kind }] } }],
+    edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }] } });
+  await json('/loops/' + loop.id + '/publish', {}); return (await runs.start(client, loop.id, { input: 42 })).id;
+}
+async function until(check) { for (let n = 0; n < 400; n++) { if (await check()) return; await delay(50); } throw Error('condition timed out'); }
+async function observe(label, id) {
+  const snapshot = await runs.get(client, id), events = await runs.events(client, id);
+  const terminal = events.items.findLast(e => ['run.finished', 'run.failed', 'run.cancelled'].includes(e.type));
+  const observation = { case: label, execution: snapshot.status, delivery: snapshot.deliveries?.map(d => ({ status: d.status, attempts: d.attempts, id: d.id })), finalized: snapshot.finalizedAt !== undefined };
+  for (const after of [0, terminal.seq, snapshot.lastEventSeq + 100]) {
+    let settled = false; const seen = [];
+    const sub = subscribeRunEvents({ client, runId: id, after, onEvent: e => { seen.push(e.type); }, backoff: { initialMs: 20 } });
+    subscriptions.push(sub); void sub.done.then(() => { settled = true; });
+    await delay(250); observation['SSE after ' + after] = { settled, seen }; sub.close();
+  }
+  const wait = await waitForRun(client, id, { timeoutMs: 300, pollMs: 50 });
+  observation.clientWait = { finished: wait.finished, status: wait.run?.status, finalized: wait.run?.finalizedAt !== undefined };
+  const tool = await mcp.callTool({ name: 'wait_for_run', arguments: { runId: id, timeoutSeconds: 1 } });
+  const result = JSON.parse(tool.content[0].text);
+  observation.mcpWait = { finished: result.finished, status: result.status ?? result.run?.status, deliveries: result.deliveries ?? result.run?.deliveries };
+  await page.goto(baseUrl + '/app/runs/' + id); await page.getByRole('heading', { name: /^Timeline/ }).waitFor(); await delay(300);
+  observation.inspector = { timeline: await page.getByRole('heading', { name: /^Timeline/ }).innerText(), text: (await page.locator('body').innerText()).match(/Execution:.*|Pending \(.*|Delivered after.*|Failed after.*/g) };
+  await page.screenshot({ path: resolve('docs/qa/2026-10-24-wp-d2-185/' + label.replaceAll(' ', '-') + '.png'), fullPage: true });
+  console.log(JSON.stringify(observation));
+  if (process.argv.includes('--verify')) {
+    const isPending = label.includes('pending') && !label.startsWith('none');
+    for (const [key, item] of Object.entries(observation)) {
+      let actual, expected;
+      if (key.startsWith('SSE after')) { actual = item.settled; expected = !isPending; }
+      else if (key === 'clientWait' || key === 'mcpWait') { actual = item.finished; expected = !isPending; }
+      else if (key === 'inspector') { actual = item.timeline.includes(', complete)'); expected = !isPending; }
+      else continue;
+      try { assert.equal(actual, expected, label + ': ' + key); }
+      catch (error) { failures.push(error.message); }
+    }
+  }
+}
+function release(kind) { const key = '/' + kind; released.add(key); const response = pending.get(key); pending.delete(key); if (response && !response.destroyed && !response.writableEnded) response.writeHead(kind === 'failure' ? 400 : 200).end(); }
+try {
+  await start();
+  for (const kind of ['retry', 'failure', 'restart', 'none']) {
+    const id = await make(kind);
+    await until(async () => (await runs.get(client, id)).status === 'succeeded' && (kind === 'none' || pending.has('/' + kind)));
+    if (kind === 'none') await until(async () => (await runs.get(client, id)).finalizedAt !== undefined);
+    await observe(kind + ' pending', id);
+    if (kind === 'restart') {
+      const cursor = (await runs.get(client, id)).lastEventSeq;
+      let opened = 0, errors = 0, settled = false;
+      const seen = [];
+      const live = subscribeRunEvents({ client, runId: id, after: cursor,
+        onEvent: event => { seen.push({ seq: event.seq, type: event.type }); },
+        onOpen: () => { opened++; }, onError: (_error, attempt) => { if (attempt) errors++; },
+        backoff: { initialMs: 20, maxMs: 100 },
+      });
+      subscriptions.push(live);
+      void live.done.then(() => { settled = true; });
+      await until(() => opened > 0);
+      assert.equal(settled, false, 'pending subscription before real restart');
+      await stop(); await start(); await observe('restart recovered pending', id);
+      assert.equal(settled, false, 'restart/EOF cannot complete pending delivery');
+      release(kind); await until(async () => (await runs.get(client, id)).finalizedAt !== undefined);
+      await live.done;
+      assert.ok(opened >= 2, 'same subscription reconnects after real API restart');
+      assert.ok(errors >= 1, 'transport interruption was observed');
+      assert.equal(seen.filter(e => e.type === 'delivery.finished').length, 1);
+      assert.equal(new Set(seen.map(e => e.seq)).size, seen.length);
+      console.log(JSON.stringify({ case: 'continuous restart subscription', opened, errors, settled, seen }));
+    }
+    release(kind); await until(async () => ((await runs.get(client, id)).finalizedAt !== undefined));
+    await observe(kind + ' final', id);
+  }
+  if (failures.length) throw Error(failures.join('\n'));
+  console.log('NATIVE_RESTART_COMPLETED; disposable store retained for orchestrator cleanup. ' + apiLog);
+} finally {
+  subscriptions.forEach(s => s.close()); await browser.close(); await mcp.close(); await server.close(); await stop(); receiver.closeAllConnections(); receiver.close();
+}

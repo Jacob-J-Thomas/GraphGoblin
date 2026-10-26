@@ -1,0 +1,110 @@
+[
+  {
+    "id": "environment",
+    "actual": {
+      "node": "v22.14.0",
+      "edge": "155.0.4283.62",
+      "port": 5880,
+      "preflight": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "cached-catalog-failure",
+    "steps": "Load a valid catalog, fail a visibility-triggered background refetch, then switch and retry.",
+    "expected": "Cached values retained with Validation unavailable and named retry; switch adds no fetch; recovery alone does not rewrite.",
+    "actual": {
+      "qaFailure": true,
+      "validationUnavailable": false,
+      "readyToPublish": true,
+      "before": {
+        "catalog": 3,
+        "settings": 2,
+        "preflight": 2
+      },
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "The model catalog may be out of date. Cached choices are still available; retry to refresh them. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "This effort is not supported by the selected model. The saved choice stays until you change it.",
+        "",
+        ""
+      ],
+      "after": {
+        "catalog": 4,
+        "settings": 2,
+        "preflight": 2
+      },
+      "recoveryPreserved": true,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "FAIL"
+  }
+]

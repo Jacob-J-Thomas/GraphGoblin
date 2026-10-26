@@ -1,0 +1,80 @@
+[
+  {
+    "id": "historical-cancellation",
+    "expected": "Missing cancellation-request actor labelled not recorded",
+    "steps": "Cancel real inference, remove request from isolated older-history fixture, read API and Edge",
+    "actual": {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDF",
+      "actor": "not recorded"
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "historical-noul",
+    "expected": "No true probability or boolean answer guessed",
+    "steps": "Store accepted older Noul facts as null; inspect unknown answer and raw event",
+    "actual": {
+      "runId": "01M5PWGDG0D4ZG8DW4BD5C9EDJ",
+      "answer": {
+        "type": "noul",
+        "holds": null,
+        "trueProbability": null,
+        "confidence": null
+      }
+    },
+    "result": "PASS"
+  },
+  {
+    "id": "exact-run-record",
+    "expected": "Inspector run record download equals REST",
+    "steps": "Open Exact run record on resumed/cancelled run; download and compare",
+    "actual": "download-run-record.json",
+    "result": "PASS"
+  },
+  {
+    "id": "visible-probability-label-choice",
+    "expected": "Visible probability heading/label as requested in consolidated #123",
+    "steps": "Select choice decision, inspect visible evaluation text and accessible list label",
+    "actual": "AssertionError [ERR_ASSERTION]: The list has only a hidden accessible label; no visible probability label\n    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-supplement.mjs:26:658\n    at async test (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-supplement.mjs:13:86)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-supplement.mjs:25:39",
+    "result": "FAIL"
+  },
+  {
+    "id": "visible-probability-label-score",
+    "expected": "Visible probability heading/label as requested in consolidated #123",
+    "steps": "Select score decision, inspect visible evaluation text and accessible list label",
+    "actual": "AssertionError [ERR_ASSERTION]: The list has only a hidden accessible label; no visible probability label\n    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-supplement.mjs:26:658\n    at async test (file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-supplement.mjs:13:86)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-255-supplement.mjs:25:39",
+    "result": "FAIL"
+  },
+  {
+    "id": "wait-pinning-layout",
+    "expected": "Waiting label and node position remain pinned after rename; long prompt wraps in both widths/themes; stale input rejected",
+    "steps": "Create long-label wait, rename/publish, inspect old run four ways, submit stale and current wait identities",
+    "actual": [
+      {
+        "width": 1440,
+        "theme": "dark",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "client": 1440,
+        "scroll": 1440
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "client": 390,
+        "scroll": 390
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "client": 390,
+        "scroll": 390
+      }
+    ],
+    "result": "PASS"
+  }
+]

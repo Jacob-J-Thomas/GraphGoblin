@@ -1,0 +1,433 @@
+{
+  "variant": "baseline",
+  "evidence": "public engine components, fake-only",
+  "checks": [
+    {
+      "name": "calibrate event count through RunManager",
+      "status": "pass",
+      "actual": {
+        "terminalSeqWithoutItems": 14
+      }
+    },
+    {
+      "name": "finalization history 255",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 255,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null,
+            "count": 255,
+            "timer": false
+          }
+        ],
+        "events": 257,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 256",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 256,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null,
+            "count": 256,
+            "timer": false
+          }
+        ],
+        "events": 258,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 257",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 257,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null,
+            "count": 257,
+            "timer": false
+          }
+        ],
+        "events": 259,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 512",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 512,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null,
+            "count": 512,
+            "timer": false
+          }
+        ],
+        "events": 514,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "finalization history 513",
+      "status": "pass",
+      "actual": {
+        "terminalSeq": 513,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null,
+            "count": 513,
+            "timer": false
+          }
+        ],
+        "events": 515,
+        "deliveries": 2,
+        "idempotentRecovery": true
+      }
+    },
+    {
+      "name": "between pages late-progress",
+      "status": "pass",
+      "actual": {
+        "injected": false,
+        "reads": [
+          {
+            "after": 0,
+            "count": 513
+          }
+        ],
+        "events": 515,
+        "callerAudits": 1
+      }
+    },
+    {
+      "name": "between pages late-delivery",
+      "status": "pass",
+      "actual": {
+        "injected": false,
+        "reads": [
+          {
+            "after": 0,
+            "count": 513
+          }
+        ],
+        "events": 515,
+        "callerAudits": 1
+      }
+    },
+    {
+      "name": "webhook success and recovered delivery journal",
+      "status": "pass",
+      "actual": {
+        "events": 619,
+        "types": [
+          "delivery.queued",
+          "return.delivered",
+          "return.delivered",
+          "delivery.attempted",
+          "delivery.finished"
+        ],
+        "webhookCalls": 1
+      }
+    },
+    {
+      "name": "webhook nonretryable failure remains exact across recovery",
+      "status": "pass",
+      "actual": {
+        "types": [
+          "delivery.queued",
+          "delivery.attempted",
+          "delivery.finished"
+        ],
+        "webhookCalls": 1
+      }
+    },
+    {
+      "name": "visit cap 2 for three gate passes",
+      "status": "pass",
+      "actual": {
+        "status": "failed",
+        "failure": {
+          "code": "MAX_NODE_VISITS",
+          "message": "node \"work\" would start for visit 3, above the loop's maxNodeVisits of 2",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "maxNodeVisits": 2
+          }
+        },
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 2,
+            "gate": 2
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "visit cap 3 for three gate passes",
+      "status": "pass",
+      "actual": {
+        "status": "succeeded",
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 3,
+            "gate": 3,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "visit cap null for three gate passes",
+      "status": "pass",
+      "actual": {
+        "status": "succeeded",
+        "counters": {
+          "nodeVisits": {
+            "start": 1,
+            "work": 3,
+            "gate": 3,
+            "done": 1
+          },
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "wake retry restart cap 2",
+      "status": "pass",
+      "actual": {
+        "status": "failed",
+        "attempts": [
+          1,
+          2,
+          1,
+          2
+        ],
+        "display": 4
+      }
+    },
+    {
+      "name": "wake retry restart cap null",
+      "status": "pass",
+      "actual": {
+        "status": "waiting",
+        "attempts": [
+          1,
+          2,
+          1,
+          2,
+          1
+        ],
+        "display": 5
+      }
+    },
+    {
+      "name": "append refusal before commit",
+      "status": "pass",
+      "actual": {
+        "attempts": [
+          1,
+          2,
+          1,
+          2
+        ],
+        "fresh": 2,
+        "restart": true
+      }
+    },
+    {
+      "name": "append refusal after commit",
+      "status": "pass",
+      "actual": {
+        "attempts": [
+          1,
+          2,
+          1,
+          2,
+          3
+        ],
+        "fresh": 2,
+        "restart": true
+      }
+    },
+    {
+      "name": "resumable script attempt 2 at cap 1",
+      "status": "pass",
+      "actual": {
+        "attempts": [
+          1,
+          2
+        ],
+        "display": 2
+      }
+    },
+    {
+      "name": "failed finalization racing failed-run resume",
+      "status": "pass",
+      "actual": {
+        "held": true,
+        "resumeWaited": true,
+        "finalStatus": "succeeded",
+        "attempts": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "name": "replay inherits display counters but fresh allowance is run-local",
+      "status": "pass",
+      "actual": {
+        "firstFork": {
+          "start": 1,
+          "work": 3,
+          "gate": 3,
+          "done": 1
+        },
+        "inherited": {
+          "start": 1,
+          "work": 3,
+          "gate": 3
+        },
+        "final": {
+          "start": 1,
+          "work": 3,
+          "gate": 3,
+          "done": 1
+        }
+      }
+    },
+    {
+      "name": "subloop visit allowance and returns isolated from parent",
+      "status": "pass",
+      "actual": {
+        "parentStatus": "succeeded",
+        "result": {
+          "status": "succeeded",
+          "outcome": "success",
+          "result": {
+            "child": 7
+          },
+          "childRunId": "00000000000000000000000009"
+        },
+        "childStatus": "succeeded",
+        "childWorkVisits": 2
+      }
+    },
+    {
+      "name": "rejected second finalization page recovers without duplicate delivery",
+      "status": "pass",
+      "actual": {
+        "injected": false,
+        "deliveryBefore": 2,
+        "deliveryAfter": 2,
+        "logCalls": 1,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "cancel during a streamed node with paged terminal history",
+      "status": "pass",
+      "actual": {
+        "status": "cancelled",
+        "progress": 800,
+        "events": 811,
+        "reads": [
+          {
+            "after": 0,
+            "limit": null,
+            "count": 811
+          }
+        ]
+      }
+    },
+    {
+      "name": "replay runs a capped node again with an inherited display count at cap",
+      "status": "pass",
+      "actual": {
+        "inheritedWorkVisits": 3,
+        "newFreshWorkVisits": 3,
+        "displayWorkVisits": 6,
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "name": "subloop propagates a child visit-cap failure",
+      "status": "pass",
+      "actual": {
+        "parentFailure": {
+          "code": "MAX_NODE_VISITS",
+          "message": "subloop child 00000000000000000000000007 failed: node \"work\" would start for visit 2, above the loop's maxNodeVisits of 1",
+          "nodeId": "sub",
+          "resumable": false,
+          "details": {
+            "childRunId": "00000000000000000000000007",
+            "childNodeId": "work",
+            "childDetails": {
+              "maxNodeVisits": 1
+            }
+          }
+        },
+        "childFailure": {
+          "code": "MAX_NODE_VISITS",
+          "message": "node \"work\" would start for visit 2, above the loop's maxNodeVisits of 1",
+          "nodeId": "work",
+          "resumable": false,
+          "details": {
+            "maxNodeVisits": 1
+          }
+        },
+        "childFreshWork": 1
+      }
+    },
+    {
+      "name": "Unlimited exceeds the default ten visits",
+      "status": "pass",
+      "actual": {
+        "status": "succeeded",
+        "freshWork": 12,
+        "displayWork": 12
+      }
+    }
+  ]
+}

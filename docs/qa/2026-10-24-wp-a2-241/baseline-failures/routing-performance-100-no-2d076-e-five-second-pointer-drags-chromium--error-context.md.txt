@@ -1,0 +1,2206 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: routing.spec.ts >> performance: 100 nodes / 200 edges, three five-second pointer drags
+- Location: e2e\routing.spec.ts:472:3
+
+# Error details
+
+```
+Error: expect(received).toBeGreaterThan(expected)
+
+Expected: > 60
+Received:   55
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Loops" [ref=e23] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e25] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e27] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e29] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e31]:
+    - banner [ref=e32]:
+      - link "Loops" [ref=e33] [cursor=pointer]:
+        - /url: /app/loops
+      - generic [ref=e34]: /
+      - 'heading "Dense graph: 100 nodes, 200 edges" [level=1] [ref=e35]'
+      - generic [ref=e36]: draft only
+      - generic [ref=e38]: Unsaved changes
+      - generic [ref=e39]:
+        - button "Undo move n44" [ref=e40] [cursor=pointer]
+        - button "Redo" [disabled] [ref=e44]
+        - link "Open in Runs" [disabled] [ref=e48]
+        - generic [ref=e51]: "Publish the loop first: runs start from a published version."
+        - button "4 errors" [ref=e53] [cursor=pointer]
+        - button "Publish" [ref=e56] [cursor=pointer]
+    - generic [ref=e61]:
+      - complementary "Palette" [ref=e62]:
+        - button "Show palette" [ref=e63] [cursor=pointer]
+        - generic [ref=e68]:
+          - button "Add Trigger node" [ref=e69]
+          - button "Add Decision node" [ref=e73]
+          - button "Add Inference node" [ref=e78]
+          - button "Add Script node" [ref=e83]
+          - button "Add Mutate node" [ref=e87]
+          - button "Add Subloop node" [ref=e92]
+          - button "Add Wait node" [ref=e97]
+          - button "Add Heartbeat node" [ref=e101]
+          - button "Add Exit node" [ref=e105]
+      - main [ref=e109]:
+        - application [ref=e111]:
+          - generic [ref=e113]:
+            - generic:
+              - generic:
+                - img:
+                  - group "start out to n1" [ref=e114] [cursor=pointer]
+                - img:
+                  - group "n1 next to n2" [ref=e117] [cursor=pointer]:
+                    - generic [ref=e120]: next
+                - img:
+                  - group "n1 retry to n1" [ref=e122] [cursor=pointer]:
+                    - generic [ref=e125]: retry
+                - img:
+                  - group "n1 self to n1" [ref=e127] [cursor=pointer]:
+                    - generic [ref=e130]: self
+                - img:
+                  - group "n2 next to n3" [ref=e132] [cursor=pointer]:
+                    - generic [ref=e135]: next
+                - img:
+                  - group "n2 retry to n1" [ref=e137] [cursor=pointer]:
+                    - generic [ref=e140]: retry
+                - img:
+                  - group "n2 self to n2" [ref=e142] [cursor=pointer]:
+                    - generic [ref=e145]: self
+                - img:
+                  - group "n3 next to n4" [ref=e147] [cursor=pointer]:
+                    - generic [ref=e150]: next
+                - img:
+                  - group "n3 retry to n2" [ref=e152] [cursor=pointer]:
+                    - generic [ref=e155]: retry
+                - img:
+                  - group "n4 next to n5" [ref=e157] [cursor=pointer]:
+                    - generic [ref=e160]: next
+                - img:
+                  - group "n4 retry to n3" [ref=e162] [cursor=pointer]:
+                    - generic [ref=e165]: retry
+                - img:
+                  - group "n5 next to n6" [ref=e167] [cursor=pointer]:
+                    - generic [ref=e170]: next
+                - img:
+                  - group "n5 retry to n4" [ref=e172] [cursor=pointer]:
+                    - generic [ref=e175]: retry
+                - img:
+                  - group "n6 next to n7" [ref=e177] [cursor=pointer]:
+                    - generic [ref=e180]: next
+                - img:
+                  - group "n6 retry to n5" [ref=e182] [cursor=pointer]:
+                    - generic [ref=e185]: retry
+                - img:
+                  - group "n7 next to n8" [ref=e187] [cursor=pointer]:
+                    - generic [ref=e190]: next
+                - img:
+                  - group "n7 retry to n6" [ref=e192] [cursor=pointer]:
+                    - generic [ref=e195]: retry
+                - img:
+                  - group "n8 next to n9" [ref=e197] [cursor=pointer]:
+                    - generic [ref=e200]: next
+                - img:
+                  - group "n8 retry to n7" [ref=e202] [cursor=pointer]:
+                    - generic [ref=e205]: retry
+                - img:
+                  - group "n9 next to n10" [ref=e207] [cursor=pointer]:
+                    - generic [ref=e210]: next
+                - img:
+                  - group "n9 retry to n8" [ref=e212] [cursor=pointer]:
+                    - generic [ref=e215]: retry
+                - img:
+                  - group "n10 next to n11" [ref=e217] [cursor=pointer]:
+                    - generic [ref=e220]: next
+                - img:
+                  - group "n10 retry to n9" [ref=e222] [cursor=pointer]:
+                    - generic [ref=e225]: retry
+                - img:
+                  - group "n11 next to n12" [ref=e227] [cursor=pointer]:
+                    - generic [ref=e230]: next
+                - img:
+                  - group "n11 retry to n10" [ref=e232] [cursor=pointer]:
+                    - generic [ref=e235]: retry
+                - img:
+                  - group "n12 next to n13" [ref=e237] [cursor=pointer]:
+                    - generic [ref=e240]: next
+                - img:
+                  - group "n12 retry to n11" [ref=e242] [cursor=pointer]:
+                    - generic [ref=e245]: retry
+                - img:
+                  - group "n13 next to n14" [ref=e247] [cursor=pointer]:
+                    - generic [ref=e250]: next
+                - img:
+                  - group "n13 retry to n12" [ref=e252] [cursor=pointer]:
+                    - generic [ref=e255]: retry
+                - img:
+                  - group "n14 next to n15" [ref=e257] [cursor=pointer]:
+                    - generic [ref=e260]: next
+                - img:
+                  - group "n14 retry to n13" [ref=e262] [cursor=pointer]:
+                    - generic [ref=e265]: retry
+                - img:
+                  - group "n15 next to n16" [ref=e267] [cursor=pointer]:
+                    - generic [ref=e270]: next
+                - img:
+                  - group "n15 retry to n14" [ref=e272] [cursor=pointer]:
+                    - generic [ref=e275]: retry
+                - img:
+                  - group "n16 next to n17" [ref=e277] [cursor=pointer]:
+                    - generic [ref=e280]: next
+                - img:
+                  - group "n16 retry to n15" [ref=e282] [cursor=pointer]:
+                    - generic [ref=e285]: retry
+                - img:
+                  - group "n17 next to n18" [ref=e287] [cursor=pointer]:
+                    - generic [ref=e290]: next
+                - img:
+                  - group "n17 retry to n16" [ref=e292] [cursor=pointer]:
+                    - generic [ref=e295]: retry
+                - img:
+                  - group "n18 next to n19" [ref=e297] [cursor=pointer]:
+                    - generic [ref=e300]: next
+                - img:
+                  - group "n18 retry to n17" [ref=e302] [cursor=pointer]:
+                    - generic [ref=e305]: retry
+                - img:
+                  - group "n19 next to n20" [ref=e307] [cursor=pointer]:
+                    - generic [ref=e310]: next
+                - img:
+                  - group "n19 retry to n18" [ref=e312] [cursor=pointer]:
+                    - generic [ref=e315]: retry
+                - img:
+                  - group "n20 next to n21" [ref=e317] [cursor=pointer]:
+                    - generic [ref=e320]: next
+                - img:
+                  - group "n20 retry to n19" [ref=e322] [cursor=pointer]:
+                    - generic [ref=e325]: retry
+                - img:
+                  - group "n21 next to n22" [ref=e327] [cursor=pointer]:
+                    - generic [ref=e330]: next
+                - img:
+                  - group "n21 retry to n20" [ref=e332] [cursor=pointer]:
+                    - generic [ref=e335]: retry
+                - img:
+                  - group "n22 next to n23" [ref=e337] [cursor=pointer]:
+                    - generic [ref=e340]: next
+                - img:
+                  - group "n22 retry to n21" [ref=e342] [cursor=pointer]:
+                    - generic [ref=e345]: retry
+                - img:
+                  - group "n23 next to n24" [ref=e347] [cursor=pointer]:
+                    - generic [ref=e350]: next
+                - img:
+                  - group "n23 retry to n22" [ref=e352] [cursor=pointer]:
+                    - generic [ref=e355]: retry
+                - img:
+                  - group "n24 next to n25" [ref=e357] [cursor=pointer]:
+                    - generic [ref=e360]: next
+                - img:
+                  - group "n24 retry to n23" [ref=e362] [cursor=pointer]:
+                    - generic [ref=e365]: retry
+                - img:
+                  - group "n25 next to n26" [ref=e367] [cursor=pointer]:
+                    - generic [ref=e370]: next
+                - img:
+                  - group "n25 retry to n24" [ref=e372] [cursor=pointer]:
+                    - generic [ref=e375]: retry
+                - img:
+                  - group "n26 next to n27" [ref=e377] [cursor=pointer]:
+                    - generic [ref=e380]: next
+                - img:
+                  - group "n26 retry to n25" [ref=e382] [cursor=pointer]:
+                    - generic [ref=e385]: retry
+                - img:
+                  - group "n27 next to n28" [ref=e387] [cursor=pointer]:
+                    - generic [ref=e390]: next
+                - img:
+                  - group "n27 retry to n26" [ref=e392] [cursor=pointer]:
+                    - generic [ref=e395]: retry
+                - img:
+                  - group "n28 next to n29" [ref=e397] [cursor=pointer]:
+                    - generic [ref=e400]: next
+                - img:
+                  - group "n28 retry to n27" [ref=e402] [cursor=pointer]:
+                    - generic [ref=e405]: retry
+                - img:
+                  - group "n29 next to n30" [ref=e407] [cursor=pointer]:
+                    - generic [ref=e410]: next
+                - img:
+                  - group "n29 retry to n28" [ref=e412] [cursor=pointer]:
+                    - generic [ref=e415]: retry
+                - img:
+                  - group "n30 next to n31" [ref=e417] [cursor=pointer]:
+                    - generic [ref=e420]: next
+                - img:
+                  - group "n30 retry to n29" [ref=e422] [cursor=pointer]:
+                    - generic [ref=e425]: retry
+                - img:
+                  - group "n31 next to n32" [ref=e427] [cursor=pointer]:
+                    - generic [ref=e430]: next
+                - img:
+                  - group "n31 retry to n30" [ref=e432] [cursor=pointer]:
+                    - generic [ref=e435]: retry
+                - img:
+                  - group "n32 next to n33" [ref=e437] [cursor=pointer]:
+                    - generic [ref=e440]: next
+                - img:
+                  - group "n32 retry to n31" [ref=e442] [cursor=pointer]:
+                    - generic [ref=e445]: retry
+                - img:
+                  - group "n33 next to n34" [ref=e447] [cursor=pointer]:
+                    - generic [ref=e450]: next
+                - img:
+                  - group "n33 retry to n32" [ref=e452] [cursor=pointer]:
+                    - generic [ref=e455]: retry
+                - img:
+                  - group "n34 next to n35" [ref=e457] [cursor=pointer]:
+                    - generic [ref=e460]: next
+                - img:
+                  - group "n34 retry to n33" [ref=e462] [cursor=pointer]:
+                    - generic [ref=e465]: retry
+                - img:
+                  - group "n35 next to n36" [ref=e467] [cursor=pointer]:
+                    - generic [ref=e470]: next
+                - img:
+                  - group "n35 retry to n34" [ref=e472] [cursor=pointer]:
+                    - generic [ref=e475]: retry
+                - img:
+                  - group "n36 next to n37" [ref=e477] [cursor=pointer]:
+                    - generic [ref=e480]: next
+                - img:
+                  - group "n36 retry to n35" [ref=e482] [cursor=pointer]:
+                    - generic [ref=e485]: retry
+                - img:
+                  - group "n37 next to n38" [ref=e487] [cursor=pointer]:
+                    - generic [ref=e490]: next
+                - img:
+                  - group "n37 retry to n36" [ref=e492] [cursor=pointer]:
+                    - generic [ref=e495]: retry
+                - img:
+                  - group "n38 next to n39" [ref=e497] [cursor=pointer]:
+                    - generic [ref=e500]: next
+                - img:
+                  - group "n38 retry to n37" [ref=e502] [cursor=pointer]:
+                    - generic [ref=e505]: retry
+                - img:
+                  - group "n39 next to n40" [ref=e507] [cursor=pointer]:
+                    - generic [ref=e510]: next
+                - img:
+                  - group "n39 retry to n38" [ref=e512] [cursor=pointer]:
+                    - generic [ref=e515]: retry
+                - img:
+                  - group "n40 next to n41" [ref=e517] [cursor=pointer]:
+                    - generic [ref=e520]: next
+                - img:
+                  - group "n40 retry to n39" [ref=e522] [cursor=pointer]:
+                    - generic [ref=e525]: retry
+                - img:
+                  - group "n41 next to n42" [ref=e527] [cursor=pointer]:
+                    - generic [ref=e530]: next
+                - img:
+                  - group "n41 retry to n40" [ref=e532] [cursor=pointer]:
+                    - generic [ref=e535]: retry
+                - img:
+                  - group "n42 next to n43" [ref=e537] [cursor=pointer]:
+                    - generic [ref=e540]: next
+                - img:
+                  - group "n42 retry to n41" [ref=e542] [cursor=pointer]:
+                    - generic [ref=e545]: retry
+                - img:
+                  - group "n43 next to n44" [ref=e547] [cursor=pointer]:
+                    - generic [ref=e550]: next
+                - img:
+                  - group "n43 retry to n42" [ref=e552] [cursor=pointer]:
+                    - generic [ref=e555]: retry
+                - img:
+                  - group "n44 next to n45" [ref=e557] [cursor=pointer]:
+                    - generic [ref=e560]: next
+                - img:
+                  - group "n44 retry to n43" [ref=e562] [cursor=pointer]:
+                    - generic [ref=e565]: retry
+                - img:
+                  - group "n45 next to n46" [ref=e567] [cursor=pointer]:
+                    - generic [ref=e570]: next
+                - img:
+                  - group "n45 retry to n44" [ref=e572] [cursor=pointer]:
+                    - generic [ref=e575]: retry
+                - img:
+                  - group "n46 next to n47" [ref=e577] [cursor=pointer]:
+                    - generic [ref=e580]: next
+                - img:
+                  - group "n46 retry to n45" [ref=e582] [cursor=pointer]:
+                    - generic [ref=e585]: retry
+                - img:
+                  - group "n47 next to n48" [ref=e587] [cursor=pointer]:
+                    - generic [ref=e590]: next
+                - img:
+                  - group "n47 retry to n46" [ref=e592] [cursor=pointer]:
+                    - generic [ref=e595]: retry
+                - img:
+                  - group "n48 next to n49" [ref=e597] [cursor=pointer]:
+                    - generic [ref=e600]: next
+                - img:
+                  - group "n48 retry to n47" [ref=e602] [cursor=pointer]:
+                    - generic [ref=e605]: retry
+                - img:
+                  - group "n49 next to n50" [ref=e607] [cursor=pointer]:
+                    - generic [ref=e610]: next
+                - img:
+                  - group "n49 retry to n48" [ref=e612] [cursor=pointer]:
+                    - generic [ref=e615]: retry
+                - img:
+                  - group "n50 next to n51" [ref=e617] [cursor=pointer]:
+                    - generic [ref=e620]: next
+                - img:
+                  - group "n50 retry to n49" [ref=e622] [cursor=pointer]:
+                    - generic [ref=e625]: retry
+                - img:
+                  - group "n51 next to n52" [ref=e627] [cursor=pointer]:
+                    - generic [ref=e630]: next
+                - img:
+                  - group "n51 retry to n50" [ref=e632] [cursor=pointer]:
+                    - generic [ref=e635]: retry
+                - img:
+                  - group "n52 next to n53" [ref=e637] [cursor=pointer]:
+                    - generic [ref=e640]: next
+                - img:
+                  - group "n52 retry to n51" [ref=e642] [cursor=pointer]:
+                    - generic [ref=e645]: retry
+                - img:
+                  - group "n53 next to n54" [ref=e647] [cursor=pointer]:
+                    - generic [ref=e650]: next
+                - img:
+                  - group "n53 retry to n52" [ref=e652] [cursor=pointer]:
+                    - generic [ref=e655]: retry
+                - img:
+                  - group "n54 next to n55" [ref=e657] [cursor=pointer]:
+                    - generic [ref=e660]: next
+                - img:
+                  - group "n54 retry to n53" [ref=e662] [cursor=pointer]:
+                    - generic [ref=e665]: retry
+                - img:
+                  - group "n55 next to n56" [ref=e667] [cursor=pointer]:
+                    - generic [ref=e670]: next
+                - img:
+                  - group "n55 retry to n54" [ref=e672] [cursor=pointer]:
+                    - generic [ref=e675]: retry
+                - img:
+                  - group "n56 next to n57" [ref=e677] [cursor=pointer]:
+                    - generic [ref=e680]: next
+                - img:
+                  - group "n56 retry to n55" [ref=e682] [cursor=pointer]:
+                    - generic [ref=e685]: retry
+                - img:
+                  - group "n57 next to n58" [ref=e687] [cursor=pointer]:
+                    - generic [ref=e690]: next
+                - img:
+                  - group "n57 retry to n56" [ref=e692] [cursor=pointer]:
+                    - generic [ref=e695]: retry
+                - img:
+                  - group "n58 next to n59" [ref=e697] [cursor=pointer]:
+                    - generic [ref=e700]: next
+                - img:
+                  - group "n58 retry to n57" [ref=e702] [cursor=pointer]:
+                    - generic [ref=e705]: retry
+                - img:
+                  - group "n59 next to n60" [ref=e707] [cursor=pointer]:
+                    - generic [ref=e710]: next
+                - img:
+                  - group "n59 retry to n58" [ref=e712] [cursor=pointer]:
+                    - generic [ref=e715]: retry
+                - img:
+                  - group "n60 next to n61" [ref=e717] [cursor=pointer]:
+                    - generic [ref=e720]: next
+                - img:
+                  - group "n60 retry to n59" [ref=e722] [cursor=pointer]:
+                    - generic [ref=e725]: retry
+                - img:
+                  - group "n61 next to n62" [ref=e727] [cursor=pointer]:
+                    - generic [ref=e730]: next
+                - img:
+                  - group "n61 retry to n60" [ref=e732] [cursor=pointer]:
+                    - generic [ref=e735]: retry
+                - img:
+                  - group "n62 next to n63" [ref=e737] [cursor=pointer]:
+                    - generic [ref=e740]: next
+                - img:
+                  - group "n62 retry to n61" [ref=e742] [cursor=pointer]:
+                    - generic [ref=e745]: retry
+                - img:
+                  - group "n63 next to n64" [ref=e747] [cursor=pointer]:
+                    - generic [ref=e750]: next
+                - img:
+                  - group "n63 retry to n62" [ref=e752] [cursor=pointer]:
+                    - generic [ref=e755]: retry
+                - img:
+                  - group "n64 next to n65" [ref=e757] [cursor=pointer]:
+                    - generic [ref=e760]: next
+                - img:
+                  - group "n64 retry to n63" [ref=e762] [cursor=pointer]:
+                    - generic [ref=e765]: retry
+                - img:
+                  - group "n65 next to n66" [ref=e767] [cursor=pointer]:
+                    - generic [ref=e770]: next
+                - img:
+                  - group "n65 retry to n64" [ref=e772] [cursor=pointer]:
+                    - generic [ref=e775]: retry
+                - img:
+                  - group "n66 next to n67" [ref=e777] [cursor=pointer]:
+                    - generic [ref=e780]: next
+                - img:
+                  - group "n66 retry to n65" [ref=e782] [cursor=pointer]:
+                    - generic [ref=e785]: retry
+                - img:
+                  - group "n67 next to n68" [ref=e787] [cursor=pointer]:
+                    - generic [ref=e790]: next
+                - img:
+                  - group "n67 retry to n66" [ref=e792] [cursor=pointer]:
+                    - generic [ref=e795]: retry
+                - img:
+                  - group "n68 next to n69" [ref=e797] [cursor=pointer]:
+                    - generic [ref=e800]: next
+                - img:
+                  - group "n68 retry to n67" [ref=e802] [cursor=pointer]:
+                    - generic [ref=e805]: retry
+                - img:
+                  - group "n69 next to n70" [ref=e807] [cursor=pointer]:
+                    - generic [ref=e810]: next
+                - img:
+                  - group "n69 retry to n68" [ref=e812] [cursor=pointer]:
+                    - generic [ref=e815]: retry
+                - img:
+                  - group "n70 next to n71" [ref=e817] [cursor=pointer]:
+                    - generic [ref=e820]: next
+                - img:
+                  - group "n70 retry to n69" [ref=e822] [cursor=pointer]:
+                    - generic [ref=e825]: retry
+                - img:
+                  - group "n71 next to n72" [ref=e827] [cursor=pointer]:
+                    - generic [ref=e830]: next
+                - img:
+                  - group "n71 retry to n70" [ref=e832] [cursor=pointer]:
+                    - generic [ref=e835]: retry
+                - img:
+                  - group "n72 next to n73" [ref=e837] [cursor=pointer]:
+                    - generic [ref=e840]: next
+                - img:
+                  - group "n72 retry to n71" [ref=e842] [cursor=pointer]:
+                    - generic [ref=e845]: retry
+                - img:
+                  - group "n73 next to n74" [ref=e847] [cursor=pointer]:
+                    - generic [ref=e850]: next
+                - img:
+                  - group "n73 retry to n72" [ref=e852] [cursor=pointer]:
+                    - generic [ref=e855]: retry
+                - img:
+                  - group "n74 next to n75" [ref=e857] [cursor=pointer]:
+                    - generic [ref=e860]: next
+                - img:
+                  - group "n74 retry to n73" [ref=e862] [cursor=pointer]:
+                    - generic [ref=e865]: retry
+                - img:
+                  - group "n75 next to n76" [ref=e867] [cursor=pointer]:
+                    - generic [ref=e870]: next
+                - img:
+                  - group "n75 retry to n74" [ref=e872] [cursor=pointer]:
+                    - generic [ref=e875]: retry
+                - img:
+                  - group "n76 next to n77" [ref=e877] [cursor=pointer]:
+                    - generic [ref=e880]: next
+                - img:
+                  - group "n76 retry to n75" [ref=e882] [cursor=pointer]:
+                    - generic [ref=e885]: retry
+                - img:
+                  - group "n77 next to n78" [ref=e887] [cursor=pointer]:
+                    - generic [ref=e890]: next
+                - img:
+                  - group "n77 retry to n76" [ref=e892] [cursor=pointer]:
+                    - generic [ref=e895]: retry
+                - img:
+                  - group "n78 next to n79" [ref=e897] [cursor=pointer]:
+                    - generic [ref=e900]: next
+                - img:
+                  - group "n78 retry to n77" [ref=e902] [cursor=pointer]:
+                    - generic [ref=e905]: retry
+                - img:
+                  - group "n79 next to n80" [ref=e907] [cursor=pointer]:
+                    - generic [ref=e910]: next
+                - img:
+                  - group "n79 retry to n78" [ref=e912] [cursor=pointer]:
+                    - generic [ref=e915]: retry
+                - img:
+                  - group "n80 next to n81" [ref=e917] [cursor=pointer]:
+                    - generic [ref=e920]: next
+                - img:
+                  - group "n80 retry to n79" [ref=e922] [cursor=pointer]:
+                    - generic [ref=e925]: retry
+                - img:
+                  - group "n81 next to n82" [ref=e927] [cursor=pointer]:
+                    - generic [ref=e930]: next
+                - img:
+                  - group "n81 retry to n80" [ref=e932] [cursor=pointer]:
+                    - generic [ref=e935]: retry
+                - img:
+                  - group "n82 next to n83" [ref=e937] [cursor=pointer]:
+                    - generic [ref=e940]: next
+                - img:
+                  - group "n82 retry to n81" [ref=e942] [cursor=pointer]:
+                    - generic [ref=e945]: retry
+                - img:
+                  - group "n83 next to n84" [ref=e947] [cursor=pointer]:
+                    - generic [ref=e950]: next
+                - img:
+                  - group "n83 retry to n82" [ref=e952] [cursor=pointer]:
+                    - generic [ref=e955]: retry
+                - img:
+                  - group "n84 next to n85" [ref=e957] [cursor=pointer]:
+                    - generic [ref=e960]: next
+                - img:
+                  - group "n84 retry to n83" [ref=e962] [cursor=pointer]:
+                    - generic [ref=e965]: retry
+                - img:
+                  - group "n85 next to n86" [ref=e967] [cursor=pointer]:
+                    - generic [ref=e970]: next
+                - img:
+                  - group "n85 retry to n84" [ref=e972] [cursor=pointer]:
+                    - generic [ref=e975]: retry
+                - img:
+                  - group "n86 next to n87" [ref=e977] [cursor=pointer]:
+                    - generic [ref=e980]: next
+                - img:
+                  - group "n86 retry to n85" [ref=e982] [cursor=pointer]:
+                    - generic [ref=e985]: retry
+                - img:
+                  - group "n87 next to n88" [ref=e987] [cursor=pointer]:
+                    - generic [ref=e990]: next
+                - img:
+                  - group "n87 retry to n86" [ref=e992] [cursor=pointer]:
+                    - generic [ref=e995]: retry
+                - img:
+                  - group "n88 next to n89" [ref=e997] [cursor=pointer]:
+                    - generic [ref=e1000]: next
+                - img:
+                  - group "n88 retry to n87" [ref=e1002] [cursor=pointer]:
+                    - generic [ref=e1005]: retry
+                - img:
+                  - group "n89 next to n90" [ref=e1007] [cursor=pointer]:
+                    - generic [ref=e1010]: next
+                - img:
+                  - group "n89 retry to n88" [ref=e1012] [cursor=pointer]:
+                    - generic [ref=e1015]: retry
+                - img:
+                  - group "n90 next to n91" [ref=e1017] [cursor=pointer]:
+                    - generic [ref=e1020]: next
+                - img:
+                  - group "n90 retry to n89" [ref=e1022] [cursor=pointer]:
+                    - generic [ref=e1025]: retry
+                - img:
+                  - group "n91 next to n92" [ref=e1027] [cursor=pointer]:
+                    - generic [ref=e1030]: next
+                - img:
+                  - group "n91 retry to n90" [ref=e1032] [cursor=pointer]:
+                    - generic [ref=e1035]: retry
+                - img:
+                  - group "n92 next to n93" [ref=e1037] [cursor=pointer]:
+                    - generic [ref=e1040]: next
+                - img:
+                  - group "n92 retry to n91" [ref=e1042] [cursor=pointer]:
+                    - generic [ref=e1045]: retry
+                - img:
+                  - group "n93 next to n94" [ref=e1047] [cursor=pointer]:
+                    - generic [ref=e1050]: next
+                - img:
+                  - group "n93 retry to n92" [ref=e1052] [cursor=pointer]:
+                    - generic [ref=e1055]: retry
+                - img:
+                  - group "n94 next to n95" [ref=e1057] [cursor=pointer]:
+                    - generic [ref=e1060]: next
+                - img:
+                  - group "n94 retry to n93" [ref=e1062] [cursor=pointer]:
+                    - generic [ref=e1065]: retry
+                - img:
+                  - group "n95 next to n96" [ref=e1067] [cursor=pointer]:
+                    - generic [ref=e1070]: next
+                - img:
+                  - group "n95 retry to n94" [ref=e1072] [cursor=pointer]:
+                    - generic [ref=e1075]: retry
+                - img:
+                  - group "n96 next to n97" [ref=e1077] [cursor=pointer]:
+                    - generic [ref=e1080]: next
+                - img:
+                  - group "n96 retry to n95" [ref=e1082] [cursor=pointer]:
+                    - generic [ref=e1085]: retry
+                - img:
+                  - group "n97 next to n98" [ref=e1087] [cursor=pointer]:
+                    - generic [ref=e1090]: next
+                - img:
+                  - group "n97 retry to n96" [ref=e1092] [cursor=pointer]:
+                    - generic [ref=e1095]: retry
+                - img:
+                  - group "n98 next to done" [ref=e1097] [cursor=pointer]:
+                    - generic [ref=e1100]: next
+                - img:
+                  - group "n98 retry to n97" [ref=e1102] [cursor=pointer]:
+                    - generic [ref=e1105]: retry
+                - img:
+                  - group "done Repeat (repeat) to n1" [ref=e1107] [cursor=pointer]:
+                    - generic [ref=e1110]: Repeat
+              - generic:
+                - group "Trigger start (start)" [ref=e1112]:
+                  - generic [ref=e1113]:
+                    - generic [ref=e1114]:
+                      - generic [ref=e1118]: Trigger
+                      - button "1 issue on start" [ref=e1120] [cursor=pointer]
+                    - generic [ref=e1123]:
+                      - generic [ref=e1124]: start
+                      - generic [ref=e1125]: start
+                      - generic [ref=e1127]:
+                        - text: out
+                        - generic "start output out (out)" [ref=e1128]
+                - group "Decision n1 (n1)" [ref=e1129]:
+                  - generic [ref=e1130]:
+                    - generic "n1 input" [ref=e1131]
+                    - generic [ref=e1132]: Decision
+                    - generic [ref=e1138]:
+                      - generic [ref=e1139]: n1
+                      - generic [ref=e1140]: n1
+                      - generic [ref=e1141]:
+                        - generic [ref=e1142]:
+                          - text: next
+                          - generic "n1 output next (next)" [ref=e1143]
+                        - generic [ref=e1144]:
+                          - text: retry
+                          - generic "n1 output retry (retry)" [ref=e1145]
+                        - generic [ref=e1146]:
+                          - text: self
+                          - generic "n1 output self (self)" [ref=e1147]
+                - group "Decision n2 (n2)" [ref=e1148]:
+                  - generic [ref=e1149]:
+                    - generic "n2 input" [ref=e1150]
+                    - generic [ref=e1151]: Decision
+                    - generic [ref=e1157]:
+                      - generic [ref=e1158]: n2
+                      - generic [ref=e1159]: n2
+                      - generic [ref=e1160]:
+                        - generic [ref=e1161]:
+                          - text: next
+                          - generic "n2 output next (next)" [ref=e1162]
+                        - generic [ref=e1163]:
+                          - text: retry
+                          - generic "n2 output retry (retry)" [ref=e1164]
+                        - generic [ref=e1165]:
+                          - text: self
+                          - generic "n2 output self (self)" [ref=e1166]
+                - group "Decision n3 (n3)" [ref=e1167]:
+                  - generic [ref=e1168]:
+                    - generic "n3 input" [ref=e1169]
+                    - generic [ref=e1170]: Decision
+                    - generic [ref=e1176]:
+                      - generic [ref=e1177]: n3
+                      - generic [ref=e1178]: n3
+                      - generic [ref=e1179]:
+                        - generic [ref=e1180]:
+                          - text: next
+                          - generic "n3 output next (next)" [ref=e1181]
+                        - generic [ref=e1182]:
+                          - text: retry
+                          - generic "n3 output retry (retry)" [ref=e1183]
+                - group "Decision n4 (n4)" [ref=e1184]:
+                  - generic [ref=e1185]:
+                    - generic "n4 input" [ref=e1186]
+                    - generic [ref=e1187]: Decision
+                    - generic [ref=e1193]:
+                      - generic [ref=e1194]: n4
+                      - generic [ref=e1195]: n4
+                      - generic [ref=e1196]:
+                        - generic [ref=e1197]:
+                          - text: next
+                          - generic "n4 output next (next)" [ref=e1198]
+                        - generic [ref=e1199]:
+                          - text: retry
+                          - generic "n4 output retry (retry)" [ref=e1200]
+                - group "Decision n5 (n5)" [ref=e1201]:
+                  - generic [ref=e1202]:
+                    - generic "n5 input" [ref=e1203]
+                    - generic [ref=e1204]: Decision
+                    - generic [ref=e1210]:
+                      - generic [ref=e1211]: n5
+                      - generic [ref=e1212]: n5
+                      - generic [ref=e1213]:
+                        - generic [ref=e1214]:
+                          - text: next
+                          - generic "n5 output next (next)" [ref=e1215]
+                        - generic [ref=e1216]:
+                          - text: retry
+                          - generic "n5 output retry (retry)" [ref=e1217]
+                - group "Decision n6 (n6)" [ref=e1218]:
+                  - generic [ref=e1219]:
+                    - generic "n6 input" [ref=e1220]
+                    - generic [ref=e1221]: Decision
+                    - generic [ref=e1227]:
+                      - generic [ref=e1228]: n6
+                      - generic [ref=e1229]: n6
+                      - generic [ref=e1230]:
+                        - generic [ref=e1231]:
+                          - text: next
+                          - generic "n6 output next (next)" [ref=e1232]
+                        - generic [ref=e1233]:
+                          - text: retry
+                          - generic "n6 output retry (retry)" [ref=e1234]
+                - group "Decision n7 (n7)" [ref=e1235]:
+                  - generic [ref=e1236]:
+                    - generic "n7 input" [ref=e1237]
+                    - generic [ref=e1238]: Decision
+                    - generic [ref=e1244]:
+                      - generic [ref=e1245]: n7
+                      - generic [ref=e1246]: n7
+                      - generic [ref=e1247]:
+                        - generic [ref=e1248]:
+                          - text: next
+                          - generic "n7 output next (next)" [ref=e1249]
+                        - generic [ref=e1250]:
+                          - text: retry
+                          - generic "n7 output retry (retry)" [ref=e1251]
+                - group "Decision n8 (n8)" [ref=e1252]:
+                  - generic [ref=e1253]:
+                    - generic "n8 input" [ref=e1254]
+                    - generic [ref=e1255]: Decision
+                    - generic [ref=e1261]:
+                      - generic [ref=e1262]: n8
+                      - generic [ref=e1263]: n8
+                      - generic [ref=e1264]:
+                        - generic [ref=e1265]:
+                          - text: next
+                          - generic "n8 output next (next)" [ref=e1266]
+                        - generic [ref=e1267]:
+                          - text: retry
+                          - generic "n8 output retry (retry)" [ref=e1268]
+                - group "Decision n9 (n9)" [ref=e1269]:
+                  - generic [ref=e1270]:
+                    - generic "n9 input" [ref=e1271]
+                    - generic [ref=e1272]: Decision
+                    - generic [ref=e1278]:
+                      - generic [ref=e1279]: n9
+                      - generic [ref=e1280]: n9
+                      - generic [ref=e1281]:
+                        - generic [ref=e1282]:
+                          - text: next
+                          - generic "n9 output next (next)" [ref=e1283]
+                        - generic [ref=e1284]:
+                          - text: retry
+                          - generic "n9 output retry (retry)" [ref=e1285]
+                - group "Decision n10 (n10)" [ref=e1286]:
+                  - generic [ref=e1287]:
+                    - generic "n10 input" [ref=e1288]
+                    - generic [ref=e1289]: Decision
+                    - generic [ref=e1295]:
+                      - generic [ref=e1296]: n10
+                      - generic [ref=e1297]: n10
+                      - generic [ref=e1298]:
+                        - generic [ref=e1299]:
+                          - text: next
+                          - generic "n10 output next (next)" [ref=e1300]
+                        - generic [ref=e1301]:
+                          - text: retry
+                          - generic "n10 output retry (retry)" [ref=e1302]
+                - group "Decision n11 (n11)" [ref=e1303]:
+                  - generic [ref=e1304]:
+                    - generic "n11 input" [ref=e1305]
+                    - generic [ref=e1306]: Decision
+                    - generic [ref=e1312]:
+                      - generic [ref=e1313]: n11
+                      - generic [ref=e1314]: n11
+                      - generic [ref=e1315]:
+                        - generic [ref=e1316]:
+                          - text: next
+                          - generic "n11 output next (next)" [ref=e1317]
+                        - generic [ref=e1318]:
+                          - text: retry
+                          - generic "n11 output retry (retry)" [ref=e1319]
+                - group "Decision n12 (n12)" [ref=e1320]:
+                  - generic [ref=e1321]:
+                    - generic "n12 input" [ref=e1322]
+                    - generic [ref=e1323]: Decision
+                    - generic [ref=e1329]:
+                      - generic [ref=e1330]: n12
+                      - generic [ref=e1331]: n12
+                      - generic [ref=e1332]:
+                        - generic [ref=e1333]:
+                          - text: next
+                          - generic "n12 output next (next)" [ref=e1334]
+                        - generic [ref=e1335]:
+                          - text: retry
+                          - generic "n12 output retry (retry)" [ref=e1336]
+                - group "Decision n13 (n13)" [ref=e1337]:
+                  - generic [ref=e1338]:
+                    - generic "n13 input" [ref=e1339]
+                    - generic [ref=e1340]: Decision
+                    - generic [ref=e1346]:
+                      - generic [ref=e1347]: n13
+                      - generic [ref=e1348]: n13
+                      - generic [ref=e1349]:
+                        - generic [ref=e1350]:
+                          - text: next
+                          - generic "n13 output next (next)" [ref=e1351]
+                        - generic [ref=e1352]:
+                          - text: retry
+                          - generic "n13 output retry (retry)" [ref=e1353]
+                - group "Decision n14 (n14)" [ref=e1354]:
+                  - generic [ref=e1355]:
+                    - generic "n14 input" [ref=e1356]
+                    - generic [ref=e1357]: Decision
+                    - generic [ref=e1363]:
+                      - generic [ref=e1364]: n14
+                      - generic [ref=e1365]: n14
+                      - generic [ref=e1366]:
+                        - generic [ref=e1367]:
+                          - text: next
+                          - generic "n14 output next (next)" [ref=e1368]
+                        - generic [ref=e1369]:
+                          - text: retry
+                          - generic "n14 output retry (retry)" [ref=e1370]
+                - group "Decision n15 (n15)" [ref=e1371]:
+                  - generic [ref=e1372]:
+                    - generic "n15 input" [ref=e1373]
+                    - generic [ref=e1374]: Decision
+                    - generic [ref=e1380]:
+                      - generic [ref=e1381]: n15
+                      - generic [ref=e1382]: n15
+                      - generic [ref=e1383]:
+                        - generic [ref=e1384]:
+                          - text: next
+                          - generic "n15 output next (next)" [ref=e1385]
+                        - generic [ref=e1386]:
+                          - text: retry
+                          - generic "n15 output retry (retry)" [ref=e1387]
+                - group "Decision n16 (n16)" [ref=e1388]:
+                  - generic [ref=e1389]:
+                    - generic "n16 input" [ref=e1390]
+                    - generic [ref=e1391]: Decision
+                    - generic [ref=e1397]:
+                      - generic [ref=e1398]: n16
+                      - generic [ref=e1399]: n16
+                      - generic [ref=e1400]:
+                        - generic [ref=e1401]:
+                          - text: next
+                          - generic "n16 output next (next)" [ref=e1402]
+                        - generic [ref=e1403]:
+                          - text: retry
+                          - generic "n16 output retry (retry)" [ref=e1404]
+                - group "Decision n17 (n17)" [ref=e1405]:
+                  - generic [ref=e1406]:
+                    - generic "n17 input" [ref=e1407]
+                    - generic [ref=e1408]: Decision
+                    - generic [ref=e1414]:
+                      - generic [ref=e1415]: n17
+                      - generic [ref=e1416]: n17
+                      - generic [ref=e1417]:
+                        - generic [ref=e1418]:
+                          - text: next
+                          - generic "n17 output next (next)" [ref=e1419]
+                        - generic [ref=e1420]:
+                          - text: retry
+                          - generic "n17 output retry (retry)" [ref=e1421]
+                - group "Decision n18 (n18)" [ref=e1422]:
+                  - generic [ref=e1423]:
+                    - generic "n18 input" [ref=e1424]
+                    - generic [ref=e1425]: Decision
+                    - generic [ref=e1431]:
+                      - generic [ref=e1432]: n18
+                      - generic [ref=e1433]: n18
+                      - generic [ref=e1434]:
+                        - generic [ref=e1435]:
+                          - text: next
+                          - generic "n18 output next (next)" [ref=e1436]
+                        - generic [ref=e1437]:
+                          - text: retry
+                          - generic "n18 output retry (retry)" [ref=e1438]
+                - group "Decision n19 (n19)" [ref=e1439]:
+                  - generic [ref=e1440]:
+                    - generic "n19 input" [ref=e1441]
+                    - generic [ref=e1442]: Decision
+                    - generic [ref=e1448]:
+                      - generic [ref=e1449]: n19
+                      - generic [ref=e1450]: n19
+                      - generic [ref=e1451]:
+                        - generic [ref=e1452]:
+                          - text: next
+                          - generic "n19 output next (next)" [ref=e1453]
+                        - generic [ref=e1454]:
+                          - text: retry
+                          - generic "n19 output retry (retry)" [ref=e1455]
+                - group "Decision n20 (n20)" [ref=e1456]:
+                  - generic [ref=e1457]:
+                    - generic "n20 input" [ref=e1458]
+                    - generic [ref=e1459]: Decision
+                    - generic [ref=e1465]:
+                      - generic [ref=e1466]: n20
+                      - generic [ref=e1467]: n20
+                      - generic [ref=e1468]:
+                        - generic [ref=e1469]:
+                          - text: next
+                          - generic "n20 output next (next)" [ref=e1470]
+                        - generic [ref=e1471]:
+                          - text: retry
+                          - generic "n20 output retry (retry)" [ref=e1472]
+                - group "Decision n21 (n21)" [ref=e1473]:
+                  - generic [ref=e1474]:
+                    - generic "n21 input" [ref=e1475]
+                    - generic [ref=e1476]: Decision
+                    - generic [ref=e1482]:
+                      - generic [ref=e1483]: n21
+                      - generic [ref=e1484]: n21
+                      - generic [ref=e1485]:
+                        - generic [ref=e1486]:
+                          - text: next
+                          - generic "n21 output next (next)" [ref=e1487]
+                        - generic [ref=e1488]:
+                          - text: retry
+                          - generic "n21 output retry (retry)" [ref=e1489]
+                - group "Decision n22 (n22)" [ref=e1490]:
+                  - generic [ref=e1491]:
+                    - generic "n22 input" [ref=e1492]
+                    - generic [ref=e1493]: Decision
+                    - generic [ref=e1499]:
+                      - generic [ref=e1500]: n22
+                      - generic [ref=e1501]: n22
+                      - generic [ref=e1502]:
+                        - generic [ref=e1503]:
+                          - text: next
+                          - generic "n22 output next (next)" [ref=e1504]
+                        - generic [ref=e1505]:
+                          - text: retry
+                          - generic "n22 output retry (retry)" [ref=e1506]
+                - group "Decision n23 (n23)" [ref=e1507]:
+                  - generic [ref=e1508]:
+                    - generic "n23 input" [ref=e1509]
+                    - generic [ref=e1510]: Decision
+                    - generic [ref=e1516]:
+                      - generic [ref=e1517]: n23
+                      - generic [ref=e1518]: n23
+                      - generic [ref=e1519]:
+                        - generic [ref=e1520]:
+                          - text: next
+                          - generic "n23 output next (next)" [ref=e1521]
+                        - generic [ref=e1522]:
+                          - text: retry
+                          - generic "n23 output retry (retry)" [ref=e1523]
+                - group "Decision n24 (n24)" [ref=e1524]:
+                  - generic [ref=e1525]:
+                    - generic "n24 input" [ref=e1526]
+                    - generic [ref=e1527]: Decision
+                    - generic [ref=e1533]:
+                      - generic [ref=e1534]: n24
+                      - generic [ref=e1535]: n24
+                      - generic [ref=e1536]:
+                        - generic [ref=e1537]:
+                          - text: next
+                          - generic "n24 output next (next)" [ref=e1538]
+                        - generic [ref=e1539]:
+                          - text: retry
+                          - generic "n24 output retry (retry)" [ref=e1540]
+                - group "Decision n25 (n25)" [ref=e1541]:
+                  - generic [ref=e1542]:
+                    - generic "n25 input" [ref=e1543]
+                    - generic [ref=e1544]: Decision
+                    - generic [ref=e1550]:
+                      - generic [ref=e1551]: n25
+                      - generic [ref=e1552]: n25
+                      - generic [ref=e1553]:
+                        - generic [ref=e1554]:
+                          - text: next
+                          - generic "n25 output next (next)" [ref=e1555]
+                        - generic [ref=e1556]:
+                          - text: retry
+                          - generic "n25 output retry (retry)" [ref=e1557]
+                - group "Decision n26 (n26)" [ref=e1558]:
+                  - generic [ref=e1559]:
+                    - generic "n26 input" [ref=e1560]
+                    - generic [ref=e1561]: Decision
+                    - generic [ref=e1567]:
+                      - generic [ref=e1568]: n26
+                      - generic [ref=e1569]: n26
+                      - generic [ref=e1570]:
+                        - generic [ref=e1571]:
+                          - text: next
+                          - generic "n26 output next (next)" [ref=e1572]
+                        - generic [ref=e1573]:
+                          - text: retry
+                          - generic "n26 output retry (retry)" [ref=e1574]
+                - group "Decision n27 (n27)" [ref=e1575]:
+                  - generic [ref=e1576]:
+                    - generic "n27 input" [ref=e1577]
+                    - generic [ref=e1578]: Decision
+                    - generic [ref=e1584]:
+                      - generic [ref=e1585]: n27
+                      - generic [ref=e1586]: n27
+                      - generic [ref=e1587]:
+                        - generic [ref=e1588]:
+                          - text: next
+                          - generic "n27 output next (next)" [ref=e1589]
+                        - generic [ref=e1590]:
+                          - text: retry
+                          - generic "n27 output retry (retry)" [ref=e1591]
+                - group "Decision n28 (n28)" [ref=e1592]:
+                  - generic [ref=e1593]:
+                    - generic "n28 input" [ref=e1594]
+                    - generic [ref=e1595]: Decision
+                    - generic [ref=e1601]:
+                      - generic [ref=e1602]: n28
+                      - generic [ref=e1603]: n28
+                      - generic [ref=e1604]:
+                        - generic [ref=e1605]:
+                          - text: next
+                          - generic "n28 output next (next)" [ref=e1606]
+                        - generic [ref=e1607]:
+                          - text: retry
+                          - generic "n28 output retry (retry)" [ref=e1608]
+                - group "Decision n29 (n29)" [ref=e1609]:
+                  - generic [ref=e1610]:
+                    - generic "n29 input" [ref=e1611]
+                    - generic [ref=e1612]: Decision
+                    - generic [ref=e1618]:
+                      - generic [ref=e1619]: n29
+                      - generic [ref=e1620]: n29
+                      - generic [ref=e1621]:
+                        - generic [ref=e1622]:
+                          - text: next
+                          - generic "n29 output next (next)" [ref=e1623]
+                        - generic [ref=e1624]:
+                          - text: retry
+                          - generic "n29 output retry (retry)" [ref=e1625]
+                - group "Decision n30 (n30)" [ref=e1626]:
+                  - generic [ref=e1627]:
+                    - generic "n30 input" [ref=e1628]
+                    - generic [ref=e1629]: Decision
+                    - generic [ref=e1635]:
+                      - generic [ref=e1636]: n30
+                      - generic [ref=e1637]: n30
+                      - generic [ref=e1638]:
+                        - generic [ref=e1639]:
+                          - text: next
+                          - generic "n30 output next (next)" [ref=e1640]
+                        - generic [ref=e1641]:
+                          - text: retry
+                          - generic "n30 output retry (retry)" [ref=e1642]
+                - group "Decision n31 (n31)" [ref=e1643]:
+                  - generic [ref=e1644]:
+                    - generic "n31 input" [ref=e1645]
+                    - generic [ref=e1646]: Decision
+                    - generic [ref=e1652]:
+                      - generic [ref=e1653]: n31
+                      - generic [ref=e1654]: n31
+                      - generic [ref=e1655]:
+                        - generic [ref=e1656]:
+                          - text: next
+                          - generic "n31 output next (next)" [ref=e1657]
+                        - generic [ref=e1658]:
+                          - text: retry
+                          - generic "n31 output retry (retry)" [ref=e1659]
+                - group "Decision n32 (n32)" [ref=e1660]:
+                  - generic [ref=e1661]:
+                    - generic "n32 input" [ref=e1662]
+                    - generic [ref=e1663]: Decision
+                    - generic [ref=e1669]:
+                      - generic [ref=e1670]: n32
+                      - generic [ref=e1671]: n32
+                      - generic [ref=e1672]:
+                        - generic [ref=e1673]:
+                          - text: next
+                          - generic "n32 output next (next)" [ref=e1674]
+                        - generic [ref=e1675]:
+                          - text: retry
+                          - generic "n32 output retry (retry)" [ref=e1676]
+                - group "Decision n33 (n33)" [ref=e1677]:
+                  - generic [ref=e1678]:
+                    - generic "n33 input" [ref=e1679]
+                    - generic [ref=e1680]: Decision
+                    - generic [ref=e1686]:
+                      - generic [ref=e1687]: n33
+                      - generic [ref=e1688]: n33
+                      - generic [ref=e1689]:
+                        - generic [ref=e1690]:
+                          - text: next
+                          - generic "n33 output next (next)" [ref=e1691]
+                        - generic [ref=e1692]:
+                          - text: retry
+                          - generic "n33 output retry (retry)" [ref=e1693]
+                - group "Decision n34 (n34)" [ref=e1694]:
+                  - generic [ref=e1695]:
+                    - generic "n34 input" [ref=e1696]
+                    - generic [ref=e1697]: Decision
+                    - generic [ref=e1703]:
+                      - generic [ref=e1704]: n34
+                      - generic [ref=e1705]: n34
+                      - generic [ref=e1706]:
+                        - generic [ref=e1707]:
+                          - text: next
+                          - generic "n34 output next (next)" [ref=e1708]
+                        - generic [ref=e1709]:
+                          - text: retry
+                          - generic "n34 output retry (retry)" [ref=e1710]
+                - group "Decision n35 (n35)" [ref=e1711]:
+                  - generic [ref=e1712]:
+                    - generic "n35 input" [ref=e1713]
+                    - generic [ref=e1714]: Decision
+                    - generic [ref=e1720]:
+                      - generic [ref=e1721]: n35
+                      - generic [ref=e1722]: n35
+                      - generic [ref=e1723]:
+                        - generic [ref=e1724]:
+                          - text: next
+                          - generic "n35 output next (next)" [ref=e1725]
+                        - generic [ref=e1726]:
+                          - text: retry
+                          - generic "n35 output retry (retry)" [ref=e1727]
+                - group "Decision n36 (n36)" [ref=e1728]:
+                  - generic [ref=e1729]:
+                    - generic "n36 input" [ref=e1730]
+                    - generic [ref=e1731]: Decision
+                    - generic [ref=e1737]:
+                      - generic [ref=e1738]: n36
+                      - generic [ref=e1739]: n36
+                      - generic [ref=e1740]:
+                        - generic [ref=e1741]:
+                          - text: next
+                          - generic "n36 output next (next)" [ref=e1742]
+                        - generic [ref=e1743]:
+                          - text: retry
+                          - generic "n36 output retry (retry)" [ref=e1744]
+                - group "Decision n37 (n37)" [ref=e1745]:
+                  - generic [ref=e1746]:
+                    - generic "n37 input" [ref=e1747]
+                    - generic [ref=e1748]: Decision
+                    - generic [ref=e1754]:
+                      - generic [ref=e1755]: n37
+                      - generic [ref=e1756]: n37
+                      - generic [ref=e1757]:
+                        - generic [ref=e1758]:
+                          - text: next
+                          - generic "n37 output next (next)" [ref=e1759]
+                        - generic [ref=e1760]:
+                          - text: retry
+                          - generic "n37 output retry (retry)" [ref=e1761]
+                - group "Decision n38 (n38)" [ref=e1762]:
+                  - generic [ref=e1763]:
+                    - generic "n38 input" [ref=e1764]
+                    - generic [ref=e1765]: Decision
+                    - generic [ref=e1771]:
+                      - generic [ref=e1772]: n38
+                      - generic [ref=e1773]: n38
+                      - generic [ref=e1774]:
+                        - generic [ref=e1775]:
+                          - text: next
+                          - generic "n38 output next (next)" [ref=e1776]
+                        - generic [ref=e1777]:
+                          - text: retry
+                          - generic "n38 output retry (retry)" [ref=e1778]
+                - group "Decision n39 (n39)" [ref=e1779]:
+                  - generic [ref=e1780]:
+                    - generic "n39 input" [ref=e1781]
+                    - generic [ref=e1782]: Decision
+                    - generic [ref=e1788]:
+                      - generic [ref=e1789]: n39
+                      - generic [ref=e1790]: n39
+                      - generic [ref=e1791]:
+                        - generic [ref=e1792]:
+                          - text: next
+                          - generic "n39 output next (next)" [ref=e1793]
+                        - generic [ref=e1794]:
+                          - text: retry
+                          - generic "n39 output retry (retry)" [ref=e1795]
+                - group "Decision n40 (n40)" [ref=e1796]:
+                  - generic [ref=e1797]:
+                    - generic "n40 input" [ref=e1798]
+                    - generic [ref=e1799]: Decision
+                    - generic [ref=e1805]:
+                      - generic [ref=e1806]: n40
+                      - generic [ref=e1807]: n40
+                      - generic [ref=e1808]:
+                        - generic [ref=e1809]:
+                          - text: next
+                          - generic "n40 output next (next)" [ref=e1810]
+                        - generic [ref=e1811]:
+                          - text: retry
+                          - generic "n40 output retry (retry)" [ref=e1812]
+                - group "Decision n41 (n41)" [ref=e1813]:
+                  - generic [ref=e1814]:
+                    - generic "n41 input" [ref=e1815]
+                    - generic [ref=e1816]: Decision
+                    - generic [ref=e1822]:
+                      - generic [ref=e1823]: n41
+                      - generic [ref=e1824]: n41
+                      - generic [ref=e1825]:
+                        - generic [ref=e1826]:
+                          - text: next
+                          - generic "n41 output next (next)" [ref=e1827]
+                        - generic [ref=e1828]:
+                          - text: retry
+                          - generic "n41 output retry (retry)" [ref=e1829]
+                - group "Decision n42 (n42)" [ref=e1830]:
+                  - generic [ref=e1831]:
+                    - generic "n42 input" [ref=e1832]
+                    - generic [ref=e1833]: Decision
+                    - generic [ref=e1839]:
+                      - generic [ref=e1840]: n42
+                      - generic [ref=e1841]: n42
+                      - generic [ref=e1842]:
+                        - generic [ref=e1843]:
+                          - text: next
+                          - generic "n42 output next (next)" [ref=e1844]
+                        - generic [ref=e1845]:
+                          - text: retry
+                          - generic "n42 output retry (retry)" [ref=e1846]
+                - group "Decision n43 (n43)" [ref=e1847]:
+                  - generic [ref=e1848]:
+                    - generic "n43 input" [ref=e1849]
+                    - generic [ref=e1850]: Decision
+                    - generic [ref=e1856]:
+                      - generic [ref=e1857]: n43
+                      - generic [ref=e1858]: n43
+                      - generic [ref=e1859]:
+                        - generic [ref=e1860]:
+                          - text: next
+                          - generic "n43 output next (next)" [ref=e1861]
+                        - generic [ref=e1862]:
+                          - text: retry
+                          - generic "n43 output retry (retry)" [ref=e1863]
+                - group "Decision n44 (n44)" [active] [ref=e1864]:
+                  - generic [ref=e1865]:
+                    - generic "n44 input" [ref=e1866]
+                    - generic [ref=e1867]: Decision
+                    - generic [ref=e1873]:
+                      - generic [ref=e1874]: n44
+                      - generic [ref=e1875]: n44
+                      - generic [ref=e1876]:
+                        - generic [ref=e1877]:
+                          - text: next
+                          - generic "n44 output next (next)" [ref=e1878]
+                        - generic [ref=e1879]:
+                          - text: retry
+                          - generic "n44 output retry (retry)" [ref=e1880]
+                - group "Decision n45 (n45)" [ref=e1881]:
+                  - generic [ref=e1882]:
+                    - generic "n45 input" [ref=e1883]
+                    - generic [ref=e1884]: Decision
+                    - generic [ref=e1890]:
+                      - generic [ref=e1891]: n45
+                      - generic [ref=e1892]: n45
+                      - generic [ref=e1893]:
+                        - generic [ref=e1894]:
+                          - text: next
+                          - generic "n45 output next (next)" [ref=e1895]
+                        - generic [ref=e1896]:
+                          - text: retry
+                          - generic "n45 output retry (retry)" [ref=e1897]
+                - group "Decision n46 (n46)" [ref=e1898]:
+                  - generic [ref=e1899]:
+                    - generic "n46 input" [ref=e1900]
+                    - generic [ref=e1901]: Decision
+                    - generic [ref=e1907]:
+                      - generic [ref=e1908]: n46
+                      - generic [ref=e1909]: n46
+                      - generic [ref=e1910]:
+                        - generic [ref=e1911]:
+                          - text: next
+                          - generic "n46 output next (next)" [ref=e1912]
+                        - generic [ref=e1913]:
+                          - text: retry
+                          - generic "n46 output retry (retry)" [ref=e1914]
+                - group "Decision n47 (n47)" [ref=e1915]:
+                  - generic [ref=e1916]:
+                    - generic "n47 input" [ref=e1917]
+                    - generic [ref=e1918]: Decision
+                    - generic [ref=e1924]:
+                      - generic [ref=e1925]: n47
+                      - generic [ref=e1926]: n47
+                      - generic [ref=e1927]:
+                        - generic [ref=e1928]:
+                          - text: next
+                          - generic "n47 output next (next)" [ref=e1929]
+                        - generic [ref=e1930]:
+                          - text: retry
+                          - generic "n47 output retry (retry)" [ref=e1931]
+                - group "Decision n48 (n48)" [ref=e1932]:
+                  - generic [ref=e1933]:
+                    - generic "n48 input" [ref=e1934]
+                    - generic [ref=e1935]: Decision
+                    - generic [ref=e1941]:
+                      - generic [ref=e1942]: n48
+                      - generic [ref=e1943]: n48
+                      - generic [ref=e1944]:
+                        - generic [ref=e1945]:
+                          - text: next
+                          - generic "n48 output next (next)" [ref=e1946]
+                        - generic [ref=e1947]:
+                          - text: retry
+                          - generic "n48 output retry (retry)" [ref=e1948]
+                - group "Decision n49 (n49)" [ref=e1949]:
+                  - generic [ref=e1950]:
+                    - generic "n49 input" [ref=e1951]
+                    - generic [ref=e1952]: Decision
+                    - generic [ref=e1958]:
+                      - generic [ref=e1959]: n49
+                      - generic [ref=e1960]: n49
+                      - generic [ref=e1961]:
+                        - generic [ref=e1962]:
+                          - text: next
+                          - generic "n49 output next (next)" [ref=e1963]
+                        - generic [ref=e1964]:
+                          - text: retry
+                          - generic "n49 output retry (retry)" [ref=e1965]
+                - group "Decision n50 (n50)" [ref=e1966]:
+                  - generic [ref=e1967]:
+                    - generic "n50 input" [ref=e1968]
+                    - generic [ref=e1969]: Decision
+                    - generic [ref=e1975]:
+                      - generic [ref=e1976]: n50
+                      - generic [ref=e1977]: n50
+                      - generic [ref=e1978]:
+                        - generic [ref=e1979]:
+                          - text: next
+                          - generic "n50 output next (next)" [ref=e1980]
+                        - generic [ref=e1981]:
+                          - text: retry
+                          - generic "n50 output retry (retry)" [ref=e1982]
+                - group "Decision n51 (n51)" [ref=e1983]:
+                  - generic [ref=e1984]:
+                    - generic "n51 input" [ref=e1985]
+                    - generic [ref=e1986]: Decision
+                    - generic [ref=e1992]:
+                      - generic [ref=e1993]: n51
+                      - generic [ref=e1994]: n51
+                      - generic [ref=e1995]:
+                        - generic [ref=e1996]:
+                          - text: next
+                          - generic "n51 output next (next)" [ref=e1997]
+                        - generic [ref=e1998]:
+                          - text: retry
+                          - generic "n51 output retry (retry)" [ref=e1999]
+                - group "Decision n52 (n52)" [ref=e2000]:
+                  - generic [ref=e2001]:
+                    - generic "n52 input" [ref=e2002]
+                    - generic [ref=e2003]: Decision
+                    - generic [ref=e2009]:
+                      - generic [ref=e2010]: n52
+                      - generic [ref=e2011]: n52
+                      - generic [ref=e2012]:
+                        - generic [ref=e2013]:
+                          - text: next
+                          - generic "n52 output next (next)" [ref=e2014]
+                        - generic [ref=e2015]:
+                          - text: retry
+                          - generic "n52 output retry (retry)" [ref=e2016]
+                - group "Decision n53 (n53)" [ref=e2017]:
+                  - generic [ref=e2018]:
+                    - generic "n53 input" [ref=e2019]
+                    - generic [ref=e2020]: Decision
+                    - generic [ref=e2026]:
+                      - generic [ref=e2027]: n53
+                      - generic [ref=e2028]: n53
+                      - generic [ref=e2029]:
+                        - generic [ref=e2030]:
+                          - text: next
+                          - generic "n53 output next (next)" [ref=e2031]
+                        - generic [ref=e2032]:
+                          - text: retry
+                          - generic "n53 output retry (retry)" [ref=e2033]
+                - group "Decision n54 (n54)" [ref=e2034]:
+                  - generic [ref=e2035]:
+                    - generic "n54 input" [ref=e2036]
+                    - generic [ref=e2037]: Decision
+                    - generic [ref=e2043]:
+                      - generic [ref=e2044]: n54
+                      - generic [ref=e2045]: n54
+                      - generic [ref=e2046]:
+                        - generic [ref=e2047]:
+                          - text: next
+                          - generic "n54 output next (next)" [ref=e2048]
+                        - generic [ref=e2049]:
+                          - text: retry
+                          - generic "n54 output retry (retry)" [ref=e2050]
+                - group "Decision n55 (n55)" [ref=e2051]:
+                  - generic [ref=e2052]:
+                    - generic "n55 input" [ref=e2053]
+                    - generic [ref=e2054]: Decision
+                    - generic [ref=e2060]:
+                      - generic [ref=e2061]: n55
+                      - generic [ref=e2062]: n55
+                      - generic [ref=e2063]:
+                        - generic [ref=e2064]:
+                          - text: next
+                          - generic "n55 output next (next)" [ref=e2065]
+                        - generic [ref=e2066]:
+                          - text: retry
+                          - generic "n55 output retry (retry)" [ref=e2067]
+                - group "Decision n56 (n56)" [ref=e2068]:
+                  - generic [ref=e2069]:
+                    - generic "n56 input" [ref=e2070]
+                    - generic [ref=e2071]: Decision
+                    - generic [ref=e2077]:
+                      - generic [ref=e2078]: n56
+                      - generic [ref=e2079]: n56
+                      - generic [ref=e2080]:
+                        - generic [ref=e2081]:
+                          - text: next
+                          - generic "n56 output next (next)" [ref=e2082]
+                        - generic [ref=e2083]:
+                          - text: retry
+                          - generic "n56 output retry (retry)" [ref=e2084]
+                - group "Decision n57 (n57)" [ref=e2085]:
+                  - generic [ref=e2086]:
+                    - generic "n57 input" [ref=e2087]
+                    - generic [ref=e2088]: Decision
+                    - generic [ref=e2094]:
+                      - generic [ref=e2095]: n57
+                      - generic [ref=e2096]: n57
+                      - generic [ref=e2097]:
+                        - generic [ref=e2098]:
+                          - text: next
+                          - generic "n57 output next (next)" [ref=e2099]
+                        - generic [ref=e2100]:
+                          - text: retry
+                          - generic "n57 output retry (retry)" [ref=e2101]
+                - group "Decision n58 (n58)" [ref=e2102]:
+                  - generic [ref=e2103]:
+                    - generic "n58 input" [ref=e2104]
+                    - generic [ref=e2105]: Decision
+                    - generic [ref=e2111]:
+                      - generic [ref=e2112]: n58
+                      - generic [ref=e2113]: n58
+                      - generic [ref=e2114]:
+                        - generic [ref=e2115]:
+                          - text: next
+                          - generic "n58 output next (next)" [ref=e2116]
+                        - generic [ref=e2117]:
+                          - text: retry
+                          - generic "n58 output retry (retry)" [ref=e2118]
+                - group "Decision n59 (n59)" [ref=e2119]:
+                  - generic [ref=e2120]:
+                    - generic "n59 input" [ref=e2121]
+                    - generic [ref=e2122]: Decision
+                    - generic [ref=e2128]:
+                      - generic [ref=e2129]: n59
+                      - generic [ref=e2130]: n59
+                      - generic [ref=e2131]:
+                        - generic [ref=e2132]:
+                          - text: next
+                          - generic "n59 output next (next)" [ref=e2133]
+                        - generic [ref=e2134]:
+                          - text: retry
+                          - generic "n59 output retry (retry)" [ref=e2135]
+                - group "Decision n60 (n60)" [ref=e2136]:
+                  - generic [ref=e2137]:
+                    - generic "n60 input" [ref=e2138]
+                    - generic [ref=e2139]: Decision
+                    - generic [ref=e2145]:
+                      - generic [ref=e2146]: n60
+                      - generic [ref=e2147]: n60
+                      - generic [ref=e2148]:
+                        - generic [ref=e2149]:
+                          - text: next
+                          - generic "n60 output next (next)" [ref=e2150]
+                        - generic [ref=e2151]:
+                          - text: retry
+                          - generic "n60 output retry (retry)" [ref=e2152]
+                - group "Decision n61 (n61)" [ref=e2153]:
+                  - generic [ref=e2154]:
+                    - generic "n61 input" [ref=e2155]
+                    - generic [ref=e2156]: Decision
+                    - generic [ref=e2162]:
+                      - generic [ref=e2163]: n61
+                      - generic [ref=e2164]: n61
+                      - generic [ref=e2165]:
+                        - generic [ref=e2166]:
+                          - text: next
+                          - generic "n61 output next (next)" [ref=e2167]
+                        - generic [ref=e2168]:
+                          - text: retry
+                          - generic "n61 output retry (retry)" [ref=e2169]
+                - group "Decision n62 (n62)" [ref=e2170]:
+                  - generic [ref=e2171]:
+                    - generic "n62 input" [ref=e2172]
+                    - generic [ref=e2173]: Decision
+                    - generic [ref=e2179]:
+                      - generic [ref=e2180]: n62
+                      - generic [ref=e2181]: n62
+                      - generic [ref=e2182]:
+                        - generic [ref=e2183]:
+                          - text: next
+                          - generic "n62 output next (next)" [ref=e2184]
+                        - generic [ref=e2185]:
+                          - text: retry
+                          - generic "n62 output retry (retry)" [ref=e2186]
+                - group "Decision n63 (n63)" [ref=e2187]:
+                  - generic [ref=e2188]:
+                    - generic "n63 input" [ref=e2189]
+                    - generic [ref=e2190]: Decision
+                    - generic [ref=e2196]:
+                      - generic [ref=e2197]: n63
+                      - generic [ref=e2198]: n63
+                      - generic [ref=e2199]:
+                        - generic [ref=e2200]:
+                          - text: next
+                          - generic "n63 output next (next)" [ref=e2201]
+                        - generic [ref=e2202]:
+                          - text: retry
+                          - generic "n63 output retry (retry)" [ref=e2203]
+                - group "Decision n64 (n64)" [ref=e2204]:
+                  - generic [ref=e2205]:
+                    - generic "n64 input" [ref=e2206]
+                    - generic [ref=e2207]: Decision
+                    - generic [ref=e2213]:
+                      - generic [ref=e2214]: n64
+                      - generic [ref=e2215]: n64
+                      - generic [ref=e2216]:
+                        - generic [ref=e2217]:
+                          - text: next
+                          - generic "n64 output next (next)" [ref=e2218]
+                        - generic [ref=e2219]:
+                          - text: retry
+                          - generic "n64 output retry (retry)" [ref=e2220]
+                - group "Decision n65 (n65)" [ref=e2221]:
+                  - generic [ref=e2222]:
+                    - generic "n65 input" [ref=e2223]
+                    - generic [ref=e2224]: Decision
+                    - generic [ref=e2230]:
+                      - generic [ref=e2231]: n65
+                      - generic [ref=e2232]: n65
+                      - generic [ref=e2233]:
+                        - generic [ref=e2234]:
+                          - text: next
+                          - generic "n65 output next (next)" [ref=e2235]
+                        - generic [ref=e2236]:
+                          - text: retry
+                          - generic "n65 output retry (retry)" [ref=e2237]
+                - group "Decision n66 (n66)" [ref=e2238]:
+                  - generic [ref=e2239]:
+                    - generic "n66 input" [ref=e2240]
+                    - generic [ref=e2241]: Decision
+                    - generic [ref=e2247]:
+                      - generic [ref=e2248]: n66
+                      - generic [ref=e2249]: n66
+                      - generic [ref=e2250]:
+                        - generic [ref=e2251]:
+                          - text: next
+                          - generic "n66 output next (next)" [ref=e2252]
+                        - generic [ref=e2253]:
+                          - text: retry
+                          - generic "n66 output retry (retry)" [ref=e2254]
+                - group "Decision n67 (n67)" [ref=e2255]:
+                  - generic [ref=e2256]:
+                    - generic "n67 input" [ref=e2257]
+                    - generic [ref=e2258]: Decision
+                    - generic [ref=e2264]:
+                      - generic [ref=e2265]: n67
+                      - generic [ref=e2266]: n67
+                      - generic [ref=e2267]:
+                        - generic [ref=e2268]:
+                          - text: next
+                          - generic "n67 output next (next)" [ref=e2269]
+                        - generic [ref=e2270]:
+                          - text: retry
+                          - generic "n67 output retry (retry)" [ref=e2271]
+                - group "Decision n68 (n68)" [ref=e2272]:
+                  - generic [ref=e2273]:
+                    - generic "n68 input" [ref=e2274]
+                    - generic [ref=e2275]: Decision
+                    - generic [ref=e2281]:
+                      - generic [ref=e2282]: n68
+                      - generic [ref=e2283]: n68
+                      - generic [ref=e2284]:
+                        - generic [ref=e2285]:
+                          - text: next
+                          - generic "n68 output next (next)" [ref=e2286]
+                        - generic [ref=e2287]:
+                          - text: retry
+                          - generic "n68 output retry (retry)" [ref=e2288]
+                - group "Decision n69 (n69)" [ref=e2289]:
+                  - generic [ref=e2290]:
+                    - generic "n69 input" [ref=e2291]
+                    - generic [ref=e2292]: Decision
+                    - generic [ref=e2298]:
+                      - generic [ref=e2299]: n69
+                      - generic [ref=e2300]: n69
+                      - generic [ref=e2301]:
+                        - generic [ref=e2302]:
+                          - text: next
+                          - generic "n69 output next (next)" [ref=e2303]
+                        - generic [ref=e2304]:
+                          - text: retry
+                          - generic "n69 output retry (retry)" [ref=e2305]
+                - group "Decision n70 (n70)" [ref=e2306]:
+                  - generic [ref=e2307]:
+                    - generic "n70 input" [ref=e2308]
+                    - generic [ref=e2309]: Decision
+                    - generic [ref=e2315]:
+                      - generic [ref=e2316]: n70
+                      - generic [ref=e2317]: n70
+                      - generic [ref=e2318]:
+                        - generic [ref=e2319]:
+                          - text: next
+                          - generic "n70 output next (next)" [ref=e2320]
+                        - generic [ref=e2321]:
+                          - text: retry
+                          - generic "n70 output retry (retry)" [ref=e2322]
+                - group "Decision n71 (n71)" [ref=e2323]:
+                  - generic [ref=e2324]:
+                    - generic "n71 input" [ref=e2325]
+                    - generic [ref=e2326]: Decision
+                    - generic [ref=e2332]:
+                      - generic [ref=e2333]: n71
+                      - generic [ref=e2334]: n71
+                      - generic [ref=e2335]:
+                        - generic [ref=e2336]:
+                          - text: next
+                          - generic "n71 output next (next)" [ref=e2337]
+                        - generic [ref=e2338]:
+                          - text: retry
+                          - generic "n71 output retry (retry)" [ref=e2339]
+                - group "Decision n72 (n72)" [ref=e2340]:
+                  - generic [ref=e2341]:
+                    - generic "n72 input" [ref=e2342]
+                    - generic [ref=e2343]: Decision
+                    - generic [ref=e2349]:
+                      - generic [ref=e2350]: n72
+                      - generic [ref=e2351]: n72
+                      - generic [ref=e2352]:
+                        - generic [ref=e2353]:
+                          - text: next
+                          - generic "n72 output next (next)" [ref=e2354]
+                        - generic [ref=e2355]:
+                          - text: retry
+                          - generic "n72 output retry (retry)" [ref=e2356]
+                - group "Decision n73 (n73)" [ref=e2357]:
+                  - generic [ref=e2358]:
+                    - generic "n73 input" [ref=e2359]
+                    - generic [ref=e2360]: Decision
+                    - generic [ref=e2366]:
+                      - generic [ref=e2367]: n73
+                      - generic [ref=e2368]: n73
+                      - generic [ref=e2369]:
+                        - generic [ref=e2370]:
+                          - text: next
+                          - generic "n73 output next (next)" [ref=e2371]
+                        - generic [ref=e2372]:
+                          - text: retry
+                          - generic "n73 output retry (retry)" [ref=e2373]
+                - group "Decision n74 (n74)" [ref=e2374]:
+                  - generic [ref=e2375]:
+                    - generic "n74 input" [ref=e2376]
+                    - generic [ref=e2377]: Decision
+                    - generic [ref=e2383]:
+                      - generic [ref=e2384]: n74
+                      - generic [ref=e2385]: n74
+                      - generic [ref=e2386]:
+                        - generic [ref=e2387]:
+                          - text: next
+                          - generic "n74 output next (next)" [ref=e2388]
+                        - generic [ref=e2389]:
+                          - text: retry
+                          - generic "n74 output retry (retry)" [ref=e2390]
+                - group "Decision n75 (n75)" [ref=e2391]:
+                  - generic [ref=e2392]:
+                    - generic "n75 input" [ref=e2393]
+                    - generic [ref=e2394]: Decision
+                    - generic [ref=e2400]:
+                      - generic [ref=e2401]: n75
+                      - generic [ref=e2402]: n75
+                      - generic [ref=e2403]:
+                        - generic [ref=e2404]:
+                          - text: next
+                          - generic "n75 output next (next)" [ref=e2405]
+                        - generic [ref=e2406]:
+                          - text: retry
+                          - generic "n75 output retry (retry)" [ref=e2407]
+                - group "Decision n76 (n76)" [ref=e2408]:
+                  - generic [ref=e2409]:
+                    - generic "n76 input" [ref=e2410]
+                    - generic [ref=e2411]: Decision
+                    - generic [ref=e2417]:
+                      - generic [ref=e2418]: n76
+                      - generic [ref=e2419]: n76
+                      - generic [ref=e2420]:
+                        - generic [ref=e2421]:
+                          - text: next
+                          - generic "n76 output next (next)" [ref=e2422]
+                        - generic [ref=e2423]:
+                          - text: retry
+                          - generic "n76 output retry (retry)" [ref=e2424]
+                - group "Decision n77 (n77)" [ref=e2425]:
+                  - generic [ref=e2426]:
+                    - generic "n77 input" [ref=e2427]
+                    - generic [ref=e2428]: Decision
+                    - generic [ref=e2434]:
+                      - generic [ref=e2435]: n77
+                      - generic [ref=e2436]: n77
+                      - generic [ref=e2437]:
+                        - generic [ref=e2438]:
+                          - text: next
+                          - generic "n77 output next (next)" [ref=e2439]
+                        - generic [ref=e2440]:
+                          - text: retry
+                          - generic "n77 output retry (retry)" [ref=e2441]
+                - group "Decision n78 (n78)" [ref=e2442]:
+                  - generic [ref=e2443]:
+                    - generic "n78 input" [ref=e2444]
+                    - generic [ref=e2445]: Decision
+                    - generic [ref=e2451]:
+                      - generic [ref=e2452]: n78
+                      - generic [ref=e2453]: n78
+                      - generic [ref=e2454]:
+                        - generic [ref=e2455]:
+                          - text: next
+                          - generic "n78 output next (next)" [ref=e2456]
+                        - generic [ref=e2457]:
+                          - text: retry
+                          - generic "n78 output retry (retry)" [ref=e2458]
+                - group "Decision n79 (n79)" [ref=e2459]:
+                  - generic [ref=e2460]:
+                    - generic "n79 input" [ref=e2461]
+                    - generic [ref=e2462]: Decision
+                    - generic [ref=e2468]:
+                      - generic [ref=e2469]: n79
+                      - generic [ref=e2470]: n79
+                      - generic [ref=e2471]:
+                        - generic [ref=e2472]:
+                          - text: next
+                          - generic "n79 output next (next)" [ref=e2473]
+                        - generic [ref=e2474]:
+                          - text: retry
+                          - generic "n79 output retry (retry)" [ref=e2475]
+                - group "Decision n80 (n80)" [ref=e2476]:
+                  - generic [ref=e2477]:
+                    - generic "n80 input" [ref=e2478]
+                    - generic [ref=e2479]: Decision
+                    - generic [ref=e2485]:
+                      - generic [ref=e2486]: n80
+                      - generic [ref=e2487]: n80
+                      - generic [ref=e2488]:
+                        - generic [ref=e2489]:
+                          - text: next
+                          - generic "n80 output next (next)" [ref=e2490]
+                        - generic [ref=e2491]:
+                          - text: retry
+                          - generic "n80 output retry (retry)" [ref=e2492]
+                - group "Decision n81 (n81)" [ref=e2493]:
+                  - generic [ref=e2494]:
+                    - generic "n81 input" [ref=e2495]
+                    - generic [ref=e2496]: Decision
+                    - generic [ref=e2502]:
+                      - generic [ref=e2503]: n81
+                      - generic [ref=e2504]: n81
+                      - generic [ref=e2505]:
+                        - generic [ref=e2506]:
+                          - text: next
+                          - generic "n81 output next (next)" [ref=e2507]
+                        - generic [ref=e2508]:
+                          - text: retry
+                          - generic "n81 output retry (retry)" [ref=e2509]
+                - group "Decision n82 (n82)" [ref=e2510]:
+                  - generic [ref=e2511]:
+                    - generic "n82 input" [ref=e2512]
+                    - generic [ref=e2513]: Decision
+                    - generic [ref=e2519]:
+                      - generic [ref=e2520]: n82
+                      - generic [ref=e2521]: n82
+                      - generic [ref=e2522]:
+                        - generic [ref=e2523]:
+                          - text: next
+                          - generic "n82 output next (next)" [ref=e2524]
+                        - generic [ref=e2525]:
+                          - text: retry
+                          - generic "n82 output retry (retry)" [ref=e2526]
+                - group "Decision n83 (n83)" [ref=e2527]:
+                  - generic [ref=e2528]:
+                    - generic "n83 input" [ref=e2529]
+                    - generic [ref=e2530]: Decision
+                    - generic [ref=e2536]:
+                      - generic [ref=e2537]: n83
+                      - generic [ref=e2538]: n83
+                      - generic [ref=e2539]:
+                        - generic [ref=e2540]:
+                          - text: next
+                          - generic "n83 output next (next)" [ref=e2541]
+                        - generic [ref=e2542]:
+                          - text: retry
+                          - generic "n83 output retry (retry)" [ref=e2543]
+                - group "Decision n84 (n84)" [ref=e2544]:
+                  - generic [ref=e2545]:
+                    - generic "n84 input" [ref=e2546]
+                    - generic [ref=e2547]: Decision
+                    - generic [ref=e2553]:
+                      - generic [ref=e2554]: n84
+                      - generic [ref=e2555]: n84
+                      - generic [ref=e2556]:
+                        - generic [ref=e2557]:
+                          - text: next
+                          - generic "n84 output next (next)" [ref=e2558]
+                        - generic [ref=e2559]:
+                          - text: retry
+                          - generic "n84 output retry (retry)" [ref=e2560]
+                - group "Decision n85 (n85)" [ref=e2561]:
+                  - generic [ref=e2562]:
+                    - generic "n85 input" [ref=e2563]
+                    - generic [ref=e2564]: Decision
+                    - generic [ref=e2570]:
+                      - generic [ref=e2571]: n85
+                      - generic [ref=e2572]: n85
+                      - generic [ref=e2573]:
+                        - generic [ref=e2574]:
+                          - text: next
+                          - generic "n85 output next (next)" [ref=e2575]
+                        - generic [ref=e2576]:
+                          - text: retry
+                          - generic "n85 output retry (retry)" [ref=e2577]
+                - group "Decision n86 (n86)" [ref=e2578]:
+                  - generic [ref=e2579]:
+                    - generic "n86 input" [ref=e2580]
+                    - generic [ref=e2581]: Decision
+                    - generic [ref=e2587]:
+                      - generic [ref=e2588]: n86
+                      - generic [ref=e2589]: n86
+                      - generic [ref=e2590]:
+                        - generic [ref=e2591]:
+                          - text: next
+                          - generic "n86 output next (next)" [ref=e2592]
+                        - generic [ref=e2593]:
+                          - text: retry
+                          - generic "n86 output retry (retry)" [ref=e2594]
+                - group "Decision n87 (n87)" [ref=e2595]:
+                  - generic [ref=e2596]:
+                    - generic "n87 input" [ref=e2597]
+                    - generic [ref=e2598]: Decision
+                    - generic [ref=e2604]:
+                      - generic [ref=e2605]: n87
+                      - generic [ref=e2606]: n87
+                      - generic [ref=e2607]:
+                        - generic [ref=e2608]:
+                          - text: next
+                          - generic "n87 output next (next)" [ref=e2609]
+                        - generic [ref=e2610]:
+                          - text: retry
+                          - generic "n87 output retry (retry)" [ref=e2611]
+                - group "Decision n88 (n88)" [ref=e2612]:
+                  - generic [ref=e2613]:
+                    - generic "n88 input" [ref=e2614]
+                    - generic [ref=e2615]: Decision
+                    - generic [ref=e2621]:
+                      - generic [ref=e2622]: n88
+                      - generic [ref=e2623]: n88
+                      - generic [ref=e2624]:
+                        - generic [ref=e2625]:
+                          - text: next
+                          - generic "n88 output next (next)" [ref=e2626]
+                        - generic [ref=e2627]:
+                          - text: retry
+                          - generic "n88 output retry (retry)" [ref=e2628]
+                - group "Decision n89 (n89)" [ref=e2629]:
+                  - generic [ref=e2630]:
+                    - generic "n89 input" [ref=e2631]
+                    - generic [ref=e2632]: Decision
+                    - generic [ref=e2638]:
+                      - generic [ref=e2639]: n89
+                      - generic [ref=e2640]: n89
+                      - generic [ref=e2641]:
+                        - generic [ref=e2642]:
+                          - text: next
+                          - generic "n89 output next (next)" [ref=e2643]
+                        - generic [ref=e2644]:
+                          - text: retry
+                          - generic "n89 output retry (retry)" [ref=e2645]
+                - group "Decision n90 (n90)" [ref=e2646]:
+                  - generic [ref=e2647]:
+                    - generic "n90 input" [ref=e2648]
+                    - generic [ref=e2649]: Decision
+                    - generic [ref=e2655]:
+                      - generic [ref=e2656]: n90
+                      - generic [ref=e2657]: n90
+                      - generic [ref=e2658]:
+                        - generic [ref=e2659]:
+                          - text: next
+                          - generic "n90 output next (next)" [ref=e2660]
+                        - generic [ref=e2661]:
+                          - text: retry
+                          - generic "n90 output retry (retry)" [ref=e2662]
+                - group "Decision n91 (n91)" [ref=e2663]:
+                  - generic [ref=e2664]:
+                    - generic "n91 input" [ref=e2665]
+                    - generic [ref=e2666]: Decision
+                    - generic [ref=e2672]:
+                      - generic [ref=e2673]: n91
+                      - generic [ref=e2674]: n91
+                      - generic [ref=e2675]:
+                        - generic [ref=e2676]:
+                          - text: next
+                          - generic "n91 output next (next)" [ref=e2677]
+                        - generic [ref=e2678]:
+                          - text: retry
+                          - generic "n91 output retry (retry)" [ref=e2679]
+                - group "Decision n92 (n92)" [ref=e2680]:
+                  - generic [ref=e2681]:
+                    - generic "n92 input" [ref=e2682]
+                    - generic [ref=e2683]: Decision
+                    - generic [ref=e2689]:
+                      - generic [ref=e2690]: n92
+                      - generic [ref=e2691]: n92
+                      - generic [ref=e2692]:
+                        - generic [ref=e2693]:
+                          - text: next
+                          - generic "n92 output next (next)" [ref=e2694]
+                        - generic [ref=e2695]:
+                          - text: retry
+                          - generic "n92 output retry (retry)" [ref=e2696]
+                - group "Decision n93 (n93)" [ref=e2697]:
+                  - generic [ref=e2698]:
+                    - generic "n93 input" [ref=e2699]
+                    - generic [ref=e2700]: Decision
+                    - generic [ref=e2706]:
+                      - generic [ref=e2707]: n93
+                      - generic [ref=e2708]: n93
+                      - generic [ref=e2709]:
+                        - generic [ref=e2710]:
+                          - text: next
+                          - generic "n93 output next (next)" [ref=e2711]
+                        - generic [ref=e2712]:
+                          - text: retry
+                          - generic "n93 output retry (retry)" [ref=e2713]
+                - group "Decision n94 (n94)" [ref=e2714]:
+                  - generic [ref=e2715]:
+                    - generic "n94 input" [ref=e2716]
+                    - generic [ref=e2717]: Decision
+                    - generic [ref=e2723]:
+                      - generic [ref=e2724]: n94
+                      - generic [ref=e2725]: n94
+                      - generic [ref=e2726]:
+                        - generic [ref=e2727]:
+                          - text: next
+                          - generic "n94 output next (next)" [ref=e2728]
+                        - generic [ref=e2729]:
+                          - text: retry
+                          - generic "n94 output retry (retry)" [ref=e2730]
+                - group "Decision n95 (n95)" [ref=e2731]:
+                  - generic [ref=e2732]:
+                    - generic "n95 input" [ref=e2733]
+                    - generic [ref=e2734]: Decision
+                    - generic [ref=e2740]:
+                      - generic [ref=e2741]: n95
+                      - generic [ref=e2742]: n95
+                      - generic [ref=e2743]:
+                        - generic [ref=e2744]:
+                          - text: next
+                          - generic "n95 output next (next)" [ref=e2745]
+                        - generic [ref=e2746]:
+                          - text: retry
+                          - generic "n95 output retry (retry)" [ref=e2747]
+                - group "Decision n96 (n96)" [ref=e2748]:
+                  - generic [ref=e2749]:
+                    - generic "n96 input" [ref=e2750]
+                    - generic [ref=e2751]: Decision
+                    - generic [ref=e2757]:
+                      - generic [ref=e2758]: n96
+                      - generic [ref=e2759]: n96
+                      - generic [ref=e2760]:
+                        - generic [ref=e2761]:
+                          - text: next
+                          - generic "n96 output next (next)" [ref=e2762]
+                        - generic [ref=e2763]:
+                          - text: retry
+                          - generic "n96 output retry (retry)" [ref=e2764]
+                - group "Decision n97 (n97)" [ref=e2765]:
+                  - generic [ref=e2766]:
+                    - generic "n97 input" [ref=e2767]
+                    - generic [ref=e2768]: Decision
+                    - generic [ref=e2774]:
+                      - generic [ref=e2775]: n97
+                      - generic [ref=e2776]: n97
+                      - generic [ref=e2777]:
+                        - generic [ref=e2778]:
+                          - text: next
+                          - generic "n97 output next (next)" [ref=e2779]
+                        - generic [ref=e2780]:
+                          - text: retry
+                          - generic "n97 output retry (retry)" [ref=e2781]
+                - group "Decision n98 (n98)" [ref=e2782]:
+                  - generic [ref=e2783]:
+                    - generic "n98 input" [ref=e2784]
+                    - generic [ref=e2785]: Decision
+                    - generic [ref=e2791]:
+                      - generic [ref=e2792]: n98
+                      - generic [ref=e2793]: n98
+                      - generic [ref=e2794]:
+                        - generic [ref=e2795]:
+                          - text: next
+                          - generic "n98 output next (next)" [ref=e2796]
+                        - generic [ref=e2797]:
+                          - text: retry
+                          - generic "n98 output retry (retry)" [ref=e2798]
+                - group "Decision done (done)" [ref=e2799]:
+                  - generic [ref=e2800]:
+                    - generic "done input" [ref=e2801]
+                    - generic [ref=e2802]:
+                      - generic [ref=e2807]: Decision
+                      - button "2 issues on done" [ref=e2809] [cursor=pointer]: "2"
+                    - generic [ref=e2812]:
+                      - generic [ref=e2813]: done
+                      - generic [ref=e2814]: done
+                      - generic [ref=e2815]:
+                        - generic [ref=e2816]:
+                          - text: Repeat
+                          - generic "done output Repeat (repeat)" [ref=e2817]
+                        - generic [ref=e2818]:
+                          - text: Finish
+                          - generic "done output Finish (finish)" [ref=e2819]
+                        - generic [ref=e2820]:
+                          - text: Limit reached
+                          - generic "done output Limit reached (limit-reached)" [ref=e2821]
+          - generic "Control Panel" [ref=e2822]:
+            - button "Zoom In" [ref=e2823] [cursor=pointer]
+            - button "Zoom Out" [ref=e2826] [cursor=pointer]
+            - button "Fit View" [ref=e2829] [cursor=pointer]
+            - button "Toggle Interactivity" [ref=e2832] [cursor=pointer]
+          - link "React Flow attribution" [ref=e2836] [cursor=pointer]:
+            - /url: https://reactflow.dev?utm_source=attribution
+            - text: React Flow
+      - complementary "Loop settings" [ref=e2839]:
+        - button "Show loop settings" [ref=e2840] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  533 |                 ) {
+  534 |                   routing.push(measure.duration);
+  535 |                   rerouted.push(measure.detail.rerouted);
+  536 |                 }
+  537 |               }
+  538 |             });
+  539 |             observer.observe({ type: 'measure' });
+  540 |             const start = performance.now();
+  541 |             let previous: number | undefined;
+  542 |             const frame = (now: number) => {
+  543 |               if (previous !== undefined) frames.push(now - previous);
+  544 |               previous = now;
+  545 |               if (now - start < 5000) requestAnimationFrame(frame);
+  546 |               else {
+  547 |                 observer.disconnect();
+  548 |                 resolveSamples({ frames, routing, rerouted, duration: now - start });
+  549 |               }
+  550 |             };
+  551 |             requestAnimationFrame(frame);
+  552 |           }),
+  553 |         count,
+  554 |       );
+  555 |       const started = Date.now();
+  556 |       let step = 0;
+  557 |       while (Date.now() - started < 5100) {
+  558 |         // Native Playwright input; a small circuit stays within the row's clear corridor.
+  559 |         const phase = step++ / 10;
+  560 |         await page.mouse.move(origin.x + 12 + Math.sin(phase) * 10, origin.y + Math.cos(phase) * 8);
+  561 |       }
+  562 |       await page.mouse.up();
+  563 |       const samples = await measuring;
+  564 |       console.log(
+  565 |         `${count} nodes, drag ${repetition + 1}: routing ${p95(samples.routing).toFixed(3)} ms / frame ${p95(samples.frames).toFixed(3)} ms p95; ${samples.routing.length} routes, ${samples.frames.length} frames`,
+  566 |       );
+  567 |       repetitions.push({
+  568 |         repetition: repetition + 1,
+  569 |         routingP95Ms: p95(samples.routing),
+  570 |         frameP95Ms: p95(samples.frames),
+  571 |         addedFrameP95Ms: p95(samples.frames) - p95(idleFrames),
+  572 |         reroutedEdgesP95: p95(samples.rerouted),
+  573 |         routingSamples: samples.routing.length,
+  574 |         frameSamples: samples.frames.length,
+  575 |         durationMs: samples.duration,
+  576 |       });
+  577 |     }
+  578 |     if (profile) {
+  579 |       const result = await profile.send('Profiler.stop');
+  580 |       await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));
+  581 |       await profile.detach();
+  582 |     }
+  583 |     // Shared two-core PR runners measured 0.8-5.2 ms for the same code, so their median
+  584 |     // bound is 8 ms. Strict runs (local, or a manual dispatch with Strict set) enforce the
+  585 |     // issue's 4 ms routing criterion.
+  586 |     const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
+  587 |     const medianRoutingLimitMs = strictPerf ? 4 : 8;
+  588 |     const medianRoutingP95Ms = [...repetitions].sort((a, b) => a.routingP95Ms - b.routingP95Ms)[1]!
+  589 |       .routingP95Ms;
+  590 |     const report = {
+  591 |       nodes: count,
+  592 |       edges: count * 2,
+  593 |       repeat: info.repeatEachIndex + 1,
+  594 |       channel:
+  595 |         process.env['GG_E2E_BROWSER_CHANNEL'] ??
+  596 |         (process.platform === 'win32' ? 'msedge' : 'chromium'),
+  597 |       browser: browser.version(),
+  598 |       userAgent: await page.evaluate(() => navigator.userAgent),
+  599 |       viewport: page.viewportSize(),
+  600 |       targets: {
+  601 |         medianRoutingP95Ms: medianRoutingLimitMs,
+  602 |         perDragRoutingP95Ms: 16,
+  603 |         frameP95Ms: 17,
+  604 |       },
+  605 |       medianRoutingP95Ms,
+  606 |       idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
+  607 |       repetitions,
+  608 |     };
+  609 |     console.log(`Routing performance: ${JSON.stringify(report)}`);
+  610 |     const json = JSON.stringify(report, null, 2);
+  611 |     await info.attach('routing-performance', { body: json, contentType: 'application/json' });
+  612 |     const reportDirectory =
+  613 |       process.env['GG_ROUTING_REPORT_DIR'] ??
+  614 |       (process.env['GG_ROUTING_SCREENSHOTS'] === '1'
+  615 |         ? qaDirectory
+  616 |         : info.outputPath('measurements'));
+  617 |     await mkdir(reportDirectory, { recursive: true });
+  618 |     await writeFile(
+  619 |       resolve(
+  620 |         reportDirectory,
+  621 |         `performance-review-${count}-repeat-${info.repeatEachIndex + 1}.json`,
+  622 |       ),
+  623 |       json + '\n',
+  624 |     );
+  625 |     // Every run reports all three routing p95s and keeps each drag below 16 ms. Strict
+  626 |     // runs enforce median routing p95 <4 ms and absolute frame p95 <17 ms; otherwise
+  627 |     // the median bound is 8 ms. Added frame time is reported only:
+  628 |     // idle and drag can use different refresh cadences (for example 120 Hz and 60 Hz).
+  629 |     expect(medianRoutingP95Ms).toBeLessThan(medianRoutingLimitMs);
+  630 |     for (const result of repetitions) {
+  631 |       // A loose ceiling beside the median: no single drag may spike far past it.
+  632 |       expect(result.routingP95Ms).toBeLessThan(16);
+> 633 |       expect(result.routingSamples).toBeGreaterThan(60);
+      |                                     ^ Error: expect(received).toBeGreaterThan(expected)
+  634 |       expect(result.frameSamples).toBeGreaterThan(120);
+  635 |       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+  636 |       if (strictPerf) {
+  637 |         // The issue's frame criterion is the 60 Hz budget (16.67 ms) at p95. RAF timestamps
+  638 |         // land a tenth of a millisecond past one vsync (local runs and the shared runner
+  639 |         // have both reported 16.8 ms), so the bound is 17 ms: a p95 that misses the budget,
+  640 |         // such as every-other-vsync at 33 ms or three 120 Hz periods at 25 ms, still fails.
+  641 |         expect(result.frameP95Ms).toBeLessThan(17);
+  642 |       }
+  643 |     }
+  644 |   });
+  645 | 
+```

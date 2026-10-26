@@ -1,0 +1,767 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=verbose
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=verbose
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+ ? src/triggers.test.ts > arming on publish > creates schedules and endpoints, keeps webhook paths, and disables old versions 2679ms
+ ? src/triggers.test.ts > arming on publish > refuses to publish a cron trigger that does not parse 311ms
+ ? src/triggers.test.ts > arming on publish > arms a stored cron node that no longer parses as disabled and logs it 756ms
+ ? src/triggers.test.ts > cron triggers > starts a run when a schedule comes due 976ms
+ ? src/triggers.test.ts > cron triggers > applies the missed-fire policy after an outage 1194ms
+ ? src/triggers.test.ts > cron triggers > logs a fire whose loop is gone 357ms
+ ? src/triggers.test.ts > boot > re-arms every published loop and catches up on missed fires 2294ms
+ ? src/triggers.test.ts > boot > keeps body business and content receipts durable after a stopped database restart 1721ms
+ ? src/triggers.test.ts > boot > logs and continues when a loop cannot be re-armed 379ms
+ ? src/triggers.test.ts > webhooks > starts a run for a correctly signed delivery 1351ms
+ ? src/triggers.test.ts > webhooks > authenticates Buffer request bytes and never persists the presented timestamp signature 602ms
+ ? src/triggers.test.ts > webhooks > rejects bad signatures, stale or missing timestamps, unknown tokens, and replays 650ms
+ ? src/triggers.test.ts > webhooks > accepts Unix-second timestamps, literal null, and a custom signature header 696ms
+ ? src/triggers.test.ts > webhooks > acknowledges formerly ignored payloads and quietly exits inside the admitted run 3258ms
+ ? src/triggers.test.ts > webhooks > reports downstream expression errors in an admitted run after 202 and keeps its key consumed 2607ms
+ ? src/triggers.test.ts > webhooks > dedupes authored keys after timestamp freshness windows 2060ms
+ ? src/triggers.test.ts > webhooks > reports invalid JSON, failing expressions, missing secrets, and oversized bodies 1538ms
+ ? src/triggers.test.ts > webhooks > rate limits each endpoint 1313ms
+ ? src/triggers.test.ts > FixedWindowRateLimiter > counts per key, resets per window, and sweeps idle keys 672ms
+ ? src/triggers.test.ts > event triggers > fires matching event triggers before downstream checks, preserves dedupe, and lists events 3749ms
+ ? src/triggers.test.ts > event triggers > logs event trigger failures 833ms
+ ? src/triggers.test.ts > event triggers > starts event triggers from external Events only; finished runs publish none (#242) 2737ms
+ ? src/triggers.test.ts > poll triggers > probes over HTTP and fires once per new dedupe key 1671ms
+ ? src/triggers.test.ts > poll triggers > probes with scripts, fires without a dedupe key, and logs failures 1431ms
+ ? src/triggers.test.ts > poll triggers > skips overlapping polls, polls on an interval, and disarms with the loop 2274ms
+ ? src/triggers.test.ts > body signing and durable admission > bounds chunked raw input before invoking intake or decoding 618ms
+ ? src/triggers.test.ts > body signing and durable admission > acknowledges a saved claim while create is blocked and exposes only the fixed receipt response 1221ms
+ ? src/triggers.test.ts > body signing and durable admission > returns 503 only for an unconfirmed claim; confirms a lost claim acknowledgement without another run 545ms
+ ? src/triggers.test.ts > body signing and durable admission > acknowledges permanently failed saved admission and retries no execution on redelivery 418ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header x-hub-signature-256 before authoring dedupe keys 546ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header X-Hub-Signature-256 before authoring dedupe keys 800ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header x-custom-signature before authoring dedupe keys 924ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256 credential header X-Custom-Signature before authoring dedupe keys 597ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header x-hub-signature-256 before authoring dedupe keys 682ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header X-Hub-Signature-256 before authoring dedupe keys 577ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header x-custom-signature before authoring dedupe keys 488ms
+ ? src/triggers.test.ts > body signing and durable admission > excludes the hmac-sha256-body credential header X-Custom-Signature before authoring dedupe keys 650ms
+ ? src/triggers.test.ts > body signing and durable admission > keeps credential-free $headers in hmac-sha256 keys and retains delivery/timestamp metadata 1017ms
+ ? src/triggers.test.ts > body signing and durable admission > keeps credential-free $headers in hmac-sha256-body keys and retains delivery/timestamp metadata 1009ms
+ ? src/triggers.test.ts > body signing and durable admission > rejects overlong business keys before consuming content and preserves exact boundary keys 819ms
+ ? src/triggers.test.ts > body signing and durable admission > logs safe operational context for a missing hmac-sha256 secret 488ms
+ ? src/triggers.test.ts > body signing and durable admission > logs safe operational context for a missing hmac-sha256-body secret 504ms
+ ? src/triggers.test.ts > body signing and durable admission > isolates a corrupt pending intent ({}) during real SQLite boot recovery and admits other due receipts 1220ms
+ ? src/triggers.test.ts > body signing and durable admission > isolates a corrupt pending intent (not-json) during real SQLite boot recovery and admits other due receipts 977ms
+ ? src/triggers.test.ts > body signing and durable admission > verifies raw body without timestamp and admits equal content with distinct authored keys 1192ms
+ ? src/triggers.test.ts > body signing and durable admission > consumes distinct bodies with the same authored business key without another run 1130ms
+ ? src/triggers.test.ts > body signing and durable admission > serializes concurrent distinct bodies with one key and keeps loop keys isolated 2058ms
+ ? src/triggers.test.ts > body signing and durable admission > keeps quiet-run and pending keys consumed 1931ms
+ ? src/triggers.test.ts > body signing and durable admission > uses the same authored key claims across timestamp and body recipes 1598ms
+ ? src/triggers.test.ts > body signing and durable admission > reserves an old webhook key from items-mode poll admission when recovery is after-lookup 2496ms
+ ? src/triggers.test.ts > body signing and durable admission > reserves an old webhook key from items-mode poll admission when recovery is still-pending 2247ms
+ ? src/triggers.test.ts > body signing and durable admission > consumes an authored body key when a current poll wins before the old authenticated claim 2148ms
+ ? src/triggers.test.ts > body signing and durable admission > does not activate business dedupe for generated signature hints 1692ms
+ ? src/triggers.test.ts > body signing and durable admission > allows unkeyed content after downstream check correction, and rejects invalid signatures before JSON 1614ms
+ ? src/triggers.test.ts > body signing and durable admission > returns 202 with a persisted pending intent, blocks deletion, and recovers before redelivery 1496ms
+ ? src/triggers.test.ts > bounded items-mode poll integration > validates all candidates before one indexed lookup, drains cap across sweeps, and uses item payloads 4443ms
+ ? src/triggers.test.ts > bounded items-mode poll integration > refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode 1197ms
+ ? src/triggers.test.ts > bounded items-mode poll integration > skips overlapping sweeps even after republish, and admission failure leaves the unseen tail 2185ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.inbound for actual hmac-sha256 bytes and recovers the same saved ID 1073ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.receipt for actual hmac-sha256 bytes and recovers the same saved ID 1237ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.run for actual hmac-sha256 bytes and recovers the same saved ID 1794ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.event for actual hmac-sha256 bytes and recovers the same saved ID 1882ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.receipt for actual hmac-sha256 bytes and recovers the same saved ID 1074ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.link for actual hmac-sha256 bytes and recovers the same saved ID 1090ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.inbound for actual hmac-sha256-body bytes and recovers the same saved ID 834ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back claim.receipt for actual hmac-sha256-body bytes and recovers the same saved ID 2306ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.run for actual hmac-sha256-body bytes and recovers the same saved ID 926ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.event for actual hmac-sha256-body bytes and recovers the same saved ID 1259ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.receipt for actual hmac-sha256-body bytes and recovers the same saved ID 663ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > rolls back create.link for actual hmac-sha256-body bytes and recovers the same saved ID 758ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > allows identical concurrent unkeyed hmac-sha256 bytes, but deduplicates an authored key 1214ms
+ ? src/triggers.test.ts > unified signed webhook admission and Allow > allows identical concurrent unkeyed hmac-sha256-body bytes, but deduplicates an authored key 1247ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > applies Allow to concurrent unsigned repeats while consuming an explicit key once 1591ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > admits unsigned json through saved intent, queued metadata and recovery 646ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > admits unsigned text through saved intent, queued metadata and recovery 488ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > admits unsigned bytes through saved intent, queued metadata and recovery 518ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > refuses signed intake when the real secret storage boundary is unavailable 572ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > applies the limiter/bound/decoding to None without accepting an authenticated identity 1018ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > never claims an invalid/ambiguous extracted event type and uses fallback for missing metadata 603ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > exposes pinned safe configuration on endpoint/Events summaries and refuses row disagreement before authentication 629ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > marks disabled orphan summaries unavailable and omits absent or foreign endpoint data from Events 518ms
+ ? src/triggers.test.ts > general webhook configuration and unsigned intake > bounds Events lookups by unique endpoint/version/loop and never caches across requests 510ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > requires secrets:write to attach a secret and permits settings-only edits that clear it 7294ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > returns a configured/enabled distinction and protects builtin metadata 747ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > creates disabled, replaces metadata preserving enabled, clears auth and retains secrets on delete 431ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"enabled":true} 503ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"source":"custom"} 310ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"configured":true} 803ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"apiKey":"key"} 930ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"endpoint":"https://user:key@host"} 1117ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"endpoint":"http://classifier.example","secretRef":"required-key"} 556ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"primitives":["choice","choice"]} 863ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > creates only with If-None-Match: *, refusing an existing id with CLASSIFIER_EXISTS 1731ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > lets exactly one of two concurrent create-only requests for an id succeed 377ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid ids and enabled bodies 428ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > checks settings scopes before parsing bodies and isolates owners and their secret state 380ms
+ ? src/classifiers.test.ts > classifier catalog HTTP API > derives status without provider calls through missing, blank, created, rotated, unreadable and deleted secrets 390ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (disabled) 954ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (missing) 850ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (blank) 837ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (unreadable) 373ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (configured) 452ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (missing) 989ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (no-choice) 1016ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (disabled) 688ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-missing) 552ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-blank) 1225ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-unreadable) 1294ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (implicit) 226ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (implicit-only) 197ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (configured) 510ms
+ ? src/classifiers.test.ts > classifier publish validation agreement > exports and imports a clean expression evaluator without unused classifier metadata 854ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > rejects Jev probabilities with an undeclared secret key before any run read 1129ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > keeps real Jev decision HTTP error bodies out of snapshots, events, streams and logs 475ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > sanitizes real built-in Jev validation paths and error bodies (HTTP 200) 427ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > sanitizes real built-in Jev validation paths and error bodies (HTTP 400) 625ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > sanitizes a real Codex turn failure before persisting it for run readers 641ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > never exposes an echoed classifier bearer to runs:read (recordAlternatives true) 575ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > never exposes an echoed classifier bearer to runs:read (recordAlternatives false) 549ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > passes the engine logger to the decision-time Jev SDK client 284ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and fails unavailable deleted/disabled published references 1996ms
+ ? src/classifiers.test.ts > classifier runtime hot reload > reports an unreachable endpoint as a provider failure, without silently falling through 1241ms
+ ? src/adversarial.test.ts > adversarial API invariants > 12: every advertised private route rejects missing and revoked credentials 5811ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: a credential without read scope cannot enumerate private resources 250ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope 6806ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write"],"status":403}) 237ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:read"],"status":403}) 180ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["secrets:write"],"status":403}) 279ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:read","secrets:write"],"status":403}) 672ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:write"],"status":200}) 777ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["*"],"status":200}) 491ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-008: local trusted mode keeps full access without a key 362ms
+ ? src/adversarial.test.ts > adversarial API invariants > 12: every mutating route rejects a valid key with no write scopes 820ms
+ ? src/adversarial.test.ts > adversarial API invariants > 12/13: API keys cannot bypass signatures; signatures bind exact body bytes 1531ms
+ ? src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -300001 ms 1045ms
+ ? src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary -299999 ms 1510ms
+ ? src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 299999 ms 592ms
+ ? src/adversarial.test.ts > adversarial API invariants > 13: timestamp window boundary 300001 ms 317ms
+ ? src/adversarial.test.ts > adversarial API invariants > 13: byte limit, 61st delivery and deleted endpoint are rejected 879ms
+ ? src/adversarial.test.ts > adversarial API invariants > 14: exits cannot chain loops through Events; external Event intake still starts runs 1098ms
+ ? src/adversarial.test.ts > adversarial API invariants > 15: a draft cron is not armed 423ms
+ ? src/adversarial.test.ts > adversarial API invariants > 4: deletion is refused while a version is pinned by an active run 938ms
+ ? src/adversarial.test.ts > adversarial API invariants > 16: disconnect during replay validation unsubscribes before headers are sent 4835ms
+ ? src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID 99999 always closes 1347ms
+ ? src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID -1 always closes 930ms
+ ? src/adversarial.test.ts > adversarial API invariants > 16: terminal SSE with Last-Event-ID not-a-number always closes 385ms
+ ? src/adversarial.test.ts > adversarial API invariants > 16: 1000 persisted events stream in sequence without duplicates 803ms
+ ? src/adversarial.test.ts > adversarial API invariants > 17: traversal, long paths, and Range cannot disclose files outside static root 1708ms
+ ? src/adversarial.test.ts > adversarial API invariants > 18: secrets never appear in read responses or invalid-request errors 2443ms
+ ? src/adversarial.test.ts > adversarial API invariants > 19: malformed JSON, 10 MB bodies, strict unknowns and numeric strings are rejected 897ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a parent started during a DELETE never pins the deleted loop 834ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 1831ms
+ ? src/adversarial.test.ts > adversarial API invariants > ADV-009: every ULID id route validates before repository lookup 941ms
+ ? src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary missing-terminal 120ms
+ ? src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary usage-only 135ms
+ ? src/adversarial.test.ts > adversarial API invariants > 8: Codex adapter boundary expired-resume 108ms
+ ? src/wait-identity.test.ts > observed wait identities over real SQLite and API > rejects visit A answers at visit B without mutation, and accepts B once 4122ms
+ ? src/wait-identity.test.ts > observed wait identities over real SQLite and API > resets signal observations on a genuine heartbeat revisit 768ms
+ ? src/wait-identity.test.ts > observed wait identities over real SQLite and API > cannot lose a timer delivered synchronously by the injected timer port around parking 1162ms
+ ? src/wait-identity.test.ts > durable wait boundaries > accepts only one racing API answer and rejects retry without changing the log 626ms
+ ? src/wait-identity.test.ts > durable wait boundaries > keeps the observed identity when SQLite is closed and reopened 1069ms
+ ? src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 50 ms polling 2297ms
+ ? src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 1000 ms polling 1565ms
+ ? src/wait-identity.test.ts > durable wait boundaries > acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 1804ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 50 336ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 50 363ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 50 299ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 50 421ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 50 306ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 50 533ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 1000 428ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 1000 844ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 1000 443ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 1000 449ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 1000 326ms
+ ? src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 1000 350ms
+ ? src/wait-identity.test.ts > durable wait boundaries > retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 1540ms
+ ? src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > requires an observed token and rejects unknown tokens without mutation 1494ms
+ ? src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > records one signal answer atomically when two API requests race 354ms
+ ? src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > recovers a paused event-first park before its snapshot/status commit without advancing it 827ms
+ ? src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > closes and reopens SQLite after the wake but before timer acknowledgement 1385ms
+ ? src/wait-identity.test.ts > a delayed wake acknowledgement cannot replace the next observed wait 1009ms
+ ? src/wait-identity.test.ts > redelivery queues a durable wake after its committed status response was lost 579ms
+ ? src/wait-identity.test.ts > retry repairs a durable input answer after its status transition failed 402ms
+ ? src/wait-identity.test.ts > retry repairs a durable signal answer after its status transition failed 472ms
+ ? src/wait-identity.test.ts > acknowledges timers for unreadable event history and keeps healthy work available 578ms
+ ? src/wait-identity.test.ts > acknowledges timers for unreadable row history and keeps healthy work available 1968ms
+ ? src/wait-identity.test.ts > reports a paused input wait as INVALID_STATE without consuming its identity 647ms
+ ? src/wait-identity.test.ts > reports a paused signal wait as INVALID_STATE without consuming its identity 413ms
+ ? src/wait-identity.test.ts > a paused timer acknowledgement cannot delete a resume re-arm at the same deadline 438ms
+ ? src/container.test.ts > default adapters > registers the Codex harness, structured completions, and the Codex evaluator and classifier registry 1597ms
+ ? src/container.test.ts > default adapters > starts without a Jev key and leaves Jev unavailable 448ms
+ ? src/container.test.ts > default adapters > refreshes Jev when its key secret is set or deleted through the API 1524ms
+ ? src/container.test.ts > default adapters > ignores other secrets and other owners 1091ms
+ ? src/container.test.ts > default adapters > does not notify when deleting a secret that does not exist 371ms
+ ? src/container.test.ts > default adapters > shares configured Noul and Choice classifier snapshots and invalidates them after key and enable changes 1223ms
+ ? src/container.test.ts > Jev key at boot > seeds before recovery, refreshes metadata, and preserves a disabled built-in across real restarts 5080ms
+ ? src/container.test.ts > Jev key at boot > seeds an encrypted local-owner secret once, keeps it across restarts, and never logs the value 624ms
+ ? src/container.test.ts > Jev key at boot > preserves an existing secret, including an empty value ("stored-key") 962ms
+ ? src/container.test.ts > Jev key at boot > preserves an existing secret, including an empty value ("") 1515ms
+ ? src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({}) 1265ms
+ ? src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({"GG_JEV_API_KEY":""}) 1701ms
+ ? src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({"JEV_API_KEY":""}) 1015ms
+ ? src/container.test.ts > Jev key at boot > does nothing without a non-empty environment seed ({"GG_JEV_API_KEY":"","JEV_API_KEY":"test-unused-fallback-key"}) 1457ms
+ ? src/container.test.ts > Jev key at boot > seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key 2684ms
+ ? src/container.test.ts > Jev key at boot > picks up a key stored before the process started 3103ms
+ ? src/container.test.ts > container directory ownership > refuses a second container before opening or recovering the store, and releases on stop 2376ms
+ ? src/container.test.ts > container directory ownership > releases ownership if container construction fails 164ms
+ ? src/container.test.ts > container directory ownership > releases ownership without recovery or writes when readiness fails during migration 1020ms
+ ? src/container.test.ts > container directory ownership > serializes repeated starts and holds ownership until a stop during migration finishes 1083ms
+ ? src/container.test.ts > configuration admission before startup writes > does not create SQLite/master-key files for an unknown process default 366ms
+ ? src/container.test.ts > configuration admission before startup writes > reads existing manual catalog entries without changing database bytes or rows on invalid effort 14289ms
+ ? src/container.test.ts > configuration admission before startup writes > refuses an old store before creating a master key or applying migrations 76ms
+ ? src/container.test.ts > admits a valid stored definition before recovery 648ms
+ ? src/container.test.ts > repeats cheap readiness checks inside migrate even after a protected preflight 539ms
+ ? src/container.test.ts > reparses external database definitions changed after construction before startup writes 391ms
+ ? src/container.test.ts > refuses malformed current definitions before master-key creation or database writes 5176ms
+ ? src/api.test.ts > system routes > serves health, version, openapi, and preflight 2577ms
+ ? src/api.test.ts > system routes > returns problem details for unknown routes and validation failures 375ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for manual 797ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for cron 264ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for hook 227ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for event 290ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for poller 379ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for github-hook 322ms
+ ? src/api.test.ts > loops > keeps type through draft save, reopen, export and import for items-poller 382ms
+ ? src/api.test.ts > loops > creates, reads, drafts, validates, publishes, exports, imports, and deletes 1776ms
+ ? src/api.test.ts > loops > refuses to delete a loop with active runs and exports drafts on request 1090ms
+ ? src/api.test.ts > runs > starts a run, lists, reads the thread and events, and streams nothing when complete 460ms
+ ? src/api.test.ts > runs > controls a waiting run: input validation, signals, pause, resume, cancel 1068ms
+ ? src/api.test.ts > runs > hides runs of other owners and serves artifacts 2196ms
+ ? src/api.test.ts > settings, secrets, api keys, catalog, events > round-trips settings and secrets without exposing values 801ms
+ ? src/api.test.ts > settings, secrets, api keys, catalog, events > manages api keys and the model catalog 380ms
+ ? src/api.test.ts > settings, secrets, api keys, catalog, events > publishes and lists same-millisecond inbound events in reverse creation order 590ms
+ ? src/api.test.ts > authentication > rejects bad keys in local mode and honours scopes 420ms
+ ? src/api.test.ts > authentication > requires a key when configured, except for public routes 2628ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > returns source and enabled, refuses harness edit/delete/create and source spoofing 1351ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > freezes hand-added legacy rows too, without removing their ability to toggle 142ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > PATCH only changes enabled for harness rows 383ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > PATCH only changes enabled for litellm rows 437ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > edits/deletes LiteLLM rows, preserves enabled when omitted, and cannot change source 497ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {} without a write 300ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {"enabled":"false"} without a write 238ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {"enabled":false,"displayName":"Oops"} without a write 217ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > rejects invalid PATCH {"enabled":null} without a write 276ms
+ ? src/catalog.test.ts > catalog ownership and toggle routes > rejects unauthorized and wrong-scope writes before validating bodies; read/write scopes work 441ms
+ ? src/catalog.test.ts > advisory model validation > ignores stale Codex models when the decision uses only an expression 228ms
+ ? src/catalog.test.ts > advisory model validation > rejects explicit unknown/wrong-family inference models and blocks unavailable selected models 225ms
+ ? src/catalog.test.ts > advisory model validation > rejects explicit unknown/wrong-family decision models and blocks unavailable selected models 253ms
+ ? src/catalog.test.ts > advisory model validation > rejects explicit unknown/wrong-family default models and blocks unavailable selected models 250ms
+ ? src/catalog.test.ts > advisory model validation > still requires ownership for validation 140ms
+ ? src/catalog.test.ts > uniform strict evaluator admission > keeps decisions subject to publication admission for an disabled model 168ms
+ ? src/catalog.test.ts > uniform strict evaluator admission > keeps decisions subject to publication admission for an unavailable harness 316ms
+ ? src/catalog.test.ts > uniform strict evaluator admission > reports explicit unknown model configuration even while its harness is unavailable 1074ms
+ ? src/catalog.test.ts > uniform strict evaluator admission > returns a typed cutover refusal for old portable and bare definitions without saving them 1781ms
+ ? src/catalog.test.ts > imports an automatic format-1 export as format 4 491ms
+ ? src/catalog.test.ts > imports an automatic format-2 export as format 4 134ms
+ ? src/catalog.test.ts > imports an automatic format-3 export as format 4 186ms
+ ? src/catalog.test.ts > refuses pending export review with item ids, hashes and reasons, and refuses supplied resolutions 334ms
+ ? src/catalog.test.ts > returns automatic rewrite notices alongside import validation issues 389ms
+ ? src/catalog.test.ts > keeps earlier-stage authored choices distinct from invalid source 292ms
+ ? src/catalog.test.ts > reports both invalid graph issues and pending reviews in one import refusal 235ms
+ ? src/edges.test.ts > scopes > rejects every write route for a key without the matching scope 1146ms
+ ? src/edges.test.ts > loop and run route branches > shows the published version without a draft and reports a missing published export 160ms
+ ? src/edges.test.ts > loop and run route branches > starts runs with every optional body field, signals without a payload, and delivers caller return defaults 429ms
+ ? src/edges.test.ts > loop and run route branches > reports missing artifact content 508ms
+ ? src/edges.test.ts > loop and run route branches > skips unset harnesses and reports non-Error preflight failures 173ms
+ ? src/edges.test.ts > error handler > maps every error family to problem details 282ms
+ ? src/edges.test.ts > error handler > serves Swagger UI when enabled 455ms
+ ? src/edges.test.ts > SSE framing > merges events appended during replay in order, sends heartbeats, and ignores events after the end 232ms
+ ? src/edges.test.ts > SSE terminal runs > waits out the grace when the status is terminal but the log has no terminal event 310ms
+ ? src/edges.test.ts > SSE terminal runs > ends on the terminal event that arrives during the grace 282ms
+ ? src/edges.test.ts > SSE terminal runs > keeps tailing a run that is not terminal 188ms
+ ? src/edges.test.ts > test helper > surfaces create and publish failures 115ms
+ ? src/edges.test.ts > composition defaults > opens a file database, generates a master key, and runs with default ports 278ms
+ ? src/preflight.test.ts > allows read-only CLI preflight alongside a container without changing its lock 1444ms
+ ? src/preflight.test.ts > individual checks > accepts Node 22 LTS 82ms
+ ? src/preflight.test.ts > individual checks > refuses unsupported Node 20.11.1 with the supported baseline 53ms
+ ? src/preflight.test.ts > individual checks > refuses unsupported Node 23.10.0 with the supported baseline 52ms
+ ? src/preflight.test.ts > individual checks > refuses unsupported Node 24.0.0 with the supported baseline 75ms
+ ? src/preflight.test.ts > individual checks > refuses unsupported Node garbage with the supported baseline 19ms
+ ? src/preflight.test.ts > individual checks > checks the data directory without creating it 130ms
+ ? src/preflight.test.ts > individual checks > reads the master key from the environment or the data directory without generating one 73ms
+ ? src/preflight.test.ts > individual checks > probes writability with a new file and never touches existing ones 55ms
+ ? src/preflight.test.ts > individual checks > lets concurrent preflights probe the same directory 27ms
+ ? src/preflight.test.ts > individual checks > accepts a missing database file only when start can create it 72ms
+ ? src/preflight.test.ts > runPreflight > passes when everything is in place 5ms
+ ? src/preflight.test.ts > runPreflight > warns about a database that is missing or behind, and skips checks that need it 20ms
+ ? src/preflight.test.ts > runPreflight > fails when a harness is not ready or none is configured 37ms
+ ? src/preflight.test.ts > runPreflight > only warns about Jev, and checks the default model against the catalog 50ms
+ ? src/preflight.test.ts > runPreflight > formats a readable table 5ms
+ ? src/preflight.test.ts > graphgoblin-api --preflight > reports a first run without creating anything 6ms
+ ? src/preflight.test.ts > graphgoblin-api --preflight > checks an installation that has started once 523ms
+ ? src/preflight.test.ts > graphgoblin-api --preflight > warns about a database under directories start will create, and start creates them 470ms
+ ? src/preflight.test.ts > graphgoblin-api --preflight > fails when the database cannot be created, read, or opened 16ms
+ ? src/preflight.test.ts > graphgoblin-api --preflight > opens an existing database named by a percent-encoded file URL 466ms
+ ? src/preflight.test.ts > graphgoblin-api --preflight > reports an in-memory database as unmigrated and bad configuration as a failure 13ms
+ ? src/preflight.test.ts > GET /system/preflight > reports on the running installation and requires credentials when keys are required 996ms
+ ? src/definition-pins.test.ts > runs pin their definition across edits, Settings changes and a restart > keeps published and draft runs on their start definition and defaults 3204ms
+ ? src/definition-pins.test.ts > classifier bindings are pinned at start > calls the provider model a waiting run pinned, after a catalog edit and a restart 1496ms
+ ? src/definition-pins.test.ts > classifier bindings are pinned at start > starts and runs a classifier whose catalog id is an Object property name 398ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary starter draft without credentials, readiness or repository settings 1510ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary implementation draft without credentials, readiness or repository settings 1082ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary review draft without credentials, readiness or repository settings 461ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates exactly one ordinary qa draft without credentials, readiness or repository settings 293ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates independent starter copies, keeps supplied names literal, and does not alter the package 560ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates independent implementation copies, keeps supplied names literal, and does not alter the package 326ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates independent review copies, keeps supplied names literal, and does not alter the package 359ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > creates independent qa copies, keeps supplied names literal, and does not alter the package 292ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > retains truthful missing model readiness issues without blocking draft creation 136ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > retains truthful disabled model readiness issues without blocking draft creation 183ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > retains truthful no-harness model readiness issues without blocking draft creation 296ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > saves normal prompt edits before defaults are configured and publishes after explicit configuration 799ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > still rejects explicit invalid choices and preserves the previous draft 222ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > refuses unknown templates and invalid requests without creating anything 204ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created starter draft owner scoped 352ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created implementation draft owner scoped 205ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created review draft owner scoped 233ms
+ ? src/routes/template-drafts.test.ts > editable template starting points > uses loops:write and keeps the newly created qa draft owner scoped 341ms
+ ? src/routes/template-drafts.test.ts > bounded manual starting-point execution > plans, implements and verifies a supplied task through distinct turns 416ms
+ ? src/routes/template-drafts.test.ts > bounded manual starting-point execution > reviews, fixes, then reviews again and preserves the prior findings as context 432ms
+ ? src/routes/template-drafts.test.ts > bounded manual starting-point execution > exhausts repeated review findings without returning approval 518ms
+ ? src/routes/template-drafts.test.ts > bounded manual starting-point execution > assesses QA evidence with a separate challenge and reports missing evidence as failure 924ms
+ ? src/routes/template-drafts.test.ts > bounded manual starting-point execution > exhausts one unsound QA rerun without claiming a passing assessment 1733ms
+ ? src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during replay and releases its subscription 1028ms
+ ? src/sse.test.ts > SSE event stream > rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 341ms
+ ? src/sse.test.ts > SSE event stream > streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 1731ms
+ ? src/sse.test.ts > SSE event stream > replays history, tails live events, and closes after the run finishes 798ms
+ ? src/sse.test.ts > SSE event stream > resumes from Last-Event-ID and from the after query parameter 283ms
+ ? src/sse.test.ts > SSE event stream > closing when the run is terminal > ends at once when the run is terminal and nothing follows the cursor 393ms
+ ? src/sse.test.ts > SSE event stream > closing when the run is terminal > replays the events after Last-Event-ID and ends when the run is already terminal 381ms
+ ? src/sse.test.ts > SSE event stream > closing when the run is terminal > ends promptly after the terminal event when the run finishes mid-stream 468ms
+ ? src/sse.test.ts > SSE event stream > stops writing when the client disconnects 6265ms
+ ? src/guide-examples.test.ts > executable guide examples > inventories every fence in guides 02 and 03 1578ms
+ ? src/guide-examples.test.ts > executable guide examples > validates settings, imports the draft definition, saves, exports, publishes and executes it 656ms
+ ? src/guide-examples.test.ts > executable guide examples > executes the exact first-summary and API input, including its prompt and return mapping 802ms
+ ? src/guide-examples.test.ts > executable guide examples > executes the HTTP request in start-bash 396ms
+ ? src/guide-examples.test.ts > executable guide examples > executes the HTTP request in start-powershell 365ms
+ ? src/guide-examples.test.ts > executable guide examples > replays the documented node in replay-bash 483ms
+ ? src/guide-examples.test.ts > executable guide examples > replays the documented node in replay-powershell 763ms
+ ? src/guide-examples.test.ts > executable guide examples > resumes a fake external failure with resume-bash; refuses a finished run 630ms
+ ? src/guide-examples.test.ts > executable guide examples > resumes a fake external failure with resume-powershell; refuses a finished run 847ms
+ ? src/guide-examples.test.ts > executable guide examples > reads the documented events request in events-bash 525ms
+ ? src/guide-examples.test.ts > executable guide examples > reads the documented events request in events-powershell 529ms
+ ? src/guide-examples.test.ts > executable guide examples > reads the documented events request in reconnect-bash 645ms
+ ? src/guide-examples.test.ts > executable guide examples > reads the documented events request in returns-bash 1085ms
+ ? src/guide-examples.test.ts > executable guide examples > reads the documented events request in returns-powershell 1191ms
+ ? src/guide-examples.test.ts > executable guide examples > runs the bounded-repeat example to exactly three passes and an Exhausted exit 1131ms
+ ? src/guide-examples.test.ts > executable guide examples > validates the failure response shape and inventories the non-request snippets 179ms
+ ? src/qa.test.ts > owner defaults (Settings) reach the engine at run start > uses the saved defaults for the next run and the configuration after they are removed 4822ms
+ ? src/qa.test.ts > owner defaults (Settings) reach the engine at run start > rejects old reserved keys, invalid defaults, and invalid persisted configuration 426ms
+ ? src/qa.test.ts > validate, draft saves, and publish agree > reports cron, subloop, and template problems the same way everywhere 525ms
+ ? src/qa.test.ts > validate, draft saves, and publish agree > accepts a published subloop, a pinned version, and a self-reference 399ms
+ ? src/qa.test.ts > validate, draft saves, and publish agree > accepts a self-reference only when it resolves 1006ms
+ ? src/qa.test.ts > validate, draft saves, and publish agree > import reports the same issues as create, including trigger checks 599ms
+ ? src/qa.test.ts > validate, draft saves, and publish agree > reports a missing subloop on import 423ms
+ ? src/qa.test.ts > export and import > round-trips: export, import, export again gives the same loop 606ms
+ ? src/qa.test.ts > run.queued carries the initial thread > records the seeded thread of a subloop child on its first event 763ms
+ ? src/qa.test.ts > request errors use stable problem codes > maps malformed, empty, and oversized bodies 192ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > authenticates exact malformed bytes before any decoding (body) 12ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > authenticates exact malformed bytes before any decoding (timestamp-body) 4ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > rejects raw duplicate credentials even if normalized headers contain one value (body) 0ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > rejects raw duplicate credentials even if normalized headers contain one value (timestamp-body) 0ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > rejects empty and whitespace JSON but accepts literal null (body) 2ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > rejects empty and whitespace JSON but accepts literal null (timestamp-body) 1ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > accepts body signing without timestamps and hashes identical content independently of signature casing and secret rotation 4ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > rejects ambiguous authentication headers and missing signatures with safe details 1ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > verifies before JSON/UTF8 parsing, then rejects correctly signed invalid bodies 4ms
+ ? src/triggers/webhook-body.test.ts > webhook byte authentication > preserves timestamp signing, window boundaries, Unix timestamps and literal JSON null 1ms
+ ? src/triggers/webhook-body.test.ts > general decoding and event metadata > decodes actual bytes after none authentication 1ms
+ ? src/triggers/webhook-body.test.ts > general decoding and event metadata > decodes actual bytes after body authentication 1ms
+ ? src/triggers/webhook-body.test.ts > general decoding and event metadata > decodes actual bytes after timestamp-body authentication 8ms
+ ? src/triggers/webhook-body.test.ts > general decoding and event metadata > allows empty text/bytes, bounds unsigned bytes and refuses unsigned invalid JSON/UTF8 1ms
+ ? src/triggers/webhook-body.test.ts > general decoding and event metadata > extracts constants, headers, escaped own-property/array/root pointers and scalar metadata 3ms
+ ? src/triggers/webhook-body.test.ts > general decoding and event metadata > rejects ambiguous raw header metadata and invalid scalars instead of using a fallback 1ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > requires a draft asset and never falls back to a configured graph 360ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > returns independent drafts across public creation calls 581ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > applies package bounds, format and graph validation to declared draft files 1338ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > loads the actual source-only starter with current graph format and no repository support 565ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with invalid JSON without exposing its raw contents 167ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with non-array without exposing its raw contents 134ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with non-string entry without exposing its raw contents 268ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with too many entries without exposing its raw contents 204ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with parent traversal without exposing its raw contents 658ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with absolute path without exposing its raw contents 1129ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses an index with backslash path without exposing its raw contents 502ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses the oversized regular asset catalog.json before parsing it 384ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses the oversized regular asset recipe/manifest.json before parsing it 569ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses the oversized regular asset recipe/draft.json before parsing it 812ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a missing declared asset catalog.json as a safe package failure 229ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a missing declared asset recipe/manifest.json as a safe package failure 208ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a missing declared asset recipe/draft.json as a safe package failure 475ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses malformed JSON and unknown manifest fields 810ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects configured manifest fields instead of opening graphs or private support entries 261ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a schema-valid script node in a shipped draft 303ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a schema-valid subloop node in a shipped draft 469ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses a schema-valid heartbeat node in a shipped draft 2006ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses nonmanual triggers and noncaller return channels 3756ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses malformed exports, old format and dangling graph targets 4065ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > refuses duplicate template identities instead of returning a partial catalog 1426ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects the root itself, lexical escapes and directory assets 1937ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects a linked catalog root using a host-native directory link or junction 1377ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects an ancestor alias even when the final root directory is not itself a link 3278ms
+ ? src/templates/catalog-boundary.test.ts > installed template catalog boundaries > rejects a linked interior component before reading its valid manifest 2221ms
+ ? src/routes/templates.test.ts > template API without runtime authority > reads only manifests without provider, script or credential probes 17680ms
+ ? src/routes/templates.test.ts > template API without runtime authority > removes configured actions from routing and OpenAPI without allocating state 4295ms
+ ? src/routes/templates.test.ts > template API without runtime authority > keeps catalogue reads scoped and unknown template IDs explicit 4978ms
+ ? src/routes/templates.test.ts > template API without runtime authority > sanitizes trusted catalogue asset faults with status 409 1450ms
+ ? src/routes/templates.test.ts > template API without runtime authority > sanitizes trusted catalogue asset faults with status 503 1424ms
+ ? src/routes/templates.test.ts > template API without runtime authority > keeps arbitrary server errors sanitized as internal errors 374ms
+ ? src/routes/templates.test.ts > template API without runtime authority > maps a real missing catalogue asset to a sanitized package fault without allocating a loop 886ms
+ ? src/routes/templates.test.ts > template API without runtime authority > maps a real malformed catalogue asset to a sanitized package fault without allocating a loop 3159ms
+ ? src/routes/templates.test.ts > template API without runtime authority > maps a real oversized catalogue asset to a sanitized package fault without allocating a loop 2247ms
+ ? src/routes/templates.test.ts > template API without runtime authority > keeps ordinary returns and the unwrapped durable finalization marker 4174ms
+ ? src/routes/templates.test.ts > template API without runtime authority > preserves ordinary script environment, stdin and JSON stdout through the container 1880ms
+ ? src/routes/templates.test.ts > template API without runtime authority > preserves ordinary script cancel and finalization 1389ms
+ ? src/routes/templates.test.ts > template API without runtime authority > preserves ordinary script timeout and finalization 3435ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > returns an empty final page 5587ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > pages tied timestamps exactly once despite a newer insertion between requests 736ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > returns 500 items plus a cursor for the lookahead row and then a final null cursor 4318ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > returns a null cursor for an exactly full final page 871ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > leaves damaged lookahead undecoded and continues past an empty unreadable page 1703ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > applies each ordinary filter and their intersection 1912ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > normalizes before=2026-10-02T14:00:00.000+02:00 to the canonical timestamp page 1389ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > normalizes before=2026-10-02T07:00:00.000-05:00 to the canonical timestamp page 651ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > normalizes before=2026-10-02T12:00:00Z to the canonical timestamp page 586ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter  unchanged across every limit-one page 860ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter loopId=D2VJ25FGH4W4R19TMKZK3CGTBW unchanged across every limit-one page 566ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter status=succeeded unchanged across every limit-one page 708ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter status=succeeded,failed unchanged across every limit-one page 364ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter parent=none unchanged across every limit-one page 836ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter parent=2RPPNXBH1B9H3F1K4K6FJNSS4B unchanged across every limit-one page 739ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter before=2026-10-03T00:00:00.000Z unchanged across every limit-one page 614ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps filter loopId=D2VJ25FGH4W4R19TMKZK3CGTBW&status=failed&parent=2RPPNXBH1B9H3F1K4K6FJNSS4B&before=2026-10-03T00:00:00.000Z unchanged across every limit-one page 623ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > keeps the already-landed invalid-status response typed and readable 343ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > publishes the cursor description and bound in OpenAPI 3017ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > scopes every page and snapshot to the authenticated owner 769ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > lists and reads canonical records with no template table or subject column 1968ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects malformed, oversized, noncanonical and non-strict cursors with INVALID_CURSOR 414ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects the removed repository filter instead of widening results 282ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects the removed issue filter instead of widening results 752ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects the removed pullRequest filter instead of widening results 764ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects the removed head filter instead of widening results 624ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects the removed mergeSha filter instead of widening results 767ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects the removed templateInstanceId filter instead of widening results 284ms
+ ? src/routes/run-paging.test.ts > ordinary run paging > rejects invalid ordinary filters or limits 512ms
+ ? src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > is refused on every read of the loop and its versions with a per-loop diagnostic 1699ms
+ ? src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > is refused before a run starts, and a parent calling it fails before any child exists 886ms
+ ? src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > a run already pinned to a published version holding one fails explicitly before it executes again 540ms
+ ? src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > a run already pinned to a draft-run snapshot holding one fails explicitly before it executes again 626ms
+ ? src/retired-event-destination.test.ts > a stored definition with an Event destination (#242) > refuses a webhook delivery deterministically and logs the diagnostic, saving nothing 437ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ? src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart 88981ms
+ ? src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent 20201ms
+ ? src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent 16394ms
+ ? src/create-api-key.test.ts > parseCreateApiKeyArgs > reads the name and optional scopes 6ms
+ ? src/create-api-key.test.ts > parseCreateApiKeyArgs > explains unusable arguments 1ms
+ ? src/create-api-key.test.ts > parseCreateApiKeyArgs > refuses typos, strays, repeats, and missing values instead of granting * 10ms
+ ? src/create-api-key.test.ts > parseCreateApiKeyArgs > refuses empty scope entries from leading, trailing, or doubled commas 12ms
+ ? src/create-api-key.test.ts > parseCreateApiKeyArgs > exits 2 for a typo before touching storage 8ms
+ ? src/create-api-key.test.ts > graphgoblin-api --create-api-key > creates a key in a fresh data directory and prints the token once, to stdout only 251ms
+ ? src/create-api-key.test.ts > graphgoblin-api --create-api-key > opens a required-key server with the printed key 1288ms
+ ? src/create-api-key.test.ts > graphgoblin-api --create-api-key > refuses to write while a server holds the directory, then succeeds after stop 227ms
+ ? src/create-api-key.test.ts > graphgoblin-api --create-api-key > prints usage for bad arguments and the reason for bad configuration or storage 180ms
+ ? src/create-api-key.test.ts > graphgoblin-api --create-api-key > works against an in-memory database and the process streams by default 123ms
+ ? src/create-api-key.test.ts > configuration defaults for an installed checkout > defaults the data directory to ~/.graphgoblin 1ms
+ ? src/create-api-key.test.ts > configuration defaults for an installed checkout > serves the built web app by default, unless GG_WEB_DIST says otherwise 1ms
+ ? src/gates.test.ts > decision gate API admission > returns the visit-cap warning on all five admission paths while allowing an early non-repeat 999ms
+ ? src/gates.test.ts > decision gate API admission > agrees across create, import, draft save, validate and publish, and persists runtime counts 286ms
+ ? src/gates.test.ts > decision gate API admission > reports the same repeat-target graph issue on all five paths 144ms
+ ? src/gates.test.ts > decision gate API admission > reports the same limit-unconnected graph issue on all five paths 148ms
+ ? src/gates.test.ts > decision gate API admission > reports the same terminal-edge graph issue on all five paths 193ms
+ ? src/gates.test.ts > decision gate API admission > rejects missing-max with a precise config path on every authoring endpoint 139ms
+ ? src/gates.test.ts > decision gate API admission > rejects multiple-repeats with a precise config path on every authoring endpoint 157ms
+ ? src/gates.test.ts > decision gate API admission > rejects reserved-id with a precise config path on every authoring endpoint 167ms
+ ? src/gates.test.ts > decision gate API admission > rejects orphan-limit with a precise config path on every authoring endpoint 187ms
+ ? src/gates.test.ts > decision gate API admission > rejects invalid-time with a precise config path on every authoring endpoint 124ms
+ ? src/gates.test.ts > decision gate API admission > rejects removed exit field criteria on every authoring endpoint 116ms
+ ? src/gates.test.ts > decision gate API admission > rejects removed exit field predicate on every authoring endpoint 117ms
+ ? src/gates.test.ts > decision gate API admission > rejects removed exit field loopBack on every authoring endpoint 130ms
+ ? src/gates.test.ts > decision gate API admission > rejects removed exit field return on every authoring endpoint 148ms
+ ? src/gates.test.ts > decision gate API admission > rejects removed exit field default on every authoring endpoint 201ms
+ ? src/durable-events.test.ts > user content in durable events > rejects a non-slug signal name before generating an event 1076ms
+ ? src/durable-events.test.ts > user content in durable events > fails oversized rendered input readably, and rejects malformed API inputs 320ms
+ ? src/durable-events.test.ts > damaged history diagnostics > pages diagnostics across run and event bounds and rejects malformed cursors 1105ms
+ ? src/durable-events.test.ts > damaged history diagnostics > lists healthy runs and deletes an unrelated loop beside damaged active row history 242ms
+ ? src/durable-events.test.ts > damaged history diagnostics > lists healthy runs and deletes an unrelated loop beside damaged active event history 238ms
+ ? src/durable-events.test.ts > damaged history diagnostics > identifies event and row damage without changing it and scopes results to the owner 309ms
+ ? src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart 2614ms
+ ? src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > refuses a pagination result above 200 before lookup or admission and keeps process diagnostics private 367ms
+ ? src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > refuses the child-buffer byte boundary before lookup or admission 739ms
+ ? src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > refuses the final-array byte boundary before lookup or admission 474ms
+ ? src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > observes only current state and cannot reconstruct a label transition between snapshots 1344ms
+ ? src/version-migration.test.ts > migrated SQLite versions through the API > preserves an old draft version and refuses startup or cutover until format 4 is available 1703ms
+ ? src/version-migration.test.ts > migrated SQLite versions through the API > preserves an old published version and refuses startup or cutover until format 4 is available 603ms
+ ? src/version-migration.test.ts > migrated SQLite versions through the API > recovers a current-format pinned run across restart mid-run without migration 9437ms
+ ? src/claude.test.ts > Claude public integration > keeps safe policy/model facts in the public typed preflight response 1325ms
+ ? src/claude.test.ts > Claude public integration > runs exact claude-opus-5-5 inference and preserves normal output/usage 654ms
+ ? src/claude.test.ts > Claude public integration > runs exact claude-fable-5-1 inference and preserves normal output/usage 374ms
+ ? src/claude.test.ts > Claude public integration > rejects static unsupported policy consistently across authoring endpoints 140ms
+ ? src/claude.test.ts > Claude public integration > blocks unavailable Claude publication without substituting Codex 134ms
+ ? src/claude.test.ts > Claude public integration > seeds Fable enabled, admits owner defaults and respects later owner disablement 147ms
+ ? src/claude.test.ts > Claude public integration > parses only explicit owner executable configuration without installation fallback 197ms
+ ? src/claude.test.ts > Claude public integration > keeps missing optional Claude a warning, but fails configured Claude readiness 237ms
+{"level":30,"time":1792637038521,"pid":55900,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5672"}
+{"level":30,"time":1792637038522,"pid":55900,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5672,"dataDir":"<user>\\AppData\\Local\\Temp\\gg-qa-231-9896cf-independent\\tests\\gg-api-process-4gbO3J","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792637038648,"pid":55900,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792637038657,"pid":55900,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.631900000000314,"msg":"request completed"}
+ ? src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close 1229ms
+ ? src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process 12978ms
+ ? src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes 18662ms
+ ? src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup 6879ms
+ ? src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure 7518ms
+ ? src/main.test.ts > built API entry and startup failures > releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)
+ ? src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGINT
+ ? src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGTERM
+ ? src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > handles a real signal before readiness, holds ownership through startup and shuts down once
+ ? src/drafts.test.ts > draft version tokens (If-Match) > exposes the token as a body field and an ETag on GET and PUT 1507ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > answers 409 DRAFT_CONFLICT with the server token when the copy is stale 160ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > keeps saves without If-Match unconditional, and accepts * and weak or listed tags 146ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > keeps the token across a publish, which does not change the content 156ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > lets only one of two concurrent saves with the same token win 137ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > accepts two editors saving the identical change from the same token 127ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > keeps a publish from landing inside a draft save, so a published version never changes 167ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > answers 422 for an invalid draft and 409 when there is nothing to publish 133ms
+ ? src/drafts.test.ts > draft version tokens (If-Match) > refuses a conditional save of another owners or a missing loop with 404 120ms
+ ? src/drafts.test.ts > draft token helpers > hashes a definition and matches If-Match forms 63ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > removes armed schedules and webhook endpoints and disarms polls only after commit 711ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > deletes terminal run history and artifacts and returns 204, then 404 270ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for queued and changes nothing 192ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for running and changes nothing 146ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for waiting and changes nothing 121ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > returns a readable 409 for paused and changes nothing 114ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > maps the transactional active-run refusal to 409 if a run appears after the route check 113ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > returns 500 and rolls back history on a mid-delete storage failure 192ms
+ ? src/loop-deletion.test.ts > DELETE /loops/:id > keeps a cross-loop parent and its published subloop reference after deleting the child 432ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > creates an exclusive lock with this PID and start time and releases it 38ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: false) 32ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: true) 30ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > reclaims its own PID from a previous process without an in-process hold 30ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses another live PID without replacing its lock 28ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > replaces a stale lock from a process that exited 90ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EPERM 24ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EACCES 26ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with UNKNOWN 30ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "" 23ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{" 22ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "null" 24ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "1" 23ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{}" 23ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":\"1\"}" 26ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":0}" 24ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":-1}" 25ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":1.5}" 21ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > does not let a delayed repeated release remove a new acquisition 45ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > leaves a lock with a different ownership token intact on release 33ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > accepts a missing file during release 23ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a fresh lock 27ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale lock 75ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a own-pid lock 28ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale-reclaim lock 27ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: false) 92ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: true) 89ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: false) 94ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: true) 88ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses a reclamation guard owned by another live PID 15ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > refuses an existing reclamation guard without deleting either file 24ms
+ ? src/data-dir-lock.test.ts > data-directory ownership > propagates filesystem errors instead of assuming a stale lock 20ms
+ ? src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest 13696ms
+ ? src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 10912ms
+ ? src/primitive-classifiers.test.ts > primitive classifier API admission and execution > executes the selected HTTP noul primitive with catalog provenance 2037ms
+ ? src/primitive-classifiers.test.ts > primitive classifier API admission and execution > executes the selected HTTP score primitive with catalog provenance 424ms
+ ? src/primitive-classifiers.test.ts > primitive classifier API admission and execution > rejects unsupported noul capability before calls 197ms
+ ? src/primitive-classifiers.test.ts > primitive classifier API admission and execution > rejects unsupported score capability before calls 124ms
+ ? src/primitive-classifiers.test.ts > primitive classifier API admission and execution > blocks disabled noul publication and rechecks an edited capability at runtime 228ms
+ ? src/primitive-classifiers.test.ts > primitive classifier API admission and execution > blocks disabled score publication and rechecks an edited capability at runtime 201ms
+ ? src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 1100 nested arrays 1425ms
+ ? src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 3000 nested arrays 1426ms
+ ? src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits the SQLite boundary and refuses the next depth without blocking the tail 1569ms
+ ? src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > silently skips a consumed key even when its payload later exceeds the depth bound 692ms
+ ? src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > keeps middle refusals unconsumed and successful keys deduplicated across store reopen 734ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: none undefined > rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 2009ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: none undefined > uses payload and credential-free header bindings; invalid key expressions stay expression failures 470ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: none undefined > never invents a key and permits repeated unkeyed bodies 389ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: none undefined > consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 415ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 850ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > uses payload and credential-free header bindings; invalid key expressions stay expression failures 340ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > never invents a key and permits repeated unkeyed bodies 411ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 body > consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 645ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 805ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > uses payload and credential-free header bindings; invalid key expressions stay expression failures 216ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > never invents a key and permits repeated unkeyed bodies 183ms
+ ? src/webhook-keys.test.ts > uniform webhook keys: hmac-sha256 timestamp-body > consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 162ms
+ ? src/units.test.ts > loadConfig > uses the contract model-name bound for process defaults 15ms
+ ? src/units.test.ts > loadConfig > applies defaults and derives the database url from the data directory 1ms
+ ? src/units.test.ts > loadConfig > parses overrides and rejects bad values 4ms
+ ? src/units.test.ts > loadConfig > resolves the Jev environment seed ({ GG_JEV_API_KEY: 'test-primary-key' }) 1ms
+ ? src/units.test.ts > loadConfig > resolves the Jev environment seed ({ JEV_API_KEY: 'test-fallback-key' }) 0ms
+ ? src/units.test.ts > loadConfig > resolves the Jev environment seed ({ (2) }) 0ms
+ ? src/units.test.ts > loadConfig > resolves the Jev environment seed ({ GG_JEV_API_KEY: '' }) 0ms
+ ? src/units.test.ts > loadConfig > resolves the Jev environment seed ({ JEV_API_KEY: '' }) 0ms
+ ? src/units.test.ts > loadConfig > resolves the Jev environment seed ({ GG_JEV_API_KEY: '', (1) }) 0ms
+ ? src/units.test.ts > UlidIds > produces valid, time-ordered, unique ULIDs 6ms
+ ? src/units.test.ts > loadMasterKey > uses the environment key when valid and rejects wrong lengths 5ms
+ ? src/units.test.ts > loadMasterKey > generates a key file once and reuses it, rejecting corrupt files 21ms
+ ? src/units.test.ts > emitOpenApi > writes a document with the expected paths 1834ms
+ ? src/units.test.ts > main > boots the server from environment configuration and shuts down 192ms
+ ? src/triggers/poll-items.test.ts > bounded poll item admission > looks up depth-refused keys without admitting them or counting them toward the cap 19ms
+ ? src/triggers/poll-items.test.ts > bounded poll item admission > validates every key before the single lookup and admits unseen candidates sequentially up to the default cap 4ms
+ ? src/triggers/poll-items.test.ts > bounded poll item admission > does no I/O for an empty set or any invalid key beyond the dispatch cap 5ms
+ ? src/triggers/poll-items.test.ts > bounded poll item admission > stops at the first admission failure while preserving prior runs and leaves the tail for a later poll 13ms
+ ? src/triggers/poll-items.test.ts > bounded poll item admission > does not consume the dispatch cap for an atomic key reservation found after lookup 1ms
+ ? src/triggers/poll-items.test.ts > bounded poll item admission > reports safe lookup failure without starting a run and skips fully seen sets 2ms
+ ? src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows omitted scopes default to wildcard without credentials 1619ms
+ ? src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows explicit wildcard without credentials 147ms
+ ? src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows arbitrary scopes without credentials 158ms
+ ? src/api-key-scopes.test.ts > API-key creation in local trusted mode > allows empty scopes without credentials 172ms
+ ? src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows omitted scopes default to wildcard 165ms
+ ? src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows explicit wildcard 130ms
+ ? src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows arbitrary scopes 131ms
+ ? src/api-key-scopes.test.ts > API-key creation by a wildcard caller > allows empty scopes 190ms
+ ? src/api-key-scopes.test.ts > API-key creation by a wildcard caller > recognizes wildcard alongside other scopes 231ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows a held subset 171ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows all held scopes 188ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows read implied by write 154ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows write and its implied read together 176ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > allows an explicit empty list 231ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects a superset with multiple unheld scopes without creating a key 458ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects wildcard without creating a key 158ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects wildcard mixed with held scopes without creating a key 326ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > rejects write when only read is held without creating a key 238ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > requires scopes explicitly without creating a key 149ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=false > does not let api-keys:write alone create an administrative key 101ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows a held subset 98ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows all held scopes 113ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows read implied by write 89ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows write and its implied read together 108ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > allows an explicit empty list 89ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects a superset with multiple unheld scopes without creating a key 80ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects wildcard without creating a key 81ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects wildcard mixed with held scopes without creating a key 80ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > rejects write when only read is held without creating a key 84ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > requires scopes explicitly without creating a key 83ms
+ ? src/api-key-scopes.test.ts > scoped API-key delegation with requireApiKey=true > does not let api-keys:write alone create an administrative key 87ms
+ ? src/replay.test.ts > POST /runs/{id}/replay > forks a finished run at a node and runs it from there 1047ms
+ ? src/replay.test.ts > POST /runs/{id}/replay > answers 409 for a node the run never reached, 404 for unknown runs, 400 for bad bodies 197ms
+ ? src/replay.test.ts > POST /runs/{id}/replay > requires the runs:write scope 385ms
+ ? src/perf.test.ts > performance baseline > runs 10 runs of 1000+ events in parallel and streams one over SSE
+ ? src/static.test.ts > loadConfig GG_WEB_DIST > resolves the directory when set and omits it otherwise 18ms
+ ? src/static.test.ts > static web app hosting > serves the shell at /app/ without caching 61ms
+ ? src/static.test.ts > static web app hosting > falls back to the shell for client-side routes 4ms
+ ? src/static.test.ts > static web app hosting > serves fingerprinted assets as immutable and the service worker as no-cache 12ms
+ ? src/static.test.ts > static web app hosting > answers a missing file with a 404 problem, not the shell 2ms
+ ? src/static.test.ts > static web app hosting > redirects / and /app to /app/ 1ms
+ ? src/static.test.ts > static web app hosting > leaves API routes and API 404s alone 7ms
+ ? src/static.test.ts > static web app hosting > keeps static routes out of the OpenAPI document 318ms
+ ? src/static.test.ts > static web app with GG_REQUIRE_API_KEY=true > serves the shell, assets, and redirects without a key 7ms
+ ? src/static.test.ts > static web app with GG_REQUIRE_API_KEY=true > keeps every API route guarded, including paths that try to escape /app/ 3ms
+ ? src/static.test.ts > static hosting disabled > does nothing without GG_WEB_DIST or when the directory has no build 275ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > agrees across create, import, save, validate and publish for expression 1317ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > agrees across create, import, save, validate and publish for llm 300ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > agrees across create, import, save, validate and publish for classifier 373ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > reports the same invalid source path across authoring and publish for expression 376ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > reports the same invalid source path across authoring and publish for llm 276ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > refuses malformed format-1 source independently of pending review 875ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > refuses malformed format-2 source independently of pending review 671ms
+ ? src/decision-admission.test.ts > evaluator-specific decision admission > refuses malformed format-3 source independently of pending review 425ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > flags exactly the authenticated key for two clients, with revoked and foreign-owner records 809ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a header 124ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a query 184ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a body 143ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a label 145ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > cannot spoof current with a client 99ms
+ ? src/api-key-current.test.ts > current API key in required-key mode > flags nothing for a non-key actor, even when its id matches a key 117ms
+ ? src/api-key-current.test.ts > current API key in trusted mode > flags nothing with or without a valid bearer key 102ms
+ ? src/cron-preview.test.ts > cron preview endpoint > equals the scheduler across the March DST boundary without arming anything 655ms
+ ? src/cron-preview.test.ts > cron preview endpoint > uses the server clock by default, supports seconds, and bounds the count 150ms
+ ? src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"expression":"not cron"} 101ms
+ ? src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"expression":""} 86ms
+ ? src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"timezone":"Mars/Olympus"} 128ms
+ ? src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"timezone":""} 110ms
+ ? src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":0} 106ms
+ ? src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":11} 102ms
+ ? src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":1.5} 109ms
+ ? src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"from":"tomorrow"} 94ms
+ ? src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"unexpected":true} 130ms
+ ? src/cron-preview.test.ts > cron preview endpoint > keeps the CRON_INVALID field path on every admission endpoint (expression) 236ms
+ ? src/cron-preview.test.ts > cron preview endpoint > keeps the CRON_INVALID field path on every admission endpoint (timezone) 154ms
+ ? src/routes/event-paging.test.ts > inbound event paging over real SQLite > preserves type and before filters across limit-one tied pages, owner scope and exact exhaustion 1495ms
+ ? src/routes/event-paging.test.ts > inbound event paging over real SQLite > rejects invalid cursors and filter values with typed readable 4xx problems 179ms
+ ? src/routes/event-paging.test.ts > inbound event paging over real SQLite > does not decode damaged payload outside the requested page 109ms
+ ? src/routes/event-paging.test.ts > inbound event paging over real SQLite > does not decode damaged run_ids outside the requested page 140ms
+ ? src/loop-definition.test.ts > canonical loop definition inputs > reports each unknown root key with its own escaped pointer and message 895ms
+ ? src/loop-definition.test.ts > canonical loop definition inputs > reports each unknown nested key with its own escaped pointer and message 189ms
+ ? src/loop-definition.test.ts > canonical loop definition inputs > rejects an unsupported inference harness with its node path 193ms
+ ? src/loop-definition.test.ts > canonical loop definition inputs > rejects a removed loop-default field valued codex everywhere 193ms
+ ? src/loop-definition.test.ts > canonical loop definition inputs > rejects a removed loop-default field valued wrong everywhere 177ms
+ ? src/subloop-failure.test.ts > subloop child failures over the API (#251) > a provider failure in a child fails the parent visibly, and resuming the parent resumes the child 1512ms
+ ? src/subloop-failure.test.ts > subloop child failures over the API (#251) > cancelling a child cancels the parent that awaits it 334ms
+ ? src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {} 973ms
+ ? src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {invalid-json 389ms
+ ? src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > reports corruption inside the requested page after=1 limit=1 453ms
+ ? src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > reports corruption inside the requested page after=0 limit=3 355ms
+ ? src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > uses sequence existence through exhaustion and retains owner scoping 402ms
+ ? src/live.test.ts > API live smoke with the real Codex adapter > runs trigger -> inference -> exit through Codex and records usage
+ ? src/model-issues-draft.test.ts > definition-aware draft admission > permits inherited unresolved readiness while keeping publication blocked 18ms
+ ? src/model-issues-draft.test.ts > definition-aware draft admission > keeps explicit inference and loop defaults and classifier errors invalid 1ms
+ ? src/model-issues-draft.test.ts > definition-aware draft admission > distinguishes inherited and explicit decision evaluator values 8ms
+ ? src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run metadata, retains its count, and identifies it through diagnostics 1103ms
+ ? src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > finds older history beyond 500 unrelated runs, orders ties, and distinguishes no history 763ms
+ ? src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild 684ms
+ ? src/templates/catalog-package.test.ts > refuses a linked target root without touching files beyond the link 56ms
+ ? src/templates/catalog-package.test.ts > refuses a linked target ancestor without touching files beyond the link 50ms
+ ? src/templates/catalog-package.test.ts > refuses a linked target entry without touching files beyond the link 43ms
+ ? src/triggers/poll-http-bounds.test.ts > poll HTTP overflow diagnostics > refuses overflow without dispatch and exposes its typed code (items: false) 145ms
+ ? src/triggers/poll-http-bounds.test.ts > poll HTTP overflow diagnostics > refuses overflow without dispatch and exposes its typed code (items: true) 24ms
+ ? src/triggers/poll-probe.test.ts > items-only strict probe admission > passes deeply nested valid probe JSON to candidate classification without a stack overflow 51ms
+ ? src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts complete JSON without persisting process diagnostics 1ms
+ ? src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects failures, timeouts, overflows and invalid JSON with fixed codes 2ms
+ ? src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts script stdout at the exact raw-byte cap 2ms
+ ? src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects 65,537 raw stdout bytes even when the overflow flag is false 1ms
+ ? src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts provided or parsed HTTP JSON and rejects bad statuses or non-JSON responses 1ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves absent through execution, rejected updates and reopen 1551ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves null through execution, rejected updates and reopen 427ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves false through execution, rejected updates and reopen 606ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves zero through execution, rejected updates and reopen 645ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves empty string through execution, rejected updates and reopen 665ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves array through execution, rejected updates and reopen 762ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves object through execution, rejected updates and reopen 552ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves nested null through execution, rejected updates and reopen 471ms
+ ? src/run-json-values.test.ts > run result snapshots over file SQLite > preserves settings null and falsy JSON values across reopen 354ms
+ ? src/artifact-integrity.test.ts > serves exact verified transcript bytes, reports corruption explicitly, repairs on put and distinguishes missing content 1202ms
+ ? src/ids.test.ts > UlidIds > strictly increases within one millisecond, including random-component carries 76ms
+ ? src/ids.test.ts > UlidIds > increases when time advances and does not reverse when the clock moves backwards 1ms
+
+ Test Files  54 passed | 2 skipped (56)
+      Tests  723 passed | 6 skipped (729)
+   Start at  21:29:02
+   Duration  1124.77s (tests 70%, import 26%, transform 3%)
+
+     Import  276 modules were evaluated 465 times · 282.83s total, 26% of tracked time
+             ~114.96s faster with isolate: false  shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.39% ( 1950/2023 )
+Branches     : 92.91% ( 1259/1355 )
+Functions    : 94.07% ( 381/405 )
+Lines        : 97.84% ( 1771/1810 )
+================================================================================
+EXIT: 0; ELAPSED_SECONDS: 1131

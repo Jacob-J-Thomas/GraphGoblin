@@ -1,0 +1,3533 @@
+{
+  "name": "01-drain-family",
+  "startedAt": "2026-10-24T08:08:41.328Z",
+  "endedAt": "2026-10-24T08:09:35.358Z",
+  "checks": [
+    {
+      "name": "independent queued before stop",
+      "pass": true,
+      "actual": "queued",
+      "expected": "queued"
+    },
+    {
+      "name": "drain accepted",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    },
+    {
+      "name": "active parent and keeper listed",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "queued independent omitted from family",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "grace does not kill or close SSE",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "wait accepted",
+      "pass": true,
+      "actual": 202,
+      "expected": 202
+    },
+    {
+      "name": "wait has no second countdown",
+      "pass": true,
+      "actual": "draining",
+      "expected": "draining"
+    },
+    {
+      "name": "stale input rejected while draining",
+      "pass": true,
+      "actual": 409,
+      "expected": 409
+    },
+    {
+      "name": "input remains reachable",
+      "pass": true,
+      "actual": 200,
+      "expected": 200
+    },
+    {
+      "name": "signal remains reachable",
+      "pass": true,
+      "actual": 200,
+      "expected": 200
+    },
+    {
+      "name": "cancel remains reachable",
+      "pass": true,
+      "actual": 200,
+      "expected": 200
+    },
+    {
+      "name": "cancelled run truthful",
+      "pass": true,
+      "actual": "cancelled",
+      "expected": "cancelled"
+    },
+    {
+      "name": "one required child created during drain",
+      "pass": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "child timer parked and woke",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "queued independent still queued",
+      "pass": true,
+      "actual": "queued",
+      "expected": "queued"
+    },
+    {
+      "name": "SSE still open after parent while keeper active",
+      "pass": false,
+      "actual": false,
+      "expected": true
+    },
+    {
+      "name": "normal exit zero",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "both SSE streams close after final keeper release",
+      "pass": false,
+      "actual": false,
+      "expected": true
+    },
+    {
+      "name": "active SSE has completion",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "queued SSE has no start",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "lock removed after drain",
+      "pass": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "name": "queued run recovered and completed",
+      "pass": true,
+      "actual": "succeeded",
+      "expected": "succeeded"
+    },
+    {
+      "name": "reopened API normal stop",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    }
+  ],
+  "records": [
+    {
+      "at": "2026-10-24T08:08:50.716Z",
+      "kind": "key-cli",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "stdout": "Created API key \"Independent QA\" (id 01M5PF94VY1M0GVVZ6M6BQN5E6, scopes *).\nCopy the token now; it is shown only this once and only its hash is stored:\n\n  [disposable-key]\n\nSend it as \"Authorization: Bearer <token>\", or paste it into the web app when it asks for a key.\n",
+      "stderr": ""
+    },
+    {
+      "at": "2026-10-24T08:09:06.680Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:09:06.680Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-family-TMmYYq",
+      "port": 5860,
+      "pid": 53596
+    },
+    {
+      "at": "2026-10-24T08:09:06.768Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA child timer",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "timer",
+              "kind": "wait",
+              "label": "Timer",
+              "config": {
+                "mode": "duration",
+                "seconds": 1
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "timer"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "timer",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PF9MY104SEP2CHM00S1P7P",
+          "ownerId": "local",
+          "name": "QA child timer",
+          "draftVersionId": "01M5PF9MY104SEP2CHM00S1P7Q",
+          "createdAt": "2026-10-24T08:09:06.753Z",
+          "updatedAt": "2026-10-24T08:09:06.753Z"
+        },
+        "draft": {
+          "id": "01M5PF9MY104SEP2CHM00S1P7Q",
+          "loopId": "01M5PF9MY104SEP2CHM00S1P7P",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA child timer",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "timer",
+                "label": "Timer",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "duration",
+                  "seconds": 1,
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "timer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "timer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:06.753Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:06.793Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9MY104SEP2CHM00S1P7P/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PF9MY104SEP2CHM00S1P7Q",
+          "loopId": "01M5PF9MY104SEP2CHM00S1P7P",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA child timer",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "timer",
+                "label": "Timer",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "duration",
+                  "seconds": 1,
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "timer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "timer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:06.753Z",
+          "publishedAt": "2026-10-24T08:09:06.780Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:06.811Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA input",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "ask",
+              "kind": "wait",
+              "label": "Question",
+              "config": {
+                "mode": "input",
+                "prompt": "QA answer"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "ask"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "ask",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PF9MZJQ877EX184722J7V7",
+          "ownerId": "local",
+          "name": "QA input",
+          "draftVersionId": "01M5PF9MZJQ877EX184722J7V8",
+          "createdAt": "2026-10-24T08:09:06.802Z",
+          "updatedAt": "2026-10-24T08:09:06.802Z"
+        },
+        "draft": {
+          "id": "01M5PF9MZJQ877EX184722J7V8",
+          "loopId": "01M5PF9MZJQ877EX184722J7V7",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA input",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "ask",
+                "label": "Question",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "input",
+                  "prompt": "QA answer",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ],
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "ask",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "ask",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:06.802Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:06.836Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9MZJQ877EX184722J7V7/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PF9MZJQ877EX184722J7V8",
+          "loopId": "01M5PF9MZJQ877EX184722J7V7",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA input",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "ask",
+                "label": "Question",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "input",
+                  "prompt": "QA answer",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ],
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "ask",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "ask",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:06.802Z",
+          "publishedAt": "2026-10-24T08:09:06.827Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:06.869Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9MZJQ877EX184722J7V7/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PF9N0WD5TYQYER52ATWX7W",
+          "ownerId": "local",
+          "loopId": "01M5PF9MZJQ877EX184722J7V7",
+          "versionId": "01M5PF9MZJQ877EX184722J7V8",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA input",
+            "label": "QA input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9N0WD5TYQYER52ATWX7X",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:09:06.844Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.019Z",
+      "kind": "condition",
+      "label": "01M5PF9N0WD5TYQYER52ATWX7W waiting"
+    },
+    {
+      "at": "2026-10-24T08:09:07.048Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9MZJQ877EX184722J7V7/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PF9N6Z9BN2XKGKRYE5618C",
+          "ownerId": "local",
+          "loopId": "01M5PF9MZJQ877EX184722J7V7",
+          "versionId": "01M5PF9MZJQ877EX184722J7V8",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA input",
+            "label": "QA input v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9N6Z9BN2XKGKRYE5618D",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:09:07.039Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.173Z",
+      "kind": "condition",
+      "label": "01M5PF9N6Z9BN2XKGKRYE5618C waiting"
+    },
+    {
+      "at": "2026-10-24T08:09:07.200Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA signal",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "signal",
+              "kind": "wait",
+              "label": "Signal",
+              "config": {
+                "mode": "signal",
+                "name": "go"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "signal"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "signal",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PF9NBS1DR9PZJ4MT6Y6QJ4",
+          "ownerId": "local",
+          "name": "QA signal",
+          "draftVersionId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ5",
+          "createdAt": "2026-10-24T08:09:07.193Z",
+          "updatedAt": "2026-10-24T08:09:07.193Z"
+        },
+        "draft": {
+          "id": "01M5PF9NBS1DR9PZJ4MT6Y6QJ5",
+          "loopId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA signal",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "signal",
+                "label": "Signal",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "signal",
+                  "name": "go",
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "signal",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "signal",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:07.193Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.214Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NBS1DR9PZJ4MT6Y6QJ4/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PF9NBS1DR9PZJ4MT6Y6QJ5",
+          "loopId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ4",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA signal",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "signal",
+                "label": "Signal",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "wait",
+                "config": {
+                  "mode": "signal",
+                  "name": "go",
+                  "onTimeout": "continue"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "signal",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "signal",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:07.193Z",
+          "publishedAt": "2026-10-24T08:09:07.206Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.238Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NBS1DR9PZJ4MT6Y6QJ4/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PF9NCYTTGK5HXMVCJ5B3PY",
+          "ownerId": "local",
+          "loopId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ4",
+          "versionId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA signal",
+            "label": "QA signal v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9NCYTTGK5HXMVCJ5B3PZ",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:09:07.230Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.485Z",
+      "kind": "condition",
+      "label": "01M5PF9NCYTTGK5HXMVCJ5B3PY waiting"
+    },
+    {
+      "at": "2026-10-24T08:09:07.499Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA keeper",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "keeper",
+              "kind": "script",
+              "label": "keeper",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\keeper-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\keeper-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "keeper"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "keeper",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PF9NN5JG9ZJMEZV9QK5M9J",
+          "ownerId": "local",
+          "name": "QA keeper",
+          "draftVersionId": "01M5PF9NN5JG9ZJMEZV9QK5M9K",
+          "createdAt": "2026-10-24T08:09:07.493Z",
+          "updatedAt": "2026-10-24T08:09:07.493Z"
+        },
+        "draft": {
+          "id": "01M5PF9NN5JG9ZJMEZV9QK5M9K",
+          "loopId": "01M5PF9NN5JG9ZJMEZV9QK5M9J",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA keeper",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "keeper",
+                "label": "keeper",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\keeper-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\keeper-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "keeper",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "keeper",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:07.493Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.521Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NN5JG9ZJMEZV9QK5M9J/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PF9NN5JG9ZJMEZV9QK5M9K",
+          "loopId": "01M5PF9NN5JG9ZJMEZV9QK5M9J",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA keeper",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "keeper",
+                "label": "keeper",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\keeper-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\keeper-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "keeper",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "keeper",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:07.493Z",
+          "publishedAt": "2026-10-24T08:09:07.513Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.540Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA parent",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "parent-hold",
+              "kind": "script",
+              "label": "parent-hold",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\parent-hold-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\parent-hold-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                ]
+              }
+            },
+            {
+              "id": "sub",
+              "kind": "subloop",
+              "label": "Child",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M5PF9MY104SEP2CHM00S1P7P"
+                }
+              }
+            },
+            {
+              "id": "tail",
+              "kind": "script",
+              "label": "tail",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "process.stdout.write(\"tail-complete\")"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {}
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "parent-hold"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "parent-hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "sub"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "sub",
+                "port": "out"
+              },
+              "to": {
+                "node": "tail"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "tail",
+                "port": "out"
+              },
+              "to": {
+                "node": "done"
+              }
+            }
+          ]
+        }
+      },
+      "status": 201,
+      "data": {
+        "loop": {
+          "id": "01M5PF9NPB6FC5V7GXCS0M44RF",
+          "ownerId": "local",
+          "name": "QA parent",
+          "draftVersionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+          "createdAt": "2026-10-24T08:09:07.531Z",
+          "updatedAt": "2026-10-24T08:09:07.531Z"
+        },
+        "draft": {
+          "id": "01M5PF9NPB6FC5V7GXCS0M44RG",
+          "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA parent",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "parent-hold",
+                "label": "parent-hold",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\parent-hold-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\parent-hold-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "sub",
+                "label": "Child",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "subloop",
+                "config": {
+                  "loopRef": {
+                    "loopId": "01M5PF9MY104SEP2CHM00S1P7P",
+                    "version": "latest"
+                  },
+                  "input": {
+                    "mode": "inherit"
+                  },
+                  "output": {
+                    "mode": "result-only",
+                    "resultTo": {
+                      "lastOutput": true
+                    },
+                    "usage": "roll-up"
+                  }
+                }
+              },
+              {
+                "id": "tail",
+                "label": "tail",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "process.stdout.write(\"tail-complete\")"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "parent-hold",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "parent-hold",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "sub",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "sub",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "tail",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "tail",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:07.531Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.561Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NPB6FC5V7GXCS0M44RF/publish",
+      "status": 200,
+      "data": {
+        "version": {
+          "id": "01M5PF9NPB6FC5V7GXCS0M44RG",
+          "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA parent",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "parent-hold",
+                "label": "parent-hold",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "const f=require('node:fs');f.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\parent-hold-started\",String(process.pid));const i=setInterval(()=>{if(f.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-224-family-TMmYYq\\\\parent-hold-release\"))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "sub",
+                "label": "Child",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "subloop",
+                "config": {
+                  "loopRef": {
+                    "loopId": "01M5PF9MY104SEP2CHM00S1P7P",
+                    "version": "latest"
+                  },
+                  "input": {
+                    "mode": "inherit"
+                  },
+                  "output": {
+                    "mode": "result-only",
+                    "resultTo": {
+                      "lastOutput": true
+                    },
+                    "usage": "roll-up"
+                  }
+                }
+              },
+              {
+                "id": "tail",
+                "label": "tail",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "script",
+                "config": {
+                  "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                  "args": [
+                    "-e",
+                    "process.stdout.write(\"tail-complete\")"
+                  ],
+                  "cwd": "workspace",
+                  "stdin": "thread",
+                  "stdout": "last-output"
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e0",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "parent-hold",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "parent-hold",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "sub",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "sub",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "tail",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "tail",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-24T08:09:07.531Z",
+          "publishedAt": "2026-10-24T08:09:07.553Z"
+        },
+        "issues": []
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:07.581Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NN5JG9ZJMEZV9QK5M9J/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PF9NQETRJHTYCG5SJ11HTC",
+          "ownerId": "local",
+          "loopId": "01M5PF9NN5JG9ZJMEZV9QK5M9J",
+          "versionId": "01M5PF9NN5JG9ZJMEZV9QK5M9K",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA keeper",
+            "label": "QA keeper v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9NQETRJHTYCG5SJ11HTD",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:09:07.566Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:09.831Z",
+      "kind": "condition",
+      "label": "keeper executing"
+    },
+    {
+      "at": "2026-10-24T08:09:09.872Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NPB6FC5V7GXCS0M44RF/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+          "ownerId": "local",
+          "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+          "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA parent",
+            "label": "QA parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9QZ6RS5TDJHT0Z8QFM25",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:09:09.862Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:11.176Z",
+      "kind": "condition",
+      "label": "parent executing"
+    },
+    {
+      "at": "2026-10-24T08:09:11.250Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/loops/01M5PF9NPB6FC5V7GXCS0M44RF/runs",
+      "body": {},
+      "status": 202,
+      "data": {
+        "run": {
+          "id": "01M5PF9SABGM1804PP7XVFVYTX",
+          "ownerId": "local",
+          "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+          "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA parent",
+            "label": "QA parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9SABGM1804PP7XVFVYTY",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-10-24T08:09:11.243Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:11.312Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:09:11.289Z",
+        "choiceAt": "2026-10-24T08:09:11.489Z",
+        "activeRunIds": [
+          "01M5PF9NQETRJHTYCG5SJ11HTC",
+          "01M5PF9QZ6RS5TDJHT0Z8QFM24"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:11.606Z",
+      "kind": "condition",
+      "label": "choice"
+    },
+    {
+      "at": "2026-10-24T08:09:11.606Z",
+      "kind": "choice",
+      "state": {
+        "phase": "awaiting-choice",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:09:11.289Z",
+        "choiceAt": "2026-10-24T08:09:11.489Z",
+        "activeRunIds": [
+          "01M5PF9NQETRJHTYCG5SJ11HTC",
+          "01M5PF9QZ6RS5TDJHT0Z8QFM24"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      },
+      "afterMs": 323
+    },
+    {
+      "at": "2026-10-24T08:09:12.388Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "wait"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:09:11.289Z",
+        "choiceAt": "2026-10-24T08:09:11.489Z",
+        "activeRunIds": [
+          "01M5PF9NQETRJHTYCG5SJ11HTC",
+          "01M5PF9QZ6RS5TDJHT0Z8QFM24"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:13.301Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:09:11.289Z",
+        "choiceAt": "2026-10-24T08:09:11.489Z",
+        "activeRunIds": [
+          "01M5PF9NQETRJHTYCG5SJ11HTC",
+          "01M5PF9QZ6RS5TDJHT0Z8QFM24"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:13.318Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/runs/01M5PF9N0WD5TYQYER52ATWX7W/input",
+      "body": {
+        "waitId": "stale",
+        "input": "bad"
+      },
+      "status": 409,
+      "data": {
+        "type": "https://graphgoblin.dev/problems/wait-mismatch",
+        "title": "wait mismatch",
+        "status": 409,
+        "code": "WAIT_MISMATCH",
+        "detail": "The observed input wait is no longer active"
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:13.342Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/runs/01M5PF9N0WD5TYQYER52ATWX7W/input",
+      "body": {
+        "waitId": "01M5PF9N0WD5TYQYER52ATWX7W:5",
+        "input": "during drain"
+      },
+      "status": 200,
+      "data": {
+        "id": "01M5PF9N0WD5TYQYER52ATWX7W",
+        "ownerId": "local",
+        "loopId": "01M5PF9MZJQ877EX184722J7V7",
+        "versionId": "01M5PF9MZJQ877EX184722J7V8",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA input",
+          "label": "QA input v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PF9N0WD5TYQYER52ATWX7X",
+        "status": "running",
+        "currentNodeId": "ask",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5PF9N0WD5TYQYER52ATWX7W:5",
+          "nodeId": "ask",
+          "kind": "input",
+          "prompt": "QA answer",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-24T08:09:06.844Z",
+        "startedAt": "2026-10-24T08:09:06.888Z",
+        "lastEventSeq": 8
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:13.370Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/runs/01M5PF9NCYTTGK5HXMVCJ5B3PY/signals/go",
+      "body": {
+        "waitId": "01M5PF9NCYTTGK5HXMVCJ5B3PY:5",
+        "payload": "during drain"
+      },
+      "status": 200,
+      "data": {
+        "run": {
+          "id": "01M5PF9NCYTTGK5HXMVCJ5B3PY",
+          "ownerId": "local",
+          "loopId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ4",
+          "versionId": "01M5PF9NBS1DR9PZJ4MT6Y6QJ5",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA signal",
+            "label": "QA signal v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5PF9NCYTTGK5HXMVCJ5B3PZ",
+          "status": "running",
+          "currentNodeId": "signal",
+          "iteration": 1,
+          "waiting": {
+            "waitId": "01M5PF9NCYTTGK5HXMVCJ5B3PY:5",
+            "nodeId": "signal",
+            "kind": "signal",
+            "signalName": "go",
+            "startedSeq": 5
+          },
+          "createdAt": "2026-10-24T08:09:07.230Z",
+          "startedAt": "2026-10-24T08:09:07.244Z",
+          "lastEventSeq": 8
+        },
+        "woke": true
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:13.414Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/runs/01M5PF9N6Z9BN2XKGKRYE5618C/cancel",
+      "body": {},
+      "status": 200,
+      "data": {
+        "id": "01M5PF9N6Z9BN2XKGKRYE5618C",
+        "ownerId": "local",
+        "loopId": "01M5PF9MZJQ877EX184722J7V7",
+        "versionId": "01M5PF9MZJQ877EX184722J7V8",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA input",
+          "label": "QA input v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PF9N6Z9BN2XKGKRYE5618D",
+        "status": "cancelled",
+        "currentNodeId": "ask",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-24T08:09:13.381Z",
+        "createdAt": "2026-10-24T08:09:07.039Z",
+        "startedAt": "2026-10-24T08:09:07.055Z",
+        "finishedAt": "2026-10-24T08:09:13.404Z",
+        "lastEventSeq": 8
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:17.237Z",
+      "kind": "condition",
+      "label": "01M5PF9QZ6RS5TDJHT0Z8QFM24 succeeded"
+    },
+    {
+      "at": "2026-10-24T08:09:17.242Z",
+      "kind": "condition",
+      "label": "01M5PF9N0WD5TYQYER52ATWX7W succeeded"
+    },
+    {
+      "at": "2026-10-24T08:09:17.246Z",
+      "kind": "condition",
+      "label": "01M5PF9NCYTTGK5HXMVCJ5B3PY succeeded"
+    },
+    {
+      "at": "2026-10-24T08:09:17.272Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs/01M5PF9QZ6RS5TDJHT0Z8QFM24/events?limit=1000",
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:09.862Z",
+            "type": "run.queued",
+            "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA parent",
+              "label": "QA parent v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+                "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+                "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PF9QZ6RS5TDJHT0Z8QFM25",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "01M5PF94VY1M0GVVZ6M6BQN5E6"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:09.862Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "subloopVersions": {
+              "01M5PF9MY104SEP2CHM00S1P7P": "01M5PF9MY104SEP2CHM00S1P7Q"
+            }
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:09.880Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:09.912Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:09.919Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:09.918Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:09.918Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:09.943Z",
+            "type": "node.started",
+            "nodeId": "parent-hold",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "5ceb4ddba3a9ec90"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:14.007Z",
+            "type": "node.progress",
+            "nodeId": "parent-hold",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 0
+            }
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:14.013Z",
+            "type": "node.finished",
+            "nodeId": "parent-hold",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/parent-hold",
+                "value": {
+                  "nodeId": "parent-hold",
+                  "value": "",
+                  "at": "2026-10-24T08:09:14.011Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "parent-hold",
+                  "value": "",
+                  "at": "2026-10-24T08:09:14.011Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 4067
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 8,
+            "ts": "2026-10-24T08:09:14.044Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 1,
+            "configHash": "aaf339e95228b72d"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 9,
+            "ts": "2026-10-24T08:09:14.071Z",
+            "type": "child_run.started",
+            "nodeId": "sub",
+            "childRunId": "01M5PF9W23BPKF4Z8AD8BQR32Q"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 10,
+            "ts": "2026-10-24T08:09:14.089Z",
+            "type": "run.waiting",
+            "nodeId": "sub",
+            "wait": {
+              "waitId": "01M5PF9QZ6RS5TDJHT0Z8QFM24:8",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+              "startedSeq": 8
+            }
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 11,
+            "ts": "2026-10-24T08:09:15.732Z",
+            "type": "run.woken",
+            "nodeId": "sub",
+            "reason": "child",
+            "payload": {
+              "childRunId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+              "status": "succeeded",
+              "outcome": "success"
+            }
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 12,
+            "ts": "2026-10-24T08:09:15.763Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 2,
+            "configHash": "aaf339e95228b72d"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 13,
+            "ts": "2026-10-24T08:09:15.769Z",
+            "type": "child_run.finished",
+            "nodeId": "sub",
+            "childRunId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "outcome": "success",
+            "status": "succeeded"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 14,
+            "ts": "2026-10-24T08:09:15.774Z",
+            "type": "node.finished",
+            "nodeId": "sub",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/sub",
+                "value": {
+                  "nodeId": "sub",
+                  "value": {
+                    "status": "succeeded",
+                    "outcome": "success",
+                    "childRunId": "01M5PF9W23BPKF4Z8AD8BQR32Q"
+                  },
+                  "at": "2026-10-24T08:09:15.772Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "sub",
+                  "value": {
+                    "status": "succeeded",
+                    "outcome": "success",
+                    "childRunId": "01M5PF9W23BPKF4Z8AD8BQR32Q"
+                  },
+                  "at": "2026-10-24T08:09:15.772Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 7
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 15,
+            "ts": "2026-10-24T08:09:15.812Z",
+            "type": "node.started",
+            "nodeId": "tail",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "bb32c2a57efb166b"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 16,
+            "ts": "2026-10-24T08:09:17.115Z",
+            "type": "node.progress",
+            "nodeId": "tail",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 13
+            }
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 17,
+            "ts": "2026-10-24T08:09:17.130Z",
+            "type": "node.finished",
+            "nodeId": "tail",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/tail",
+                "value": {
+                  "nodeId": "tail",
+                  "value": "tail-complete",
+                  "at": "2026-10-24T08:09:17.128Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "tail",
+                  "value": "tail-complete",
+                  "at": "2026-10-24T08:09:17.128Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1313
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 18,
+            "ts": "2026-10-24T08:09:17.170Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 19,
+            "ts": "2026-10-24T08:09:17.180Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 20,
+            "ts": "2026-10-24T08:09:17.180Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 3
+          },
+          {
+            "runId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+            "seq": 21,
+            "ts": "2026-10-24T08:09:17.180Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 21,
+        "hasMore": false
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:17.279Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs/01M5PF9W23BPKF4Z8AD8BQR32Q/events?limit=1000",
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:14.051Z",
+            "type": "run.queued",
+            "versionId": "01M5PF9MY104SEP2CHM00S1P7Q",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA child timer",
+              "label": "QA child timer v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+                "loopId": "01M5PF9MY104SEP2CHM00S1P7P",
+                "versionId": "01M5PF9MY104SEP2CHM00S1P7Q",
+                "parentRunId": "01M5PF9QZ6RS5TDJHT0Z8QFM24",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PF9W23BPKF4Z8AD8BQR32R",
+                "source": "subloop",
+                "caller": {
+                  "kind": "run",
+                  "id": "01M5PF9QZ6RS5TDJHT0Z8QFM24"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:14.051Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {
+                "start": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:09.918Z"
+                },
+                "parent-hold": {
+                  "nodeId": "parent-hold",
+                  "value": "",
+                  "at": "2026-10-24T08:09:14.011Z"
+                }
+              },
+              "lastOutput": {
+                "nodeId": "parent-hold",
+                "value": "",
+                "at": "2026-10-24T08:09:14.011Z"
+              },
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "subloopVersions": {
+              "01M5PF9MY104SEP2CHM00S1P7P": "01M5PF9MY104SEP2CHM00S1P7Q"
+            }
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:14.317Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:14.330Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:14.350Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "replace",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:14.346Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:14.346Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 4
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:14.377Z",
+            "type": "node.started",
+            "nodeId": "timer",
+            "kind": "wait",
+            "attempt": 1,
+            "configHash": "d5b5454f20c4ad41"
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:14.382Z",
+            "type": "run.waiting",
+            "nodeId": "timer",
+            "wait": {
+              "waitId": "01M5PF9W23BPKF4Z8AD8BQR32Q:5",
+              "nodeId": "timer",
+              "kind": "timer",
+              "until": "2026-10-24T08:09:15.381Z",
+              "startedSeq": 5
+            }
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:15.394Z",
+            "type": "run.woken",
+            "nodeId": "timer",
+            "reason": "timer"
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 8,
+            "ts": "2026-10-24T08:09:15.435Z",
+            "type": "node.started",
+            "nodeId": "timer",
+            "kind": "wait",
+            "attempt": 2,
+            "configHash": "d5b5454f20c4ad41"
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 9,
+            "ts": "2026-10-24T08:09:15.687Z",
+            "type": "node.finished",
+            "nodeId": "timer",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/timer",
+                "value": {
+                  "nodeId": "timer",
+                  "value": {
+                    "wokeAt": "2026-10-24T08:09:15.679Z",
+                    "reason": "timer"
+                  },
+                  "at": "2026-10-24T08:09:15.679Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "timer",
+                  "value": {
+                    "wokeAt": "2026-10-24T08:09:15.679Z",
+                    "reason": "timer"
+                  },
+                  "at": "2026-10-24T08:09:15.679Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 25
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 10,
+            "ts": "2026-10-24T08:09:15.712Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 11,
+            "ts": "2026-10-24T08:09:15.718Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 12,
+            "ts": "2026-10-24T08:09:15.718Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PF9W23BPKF4Z8AD8BQR32Q",
+            "seq": 13,
+            "ts": "2026-10-24T08:09:15.718Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 13,
+        "hasMore": false
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:17.284Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs/01M5PF9SABGM1804PP7XVFVYTX",
+      "status": 200,
+      "data": {
+        "id": "01M5PF9SABGM1804PP7XVFVYTX",
+        "ownerId": "local",
+        "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+        "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent",
+          "label": "QA parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PF9SABGM1804PP7XVFVYTY",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T08:09:11.243Z",
+        "lastEventSeq": 1
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:17.700Z",
+      "kind": "drain-finish",
+      "elapsedMs": 6417,
+      "releaseAt": 1792829357284,
+      "streamClosedAt": [
+        1792829357183,
+        1792829357511
+      ]
+    },
+    {
+      "at": "2026-10-24T08:09:31.316Z",
+      "kind": "condition",
+      "label": "API listening"
+    },
+    {
+      "at": "2026-10-24T08:09:31.316Z",
+      "kind": "boot",
+      "dataDir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-c7-224-family-TMmYYq",
+      "port": 5860,
+      "pid": 4020
+    },
+    {
+      "at": "2026-10-24T08:09:35.235Z",
+      "kind": "condition",
+      "label": "01M5PF9SABGM1804PP7XVFVYTX succeeded"
+    },
+    {
+      "at": "2026-10-24T08:09:35.252Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs/01M5PF9SABGM1804PP7XVFVYTX",
+      "status": 200,
+      "data": {
+        "id": "01M5PF9SABGM1804PP7XVFVYTX",
+        "ownerId": "local",
+        "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+        "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent",
+          "label": "QA parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5PF9SABGM1804PP7XVFVYTY",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-24T08:09:11.243Z",
+        "startedAt": "2026-10-24T08:09:29.430Z",
+        "finishedAt": "2026-10-24T08:09:35.162Z",
+        "lastEventSeq": 21
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:35.288Z",
+      "kind": "http",
+      "method": "GET",
+      "path": "/runs/01M5PF9SABGM1804PP7XVFVYTX/events?limit=1000",
+      "status": 200,
+      "data": {
+        "items": [
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 1,
+            "ts": "2026-10-24T08:09:11.243Z",
+            "type": "run.queued",
+            "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA parent",
+              "label": "QA parent v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M5PF9SABGM1804PP7XVFVYTX",
+                "loopId": "01M5PF9NPB6FC5V7GXCS0M44RF",
+                "versionId": "01M5PF9NPB6FC5V7GXCS0M44RG",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M5PF9SABGM1804PP7XVFVYTY",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "01M5PF94VY1M0GVVZ6M6BQN5E6"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-24T08:09:11.243Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "subloopVersions": {
+              "01M5PF9MY104SEP2CHM00S1P7P": "01M5PF9MY104SEP2CHM00S1P7Q"
+            }
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 2,
+            "ts": "2026-10-24T08:09:29.439Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 3,
+            "ts": "2026-10-24T08:09:29.454Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 4,
+            "ts": "2026-10-24T08:09:29.509Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:29.502Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-24T08:09:29.502Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 5
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 5,
+            "ts": "2026-10-24T08:09:29.535Z",
+            "type": "node.started",
+            "nodeId": "parent-hold",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "5ceb4ddba3a9ec90"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 6,
+            "ts": "2026-10-24T08:09:32.524Z",
+            "type": "node.progress",
+            "nodeId": "parent-hold",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 0
+            }
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 7,
+            "ts": "2026-10-24T08:09:32.621Z",
+            "type": "node.finished",
+            "nodeId": "parent-hold",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/parent-hold",
+                "value": {
+                  "nodeId": "parent-hold",
+                  "value": "",
+                  "at": "2026-10-24T08:09:32.617Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "parent-hold",
+                  "value": "",
+                  "at": "2026-10-24T08:09:32.617Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 3048
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 8,
+            "ts": "2026-10-24T08:09:32.837Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 1,
+            "configHash": "aaf339e95228b72d"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 9,
+            "ts": "2026-10-24T08:09:32.876Z",
+            "type": "child_run.started",
+            "nodeId": "sub",
+            "childRunId": "01M5PFAEDJX9N0BFAB05NDDHGM"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 10,
+            "ts": "2026-10-24T08:09:32.946Z",
+            "type": "run.waiting",
+            "nodeId": "sub",
+            "wait": {
+              "waitId": "01M5PF9SABGM1804PP7XVFVYTX:8",
+              "nodeId": "sub",
+              "kind": "child",
+              "childRunId": "01M5PFAEDJX9N0BFAB05NDDHGM",
+              "startedSeq": 8
+            }
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 11,
+            "ts": "2026-10-24T08:09:34.438Z",
+            "type": "run.woken",
+            "nodeId": "sub",
+            "reason": "child",
+            "payload": {
+              "childRunId": "01M5PFAEDJX9N0BFAB05NDDHGM",
+              "status": "succeeded",
+              "outcome": "success"
+            }
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 12,
+            "ts": "2026-10-24T08:09:34.508Z",
+            "type": "node.started",
+            "nodeId": "sub",
+            "kind": "subloop",
+            "attempt": 2,
+            "configHash": "aaf339e95228b72d"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 13,
+            "ts": "2026-10-24T08:09:34.521Z",
+            "type": "child_run.finished",
+            "nodeId": "sub",
+            "childRunId": "01M5PFAEDJX9N0BFAB05NDDHGM",
+            "outcome": "success",
+            "status": "succeeded"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 14,
+            "ts": "2026-10-24T08:09:34.549Z",
+            "type": "node.finished",
+            "nodeId": "sub",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/sub",
+                "value": {
+                  "nodeId": "sub",
+                  "value": {
+                    "status": "succeeded",
+                    "outcome": "success",
+                    "childRunId": "01M5PFAEDJX9N0BFAB05NDDHGM"
+                  },
+                  "at": "2026-10-24T08:09:34.542Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "sub",
+                  "value": {
+                    "status": "succeeded",
+                    "outcome": "success",
+                    "childRunId": "01M5PFAEDJX9N0BFAB05NDDHGM"
+                  },
+                  "at": "2026-10-24T08:09:34.542Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 30
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 15,
+            "ts": "2026-10-24T08:09:34.594Z",
+            "type": "node.started",
+            "nodeId": "tail",
+            "kind": "script",
+            "attempt": 1,
+            "configHash": "bb32c2a57efb166b"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 16,
+            "ts": "2026-10-24T08:09:35.052Z",
+            "type": "node.progress",
+            "nodeId": "tail",
+            "progress": {
+              "exitCode": 0,
+              "stderr": "",
+              "stdoutBytes": 13
+            }
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 17,
+            "ts": "2026-10-24T08:09:35.059Z",
+            "type": "node.finished",
+            "nodeId": "tail",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/tail",
+                "value": {
+                  "nodeId": "tail",
+                  "value": "tail-complete",
+                  "at": "2026-10-24T08:09:35.056Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "tail",
+                  "value": "tail-complete",
+                  "at": "2026-10-24T08:09:35.056Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 460
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 18,
+            "ts": "2026-10-24T08:09:35.108Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 19,
+            "ts": "2026-10-24T08:09:35.115Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 20,
+            "ts": "2026-10-24T08:09:35.115Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 1
+          },
+          {
+            "runId": "01M5PF9SABGM1804PP7XVFVYTX",
+            "seq": 21,
+            "ts": "2026-10-24T08:09:35.115Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 21,
+        "hasMore": false
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:35.299Z",
+      "kind": "http",
+      "method": "POST",
+      "path": "/system/shutdown",
+      "body": {
+        "action": "drain"
+      },
+      "status": 202,
+      "data": {
+        "phase": "draining",
+        "graceMs": 200,
+        "startedAt": "2026-10-24T08:09:35.295Z",
+        "choiceAt": "2026-10-24T08:09:35.495Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ]
+      }
+    },
+    {
+      "at": "2026-10-24T08:09:35.347Z",
+      "kind": "exit",
+      "action": "drain",
+      "response": {
+        "status": 202,
+        "data": {
+          "phase": "draining",
+          "graceMs": 200,
+          "startedAt": "2026-10-24T08:09:35.295Z",
+          "choiceAt": "2026-10-24T08:09:35.495Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ]
+        }
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "elapsedMs": 57,
+      "lockExists": false
+    }
+  ]
+}

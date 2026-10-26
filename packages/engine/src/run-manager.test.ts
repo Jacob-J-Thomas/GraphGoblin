@@ -481,6 +481,30 @@ describe('failure and recovery', () => {
       { type: 'node.started', nodeId: 'start', kind: 'trigger', attempt: 1, configHash: 'h' },
       { type: 'node.finished', nodeId: 'start', patch: [], route: 'out', durationMs: 1 },
       { type: 'node.started', nodeId: 'infer', kind: 'inference', attempt: 1, configHash: 'h' },
+      {
+        type: 'harness.turn',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        harness: 'codex',
+        promptKind: 'authored',
+        prompt: 'go',
+      },
+      {
+        type: 'harness.session',
+        nodeId: 'infer',
+        harness: 'codex',
+        sessionId: 'left-behind',
+        mode: 'fresh',
+      },
+      {
+        type: 'harness.submission',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        submission: 'delivery-uncertain',
+        marker: 'fake.accepted',
+      },
     ]);
     await ports.sessions.upsert({
       runId,

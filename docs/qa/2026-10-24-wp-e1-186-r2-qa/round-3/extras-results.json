@@ -1,0 +1,153 @@
+[
+  {
+    "name": "active browsing freezes membership while live acknowledgement advances",
+    "steps": "Seek 50 in active >700-event run; wait 100 more live events; reload; Follow live",
+    "expected": "Frozen rows unchanged, acknowledgement advances, reload preserves history mode, live returns exact bounded suffix",
+    "pass": true,
+    "actual": {
+      "before": {
+        "ack": 871,
+        "first": 1,
+        "last": 50
+      },
+      "after": {
+        "ack": 985,
+        "first": 1,
+        "last": 50
+      },
+      "live": {
+        "ack": 1039,
+        "rows": 163,
+        "bytes": 114032
+      }
+    }
+  },
+  {
+    "name": "corrected pure real long cancellation reproduction",
+    "steps": "Before any synthetic suffix: seek 50, then 600; Load older and newer from enabled edges; reload frozen window; Follow live",
+    "expected": "Actual actor preserved at all positions; exact suffix and <=80 Timeline rows",
+    "pass": true,
+    "actual": {
+      "runId": "01M5S952FCHYY8H8GPZPFD920N",
+      "total": 1046,
+      "actor": {
+        "kind": "api-key",
+        "id": "01M5S80Q6HBDZQ90Z2XXGG2QBJ"
+      },
+      "contexts": [
+        "Execution context\n\nIndependent QA 1792923568589 v1 · version ID 01M5S952EMNSSWMKWD42FBTWRA\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #1045; cancellation #1046). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON",
+        "Execution context\n\nIndependent QA 1792923568589 v1 · version ID 01M5S952EMNSSWMKWD42FBTWRA\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #1045; cancellation #1046). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON",
+        "Execution context\n\nIndependent QA 1792923568589 v1 · version ID 01M5S952EMNSSWMKWD42FBTWRA\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #1045; cancellation #1046). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON",
+        "Execution context\n\nIndependent QA 1792923568589 v1 · version ID 01M5S952EMNSSWMKWD42FBTWRA\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #1045; cancellation #1046). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON",
+        "Execution context\n\nIndependent QA 1792923568589 v1 · version ID 01M5S952EMNSSWMKWD42FBTWRA\n\nCancelled by api-key 01M5S80Q6HBDZQ90Z2XXGG2QBJ (request #1045; cancellation #1046). Recorded node position: Work (work).\n\nExact run record\nPinned definition JSON"
+      ],
+      "tail": {
+        "rows": 128,
+        "first": 919,
+        "last": 1046,
+        "bytes": 90292,
+        "mounted": 80
+      }
+    }
+  },
+  {
+    "name": "empty cancelled run honestly labels missing history",
+    "steps": "Create an explicitly synthetic zero-row cancelled record; open inspector and seek unavailable event",
+    "expected": "No invented actor; terminal cancellation event not recorded; zero persisted rows",
+    "pass": false,
+    "error": "TypeError: Cannot read properties of undefined (reading 'events')",
+    "stack": "TypeError: Cannot read properties of undefined (reading 'events')\n    at file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/.tmp/qa3/extras.mjs:27:358\n    at async check (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/.tmp/qa3/extras.mjs:13:100)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2-3/.tmp/qa3/extras.mjs:26:1"
+  },
+  {
+    "name": "concurrent fresh-session requests admit exactly one choice",
+    "steps": "Real failed two-visit fake-harness run; send two recover-session requests with the same failureSeq concurrently; follow it",
+    "expected": "One 200 and one 409; one new fresh-session event; success",
+    "pass": true,
+    "actual": {
+      "runId": "01M5S95CS8DDRKSTD0NNWNGZMS",
+      "requests": [
+        {
+          "status": 200
+        },
+        {
+          "status": 409,
+          "code": "INVALID_STATE"
+        }
+      ],
+      "choice": {
+        "runId": "01M5S95CS8DDRKSTD0NNWNGZMS",
+        "seq": 20,
+        "ts": "2026-10-25T10:19:39.303Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M5S80Q6HBDZQ90Z2XXGG2QBJ"
+        },
+        "freshSession": {
+          "visitId": "01M5S95CS8DDRKSTD0NNWNGZMS:15",
+          "harness": "codex",
+          "sessionId": "fake-session-188",
+          "origin": "resume-previous",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "nodeId": "work",
+          "failureSeq": 19,
+          "priorContextCarried": false,
+          "prompt": "controlled measurement"
+        }
+      }
+    }
+  },
+  {
+    "name": "real gateway graceful restart preserves history and observation",
+    "steps": "Stop original gateway through QA control; mint a key with built main.js on the same store; spawn new built fake gateway; compare record/observation/thread",
+    "expected": "New PID, built CLI key success, unchanged durable data and old credentials still valid",
+    "pass": true,
+    "actual": {
+      "oldPid": 26776,
+      "newPid": 22960,
+      "cliCode": 0,
+      "cliKeyMinted": true,
+      "dir": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-e1-186r2-3-gfQnhS",
+      "equal": [
+        "run",
+        "observation",
+        "thread"
+      ]
+    }
+  },
+  {
+    "name": "#319 shutdown notice above bounded inspector",
+    "steps": "Start active fake run; open inspector; POST drain; observe run link, open force confirmation and dismiss; choose Keep waiting; cancel run and observe readiness",
+    "expected": "Draining notice names active run, force requires confirmation, dismissal is inert, no new independent admission, stored history still browsable",
+    "pass": true,
+    "actual": {
+      "runId": "01M5S95KNN6VF75STQQBBFGBYK",
+      "drain": {
+        "phase": "draining",
+        "graceMs": 300000,
+        "startedAt": "2026-10-25T10:19:47.466Z",
+        "choiceAt": "2026-10-25T10:24:47.466Z",
+        "activeRunIds": [
+          "01M5S95KNN6VF75STQQBBFGBYK"
+        ],
+        "unconfirmedRunIds": [],
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "controlToken": "45909653-65db-403c-aff2-43b0b9e99059:1:draining"
+      },
+      "final": {
+        "phase": "ready",
+        "graceMs": 300000,
+        "startedAt": "2026-10-25T10:19:47.466Z",
+        "choiceAt": "2026-10-25T10:24:47.466Z",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "controlToken": "45909653-65db-403c-aff2-43b0b9e99059:3:ready"
+      }
+    }
+  }
+]

@@ -87,12 +87,12 @@ describe('query reconnect', () => {
     name: string;
     useRead: (loopId: string, runId: string) => UseQueryResult<unknown>;
   }[] = [
-    { name: 'Loops', useRead: useLoops },
+    { name: 'Loops', useRead: () => useLoops() },
     { name: 'loop details', useRead: (loopId) => useLoop(loopId) },
     { name: 'Runs', useRead: () => useRuns() },
     { name: 'run inspector', useRead: (_loopId, runId) => useRun(runId) },
     { name: 'run thread', useRead: (_loopId, runId) => useRunThread(runId) },
-    { name: 'Events', useRead: useInboundEvents },
+    { name: 'Events', useRead: () => useInboundEvents() },
     { name: 'Settings defaults', useRead: useSettings },
     { name: 'Settings models', useRead: useModelCatalog },
     { name: 'Settings secrets', useRead: useSecrets },
@@ -132,7 +132,7 @@ describe('query reconnect', () => {
     },
   );
 
-  it.each(reads)('recovers the cold offline $name query', async ({ useRead }) => {
+  it.each(reads)('recovers the cold offline $name query', async ({ name, useRead }) => {
     onlineManager.setOnline(true);
     const api = new FakeApi();
     const loop = api.addLoop(minimalLoop());
@@ -147,7 +147,14 @@ describe('query reconnect', () => {
       act(reconnect);
       await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
       expect(view.result.current.data).toBeDefined();
-      expect(view.fetch).toHaveBeenCalledTimes(3);
+      const availabilityChecks = view.fetch.mock.calls.filter(([request]) => {
+        const url = new URL(request.url);
+        return url.pathname === '/events' && url.searchParams.get('limit') === '1';
+      });
+      // Initial failure plus its retry, then exactly one recovered history read. Events
+      // starts its separate availability check only after that successful initial load.
+      expect(availabilityChecks).toHaveLength(name === 'Events' ? 1 : 0);
+      expect(view.fetch.mock.calls.length - availabilityChecks.length).toBe(3);
     } finally {
       view.unmount();
       view.queryClient.clear();

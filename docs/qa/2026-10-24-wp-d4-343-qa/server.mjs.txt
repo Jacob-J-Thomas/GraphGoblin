@@ -1,0 +1,28 @@
+// Independent QA process: built composition root, real file SQLite, public fake harness injection.
+import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+const root = process.env.QA_ROOT;
+const load = (p) => import(pathToFileURL(join(root, p)).href);
+const { createContainer, loadConfig, buildApp } = await load('apps/api/dist/index.js');
+const { FakeHarness, FakeClock, FakeDecider } = await load('packages/engine/dist/testing/index.js');
+const clock = new FakeClock(Date.now());
+const harness = new FakeHarness();
+const container = await createContainer(loadConfig(process.env), {
+  clock, harnesses: { codex: harness }, deciders: [new FakeDecider('codex')], startTimers: false,
+});
+await container.start();
+const app = await buildApp(container, { logger: false });
+app.post('/__qa', async (request, reply) => {
+  const b = request.body;
+  if (b.op === 'sql') return (await container.handle.client.execute({ sql: b.sql, args: b.args ?? [] })).rows;
+  if (b.op === 'settle') { await container.manager.waitForWebhookRecovery(); await container.manager.waitForIdle(); return { ok: true }; }
+  if (b.op === 'sweep') { if (b.ms) clock.advance(b.ms); await container.manager.retryPendingWebhooks(); await container.manager.waitForWebhookRecovery(); return { ok: true }; }
+  if (b.op === 'script') { harness.script(b.turns); return { ok: true }; }
+  if (b.op === 'harness') return { started: harness.started.map(r => ({ model: r.model, prompt: r.prompt, runId: r.runId })) };
+  if (b.op === 'key') return container.repos.apiKeys.create(b.owner ?? 'local', 'QA scoped key', b.scopes);
+  if (b.op === 'stop') { setTimeout(async () => { await app.close(); await container.stop(); process.exit(0); }, 100); return { stopping: true }; }
+  reply.code(400); return { error: 'unknown QA operation' };
+});
+await app.listen({ host: '127.0.0.1', port: Number(process.env.GG_PORT) });
+console.log('QA_READY ' + process.env.GG_PORT);
+

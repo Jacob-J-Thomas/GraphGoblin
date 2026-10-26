@@ -1,0 +1,117 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-33/apps/api
+      Coverage enabled with v8
+
+ ❯ src/container.test.ts (27 tests | 1 failed) 51673ms
+   ❯ configuration admission before startup writes (3)
+     × reads existing manual catalog entries without changing database bytes or rows on invalid effort 25500ms
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 102695ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 20572ms
+ ❯ src/nested-readiness.test.ts (19 tests | 1 failed) 60265ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the codex executable fixture through public nested admission 20647ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+{"level":30,"time":1792814680559,"pid":10460,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5682"}
+{"level":30,"time":1792814680560,"pid":10460,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5682,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-fX44Pi","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792814680728,"pid":10460,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792814680735,"pid":10460,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.95129999999881,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 1 failed | 4 skipped) 208236ms
+   ❯ built API entry and startup failures (6)
+     × dispatches the API-key and preflight CLIs with their real exit codes 60636ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:178:3
+    176|   };
+    177|
+    178|   it('ADV-008: every advertised route against every scope', async () =…
+       |   ^
+    179|     const t = await app({ requireApiKey: true });
+    180|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/container.test.ts > configuration admission before startup writes > reads existing manual catalog entries 
+without changing database bytes or rows on invalid effort
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/container.test.ts:632:3
+    630|       await expect(access(join(dataDir, name))).rejects.toThrow();
+    631|   });
+    632|   it('reads existing manual catalog entries without changing database …
+       |   ^
+    633|     const valid = config();
+    634|     const first = await createContainer(valid, { startTimers: false });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their 
+real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the codex executable 
+fixture through public nested admission
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/nested-readiness.test.ts:440:40
+    438|   });
+    439|
+    440|   it.each(['claude', 'codex'] as const)(
+       |                                        ^
+    441|     'uses the %s executable fixture through public nested admission',
+    442|     async (id) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  4 failed | 60 passed | 2 skipped (66)
+      Tests  4 failed | 1317 passed | 8 skipped (1329)
+   Start at  22:49:41
+   Duration  1758.31s (tests 74%, import 23%, transform 3%)
+
+    Isolate  66 workers spawned · ~2.38s startup each (spawn + environment, per file)
+             at least ~76.08s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.47% ( 1998/2071 )
+Branches     : 93.16% ( 1294/1389 )
+Functions    : 94.27% ( 395/419 )
+Lines        : 97.94% ( 1814/1852 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ 33\apps\api
+

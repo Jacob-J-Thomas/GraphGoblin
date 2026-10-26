@@ -169,7 +169,7 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
 
   // Alert: a real failure whose message is one 350-character word.
   await page.goto(`/app/runs/${runId}`);
-  const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' });
+  const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_DELIVERY_UNCERTAIN' });
   await expect(alert).toContainText(word);
   expect(await alert.evaluate((a) => a.scrollWidth <= a.clientWidth)).toBe(true);
   expect(await pageOverflows(page)).toBe(false);

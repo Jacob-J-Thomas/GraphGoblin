@@ -1,0 +1,515 @@
+[
+  {
+    "at": "2026-10-24T23:11:23.430Z",
+    "path": "/loops",
+    "method": "POST",
+    "request": {
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Held QA work",
+        "nodes": [
+          {
+            "id": "start",
+            "kind": "trigger",
+            "label": "Start",
+            "config": {
+              "type": "manual"
+            }
+          },
+          {
+            "id": "hold",
+            "kind": "script",
+            "label": "Held script",
+            "config": {
+              "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+              "args": [
+                "-e",
+                "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-permissions-L2EUDI\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-permissions-L2EUDI\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "kind": "exit",
+            "label": "Done",
+            "config": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "edge0",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "hold"
+            }
+          },
+          {
+            "id": "edge1",
+            "from": {
+              "node": "hold",
+              "port": "out"
+            },
+            "to": {
+              "node": "done"
+            }
+          }
+        ]
+      }
+    },
+    "status": 201,
+    "body": {
+      "loop": {
+        "id": "01M5R2XRRFN1E92MCJAHSA7JVM",
+        "ownerId": "local",
+        "name": "Held QA work",
+        "draftVersionId": "01M5R2XRRFN1E92MCJAHSA7JVN",
+        "createdAt": "2026-10-24T23:11:23.407Z",
+        "updatedAt": "2026-10-24T23:11:23.407Z"
+      },
+      "draft": {
+        "id": "01M5R2XRRFN1E92MCJAHSA7JVN",
+        "loopId": "01M5R2XRRFN1E92MCJAHSA7JVM",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held QA work",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-permissions-L2EUDI\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-permissions-L2EUDI\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:11:23.407Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:23.464Z",
+    "path": "/loops/01M5R2XRRFN1E92MCJAHSA7JVM/publish",
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "version": {
+        "id": "01M5R2XRRFN1E92MCJAHSA7JVN",
+        "loopId": "01M5R2XRRFN1E92MCJAHSA7JVM",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held QA work",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "hold",
+              "label": "Held script",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "%USERPROFILE%\\AppData\\Roaming\\nvm\\v22.14.0\\node.exe",
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');fs.writeFileSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-permissions-L2EUDI\\\\started\",String(process.pid));const t=setInterval(()=>{if(fs.existsSync(\"%USERPROFILE%\\\\AppData\\\\Local\\\\Temp\\\\gg-qa-c7-319-permissions-L2EUDI\\\\release\"))process.exit(0)},25);setTimeout(()=>process.exit(0),600000);"
+                ],
+                "cwd": "workspace",
+                "stdin": "thread",
+                "stdout": "last-output"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "edge0",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "hold",
+                "port": "in"
+              }
+            },
+            {
+              "id": "edge1",
+              "from": {
+                "node": "hold",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T23:11:23.407Z",
+        "publishedAt": "2026-10-24T23:11:23.447Z"
+      },
+      "issues": []
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:23.502Z",
+    "path": "/loops/01M5R2XRRFN1E92MCJAHSA7JVM/runs",
+    "method": "POST",
+    "request": {},
+    "status": 202,
+    "body": {
+      "run": {
+        "id": "01M5R2XRTNGRZ84ZWR524W12SG",
+        "ownerId": "local",
+        "loopId": "01M5R2XRRFN1E92MCJAHSA7JVM",
+        "versionId": "01M5R2XRRFN1E92MCJAHSA7JVN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Held QA work",
+          "label": "Held QA work v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5R2XRTNGRZ84ZWR524W12SH",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-24T23:11:23.477Z",
+        "lastEventSeq": 1
+      }
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:27.909Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 403,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/forbidden",
+      "title": "forbidden",
+      "status": 403,
+      "code": "FORBIDDEN",
+      "detail": "this key lacks the \"system:read\" scope"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:28.313Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "draining",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [
+        "01M5R2XRTNGRZ84ZWR524W12SG"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:draining"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:29.985Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "wait"
+    },
+    "status": 403,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/forbidden",
+      "title": "forbidden",
+      "status": 403,
+      "code": "FORBIDDEN",
+      "detail": "this key lacks the \"system:write\" scope"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:29.988Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [
+        "01M5R2XRTNGRZ84ZWR524W12SG"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:30.098Z",
+    "path": "/system/shutdown",
+    "method": "POST",
+    "request": {
+      "action": "drain"
+    },
+    "status": 202,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [
+        "01M5R2XRTNGRZ84ZWR524W12SG"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:30.109Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [
+        "01M5R2XRTNGRZ84ZWR524W12SG"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:30.137Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [
+        "01M5R2XRTNGRZ84ZWR524W12SG"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:30.311Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [
+        "01M5R2XRTNGRZ84ZWR524W12SG"
+      ],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+    }
+  },
+  {
+    "at": "2026-10-24T23:11:30.408Z",
+    "path": "/system/shutdown",
+    "method": "GET",
+    "status": 200,
+    "body": {
+      "phase": "awaiting-choice",
+      "graceMs": 800,
+      "startedAt": "2026-10-24T23:11:28.303Z",
+      "choiceAt": "2026-10-24T23:11:29.103Z",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [],
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "controlToken": "42cfcebd-7770-4f4f-8c52-7aa83d2e7228:awaiting-choice"
+    }
+  }
+]

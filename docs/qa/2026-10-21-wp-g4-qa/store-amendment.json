@@ -1,0 +1,43 @@
+{
+  "store": "%TEMP%/gg-qa-129-dbca0fea",
+  "evidence": [
+    {
+      "name": "kept",
+      "runId": "01M5GDNE3VMTCEBHMGMADXJGRP",
+      "before": [
+        {
+          "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\"}"
+        }
+      ],
+      "sql": [
+        "UPDATE run_events SET payload = json_remove(payload, '$.result') WHERE run_id = ? AND type = 'run.finished'",
+        "UPDATE runs SET result = NULL WHERE id = ?"
+      ],
+      "rowsAffected": [1, 1],
+      "after": [
+        {
+          "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\"}"
+        }
+      ]
+    },
+    {
+      "name": "null",
+      "runId": "01M5GDV7CPZFT60XHNFM2TV2D6",
+      "before": [
+        {
+          "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\"}"
+        }
+      ],
+      "sql": [
+        "UPDATE run_events SET payload = json_remove(payload, '$.result') WHERE run_id = ? AND type = 'run.finished'",
+        "UPDATE runs SET result = NULL WHERE id = ?"
+      ],
+      "rowsAffected": [1, 1],
+      "after": [
+        {
+          "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\"}"
+        }
+      ]
+    }
+  ]
+}

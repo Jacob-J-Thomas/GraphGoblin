@@ -1,0 +1,312 @@
+{
+  "name": "orderly-attempt",
+  "id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+  "expected": "No new attempt on stop; next boot uses attempt two",
+  "actual": [
+    {
+      "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5811/stop-attempt"
+      },
+      "status": "delivered",
+      "attempts": 2,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true,
+      "lastError": {
+        "code": "timeout",
+        "message": "Webhook acknowledgement timed out; the effect may have happened.",
+        "retryable": true,
+        "acknowledgement": "unknown"
+      }
+    }
+  ],
+  "apiEvents": [
+    {
+      "runId": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "seq": 9,
+      "ts": "2026-10-22T00:54:31.572Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-attempt"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "seq": 10,
+      "ts": "2026-10-22T00:54:31.819Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-attempt"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:43.805Z"
+      }
+    },
+    {
+      "runId": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "seq": 11,
+      "ts": "2026-10-22T00:54:41.901Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-attempt"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:43.864Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "seq": 12,
+      "ts": "2026-10-22T00:54:58.641Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-attempt"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:55:13.583Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "seq": 13,
+      "ts": "2026-10-22T00:55:02.912Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-attempt"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "sqlite": {
+    "run": {
+      "id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "status": "succeeded",
+      "finalized_at": "2026-10-22T00:55:03.061Z",
+      "last_event_seq": 13
+    },
+    "events": [
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 1,
+        "ts": "2026-10-22T00:54:31.196Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHME8EH9QXA3XGVFA08SB6\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA stop attempt\",\"label\":\"QA stop attempt v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHMEGW53T2TD6YYXMHTAKV\",\"loopId\":\"01M5GHME8EX6J183894V3AY8NP\",\"versionId\":\"01M5GHME8EH9QXA3XGVFA08SB6\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHMEGW9HC5E01M2SM3FSFP\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5GHDVJ7EHE58D5C73745QWV\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{\"qa\":\"stop attempt\"},\"receivedAt\":\"2026-10-22T00:54:31.196Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 2,
+        "ts": "2026-10-22T00:54:31.368Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 3,
+        "ts": "2026-10-22T00:54:31.426Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 4,
+        "ts": "2026-10-22T00:54:31.458Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"stop attempt\"},\"at\":\"2026-10-22T00:54:31.451Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"stop attempt\"},\"at\":\"2026-10-22T00:54:31.451Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 5,
+        "ts": "2026-10-22T00:54:31.541Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"58be9e2b6b8c5dd9\"}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 6,
+        "ts": "2026-10-22T00:54:31.572Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 7,
+        "ts": "2026-10-22T00:54:31.572Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":11}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 8,
+        "ts": "2026-10-22T00:54:31.572Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 9,
+        "ts": "2026-10-22T00:54:31.572Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHMEWMMWVXZPEX91TYFVSB\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-attempt\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 10,
+        "ts": "2026-10-22T00:54:31.819Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHMEWMMWVXZPEX91TYFVSB\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-attempt\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:54:43.805Z\"}}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 11,
+        "ts": "2026-10-22T00:54:41.901Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHMEWMMWVXZPEX91TYFVSB\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-attempt\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:54:43.864Z\",\"lastError\":{\"code\":\"timeout\",\"message\":\"Webhook acknowledgement timed out; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 12,
+        "ts": "2026-10-22T00:54:58.641Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHMEWMMWVXZPEX91TYFVSB\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-attempt\"},\"status\":\"pending\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:55:13.583Z\",\"lastError\":{\"code\":\"timeout\",\"message\":\"Webhook acknowledgement timed out; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+      },
+      {
+        "run_id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+        "seq": 13,
+        "ts": "2026-10-22T00:55:02.912Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHMEWMMWVXZPEX91TYFVSB\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-attempt\"},\"status\":\"delivered\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"accepted\",\"effectMayHaveHappened\":true,\"lastError\":{\"code\":\"timeout\",\"message\":\"Webhook acknowledgement timed out; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+      }
+    ]
+  },
+  "pass": true,
+  "pending": {
+    "id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+    "ownerId": "local",
+    "loopId": "01M5GHME8EX6J183894V3AY8NP",
+    "versionId": "01M5GHME8EH9QXA3XGVFA08SB6",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA stop attempt",
+      "label": "QA stop attempt v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GHMEGW9HC5E01M2SM3FSFP",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-attempt"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:43.805Z"
+      }
+    ],
+    "createdAt": "2026-10-22T00:54:31.196Z",
+    "startedAt": "2026-10-22T00:54:31.337Z",
+    "finishedAt": "2026-10-22T00:54:31.621Z",
+    "lastEventSeq": 10
+  },
+  "elapsedMs": 9842,
+  "requestsDuringStop": 0
+}

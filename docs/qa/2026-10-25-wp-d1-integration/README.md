@@ -1,0 +1,171 @@
+> Carried into the repository by the orchestrator from the worker's temp folder (`gg-wp-d1-int-evidence`). Logs are kept as `.log.txt`. Not kept (size or binary traces): api-coverage-verified.json (1161418 bytes), browser-default-failure/ (folder), browser-focused-results/ (folder), engine-coverage-verified.json (1522575 bytes), infrastructure-coverage-verified.json (1060953 bytes). Their summaries are in the JSON and logs below.
+
+# WP-D1 integration report
+
+## 1. Branch and worktree
+
+Branch `wp-d1-integrate`, worktree `%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-integrate`.
+HEAD remains `48a576964d3da7508930f708d3add8217d90fab9`; MERGE_HEAD remains `642da39194dc052dc58da7298bf099a14e5356a2`. Work is uncommitted and unstaged by this worker. The orchestrator owns staging and committing. The work is not ready for a green-gate sign-off: the failures below remain. Final verification: all 22 conflicted working files have no conflict markers, `git diff --check` exits 0, and exactly four expected new source/test/decision files are untracked. Their index entries remain unmerged because staging is prohibited. See `final-worktree-verification.json`.
+
+Runtime: `v22.23.4`, `%USERPROFILE%/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node.exe`. Commands use `pnpm.cmd`. Evidence is in this report's directory. No sub-agents, owner ports/store, main-checkout changes, GitHub writes, index changes or commits were used.
+
+## 2. Per bolt
+
+#320, criterion 1 (one durable child identity per parent visit): SQLite admission commits the child row, initial thread and `run.queued` together with the parent's `child_run.started`; notifications follow commit. Re-admission requires the original link and node; a missing parent or link is refused. Evidence: admission contract in both fake and SQLite adapters; `child-creation.test.ts`, `child-admission-recovery.test.ts`, and the three real API kill timings in `child-creation-restart.test.ts`.
+
+#320, criterion 2 (creation/link acknowledgement crash reuses the same child): before/after admission fault injection, real SQLite close/reopen, independent API kill/restart and nested parent cardinality assertions cover the boundary. Each real kill case checks 24 parent visits, exactly one child and one completion per visit, and no visible unlinked child from coherent read-only SQLite snapshots.
+
+Integrated child completion: the subloop handler returns completion drafts in `records`; the executor/manager writes a new `child_run.finished` in the same append as the parent's `node.finished`, `run.failed`, or cancellation. There is no separate completion append. A wake's `childFinishedSeq` still names the observed child terminal event; consumption requires that identity. An existing finish for that sequence is reused after mapping failure. Independent child retry changes the terminal sequence and requires a new park/wake before a new completion fact. Outcome, failure and thread are read from one child-log snapshot, with checkpoints bounded by that snapshot. `awaited-children`, `child-creation`, `child-failure-parity`, SQLite recovery and real subloop restart tests cover these guarantees. Tests that expected the former split-write gap now assert neither fact before the atomic append and one adjacent finish/outcome after recovery.
+
+#321, criterion 1 (uncertain effects visible, proven refusal distinguishable): keep durable `script.dispatched`, visit and dispatch identity, runner disposition, typed `failure.script`, and `SCRIPT_OUTCOME_UNCERTAIN`. Persistence faults cannot turn unresolved dispatch into safe automatic retry. Proven pre-start refusal remains `SCRIPT_START_FAILED`; completed nonzero exits remain `SCRIPT_EXIT_CODE`. New integration regressions preserve non-resumable stop causes and propagate a child's script provenance through its parent.
+
+#321, criterion 2 (deliberate recovery, no automatic replay): engine recovery, native marker-script restart, persistence fault, upgrade, explicit Resume and Replay checks cover this. The new nested regression verifies restart makes no second script call and explicit parent Resume retries the same child. A browser kill/restart checks marker count 1, Cancel leaves it 1, and explicit Resume alone makes it 2 and reaches success without reload. No exactly-once external-effect claim is made. Owner product acceptance and issue closure remain outside this worker's actions.
+
+Resumed-run following uses main's authoritative SSE completion, followed by `followRunAttempts` polling/cursor paging and reconnecting for a running attempt. Cached terminal events never end a new subscription by themselves. The two `useRunEvents.test.tsx` cases cover a resumed attempt observed running and one already succeeded between polls. Main's 512-event / 1 MiB retention, description parts, whole-history server projections and finalization remain in place.
+
+## 3. Files changed
+
+The following table covers every original conflicted file. Additional integration edits are listed after it; automatically merged main changes are not individually enumerated here.
+
+| Conflicted file | Resolution |
+|---|---|
+| `CHANGELOG.md` | Retain both feature bullets at the top and every main bullet; describe atomic completion, uncertainty, provenance, stop policy and upgrade. |
+| `apps/api/src/testing/api-subprocess.ts` | Main's prefix/port allocation and process lifecycle; add native closed-object collection before temporary-store removal. |
+| `apps/web/src/runs/RunInspectorPage.tsx` | Script and session recovery controls with main's paged history and server observation projections. |
+| `apps/web/src/runs/projections.ts` | Main description parts, plus a script-dispatch description in that representation. |
+| `apps/web/src/runs/useRunEvents.test.tsx` | Main tests plus running/fast-finished explicit script Resume following. |
+| `apps/web/src/runs/useRunEvents.ts` | Main authoritative completion, cursor recovery and attempt following; remove old cached-terminal shortcut entirely. |
+| `apps/web/tsconfig.json` | Main evidence config; remove the now-unused separate script-recovery config entry. |
+| `docs/03-domain-model.md` | Combine script provenance and main bounded data model text. |
+| `docs/05-execution-engine.md` | Integrated child admission/completion, snapshot identity, script uncertainty, shutdown policy and existing inference/history behavior. |
+| `docs/decisions/README.md` | Preserve both decision lists and link ADR-0059. |
+| `docs/guide/03-run-and-observe.md` | Main observation/recovery guide plus uncertain-script failure and deliberate recovery. |
+| `packages/api-client/openapi.json` | Regenerated from integrated source with the API-client generator. |
+| `packages/api-client/src/generated/schema.ts` | Regenerated alongside OpenAPI; no hand-merge. |
+| `packages/contracts/src/events.ts` | Script dispatch and main harness turn/submission event variants together. |
+| `packages/contracts/src/run.ts` | Script disposition/provenance alongside main inference and missing-session provenance. |
+| `packages/engine/src/errors.ts` | Script, inference, session and atomic outcome `records` options. |
+| `packages/engine/src/handlers/subloop.ts` | One atomic outcome append, sequence-bound wake/finish reuse, child failure parity and retained script provenance. |
+| `packages/engine/src/ports.ts` | Required script disposition with main unconfirmed-termination evidence. |
+| `packages/engine/src/run-manager.ts` | Atomic failure records, truthful script classification, snapshot-bounded child outcome, parent wake identity and force guards; parent-node identity in both admission paths. |
+| `packages/engine/src/testing/fakes.ts` | Atomic parent/child commit and post-commit notifications beside main's separate targeted-Event receipt port. |
+| `packages/infrastructure/src/process/scripts.ts` | Runner disposition and proven spawn refusal with main process-tree cleanup and unconfirmed-termination evidence. |
+| `packages/infrastructure/src/sqlite/admission.ts` | Atomic child link beside main targeted Event receipt, claim, pending-key and deduplication logic. |
+
+Additional edits, including cross-work-package files authorized by this integration brief:
+
+- API: `scripts/webhook-retry.acceptance.mjs`; `src/child-creation-restart.test.ts`, `src/script-persistence-restart.test.ts`, `src/script-restart.test.ts`, `src/shutdown-controller.test.ts`, `src/testing/thread-history.ts`; new `src/pinned-run-restart.test.ts`. Restart fixtures use the allocated prefix and shared port settings, shutdown/thread-history fixtures declare script disposition, child restart records disposal measurements, and webhook retry accepts `GG_TEST_STORE_PREFIX`.
+- Engine: `src/awaited-children.test.ts`, `src/child-creation.test.ts`, `src/child-failure-parity.test.ts`, `src/drain-regressions.test.ts`, `src/handlers/script-dispatch.ts`, `src/handlers/script.ts`; new `src/script-stop.test.ts`. These update atomic/identity crash expectations, retain nested and cleanup-failure script provenance, preserve stop policy, and update drain fixture identity/disposition.
+- Infrastructure: `src/sqlite/child-admission-recovery.test.ts`: recovery wrapper delegates main's Event admission port; SQLite crash test asserts the atomic finish boundary and adjacent parent completion.
+- Web/CI: `.github/workflows/ci.yml`; rename `script-recovery.browser.ts` to default-discovered `script-recovery.spec.ts`; own API/store/free-port lifecycle, test-scoped captures, correct API-key setting, remove unused separate config; CI summary explicitly names these checks.
+- Docs/generated: ADR-0046, new ADR-0059, numbered docs and guide, testing-gate description, generated API/node references, generated OpenAPI and client schema.
+
+## 4. Tests
+
+Confirmed red/green integration regressions:
+
+- Forced script stop: before classification fix, expected `RUN_INTERRUPTED_BY_STOP` / non-resumable but received `SCRIPT_OUTCOME_UNCERTAIN` / resumable. Now the cause and uncertain dispatch provenance both survive. Typed test injects the script port through the public manager constructor.
+- Nested script provenance: before subloop fix, expected `failure.script` with the child's visit/dispatch but the parent omitted it. Now parent evidence survives restart; only explicit Resume makes another call.
+- Atomic SQLite crash adaptation: the old test expected one child finish before the refused parent finish append; integrated behavior correctly stored zero. It now asserts neither before the append and exactly one adjacent child/parent completion after recovery.
+
+Engine integration matrix: 127/127 across 10 files. Counts: awaited children 24, child creation 7, child failure parity 14, drain admission 4, drain regressions 11, drain 6, finalization 44, script recovery 9, forced-script-stop 1, script dispatch 7.
+
+SQLite/process focused matrix: 8/8 (child admission recovery 6; native script recovery 2). Web focused unit matrix: 47/47 across five files (hook, retention, Timeline, history browsing, projections). Full web coverage run: 1,780/1,780 across 146 files.
+
+Native teardown investigation: reproduced slow disposal after observer close at 6,788 / 13,450 / 45,511 ms. A standalone real-SQLite probe got `EBUSY` immediately after closed clients, including writer-only and observer cases; explicit collection then removed each store (approximately 3 / 5 / 9 / 76 ms). The closed native connections/statements retained file handles until collection. The API fixture now collects before removal, matching existing SQLite fixture practice and using the API runner's existing `--expose-gc`. The same three real child-kill tests passed with disposal 62 / 24 / 30 ms. No timeout, cardinality, no-gap, completion or store-removal assertion was weakened. A proposed generic disposal unit test also passed without the fix, so it was removed; the native probe and measured real restart tests are the causal evidence.
+
+Required native matrices, with file counts:
+
+| Matrix | Result |
+|---|---|
+| Child admission, crash and retry | `child-creation.test.ts` 7; `child-admission-recovery.test.ts` 6; `child-creation-restart.test.ts` 3; `subloop-restart.test.ts` 3; `awaited-children.test.ts` 24; `child-failure-parity.test.ts` 14. **57 passed.** |
+| Uncertain script recovery | API `script-restart.test.ts` 3, `script-persistence-restart.test.ts` 3; engine `script-recovery.test.ts` 9, infrastructure `script-recovery.test.ts` 2; engine `handlers/script-dispatch.test.ts` 7. **24 passed.** New forced-stop regression: 1 passed. |
+| Nested shutdown/recovery | `shutdown-process.test.ts`: **8 passed, 3 platform skips** (native first-SIGINT/first-SIGTERM descendant drains and native explicit-force case, POSIX-only on this Windows host). `pinned-run-restart.test.ts`: **1 passed**. `test:recovery-process`: TAP **1 passed**. `test:wait-restart`: **2 configurations passed** (50/1000 ms; each verified input identity, one timer wake, one paused wake, two heartbeats). |
+| Delivery/finalization | API `finalization.test.ts` **2 passed**, engine `finalization.test.ts` **44 passed**; `test:webhook-retry` **5 HTTP paths** passed, including five failure requests, two crash requests, and drain during backoff and active attempt. |
+| Bounded history | API `routes/run-history.test.ts` **3 passed**. Web `event-retention.test.ts`, `Timeline.test.tsx`, `history-browsing.test.tsx`, `useRunEvents.test.tsx`, plus `projections.test.ts`: **47 passed**. |
+
+The requested `pinned-run-restart.test.ts` did not exist in either supplied head. The added real-process test verifies old pin after kill/restart, new publish for a new run, Replay retaining the source pin, and one child admission/completion each. It passed after correcting its initial helper's body-less JSON POST (the first helper error and corrected result are both retained). This was added coverage, not a demonstrated pre-fix product regression.
+
+The six-file child matrix includes named regressions for dying before atomic success/failure append, mapping retry reusing an unchanged outcome, explicit retry producing a second failed outcome, independent retry while the parent was interrupted, and recovery continuing mid-wake exactly once. The native child test made 24 visits per kill timing and checked no unlinked child through read-only SQLite snapshots. The combined native matrix measured disposal at 48/24/25 ms; the final full API coverage run measured 36/21/26 ms. Both formerly failing API teardown cases passed after collection. No shutdown `EADDRINUSE` on 5760..5769 occurred, so the brief's special collision rerun was unnecessary. Final API coverage repeated the seven named native restart/shutdown/history/finalization files successfully; no native child, script or finalization case failed in that refresh.
+
+Package coverage (latest reports; percentages alone do not make failing tests green):
+
+| Package | Tests passed / failed / skipped | Lines | Branches |
+|---|---:|---:|---:|
+| contracts | 285 / 0 / 0 | 99.74% | 95.00% |
+| domain | 612 / 0 / 0 | 98.48% | 95.81% |
+| engine | 1729 / 1 / 0 | 97.48% | 91.43% |
+| infrastructure | 809 / 9 / 0 | 98.44% | 94.85% |
+| adapter-codex | 501 / 0 / 5 | 98.90% | 94.76% |
+| adapter-jev | 34 / 0 / 5 | 98.80% | 96.77% |
+| api-client | 95 / 1 / 0 | 100.00% | 98.42% |
+| api | 1466 / 0 / 11 | 97.35% | 92.36% |
+| mcp | 52 / 0 / 0 | 96.69% | 95.15% |
+| plugin-codex | 9 / 0 / 1 | 95.23% | 95.45% |
+| web | 1780 / 0 / 0 | 98.68% | 94.58% |
+
+Tooling's separate existing Node test task passed 87/87; it emits no instrumented coverage summary. No coverage thresholds, exclusions or test assertions were relaxed.
+
+Browser focused selection: 34 merge-touched/default-discovered specs, **316 passed / 1 failed**, zero retries, 45.4 min. The failed `drafts.spec.ts:159` case did not display the blocked-device-draft warning at line 189 within 10 seconds. Whole default suite: **421 passed / 1 failed / 1 paid-provider skip**, zero retries, 43.3 min. Its failure was `issue-170-qa.spec.ts:1079` / call at 1088: 60-second timeout waiting for the `node-approve` header via `fixtures.ts:98`. Both failure traces are preserved in `browser-focused-results/` and `browser-default-failure/`. Passing cases in the later run do not erase a failure in the earlier run.
+
+The default-discovered script-recovery check passed in both runs. It used a separate real built API/store: kill/restart left one effect; cancelling consent left one; explicit Resume produced exactly the second effect and success without reload. The whole suite also passed bounded history, delivery/finalization, drain and confirmed-force browser checks. This is native controlled-process/browser evidence, not paid-provider evidence.
+
+## 5. Gates
+
+All commands use the runtime above. Turbo cache is local to this worktree. Child Git trust is process-scoped; no global Git config was changed. API allocation is `GG_TEST_PORT_START=5850`, `GG_TEST_PORT_COUNT=100`, `GG_TEST_STORE_PREFIX=gg-wp-d1-int-`; standalone native commands used 6330..6339. Script browser uses its own free 6320..6339 port. No live providers were called (`LIVE=0`).
+
+| Exact gate command | Result |
+|---|---|
+| `pnpm build` | PASS, 11 tasks, fresh before browser runs. |
+| `pnpm typecheck` | PASS; final API-only `pnpm --filter @graphgoblin/api typecheck` also passed after adding native pin coverage. |
+| `pnpm lint` | PASS; final API-only lint also passed. Initial lint caught an unawaited new hook-test promise; it was corrected. |
+| `pnpm format:check` | PASS; all later changed files, including native pin test and final docs, separately passed `pnpm exec prettier --check <changed paths>`. |
+| `pnpm check:layers` | PASS. |
+| `pnpm check:deps` | PASS. |
+| `pnpm check:migrations` | PASS. |
+| `pnpm check:docs` | PASS after regeneration. |
+| `pnpm check:tokens` | PASS. |
+| `pnpm check:templates` | PASS. |
+| `pnpm check:licenses` | PASS, 225 packages. |
+| `pnpm exec turbo run test:coverage --concurrency=2` | FAILED; first attempt hit child Git trust/environment problems. See attempts below. |
+| `pnpm exec turbo run test:coverage --concurrency=2 --env-mode=loose --continue=always --force --filter=!@graphgoblin/tooling -- --maxWorkers=2` | FAILED test assertions/timeouts; reached all 11 app/library packages. Tooling was checked separately (87/87). |
+| `pnpm --filter @graphgoblin/engine test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=json --outputFile=<evidence>/engine-coverage-verified.json` | FAILED, 1 checkpoint timing assertion. |
+| Same direct coverage command for `@graphgoblin/infrastructure` | FAILED, 9 native/upgrade checks; coverage emitted. |
+| Same direct coverage command for `@graphgoblin/api-client` | FAILED, 1 template test timeout; coverage emitted. |
+| `pnpm --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure --reporter=json --outputFile=<evidence>/api-coverage-verified.json` | PASS, 1466 passed / 11 skipped. This run collected before the new pinned test existed; that test separately passed its native run and final API typecheck/lint. |
+| `pnpm test:recovery-process` | PASS. |
+| `pnpm test:wait-restart` | PASS. |
+| `pnpm test:webhook-retry` | PASS. |
+| From `apps/web`: `pnpm exec playwright test <34 selected spec paths> --retries=0 --workers=1` | FAILED, 316 passed / 1 failed. Exact selected paths: `browser-focused-selection.txt`. |
+| From `apps/web`: `pnpm exec playwright test --retries=0 --workers=1` | FAILED, 421 passed / 1 failed / 1 skipped. Script recovery executed and passed. |
+
+Native/unit matrices above used `pnpm --filter <package> exec vitest run <named files> --maxWorkers=2` (JSON reporter/output-file arguments retained with their reports; the standalone pinned test used one worker). Evidence: `engine-integrated-matrix.json`, `infrastructure-matrix.json`, `api-native-matrix.json`, `pinned-run-restart-verified.json`, and `web-matrix.log.txt`.
+
+All failed attempts remain in the evidence directory. `coverage.log.txt`, `coverage-resumed.log.txt`, and `coverage-final.log.txt` retain initial trust/strict-environment errors and the canceled follow-up; the canceled run was stopped before starting API on an unintended allocation. Turbo strict mode stripped test-allocation and process-scoped Git trust variables. `--env-mode=loose` made those explicit settings reach child tasks. `coverage-controlled.log.txt` is the complete broad run, including the old SQLite atomic expectation corrected afterward and the API cleanup failures that motivated native investigation. Direct package refreshes followed meaningful fixture/semantic fixes and emitted coverage even when tests failed; they did not convert failures to success.
+
+## 6. Docs
+
+Updated domain model, execution engine, run/observe guide, docs/10 Browser gate description, ADR-0046 and decision index. Added ADR-0059 because no dedicated #321 ADR existed in the supplied branch tree; it records the integrated script decision and its limits. CHANGELOG #321 and #320 stay at the top; verified all 185 main bullets are present. OpenAPI/client schema generated with `pnpm --filter @graphgoblin/api-client generate`; references generated with `pnpm docs:generate`. `check:docs` and `check:migrations` passed. Script evidence is event JSON; it needs no added SQL migration. Main's migration chain through `0020_targeted_event_admission` is retained.
+
+## 7. Decisions and parameters
+
+- One mechanism records a new child finish: parent's outcome append. Sequence-bound wake/finish identity is the reuse/consumption rule, not an additional persistence mechanism.
+- Preserve stop/deadline/termination failure policy while retaining script uncertainty; propagate child script provenance to parent failures.
+- Keep main's current stream completion and resumed-attempt mechanism and test the #321 cases through it.
+- Required Browser discovers the renamed script spec by default. The serial test owns a built API and disposable store, separate from the default E2E server. Its 180-second timeout moves the existing separate-config value onto the test; it is not an increase. Separate config is removed; CI and docs name the coverage.
+- Collect closed native test objects before deleting SQLite stores; do not increase teardown timeouts or retry counts. New pinned native coverage uses a 180-second test budget for two API boots, three parent/child executions and Replay; it does not change any existing test budget.
+- Bound workers and pass test allocation through Turbo explicitly after observing strict-env filtering and timed failures. Keep every failed attempt as evidence; a later pass does not erase a flaky failure.
+
+## 8. Caveats and open items
+
+The working-tree merge is resolved, but verification is **not green**. Do not treat this as an exact-head acceptance sign-off.
+
+- Engine checkpoint timing: `packages/engine/src/recovery.test.ts:679`, 5531.43 ms against the unchanged 2000 ms bound (earlier broad attempt: 2760.40 ms). The functional checkpoint reconstruction/assertions completed. Cause remains unresolved; no bound was raised and no load explanation is claimed as a fix.
+- Infrastructure: six native process checks could not establish termination (ProcessScripts abort/UTF-8 and Claude deadline/abort/descendant/readiness), plus three existing `sqlite/upgrade.test.ts` 20-second timeouts (lines 220, 230 and 302). A real disposable-child probe established that this sandbox denies `taskkill /T /F`: exit 1, `ERROR: Access denied`; native WMI process inventory is also denied. This is concrete environment evidence, not a proof that every failure has only that cause. Tree-termination checks need an unrestricted native run. Do not weaken their assertions or replace unconfirmed termination with success.
+- API client: `packages/api-client/src/templates.test.ts:19`, 5000 ms test timeout. Cause remains unresolved.
+- Observed outside scope: focused browser draft-storage warning failure at `apps/web/e2e/drafts.spec.ts:189`, and whole-suite Context JSON editor failure at `apps/web/e2e/issue-170-qa.spec.ts:1088` / `fixtures.ts:98`. These concern editor/draft behavior outside #320/#321; they were recorded, not opportunistically fixed or retried to green.
+- The API full coverage refresh passed after the cleanup fix; its collection preceded the added pinned test. Native pinned-run coverage is separately 1/1 and final API typecheck/lint passed. The earlier two failed teardown attempts remain in `coverage-controlled.log.txt`.
+- Three native shutdown cases are POSIX-gated on Windows. Adapter/provider skips and the one default browser paid-provider skip remain explicit evidence limits.
+- No old shortcut was restored, no coverage denominator/threshold changed, no timeout increased, and no compatibility path added. The new pinned native test has its own 180-second real-process budget, matching the scale of the other native restart cases; existing limits remain unchanged.
+
+No staging, commit, merge completion, push, issue closure or owner product acceptance is performed here. The orchestrator must review the working tree, stage conflict resolutions and commit when its verification standard is met. Real native-process checks use controlled scripts/harnesses; they do not establish live Codex/Claude/provider acceptance.

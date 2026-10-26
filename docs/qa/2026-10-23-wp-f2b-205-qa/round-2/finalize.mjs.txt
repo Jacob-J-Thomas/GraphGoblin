@@ -1,0 +1,41 @@
+import {readFile,writeFile,readdir,open} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {execFileSync,spawn} from 'node:child_process';
+import net from 'node:net';
+import path from 'node:path';
+const out=path.resolve('docs/qa/2026-10-23-wp-f2b-205-qa/round-2');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const state=execFileSync('git',['--no-optional-locks','status','--short'],{encoding:'utf8'});
+const listeners=[];
+for(let port=5840;port<=5849;port++)listeners.push(await new Promise(resolve=>{const s=net.createConnection({host:'127.0.0.1',port});let done=false;const end=listening=>{if(done)return;done=true;s.destroy();resolve({port,listening});};s.once('connect',()=>end(true));s.once('error',()=>end(false));s.setTimeout(1000,()=>end('timeout'));}));
+const observation={D015:'Native process-tree termination denied by sandbox; no forced tree termination tested. Graceful same-store real-process restarts passed.',processQuery:'Get-CimInstance Win32_Process returned Access denied, HRESULT 0x80041003; no alternate host process query attempted.',formatter:'pnpm.cmd format:check stayed at Checking formatting with no result. Own exec session 98068 interrupted using Ctrl+C; command session returned exit 1. Remaining gates continued separately.'};
+await writeFile(path.join(out,'outside-observations.json'),JSON.stringify(observation,null,2));
+await writeFile(path.join(out,'report-format.log.txt'),'');
+let files=(await readdir(out)).filter(x=>!['README.md','SHA256SUMS.log.txt','final-validation.json'].includes(x)).sort();
+let report=await readFile(path.join(out,'README.md'),'utf8');
+report=report.split('### Artifact index')[0].replace('All instances used ports','Independent QA instances used ports');
+report+='### Artifact index\n\n'+files.map(x=>`- [${x}](./${x})`).join('\n')+'\n- [final-validation.json](./final-validation.json)\n- [SHA256SUMS.log.txt](./SHA256SUMS.log.txt)\n';
+report+='\n## 5. Observations outside scope\n\nD-015 limits native forced process-tree evidence in this sandbox. The read-only Win32_Process query also returned Access denied; no alternate host inspection or owner-environment action followed. Lint retains its pre-existing ThreadViewer.tsx use-state warning. The root formatting gate has no completed result. API/other gate failures, if listed, remain failures regardless of isolated reruns. Independent Edge instances use only the stated ports/prefix; maintained unit/integration gates use their own existing fixture lifecycle. No live-provider, actual screen-reader, native OS focus/visibility, forced-termination, owner acceptance or merge claim is made. No directory was deleted; disposable temp directories and ignored build/coverage output are left for the orchestrator.\n';
+await writeFile(path.join(out,'README.md'),report);
+const fd=await open(path.join(out,'report-format.log.txt'),'w');
+const command='pnpm.cmd exec prettier --write docs/qa/2026-10-23-wp-f2b-205-qa/round-2/README.md docs/qa/2026-10-23-wp-f2b-205-qa/round-2/NOT-KEPT.md';
+const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{stdio:['ignore',fd.fd,fd.fd],windowsHide:true});
+const code=await new Promise(r=>child.on('exit',r));await fd.close();
+const username=process.env.USERPROFILE.split(/[\\/]/).at(-1).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const wrapped=new RegExp(String.raw`[A-Za-z]:[\\/]*\r?\n[^\r\n]*[\\/]+Users[\\/]+`+username,'g');
+const canonical=new RegExp(String.raw`[A-Za-z]:[\\/]+Users[\\/]+`+username,'g');
+const clean=s=>s.replace(wrapped,'%USERPROFILE%').replace(canonical,'%USERPROFILE%').split(JSON.stringify(process.env.USERPROFILE).slice(1,-1)).join('%USERPROFILE%').split(process.env.USERPROFILE).join('%USERPROFILE%').split(process.env.USERPROFILE.replaceAll('\\','/')).join('%USERPROFILE%');
+for(const file of await readdir(out)){if(!/\.(txt|json|md)$/.test(file))continue;const full=path.join(out,file);const b=await readFile(full);const s=b[0]===255&&b[1]===254?b.toString('utf16le').slice(1):b.toString('utf8');await writeFile(full,clean(s));}
+report=await readFile(path.join(out,'README.md'),'utf8');
+const links=[...report.matchAll(/\]\(\.\/([^)]*)\)/g)].map(x=>x[1]);
+const names=new Set(await readdir(out));names.add('final-validation.json');names.add('SHA256SUMS.log.txt');
+const missing=links.filter(x=>!names.has(x));
+const unlinked=[...names].filter(x=>x!=='README.md'&&!links.includes(x));
+const jsonErrors=[],oversized=[],userPaths=[];
+for(const file of await readdir(out)){const b=await readFile(path.join(out,file));if(b.length>1000000)oversized.push(file);if(file.endsWith('.json'))try{JSON.parse(b.toString('utf8'));}catch(e){jsonErrors.push({file,error:String(e)});}if(/\.(txt|md|json)$/.test(file)&&/Users[\\/]+<user name>/.test(b.toString('utf8')))userPaths.push(file);}
+const validation={head,expectedHead:'8cb8bff4c2555f75b193598ad6076aaae4d42d7e',headMatches:head==='8cb8bff4c2555f75b193598ad6076aaae4d42d7e',gitStatus:state,reportFormatExit:code,listeners,missingLinks:missing,unlinkedArtifacts:unlinked,jsonErrors,oversized,userPaths};
+await writeFile(path.join(out,'final-validation.json'),JSON.stringify(validation,null,2));
+const hashes=[];for(const file of (await readdir(out)).sort()){if(file==='SHA256SUMS.log.txt')continue;const b=await readFile(path.join(out,file));hashes.push(`${createHash('sha256').update(b).digest('hex')}  ${file}  ${b.length}`);}
+await writeFile(path.join(out,'SHA256SUMS.log.txt'),hashes.join('\n')+'\n');
+console.log(JSON.stringify(validation));
+if(code!==0||missing.length||unlinked.length||listeners.some(x=>x.listening!==false)||jsonErrors.length||oversized.length||userPaths.length)process.exitCode=1;

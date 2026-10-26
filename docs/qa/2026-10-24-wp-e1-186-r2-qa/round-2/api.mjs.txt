@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2';
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection');
+const checks=[];
+async function get(path,key='reader'){const r=await fetch(c.url+path,{headers:key?{authorization:'Bearer '+c.keys[key]}:{}});return {status:r.status,body:await r.json()};}
+const canon=x=>x===null||typeof x!=='object'?x:Array.isArray(x)?x.map(canon):Object.fromEntries(Object.keys(x).sort().map(k=>[k,canon(x[k])]));
+const hash=x=>createHash('sha256').update(JSON.stringify(canon(x))).digest('hex');
+async function check(name,fn){try{const evidence=await fn();checks.push({name,pass:true,evidence});}catch(e){checks.push({name,pass:false,error:String(e),stack:e.stack});}await writeFile(out+'/api-results.json',JSON.stringify(checks,null,2));}
+const run=await ctl('/start',{passes:85,delay:0,items:3});
+await ctl('/idle');
+const initial=await ctl('/oracle',{runId:run.id});
+await ctl('/append',{runId:run.id,count:750});
+const all=await ctl('/oracle',{runId:run.id,full:true});
+await writeFile('.tmp/qa186r2/api-full.json',JSON.stringify(all));
+await writeFile('.tmp/qa186r2/run.json',JSON.stringify({runId:run.id,total:all.total,dir:c.dir}));
+await check('fresh full history: status, complete durable evidence, same timestamp batch',async()=>{assert.equal(all.record.status,'succeeded');assert.ok(all.total>1000);assert.ok(all.timestamps<all.total-500);return {runId:run.id,total:all.total,distinctTimestamps:all.timestamps,sha256:hash(all.events),record:all.record,checkpoint:all.checkpoint};});
+await check('opaque older pages exactly equal fresh full read, no gaps or duplicates',async()=>{
+ let page=(await get('/runs/'+run.id+'/events?around='+all.last+'&limit=128')).body;
+ const items=[...page.items],boundaries=[];
+ while(page.olderCursor){boundaries.push({first:page.items[0]?.seq,last:page.items.at(-1)?.seq,cursor:page.olderCursor});const r=await get('/runs/'+run.id+'/events?cursor='+page.olderCursor+'&limit=128');assert.equal(r.status,200);page=r.body;items.unshift(...page.items);}
+ assert.deepEqual(items,all.events);assert.equal(new Set(items.map(e=>e.seq)).size,all.total);
+ let forward=[...page.items],count=0;
+ while(page.newerCursor){page=(await get('/runs/'+run.id+'/events?cursor='+page.newerCursor+'&limit=128')).body;forward.push(...page.items);assert.ok(++count<100);}
+ assert.deepEqual(forward,all.events);return {pages:boundaries.length+1,newerPages:count,total:items.length,first:items[0].seq,last:items.at(-1).seq,sha256:hash(items),boundaries};
+});
+for(const limit of [1,128,512,1000]) await check('around and window-edge limits '+limit,async()=>{const r=await get('/runs/'+run.id+'/events?around=512&limit='+limit);assert.equal(r.status,200);const expected=all.events.filter(e=>e.seq<=512).slice(-limit);assert.deepEqual(r.body.items,expected);return {status:r.status,count:r.body.items.length,first:r.body.items[0]?.seq,last:r.body.items.at(-1)?.seq};});
+const cursor=(await get('/runs/'+run.id+'/events?around=512&limit=128')).body.olderCursor;
+const invalid=['cursor=','cursor=!!!','cursor='+'x'.repeat(257),'cursor='+Buffer.from('{}').toString('base64url'),'cursor='+Buffer.from(JSON.stringify({runId:'other',seq:512,direction:'older'})).toString('base64url'),'cursor='+cursor+'&around=512','cursor='+cursor+'&after=0','around=5&after=0','limit=0','limit=1001','limit=-1','limit=1.5','around=-1','around=1.5','around=9007199254740991'];
+for(const query of invalid) await check('reject invalid query '+query.slice(0,95),async()=>{const r=await get('/runs/'+run.id+'/events?'+query);assert.equal(r.status,400);return r;});
+const otherRun=await ctl('/start',{passes:1,delay:0,items:1});await ctl('/idle');
+await check('cursor returned by another actual run is rejected',async()=>{const r=await get('/runs/'+otherRun.id+'/events?cursor='+cursor);assert.equal(r.status,400);return r;});
+for(const suffix of ['/events?around=512','/observation','/thread?at=128']) for(const [key,status] of [['reader',200],['denied',403],['other',404],[null,401]])await check('authorization '+suffix+' '+key,async()=>{const r=await get('/runs/'+run.id+suffix,key);assert.equal(r.status,status);return {status:r.status,...(status===200?{sha256:hash(r.body)}:{body:r.body})};});
+const ats=[0,1,127,128,129,511,512,513,initial.checkpoint?.seq-1,initial.checkpoint?.seq,initial.checkpoint?.seq+1,all.last,all.last+100].filter(n=>Number.isSafeInteger(n)&&n>=0);
+const oracle=await ctl('/oracle',{runId:run.id,at:ats});
+for(const at of [...new Set(ats)])await check('thread at '+at+' equals fresh complete replay',async()=>{const r=await get('/runs/'+run.id+'/thread?at='+at);assert.equal(r.status,200);assert.deepEqual(r.body,oracle.threads[at]);return {at,sha256:hash(r.body),counters:r.body.counters,vars:r.body.vars};});
+await check('observation equals full-history latest exit/gate/finish/lifecycle after 750 later rows',async()=>{const r=await get('/runs/'+run.id+'/observation');assert.equal(r.status,200);assert.deepEqual(r.body,all.observation);return r.body;});
+for(const at of ['-1','1.1','NaN','9007199254740992'])await check('invalid historical thread '+at,async()=>{const r=await get('/runs/'+run.id+'/thread?at='+at);assert.equal(r.status,400);return r;});
+console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass).map(x=>({name:x.name,error:x.error})),runId:run.id,total:all.total}));

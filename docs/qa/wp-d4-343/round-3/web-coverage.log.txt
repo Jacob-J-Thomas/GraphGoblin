@@ -1,0 +1,82 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/web
+      Coverage enabled with v8
+
+ ❯ src/events/EventsPage.test.tsx (9 tests | 2 failed) 17068ms
+   × shows the target and admission identity for a pending Event without a run 575ms
+   × shows the target and admission identity for a failed Event without a run 258ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/events/EventsPage.test.tsx > shows the target and admission identity for a pending Event without a run
+ FAIL  src/events/EventsPage.test.tsx > shows the target and admission identity for a failed Event without a run
+Error: expect(element).toHaveAttribute("href", "/loops/01ARZ3NDEKTSV4RRFFQ69G5FAV/edit") // 
+element.getAttribute("href") === "/loops/01ARZ3NDEKTSV4RRFFQ69G5FAV/edit"
+
+Expected the element to have attribute:
+  href="/loops/01ARZ3NDEKTSV4RRFFQ69G5FAV/edit"
+Received:
+  href="/loops/01ARZ3NDEKTSV4RRFFQ69G5FAV"
+ ❯ src/events/EventsPage.test.tsx:357:61
+    355|     renderApp('/events', api);
+    356|     const row = await screen.findByRole('row', { name: /ready/ });
+    357|     expect(within(row).getByRole('link', { name: loopId })).toHaveAttr…
+       |                                                             ^
+    358|       'href',
+    359|       `/loops/${loopId}/edit`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/web/src/forms/advanced.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 127 passed (128)
+      Tests  2 failed | 1601 passed (1603)
+     Errors  1 error
+   Start at  03:26:06
+   Duration  4148.89s (tests 39%, environment 34%, setup 12%, import 12%, transform 2%, worker 1%)
+
+Environment  jsdom was created 128 times · 1288.29s total, 34% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98.04% ( 8527/8697 )
+Branches     : 94.96% ( 7733/8143 )
+Functions    : 98.48% ( 2269/2304 )
+Lines        : 98.93% ( 7434/7514 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\web
+

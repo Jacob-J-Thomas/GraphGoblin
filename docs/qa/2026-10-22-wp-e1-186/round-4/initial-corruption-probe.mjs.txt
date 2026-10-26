@@ -1,0 +1,41 @@
+import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+const root = process.cwd(), out = process.argv[2];
+const dep = (name, app='api') => import(import.meta.resolve(name, pathToFileURL(join(root,'apps',app,'package.json')).href));
+const { createContainer, loadConfig, buildApp } = await dep('@graphgoblin/api');
+const { FakeHarness, FakeClock } = await dep('@graphgoblin/engine/testing');
+const { createGraphGoblinClient, subscribeRunEvents } = await dep('@graphgoblin/api-client','web');
+const dataDir = await mkdtemp(join(tmpdir(),'gg-wp-e1-186-corruption-'));
+const c = await createContainer(loadConfig({GG_DATA_DIR:dataDir,GG_REQUIRE_API_KEY:'true',GG_MASTER_KEY:Buffer.alloc(32,15).toString('base64'),GG_SWAGGER_UI:'false',GG_WEB_DIST:join(root,'apps/web/dist')}),{harnesses:{codex:new FakeHarness()},clock:new FakeClock(),startTimers:false});
+await c.start();
+const app = await buildApp(c,{logger:false});
+const {token} = await c.repos.apiKeys.create('local','audit',['*']);
+const headers = {authorization:'Bearer '+token};
+const definition={schemaVersion:4,name:'Corruption audit',nodes:[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},{id:'wait',kind:'wait',label:'Wait',config:{mode:'input',prompt:'Audit'}},{id:'done',kind:'exit',label:'Done',config:{}}],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'wait'}},{id:'b',from:{node:'wait',port:'out'},to:{node:'done'}}]};
+async function api(url,payload){const r=await app.inject({url,method:payload===undefined?'GET':'POST',headers,payload});if(r.statusCode>=400)throw new Error(r.body);return r.json();}
+async function makeRun(){const {loop}=await api('/loops',{definition});await api(`/loops/${loop.id}/publish`,{});const {run}=await api(`/loops/${loop.id}/runs`,{});await c.manager.waitForIdle();return run.id;}
+const results={head:'389dc14f24fcab33f6c22b0ba14428596fdda539',transport:'Fastify public HTTP injection with a configured client fetch adapter; no listener or real socket',dataDir,cases:[]};
+try{
+ for(const location of ['first page','consumed terminal lookup']){
+  const id=await makeRun();let after=0,seq=1;
+  if(location==='consumed terminal lookup'){
+   await api(`/runs/${id}/cancel`,{});await c.manager.waitForIdle();
+   seq=(await c.repos.events.read(id)).at(-1).seq;after=seq;
+  }
+  await c.handle.client.execute({sql:'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = ?',args:['{',id,seq]});
+  const raw=await app.inject({url:`/runs/${id}/events?after=${after}`,headers:{...headers,accept:'text/event-stream'}});
+  const requests=[],errors=[],seen=[];
+  const client=createGraphGoblinClient({baseUrl:'http://audit.invalid',apiKey:token,fetch:async request=>{
+   const url=new URL(request.url);const r=await app.inject({url:url.pathname+url.search,method:request.method,headers:Object.fromEntries(request.headers)});
+   requests.push({status:r.statusCode,code:r.json().code});
+   return new Response(r.body,{status:r.statusCode,headers:r.headers});
+  }});
+  const sub=subscribeRunEvents({client,runId:id,after,onEvent:e=>seen.push(e.seq),onError:(e,attempt)=>errors.push({name:e.name,code:e.code,attempt}),backoff:{initialMs:1,maxMs:1,maxAttempts:2}});
+  let rejection;
+  try{await sub.done;}catch(e){rejection={name:e.name,message:e.message,code:e.code};}
+  const result={location,after,corruptSeq:seq,raw:{status:raw.statusCode,body:raw.json()},requests,errors,seen,lastSeq:sub.lastSeq,rejection};
+  results.cases.push(result);console.log(JSON.stringify(result));
+ }
+}finally{await app.close();await c.stop();await writeFile(join(out,'initial-corruption-results.json'),JSON.stringify(results,null,2));}

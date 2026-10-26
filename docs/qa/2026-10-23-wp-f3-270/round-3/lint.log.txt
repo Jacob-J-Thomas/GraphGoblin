@@ -1,0 +1,37 @@
+{"command": ["pnpm.cmd", "lint", "--concurrency=1"], "cwd": "%USERPROFILE%\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-wp-f3-270"}
+$ turbo run lint --concurrency=1
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:lint: cache miss, executing 25582929e1818c3e
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/domain:lint: cache miss, executing 006a2de49550a9be
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: cache miss, executing 1223d727b93db78d
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/engine:lint: 
+@graphgoblin/engine:lint: %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-270\packages\engine\src\repair-deadline.test.ts
+@graphgoblin/engine:lint:    22:48  error  Expected the Promise rejection reason to be an Error                               @typescript-eslint/prefer-promise-reject-errors
+@graphgoblin/engine:lint:    53:3   error  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+@graphgoblin/engine:lint:   104:5   error  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+@graphgoblin/engine:lint: 
+@graphgoblin/engine:lint: ✖ 3 problems (3 errors, 0 warnings)
+@graphgoblin/engine:lint: 
+@graphgoblin/engine:lint: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/infrastructure:lint: cache miss, executing c6d37997701c2656
+@graphgoblin/adapter-codex:lint: cache miss, executing 9c2939b17b4aec00
+@graphgoblin/adapter-jev:lint: cache miss, executing 50e14694e7565274
+@graphgoblin/engine#lint:  ERROR  command (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f3-270\packages\engine) C:\nvm4w\nodejs\pnpm.cmd run lint exited (1)
+
+ Tasks:    2 successful, 6 total
+Cached:    0 cached, 6 total
+  Time:    2m28.176s 
+Failed:    @graphgoblin/engine#lint
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
+
+{"command": ["pnpm.cmd", "lint", "--concurrency=1"], "exitCode": 1, "seconds": 149.906}

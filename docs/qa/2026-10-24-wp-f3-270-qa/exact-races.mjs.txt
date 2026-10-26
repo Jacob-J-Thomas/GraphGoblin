@@ -1,0 +1,29 @@
+﻿import {mock} from 'node:test';
+import {writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=resolve(root,'docs/qa/2026-10-24-wp-f3-270-qa');
+const {createTestEngine,singleNodeLoop}=await import(pathToFileURL(resolve(root,'packages/engine/dist/testing/index.js')).href);
+const flush=async()=>{for(let n=0;n<20;n++)await new Promise(r=>setImmediate(r))};
+const results=[];
+for(const [when,registration] of [[499,'after'],[500,'before'],[500,'after'],[501,'after']]){
+ mock.timers.enable({apis:['Date','setTimeout'],now:0});
+ const e=await createTestEngine({maxConcurrentRuns:1});let run,signal,release,cancel;
+ const schedule=()=>setTimeout(()=>{cancel=e.manager.cancel(run.id)},when);
+ if(registration==='before')schedule();
+ e.ports.deciders=[{id:'codex',available:()=>true,route:(_request,supplied)=>{signal=supplied;return new Promise(r=>{release=()=>r({route:'yes',confidence:1,reasoning:'late'})})}}];
+ const d=singleNodeLoop('Exact boundary '+when+' '+registration,{id:'work',kind:'decision',label:'Route',config:{kind:'llm',harness:'codex',model:{mode:'inherit'},effort:{mode:'inherit'},instructions:'Choose',routes:[{id:'yes',label:'Yes'},{id:'no',label:'No'}]}});d.settings={structuredTimeoutMs:500,runDeadlineSeconds:null};for(const port of ['yes','no'])d.edges.push({id:port,from:{node:'work',port},to:{node:'done'}});
+ try{
+  run=await e.start(e.publish(d).loopId);for(let n=0;n<20&&!signal;n++){mock.timers.tick(0);await flush()}assert(signal,'completion not reached at fake time zero');assert.equal(Date.now(),0);
+  if(registration==='after')schedule();mock.timers.tick(when);await flush();await cancel;await e.manager.waitForIdle();
+  const before=await e.ports.runs.get(run.id),thread=await e.manager.getThread(run.id);release();await flush();const after=await e.ports.runs.get(run.id),events=e.events(run.id),terminal=events.filter(x=>['run.failed','run.cancelled','run.finished'].includes(x.type));
+  assert.equal(terminal.length,1);assert.equal(after.status,before.status);assert.deepEqual(after.failure,before.failure);assert.deepEqual(await e.manager.getThread(run.id),thread);assert(signal.aborted);
+  if(when===499){assert.equal(after.status,'cancelled');assert.equal(after.failure,undefined)}
+  if(when===501)assert.equal(after.failure.code,'STRUCTURED_COMPLETION_TIMEOUT');
+  if(when===500)assert(['cancelled','failed'].includes(after.status));
+  results.push({whenMs:when,cancelTimerRegistration:registration,clockMs:Date.now(),status:'PASS',run:after,events,terminalCount:terminal.length,completionAborted:signal.aborted,thread});
+ }catch(error){results.push({whenMs:when,cancelTimerRegistration:registration,status:'FAIL',error:String(error),stack:error.stack});process.exitCode=1;}
+ finally{e.manager.stop();if(run){const r=await e.ports.runs.get(run.id);if(r&&!['failed','succeeded','cancelled'].includes(r.status))await e.manager.cancel(run.id)}release?.();await flush();mock.timers.reset();}
+}
+await writeFile(resolve(out,'exact-races.json'),JSON.stringify(results,null,2));console.log(JSON.stringify(results.map(({events,thread,run,...r})=>({...r,outcome:run?.status,code:run?.failure?.code}))));

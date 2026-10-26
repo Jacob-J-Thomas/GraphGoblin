@@ -845,13 +845,18 @@ describe('exit node and return channels', () => {
     ).toBe(true);
     expect(engine.ports.workspace.files.get('/abs/result.md')).toMatch(/Outcome: success/);
     expect([...engine.ports.workspace.files.values()]).toContain('{"answer":42}');
-    expect(engine.ports.delivery.webhooks.map((w) => w.url)).toEqual([
-      'https://example.test/hook',
+    // Webhook deliveries run concurrently in the background, so their order is not part of the
+    // contract: the signed one resolves its secret first.
+    expect(engine.ports.delivery.webhooks.map((w) => w.url).sort()).toEqual([
       'https://example.test/default',
+      'https://example.test/hook',
     ]);
-    expect(engine.ports.delivery.webhooks[0]?.secret).toBe('hs');
+    expect(
+      engine.ports.delivery.webhooks.find((w) => w.url === 'https://example.test/hook')?.secret,
+    ).toBe('hs');
     const delivered = engine.events(run.id).filter((e) => e.type === 'return.delivered');
-    expect(delivered).toHaveLength(7);
+    expect(delivered).toHaveLength(5);
+    expect(engine.events(run.id).filter((e) => e.type === 'delivery.finished')).toHaveLength(2);
   });
 
   it('records webhook failures and skips delivery when mapping is none', async () => {
@@ -874,8 +879,10 @@ describe('exit node and return channels', () => {
     );
     const run = await engine.runToIdle(failing.loopId);
     expect(run.status).toBe('succeeded');
-    const failed = engine.events(run.id).find((e) => e.type === 'return.failed');
-    expect(failed).toMatchObject({ error: 'webhook endpoint returned 503' });
+    const failed = engine.events(run.id).find((e) => e.type === 'delivery.finished');
+    expect(failed).toMatchObject({
+      delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } },
+    });
 
     const silent = engine.publish(
       singleNodeLoop('silent', {

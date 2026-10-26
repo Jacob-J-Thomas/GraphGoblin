@@ -1,0 +1,6 @@
+Independent QA setup notes (tool transcript extracts):
+1. Initial invocation of the copied gates.ps1 was refused: File %USERPROFILE%/AppData/Local/Temp/gg-qa-d2-185-gates.ps1 cannot be loaded. The file is not digitally signed. No gates ran in that attempt. The same script was then invoked as an inline PowerShell script block; execution policy was not changed.
+2. The first native script imported playwright instead of the installed @playwright/test module. native-initial-setup-error.log.txt preserves that launch error.
+3. The next native attempt sent content-type application/json on an empty POST publish request. The gateway returned 400 MALFORMED_BODY, Body cannot be empty when content-type is set to application/json. http-helper-error-* files preserve this attempt. The helper was corrected to set content-type only when sending a body.
+4. Primary native results retain one invalid event.payload.channel assertion and one invalid /children route. The supplement uses event.channel and GET /runs?parent=id. These were QA harness corrections; no product source changed.
+5. Extra adversarial retained-delivery assertions had a false precondition: a failed-before-exit inference had no webhook return. These are not product defects. Its active-marker/observer and real minute-CPU measurements remain valid.

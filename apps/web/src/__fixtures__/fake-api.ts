@@ -26,6 +26,7 @@ import {
 } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import {
+  reconcileThread,
   exportLoop,
   importLoop,
   LoopFormatUpgradeRequiredError,
@@ -45,6 +46,7 @@ export interface RecordedCall {
   search: URLSearchParams;
   body: unknown;
   headers: Headers;
+  signal?: AbortSignal;
 }
 
 type Handler = (call: RecordedCall, params: string[]) => Response | Promise<Response>;
@@ -215,6 +217,8 @@ export class FakeApi {
     dedupeKey?: string;
     source: string;
     runIds: string[];
+    target?: { loopId: string; versionId: string; triggerNodeId: string };
+    admissionId?: string;
     delivery?: {
       state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
       attempts: number;
@@ -223,7 +227,14 @@ export class FakeApi {
     };
   }[] = [];
   preflight: ({ harness: string } & HarnessPreflight)[] = [
-    { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] },
+    {
+      harness: 'codex',
+      state: 'ready',
+      ok: true,
+      version: '1.0',
+      authenticated: true,
+      problems: [],
+    },
   ];
   calls: RecordedCall[] = [];
   /** When true every request fails like a dropped network. */
@@ -337,6 +348,31 @@ export class FakeApi {
       `id: ${event.seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`,
     );
     for (const controller of this.streams.get(runId) ?? []) controller.enqueue(frame);
+    // Model the server's tail confirmation after a synchronous batch, including any audits
+    // or resume that follow an outcome. A terminal event alone is no longer completion.
+    queueMicrotask(() => this.completeStream(runId));
+  }
+
+  private completeStream(runId: string, after?: number): void {
+    const log = this.events.get(runId) ?? [];
+    const marker = log
+      .slice()
+      .reverse()
+      .find((event) =>
+        ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'].includes(
+          event.type,
+        ),
+      );
+    if (!marker || marker.type === 'run.started' || marker.type === 'run.resumed') return;
+    const cursor = Math.max(after ?? 0, log.at(-1)?.seq ?? 0);
+    const frame = new TextEncoder().encode(
+      `event: stream.complete\ndata: ${JSON.stringify({ after: cursor })}\n\n`,
+    );
+    for (const controller of this.streams.get(runId) ?? []) {
+      controller.enqueue(frame);
+      controller.close();
+    }
+    this.streams.delete(runId);
   }
 
   /** Close every open stream for a run, as a dropped connection would. */
@@ -399,6 +435,7 @@ export class FakeApi {
       search: url.searchParams,
       body: text ? (JSON.parse(text) as unknown) : undefined,
       headers: request.headers,
+      signal: request.signal,
     };
     this.calls.push(call);
     if (this.requiredKey && request.headers.get('authorization') !== `Bearer ${this.requiredKey}`)
@@ -412,6 +449,15 @@ export class FakeApi {
 
   /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
   builtIn(call: RecordedCall): Response | Promise<Response> {
+    if (call.method === 'GET' && call.path === '/system/shutdown')
+      return json({
+        phase: 'running',
+        controlToken: 'fake-running',
+        graceMs: 300000,
+        activeRunIds: [],
+        unconfirmedRunIds: [],
+        choices: [],
+      });
     for (const [route, handler] of this.routes) {
       const params = match(route, call);
       if (params) return handler(call, params);
@@ -423,6 +469,7 @@ export class FakeApi {
     const events = (this.events.get(runId) ?? []).filter((e) => e.seq > after);
     const encoder = new TextEncoder();
     const streams = this.streams;
+    const complete = () => this.completeStream(runId, after);
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         for (const event of events) {
@@ -435,6 +482,7 @@ export class FakeApi {
         const set = streams.get(runId) ?? new Set();
         set.add(controller);
         streams.set(runId, set);
+        complete();
       },
       cancel() {
         streams.get(runId)?.clear();
@@ -469,7 +517,29 @@ export class FakeApi {
       },
     ],
     ['GET /loops/:id/triggers', () => json({ schedules: [], webhooks: [], polls: [] })],
-    ['GET /loops', () => json({ items: [...this.loops.values()].map((l) => l.loop) })],
+    [
+      'GET /loops',
+      () =>
+        json({
+          items: [...this.loops.values()].map(({ loop }) => {
+            const history = [...this.runs.values()]
+              .filter((r) => r.loopId === loop.id)
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+            const latest = history[0];
+            return {
+              ...loop,
+              runCount: history.length,
+              latestRun: latest
+                ? {
+                    id: latest.id,
+                    status: latest.status,
+                    createdAt: latest.createdAt,
+                  }
+                : null,
+            };
+          }),
+        }),
+    ],
     [
       'POST /loops',
       (call) => {
@@ -685,7 +755,16 @@ export class FakeApi {
         if (status) items = items.filter((r) => status.split(',').includes(r.status));
         if (parent === 'none') items = items.filter((r) => !r.parentRunId);
         else if (parent) items = items.filter((r) => r.parentRunId === parent);
-        return json({ items });
+        const before = call.search.get('before');
+        if (before) items = items.filter((r) => r.createdAt < before);
+        items.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        const cursor = call.search.get('cursor');
+        if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+        const limit = Number(call.search.get('limit') ?? 100);
+        return json({
+          items: items.slice(0, limit),
+          nextCursor: items.length > limit ? items[limit - 1]!.id : null,
+        });
       },
     ],
     [
@@ -694,14 +773,108 @@ export class FakeApi {
         if (!this.runs.has(runId!)) return problem(404, 'RUN_NOT_FOUND');
         const after = Number(call.search.get('after') ?? 0);
         if (call.headers.get('accept') === 'text/event-stream') return this.stream(runId!, after);
-        return json({ items: (this.events.get(runId!) ?? []).filter((e) => e.seq > after) });
+        const all = this.events.get(runId!) ?? [];
+        const cursor = call.search.get('cursor');
+        const position: { seq: number; direction: string } | undefined = cursor
+          ? (JSON.parse(atob(cursor)) as { seq: number; direction: string })
+          : undefined;
+        const around = call.search.get('around');
+        const older = position?.direction === 'older' || around !== null;
+        const bound = position?.seq ?? (around !== null ? Number(around) + 1 : after);
+        const limit = Number(call.search.get('limit') ?? 500);
+        const matches = all.filter((e) => (older ? e.seq < bound : e.seq > bound));
+        const items = older ? matches.slice(-limit) : matches.slice(0, limit);
+        const first = items[0]?.seq ?? bound;
+        const last = items.at(-1)?.seq ?? bound;
+        return json({
+          items,
+          nextAfter: last,
+          hasMore: all.some((e) => e.seq > last),
+          olderCursor: all.some((e) => e.seq < first)
+            ? btoa(JSON.stringify({ seq: first, direction: 'older' }))
+            : null,
+          newerCursor: all.some((e) => e.seq > last)
+            ? btoa(JSON.stringify({ seq: last, direction: 'newer' }))
+            : null,
+        });
       },
     ],
     [
       'GET /runs/:id/thread',
+      (call, [runId]) => {
+        const current = this.threads.get(runId!);
+        if (!current) return problem(404, 'THREAD_NOT_FOUND', 'the run has no thread');
+        const events = this.events.get(runId!) ?? [];
+        if (!events.length) return json(current);
+        const first = events[0];
+        const run = this.runs.get(runId!);
+        const loop = run ? this.loops.get(run.loopId) : undefined;
+        const definition =
+          loop?.history.find((v) => v.id === run?.versionId)?.definition ??
+          loop?.current?.definition ??
+          loop?.draft?.definition;
+        const initial =
+          first?.type === 'run.queued' && first.initialThread
+            ? first.initialThread
+            : {
+                ...current,
+                run: { ...current.run, iteration: 1 },
+                messages: [],
+                vars: {},
+                artifacts: [],
+                outputs: {},
+                counters: {
+                  nodeVisits: {},
+                  usage: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    cachedInputTokens: 0,
+                    reasoningOutputTokens: 0,
+                  },
+                },
+                gates: Object.fromEntries(
+                  (definition?.nodes ?? [])
+                    .filter(
+                      (node) => node.kind === 'decision' && node.config.maxPasses !== undefined,
+                    )
+                    .map((node) => [node.id, { passes: 1 }]),
+                ),
+              };
+        try {
+          const at = call.search.get('at');
+          return json(
+            reconcileThread(initial, events, undefined, at === null ? undefined : Number(at)),
+          );
+        } catch (error) {
+          return problem(500, 'THREAD_REPLAY_FAILED', String(error));
+        }
+      },
+    ],
+    [
+      'GET /runs/:id/observation',
       (_call, [runId]) => {
-        const thread = this.threads.get(runId!);
-        return thread ? json(thread) : problem(404, 'THREAD_NOT_FOUND', 'the run has no thread');
+        if (!this.runs.has(runId!)) return problem(404, 'RUN_NOT_FOUND');
+        const all = this.events.get(runId!) ?? [];
+        const cancelled = all.findLast((event) => event.type === 'run.cancelled');
+        const before = cancelled ? all.filter((event) => event.seq < cancelled.seq) : [];
+        const requested = before.findLast((event) => event.type === 'run.cancel_requested');
+        const resumed = before.findLast((event) => event.type === 'run.resumed');
+        return json({
+          lifecycle: all.findLast((event) =>
+            ['run.finished', 'run.failed', 'run.cancelled', 'run.started', 'run.resumed'].includes(
+              event.type,
+            ),
+          ),
+          exit: all.findLast((event) => event.type === 'exit.evaluated'),
+          gate: all.findLast((event) => event.type === 'decision.made' && event.gate !== undefined),
+          finished: all.findLast((event) => event.type === 'run.finished'),
+          cancelled,
+          cancelRequested:
+            requested && (!resumed || requested.seq > resumed.seq) ? requested : undefined,
+          freshSessionChoices: all
+            .filter((event) => event.type === 'run.resumed' && event.freshSession !== undefined)
+            .slice(-20),
+        });
       },
     ],
     [
@@ -735,6 +908,10 @@ export class FakeApi {
     ['POST /runs/:id/signals/:name', () => json({ woke: true })],
     ['GET /settings', () => json(this.settingsValues)],
     [
+      'GET /system/model-defaults',
+      () => json({ byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }),
+    ],
+    [
       'PUT /settings',
       (call) => {
         Object.assign(this.settingsValues, call.body);
@@ -750,7 +927,18 @@ export class FakeApi {
         return new Response(null, { status: 204 });
       },
     ],
-    ['GET /model-catalog', () => json({ items: this.catalog })],
+    [
+      'GET /model-catalog',
+      () =>
+        json({
+          items: this.catalog.map((entry) => ({
+            ...entry,
+            ecosystemDefault:
+              (entry.harness === 'codex' && entry.model === 'gpt-6-luna') ||
+              (entry.harness === 'claude' && entry.model === 'claude-opus-5-5'),
+          })),
+        }),
+    ],
     [
       'PATCH /model-catalog/:harness/:model',
       (call, [harness, model]) => {
@@ -929,7 +1117,28 @@ export class FakeApi {
       },
     ],
     ['GET /harness/preflight', () => json({ items: this.preflight })],
-    ['GET /events', () => json({ items: this.inbound })],
+    [
+      'GET /events',
+      (call) => {
+        let items = [...this.inbound];
+        const type = call.search.get('type');
+        if (type) items = items.filter((event) => event.type === type);
+        const before = call.search.get('before');
+        if (before) items = items.filter((event) => event.receivedAt < before);
+        const anchor = call.search.get('anchor');
+        if (anchor) {
+          const start = items.findIndex((item) => item.id === anchor);
+          items = start < 0 ? [] : items.slice(start);
+        }
+        const cursor = call.search.get('cursor');
+        if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+        const limit = Number(call.search.get('limit') ?? 100);
+        return json({
+          items: items.slice(0, limit),
+          nextCursor: items.length > limit ? items[limit - 1]!.id : null,
+        });
+      },
+    ],
   ];
 }
 

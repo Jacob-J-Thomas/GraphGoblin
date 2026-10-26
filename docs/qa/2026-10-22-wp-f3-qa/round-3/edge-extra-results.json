@@ -1,0 +1,84 @@
+{
+  "head": "a3dd50ea74c4bbcc926ec43a37134737ce600f07",
+  "results": [
+    {
+      "name": "390px Settings defaults and no budget controls",
+      "status": "PASS",
+      "actual": {
+        "layout": {
+          "viewport": 390,
+          "width": 390
+        },
+        "card": "Maximum node visits: 10. No run deadline unless the loop sets one."
+      }
+    },
+    {
+      "name": "390px Loop defaults, keyboard Unlimited and warning",
+      "status": "PASS",
+      "actual": {
+        "layout": {
+          "viewport": 390,
+          "width": 390
+        },
+        "warning": true
+      }
+    },
+    {
+      "name": "390px published default pin inspector",
+      "status": "PASS",
+      "actual": {
+        "layout": {
+          "viewport": 390,
+          "width": 390
+        },
+        "pin": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "card": "Maximum node visits: 10. Run deadline: none."
+      }
+    },
+    {
+      "name": "gate warning above finite visit cap, narrow Unlimited passes",
+      "status": "PASS",
+      "actual": {
+        "validation": {
+          "issues": [
+            {
+              "code": "GATE_PASSES_ABOVE_VISIT_CAP",
+              "severity": "warning",
+              "message": "gate \"gate\" has maxPasses 4, above settings.maxNodeVisits 3. Repeat-cycle nodes: \"work\", \"gate\". Continued repetition will fail with MAX_NODE_VISITS before the maximum-pass Limit reached output. Lower maximum passes or raise the visit cap.",
+              "nodeId": "gate",
+              "path": "config.maxPasses"
+            }
+          ],
+          "publishable": true
+        },
+        "layout": {
+          "viewport": 390,
+          "width": 390
+        }
+      }
+    },
+    {
+      "name": "OpenAPI has no substitute usage budget fields",
+      "status": "PASS",
+      "actual": {
+        "matches": []
+      }
+    }
+  ],
+  "lifecycle": [
+    {
+      "pid": 55652,
+      "exitCode": 0,
+      "confirmedExited": true,
+      "forced": false
+    }
+  ],
+  "cleanup": {
+    "store": "gg-qa-243-r3-edge-extra-DfrxjB",
+    "processConfirmedExited": true,
+    "removed": true
+  }
+}

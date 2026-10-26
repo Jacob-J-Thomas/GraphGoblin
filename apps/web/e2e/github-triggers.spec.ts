@@ -314,15 +314,17 @@ test('Events exposes safe labels for all five webhook delivery dispositions', as
       delivery: { state: 'filtered', attempts: 0 },
     },
   ];
-  await page.route('**/events', async (route) => {
-    if (route.request().method() !== 'GET' || new URL(route.request().url()).pathname !== '/events')
-      return route.continue();
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ items: fixtures }),
-    });
-  });
+  await page.route(
+    (url) => url.pathname === '/events',
+    async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ items: fixtures, nextCursor: null }),
+      });
+    },
+  );
   await page.goto('/app/events');
 
   const row = (id: string) => page.getByRole('row').filter({ hasText: id });

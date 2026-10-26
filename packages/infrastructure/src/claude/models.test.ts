@@ -1,12 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { ClaudeModelCapabilitySchema } from '@graphgoblin/contracts';
-import { claudeModelCapabilities, CLAUDE_FABLE_MODEL, CLAUDE_MODEL } from './models.js';
+import {
+  claudeCatalogModels,
+  claudeModelCapabilities,
+  CLAUDE_FABLE_MODEL,
+  CLAUDE_HAIKU_MODEL,
+  CLAUDE_MODEL,
+  CLAUDE_SONNET_MODEL,
+} from './models.js';
 import { resolvedClaudeSettings } from './policy.js';
 
+// Supported, not all turn-tested: docs/06-harness-integration.md records which levels a real
+// turn exercised for each model and which rest on Claude Code's documentation.
+const SUPPORTED_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+
 describe('exact Claude model capabilities', () => {
-  it('admits both exact identities through the same model and effort checks', () => {
+  it('admits every exact identity through the same model and effort checks', () => {
     const entries = claudeModelCapabilities();
-    expect(entries.map((entry) => entry.model)).toEqual([CLAUDE_MODEL, CLAUDE_FABLE_MODEL]);
+    expect(entries.map((entry) => entry.model)).toEqual([
+      CLAUDE_MODEL,
+      CLAUDE_FABLE_MODEL,
+      CLAUDE_SONNET_MODEL,
+      CLAUDE_HAIKU_MODEL,
+    ]);
     for (const entry of entries) {
       expect(ClaudeModelCapabilitySchema.parse(entry)).toEqual(entry);
       for (const effort of entry.efforts)
@@ -24,5 +40,38 @@ describe('exact Claude model capabilities', () => {
     );
     entries[0]!.efforts.length = 0;
     expect(claudeModelCapabilities()[0]!.efforts).toHaveLength(5);
+  });
+
+  it('declares the current Sonnet and Haiku ids with their supported efforts', () => {
+    expect(CLAUDE_SONNET_MODEL).toBe('claude-sonnet-5-5');
+    expect(CLAUDE_HAIKU_MODEL).toBe('claude-haiku-5-5');
+    const byModel = new Map(claudeCatalogModels().map((entry) => [entry.model, entry]));
+    expect(byModel.get(CLAUDE_SONNET_MODEL)).toEqual({
+      model: CLAUDE_SONNET_MODEL,
+      displayName: 'Claude Sonnet 5.5',
+      efforts: SUPPORTED_EFFORTS,
+    });
+    expect(byModel.get(CLAUDE_HAIKU_MODEL)).toEqual({
+      model: CLAUDE_HAIKU_MODEL,
+      displayName: 'Claude Haiku 5.5',
+      efforts: SUPPORTED_EFFORTS,
+    });
+    // The older Haiku has no effort control in the installed CLI, and aliases are not exact ids.
+    for (const model of ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'sonnet', 'haiku'])
+      expect(() => resolvedClaudeSettings({ model, effort: 'high' })).toThrow(/model/);
+  });
+
+  it('keeps catalog rows and preflight capabilities on one list with distinct display names', () => {
+    const rows = claudeCatalogModels();
+    expect(rows.map(({ model, efforts }) => ({ model, efforts }))).toEqual(
+      claudeModelCapabilities(),
+    );
+    expect(new Set(rows.map((row) => row.displayName)).size).toBe(rows.length);
+    rows[0]!.efforts.length = 0;
+    rows[0]!.displayName = 'changed';
+    expect(claudeCatalogModels()[0]).toMatchObject({
+      displayName: 'Claude Opus 5.5',
+      efforts: SUPPORTED_EFFORTS,
+    });
   });
 });

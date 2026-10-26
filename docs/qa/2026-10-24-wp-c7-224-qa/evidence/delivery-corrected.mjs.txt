@@ -1,0 +1,12 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+const dir=resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+// The first fixture used an invalid nested exit.return object and was correctly refused 400.
+// Retain that run, then author a valid public-contract fixture for the previously untested case.
+let source=await readFile(join(dir,'delivery.mjs.txt'),'utf8');
+source=source.replace("{return:{destinations:[{kind:'webhook',url:'http://127.0.0.1:'+receiverPort+'/return'}]}}", "{returns:'{\"qa\":224}',destinations:[{kind:'webhook',url:'http://127.0.0.1:'+receiverPort+'/return'}]}")
+  .replaceAll('11-delivery-cleanup','11b-delivery-cleanup')
+  .replaceAll('delivery-summary.json','delivery-corrected-summary.json')
+  .replaceAll('delivery-generated.mjs.txt','delivery-corrected-generated.mjs.txt');
+await writeFile(join(dir,'delivery-corrected-driver.mjs.txt'),source);
+await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));

@@ -1,0 +1,34 @@
+import {spawn,execFileSync} from 'node:child_process';
+import {createWriteStream} from 'node:fs';
+import {readFile,writeFile} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {createHash} from 'node:crypto';
+const out=resolve('docs/qa/2026-10-24-wp-c7-319-qa/round-2');
+const results=[];
+const jobs=[{pkg:'api',filter:'src/shutdown',name:'api-shutdown-focused',reason:'Exact requested command forwarded a literal -- and selected the full package; this invocation uses the intended selector with one worker.'},{pkg:'web',filter:'src/app/ShutdownNotice',name:'web-shutdown-focused',reason:'Explicit selector after the exact requested command; one worker.'}];
+const extracted=[];
+for(const [pkg,name] of [['api','api-shutdown'],['web','web-shutdown-notice']]){
+ const s=(await readFile(join(out,name+'.log.txt'),'utf8')).replace(/\u001b\[[0-9;]*m/g,'');
+ const failed=new Set([...s.matchAll(/\bFAIL\s+(src\/[\w/.-]+\.test\.[jt]sx?)/g)].map(m=>m[1]));
+ for(const m of s.matchAll(/(src\/[\w/.-]+\.test\.[jt]sx?)\s+\([^\r\n]*\bfailed\b/g))failed.add(m[1]);
+ const workerBlocks=[...s.matchAll(/Failed to start forks worker for test files ([\s\S]*?)(?=\n\s*[^\w/%.:-]|\n\n|$)/g)].map(m=>m[1]);
+ for(const block of workerBlocks){const m=block.replace(/\r?\n/g,'').match(new RegExp('apps/'+pkg+'/(src/[\\w/.-]+\\.test\\.[jt]sx?)'));if(m)failed.add(m[1]);}
+ for(const file of failed){
+  const bytes=await readFile('apps/'+pkg+'/'+file);let base;try{base=execFileSync('git',['show','c63db24590d23263a3f7253eda13249f9252ec16:apps/'+pkg+'/'+file]);}catch{}
+  const unchanged=base?.equals(bytes)??false;const item={pkg,file,unchanged,sha256:createHash('sha256').update(bytes).digest('hex'),workerStartFailure:workerBlocks.some(b=>b.replace(/\r?\n/g,'').includes(file))};extracted.push(item);
+  // The focused shutdown invocation already executes these files sequentially, once per file.
+  if(pkg==='api'&&file.startsWith('src/shutdown')||pkg==='web'&&file.startsWith('src/app/ShutdownNotice')){item.coveredByFocusedRun=true;continue;}
+  if(!unchanged){item.notRepeated='Changed by the full #319 delta; retained for analysis rather than an automatic unrelated-file retry.';continue;}
+  jobs.push({pkg,filter:file,name:'isolated-'+pkg+'-'+file.replace(/^src\//,'').replaceAll('/','-').replace(/\.test\.[jt]sx?$/,''),reason:'One isolated recheck of an unchanged file affected in the original package run; original failure remains recorded.',...item});
+ }
+}
+await writeFile(join(out,'failure-files.json'),JSON.stringify({extracted,jobs},null,2));
+for(const job of jobs){
+ const command=`pnpm.cmd --filter @graphgoblin/${job.pkg} exec vitest run ${job.filter} --maxWorkers=1`;
+ console.log('START '+command);const started=new Date().toISOString(),begin=Date.now(),logName=job.name+'.log.txt';
+ const output=createWriteStream(join(out,logName));const child=spawn(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ child.stdout.on('data',b=>output.write(b));child.stderr.on('data',b=>output.write(b));
+ const exit=await new Promise((r,j)=>{child.on('error',j);child.on('close',(code,signal)=>r({code,signal}));});await new Promise(r=>output.end(r));
+ results.push({...job,command,started,elapsedMs:Date.now()-begin,...exit,log:logName,alone:true});await writeFile(join(out,'focused-and-isolated-results.json'),JSON.stringify(results,null,2));console.log('END '+job.name+' '+exit.code);
+}
+if(results.some(r=>r.code!==0))process.exitCode=1;

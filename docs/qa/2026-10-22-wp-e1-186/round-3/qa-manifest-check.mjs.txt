@@ -1,0 +1,13 @@
+﻿import {readFile,writeFile,rename} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const qa='docs/qa/2026-10-24-wp-e1-186-qa/', out='docs/qa/2026-10-22-wp-e1-186/round-3/';
+const manifest=JSON.parse(await readFile(qa+'artifact-manifest.json','utf8'));
+const restoration=JSON.parse(await readFile(out+'format-restoration.json','utf8'));
+const hash=b=>createHash('sha256').update(b).digest('hex');
+let rawMatches=0;const lfOnly=[],unexpected=[],restoredQa=[];
+for(const r of manifest){const b=await readFile(qa+r.path);const raw=hash(b)===r.sha256;const canonical=hash(Buffer.from(b.toString('utf8').replace(/\r\n/g,'\n')))===r.sha256;if(raw)rawMatches++;else if(canonical)lfOnly.push(r.path);else unexpected.push(r.path);if(restoration.files.some(f=>f.path===qa+r.path))restoredQa.push({path:r.path,matchesOriginal:raw});}
+await rename(out+'original-qa-manifest-integrity.json',out+'original-qa-manifest-raw-check.json');
+const result={checked:manifest.length,rawMatches,lfNormalizedMatches:lfOnly.length,canonicalMatches:rawMatches+lfOnly.length,workingCopyCrlfLogs:lfOnly,unexpected,restoredQa,interpretation:'The repository enforces LF in Git. These untouched working-copy logs retain CRLF; normalization matches the original QA manifest. No QA log content was rewritten.'};
+await writeFile(out+'original-qa-manifest-integrity.json',JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({checked:result.checked,canonicalMatches:result.canonicalMatches,rawMatches,lfNormalizedMatches:lfOnly.length,unexpected,restoredQaMatched:restoredQa.filter(r=>r.matchesOriginal).length}));
+if(unexpected.length||restoredQa.some(r=>!r.matchesOriginal))process.exitCode=1;

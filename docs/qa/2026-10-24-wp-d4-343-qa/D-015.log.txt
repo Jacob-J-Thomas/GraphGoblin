@@ -1,0 +1,8 @@
+2026-10-24: Native diagnostic boundary, D-015.
+The user identified native process-tree termination as denied in this sandbox.
+Infrastructure coverage failed its native process-tree termination/abort assertions (see coverage-infrastructure.log.txt). Direct owned API-child SIGKILL succeeded separately (see lifecycle-results.json); these are distinct operations.
+Additional attempted read-only process inventory:
+Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.CommandLine -like '*codex-qa-wp-d4-343*vitest*' } | Select-Object ProcessId,ParentProcessId,CommandLine
+Result: Get-CimInstance : Access denied. HRESULT 0x80041003, Microsoft.Management.Infrastructure.CimCmdlets.GetCimInstanceCommand.
+No process-tree termination workaround was attempted. Orchestrator must verify native process-tree cases and inspect any leftover fixtures outside the sandbox.
+Bounded API coverage was interrupted through the tool's stdin control after partial output stopped advancing (exit 1); no final coverage summary was produced. The retained coverage-api-bounded.log.txt is partial, not a passing coverage gate.

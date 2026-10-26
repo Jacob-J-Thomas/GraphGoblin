@@ -1,0 +1,545 @@
+pnpm.cmd : $ vitest run --coverage
+At line:11 char:3
++   & pnpm.cmd --filter "@graphgoblin/$packageName" test:coverage *> "d ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/web
+      Coverage enabled with v8
+
+ ❯ src/forms/json-sections.test.tsx (39 tests | 1 failed) 168434ms
+   ❯ section JSON mode (29)
+     × retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step 20238ms
+ ❯ src/editor/EditorPage.restore.test.tsx (20 tests | 1 failed) 76043ms
+   ❯ restoring a set-aside copy (20)
+     × converts a v1 draft, archives the exact original and requires explicit first-save overwrite 10134ms
+ ❯ src/settings/SettingsPage.test.tsx (38 tests | 1 failed) 204364ms
+   ❯ SettingsPage (35)
+     × edits and deletes LiteLLM rows and toggles through PATCH 20334ms
+ ❯ src/editor/routing-review.test.ts (23 tests | 1 failed) 257245ms
+   ❯ routing review regressions (23)
+     × seeded sparse graphs preserve geometry and keep detours below twelve bends 96194ms
+ ❯ src/editor/DecisionAuthoring.test.tsx (23 tests | 1 failed) 244922ms
+   × guides Expression to Classifier setup with field instructions and diagnostic details 20483ms
+ ❯ src/editor/EditorPage.test.tsx (37 tests | 2 failed) 321328ms
+   ❯ EditorPage (37)
+     × opens the node editor’s Advanced group to focus an issue’s field inside it 22450ms
+     × flags a collapsed Advanced group or operation holding an expression that does not compile 20377ms
+ ❯ src/editor/NodeEditorDialog.test.tsx (32 tests | 4 failed) 390196ms
+   ❯ NodeEditorDialog evaluator-specific decisions (14)
+     × authors and saves a new llm decision from the default editor fields 20593ms
+     × authors and saves a new classifier decision from the default editor fields 20412ms
+     × selects each kind with only its applicable fields and keeps source issue focus 21164ms
+   ❯ NodeEditorDialog disclosures across undo and redo (11)
+     × redoing removal from an injected message focuses the surviving operation header (open: true) 20415ms
+ ❯ src/runs/inspector/ThreadViewer.test.tsx (9 tests | 2 failed) 65473ms
+   ❯ ThreadViewer with a large history (6)
+     × asks again for an event whose reconstruction the viewer no longer remembers 20306ms
+     × reconstructs a patch diff whose other half was let go in one activation 20026ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > guides Expression to Classifier setup with field instructions and 
+diagnostic details
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:55:1
+     53|   user.click(within(dialog).getByRole('button', { name: 'Confirm chang…
+     54|
+     55| it('guides Expression to Classifier setup with field instructions and …
+       | ^
+     56|   const user = userEvent.setup();
+     57|   const { dialog } = await setup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > converts a v1 draft, archives the exact 
+original and requires explicit first-save overwrite
+TestingLibraryElementError: Unable to find role="heading" and name "legacy device copy"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_8_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_8_"
+        >
+          <a
+            aria-current="page"
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse 
+px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold 
+tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] 
+[stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_8_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border 
+border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch 
+max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse 
+max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_8_"
+        >
+          <a
+            aria-current="page"
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted 
+no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse 
+focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 
+max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] 
+after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+ ❯ waitForWrapper 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/editor/EditorPage.restore.test.tsx:129:25
+    127|     // Observe device/server loading before querying the restored edit…
+    128|     await waitForElementToBeRemoved(screen.getByText('Loading loop…'));
+    129|     expect(await screen.findByRole('heading', { name: 'legacy device c…
+       |                         ^
+    130|     await waitFor(async () => expect(await drafts.loadArchivedDrafts(l…
+    131|     expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > opens the node editor’s Advanced group to focus an issue’s field 
+inside it
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:304:3
+    302|   });
+    303|
+    304|   it('opens the node editor’s Advanced group to focus an issue’s field…
+       |   ^
+    305|     const user = userEvent.setup();
+    306|     const api = new FakeApi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > flags a collapsed Advanced group or operation holding an 
+expression that does not compile
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:342:3
+    340|   });
+    341|
+    342|   it('flags a collapsed Advanced group or operation holding an express…
+       |   ^
+    343|     const api = new FakeApi();
+    344|     const definition = kitchenSinkLoop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new 
+llm decision from the default editor fields
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new 
+classifier decision from the default editor fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:189:56
+    187|   });
+    188|
+    189|   it.each(['expression', 'llm', 'classifier'] as const)(
+       |                                                        ^
+    190|     'authors and saves a new %s decision from the default editor field…
+    191|     async (kind) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > selects each kind with 
+only its applicable fields and keeps source issue focus
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:362:3
+    360|     );
+    361|   });
+    362|   it('selects each kind with only its applicable fields and keeps sour…
+       |   ^
+    363|     const user = userEvent.setup();
+    364|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > redoing removal from 
+an injected message focuses the surviving operation header (open: true)
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:828:25
+    826|   });
+    827|
+    828|   it.each([false, true])(
+       |                         ^
+    829|     'redoing removal from an injected message focuses the surviving op…
+    830|     async (neighbourOpen) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  src/editor/routing-review.test.ts > routing review regressions > seeded sparse graphs preserve geometry and 
+keep detours below twelve bends
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/routing-review.test.ts:662:3
+    660|   });
+    661|
+    662|   it('seeded sparse graphs preserve geometry and keep detours below tw…
+       |   ^
+    663|     let seed = 0x182026;
+    664|     const random = () => (seed = (Math.imul(seed, 1664525) + 101390422…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  src/forms/json-sections.test.tsx > section JSON mode > retains held text through Advanced, tabs, history and 
+dialog-session remounts; Apply is one step
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/forms/json-sections.test.tsx:657:3
+    655|   );
+    656|
+    657|   it('retains held text through Advanced, tabs, history and dialog-ses…
+       |   ^
+    658|     const definition = newLoopDefinition('json');
+    659|     definition.nodes.push({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  src/settings/SettingsPage.test.tsx > SettingsPage > edits and deletes LiteLLM rows and toggles through PATCH
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/settings/SettingsPage.test.tsx:244:3
+    242|     expect(screen.getByRole('alertdialog')).toHaveTextContent('next se…
+    243|   });
+    244|   it('edits and deletes LiteLLM rows and toggles through PATCH', async…
+       |   ^
+    245|     const user = userEvent.setup();
+    246|     const api = seeded('litellm');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  src/runs/inspector/ThreadViewer.test.tsx > ThreadViewer with a large history > asks again for an event whose 
+reconstruction the viewer no longer remembers
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/runs/inspector/ThreadViewer.test.tsx:165:3
+    163|   });
+    164|
+    165|   it('asks again for an event whose reconstruction the viewer no longe…
+       |   ^
+    166|     const user = userEvent.setup();
+    167|     const { thread, events } = threadOf(3, 'a');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  src/runs/inspector/ThreadViewer.test.tsx > ThreadViewer with a large history > reconstructs a patch diff whose 
+other half was let go in one activation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/runs/inspector/ThreadViewer.test.tsx:191:3
+    189|   });
+    190|
+    191|   it('reconstructs a patch diff whose other half was let go in one act…
+       |   ^
+    192|     const user = userEvent.setup();
+    193|     const { thread, events } = threadOf(3, 'a');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/web/src/editor/TriggerEditor.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ process.processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  8 failed | 122 passed (130)
+      Tests  13 failed | 1619 passed (1632)
+     Errors  1 error
+   Start at  22:40:29
+   Duration  1000.50s (tests 38%, environment 31%, setup 12%, import 10%, transform 8%, worker 1%)
+
+Environment  jsdom was created 130 times · 3117.45s total, 31% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\web
+

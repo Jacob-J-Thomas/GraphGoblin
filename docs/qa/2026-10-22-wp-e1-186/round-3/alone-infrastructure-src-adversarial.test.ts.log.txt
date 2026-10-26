@@ -1,0 +1,56 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e1-186/packages/infrastructure
+
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 3: concurrent SQLite batches have no sequence gaps 332ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: skip catches missed daily slots across spring DST 79ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-once catches missed daily slots across spring DST 139ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-each catches missed daily slots across spring DST 103ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-010: run-once chooses the latest missed slot even beyond the run-each cap 225ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: two scheduler instances have no shared lease (documented single-process limit) 72ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a duration timer lost before a crash is re-armed from the waiting run 186ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a input timeout timer lost before a crash is re-armed from the waiting run 107ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a fire interrupted mid-delivery is delivered again after a restart 219ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 18: concurrent set of one secret preserves one authenticated ciphertext 136ms
+ × src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30428ms
+   → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > a throwing timer listener leaves the timer for another delivery 223ms
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > a failed manager wake does not consume the timer 128ms
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > a duration with a timeout re-arms both lost deadlines (SQLite) 295ms
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > an obsolete timeout in the same poll batch does not wake a later input wait 184ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > a resumed failed run is finalized again after a crash on its next terminal status 420ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the next success 315ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the durable resume 300ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (same failure) 256ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 268ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  07:38:29
+   Duration  60.52s (tests 58%, transform 28%, import 15%)
+
+  Transform  transforming modules took 16.41s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\packages\infrastructure
+

@@ -1,0 +1,34 @@
+# Independent QA round 5: WP-E1 bolt #186 round 2 (bounded browser history), head `d6760dcdcb719a3d98c0b3e06a0a6d15d80cbdc9`
+
+Read `%USERPROFILE%\.claude\codex-runs\GraphGoblin\briefs\i01-i07\COMMON.md` and `QA-COMMON.md` in the same folder; both bind you. You are not the implementer or the reviewer. Work alone in your thread and do not start sub-agents; change no production code; never commit.
+
+## What you test
+
+- Worktree `.claude/worktrees/codex-qa-wp-e1-186-r2-5` in `%USERPROFILE%\source\repos\GraphGoblin`, checked out at the head above (PR #405, branch `codex-wp-e1-186-r2`), dependencies installed. Confirm `git rev-parse HEAD`; if it differs, stop and report. If `node_modules` is missing or empty, stop and report; never link another checkout's.
+- Earlier rounds are in `docs/qa/2026-10-24-wp-e1-186-r2-qa/` (rounds 1 to 3 committed; round 4, if present in your worktree, tested the previous head `4096293e`). Your record goes in `round-5/`.
+- The change against `main` (merged into the head): `git diff 9a3eded1 HEAD -- . ':!docs/qa'`.
+
+## What changed since `4096293e`
+
+CI's Browser job at `4096293e` failed four cases, which `d6760dcd` addresses:
+
+1. **I7-QA-03** (pulses): this change's Timeline rewrite had dropped the pulsing live dot that #7 added to the Timeline heading. It is restored while the stream is live (`apps/web/src/runs/inspector/Timeline.tsx`).
+2. **Coarse-pointer 44 px check** (dark and light): the Timeline's **Event sequence** field was a hand-styled input below 44 px on a coarse pointer; it now uses the shared `Input`.
+3. **thread-history**: the spec's thread read treated the bounded value's "Preparing the preview…" note as an error inside a poll; it now treats it as "not yet" and keeps the value that matched.
+
+CI run 40191543163 at `d6760dcd` passed every job, including the complete Edge suite with zero retries.
+
+## Checks
+
+1. The three cases above in Edge locally, plus the complete Edge suite once (`pnpm.cmd build`; from `apps/web`, `pnpm.cmd exec playwright test --retries=0 --workers=1`, `LIVE=0`). Report every failure with its cause; re-run a timing failure in a spec this change does not touch once, alone, and report both results.
+2. The live dot: present and pulsing while live, absent once complete, hidden from assistive technology, and stopped under reduced motion; the Event sequence field at 1440 and 390 px in both themes and on a coarse pointer.
+3. Whether the spec changes since round 3 (`qa.spec.ts`, `inspector-large-values.spec.ts`, `thread-history.spec.ts`) loosen any assertion without a product reason.
+4. Required gates per QA-COMMON for web (and api, api-client, infrastructure only if round 4 is absent from your worktree), D-015 limits named as such.
+
+## Environment
+
+Node 22 first on PATH; disposable instances on ports 6150 to 6159 with temp data directories under the prefix `gg-qa-e1-186r2-5-`; fake harnesses only; never ports 4747/4748 or the owner's store. If a pnpm command fails with `ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK`, call the tool binaries in `node_modules\.bin` directly and say so.
+
+## Record and report
+
+Write `docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/README.md` with every check (steps, expected, actual, pass or fail, evidence), every defect with severity and reproduction, and what you could not test. **Link every artefact you keep from the README** (scripts as `.mjs.txt`, logs as `.log.txt`, JSON results, screenshots; captures above 1,000,000 bytes and any Playwright output folder go in `NOT-KEPT.md` with size and SHA-256); cite nothing you did not keep. Write local user paths as `%USERPROFILE%`, and write files as UTF-8 without a byte-order mark. End with the QA-COMMON report: verdict, defects, coverage of criteria, report path and evidence folder, observations outside scope.

@@ -1,0 +1,64 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:175
++ ...  $env:TEMP; pnpm.cmd typecheck *> (Join-Path $qaRoot 'typecheck-raw.t ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 306883d470086478
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 74762da37fc70efb
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 9a5ba0ca6e420168
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs bbb13c936b61d206
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache hit, replaying logs 862789c752576ac2
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: cache hit, replaying logs d001ed4afce2e511
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing 6c334c7cf271b2f7
+@graphgoblin/infrastructure:build: cache miss, executing b3d2d82427287884
+@graphgoblin/adapter-jev:typecheck: cache hit, replaying logs a86610133e45e289
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: cache hit, replaying logs 0e1a960d735fef70
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: cache hit, replaying logs 35619d94e9975d96
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 26ab3662ae1763d4
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 20a7bc8d7a2f90f0
+@graphgoblin/api:typecheck: cache miss, executing 454093107499da43
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:build: cache miss, executing a7a5b1c22b7d2285
+@graphgoblin/api-client:typecheck: cache miss, executing fe45dc7d0930671f
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: cache miss, executing 7c2e14ca735238d1
+@graphgoblin/web:typecheck: cache miss, executing ad6c31e26bed11a3
+@graphgoblin/mcp:typecheck: cache miss, executing 6138bd0faff3a427
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 5e3b906ba5c23a68
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+
+ Tasks:    20 successful, 20 total
+Cached:    10 cached, 20 total
+  Time:    3m12.681s 
+
+

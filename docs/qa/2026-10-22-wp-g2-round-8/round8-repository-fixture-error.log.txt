@@ -1,0 +1,62 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/sqlite/history-summaries.test.ts (15 tests | 1 failed | 14 skipped) 226ms
+   ❯ SQLite history queries (15)
+     ↓ applies the history index to an existing current-format store and reruns idempotently
+     ↓ summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls
+     ↓ isolates damaged latest status without substituting an older run
+     ↓ isolates damaged latest pinned without substituting an older run
+     ↓ isolates damaged latest pinned without substituting an older run
+     ↓ isolates damaged latest pinned without substituting an older run
+     ↓ isolates damaged latest waiting without substituting an older run
+     ↓ isolates damaged latest failure without substituting an older run
+     ↓ isolates damaged latest result without substituting an older run
+     ↓ isolates damaged latest iteration without substituting an older run
+     ↓ isolates damaged latest initial_thread without substituting an older run
+     ↓ isolates damaged latest thread_snapshot without substituting an older run
+     ↓ isolates damaged latest thread_snapshot without substituting an older run
+     ↓ pages inbound timestamp ties, applies every filter before the boundary, and detects exhaustion
+     × refuses unreadable latest events despite a durable finish and a valid stale running record 222ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > refuses unreadable latest events despite a 
+durable finish and a valid stale running record
+RunFailureError: Generated run event could not be recorded: attempt: Invalid input: expected number, received undefined
+ ❯ validateGeneratedEvent ../engine/src/event-validation.ts:18:9
+     16|     .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+     17|     .join('; ');
+     18|   throw new RunFailureError(
+       |         ^
+     19|     'EVENT_INVALID',
+     20|     `Generated run event could not be recorded: ${reason}`,
+ ❯ src/sqlite/events.ts:87:23
+ ❯ LibSQLSession.transaction 
+../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:122:19
+ ❯ SqliteEventStore.append src/sqlite/events.ts:70:20
+ ❯ src/sqlite/history-summaries.test.ts:218:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  20:33:56
+   Duration  6.45s (import 60%, transform 36%, tests 4%)
+
+  Transform  transforming modules took 2.20s · 36% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to <worktree>/round8-repository-before-results.log
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

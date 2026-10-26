@@ -1,0 +1,90 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+import {definition} from '../../tooling/perf/common.mjs';
+import {CURRENT_DEFINITION_FORMAT} from '../../packages/contracts/dist/index.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',checks=[],errors=[];
+const ctl=async(path,b={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection'),headers={authorization:'Bearer '+c.keys.admin,'content-type':'application/json'};
+const api=async(path,b)=>{const r=await fetch(c.url+path,{headers,...(b===undefined?{}:{method:'POST',body:JSON.stringify(b)})});if(!r.ok)throw Error(await r.text());return r.json();};
+const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const until=async(fn,msg)=>{for(let i=0;i<250;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error(msg);};
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,3000),stack:e.stack?.slice(-1500)});}await writeFile(out+'/merged-inspector-results.json',JSON.stringify({checks,errors},null,2));}
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+async function open(id){const p=await context.newPage();p.on('pageerror',e=>errors.push(String(e)));await p.goto(c.url+'/app/runs/'+id);await p.getByRole('list',{name:'Timeline',exact:true}).waitFor();await until(async()=>!!(await cache(p,id)),'cache not ready');return p;}
+const cache=(p,id)=>p.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')??'{}').state?.runs?.[id],id);
+async function seek(p,n){await p.getByRole('spinbutton',{name:'Event sequence',exact:true}).fill(String(n));await p.getByRole('button',{name:'Go to event',exact:true}).click();await p.getByRole('heading',{name:'Thread at event '+n,exact:true}).waitFor();}
+async function exactDownload(p,event,label){
+ await p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true}).click();
+ const exact=p.getByTestId('recorded-event-json');await exact.waitFor();
+ const more=p.getByRole('button',{name:'Show all of Exact recorded event',exact:true});if(await more.isVisible())await more.click();
+ assert.deepEqual(JSON.parse(await exact.innerText()),event);
+ const waiting=p.waitForEvent('download');await p.getByRole('button',{name:'Download Exact recorded event as JSON',exact:true}).click();const download=await waiting;
+ const path='.tmp/qa186r2/'+label+'-download.json';await download.saveAs(path);const raw=await readFile(path,'utf8');assert.deepEqual(JSON.parse(raw),event);
+ const result={seq:event.seq,bytes:Buffer.byteLength(raw),sha256:createHash('sha256').update(raw).digest('hex'),filename:download.suggestedFilename()};
+ if(Buffer.byteLength(raw)<=1000000)await writeFile(out+'/'+label+'-download.json',raw);else await writeFile(out+'/'+label+'-omitted.json',result);
+ return result;
+}
+const def=definition(CURRENT_DEFINITION_FORMAT,{passes:4,inference:true});def.name='Pinned QA labels';def.nodes.find(n=>n.id==='work').label='Pinned Worker';def.nodes.find(n=>n.id==='work').config.output.toMessages='final';def.nodes.find(n=>n.id==='gate').label='Pinned Gate';def.nodes.find(n=>n.id==='gate').config.routes[0].label='Pinned Again';
+const run=await ctl('/start',{definition:def,passes:4,delay:0,items:2});await ctl('/idle');let all=await ctl('/oracle',{runId:run.id,full:true});
+const finished=all.events.find(e=>e.type==='node.finished'&&e.nodeId==='work'),decision=all.events.find(e=>e.type==='decision.made');
+const page=await open(run.id);
+await check('pinned labels in live Timeline, patch, messages and progress; no obsolete initial-thread fallback',async()=>{
+ await page.getByRole('button',{name:new RegExp('^#'+finished.seq+' node.finished Pinned Worker \\(work\\)')}).waitFor();
+ await seek(page,finished.seq);await page.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();
+ assert.ok((await page.getByRole('list',{name:'Messages',exact:true}).innerText()).includes('Pinned Worker (work)'));
+ await page.getByRole('button',{name:/^Node progress/}).click();await page.getByRole('heading',{name:'Pinned Worker (work)',exact:true}).waitFor();
+ const text=await page.locator('body').innerText();assert.ok(!text.includes('Initial thread not recorded'));assert.ok(text.includes('Pinned Gate (gate) chose Pinned Again (again)'));
+ const download=await exactDownload(page,finished,'inside-window');await page.screenshot({path:out+'/labels-live.png'});return {runId:run.id,event:finished.seq,download,gate:all.observation.gate};
+});
+await ctl('/append',{runId:run.id,count:700});all=await ctl('/oracle',{runId:run.id,full:true});await page.reload();await until(async()=>(await cache(page,run.id))?.lastSeq===all.last,'tail not ready');
+await check('browsed older pinned rows, server gate/exit/finish after eviction, exact old event download',async()=>{
+ const before=await cache(page,run.id);assert.ok(before.events[0].seq>finished.seq);
+ await page.getByText('Done (done): Exited: success',{exact:true}).waitFor();
+ await page.getByText(/Last gate decision: Pinned Gate \(gate\) chose Pinned Again \(again\)/).waitFor();
+ await seek(page,finished.seq);await page.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();
+ const row=page.getByRole('list',{name:'Timeline',exact:true}).getByRole('button').last();assert.ok((await row.innerText()).includes('Pinned Worker (work)'));
+ const download=await exactDownload(page,finished,'outside-window');const beforeThread=await api('/runs/'+run.id+'/thread?at='+(finished.seq-1));
+ const oracle=await ctl('/oracle',{runId:run.id,at:[finished.seq-1]});assert.deepEqual(beforeThread,oracle.threads[finished.seq-1]);
+ await page.getByRole('button',{name:'Follow live',exact:true}).click();await until(async()=>(await cache(page,run.id)).mode==='live','not live');const log=await cache(page,run.id);assert.deepEqual(log.events,all.events.slice(-log.events.length));assert.ok(log.events.length<=512);assert.equal(log.events.at(-1).seq,all.last);
+ return {runId:run.id,total:all.total,priorWindowFirst:before.events[0].seq,download,followLive:{count:log.events.length,first:log.events[0].seq,last:log.events.at(-1).seq,sha256:hash(log.events)},beforeThreadHash:hash(beforeThread)};
+});
+// Accepted history event with an intrinsically oversized exact value; it is never a cached row.
+const huge=(await ctl('/append',{runId:run.id,drafts:[{type:'node.finished',nodeId:'work',patch:[{op:'add',path:'/vars/oversized',value:'Ω'.repeat(600000)}],durationMs:1}]})).last;
+const hugeAll=await ctl('/oracle',{runId:run.id,full:true});const hugeEvent=hugeAll.events.find(e=>e.seq===huge);
+await writeFile('.tmp/qa186r2/oversized-full.json',JSON.stringify(hugeAll));await page.reload();await until(async()=>(await cache(page,run.id))?.lastSeq===huge,'huge not loaded');
+await check('oversized row keeps recorded ID description and exact disclosure/download, inside retained window',async()=>{
+ const log=await cache(page,run.id);assert.ok(!log.events.some(e=>e.seq===huge));const marker=log.uncached.find(e=>e.seq===huge);assert.ok(marker);assert.ok(!marker.description.includes('Pinned Worker'));assert.ok(marker.description.includes('work'));
+ await seek(page,huge);const download=await exactDownload(page,hugeEvent,'oversized-inside');const after=await cache(page,run.id);assert.ok(!after.events.some(e=>e.seq===huge));assert.ok(after.bytes<=1048576);await page.screenshot({path:out+'/oversized.png'});return {runId:run.id,marker,retainedBytes:after.bytes,download};
+});
+await ctl('/append',{runId:run.id,count:700});await page.reload();await until(async()=>(await cache(page,run.id))?.lastSeq===huge+700,'after oversized not loaded');
+await check('oversized event outside retained window remains exactly downloadable',async()=>{const before=await cache(page,run.id);assert.ok(before.events[0].seq>huge);await seek(page,huge);return {priorWindowFirst:before.events[0].seq,download:await exactDownload(page,hugeEvent,'oversized-outside')};});
+// Recorded classifier probabilities exercise #255 formatting through the running product.
+const prob={...decision,observation:{kind:'classifier',answer:{type:'choice',optionId:'again',confidence:0.123456,probabilities:{again:0.123456,stop:0.876544}}},provenance:{kind:'classifier',provider:'jev',classifierId:'qa',model:'fake',effort:null}};
+delete prob.runId;delete prob.seq;delete prob.ts;
+const probabilityRun=await ctl('/seed',{source:run.id,drafts:[prob]});
+const probabilities=await open(probabilityRun.id);
+await check('readable probabilities and original numeric titles',async()=>{await seek(probabilities,1);const text=await probabilities.locator('body').innerText();assert.ok(text.includes('12.35%'));assert.ok(text.includes('87.65%'));assert.ok(text.includes('Pinned Again (again)'));assert.ok(await probabilities.locator('[title="0.123456"]').count()>0);return {runId:probabilityRun.id,display:['12.35%','87.65%'],exact:0.123456};});
+// Genuine API cancellation on the fake harness, then browse away from its evidence.
+const cancel=await ctl('/start',{passes:100,delay:200,items:1});await api('/runs/'+cancel.id+'/cancel',{});await ctl('/idle');const cancelled=await ctl('/oracle',{runId:cancel.id,full:true});
+const cp=await open(cancel.id);
+await check('cancellation actor recorded inside retained window',async()=>{await cp.getByRole('region',{name:'Execution context',exact:true}).getByText(/api-key/).waitFor();return {runId:cancel.id,events:cancelled.events.filter(e=>e.type.startsWith('run.cancel'))};});
+await ctl('/append',{runId:cancel.id,count:700});await cp.reload();await until(async()=>(await cache(cp,cancel.id))?.lastSeq===cancelled.last+700,'cancel suffix not ready');
+await check('cancellation actor remains truthful with cancellation outside retained window',async()=>{
+ const text=await cp.getByRole('region',{name:'Execution context',exact:true}).innerText();await writeFile(out+'/cancellation-outside.aria.txt',await cp.locator('body').ariaSnapshot());await cp.getByRole('region',{name:'Execution context',exact:true}).scrollIntoViewIfNeeded();await cp.screenshot({path:out+'/cancellation-outside.png'});
+ const record=cancelled.events.find(e=>e.type==='run.cancel_requested');assert.ok(record?.actor);assert.ok(text.includes(record.actor.id),text);return {runId:cancel.id,text,actor:record.actor};
+});
+const unknown=await ctl('/seed',{source:cancel.id,status:'cancelled',drafts:[{type:'run.cancelled'}]});const up=await open(unknown.id);
+await check('unrecorded cancellation actor is labelled honestly',async()=>{const text=await up.getByRole('region',{name:'Execution context',exact:true}).innerText();assert.ok(text.includes('actor not recorded'),text);return {runId:unknown.id,text};});
+const unavailable=await context.newPage();await unavailable.route('**/loops/*/versions/*',r=>r.fulfill({status:404,contentType:'application/problem+json',body:JSON.stringify({status:404,detail:'QA pinned definition unavailable'})}));await unavailable.goto(c.url+'/app/runs/'+unknown.id);
+await check('pinned labels unavailable is explicit',async()=>{await unavailable.getByText('Pinned definition unavailable. Authored node and route labels are not recorded in the available history.',{exact:true}).waitFor();return {runId:unknown.id,controlled:'pinned version HTTP 404',text:await unavailable.getByRole('region',{name:'Execution context',exact:true}).innerText()};});
+for(const width of [1440,390])for(const theme of ['dark','light'])await check(`merged inspector layout ${width} ${theme}`,async()=>{
+ await page.setViewportSize({width,height:width===390?844:900});await page.evaluate(t=>{localStorage.setItem('graphgoblin-theme',t);document.documentElement.dataset.theme=t;},theme);await seek(page,finished.seq);
+ await page.getByRole('heading',{name:'Patch from Pinned Worker (work)',exact:true}).waitFor();await page.getByRole('list',{name:'Timeline',exact:true}).scrollIntoViewIfNeeded();
+ const geometry=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,theme:document.documentElement.dataset.theme}));assert.ok(geometry.scrollWidth<=width);const rows=await page.getByRole('list',{name:'Timeline',exact:true}).getByRole('listitem').count();assert.ok(rows<=80);
+ await page.screenshot({path:out+'/merged-'+width+'-'+theme+'.png',fullPage:true});await writeFile(out+'/merged-'+width+'-'+theme+'.aria.txt',await page.locator('body').ariaSnapshot());return {geometry,rows};
+});
+await writeFile(out+'/merged-fixtures.json',JSON.stringify({runId:run.id,finished,cancelledEvents:cancelled.events.filter(e=>e.type.startsWith('run.cancel')),cancelRunId:cancel.id,unknownId:unknown.id,oversizedSeq:huge,probabilityRunId:probabilityRun.id},null,2));
+await context.close();await browser.close();console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.pass).length,failed:checks.filter(x=>!x.pass),errors}));

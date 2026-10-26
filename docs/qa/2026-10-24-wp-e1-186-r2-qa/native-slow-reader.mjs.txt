@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {subscribeRunEvents,createGraphGoblinClient} from '../../packages/api-client/dist/index.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa';
+const ctl=async(path,body={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection');await ctl('/idle');
+const run=await ctl('/start',{passes:1,delay:0,items:1});await ctl('/idle');
+await ctl('/append',{runId:run.id,count:64,payload:500000});
+const results={runId:run.id,holdMs:6100,payloadEvents:64,payloadCharacters:500000};
+let body='';
+try{
+ await new Promise((resolve,reject)=>{
+ const req=http.get(c.url+'/runs/'+run.id+'/events?after=0',{headers:{authorization:'Bearer '+c.keys.reader,accept:'text/event-stream'}},res=>{
+  results.httpStatus=res.statusCode;res.pause();setTimeout(()=>res.resume(),6100);
+  res.setEncoding('utf8');res.on('data',x=>body+=x);res.on('end',resolve);res.on('error',e=>{results.transportError=String(e);resolve();});
+ });req.on('error',reject);req.setTimeout(20000,()=>{req.destroy(Error('QA reader deadline'));});
+ });
+ await writeFile('.tmp/qa186/paused-stream.txt',body);
+ const controls=[...body.matchAll(/event: stream.error\ndata: (.+)/g)].map(x=>JSON.parse(x[1]));
+ const delivered=[...body.matchAll(/data: (.+)\nid: (\d+)\n\n/g)].flatMap(x=>{try{return [{seq:Number(x[2]),event:JSON.parse(x[1])}];}catch{return [];}});
+ const last=delivered.at(-1)?.seq??0;
+ Object.assign(results,{bytes:Buffer.byteLength(body),sha256:createHash('sha256').update(body).digest('hex'),controls,completeEvents:delivered.length,lastComplete:last});
+ assert.equal(controls[0]?.code,'SSE_SLOW_CONSUMER');
+ const client=createGraphGoblinClient({baseUrl:c.url,fetch:req=>fetch(req,{headers:{...Object.fromEntries(req.headers),authorization:'Bearer '+c.keys.reader}})});
+ const suffix=[],errors=[];
+ const sub=subscribeRunEvents({client,runId:run.id,after:last,onEvent:e=>suffix.push(e),onError:(e,attempt)=>errors.push({code:e.code,message:e.message,attempt})});
+ await sub.done;
+ const all=await ctl('/oracle',{runId:run.id,full:true});await writeFile('.tmp/qa186/paused-full.json',JSON.stringify(all));
+ assert.deepEqual([...delivered.map(x=>x.event),...suffix],all.events);
+ Object.assign(results,{pass:true,reconnectedAfter:last,suffixEvents:suffix.length,total:all.total,gaps:0,duplicates:0,errors});
+}catch(e){results.pass=false;results.error=String(e).slice(0,3000);}
+await writeFile(out+'/native-slow-reader.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results));

@@ -1,0 +1,28 @@
+// Node 22, repository root. Monitors the one-shot gate/full-suite pipeline only.
+import { readFileSync, existsSync } from 'node:fs';
+const dir = 'docs/qa/2026-10-24-wp-a2-241/';
+const read = (label) => JSON.parse(readFileSync(dir + label + '.json', 'utf8'));
+const gates = ['coverage','typecheck','lint','layers','tokens','deps','docs','build'];
+const tick = () => {
+  const completedGates = gates.filter((g) => existsSync(dir + g + '-qualified.json'));
+  const failedGate = completedGates.find((g) => read(g + '-qualified').exitCode !== 0);
+  let active = 0;
+  for (let i=1; i<=3; i++) if (existsSync(dir + 'qualified-' + i + '.log.txt')) active=i;
+  if (!active) {
+    const gate = gates.find((g) => !completedGates.includes(g));
+    const file = dir + gate + '-qualified.log.txt';
+    const log = existsSync(file) ? readFileSync(file,'utf8') : '';
+    console.log(JSON.stringify({ utc:new Date().toISOString(),phase:'gates',completedGates,gate,last:log.trim().split(/\r?\n/).at(-1),bytes:Buffer.byteLength(log),failedGate }));
+  } else {
+    const label='qualified-'+active;
+    const log=readFileSync(dir+label+'.log.txt','utf8');
+    const rows=log.split(/\r?\n/).filter((r)=>/^\s+(?:ok|x|-)\s+\d+\s+\[chromium\]/.test(r));
+    const result={utc:new Date().toISOString(),label,passed:rows.filter((r)=>/^\s+ok\s/.test(r)).length,failed:rows.filter((r)=>/^\s+x\s/.test(r)).length,skipped:rows.filter((r)=>/^\s+-\s/.test(r)).length,last:rows.at(-1)};
+    if (existsSync(dir+label+'.json')) result.completed=read(label);
+    console.log(JSON.stringify(result));
+  }
+  const failedSuite=[1,2,3].find((i)=>existsSync(dir+'qualified-'+i+'.json')&&read('qualified-'+i).exitCode!==0);
+  if(failedGate||failedSuite||existsSync(dir+'qualified-3.json'))process.exit(failedGate||failedSuite?1:0);
+};
+tick();
+setInterval(tick,40_000);

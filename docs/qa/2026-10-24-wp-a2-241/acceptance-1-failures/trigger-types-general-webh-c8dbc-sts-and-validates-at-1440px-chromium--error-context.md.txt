@@ -1,0 +1,152 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: trigger-types.spec.ts >> general webhook configuration persists and validates at 1440px
+- Location: e2e\trigger-types.spec.ts:122:3
+
+# Error details
+
+```
+Error: expect(locator).toHaveValue(expected) failed
+
+Locator:  getByRole('dialog').getByLabel('Fallback event type')
+Expected: "webhook"
+Received: ""
+Timeout:  10000ms
+
+Call log:
+  - Expect "toHaveValue" getByRole('dialog').getByLabel('Fallback event type') with timeout 10000ms
+  - waiting for getByRole('dialog').getByLabel('Fallback event type')
+    23 × locator resolved to <input value="" id="_r_13_" placeholder="webhook" aria-describedby="_r_13_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabl…/>
+       - unexpected value ""
+
+```
+
+```yaml
+- textbox "Fallback event type":
+  - /placeholder: webhook
+```
+
+# Test source
+
+```ts
+  74  |     await setup.getByLabel('Preset', { exact: true }).selectOption('issues-poll');
+  75  |     await setup.getByLabel('Repository owner', { exact: true }).fill('octo-team');
+  76  |     await setup.getByLabel('Repository', { exact: true }).fill('fixture-repo');
+  77  |     await setup.getByLabel('Issue label').fill('ready');
+  78  |     const previewButton = setup.getByRole('button', { name: 'Preview GitHub preset' });
+  79  |     await previewButton.focus();
+  80  |     await page.keyboard.press('Enter');
+  81  |     const preview = dialog.getByRole('region', { name: 'Preset preview' });
+  82  |     await expect(preview).toBeFocused();
+  83  |     await expect(preview).toContainText('synthetic-hook');
+  84  |     await expect(preview).toContainText('intervalSeconds');
+  85  |     await expect(type).toHaveValue('webhook');
+  86  |     await page.screenshot({ path: testInfo.outputPath(`preset-preview-${theme}.png`) });
+  87  |     // JSON blocks are explicit tab stops, including when their content does not overflow.
+  88  |     await page.keyboard.press('Tab');
+  89  |     await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+  90  |     await page.keyboard.press('Tab');
+  91  |     await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
+  92  |     await page.keyboard.press('Tab');
+  93  |     await expect(preview.getByRole('button', { name: 'Cancel preview' })).toBeFocused();
+  94  |     await page.keyboard.press('Enter');
+  95  |     await expect(previewButton).toBeFocused();
+  96  |     await expect(type).toHaveValue('webhook');
+  97  |     await page.keyboard.press('Enter');
+  98  |     await expect(preview).toBeFocused();
+  99  |     await page.keyboard.press('Tab');
+  100 |     await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+  101 |     await page.keyboard.press('Tab');
+  102 |     await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
+  103 |     await page.keyboard.press('Tab');
+  104 |     await page.keyboard.press('Tab');
+  105 |     await expect(preview.getByRole('button', { name: 'Apply GitHub preset' })).toBeFocused();
+  106 |     await page.keyboard.press('Enter');
+  107 |     await expect(type).toHaveValue('poll');
+  108 |     await expect(type).toBeFocused();
+  109 |     await expect(dialog.getByLabel('Interval seconds')).toHaveValue('60');
+  110 |     await page.keyboard.press('Control+z');
+  111 |     await expect(type).toHaveValue('webhook');
+  112 |     await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveValue('synthetic-hook');
+  113 |     await expect(signing.locator('option:checked')).toHaveText('Body HMAC');
+  114 |     await page.keyboard.press('Control+y');
+  115 |     await expect(type).toHaveValue('poll');
+  116 |     await expect(dialog.getByLabel('Max runs per poll')).toHaveValue('5');
+  117 |     await page.screenshot({ path: testInfo.outputPath(`poll-fields-${theme}.png`) });
+  118 |   });
+  119 | }
+  120 | 
+  121 | for (const width of [360, 1440]) {
+  122 |   test(`general webhook configuration persists and validates at ${width}px`, async ({
+  123 |     page,
+  124 |     request,
+  125 |   }) => {
+  126 |     await page.setViewportSize({ width, height: 900 });
+  127 |     const created = await request.post('/loops', {
+  128 |       data: { definition: approvalLoop(`general webhook ${width}`) },
+  129 |     });
+  130 |     expect(created.status()).toBe(201);
+  131 |     const id = ((await created.json()) as { loop: { id: string } }).loop.id;
+  132 |     await page.goto(`/app/loops/${id}/edit`);
+  133 |     const dialog = await openNode(page, 'start');
+  134 |     await dialog.getByLabel('Trigger type').selectOption('webhook');
+  135 |     const auth = dialog.getByLabel('Authentication recipe');
+  136 |     await expect(auth.locator('option:checked')).toHaveText('None');
+  137 |     await auth.focus();
+  138 |     await page.keyboard.press('ArrowDown');
+  139 |     await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
+  140 |     await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
+  141 |     await expect(dialog.getByLabel('Signing header')).toHaveAttribute(
+  142 |       'placeholder',
+  143 |       'x-hub-signature-256',
+  144 |     );
+  145 |     await auth.focus();
+  146 |     await auth.selectOption({ label: 'Timestamp and body HMAC' });
+  147 |     await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveAttribute(
+  148 |       'placeholder',
+  149 |       '300',
+  150 |     );
+  151 |     await page.keyboard.press('Control+z');
+  152 |     await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
+  153 |     await expect(auth).toBeFocused();
+  154 |     await auth.selectOption({ label: 'None' });
+  155 |     await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveCount(0);
+  156 |     const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
+  157 |     await modes.getByText('bytes', { exact: true }).click();
+  158 |     await dialog.getByLabel('Event type source').selectOption('json-pointer');
+  159 |     await dialog.getByLabel('JSON pointer').fill('/event~1type/0');
+  160 |     await expect(
+  161 |       dialog.getByText('JSON pointers require JSON body mode', { exact: true }).first(),
+  162 |     ).toBeVisible();
+  163 |     await modes.getByText('json', { exact: true }).click();
+  164 |     await expect(
+  165 |       dialog.getByText('JSON pointers require JSON body mode', { exact: true }),
+  166 |     ).toHaveCount(0);
+  167 |     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  168 |     await page.reload();
+  169 |     const reopened = await openNode(page, 'start');
+  170 |     await expect(reopened.getByLabel('Authentication recipe').locator('option:checked')).toHaveText(
+  171 |       'None',
+  172 |     );
+  173 |     await expect(reopened.getByLabel('JSON pointer')).toHaveValue('/event~1type/0');
+> 174 |     await expect(reopened.getByLabel('Fallback event type')).toHaveValue('webhook');
+      |                                                              ^ Error: expect(locator).toHaveValue(expected) failed
+  175 |     const exported = await request.get(`/loops/${id}/export?draft=true`);
+  176 |     expect(exported.ok()).toBe(true);
+  177 |     const value = (await exported.json()) as { loop: { nodes: { id: string; config: unknown }[] } };
+  178 |     expect(value.loop.nodes.find((node) => node.id === 'start')?.config).toMatchObject({
+  179 |       type: 'webhook',
+  180 |       authentication: { type: 'none' },
+  181 |       body: { type: 'json' },
+  182 |       eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
+  183 |     });
+  184 |   });
+  185 | }
+  186 | 
+```

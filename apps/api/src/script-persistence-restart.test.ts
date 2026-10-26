@@ -39,8 +39,7 @@ afterEach(async () => {
 
 async function setup() {
   const fixture = await createApiProcessFixture({
-    directoryPrefix: 'gg-wp-d1-outcome-',
-    portRange: [5690, 5699],
+    prefix: 'gg-wp-d1-int-outcome-',
   });
   const servers: Server[] = [];
   fixtures.push({ fixture, servers });

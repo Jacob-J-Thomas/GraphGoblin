@@ -1,0 +1,258 @@
+Execution evidence: http://127.0.0.1:6002; disposable store %USERPROFILE%\AppData\Local\Temp\gg-wp-g1-255-YirpHx
+
+Running 1 test using 1 worker
+
+pnpm.cmd : (node:40716) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:32 char:1
++ pnpm.cmd --filter @graphgoblin/web exec playwright test -c playwright ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:40716) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40716) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\execution-evidence.spec.ts:7:1 › exact recorded execution evidence across inspector, list and API (#255) (13.8s)
+
+
+  1) [chromium] › e2e\execution-evidence.spec.ts:7:1 › exact recorded execution evidence across inspector, list and API (#255) 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('list', { name: 'Patch diff' }).getByRole('listitem').filter({ hasText: '/messages/-' }).filter({ hasText: 'Appended exact value α' })
+    Expected: 1
+    Received: 0
+    Timeout:  1000ms
+
+    Call log:
+      - Expect "soft toHaveCount" getByRole('list', { name: 'Patch diff' }).getByRole('listitem').filter({ hasText: '/messages/-' }).filter({ hasText: 'Appended exact value α' }) with timeout 1000ms
+      - waiting for getByRole('list', { name: 'Patch diff' }).getByRole('listitem').filter({ hasText: '/messages/-' }).filter({ hasText: 'Appended exact value α' })
+        11 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      58 |   await timeline.getByRole('button').filter({ hasText: 'node.finished' }).filter({ hasText: 'work' }).click();
+      59 |   const appends = page.getByRole('list', { name: 'Patch diff' }).getByRole('listitem').filter({ hasText: '/messages/-' });
+    > 60 |   await assertion(appends.filter({ hasText: 'Appended exact value α' })).toHaveCount(1);
+         |                                                                          ^
+      61 |   assertion(rows['append']).toContain('Original append loop');
+      62 |   assertion(rows['append']).not.toContain('Renamed append loop');
+      63 |   await assertion(timeline).toContainText('Original work');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:60:74
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Original append loop"
+    Received string:    "01M3Y7RKG02ASY303V0RNBP6W4	Renamed append loop·
+    succeeded
+    	10/2/2026, 7:00:00 AM	-	children"
+
+      59 |   const appends = page.getByRole('list', { name: 'Patch diff' }).getByRole('listitem').filter({ hasText: '/messages/-' });
+      60 |   await assertion(appends.filter({ hasText: 'Appended exact value α' })).toHaveCount(1);
+    > 61 |   assertion(rows['append']).toContain('Original append loop');
+         |                             ^
+      62 |   assertion(rows['append']).not.toContain('Renamed append loop');
+      63 |   await assertion(timeline).toContainText('Original work');
+      64 |   await page.goto('/app/runs/' + cases['decision']!.id);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:61:29
+
+    Error: expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "Renamed append loop"
+    Received string:        "01M3Y7RKG02ASY303V0RNBP6W4	Renamed append loop	
+    succeeded
+    	10/2/2026, 7:00:00 AM	-	children"
+
+      60 |   await assertion(appends.filter({ hasText: 'Appended exact value α' })).toHaveCount(1);
+      61 |   assertion(rows['append']).toContain('Original append loop');
+    > 62 |   assertion(rows['append']).not.toContain('Renamed append loop');
+         |                                 ^
+      63 |   await assertion(timeline).toContainText('Original work');
+      64 |   await page.goto('/app/runs/' + cases['decision']!.id);
+      65 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original accept');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:62:33
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('list', { name: 'Timeline' })
+    Expected substring: "Original work"
+    Received string:    "#1run.queued#2run.startedattempt 1#3node.startedstart (trigger) attempt 1#4node.finishedstart → out, 2 changes, 3 ms#5node.startedwork (inference) attempt 1#6harness.turnwork#7harness.sessionwork#8harness.submissionwork#9node.progresswork#10harness.usagework#11node.finishedwork → out, 5 changes, 72 ms#12node.starteddone (exit) attempt 1#13exit.evaluatedExited: success#14node.finisheddone, 0 changes, 2 ms#15run.finishedsucceeded (success)"
+    Timeout: 1000ms
+
+    Call log:
+      - Expect "soft toContainText" getByRole('list', { name: 'Timeline' }) with timeout 1000ms
+      - waiting for getByRole('list', { name: 'Timeline' })
+        10 × locator resolved to <ol aria-label="Timeline" class="max-h-[60vh] overflow-auto p-2">…</ol>
+           - unexpected value "#1run.queued#2run.startedattempt 1#3node.startedstart (trigger) attempt 1#4node.finishedstart → out, 2 changes, 3 ms#5node.startedwork (inference) attempt 1#6harness.turnwork#7harness.sessionwork#8harness.submissionwork#9node.progresswork#10harness.usagework#11node.finishedwork → out, 5 changes, 72 ms#12node.starteddone (exit) attempt 1#13exit.evaluatedExited: success#14node.finisheddone, 0 changes, 2 ms#15run.finishedsucceeded (success)"
+
+
+      61 |   assertion(rows['append']).toContain('Original append loop');
+      62 |   assertion(rows['append']).not.toContain('Renamed append loop');
+    > 63 |   await assertion(timeline).toContainText('Original work');
+         |                             ^
+      64 |   await page.goto('/app/runs/' + cases['decision']!.id);
+      65 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original accept');
+      66 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original ship');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:63:29
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('list', { name: 'Timeline' })
+    Expected substring: "Original accept"
+    Received string:    "#1run.queued#2run.startedattempt 1#3node.startedstart (trigger) attempt 1#4node.finishedstart → out, 2 changes, 2 ms#5node.startedclassify (decision) attempt 1#6decision.madeChose accept with classifier via typesafe (jev-latest) with confidence 0.8765432109876543#7node.finishedclassify → accept, 2 changes, 7 ms#8node.startedroute (decision) attempt 1#9decision.madeChose ship with llm via codex (gpt-6-luna) with self-reported confidence (informational) 0.9123456789012345#10node.finishedroute → ship, 2 changes, 5 ms#11node.starteddone (exit) attempt 1#12exit.evaluatedExited: success#13node.finisheddone, 0 changes, 2 ms#14run.finishedsucceeded (success)"
+    Timeout: 1000ms
+
+    Call log:
+      - Expect "soft toContainText" getByRole('list', { name: 'Timeline' }) with timeout 1000ms
+      - waiting for getByRole('list', { name: 'Timeline' })
+        10 × locator resolved to <ol aria-label="Timeline" class="max-h-[60vh] overflow-auto p-2">…</ol>
+           - unexpected value "#1run.queued#2run.startedattempt 1#3node.startedstart (trigger) attempt 1#4node.finishedstart → out, 2 changes, 2 ms#5node.startedclassify (decision) attempt 1#6decision.madeChose accept with classifier via typesafe (jev-latest) with confidence 0.8765432109876543#7node.finishedclassify → accept, 2 changes, 7 ms#8node.startedroute (decision) attempt 1#9decision.madeChose ship with llm via codex (gpt-6-luna) with self-reported confidence (informational) 0.9123456789012345#10node.finishedroute → ship, 2 changes, 5 ms#11node.starteddone (exit) attempt 1#12exit.evaluatedExited: success#13node.finisheddone, 0 changes, 2 ms#14run.finishedsucceeded (success)"
+
+
+      63 |   await assertion(timeline).toContainText('Original work');
+      64 |   await page.goto('/app/runs/' + cases['decision']!.id);
+    > 65 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original accept');
+         |                                                                 ^
+      66 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original ship');
+      67 |   const decisions = history.get('decision')!;
+      68 |   const chosen = decisions.find((e) => e.type === 'decision.made')!;
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:65:65
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('list', { name: 'Timeline' })
+    Expected substring: "Original ship"
+    Received string:    "#1run.queued#2run.startedattempt 1#3node.startedstart (trigger) attempt 1#4node.finishedstart → out, 2 changes, 2 ms#5node.startedclassify (decision) attempt 1#6decision.madeChose accept with classifier via typesafe (jev-latest) with confidence 0.8765432109876543#7node.finishedclassify → accept, 2 changes, 7 ms#8node.startedroute (decision) attempt 1#9decision.madeChose ship with llm via codex (gpt-6-luna) with self-reported confidence (informational) 0.9123456789012345#10node.finishedroute → ship, 2 changes, 5 ms#11node.starteddone (exit) attempt 1#12exit.evaluatedExited: success#13node.finisheddone, 0 changes, 2 ms#14run.finishedsucceeded (success)"
+    Timeout: 1000ms
+
+    Call log:
+      - Expect "soft toContainText" getByRole('list', { name: 'Timeline' }) with timeout 1000ms
+      - waiting for getByRole('list', { name: 'Timeline' })
+        10 × locator resolved to <ol aria-label="Timeline" class="max-h-[60vh] overflow-auto p-2">…</ol>
+           - unexpected value "#1run.queued#2run.startedattempt 1#3node.startedstart (trigger) attempt 1#4node.finishedstart → out, 2 changes, 2 ms#5node.startedclassify (decision) attempt 1#6decision.madeChose accept with classifier via typesafe (jev-latest) with confidence 0.8765432109876543#7node.finishedclassify → accept, 2 changes, 7 ms#8node.startedroute (decision) attempt 1#9decision.madeChose ship with llm via codex (gpt-6-luna) with self-reported confidence (informational) 0.9123456789012345#10node.finishedroute → ship, 2 changes, 5 ms#11node.starteddone (exit) attempt 1#12exit.evaluatedExited: success#13node.finisheddone, 0 changes, 2 ms#14run.finishedsucceeded (success)"
+
+
+      64 |   await page.goto('/app/runs/' + cases['decision']!.id);
+      65 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original accept');
+    > 66 |   await assertion(page.getByRole('list', { name: 'Timeline' })).toContainText('Original ship');
+         |                                                                 ^
+      67 |   const decisions = history.get('decision')!;
+      68 |   const chosen = decisions.find((e) => e.type === 'decision.made')!;
+      69 |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(decisions.indexOf(chosen)).click();
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:66:65
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('list', { name: 'Alternative probabilities' })
+    Expected substring: "Original accept (accept): 87.65%"
+    Received string:    "accept: 0.8765432109876543reject: 0.1234567890123457"
+    Timeout: 1000ms
+
+    Call log:
+      - Expect "soft toContainText" getByRole('list', { name: 'Alternative probabilities' }) with timeout 1000ms
+      - waiting for getByRole('list', { name: 'Alternative probabilities' })
+        10 × locator resolved to <ul class="mt-2 grid gap-1 text-sm" aria-label="Alternative probabilities">…</ul>
+           - unexpected value "accept: 0.8765432109876543reject: 0.1234567890123457"
+
+
+      68 |   const chosen = decisions.find((e) => e.type === 'decision.made')!;
+      69 |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(decisions.indexOf(chosen)).click();
+    > 70 |   await assertion(page.getByRole('list', { name: 'Alternative probabilities' })).toContainText('Original accept (accept): 87.65%');
+         |                                                                                  ^
+      71 |   await assertion(page.getByRole('button', { name: 'Exact recorded event #' + chosen.seq })).toBeVisible();
+      72 |   await page.goto('/app/runs/' + cases['cancelled']!.id);
+      73 |   await assertion(page.getByText(/Cancelled by user local/)).toBeVisible();
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:70:82
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Exact recorded event #6' })
+    Expected: visible
+    Timeout: 1000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "soft toBeVisible" getByRole('button', { name: 'Exact recorded event #6' }) with timeout 1000ms
+      - waiting for getByRole('button', { name: 'Exact recorded event #6' })
+
+
+      69 |   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(decisions.indexOf(chosen)).click();
+      70 |   await assertion(page.getByRole('list', { name: 'Alternative probabilities' })).toContainText('Original accept (accept): 87.65%');
+    > 71 |   await assertion(page.getByRole('button', { name: 'Exact recorded event #' + chosen.seq })).toBeVisible();
+         |                                                                                              ^
+      72 |   await page.goto('/app/runs/' + cases['cancelled']!.id);
+      73 |   await assertion(page.getByText(/Cancelled by user local/)).toBeVisible();
+      74 |   assertion(rows['provider']).toContain('Recorded diagnostic: controlled provider connection closed');
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:71:94
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Cancelled by user local/)
+    Expected: visible
+    Timeout: 1000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "soft toBeVisible" getByText(/Cancelled by user local/) with timeout 1000ms
+      - waiting for getByText(/Cancelled by user local/)
+
+
+      71 |   await assertion(page.getByRole('button', { name: 'Exact recorded event #' + chosen.seq })).toBeVisible();
+      72 |   await page.goto('/app/runs/' + cases['cancelled']!.id);
+    > 73 |   await assertion(page.getByText(/Cancelled by user local/)).toBeVisible();
+         |                                                              ^
+      74 |   assertion(rows['provider']).toContain('Recorded diagnostic: controlled provider connection closed');
+      75 |   assertion(rows['deadline']).toContain('RUN_DEADLINE_EXCEEDED');
+      76 |
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:73:62
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Recorded diagnostic: controlled provider connection closed"
+    Received string:    "01M3Y7RMF9F43RNP80D7VX6MDF	Provider failure loop·
+    failed
+    	10/2/2026, 7:00:01 AM	-	children"
+
+      72 |   await page.goto('/app/runs/' + cases['cancelled']!.id);
+      73 |   await assertion(page.getByText(/Cancelled by user local/)).toBeVisible();
+    > 74 |   assertion(rows['provider']).toContain('Recorded diagnostic: controlled provider connection closed');
+         |                               ^
+      75 |   assertion(rows['deadline']).toContain('RUN_DEADLINE_EXCEEDED');
+      76 |
+      77 |   if (stage === 'after') {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:74:31
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "RUN_DEADLINE_EXCEEDED"
+    Received string:    "01M3Y7RKG02ASY303V0RNBP6WM	Deadline loop·
+    failed
+    	10/2/2026, 7:00:00 AM	-	children"
+
+      73 |   await assertion(page.getByText(/Cancelled by user local/)).toBeVisible();
+      74 |   assertion(rows['provider']).toContain('Recorded diagnostic: controlled provider connection closed');
+    > 75 |   assertion(rows['deadline']).toContain('RUN_DEADLINE_EXCEEDED');
+         |                               ^
+      76 |
+      77 |   if (stage === 'after') {
+      78 |     await page.goto('/app/runs/' + cases['decision']!.id);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-255\apps\web\e2e\execution-evidence.spec.ts:75:31
+
+    Error Context: test-results\execution-evidence-exact-r-7392f-inspector-list-and-API-255--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\execution-evidence-exact-r-7392f-inspector-list-and-API-255--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\execution-evidence-exact-r-7392f-inspector-list-and-API-255--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\execution-evidence.spec.ts:7:1 › exact recorded execution evidence across inspector, list and API (#255) 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 255\apps\web
+

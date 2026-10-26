@@ -1,4 +1,6 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { CODEX_DEFAULT_MODEL } from '@graphgoblin/adapter-codex';
+import { CLAUDE_MODEL } from '@graphgoblin/infrastructure/claude';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput, LoopIssue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
@@ -15,6 +17,19 @@ const body = { displayName: 'Changed', efforts: ['low'], defaultEffort: 'low' };
 const url = '/model-catalog/codex/gpt-6-luna';
 
 describe('catalog ownership and toggle routes', () => {
+  it('identifies the adapters ecosystem defaults without changing catalog enablement', async () => {
+    await t.app.inject({ method: 'PATCH', url, payload: { enabled: false } });
+    const { items } = (await t.app.inject('/model-catalog')).json<{
+      items: (ModelCatalogEntry & { ecosystemDefault: boolean })[];
+    }>();
+    expect(
+      items.filter((entry) => entry.ecosystemDefault).map(({ harness, model }) => [harness, model]),
+    ).toEqual([
+      ['claude', CLAUDE_MODEL],
+      ['codex', CODEX_DEFAULT_MODEL],
+    ]);
+    expect(items.find((entry) => entry.model === CODEX_DEFAULT_MODEL)?.enabled).toBe(false);
+  });
   it('returns source and enabled, refuses harness edit/delete/create and source spoofing', async () => {
     const before = (await t.app.inject('/model-catalog')).json<{ items: ModelCatalogEntry[] }>()
       .items;
@@ -354,18 +369,21 @@ describe('uniform strict evaluator admission', () => {
       if (unavailable === 'disabled model')
         await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
       else delete t.container.ports.harnesses.codex;
-      const code = unavailable === 'disabled model' ? 'MODEL_DISABLED' : 'HARNESS_UNAVAILABLE';
+      const code =
+        unavailable === 'disabled model' ? 'MODEL_DISABLED' : 'HARNESS_READINESS_CLI_MISSING';
       const created = await t.app.inject({
         method: 'POST',
         url: '/loops',
         payload: { definition },
       });
       expect(created.statusCode).toBe(201);
-      expect(created.json().issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code, severity: 'warning', nodeId: 'model-node' }),
-        ]),
-      );
+      if (unavailable === 'disabled model')
+        expect(created.json().issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ code, severity: 'warning', nodeId: 'model-node' }),
+          ]),
+        );
+      else expect(created.json().issues).toEqual([]);
       const id = created.json<{ loop: { id: string } }>().loop.id;
       const validated = await t.app.inject({
         method: 'POST',
@@ -374,6 +392,7 @@ describe('uniform strict evaluator admission', () => {
       });
       expect(validated.statusCode).toBe(200);
       expect(validated.json().publishable).toBe(false);
+      expect(validated.body).toContain(code);
       expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
         422,
       );
@@ -393,7 +412,6 @@ describe('uniform strict evaluator admission', () => {
     expect(created.json().errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: 'MODEL_NOT_IN_CATALOG', severity: 'error' }),
-        expect.objectContaining({ code: 'HARNESS_UNAVAILABLE', severity: 'warning' }),
       ]),
     );
     const baseId = await t.publishLoop(minimalLoop());

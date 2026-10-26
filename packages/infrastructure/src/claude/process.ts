@@ -1,6 +1,8 @@
 import { spawn } from 'node:child_process';
 import { killTree } from '../process/index.js';
 import { ClaudeHarnessError } from './errors.js';
+import { cliFailureState } from '@graphgoblin/domain';
+import type { HarnessReadinessState } from '@graphgoblin/contracts';
 export interface ClaudeProcessRequest {
   binary: string;
   args: readonly string[];
@@ -8,8 +10,10 @@ export interface ClaudeProcessRequest {
   env: NodeJS.ProcessEnv;
   stdin?: string;
   signal: AbortSignal;
-  timeoutMs: number;
+  timeoutMs: number | null;
   maxOutputBytes: number;
+  /** Readiness diagnostic inference is permitted only for no-turn prerequisite probes. */
+  classifyDiagnostics?: true;
 }
 export interface ClaudeProcessResult {
   exitCode: number | null;
@@ -22,6 +26,12 @@ export interface ClaudeProcessResult {
   terminationUnconfirmed?: true;
   stdinFailed?: boolean;
   callbackError?: ClaudeHarnessError;
+  /** Fixed classification only; stdout/stderr diagnostic bodies are never retained here. */
+  failureState?: HarnessReadinessState;
+  /** Fixed pre-turn refusal inferred only from bounded CLI stderr, never model stdout. */
+  turnRejection?: 'arguments' | 'auth' | 'session-missing';
+  /** Positive sign-out text in bounded no-turn stderr; never a retained diagnostic body. */
+  notLoggedIn?: true;
 }
 export type ClaudeCliRunner = (
   request: ClaudeProcessRequest,
@@ -55,7 +65,13 @@ export const runClaudeProcess = (
       overflow = false,
       stdinFailed = false;
     let callbackError: ClaudeHarnessError | undefined, spawnCode: ClaudeProcessResult['spawnCode'];
+    let killing: Promise<boolean> | undefined;
+    let closed = false;
+    let treeConfirmed = false;
+    let closeCode: number | null = null;
     let killTimer: ReturnType<typeof setTimeout> | undefined;
+    let diagnostic = '';
+    let rejection: ClaudeProcessResult['turnRejection'];
     const finish = (exitCode: number | null, terminationUnconfirmed = false): void => {
       if (settled) return;
       settled = true;
@@ -70,20 +86,38 @@ export const runClaudeProcess = (
         overflow,
         ...(terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
         ...(spawnCode ? { spawnCode } : {}),
+        ...(exitCode !== 0 && rejection ? { turnRejection: rejection } : {}),
         ...(stdinFailed ? { stdinFailed } : {}),
         ...(callbackError ? { callbackError } : {}),
+        ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
+          ? { failureState: cliFailureState(diagnostic) }
+          : {}),
+        ...(request.classifyDiagnostics && /\bnot logged in\b/i.test(diagnostic)
+          ? { notLoggedIn: true }
+          : {}),
       });
     };
     const kill = (): void => {
       if (settled) return;
       clearTimeout(timer);
-      killTree(child);
-      if (!killTimer) killTimer = setTimeout(() => finish(null, true), 5000);
+      if (killing) return;
+      killTimer = setTimeout(() => finish(null, true), 5000);
+      killing = killTree(child);
+      void killing.then((confirmed) => {
+        if (!confirmed) finish(null, true);
+        else {
+          treeConfirmed = true;
+          if (closed) finish(closeCode);
+        }
+      });
     };
-    const timer = setTimeout(() => {
-      timedOut = true;
-      kill();
-    }, request.timeoutMs);
+    const timer =
+      request.timeoutMs === null
+        ? undefined
+        : setTimeout(() => {
+            timedOut = true;
+            kill();
+          }, request.timeoutMs);
     request.signal.addEventListener('abort', kill, { once: true });
     const collect = (chunk: Buffer, output: boolean): void => {
       if (settled || overflow || callbackError) return;
@@ -94,6 +128,22 @@ export const runClaudeProcess = (
         return;
       }
       try {
+        // Keep only stderr in this ephemeral window. Turn stdout can contain authored/model text.
+        // The same bounded buffer supports turn refusals and probe-only sign-out inference;
+        // only fixed classifications leave it. Probe stdout is inspected separately by the harness.
+        if (!output) {
+          diagnostic = (diagnostic + chunk.toString('utf8')).slice(-8192);
+          if (/^(?:Error: )?No conversation found with session ID:/im.test(diagnostic))
+            rejection = 'session-missing';
+          else if (/^error: (?:unknown option|unexpected argument)/im.test(diagnostic))
+            rejection = 'arguments';
+          else if (
+            /^(?:Error: )?(?:Not logged in|Invalid API key|Authentication required)\b/im.test(
+              diagnostic,
+            )
+          )
+            rejection = 'auth';
+        }
         if (output) {
           stdout += chunk.toString('utf8');
           onStdout?.(chunk);
@@ -113,7 +163,11 @@ export const runClaudeProcess = (
         error.code === 'ENOENT' ? 'ENOENT' : error.code === 'EACCES' ? 'EACCES' : 'UNKNOWN';
       finish(null);
     });
-    child.on('close', (code) => finish(code));
+    child.on('close', (code) => {
+      closed = true;
+      closeCode = code;
+      if (!killing || treeConfirmed) finish(code);
+    });
     child.stdin?.on('error', () => {
       stdinFailed = true;
       kill();

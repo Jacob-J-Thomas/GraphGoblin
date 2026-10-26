@@ -1,0 +1,177 @@
+﻿import { spawn, execFileSync } from 'node:child_process';
+import { once } from 'node:events';
+import { createRequire } from 'node:module';
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+import net from 'node:net';
+
+const root = process.cwd(), web = join(root, 'apps/web');
+const req = createRequire(join(web, 'package.json'));
+const { chromium, expect } = req('@playwright/test');
+const { minimalLoop } = await import(pathToFileURL(join(root, 'packages/contracts/dist/testing/index.js')));
+const evidence = join(root, 'docs/qa/2026-10-18-wp-f2a');
+await mkdir(evidence, { recursive: true });
+const results = [], env = { ...process.env, LIVE: '0', LIVE_CLAUDE: '0' };
+const delay = ms => new Promise(r => setTimeout(r, ms));
+let browser, server, native;
+async function save() { await writeFile(join(evidence, 'checks-followup.json'), JSON.stringify(results, null, 2)); }
+async function check(name, fn) {
+  console.log('START ' + name);
+  try { const detail = await fn(); results.push({ name, status: 'pass', detail }); console.log('PASS ' + name); }
+  catch (e) { results.push({ name, status: 'fail', error: String(e.stack) }); console.log('FAIL ' + name + ': ' + e.message); }
+  await save();
+}
+async function api(base, path, method = 'GET', body, token) {
+  const r = await fetch(base + path, { method, headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(token ? { authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  const t = await r.text(); let data; try { data = JSON.parse(t); } catch { data = t; }
+  return { status: r.status, data };
+}
+function loop(name, model, effort) {
+  const base = minimalLoop();
+  return { ...base, name, nodes: [base.nodes[0], { id: 'infer', kind: 'inference', label: 'Infer', config: { harness: 'claude', session: { policy: 'fresh' }, prompt: { template: 'Synthetic QA result.' }, harnessOptions: { sandbox: 'read-only', approval: 'never' }, ...(model ? { model } : {}), ...(effort ? { effort } : {}) } }, base.nodes[1]].map((n,i) => ({ ...n, ui: { x: i * 260, y: 80 } })), edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'infer' } }, { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'done' } }] };
+}
+async function create(base, definition, token) {
+  const r = await api(base, '/loops', 'POST', { definition }, token); assert.equal(r.status, 201, JSON.stringify(r)); return r.data.loop.id;
+}
+async function open(page, base, id) {
+  await page.goto(base + '/app/loops/' + id + '/edit');
+  await page.getByTestId('node-infer').click({ position: { x: 60, y: 12 } });
+  const dialog = page.getByRole('dialog'); await expect(dialog).toBeVisible();
+  const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  if (await advanced.getAttribute('aria-expanded') === 'false') await advanced.click();
+  return dialog;
+}
+async function done(page, dialog) { await dialog.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.getByTestId('save-state')).toContainText('All changes saved'); }
+async function terminal(base, id) {
+  let r;
+  for (let i = 0; i < 100; i++) { r = await api(base, '/runs/' + id); if (['succeeded', 'failed', 'cancelled'].includes(r.data.status)) return r.data; await delay(100); }
+  throw new Error('run did not terminate: ' + JSON.stringify(r));
+}
+async function shot(page, name) { await page.screenshot({ path: join(evidence, name + '.png'), fullPage: true }); }
+async function stopChild(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  const exited = once(child, 'exit'); child.kill();
+  await Promise.race([exited, delay(10000).then(() => { if(child.exitCode === null) throw new Error('child did not exit'); })]);
+}
+
+
+let page;
+try {
+  server = spawn(process.execPath, ['--conditions=development', '--import', pathToFileURL(req.resolve('tsx')).href, 'e2e/server.ts'], { cwd:web, env, windowsHide:true, stdio:['pipe','pipe','pipe'] });
+  let output='', errors=''; server.stdout.on('data',c=>output+=c);server.stderr.on('data',c=>errors+=c);
+  for(let i=0;i<600&&!/GG_E2E_READY/.test(output);i++){if(server.exitCode!==null)throw new Error(errors);await delay(100);}
+  const controlUrl=/GG_E2E_CONTROL (\S+)/.exec(output)?.[1];assert.ok(controlUrl);
+  const control=async(path,body={})=>{const r=await api(controlUrl,path,'POST',body);assert.equal(r.status,200,JSON.stringify(r));return r.data;};
+  const instance=await control('/apps',{claude:true}), base=instance.url, instanceId=instance.instanceId;
+  results.push({name:'environment',status:'info',detail:{base,controlUrl,serverPid:server.pid,node:process.version}});
+  browser=await chromium.launch({channel:'msedge',headless:true});
+  let context=await browser.newContext({viewport:{width:1440,height:900}});page=await context.newPage();
+  const requestLog=()=>control('/harness/requests',{instanceId,harness:'claude'});
+  const script=()=>control('/harness/script',{instanceId,harness:'claude',turns:[{finalText:'Synthetic follow-up result.'}]});
+  const ids={};
+  for(const model of ['claude-sonnet-5-5','claude-haiku-5-5']){const id=await create(base,loop('Follow-up '+model,model,'high'));const p=await api(base,'/loops/'+id+'/publish','POST');assert.equal(p.status,200,JSON.stringify(p));ids[model]=id;}
+  await check('Owner default model and effort inherited for both new models',async()=>{
+    const observed=[];
+    for(const model of ['claude-sonnet-5-5','claude-haiku-5-5']){
+      await page.goto(base+'/app/settings');const field=page.getByLabel('Default model (claude)',{exact:true});await expect(field).toBeEnabled();
+      let save=page.waitForResponse(r=>r.url()===base+'/settings'&&r.request().method()==='PUT');await field.selectOption(model);assert.equal((await save).status(),200);await expect(field).toBeEnabled();
+      const effort=page.getByLabel('Default effort (claude)',{exact:true});
+      if(await effort.inputValue()!=='high'){save=page.waitForResponse(r=>r.url()===base+'/settings'&&r.request().method()==='PUT');await effort.selectOption('high');assert.equal((await save).status(),200);await expect(effort).toBeEnabled();}
+      const settings=await api(base,'/settings');const id=await create(base,loop('Inherited '+model));const pub=await api(base,'/loops/'+id+'/publish','POST');assert.equal(pub.status,200,JSON.stringify(pub));
+      await script();const start=await api(base,'/loops/'+id+'/runs','POST',{input:null});assert.equal(start.status,202,JSON.stringify(start));assert.equal((await terminal(base,start.data.run.id)).status,'succeeded');
+      const last=(await requestLog()).started.at(-1);assert.equal(last.model,model);assert.equal(last.effort,'high');observed.push({settings:settings.data,request:last,runId:start.data.run.id});
+    }
+    return observed;
+  });
+  await check('Export import exact definition round trip both new models',async()=>{
+    const observed=[];for(const model of ['claude-sonnet-5-5','claude-haiku-5-5']){const exported=await api(base,'/loops/'+ids[model]+'/export');assert.equal(exported.status,200);const imported=await api(base,'/loops/import','POST',exported.data);assert.equal(imported.status,201,JSON.stringify(imported));const read=await api(base,'/loops/'+imported.data.loop.id);assert.deepEqual(read.data.draft.definition,exported.data.loop);observed.push({exported:exported.data,imported:imported.data});}return observed;
+  });
+  await check('MCP new-model describe/start and disabled failure without fake request',async()=>{
+    const mreq=createRequire(join(root,'apps/mcp/package.json'));const {Client}=mreq('@modelcontextprotocol/sdk/client/index.js');const {InMemoryTransport}=mreq('@modelcontextprotocol/sdk/inMemory.js');const {createMcpServer}=await import(pathToFileURL(join(root,'apps/mcp/dist/index.js')));
+    const mcp=createMcpServer({apiUrl:base,pollMs:10});const[a,b]=InMemoryTransport.createLinkedPair();await mcp.connect(b);const client=new Client({name:'qa-f2a',version:'1'});await client.connect(a);
+    const observed=[];
+    try{for(const model of ['claude-sonnet-5-5','claude-haiku-5-5']){const described=await client.callTool({name:'describe_loop',arguments:{loopId:ids[model]}});assert.ok(!described.isError);await script();const start=await client.callTool({name:'start_run',arguments:{loopId:ids[model]}});assert.ok(!start.isError,JSON.stringify(start));const body=JSON.parse(start.content[0].text);assert.equal((await terminal(base,body.runId)).status,'succeeded');const last=(await requestLog()).started.at(-1);assert.equal(last.model,model);assert.equal(last.effort,'high');observed.push({model,described,start,request:last});}
+      const missing=await client.callTool({name:'describe_loop',arguments:{loopId:'qa-no-such-loop'}});assert.equal(missing.isError,true);
+      await api(base,'/model-catalog/claude/claude-haiku-5-5','PATCH',{enabled:false});const before=(await requestLog()).started.length;
+      const disabled=await client.callTool({name:'start_run',arguments:{loopId:ids['claude-haiku-5-5']}});
+      let blocked;if(disabled.isError){assert.match(JSON.stringify(disabled),/MODEL_DISABLED/);blocked=disabled;}else{const body=JSON.parse(disabled.content[0].text);blocked=await terminal(base,body.runId);assert.equal(blocked.status,'failed');assert.match(JSON.stringify(blocked),/MODEL_DISABLED/);}
+      assert.equal((await requestLog()).started.length,before);return{observed,missing,disabled,blocked,requestCount:before};
+    }finally{await api(base,'/model-catalog/claude/claude-haiku-5-5','PATCH',{enabled:true});await client.close();await mcp.close();}
+  });
+  await check('Rapid UI toggle serialized and disabled picker publication/run refusal',async()=>{
+    await api(base,'/settings','PUT',{defaults:{byHarness:{claude:{model:'claude-sonnet-5-5',effort:'high'}}}});
+    await page.goto(base+'/app/settings');const toggle=page.getByRole('switch',{name:'Enable Claude Haiku 5.5'});await expect(toggle).toBeChecked();const patches=[];page.on('response',r=>{if(r.request().method()==='PATCH')patches.push(r.status());});
+    await toggle.click({clickCount:8,delay:20});await expect(toggle).toHaveAttribute('aria-busy','false');const state=(await api(base,'/model-catalog')).data.items.find(x=>x.model==='claude-haiku-5-5').enabled;await expect(toggle).toHaveAttribute('aria-checked',String(state));
+    if(state){await toggle.click();await expect(toggle).not.toBeChecked();await expect(toggle).toHaveAttribute('aria-busy','false');}
+    const id=await create(base,loop('Disabled fresh picker'));const dialog=await open(page,base,id);assert.equal(await dialog.getByLabel('Model',{exact:true}).locator('option[value="claude-haiku-5-5"]').count(),0);await dialog.getByRole('button',{name:'Done',exact:true}).click();
+    const d=await api(base,'/loops','POST',{definition:loop('Disabled authored','claude-haiku-5-5','high')});assert.equal(d.status,201,JSON.stringify(d));assert.match(JSON.stringify(d.data),/MODEL_DISABLED/);
+    const published=await api(base,'/loops/'+d.data.loop.id+'/publish','POST');assert.equal(published.status,422,JSON.stringify(published));assert.match(JSON.stringify(published.data),/MODEL_DISABLED/);
+    await page.goto(base+'/app/settings');await toggle.click();await expect(toggle).toBeChecked();await expect(toggle).toHaveAttribute('aria-busy','false');const returned=await open(page,base,id);await expect(returned.getByLabel('Model',{exact:true}).locator('option[value="claude-haiku-5-5"]')).toBeEnabled();await returned.getByRole('button',{name:'Done',exact:true}).click();
+    return{rapidFinalState:state,patches,disabledDraft:d,publish:published,restored:true};
+  });
+  await check('Stale same-context browser tabs model edits conflict without overwrite',async()=>{
+    await page.close();page=await context.newPage();const other=await context.newPage();const id=await create(base,loop('Stale same node','claude-opus-5-5','high'));
+    try{const first=await open(page,base,id);const second=await open(other,base,id);await first.getByLabel('Model',{exact:true}).selectOption('claude-sonnet-5-5');await expect(page.getByTestId('save-state')).toContainText('All changes saved');
+      await second.getByLabel('Model',{exact:true}).selectOption('claude-haiku-5-5');await expect(other.getByText('The draft changed on the server',{exact:true}).first()).toBeVisible();const read=await api(base,'/loops/'+id);assert.equal(read.data.draft.definition.nodes.find(x=>x.id==='infer').config.model,'claude-sonnet-5-5');await shot(other,'two-tabs-conflict');await second.getByRole('button',{name:'Reload server draft'}).click();await expect(other.getByRole('dialog')).toHaveCount(0);
+      const d=await open(other,base,id);await expect(d.getByLabel('Model',{exact:true})).toHaveValue('claude-sonnet-5-5');return{loopId:id,serverModel:'claude-sonnet-5-5',staleModel:'claude-haiku-5-5',result:'Conflict shown; reload retains server model'};
+    }catch(e){await shot(other,'two-tabs-diagnostic');await writeFile(join(evidence,'two-tabs-diagnostic.txt'),await other.locator('body').innerText());throw e;}finally{await other.close();await page.close();page=await context.newPage();}
+  });
+  await check('390px controls fit and keyboard selects model and effort',async()=>{
+    const id=await create(base,loop('Narrow keyboard','claude-opus-5-5','high'));await page.setViewportSize({width:390,height:844});const d=await open(page,base,id),model=d.getByLabel('Model',{exact:true}),effort=d.getByLabel('Effort',{exact:true});const bounds=[];
+    for(const field of [model,effort]){await field.scrollIntoViewIfNeeded();const box=await field.boundingBox();assert.ok(box&&box.x>=0&&box.x+box.width<=391,JSON.stringify(box));bounds.push(box);}
+    await model.focus();await page.keyboard.press('Home');await page.keyboard.press('End');await page.keyboard.press('Enter');await expect(model).toHaveValue('claude-sonnet-5-5');
+    const focus=[];for(let i=0;i<6;i++){await page.keyboard.press('Tab');focus.push(await page.locator(':focus').evaluate(e=>({tag:e.tagName,text:e.textContent?.slice(0,120),id:e.id})));if(await effort.evaluate(e=>e===document.activeElement))break;}
+    await expect(effort).toBeFocused();await page.keyboard.press('End');await page.keyboard.press('Enter');await expect(effort).toHaveValue('max');await shot(page,'narrow-keyboard');await done(page,d);
+    const stored=await api(base,'/loops/'+id);const config=stored.data.draft.definition.nodes.find(x=>x.id==='infer').config;assert.equal(config.model,'claude-sonnet-5-5');assert.equal(config.effort,'max');return{viewport:{width:390,height:844},bounds,tabOrder:focus,saved:config};
+  });
+  // A separately spawned built production binary and disk database establish real restart evidence.
+  await check('Real built API process restart preserves Settings Haiku disable and owner defaults', async () => {
+    const dataDir=await mkdtemp(join(tmpdir(),'gg-wp-f2a-restart-'));
+    let port;
+    for(let candidate=5600;candidate<=5699;candidate++) {
+      const probe=net.createServer(); const free=await new Promise(r=>{probe.once('error',()=>r(false)); probe.listen(candidate,'127.0.0.1',()=>probe.close(()=>r(true)));});
+      if(free){port=candidate;break;}
+    }
+    assert.ok(port,'No free allowed port');
+    const nativeEnv={...env,GG_DATA_DIR:dataDir,GG_PORT:String(port),GG_REQUIRE_API_KEY:'true',GG_CLAUDE_BINARY:join(dataDir,'nonexistent-claude.exe'),GG_CODEX_BINARY:join(dataDir,'nonexistent-codex.exe'),GG_WEB_DIST:join(web,'dist'),GG_LOG_LEVEL:'warn'};
+    delete nativeEnv.GG_DB_URL; delete nativeEnv.GG_DEFAULTS; delete nativeEnv.GG_DEFAULT_MODEL; delete nativeEnv.GG_DEFAULT_EFFORT;
+    const keyOutput=execFileSync(process.execPath,[join(root,'apps/api/dist/main.js'),'--create-api-key','wp-f2a-qa'],{cwd:root,env:nativeEnv,windowsHide:true,encoding:'utf8'});
+    const token=/\n\s+(gg_[^\s]+)\s*\n/.exec(keyOutput)?.[1]; assert.ok(token,'binary token not parsed');
+    const nativeBase='http://127.0.0.1:'+port, pids=[];
+    const start=async()=>{
+      native=spawn(process.execPath,[join(root,'apps/api/dist/main.js')],{cwd:root,env:nativeEnv,windowsHide:true,stdio:['ignore','pipe','pipe']});
+      pids.push(native.pid); let logs=''; native.stdout.on('data',x=>logs+=x);native.stderr.on('data',x=>logs+=x);
+      for(let i=0;i<200;i++){if(native.exitCode!==null)throw new Error(logs);try{if((await api(nativeBase,'/model-catalog','GET',undefined,token)).status===200)return;}catch{} await delay(100);}
+      throw new Error('native startup timeout '+logs);
+    };
+    await start();
+    const ncontext=await browser.newContext({viewport:{width:1440,height:900},extraHTTPHeaders:{Authorization:'Bearer '+token}}); const np=await ncontext.newPage();
+    try {
+      await np.goto(nativeBase+'/app/settings');
+      const toggle=np.getByRole('switch',{name:'Enable Claude Haiku 5.5'});await expect(toggle).toBeChecked();await toggle.click();await expect(toggle).not.toBeChecked();await expect(toggle).toBeEnabled();
+      const settings=await api(nativeBase,'/settings','PUT',{defaults:{byHarness:{claude:{model:'claude-sonnet-5-5',effort:'max'}}}},token);assert.equal(settings.status,200);
+      const before=(await api(nativeBase,'/model-catalog','GET',undefined,token)).data.items.filter(x=>x.harness==='claude');
+      const pid1=native.pid; await stopChild(native); assert.ok(native.exitCode !== null || native.signalCode !== null);
+      const exit1={pid:pid1,code:native.exitCode,signal:native.signalCode};
+      await start();assert.notEqual(native.pid,pid1);
+      const after=(await api(nativeBase,'/model-catalog','GET',undefined,token)).data.items.filter(x=>x.harness==='claude');assert.deepEqual(after,before);
+      assert.equal(after.find(x=>x.model==='claude-haiku-5-5').enabled,false);
+      const persisted=await api(nativeBase,'/settings','GET',undefined,token);assert.deepEqual(persisted.data.defaults,settings.data.defaults);
+      await np.reload();await expect(toggle).not.toBeChecked();await shot(np,'restart-haiku-disabled');
+      const id=await create(nativeBase,loop('Native disabled','claude-haiku-5-5','high'),token);
+      const blocked=await api(nativeBase,'/loops/'+id+'/publish','POST',undefined,token);assert.equal(blocked.status,422);assert.match(JSON.stringify(blocked.data),/MODEL_DISABLED/);
+      await toggle.click();await expect(toggle).toBeChecked();await expect(toggle).toBeEnabled();
+      const restored=(await api(nativeBase,'/model-catalog','GET',undefined,token)).data.items.find(x=>x.model==='claude-haiku-5-5');assert.equal(restored.enabled,true);
+      return {dataDir,port,pids,exit1,before,after,persisted:persisted.data,publish:blocked,restored,providerBinaries:'explicit nonexistent paths; no provider CLI invoked'};
+    } finally {await ncontext.close(); await stopChild(native);}
+  });
+} finally {
+  await stopChild(native).catch(e=>console.log('Cleanup native: '+e.message));
+  await browser?.close();
+  if(server && server.exitCode===null && server.signalCode===null){const exited=once(server,'exit');server.stdin.end('stop\n');await Promise.race([exited,delay(10000)]);if(server.exitCode===null&&server.signalCode===null)await stopChild(server).catch(e=>console.log('Cleanup E2E: '+e.message));}
+  await save();
+}
+console.log(JSON.stringify(results.map(x=>({name:x.name,status:x.status}))));process.exitCode=results.some(x=>x.status==='fail')?1:0;

@@ -39,11 +39,9 @@ describe('script effects across a real API kill (#321)', () => {
   it.each(['before-dispatch', 'after-dispatch', 'after-completion'] as const)(
     '%s never repeats an effect without an explicit resume',
     async (boundary) => {
-      // A range of its own: test files run in parallel, and sharing child-creation-restart's
-      // range raced its probe-then-bind (EADDRINUSE on the CI runner).
+      // The shared fixture honors GG_TEST_PORT_START/COUNT for isolated integration gates.
       const fixture = await createApiProcessFixture({
-        directoryPrefix: 'gg-wp-d1-script-',
-        portRange: [5930, 5939],
+        prefix: 'gg-wp-d1-int-script-',
       });
       fixtures.push(fixture);
       const marker = join(fixture.dataDir, 'marker');

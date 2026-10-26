@@ -1,0 +1,28 @@
+// Evidence setup and retention audit. Run from the assigned worktree; no Git writes.
+import {readFile,writeFile,stat,mkdir} from 'node:fs/promises';
+import {resolve,basename,relative} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const base=resolve('docs/qa/2026-10-22-wp-e1-259-qa'),old=resolve(base,'round-2'),dir=resolve(base,'round-3');
+await mkdir(dir,{recursive:true});
+for(const name of ['run-command.mjs.txt','server.mjs.txt','playwright.config.mjs.txt','focus-small-repro.mjs.txt']){
+ const text=(await readFile(resolve(old,name),'utf8')).replaceAll('round-2','round-3').replaceAll('r2-playwright','r3-playwright');
+ await writeFile(resolve(dir,name),text);
+}
+const tracked=new Set(execFileSync('git',['ls-files'],{encoding:'utf8'}).trim().split(/\r?\n/));
+const report=await readFile(resolve(old,'README.md'),'utf8');
+const links=[...report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1].replace(/^<|>$/g,''));
+const backticks=[...report.matchAll(/`([^`\n]+\.(?:json|txt|png|md|mjs|log))`/g)].map(m=>m[1]);
+const records=[];
+for(const name of [...new Set([...links,...backticks])]){
+ if(/^(?:https?:|#)/.test(name))continue;
+ const file=resolve(old,name.split('#')[0]);let row={name};
+ try{const s=await stat(file);row={...row,exists:true,tracked:tracked.has(relative(process.cwd(),file).replaceAll('\\','/')),bytes:s.size,...s.isFile()?{sha256:createHash('sha256').update(await readFile(file)).digest('hex')}: {directory:true}};}
+ catch{row={...row,exists:false};}
+ records.push(row);
+}
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),status=execFileSync('git',['status','--short'],{encoding:'utf8'}).trim();
+const audit={head,round2Referenced:records.length,missing:records.filter(x=>!x.exists).length,tracked:records.filter(x=>x.tracked).length,untracked:records.filter(x=>x.exists&&!x.tracked).length,status,records};
+await writeFile(resolve(dir,'round-two-audit.json'),JSON.stringify(audit,null,2));
+await writeFile(resolve(dir,'environment.json'),JSON.stringify({head,node:process.version,worktree:basename(process.cwd()),platform:process.platform,apiPort:5720,controlPort:5721,initialStatus:status},null,2));
+console.log(JSON.stringify({head,node:process.version,references:records.length,missing:audit.missing,tracked:audit.tracked,untracked:audit.untracked}));

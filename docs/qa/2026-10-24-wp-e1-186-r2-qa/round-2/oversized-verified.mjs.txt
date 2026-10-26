@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {chromium} from '../../apps/web/node_modules/@playwright/test/index.mjs';
+import {definition} from '../../tooling/perf/common.mjs';
+import {CURRENT_DEFINITION_FORMAT} from '../../packages/contracts/dist/index.js';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-2',checks=[],errors=[];
+const ctl=async(path,b={})=>{const r=await fetch('http://127.0.0.1:6151'+path,{method:'POST',body:JSON.stringify(b)});if(!r.ok)throw Error(await r.text());return r.json();};
+const c=await ctl('/connection'),headers={authorization:'Bearer '+c.keys.admin,'content-type':'application/json'};
+const api=async(path,b)=>{const r=await fetch(c.url+path,{headers,...(b===undefined?{}:{method:'POST',body:JSON.stringify(b)})});if(!r.ok)throw Error(await r.text());return r.json();};
+const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+const until=async(fn,msg)=>{for(let i=0;i<250;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error(msg);};
+async function check(name,fn){try{checks.push({name,pass:true,evidence:await fn()});}catch(e){checks.push({name,pass:false,error:String(e).slice(0,3000),stack:e.stack?.slice(-1500)});}await writeFile(out+'/oversized-verified-results.json',JSON.stringify({checks,errors},null,2));}
+const browser=await chromium.launch({channel:'msedge',headless:true}),context=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});
+await context.addInitScript(t=>localStorage.setItem('graphgoblin-api-key',t),c.keys.admin);
+async function open(id){const p=await context.newPage();p.on('pageerror',e=>errors.push(String(e)));await p.goto(c.url+'/app/runs/'+id);await p.getByRole('list',{name:'Timeline',exact:true}).waitFor();await until(async()=>!!(await cache(p,id)),'cache not ready');return p;}
+const cache=(p,id)=>p.evaluate(id=>JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4')??'{}').state?.runs?.[id],id);
+async function seek(p,n){await p.getByRole('spinbutton',{name:'Event sequence',exact:true}).fill(String(n));await p.getByRole('button',{name:'Go to event',exact:true}).click();await p.getByRole('heading',{name:'Thread at event '+n,exact:true}).waitFor();}
+async function exactDownload(p,event,label){
+ const disclosure=p.getByRole('button',{name:'Exact recorded event #'+event.seq,exact:true});if(await disclosure.getAttribute('aria-expanded')!=='true')await disclosure.click();
+ const exact=p.getByTestId('recorded-event-json');await exact.waitFor();
+ const more=p.getByRole('button',{name:'Show all of Exact recorded event',exact:true});if(await more.isVisible())await more.click();
+ assert.deepEqual(JSON.parse(await exact.innerText()),event);
+ const waiting=p.waitForEvent('download');await p.getByRole('button',{name:'Download Exact recorded event as JSON',exact:true}).click();const download=await waiting;
+ const path='.tmp/qa186r2/'+label+'-download.json';await download.saveAs(path);const raw=await readFile(path,'utf8');assert.deepEqual(JSON.parse(raw),event);
+ const result={seq:event.seq,bytes:Buffer.byteLength(raw),sha256:createHash('sha256').update(raw).digest('hex'),filename:download.suggestedFilename()};
+ if(Buffer.byteLength(raw)<=1000000)await writeFile(out+'/'+label+'-download.json',raw);else await writeFile(out+'/'+label+'-omitted.json',JSON.stringify(result,null,2));
+ return result;
+}
+const fixture=JSON.parse(await readFile(out+'/merged-fixtures.json','utf8'));
+const all=await ctl('/oracle',{runId:fixture.runId,full:true}),huge=all.events.find(e=>e.seq===fixture.oversizedSeq),page=await open(fixture.runId);
+await until(async()=>(await cache(page,fixture.runId))?.lastSeq===all.last,'no suffix');
+await check('oversized exact disclosure and downloads outside then inside retained window',async()=>{
+ const before=await cache(page,fixture.runId);assert.ok(before.events[0].seq>huge.seq);await seek(page,huge.seq);
+ const log=await cache(page,fixture.runId),marker=log.uncached.find(e=>e.seq===huge.seq);assert.ok(marker);assert.ok(marker.description.includes('work'));assert.ok(!marker.description.includes('Pinned Worker'));assert.ok(!log.events.some(e=>e.seq===huge.seq));
+ const outside=await exactDownload(page,huge,'oversized-outside');await seek(page,huge.seq-1);await seek(page,huge.seq);const inside=await exactDownload(page,huge,'oversized-inside');assert.equal(outside.sha256,inside.sha256);
+ const after=await cache(page,fixture.runId);assert.ok(after.bytes<=1048576);assert.ok(!after.events.some(e=>e.seq===huge.seq));await page.screenshot({path:out+'/oversized.png'});return {runId:fixture.runId,marker,outside,inside,retainedRows:after.events.length+after.uncached.length,retainedBytes:after.bytes};
+});
+await context.close();await browser.close();console.log(JSON.stringify({checks}));

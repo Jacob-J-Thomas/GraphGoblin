@@ -1,0 +1,280 @@
+{
+  "head": "9f654e7f7cfe4180dd8d1258174cc4a2d2a30110",
+  "results": [
+    {
+      "name": "published omitted defaults pin",
+      "status": "PASS",
+      "actual": {
+        "pin": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        }
+      }
+    },
+    {
+      "name": "five-second input deadline and correctly shaped late input",
+      "status": "PASS",
+      "actual": {
+        "elapsedMs": 5759,
+        "failure": {
+          "code": "RUN_DEADLINE_EXCEEDED",
+          "message": "The run exceeded its configured elapsed execution deadline",
+          "resumable": false
+        },
+        "lateInput": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/wait-mismatch",
+            "title": "wait mismatch",
+            "status": 409,
+            "code": "WAIT_MISMATCH",
+            "detail": "The observed input wait is no longer active"
+          }
+        },
+        "resume": {
+          "status": 409,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/invalid-state",
+            "title": "invalid state",
+            "status": 409,
+            "code": "INVALID_STATE",
+            "detail": "cannot resume a run that is failed"
+          }
+        }
+      }
+    },
+    {
+      "name": "paused authored deadline survives kill and native restart",
+      "status": "PASS",
+      "actual": {
+        "before": {
+          "status": "paused",
+          "startedAt": "2026-10-22T21:25:09.209Z",
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": 5
+          }
+        },
+        "after": {
+          "status": "failed",
+          "startedAt": "2026-10-22T21:25:09.209Z",
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": 5
+          }
+        },
+        "absoluteDeadline": "2026-10-22T21:25:14.209Z"
+      }
+    },
+    {
+      "name": "default input wait survives native restart without a deadline",
+      "status": "PASS",
+      "actual": {
+        "pin": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null
+        },
+        "observation": "7 seconds after native restart; engine focused run separately advances 24 hours"
+      }
+    },
+    {
+      "name": "Unlimited marked repeat gate exceeds twenty visits and cancels",
+      "status": "PASS",
+      "actual": {
+        "visits": 22,
+        "pin": {
+          "maxNodeVisits": null,
+          "runDeadlineSeconds": null
+        },
+        "cancelMs": 105
+      }
+    },
+    {
+      "name": "retry HARNESS_TRANSPORT_FAILED definitely-not-submitted retriable=true",
+      "status": "PASS",
+      "actual": {
+        "invocations": 2,
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "QA synthetic failure",
+          "nodeId": "ask",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5JR2MQ4EP3TRKKN1KZXA5TX:5",
+            "turnId": "01M5JR2MR9PVVWV0B74C2WD8PX",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    },
+    {
+      "name": "retry HARNESS_TRANSPORT_FAILED delivery-uncertain retriable=true",
+      "status": "PASS",
+      "actual": {
+        "invocations": 1,
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "QA synthetic failure. Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+          "nodeId": "ask",
+          "resumable": false,
+          "inference": {
+            "visitId": "01M5JR2MTHECEATSRF2TD8ZFWV:5",
+            "turnId": "01M5JR2MVNWN3K3YGPNRJGQTPC",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored"
+          }
+        }
+      }
+    },
+    {
+      "name": "retry HARNESS_TRANSPORT_FAILED definitely-not-submitted retriable=false",
+      "status": "PASS",
+      "actual": {
+        "invocations": 1,
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "QA synthetic failure",
+          "nodeId": "ask",
+          "resumable": false,
+          "inference": {
+            "visitId": "01M5JR2MY0Y76SGB5WSSH2J15N:5",
+            "turnId": "01M5JR2MZ21PCWZ3CAXS0ZTJMD",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    },
+    {
+      "name": "retry HARNESS_QUOTA_EXHAUSTED definitely-not-submitted retriable=true",
+      "status": "PASS",
+      "actual": {
+        "invocations": 1,
+        "failure": {
+          "code": "HARNESS_QUOTA_EXHAUSTED",
+          "message": "QA synthetic failure",
+          "nodeId": "ask",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5JR2N1DQEG82ANC7HRD0ZCD:5",
+            "turnId": "01M5JR2N2FPR5572WW907807KS",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    },
+    {
+      "name": "retry HARNESS_NOT_AUTHENTICATED definitely-not-submitted retriable=false",
+      "status": "PASS",
+      "actual": {
+        "invocations": 1,
+        "failure": {
+          "code": "HARNESS_NOT_AUTHENTICATED",
+          "message": "QA synthetic failure",
+          "nodeId": "ask",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5JR2N4S883QKHZM6Q6EE9M9:5",
+            "turnId": "01M5JR2N5XT38ZPMMJ5S94Y724",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    },
+    {
+      "name": "retry HARNESS_TIMEOUT definitely-not-submitted retriable=false",
+      "status": "PASS",
+      "actual": {
+        "invocations": 1,
+        "failure": {
+          "code": "INFERENCE_TIMEOUT",
+          "message": "QA synthetic failure",
+          "nodeId": "ask",
+          "resumable": true,
+          "inference": {
+            "visitId": "01M5JR2N7YNZJ6V7W8XEF7FW6C:5",
+            "turnId": "01M5JR2N990S1FY2GTDF9R0J3B",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    },
+    {
+      "name": "retry HARNESS_OUTPUT_LIMIT delivery-uncertain retriable=false",
+      "status": "PASS",
+      "actual": {
+        "invocations": 1,
+        "failure": {
+          "code": "HARNESS_OUTPUT_LIMIT",
+          "message": "QA synthetic failure. Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+          "nodeId": "ask",
+          "resumable": false,
+          "inference": {
+            "visitId": "01M5JR2NBG9YTA756KC456SSFX:5",
+            "turnId": "01M5JR2NCQJWNES4XNDZ4DCQZT",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored"
+          }
+        }
+      }
+    }
+  ],
+  "lifecycle": [
+    {
+      "pid": 22752,
+      "exitObserved": true,
+      "exitCode": null,
+      "signalCode": "SIGTERM",
+      "confirmedExited": true,
+      "forced": true
+    },
+    {
+      "pid": 52692,
+      "exitObserved": true,
+      "exitCode": null,
+      "signalCode": "SIGTERM",
+      "confirmedExited": true,
+      "forced": true
+    },
+    {
+      "pid": 46536,
+      "exitObserved": true,
+      "exitCode": 0,
+      "signalCode": null,
+      "confirmedExited": true,
+      "forced": false
+    }
+  ],
+  "cleanup": {
+    "store": "gg-qa-f3-r4-api-AeDTO4",
+    "processConfirmedExited": true,
+    "processes": [
+      {
+        "pid": 22752,
+        "exitObserved": true,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "confirmedExited": true
+      },
+      {
+        "pid": 52692,
+        "exitObserved": true,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "confirmedExited": true
+      },
+      {
+        "pid": 46536,
+        "exitObserved": true,
+        "exitCode": 0,
+        "signalCode": null,
+        "confirmedExited": true
+      }
+    ],
+    "removed": true
+  }
+}

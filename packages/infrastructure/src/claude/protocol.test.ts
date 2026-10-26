@@ -119,7 +119,7 @@ describe('strict Claude auth/capability parsing', () => {
       );
     for (const text of ['PRIVATE', '2.1', '2.1.287-beta', '9999999.1.1'])
       expect(() => verifyInstalledCapabilities(text, flags.join(' '))).toThrow(
-        /version unknown.*version identification/,
+        /^Claude CLI version could not be identified\.$/,
       );
     for (const removed of flags)
       expect(() =>
@@ -127,7 +127,7 @@ describe('strict Claude auth/capability parsing', () => {
           '2.1.285 (Claude Code)',
           flags.filter((flag) => flag !== removed).join(' '),
         ),
-      ).toThrow(new RegExp(`2\\.1\\.285.*capabilities unavailable: ${removed}`));
+      ).toThrow(`Claude CLI 2.1.285 does not list required options: ${removed}.`);
   });
 });
 describe('bounded JSONL parser', () => {
@@ -162,7 +162,7 @@ describe('Claude stream contract and honest execution evidence', () => {
           summary: expect.stringContaining('Claude account login'),
           detail: expect.objectContaining({
             inputTransport: 'text',
-            promptDeliveryProof: 'unsupported',
+            promptDeliveryProof: 'assistant-or-result',
           }),
         }),
       },
@@ -183,7 +183,7 @@ describe('Claude stream contract and honest execution evidence', () => {
         ],
       },
     });
-    expect(events.map((event) => event.type)).toEqual(['item', 'item', 'item']);
+    expect(events.map((event) => event.type)).toEqual(['submitted', 'item', 'item', 'item']);
     expect(JSON.stringify(events)).not.toContain('PRIVATE');
     acc.push({
       type: 'user',
@@ -207,7 +207,7 @@ describe('Claude stream contract and honest execution evidence', () => {
           id: 'claude-policy',
           detail: expect.objectContaining({
             inputTransport: 'text',
-            promptDeliveryProof: 'unsupported',
+            promptDeliveryProof: 'assistant-or-result',
           }),
         }),
       ]),
@@ -353,6 +353,7 @@ describe('conditional native structured-output carrier', () => {
         carrier({ ok: 'invalid candidate', file_path: 'PRIVATE_FILE', command: 'PRIVATE_COMMAND' }),
       );
       expect(progress).toEqual([
+        { type: 'submitted', marker: 'claude.assistant' },
         {
           type: 'item',
           item: {
@@ -660,6 +661,7 @@ describe('Claude transcript and error evidence limits', () => {
       },
     });
     expect(events).toMatchObject([
+      { type: 'submitted', marker: 'claude.assistant' },
       { type: 'item', item: { type: 'command', commandPreview: expect.any(String) } },
       { type: 'item', item: { type: 'file-change' } },
     ]);
@@ -685,7 +687,7 @@ describe('Claude transcript and error evidence limits', () => {
     { status: 401, code: 'HARNESS_NOT_AUTHENTICATED', retriable: false },
     { status: 403, code: 'HARNESS_NOT_AUTHENTICATED', retriable: false },
     { status: 429, code: 'HARNESS_QUOTA_EXHAUSTED', retriable: true },
-    { status: 503, code: 'HARNESS_TURN_FAILED', retriable: true },
+    { status: 503, code: 'HARNESS_TRANSPORT_FAILED', retriable: true },
     { status: 400, code: 'HARNESS_TURN_FAILED', retriable: false },
   ])(
     'classifies known structured status $status without provider text',
@@ -756,6 +758,7 @@ describe('Claude CLI 2.1.287 captured stream', () => {
       { type: 'item', item: { detail: { requestedModel: 'claude-opus-5-5' } } },
     ]);
     expect(acc.push(records[2]!)).toMatchObject([
+      { type: 'submitted', marker: 'claude.assistant' },
       { type: 'item', item: { type: 'message', summary: 'QA_OK' } },
     ]);
     expect(acc.push(records[3]!)).toEqual([]);
@@ -969,7 +972,9 @@ describe('documented native assistant failure categories', () => {
   it.each([
     { category: 'authentication_failed', code: 'HARNESS_NOT_AUTHENTICATED', retriable: false },
     { category: 'rate_limit', code: 'HARNESS_QUOTA_EXHAUSTED', retriable: true },
-    { category: 'server_error', code: 'HARNESS_TURN_FAILED', retriable: true },
+    { category: 'quota_exceeded', code: 'HARNESS_QUOTA_EXHAUSTED', retriable: false },
+    { category: 'usage_limit', code: 'HARNESS_QUOTA_EXHAUSTED', retriable: false },
+    { category: 'server_error', code: 'HARNESS_TRANSPORT_FAILED', retriable: true },
     { category: 'billing_error', code: 'HARNESS_TURN_FAILED', retriable: false },
     { category: 'invalid_request', code: 'HARNESS_TURN_FAILED', retriable: false },
     { category: 'unknown', code: 'HARNESS_TURN_FAILED', retriable: false },
@@ -1060,5 +1065,59 @@ describe('documented command-cache bootstrap without execution evidence', () => 
       message: { content: [{ type: 'tool_use', id: 'pending', name: 'Read', input: {} }] },
     });
     expect(() => acc.push(result())).toThrow(/protocol/);
+  });
+});
+
+describe('complete accepted transcripts (#243)', () => {
+  it('bounds stored item detail while retaining the complete final result', () => {
+    const acc = accumulator();
+    acc.push(init());
+    const text = 'x'.repeat(20000);
+    const events = acc.push({
+      type: 'assistant',
+      message: {
+        content: [
+          { type: 'text', text },
+          { type: 'thinking', thinking: text },
+          { type: 'tool_use', id: 'large-read', name: 'Read', input: { file_path: 'fixture.txt' } },
+        ],
+      },
+    });
+    expect(events.filter((event) => event.type === 'item').slice(0, 2)).toEqual([
+      expect.objectContaining({
+        item: expect.objectContaining({ detail: { text: text.slice(0, 16 * 1024) } }),
+      }),
+      expect.objectContaining({
+        item: expect.objectContaining({ detail: { text: text.slice(0, 16 * 1024) } }),
+      }),
+    ]);
+    const outputs = acc.push({
+      type: 'user',
+      message: {
+        content: [
+          { type: 'tool_result', tool_use_id: 'large-read', is_error: false, content: text },
+        ],
+      },
+    });
+    expect(outputs).toContainEqual(
+      expect.objectContaining({
+        item: expect.objectContaining({
+          detail: { tool: 'Read', output: text.slice(0, 16 * 1024) },
+        }),
+      }),
+    );
+    acc.push(result({ result: text }));
+    expect(acc.finish().finalText).toBe(text);
+    expect(
+      acc
+        .finish()
+        .items.filter(
+          (item) =>
+            item.detail &&
+            typeof item.detail === 'object' &&
+            !Array.isArray(item.detail) &&
+            'text' in item.detail,
+        ),
+    ).toHaveLength(2);
   });
 });

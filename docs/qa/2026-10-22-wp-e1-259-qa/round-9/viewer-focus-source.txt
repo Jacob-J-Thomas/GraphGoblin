@@ -1,0 +1,77 @@
+  // replaces a thread the keyboard was in, the keyboard goes to the card's button; when the reader
+  // activates that button, the keyboard goes to the thread's controls (the hand-off below).
+  // Ownership of the whole viewer is tracked by its focus events for the same reason as above.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const reconstructRef = useRef<HTMLButtonElement>(null);
+  const [viewerOwnsFocus, setViewerOwnsFocus] = useState(false);
+  // The card unmounts the messages section without a blur event: its ownership ends here.
+  if (!ready && ownsFocus) {
+    setOwnsFocus(false);
+    setHoldsFocus(false);
+  }
+  if (shownThread !== thread) {
+    setShownThread(thread);
+    setAllMessagesState(false);
+    if (ownsFocus) {
+      setHoldsFocus(true);
+      setHandoffs((n) => n + 1);
+    }
+  }
+  const allMessages = allMessagesState && shownThread === thread;
+  useLayoutEffect(() => {
+    if (handoffs === 0) return;
+    const section = messagesRef.current;
+    const list = listRef.current;
+    const inside = section !== null && section.contains(document.activeElement);
+    if (!inside) (showAllRef.current ?? list)?.focus();
+    setHoldsFocus(document.activeElement === list);
+  }, [handoffs]);
+  useLayoutEffect(() => {
+    if (ready || !viewerOwnsFocus) return;
+    const root = rootRef.current;
+    if (root !== null && !root.contains(document.activeElement)) reconstructRef.current?.focus();
+  }, [ready, shownSeq, viewerOwnsFocus]);
+  const viewerFocus = {
+    ref: rootRef,
+    onFocus: () => setViewerOwnsFocus(true),
+    onBlur: (event: React.FocusEvent<HTMLDivElement>) => {
+      if (!rootRef.current?.contains(event.relatedTarget)) setViewerOwnsFocus(false);
+    },
+  };
+  if (!ready) {
+    return (
+      <div {...viewerFocus}>
+        <Card title={`Thread at event ${shownSeq}`}>
+          <p className="text-sm text-muted">
+            This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
+            rebuild the thread at an event can take a while, so it happens on request.
+          </p>
+          <p>
+            <Button
+              ref={reconstructRef}
+              size="sm"
+              onClick={() => {
+                // The replay happens here, on request; the render that follows finds it cached.
+                cache.at(initial, events, shownSeq);
+                if (withDiff) cache.at(initial, events, shownSeq - 1);
+                setPrepared((n) => n + 1);
+                // The button goes away with the card: the thread's controls take the keyboard.
+                setHoldsFocus(true);
+                setHandoffs((n) => n + 1);
+              }}
+            >{`Reconstruct the thread at event ${shownSeq}`}</Button>
+          </p>
+        </Card>
+      </div>
+    );
+  }
+  if (replayed === undefined || !replayed.ok || thread === undefined) {
+    return (
+      <div {...viewerFocus}>
+        <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+          {replayed === undefined || replayed.ok ? '' : replayed.error}
+        </Alert>
+      </div>
+    );
+  }
+  const messages = thread.messages;

@@ -1,0 +1,32 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {createConnection} from 'node:net';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-e1-186-qa');
+const files=[];async function walk(dir,prefix=''){for(const e of await readdir(dir,{withFileTypes:true})){if(e.isDirectory())await walk(join(dir,e.name),prefix+e.name+'/');else files.push(prefix+e.name);}}
+await walk(out);
+let md=await readFile(join(out,'README.md'),'utf8');
+const linked=new Set([...md.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(x=>x[1]));
+for(const file of files){if(file!=='README.md'&&!linked.has(file))md+='\n- ['+file+']('+file+')\n';}
+// Improve prose spacing while preserving paths, code and Markdown link bytes.
+md=md.replace('Ryzen53600','Ryzen 5 3600').split(/(`[^`]*`|\[[^\]]*\]\([^)]+\))/g).map((part,index)=>index%2?part:part.replace(/([a-z])(?=\d)/g,'$1 ').replace(/(\d)(ms|bytes|seconds|minutes|events|files|rows|MiB|KiB)\b/g,'$1 $2').replace(/\b(in|by|of|from|through|within)(?=\[)/g,'$1 ')).join('');
+const tokens=md.split(/(`[^`]*`|\[[^\]]*\]\([^)]+\))/g);
+for(let i=1;i<tokens.length;i+=2){if(/[A-Za-z0-9]$/.test(tokens[i-1]))tokens[i-1]+=' ';if(i+1<tokens.length&&/^[A-Za-z0-9]/.test(tokens[i+1]))tokens[i+1]=' '+tokens[i+1];}
+md=tokens.join('').replace(/(\d+)x\s*(\d+)/g,'$1 × $2').replace('Focused tests:14','Focused tests: 14');
+await writeFile(join(out,'README.md'),md);
+if(process.argv.includes('--prepare')){console.log('QA_REPORT_PREPARED');process.exit(0);}
+const missing=[];for(const match of md.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){const target=match[1];if(/^(https?:|#)/.test(target))continue;try{await stat(resolve(out,target));}catch{missing.push(target);}}
+const oversized=[],badJson=[],privatePaths=[];
+const markers=[process.env.USERPROFILE,JSON.stringify(process.env.USERPROFILE).slice(1,-1),process.env.USERPROFILE.replaceAll('\\','/')];
+const manifest=[];
+for(const file of files){if(file==='artifact-manifest.json'||file==='integrity-results.json')continue;let b=await readFile(join(out,file));if(b[0]===255&&b[1]===254){b=Buffer.from(b.subarray(2).toString('utf16le'));await writeFile(join(out,file),b);}if(b.length>1000000)oversized.push({file,bytes:b.length});if(/\.json$/.test(file)){try{JSON.parse(b.toString('utf8'));}catch(e){badJson.push({file,error:e.message});}}
+ if(/\.(md|txt|json|jsonl)$/.test(file)){const s=b.toString('utf8');if(markers.some(x=>s.includes(x)))privatePaths.push(file);}
+ if(file!=='README.md')manifest.push({path:file,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});
+}
+async function listening(port){return new Promise(resolve=>{const socket=createConnection({port,host:'127.0.0.1'});socket.once('connect',()=>{socket.destroy();resolve(true);});socket.once('error',()=>resolve(false));socket.setTimeout(2000,()=>{socket.destroy();resolve('timeout');});});}
+const ports={};for(const port of [5950,5952,5953,5954,5955])ports[port]=await listening(port);
+const result={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),branch:execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim(),trackedDiff:execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim(),artifacts:files.length-1,missingLinks:missing,oversizedRetained:oversized,invalidJson:badJson,unredactedLocalUserPaths:privatePaths,manualPortsStillListening:ports,pass:missing.length===0&&oversized.length===0&&badJson.length===0&&privatePaths.length===0&&Object.values(ports).every(x=>x===false)};
+await writeFile(join(out,'integrity-results.json'),JSON.stringify(result,null,2));
+const b=await readFile(join(out,'integrity-results.json'));manifest.push({path:'integrity-results.json',bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});manifest.sort((a,b)=>a.path.localeCompare(b.path));
+await writeFile(join(out,'artifact-manifest.json'),JSON.stringify(manifest,null,2));console.log(JSON.stringify(result));if(!result.pass)process.exitCode=1;

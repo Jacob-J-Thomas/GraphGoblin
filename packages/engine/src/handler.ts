@@ -103,7 +103,13 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
 }
 
 export type NodeResult =
-  | { kind: 'done'; patch: JsonPatch; route: string }
+  | {
+      kind: 'done';
+      patch: JsonPatch;
+      route: string;
+      /** Facts the visit learned, appended in the same write as its `node.finished` (#398). */
+      records?: EventDraft[];
+    }
   | { kind: 'decision'; patch: JsonPatch; route: string; evidence: DecisionEvidence }
   | { kind: 'park'; patch: JsonPatch; wait: Omit<WaitSpec, 'waitId' | 'startedSeq'> }
   | {

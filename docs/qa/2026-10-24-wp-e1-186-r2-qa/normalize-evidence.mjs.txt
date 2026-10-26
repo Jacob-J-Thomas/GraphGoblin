@@ -1,0 +1,27 @@
+import{readdir,readFile,writeFile,copyFile}from'node:fs/promises';
+import{execFileSync}from'node:child_process';
+import{join}from'node:path';
+const out='docs/qa/2026-10-24-wp-e1-186-r2-qa',notes=[];
+for(const n of await readdir(out)){
+ if(!/\.(txt|json|jsonl|md)$/.test(n))continue;
+ const path=join(out,n),buffer=await readFile(path);
+ let text;
+ if(buffer[0]===255&&buffer[1]===254)text=buffer.subarray(2).toString('utf16le');
+ else text=buffer.toString('utf8');
+ const nuls=(text.match(/\u0000/g)??[]).length;
+ if(nuls>0){
+  notes.push({file:n,normalization:'An early UTF-8 conversion of a UTF-16LE PowerShell redirection introduced NULs. ASCII output restored; non-ASCII reporter glyphs may be lost.',nulCount:nuls});
+  text=text.replace(/\u0000/g,'').replace(/^\uFFFD+/,'').replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001A\u001C-\u001F]/g,'');
+ }
+ const p=process.env.USERPROFILE;
+ for(const profile of[p.replaceAll('\\','\\\\'),p,p.replaceAll('\\','/')])text=text.split(profile).join('%USERPROFILE%');
+ await writeFile(path,text);
+ if(n.endsWith('.json'))JSON.parse(text.replace(/^\uFEFF/,''));
+}
+const diff=execFileSync('git',['diff','498da565d445113116495301691e5e284d0e3d42','HEAD','--','.',':!docs/qa'],{maxBuffer:5000000});
+await writeFile(out+'/source.diff.txt',diff);
+await writeFile(out+'/encoding-normalization.json',JSON.stringify(notes,null,2));
+await writeFile(out+'/EVIDENCE-ENCODING.md','# Evidence text encoding\n\nPowerShell command redirection initially emitted UTF-16LE. The first evidence-preparation pass mistakenly read those logs as UTF-8. The affected logs are listed in [encoding-normalization.json](encoding-normalization.json). Their ASCII command output, counts, errors and paths have been restored by removing the introduced NULs; some decorative non-ASCII reporter glyphs may be lost. These normalized logs are readable evidence, not claimed byte-exact original process captures.\n\nNode-produced JSON results, scripts and screenshots did not pass through that UTF-16 conversion. JSON payloads/assertions retain their values, with local user path prefixes redacted to %USERPROFILE%. The requested source diff was regenerated directly from Git as bytes. Digests in NOT-KEPT.md apply to the original omitted raw captures, which were not modified. The final artifact manifest hashes the actual retained files after normalization and Markdown formatting.\n');
+for(const n of ['artifact-manifest.json','report-verification.json','final-state.log.txt','final-markdown-check.log.txt']){try{await readFile(join(out,n));}catch{await writeFile(join(out,n),n.endsWith('.json')?'{}':'');}}
+await copyFile('.tmp/qa186/normalize-evidence.mjs',out+'/normalize-evidence.mjs.txt');
+

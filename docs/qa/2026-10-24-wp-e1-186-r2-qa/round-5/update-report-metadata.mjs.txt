@@ -1,0 +1,8 @@
+import {readFile,writeFile} from 'node:fs/promises';
+const path='docs/qa/2026-10-24-wp-e1-186-r2-qa/round-5/README.md';
+let text=await readFile(path,'utf8');
+text=text.replace('Worktree:','Local QA branch: `codex-qa-wp-e1-186-r2-5`.\n\nWorktree:');
+text=text.replace('Disposable listeners use','Disposable manual/browser app listeners use');
+text=text.replace('original unit fixtures retain their internal disposable subdirectory names beneath the assigned temporary root.','original unit fixtures retain their internal disposable subdirectory names beneath the assigned temporary root and their ordinary OS-assigned ephemeral HTTP transport listeners. The manual/browser instances and API subprocess helper use the assigned range.');
+text=text.replace('**5,718** assertion expressions','**5,718** checked call expressions (every `expect` call and `to*` call, including nested matcher chains)');
+await writeFile(path,text);

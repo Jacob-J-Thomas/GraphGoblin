@@ -1,0 +1,143 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:2 char:179
++ ... ','web')) { & pnpm.cmd --filter "@graphgoblin/$qaPackage" test:covera ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186-r2/packages/infrastructure
+      Coverage enabled with v8
+
+ o' src/adversarial.test.ts (20 tests | 1 failed) 10164ms
+   o' adversarial infrastructure invariants (forks pool) (11)
+     � 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 6314ms
+ o' src/sqlite/upgrade.test.ts (26 tests | 1 failed) 101013ms
+   o' definitions-only format-4 cutover (26)
+     � refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z') 20293ms
+ o' src/process/scripts.test.ts (39 tests | 1 failed) 25930ms
+   o' ProcessScripts (36)
+     � kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 1222ms
+ o' src/claude/process.test.ts (5 tests | 3 failed) 3923ms
+   o' owned native Claude process transport (5)
+     � kills on deadline and output overflow 903ms
+     � does not spawn for an already aborted signal and cancels a running process 358ms
+     � kills the descendant that a long-lived child started 2204ms
+ o' src/claude/readiness.test.ts (21 tests | 1 failed) 21076ms
+   o' Claude no-turn executable boundary (9)
+     � hang reports unknown without exposing CLI bodies 1863ms
+
+�#�#�#�#�#�#�# Failed Tests 7 �#�#�#�#�#�#�#
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-c5mDlh'
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[1/8]�#
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-BksF9m'
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[2/8]�#
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-VD2Ydf'
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[3/8]�#
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxx' to be 'xxxxxxxxxxxxx' // Object.is equality
+
+Expected: "xxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxx"
+
+ o' src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[4/8]�#
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-joCqIo'
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[5/8]�#
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ o' src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' & 
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[6/8]�#
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: expected [Function] to throw an error
+ o' src/process/scripts.test.ts:200:45
+    198|     if (pid === undefined) throw new Error('child did not start');
+    199|     const childPid = pid;
+    200|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    201|   });
+    202|
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[7/8]�#
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: 
+INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z')
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ o' src/sqlite/upgrade.test.ts:432:5
+    430|     "INSERT INTO settings VALUES ('local','defaultModel','\"unknown\"'& 
+    431|     "INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"& 
+    432|   ])('refuses invalid/conflicting owner defaults: %s', async (sql) => {
+       |     ^
+    433|     const handle = await fixture();
+    434|     await handle.client.execute(sql);
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[8/8]�#
+
+
+ Test Files  5 failed | 50 passed (55)
+      Tests  7 failed | 790 passed (797)
+   Start at  01:27:11
+   Duration  321.03s (tests 62%, import 34%, transform 4%, worker 1%)
+
+     Import  219 modules were evaluated 520 times � 189.79s total, 34% of tracked time
+             ~33.03s faster with isolate: false   shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.74% ( 2559/2618 )
+Branches     : 95.28% ( 1860/1952 )
+Functions    : 98.02% ( 547/558 )
+Lines        : 98.61% ( 2275/2307 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  � "pnpm recursive run" failed in C:
+  % %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  % 186-r2\packages\infrastructure
+

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { event } from '../__fixtures__/fake-api.js';
+import { event, runRecord } from '../__fixtures__/fake-api.js';
 import { ApiProvider, createAppClient } from '../api/context.js';
 import {
   markApiReachable,
@@ -45,9 +45,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function mountStream(client = createAppClient('http://graphgoblin.test'), latestSeq?: number) {
-  return renderHook(({ seq }) => useRunEvents(runId, undefined, seq), {
-    initialProps: { seq: latestSeq },
+function mountStream(client = createAppClient('http://graphgoblin.test')) {
+  return renderHook(() => useRunEvents(runId), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <ApiProvider client={client}>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -59,97 +58,86 @@ function options(index = 0): SubscribeRunEventsOptions {
   return subscribe.mock.calls[index]![0];
 }
 
-describe('script recovery observation (#321)', () => {
-  const failed = event(runId, 1, 'run.failed', {
-    failure: { code: 'SCRIPT_OUTCOME_UNCERTAIN', message: 'uncertain', resumable: true },
+function emit(index: number, value: Parameters<SubscribeRunEventsOptions['onEvent']>[0]) {
+  return options(index).onEvent(value, JSON.stringify(value).length * 2);
+}
+describe('run stream reachability', () => {
+  it('confirms cached terminal history with the server before reporting completion', async () => {
+    useRunEventStore.getState().append(runId, event(runId, 1, 'run.cancelled', {}));
+    let finish!: () => void;
+    subscribe.mockImplementation(() => ({
+      lastSeq: 1,
+      done: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+      close: vi.fn(),
+    }));
+    const { result } = mountStream();
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    expect(options().after).toBe(1);
+    expect(result.current.status).toBe('connecting');
+    await act(async () => {
+      await emit(0, event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
+      await emit(0, event(runId, 3, 'run.cancelled', {}));
+      await emit(
+        0,
+        event(runId, 4, 'return.delivered', { channel: { kind: 'caller' }, target: 'run.result' }),
+      );
+      finish();
+    });
+    expect(result.current.events.map((event) => event.seq)).toEqual([1, 2, 3, 4]);
+    expect(result.current.status).toBe('finished');
   });
-  const resumed = event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'owner' } });
-  it.each([2, 3])(
-    'reads past a previous failure when the run snapshot advances to %i',
-    async (seq) => {
-      vi.useFakeTimers();
-      useRunEventStore.getState().append(runId, failed);
-      const view = mountStream(undefined, 1);
-      expect(view.result.current.status).toBe('finished');
-      expect(subscribe).not.toHaveBeenCalled();
-      view.rerender({ seq });
-      expect(subscribe).toHaveBeenCalledTimes(1);
-      expect(options().after).toBe(1);
-      await act(async () => {
-        await options().onEvent(resumed);
-        await options().onEvent(
-          event(runId, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
-        );
-        await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
-      });
-      expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2, 3]);
-      expect(view.result.current.status).toBe('finished');
+  it('flushes an oversized single event immediately without dropping its payload', async () => {
+    vi.useFakeTimers();
+    mountStream();
+    await act(async () => {
+      await emit(
+        0,
+        event(runId, 1, 'run.woken', {
+          nodeId: 'wait',
+          reason: 'manual',
+          payload: 'x'.repeat(600_000),
+        }),
+      );
+    });
+    expect(useRunEventStore.getState().runs[runId]?.uncached).toHaveLength(1);
+  });
+  it.each(['SSE_SLOW_CONSUMER', 'SSE_REPLAY_FAILED'])(
+    'shows a %s reason during retry and clears it when the stream reopens',
+    (code) => {
+      const { result } = mountStream();
+      act(() =>
+        options().onError?.(
+          new GraphGoblinApiError({
+            status: code === 'SSE_SLOW_CONSUMER' ? 503 : 500,
+            code,
+            detail: 'The reader fell behind; reconnecting from the last received event.',
+          }),
+          1,
+        ),
+      );
+      expect(result.current.status).toBe('error');
+      expect(result.current.error).toContain('The reader fell behind');
+      act(() => options().onOpen?.());
+      expect(result.current.status).toBe('live');
+      expect(result.current.error).toBeUndefined();
     },
   );
 
-  it('observes a cached resumed run even though its history contains an earlier failure', () => {
-    useRunEventStore.getState().append(runId, failed, resumed);
-    mountStream(undefined, 2);
-    expect(subscribe).toHaveBeenCalledTimes(1);
-    expect(options().after).toBe(2);
-  });
-
-  it('does not reconnect a live subscription for ordinary snapshot sequence updates', () => {
-    const view = mountStream(undefined, 0);
-    view.rerender({ seq: 3 });
-    view.rerender({ seq: 8 });
-    expect(subscribe).toHaveBeenCalledTimes(1);
-  });
-
-  it('follows multiple recorded outcomes to the latest one while retaining their history', async () => {
+  it('flushes a burst in bounded batches before the batching timer runs', async () => {
     vi.useFakeTimers();
-    useRunEventStore.getState().append(runId, failed);
-    const view = mountStream(undefined, 5);
-    expect(options().after).toBe(1);
+    mountStream();
     await act(async () => {
-      await options().onEvent(resumed);
-      await options().onEvent(
-        event(runId, 3, 'run.failed', {
-          failure: {
-            code: 'SCRIPT_OUTCOME_UNCERTAIN',
-            message: 'uncertain again',
-            resumable: true,
-          },
-        }),
-      );
+      for (let seq = 1; seq <= 600; seq++)
+        await emit(0, event(runId, seq, 'run.started', { attempt: 1 }));
+    });
+    expect(useRunEventStore.getState().runs[runId]?.events.length).toBeGreaterThanOrEqual(512);
+    await act(async () => {
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
     });
-    expect(subscribe).toHaveBeenCalledTimes(2);
-    expect(options(1).after).toBe(3);
-    await act(async () => {
-      await options(1).onEvent(
-        event(runId, 4, 'run.resumed', { actor: { kind: 'user', id: 'owner' } }),
-      );
-      await options(1).onEvent(
-        event(runId, 5, 'run.finished', { status: 'succeeded', outcome: 'success' }),
-      );
-      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
-    });
-    expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 5]);
-    expect(view.result.current.status).toBe('finished');
+    expect(useRunEventStore.getState().runs[runId]?.events).toHaveLength(512);
   });
-
-  it('finishes after reading newer return bookkeeping for the same failed outcome', async () => {
-    vi.useFakeTimers();
-    useRunEventStore.getState().append(runId, failed);
-    const view = mountStream(undefined, 2);
-    expect(options().after).toBe(1);
-    await act(async () => {
-      await options().onEvent(event(runId, 2, 'return.delivered', { channel: { kind: 'log' } }));
-      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
-    });
-    expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2]);
-    expect(view.result.current.status).toBe('finished');
-    expect(subscribe).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('run stream reachability', () => {
   it('leaves an accepted clean close on the stream backoff without reporting an outage', () => {
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries');
@@ -184,7 +172,7 @@ describe('run stream reachability', () => {
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
     await act(async () => {
-      await options().onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(0, event(runId, 5, 'run.started', { attempt: 1 }));
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
     });
     act(() => options().onError?.(GraphGoblinApiError.network('refused'), 1));
@@ -195,7 +183,7 @@ describe('run stream reachability', () => {
     expect(subscribe).toHaveBeenCalledTimes(2);
     act(() => options(1).onOpen?.());
     await act(async () => {
-      await options(1).onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(1, event(runId, 5, 'run.started', { attempt: 1 }));
     });
     act(() => options(1).onError?.(new TypeError('reader failed'), 2));
     expect(reads).toHaveBeenCalledTimes(1);
@@ -203,7 +191,8 @@ describe('run stream reachability', () => {
     act(() => markApiReachable());
     expect(subscribe).toHaveBeenCalledTimes(2);
     await act(async () => {
-      await options(1).onEvent(
+      await emit(
+        1,
         event(runId, 6, 'node.started', {
           nodeId: 'wait',
           attempt: 1,
@@ -367,7 +356,7 @@ describe('run stream reachability', () => {
     vi.useFakeTimers();
     const view = mountStream();
     await act(async () => {
-      await options().onEvent(event(runId, 5, 'run.started', { attempt: 1 }));
+      await emit(0, event(runId, 5, 'run.started', { attempt: 1 }));
     });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
@@ -399,4 +388,84 @@ describe('run stream reachability', () => {
     act(() => options().onError?.(new Error('invalid event frame'), 0));
     expect(useReachability.getState().apiReachable).toBe(true);
   });
+});
+
+describe('explicit script recovery follows resumed attempts (#321)', () => {
+  it.each(['running', 'succeeded'] as const)(
+    'follows an explicit Resume observed as %s without reload or cached-terminal shortcuts',
+    async (status) => {
+      vi.useFakeTimers();
+      const failure = {
+        code: 'SCRIPT_OUTCOME_UNCERTAIN' as const,
+        message: 'uncertain',
+        resumable: true,
+      };
+      let history = [event(runId, 1, 'run.failed', { failure })];
+      let snapshot = runRecord({ id: runId, status: 'failed', failure, lastEventSeq: 1 });
+      const client = createAppClient('http://graphgoblin.test', (request) => {
+        const url = new URL(request.url);
+        if (url.pathname.endsWith('/observation'))
+          return Promise.resolve(
+            Response.json({ lifecycle: history.at(-1), freshSessionChoices: [] }),
+          );
+        if (url.pathname.endsWith('/events')) {
+          const after = Number(url.searchParams.get('after') ?? 0);
+          const items = history.filter((entry) => entry.seq > after);
+          return Promise.resolve(
+            Response.json({ items, nextAfter: items.at(-1)?.seq ?? after, hasMore: false }),
+          );
+        }
+        return Promise.resolve(Response.json(snapshot));
+      });
+      const complete: (() => void)[] = [];
+      subscribe.mockImplementation(() => ({
+        lastSeq: 0,
+        done: new Promise<void>((resolve) => complete.push(resolve)),
+        close: vi.fn(),
+      }));
+      useRunEventStore.getState().append(runId, ...history);
+      const view = mountStream(client);
+      expect(options().after).toBe(1);
+      expect(view.result.current.status).toBe('connecting');
+      await act(async () => {
+        complete[0]!();
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(view.result.current.status).toBe('finished');
+      history = [
+        ...history,
+        event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'owner' } }),
+      ];
+      if (status === 'succeeded')
+        history.push(event(runId, 3, 'run.finished', { status, outcome: 'success' }));
+      snapshot = runRecord({ id: runId, status, lastEventSeq: history.at(-1)!.seq });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      expect(options(1).after).toBe(history.at(-1)!.seq);
+      // Even a fast resumed terminal still needs authoritative stream.complete.
+      expect(view.result.current.status).toBe('connecting');
+      if (status === 'running') {
+        const finished = event(runId, 3, 'run.finished', {
+          status: 'succeeded',
+          outcome: 'success',
+        });
+        history.push(finished);
+        snapshot = runRecord({ id: runId, status: 'succeeded', lastEventSeq: 3 });
+        await act(async () => {
+          await emit(1, finished);
+          await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+        });
+        expect(view.result.current.status).toBe('live');
+      }
+      await act(async () => {
+        complete[1]!();
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(view.result.current.status).toBe('finished');
+      expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2, 3]);
+      expect(subscribe).toHaveBeenCalledTimes(2);
+    },
+  );
 });

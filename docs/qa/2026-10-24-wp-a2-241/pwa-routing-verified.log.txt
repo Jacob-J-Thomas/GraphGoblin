@@ -1,0 +1,87 @@
+Command: pnpm.cmd exec playwright test e2e/pwa.spec.ts e2e/routing.spec.ts --grep "an open window detects|performance:" --retries=0 --workers=1
+Working directory: apps/web
+Node: v22.14.0
+Started: 2026-10-24T22:40:07.932Z
+
+Running 3 tests using 1 worker
+
+  x  1 [chromium] › e2e\pwa.spec.ts:192:1 › an open window detects a changed worker on focus, prompts, and updates only on confirmation (1.8m)
+100 nodes, drag 1: routing 5.100 ms / frame 33.300 ms p95; 7 routes, 287 frames
+100 nodes, drag 2: routing 5.400 ms / frame 50.100 ms p95; 60 routes, 230 frames
+100 nodes, drag 3: routing 8.300 ms / frame 33.400 ms p95; 58 routes, 310 frames
+Routing performance: {"nodes":100,"edges":200,"repeat":1,"channel":"msedge","browser":"156.0.4314.42","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":5.400000095367432,"idle":{"frameP95Ms":33.5,"frameSamples":170},"repetitions":[{"repetition":1,"routingP95Ms":5.100000023841858,"frameP95Ms":33.29999999999927,"addedFrameP95Ms":-0.2000000000007276,"reroutedEdgesP95":11,"routingSamples":7,"frameSamples":287,"durationMs":5005.200000047684,"pointerMovesSent":36,"pointerMovesObserved":9,"inputRadiansPerSecond":6,"samplerStartOffsetMs":28,"firstPointerMs":344.40000009536743,"lastPointerMs":4684.800000071526,"inputDurationMs":5104},{"repetition":2,"routingP95Ms":5.400000095367432,"frameP95Ms":50.099999999998545,"addedFrameP95Ms":16.599999999998545,"reroutedEdgesP95":11,"routingSamples":60,"frameSamples":230,"durationMs":5011.599999976159,"pointerMovesSent":182,"pointerMovesObserved":84,"inputRadiansPerSecond":6,"samplerStartOffsetMs":11,"firstPointerMs":2.600000023841858,"lastPointerMs":5009.199999928474,"inputDurationMs":5127},{"repetition":3,"routingP95Ms":8.299999952316284,"frameP95Ms":33.39999999999782,"addedFrameP95Ms":-0.10000000000218279,"reroutedEdgesP95":11,"routingSamples":58,"frameSamples":310,"durationMs":5001.5,"pointerMovesSent":165,"pointerMovesObserved":79,"inputRadiansPerSecond":6,"samplerStartOffsetMs":8,"firstPointerMs":3.299999952316284,"lastPointerMs":4067.7999999523163,"inputDurationMs":5641}]}
+  x  2 [chromium] › e2e\routing.spec.ts:476:3 › performance: 100 nodes / 200 edges, three five-second pointer drags (29.9s)
+300 nodes, drag 1: routing 11.000 ms / frame 27.400 ms p95; 59 routes, 348 frames
+300 nodes, drag 2: routing 7.600 ms / frame 33.200 ms p95; 56 routes, 362 frames
+300 nodes, drag 3: routing 8.400 ms / frame 33.400 ms p95; 90 routes, 349 frames
+Routing performance: {"nodes":300,"edges":600,"repeat":1,"channel":"msedge","browser":"156.0.4314.42","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":8.399999856948853,"idle":{"frameP95Ms":33.30000000000018,"frameSamples":194},"repetitions":[{"repetition":1,"routingP95Ms":11,"frameP95Ms":27.399999999999636,"addedFrameP95Ms":-5.900000000000546,"reroutedEdgesP95":11,"routingSamples":59,"frameSamples":348,"durationMs":5003.199999976157,"pointerMovesSent":183,"pointerMovesObserved":81,"inputRadiansPerSecond":6,"samplerStartOffsetMs":9,"firstPointerMs":6.799999952316284,"lastPointerMs":4908.899999976158,"inputDurationMs":5117},{"repetition":2,"routingP95Ms":7.600000023841858,"frameP95Ms":33.20000000000073,"addedFrameP95Ms":-0.0999999999994543,"reroutedEdgesP95":11,"routingSamples":56,"frameSamples":362,"durationMs":5003.599999928476,"pointerMovesSent":200,"pointerMovesObserved":76,"inputRadiansPerSecond":6,"samplerStartOffsetMs":6,"firstPointerMs":3.6999999284744263,"lastPointerMs":4990.5,"inputDurationMs":5178},{"repetition":3,"routingP95Ms":8.399999856948853,"frameP95Ms":33.400000000001455,"addedFrameP95Ms":0.10000000000127329,"reroutedEdgesP95":11,"routingSamples":90,"frameSamples":349,"durationMs":5002.199999952318,"pointerMovesSent":288,"pointerMovesObserved":116,"inputRadiansPerSecond":6,"samplerStartOffsetMs":13,"firstPointerMs":6.600000023841858,"lastPointerMs":4965.600000023842,"inputDurationMs":5119}]}
+  x  3 [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags (24.4s)
+
+
+  1) [chromium] › e2e\pwa.spec.ts:192:1 › an open window detects a changed worker on focus, prompts, and updates only on confirmation 
+
+    Test timeout of 100000ms exceeded.
+
+    Error: browserContext.waitForEvent: Test timeout of 100000ms exceeded.
+
+      232 |   // settles. Finish that real fetch before publishing a different worker.
+      233 |   await Promise.all([
+    > 234 |     page.context().waitForEvent('requestfinished', (finished) => {
+          |                    ^
+      235 |       return new URL(finished.url()).pathname === '/app/sw.js';
+      236 |     }),
+      237 |     page.reload(),
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\pwa.spec.ts:234:20
+
+    Error Context: test-results\pwa-an-open-window-detects-5e2af-pdates-only-on-confirmation-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\pwa-an-open-window-detects-5e2af-pdates-only-on-confirmation-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\pwa-an-open-window-detects-5e2af-pdates-only-on-confirmation-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\routing.spec.ts:476:3 › performance: 100 nodes / 200 edges, three five-second pointer drags 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 60
+    Received:   7
+
+      700 |       // A loose ceiling beside the median: no single drag may spike far past it.
+      701 |       expect(result.routingP95Ms).toBeLessThan(16);
+    > 702 |       expect(result.routingSamples).toBeGreaterThan(60);
+          |                                     ^
+      703 |       expect(result.frameSamples).toBeGreaterThan(120);
+      704 |       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+      705 |       if (strictPerf) {
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\routing.spec.ts:702:37
+
+    Error Context: test-results\routing-performance-100-no-2d076-e-five-second-pointer-drags-chromium\error-context.md
+
+  3) [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags 
+
+    Error: expect(received).toBeLessThan(expected)
+
+    Expected: < 8
+    Received:   8.399999856948853
+
+      696 |     // the median bound is 8 ms. Added frame time is reported only:
+      697 |     // idle and drag can use different refresh cadences (for example 120 Hz and 60 Hz).
+    > 698 |     expect(medianRoutingP95Ms).toBeLessThan(medianRoutingLimitMs);
+          |                                ^
+      699 |     for (const result of repetitions) {
+      700 |       // A loose ceiling beside the median: no single drag may spike far past it.
+      701 |       expect(result.routingP95Ms).toBeLessThan(16);
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-a2-241\apps\web\e2e\routing.spec.ts:698:32
+
+    Error Context: test-results\routing-performance-300-no-c363b-e-five-second-pointer-drags-chromium\error-context.md
+
+  3 failed
+    [chromium] › e2e\pwa.spec.ts:192:1 › an open window detects a changed worker on focus, prompts, and updates only on confirmation 
+    [chromium] › e2e\routing.spec.ts:476:3 › performance: 100 nodes / 200 edges, three five-second pointer drags 
+    [chromium] › e2e\routing.spec.ts:476:3 › performance: 300 nodes / 600 edges, three five-second pointer drags 
+
+{"label":"pwa-routing-verified","command":"pnpm.cmd exec playwright test e2e/pwa.spec.ts e2e/routing.spec.ts --grep \"an open window detects|performance:\" --retries=0 --workers=1","cwd":"apps/web","node":"v22.14.0","head":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","endHead":"24d7be41da50944cae25e9093c0591f4a7fdf5c0","applicationPatchSha256":"b4240bc90f81b3a48cd89150456dfc35617476bb2f5d6eda4428312aca6aa212","applicationPatchSha256After":"b4240bc90f81b3a48cd89150456dfc35617476bb2f5d6eda4428312aca6aa212","inputsUnchanged":true,"webDist":"apps/web/dist","started":"2026-10-24T22:40:07.932Z","finished":"2026-10-24T22:45:55.755Z","durationSeconds":347.823,"exitCode":1}

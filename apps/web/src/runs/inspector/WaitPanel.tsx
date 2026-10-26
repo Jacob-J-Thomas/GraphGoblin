@@ -1,8 +1,10 @@
+import type { LoopDefinition } from '@graphgoblin/contracts';
+import { nodeName } from '../projections.js';
 import { runs, type RunSnapshot } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
 import { keys } from '../../api/queries.js';
-import { Alert, Card } from '../../components/ui/index.js';
+import { Alert, BoundedValue, Card } from '../../components/ui/index.js';
 import { KindChip } from '../../editor/KindChip.js';
 import { JsonSchemaForm } from '../../forms/JsonSchemaForm.js';
 import { errorMessage, formatDateTime } from '../../lib/utils.js';
@@ -15,7 +17,13 @@ type Answer = {
 };
 
 /** The run waits on input or a signal: a form for it, generated from the wait node's schema. */
-export function WaitPanel({ run }: { run: RunSnapshot }) {
+export function WaitPanel({
+  run,
+  definition,
+}: {
+  run: RunSnapshot;
+  definition?: LoopDefinition | undefined;
+}) {
   const client = useApi();
   const queryClient = useQueryClient();
   const waiting = run.waiting;
@@ -38,7 +46,7 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
       <Alert tone="info">
         Waiting for {waiting.kind}
         {waiting.until ? ` until ${formatDateTime(waiting.until)}` : ''} at{' '}
-        <code>{waiting.nodeId}</code>.
+        <code className="wrap-anywhere">{nodeName(definition, waiting.nodeId)}</code>.
       </Alert>
     );
   }
@@ -54,8 +62,18 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
       }
     >
       <div className="grid gap-5">
+        <p className="min-w-0 text-sm wrap-anywhere text-muted">
+          At {nodeName(definition, waiting.nodeId)}
+        </p>
         {waiting.prompt ? (
-          <p className="text-lg font-semibold whitespace-pre-wrap">{waiting.prompt}</p>
+          <BoundedValue
+            value={waiting.prompt}
+            text
+            tone="heading"
+            label="Prompt"
+            labelled
+            className="-mx-3"
+          />
         ) : null}
         <JsonSchemaForm
           // One form per wait: the next wait (even at the same node) starts empty, while a refetch

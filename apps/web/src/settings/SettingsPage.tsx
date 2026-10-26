@@ -2,6 +2,7 @@ import { Page, PageHeader } from '../components/layout/index.js';
 import { ApiKeysSection, BrowserKeySection } from './sections/ApiKeysSection.js';
 import { AppearanceSection } from './sections/AppearanceSection.js';
 import { ClassifierModelsSection } from './sections/ClassifierModelsSection.js';
+import { ExecutionDefaultsSection } from './sections/ExecutionDefaultsSection.js';
 import { DefaultsSection } from './sections/DefaultsSection.js';
 import { ModelCatalogSection } from './sections/ModelCatalogSection.js';
 import { InstallSection, PreflightSection } from './sections/PreflightSection.js';
@@ -19,6 +20,7 @@ export function SettingsPage() {
       <ModelCatalogSection />
       <ClassifierModelsSection />
       <DefaultsSection />
+      <ExecutionDefaultsSection />
       <SecretsSection />
       <ApiKeysSection />
       <BrowserKeySection />

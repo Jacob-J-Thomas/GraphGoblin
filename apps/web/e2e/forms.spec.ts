@@ -463,10 +463,10 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
         { timeoutSeconds?: number } | undefined
     )?.timeoutSeconds;
 
-  // The basic set keeps session policy and sandbox visible; model overrides are Advanced.
+  // Model and effort stay in the basic set alongside session policy and sandbox (#205).
   await expect(dialog.getByLabel('Harness', { exact: true })).toBeVisible();
-  await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
-  await expect(dialog.getByLabel('Effort', { exact: true })).toBeHidden();
+  await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
   await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
   const sandbox = dialog.getByRole('radiogroup', { name: 'Sandbox', exact: true });
@@ -488,9 +488,11 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
   await page.keyboard.press('Enter');
   await expect(advanced).toHaveAttribute('aria-expanded', 'true');
   const panel = page.locator(`[id="${await advanced.getAttribute('aria-controls')}"]`);
-  for (const group of ['Model', 'Harness options', 'Output', 'Limits']) {
+  for (const group of ['Harness options', 'Output', 'Limits']) {
     await expect(panel.getByRole('group', { name: group, exact: true })).toBeVisible();
   }
+  await expect(panel.getByLabel('Model', { exact: true })).toHaveCount(0);
+  await expect(panel.getByLabel('Effort', { exact: true })).toHaveCount(0);
 
   // A value set inside, then collapsed: the toggle says so.
   await dialog.getByLabel('Timeout seconds', { exact: true }).fill('120');
