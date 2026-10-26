@@ -79,6 +79,37 @@ describe('reading a store for a reset', () => {
     expect(result).toMatchObject({ readable: false });
   });
 
+  it.each(['stdout', 'stderr'] as const)(
+    'bounds the reader %s stream',
+    async (stream) => {
+      const script = `const stream = process.${stream}; const chunk = 'x'.repeat(65536); function write() { while (stream.write(chunk)) {} stream.once('drain', write); } write();`;
+      const result = await readStoreFacts(join(seeded, 'current', 'graphgoblin.db'), {
+        readerArguments: ['-e', script],
+      });
+      expect(result).toEqual({ readable: false, reason: `store reader ${stream} exceeded 64 MiB` });
+    },
+    60_000,
+  );
+
+  it('reports the stderr of a reader that exits unsuccessfully', async () => {
+    expect(
+      await readStoreFacts(join(seeded, 'current', 'graphgoblin.db'), {
+        readerArguments: ['-e', 'process.stderr.write("reader failure"); process.exitCode = 2'],
+      }),
+    ).toEqual({ readable: false, reason: 'reader failure' });
+  });
+
+  it('surfaces a private-copy cleanup failure instead of proceeding with an unreadable store', async () => {
+    await expect(
+      readStoreFacts(join(seeded, 'current', 'graphgoblin.db'), {
+        readerArguments: [
+          '-e',
+          'process.stdout.write(JSON.stringify({ copyFailure: "private copy could not be removed" }))',
+        ],
+      }),
+    ).rejects.toThrow('private copy could not be removed');
+  });
+
   it('reads a copy in this process and reports a reader started without a path', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'gg-store-facts-copy-'));
     try {

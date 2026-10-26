@@ -6,12 +6,13 @@ import { loadConfig, type ApiConfig } from '../config.js';
 import { acquireDataDirLock, dataDirLockState, type DataDirLock } from '../data-dir-lock.js';
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
+import { cleanupStaleStoreCopies } from './store-copy.js';
 import { identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
  * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
- * cannot open. Without `--yes` it only lists what a reset would remove (a dry run, which reads and
- * changes nothing). With `--yes --data-dir <path>` naming the configured data directory it takes
+ * cannot open. Without `--yes` it only lists what a reset would remove (a dry run, which changes
+ * no data-directory byte). With `--yes --data-dir <path>` naming the configured data directory it takes
  * the data-directory lock, lists the same manifest and removes exactly that: the database and its
  * SQLite sidecars, the artifact directory, and the run workspaces whose names are stored run IDs,
  * then the lock file last. Planned identities are rechecked before each removal (see tree.ts for
@@ -688,6 +689,7 @@ export async function runResetCli(options: ResetCliOptions = {}): Promise<number
     return 1;
   }
   try {
+    await cleanupStaleStoreCopies();
     return await resetDataDirectory(config, args, {
       write,
       readStore: options.readStore ?? ((file) => readStoreFacts(file)),

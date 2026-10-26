@@ -5,8 +5,9 @@ import { isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
  * Filesystem entries of a reset (ADR-0042). An entry identified as a symbolic link or Windows
  * junction is listed without descending into it and unlinked itself. See removeEntry for the
  * remaining external-process race. Anything that is neither a regular file, a directory nor a
- * link (a FIFO, a socket, a device) is `other`: it is never accepted as a database file, and inside
- * a removed directory it is unlinked like any other non-directory entry.
+ * link (a FIFO, a socket, a device) is `other` when lstat can inspect it: it is never accepted as a
+ * database file, and inside a removed directory it is unlinked like any other non-directory entry.
+ * Uninspectable entries (including Windows AF_UNIX sockets) refuse the reset; never unlink blind.
  */
 export type EntryKind = 'file' | 'directory' | 'link' | 'other';
 
@@ -26,6 +27,20 @@ export function hasCode(error: unknown, code: string): boolean {
   return error instanceof Error && 'code' in error && error.code === code;
 }
 
+/** No fallback to stat: an inaccessible reparse point must never be followed or removed blindly. */
+async function inspect(path: string) {
+  try {
+    return await lstat(path, { bigint: true });
+  } catch (error) {
+    if (hasCode(error, 'EACCES') || hasCode(error, 'EPERM'))
+      throw new Error(
+        `${path} cannot be inspected without following it on this system. Stop the program using it, check its permissions, and move or remove that entry yourself, then run the reset again`,
+        { cause: error },
+      );
+    throw error;
+  }
+}
+
 /**
  * The identity of the entry at `path` without following links: the volume root of the path, the
  * device and the file index as 64-bit values, which is how the filesystem itself tells one file
@@ -37,7 +52,7 @@ export function hasCode(error: unknown, code: string): boolean {
  */
 export async function identityOf(path: string): Promise<string | undefined> {
   try {
-    return identityFrom(path, await lstat(path, { bigint: true }));
+    return identityFrom(path, await inspect(path));
   } catch (error) {
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
     throw error;
@@ -80,12 +95,12 @@ export async function statEntry(root: string, path: string): Promise<TreeEntry |
     for (let depth = 0; depth < segments.length; depth += 1) {
       const parent = segments.slice(0, depth).join('/');
       const parentFull = absolute(root, parent);
-      const stats = await lstat(parentFull, { bigint: true });
+      const stats = await inspect(parentFull);
       if (kindOf(stats) !== 'directory')
         throw new Error(`${parent || 'data-directory root'} is not a physical directory`);
       ancestors.push({ path: parent, identity: identityFrom(parentFull, stats) });
     }
-    const stats = await lstat(full, { bigint: true });
+    const stats = await inspect(full);
     const kind = kindOf(stats);
     return {
       path,
@@ -152,7 +167,7 @@ export async function removeEntry(root: string, entry: TreeEntry): Promise<void>
 /** Missing paths are a changed plan too; identify what moved instead of reporting only ENOENT. */
 async function removalStat(path: string, description: string) {
   try {
-    return await lstat(path, { bigint: true });
+    return await inspect(path);
   } catch (error) {
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR'))
       throw new Error(`${description} was moved or removed during the reset`, { cause: error });

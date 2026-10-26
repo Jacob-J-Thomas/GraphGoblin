@@ -1,10 +1,5 @@
-import { execFile } from 'node:child_process';
-import { constants } from 'node:fs';
-import { copyFile, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { promisify } from 'node:util';
 import { openDatabase, type DatabaseHandle } from '@graphgoblin/infrastructure/sqlite';
 import { z } from 'zod';
 
@@ -24,6 +19,7 @@ export const StoreFactsSchema = z.discriminatedUnion('readable', [
   z.object({ readable: z.literal(false), reason: z.string() }),
 ]);
 export type StoreFacts = z.infer<typeof StoreFactsSchema>;
+const ReaderResultSchema = z.union([StoreFactsSchema, z.object({ copyFailure: z.string() })]);
 
 const message = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
@@ -70,7 +66,7 @@ export async function readStoreFactsFromFile(file: string): Promise<StoreFacts> 
 /** How long the reader process may take before its store counts as unreadable. */
 export const STORE_READ_TIMEOUT_MS = 120_000;
 
-/** The reader process's arguments before the copy's path: the built entry beside this module. */
+/** The reader process's arguments before the source path and parent PID: the adjacent built entry. */
 export function defaultReaderArguments(): string[] {
   return [fileURLToPath(new URL('./store-facts-reader.js', import.meta.url))];
 }
@@ -82,9 +78,61 @@ export interface ReadStoreOptions {
 }
 
 /**
+ * A separate process group is essential on Windows: non-detached children are killed when the
+ * CLI's libuv job closes. Retain pipes and await close on normal reads; detachment only lets the
+ * copy owner finish its cleanup after a killed CLI. Keep the existing 120 s / 64 MiB bounds.
+ */
+function readerOutput(databaseFile: string, options: ReadStoreOptions): Promise<string> {
+  const child = spawn(
+    process.execPath,
+    [...(options.readerArguments ?? defaultReaderArguments()), databaseFile, String(process.pid)],
+    { detached: true, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  let stdout = '',
+    stderr = '';
+  let stdoutBytes = 0,
+    stderrBytes = 0;
+  let failure: Error | undefined;
+  const limit = 64 * 1024 * 1024;
+  child.stdout.setEncoding('utf8').on('data', (text: string) => {
+    stdoutBytes += Buffer.byteLength(text);
+    if (stdoutBytes <= limit) stdout += text;
+    else {
+      failure ??= new Error('store reader stdout exceeded 64 MiB');
+      child.kill();
+    }
+  });
+  child.stderr.setEncoding('utf8').on('data', (text: string) => {
+    stderrBytes += Buffer.byteLength(text);
+    if (stderrBytes <= limit) stderr += text;
+    else {
+      failure ??= new Error('store reader stderr exceeded 64 MiB');
+      child.kill();
+    }
+  });
+  child.on('error', (error) => {
+    failure ??= error;
+  });
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      failure ??= new Error('store reader timed out');
+      child.kill();
+    }, options.timeoutMs ?? STORE_READ_TIMEOUT_MS);
+    child.once('close', (code, signal) => {
+      clearTimeout(timer);
+      if (failure || code !== 0)
+        reject(
+          failure ?? new Error(stderr || `store reader exited with ${signal ?? String(code)}`),
+        );
+      else resolve(stdout);
+    });
+  });
+}
+
+/**
  * Read the facts of `databaseFile` without touching it or its directory: copy it (and its WAL, so
  * committed but uncheckpointed rows count) into a private temporary directory, read the copy in a
- * child process whose exit releases every native handle, then remove the copy. Opening even a
+ * child copy owner, which waits for its SQLite worker to exit and removes the copy. Opening even a
  * read-only SQLite connection creates or updates `-wal`/`-shm` files beside the database, so the
  * original is never opened. A store that cannot be read reports why instead of failing.
  */
@@ -92,30 +140,14 @@ export async function readStoreFacts(
   databaseFile: string,
   options: ReadStoreOptions = {},
 ): Promise<StoreFacts> {
-  const directory = await mkdtemp(join(tmpdir(), 'gg-reset-store-'));
+  let result: z.infer<typeof ReaderResultSchema>;
   try {
-    const copy = join(directory, 'store.db');
-    await copyFile(databaseFile, copy, constants.COPYFILE_EXCL);
-    await copyFile(databaseFile + '-wal', copy + '-wal', constants.COPYFILE_EXCL).catch(
-      (error: unknown) => {
-        if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
-      },
-    );
-    const { stdout } = await promisify(execFile)(
-      process.execPath,
-      [...(options.readerArguments ?? defaultReaderArguments()), copy],
-      {
-        timeout: options.timeoutMs ?? STORE_READ_TIMEOUT_MS,
-        maxBuffer: 64 * 1024 * 1024,
-        windowsHide: true,
-      },
-    );
-    return StoreFactsSchema.parse(JSON.parse(stdout));
+    const stdout = await readerOutput(databaseFile, options);
+    result = ReaderResultSchema.parse(JSON.parse(stdout));
   } catch (error) {
     return { readable: false, reason: message(error) };
-  } finally {
-    // The reader has exited, so nothing holds the copy; a failure here would leave a copy of the
-    // store in the temporary directory, which the caller must hear about.
-    await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
+  // A cleanup failure must refuse the reset, not downgrade to an unreadable store and proceed.
+  if ('copyFailure' in result) throw new Error(result.copyFailure);
+  return result;
 }

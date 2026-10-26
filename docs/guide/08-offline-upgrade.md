@@ -32,7 +32,9 @@ A reset removes, inside the data directory only:
 - the database file and its SQLite sidecars (`-wal`, `-shm`, `-journal`);
 - the lock file, last, when the reset releases it.
 
-It keeps `master.key` (the secret-store key: a backup of the database stays readable with it, and the next store reuses it), every other entry, and anything under `workspaces/` that is not a stored run ID. It never follows a symbolic link or junction: a link inside the data directory is removed as a link and its target is untouched, so repositories, working directories and harness installations that loops refer to are never touched. Browser device drafts live in each browser; see [Old device drafts](#old-device-drafts-in-a-browser).
+It keeps `master.key` (the secret-store key: a backup of the database stays readable with it, and the next store reuses it), every other entry, and anything under `workspaces/` that is not a stored run ID. Entries identified as symbolic links or junctions are removed as links themselves. Immediately before removal the reset checks the planned identities of the physical root, every ancestor and the entry. These checks protect referenced repositories, working directories and harness installations, subject to Node's remaining race: it offers no handle-relative removal, so an external process can still change the tree between a check and removal. The lock prevents concurrent GraphGoblin changes. Browser device drafts live in each browser; see [Old device drafts](#old-device-drafts-in-a-browser).
+
+An inspectable special file (socket, FIFO or device) inside a removed directory is unlinked, a special file at the root is kept, and a special file configured as the database is refused. Some entries cannot be inspected without following them on a particular system: Windows AF_UNIX socket files, for example, make Node's `lstat` return access denied. Both the dry run and confirmed reset then refuse, naming the path and changing no data-directory byte. Stop the program using it, check its permissions, and move or remove that entry yourself before running the reset again. The reset never guesses its identity or removes it blindly.
 
 A reset cannot be undone. If you might want the data later, stop GraphGoblin and copy the whole data directory somewhere safe first.
 
@@ -44,7 +46,7 @@ Stop every GraphGoblin process that uses the data directory (the API, `pnpm star
 node apps/api/dist/main.js --reset --data-dir "C:\Users\you\.graphgoblin"
 ```
 
-This dry run reads and prints; it changes nothing. It does not open the database with SQLite, which would rewrite its sidecar files: the format marker and run IDs are read from a temporary copy. `--data-dir` is optional here; when given it must name the configured data directory. Sample output:
+This dry run reads and prints; it changes no byte in the data directory. It does not open the database with SQLite, which would rewrite its sidecar files: the format marker and run IDs are read from a temporary copy. `--data-dir` is optional here; when given it must name the configured data directory. The independent reader owns that copy and removes it after its SQLite worker exits; it also monitors whether the reset CLI is still alive. If both processes are terminated before cleanup, the next valid reset also cleans stale private copies in the system temp directory. It only removes its exact dedicated prefix plus valid ownership metadata and matching directory identity, after both recorded owners are provably dead and no unexpected entries are present. Similar names, unmarked or malformed directories, links and live or uncertain owners are left alone. No age-based temp cleanup is performed. A private-copy cleanup failure refuses the reset with the named directory to check. Sample output:
 
 ```text
 GraphGoblin reset (dry run: nothing is removed)
