@@ -35,7 +35,7 @@ async function freePort() {
   throw new Error('No free #321 port in 6371..6389');
 }
 
-test('a real interrupted script explains its effect and only Resume repeats it (#321)', async ({
+test('an uncertain script needs consent; deliberate Replay runs the script as a new run (#321)', async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
@@ -178,7 +178,9 @@ test('a real interrupted script explains its effect and only Resume repeats it (
     const earlierReplay = page.getByRole('dialog', { name: 'Replay as a new run' });
     await earlierReplay.getByLabel('Replay from node').selectOption('start');
     await expect(earlierReplay.getByRole('button', { name: 'Create replay run' })).toBeDisabled();
-    await expect(earlierReplay).toContainText('could repeat recorded external work');
+    await expect(earlierReplay).toContainText('current uncertain script');
+    await earlierReplay.getByRole('checkbox', { name: /I explicitly allow/ }).check();
+    await expect(earlierReplay.getByRole('button', { name: 'Create replay run' })).toBeEnabled();
     await earlierReplay.getByRole('button', { name: 'Cancel', exact: true }).click();
     expect(await count()).toBe(1);
     await eventually(async () => !(await markerRunning()));
@@ -204,14 +206,19 @@ test('a real interrupted script explains its effect and only Resume repeats it (
     expect(completed.status).toBe('succeeded');
     await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
     expect(await count()).toBe(2);
-    // Replay after the consumed marker keeps its recorded state; replaying the script is refused.
+    await eventually(async () =>
+      Boolean((await call<RunRecord>('GET', `/runs/${run.id}`)).finalizedAt),
+    );
+    // Deliberate Replay runs the chosen script for a new run, preserving the source history.
     await page.getByRole('button', { name: 'Replay...', exact: true }).click();
     const replayDialog = page.getByRole('dialog', { name: 'Replay as a new run' });
     await replayDialog.getByLabel('Replay from node').selectOption('script');
-    await expect(replayDialog.getByRole('button', { name: 'Create replay run' })).toBeDisabled();
-    await expect(replayDialog).toContainText('could repeat recorded external work');
+    await expect(replayDialog.getByRole('button', { name: 'Create replay run' })).toBeEnabled();
+    await expect(replayDialog.getByRole('list', { name: 'Work that can run again' })).toContainText(
+      'Effect (script): script',
+    );
     expect(await count()).toBe(2);
-    await replayDialog.getByLabel('Replay from node').selectOption('done');
+    const sourceHistory = await call('GET', `/runs/${run.id}/events`);
     const replayResponse = page.waitForResponse((response) =>
       response.url().endsWith(`/runs/${run.id}/replay`),
     );
@@ -225,9 +232,10 @@ test('a real interrupted script explains its effect and only Resume repeats it (
     await eventually(
       async () => (await call<RunRecord>('GET', `/runs/${fork.id}`)).status === 'succeeded',
     );
-    expect(await count()).toBe(2);
+    expect(await count()).toBe(3);
+    expect(await call('GET', `/runs/${run.id}/events`)).toEqual(sourceHistory);
     expect((await call<RunRecord>('GET', `/runs/${run.id}`)).status).toBe('succeeded');
-    await page.screenshot({ path: testInfo.outputPath('replay-after-consumed-script.png') });
+    await page.screenshot({ path: testInfo.outputPath('replay-script-as-new-run.png') });
   } catch (error) {
     console.warn(
       JSON.stringify({

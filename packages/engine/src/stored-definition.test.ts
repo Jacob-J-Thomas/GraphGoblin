@@ -117,7 +117,7 @@ describe('stored definitions with an Event destination (#242)', () => {
     const version = stored(e, (await e.ports.loops.getVersion(ok.versionId))!);
     await expect(e.start(version.loopId)).rejects.toBeInstanceOf(LoopUpgradeRequiredError);
     await expect(e.manager.replay({ runId: ok.id, nodeId: 'ask' })).rejects.toMatchObject({
-      code: 'RUN_ACTIVE',
+      code: 'DEFINITION_UNAVAILABLE',
     });
     expect([...e.ports.runs.runs.values()]).toHaveLength(1);
   });

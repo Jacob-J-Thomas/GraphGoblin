@@ -1,0 +1,555 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/sqlite/definition-pins.test.ts (13 tests | 2 failed) 3641ms
+   ❯ draft snapshots (11)
+     × materializes omitted deadline fields in every stored copy, preserving authored null 572ms
+     × materializes omitted deadline fields in every stored copy, preserving authored 250 329ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 10943ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 6226ms
+ ❯ src/sqlite/delivery-runs.test.ts (32 tests | 24 failed) 4956ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook"}}) 133ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"}}) 148ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":42}) 131ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":17}) 231ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"unexpectedEvidence":"keep-this-damaged-record"}) 136ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":null}) 128ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":17},"error":"failed"}) 163ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","extra":true},"error":"failed"}) 126ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"failed","target":"unexpected"}) 188ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 154ms
+   × migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 133ms
+   × migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}}) 180ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":["corrupt"]}) alongside a healthy run 141ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"}) alongside a healthy run 139ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":17}) alongside a healthy run 114ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[null]}) alongside a healthy run 156ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[17]}) alongside a healthy run 224ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[true]}) alongside a healthy run 127ms
+   × migration isolates a damaged pending returnDefaults ({"defaults":[{"kind":"webhook"}]}) alongside a healthy run 155ms
+   × one-off migration converts historical webhook outcomes without retrying or changing other sinks 132ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (succeeded) 244ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (running) 132ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (resumed) 162ms
+   × one-off migration queues only the current unfinished return, including invocation defaults (receipted) 116ms
+ ❯ src/sqlite/catalog.test.ts (7 tests | 1 failed) 25170ms
+   ❯ model catalog source migration and repository (7)
+     × can roll back the column and migration record without losing model data 215ms
+ ❯ src/process/scripts.test.ts (41 tests | 1 failed) 18642ms
+   ❯ ProcessScripts (38)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 312ms
+ ❯ src/sqlite/history-summaries.test.ts (16 tests | 1 failed) 4387ms
+   ❯ SQLite history queries (16)
+     × applies the history index to an existing current-format store and reruns idempotently 680ms
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts (27 tests | 27 failed) 3534ms
+   × frozen receipt contract: omitted optionals 320ms
+   × frozen receipt contract: empty optionals 145ms
+   × frozen receipt contract: ASCII maxima 112ms
+   × frozen receipt contract: astral maxima 106ms
+   × frozen receipt contract: short embedded NUL 118ms
+   × frozen receipt contract: URL normalization preserves stored chan… 121ms
+   × frozen receipt contract: failure ASCII maximum 142ms
+   × frozen receipt contract: failure astral maximum 100ms
+   × frozen receipt contract: empty failure 92ms
+   × frozen receipt contract: astral target 2049 137ms
+   × frozen receipt contract: astral secret 65 101ms
+   × frozen receipt contract: astral error 2001 162ms
+   × frozen receipt contract: target 4097 code points 180ms
+   × frozen receipt contract: ASCII target overflow 160ms
+   × frozen receipt contract: ASCII secret overflow 139ms
+   × frozen receipt contract: ASCII error overflow 111ms
+   × frozen receipt contract: NUL target overflow 154ms
+   × frozen receipt contract: NUL secret overflow 107ms
+   × frozen receipt contract: NUL error overflow 89ms
+   × frozen receipt contract: invalid URL 101ms
+   × frozen receipt contract: numeric target 116ms
+   × frozen receipt contract: unknown evidence 122ms
+   × commits receipt conversion, structure and migration ledger atomically 131ms
+   × preserves damaged receipt invalid JSON 103ms
+   × preserves damaged receipt invalid envelope timestamp 104ms
+   × preserves damaged receipt unexpected envelope field 107ms
+   × preserves damaged receipt unexpected node id 142ms
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed) 18676ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 1818ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 3771ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 1853ms
+     × does not spawn for an already aborted signal and cancels a running process 251ms
+     × kills the descendant that a long-lived child started 1090ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 61 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-process-tree-kjUBCv'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/62]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-yZ57NX'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/62]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-mdkiwm'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/62]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxx' to be 'xxxxx' // Object.is equality
+
+Expected: "xxxxx"
+Received: "xxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/62]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '%USERPROFILE%\AppData\Local\Temp\gg-claude-process-47Jd1D'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/62]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/62]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: expected [Function] to throw an error
+ ❯ src/process/scripts.test.ts:203:45
+    201|     if (pid === undefined) throw new Error('child did not start');
+    202|     const childPid = pid;
+    203|     expect(() => process.kill(childPid, 0)).toThrow();
+       |                                             ^
+    204|   });
+    205|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/62]⎯
+
+ FAIL  src/sqlite/catalog.test.ts > model catalog source migration and repository > can roll back the column and migration record without losing model data
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ applyShippedSqlToHistoricalTestFixture src/sqlite/testing/shipped-migrations.ts:73:55
+     71|     for (const migration of readMigrationFiles({ migrationsFolder: fol…
+     72|       if (migration.folderMillis <= last) continue;
+     73|       for (const statement of migration.sql) await tx.execute(statemen…
+       |                                                       ^
+     74|       await tx.execute({
+     75|         sql: 'INSERT INTO __drizzle_migrations(hash,created_at) VALUES…
+ ❯ src/sqlite/catalog.test.ts:331:7
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ applyShippedSqlToHistoricalTestFixture src/sqlite/testing/shipped-migrations.ts:73:55
+ ❯ src/sqlite/catalog.test.ts:331:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/62]⎯
+
+ FAIL  src/sqlite/definition-pins.test.ts > draft snapshots > materializes omitted deadline fields in every stored copy, preserving authored null
+Error: Failed query: insert into "runs" ("id", "owner_id", "loop_id", "version_id", "parent_run_id", "replay_intent_source_run_id", "replay_intent_node_id", "replay_intent_observed_seq", "invocation_id", "status", "current_node_id", "iteration", "waiting", "cancel_requested_at", "paused_at", "failure", "outcome", "result", "created_at", "started_at", "finished_at", "last_event_seq", "initial_thread", "thread_snapshot", "thread_snapshot_seq", "thread_snapshot_replay_state", "finalized_at", "pinned") values (?, ?, ?, ?, ?, null, null, null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, null, null, null, ?)
+params: QPZWXEA259SG65S344QN4BZFVT,local,00000000000000000000000001,T0CWBKV1Q7NQ07QN3FQQZ7BP8C,,NN6RCC82J3WKT7EKYMHS0VC2FN,queued,,1,,,,,,,2026-10-02T12:00:00.000Z,,,0,{"schemaVersion":1,"run":{"id":"QPZWXEA259SG65S344QN4BZFVT","loopId":"00000000000000000000000001","versionId":"T0CWBKV1Q7NQ07QN3FQQZ7BP8C","iteration":1},"invocation":{"id":"NN6RCC82J3WKT7EKYMHS0VC2FN","source":"manual.api","trigger":{"nodeId":"start","kind":"manual","payload":null,"receivedAt":"2026-10-02T12:00:00.000Z"}},"messages":[],"vars":{},"artifacts":[],"outputs":{},"gates":{},"counters":{"nodeVisits":{},"usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}},{"schemaVersion":1,"run":{"id":"QPZWXEA259SG65S344QN4BZFVT","loopId":"00000000000000000000000001","versionId":"T0CWBKV1Q7NQ07QN3FQQZ7BP8C","iteration":1},"invocation":{"id":"NN6RCC82J3WKT7EKYMHS0VC2FN","source":"manual.api","trigger":{"nodeId":"start","kind":"manual","payload":null,"receivedAt":"2026-10-02T12:00:00.000Z"}},"messages":[],"vars":{},"artifacts":[],"outputs":{},"gates":{},"counters":{"nodeVisits":{},"usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}},{"source":"draft","version":1,"name":"Additive defaults","label":"Additive defaults draft v1","defaults":{"owner":{"byHarness":{}},"process":{"byHarness":{}}},"limits":{"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null},"classifiers":{}}
+ ❯ LibSQLPreparedQuery.queryWithCache ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/sqlite-core/session.ts:80:11
+ ❯ LibSQLPreparedQuery.run ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:197:10
+ ❯ SqliteRunRepository.create src/sqlite/runs.ts:110:5
+    108|
+    109|   async create(run: RunRecord, initialThread: ContextThread): Promise<…
+    110|     await this.db.insert(runs).values(runInsert(RunRecordSchema.parse(…
+       |     ^
+    111|   }
+    112|
+ ❯ src/sqlite/definition-pins.test.ts:157:7
+
+Caused by: LibsqlError: SQLITE_ERROR: table runs has no column named replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', extendedCode: 'SQLITE_ERROR', rawCode: 1 }
+Caused by: SqliteError: table runs has no column named replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/62]⎯
+
+ FAIL  src/sqlite/definition-pins.test.ts > draft snapshots > materializes omitted deadline fields in every stored copy, preserving authored 250
+Error: Failed query: insert into "runs" ("id", "owner_id", "loop_id", "version_id", "parent_run_id", "replay_intent_source_run_id", "replay_intent_node_id", "replay_intent_observed_seq", "invocation_id", "status", "current_node_id", "iteration", "waiting", "cancel_requested_at", "paused_at", "failure", "outcome", "result", "created_at", "started_at", "finished_at", "last_event_seq", "initial_thread", "thread_snapshot", "thread_snapshot_seq", "thread_snapshot_replay_state", "finalized_at", "pinned") values (?, ?, ?, ?, ?, null, null, null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, null, null, null, ?)
+params: QPZWXEA259SG65S344QN4BZFVT,local,00000000000000000000000001,T0CWBKV1Q7NQ07QN3FQQZ7BP8C,,NN6RCC82J3WKT7EKYMHS0VC2FN,queued,,1,,,,,,,2026-10-02T12:00:00.000Z,,,0,{"schemaVersion":1,"run":{"id":"QPZWXEA259SG65S344QN4BZFVT","loopId":"00000000000000000000000001","versionId":"T0CWBKV1Q7NQ07QN3FQQZ7BP8C","iteration":1},"invocation":{"id":"NN6RCC82J3WKT7EKYMHS0VC2FN","source":"manual.api","trigger":{"nodeId":"start","kind":"manual","payload":null,"receivedAt":"2026-10-02T12:00:00.000Z"}},"messages":[],"vars":{},"artifacts":[],"outputs":{},"gates":{},"counters":{"nodeVisits":{},"usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}},{"schemaVersion":1,"run":{"id":"QPZWXEA259SG65S344QN4BZFVT","loopId":"00000000000000000000000001","versionId":"T0CWBKV1Q7NQ07QN3FQQZ7BP8C","iteration":1},"invocation":{"id":"NN6RCC82J3WKT7EKYMHS0VC2FN","source":"manual.api","trigger":{"nodeId":"start","kind":"manual","payload":null,"receivedAt":"2026-10-02T12:00:00.000Z"}},"messages":[],"vars":{},"artifacts":[],"outputs":{},"gates":{},"counters":{"nodeVisits":{},"usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}},{"source":"draft","version":1,"name":"Additive defaults","label":"Additive defaults draft v1","defaults":{"owner":{"byHarness":{}},"process":{"byHarness":{}}},"limits":{"maxNodeVisits":10,"runDeadlineSeconds":5,"structuredTimeoutMs":250},"classifiers":{}}
+ ❯ LibSQLPreparedQuery.queryWithCache ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/sqlite-core/session.ts:80:11
+ ❯ LibSQLPreparedQuery.run ../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:197:10
+ ❯ SqliteRunRepository.create src/sqlite/runs.ts:110:5
+    108|
+    109|   async create(run: RunRecord, initialThread: ContextThread): Promise<…
+    110|     await this.db.insert(runs).values(runInsert(RunRecordSchema.parse(…
+       |     ^
+    111|   }
+    112|
+ ❯ src/sqlite/definition-pins.test.ts:157:7
+
+Caused by: LibsqlError: SQLITE_ERROR: table runs has no column named replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', extendedCode: 'SQLITE_ERROR', rawCode: 1 }
+Caused by: SqliteError: table runs has no column named replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Client.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/62]⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook"}})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"}})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":42})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":17})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"unexpectedEvidence":"keep-this-damaged-record"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":null})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":17},"error":"failed"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","extra":true},"error":"failed"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"failed","target":"unexpected"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"target":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.failed receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test"},"error":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"})
+ FAIL  src/sqlite/delivery-runs.test.ts > migration preserves shape-damaged return.delivered receipts byte for byte ({"channel":{"kind":"webhook","url":"https://example.test","secretRef":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}})
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:101:3
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:101:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/62]⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":["corrupt"]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":"corrupt"}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":17}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[null]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[17]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[true]}) alongside a healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"defaults":[{"kind":"webhook"}]}) alongside a healthy run
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:166:5
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:166:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/62]⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration converts historical webhook outcomes without retrying or changing other sinks
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:274:3
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:274:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/62]⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (succeeded)
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (running)
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (resumed)
+ FAIL  src/sqlite/delivery-runs.test.ts > one-off migration queues only the current unfinished return, including invocation defaults (receipted)
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:344:5
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ migrateHistoricalReturns src/sqlite/delivery-runs.test.ts:56:3
+ ❯ src/sqlite/delivery-runs.test.ts:344:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/62]⎯
+
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > applies the history index to an existing current-format store and reruns idempotently
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/history-summaries.test.ts:42:5
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/history-summaries.test.ts:42:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/62]⎯
+
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: omitted optionals
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: empty optionals
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII maxima
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral maxima
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: short embedded NUL
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: URL normalization preserves stored chan…
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: failure ASCII maximum
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: failure astral maximum
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: empty failure
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral target 2049
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral secret 65
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: astral error 2001
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: target 4097 code points
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII target overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII secret overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: ASCII error overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: NUL target overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: NUL secret overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: NUL error overflow
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: invalid URL
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: numeric target
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: unknown evidence
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:70:3
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:70:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/62]⎯
+
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > commits receipt conversion, structure and migration ledger atomically
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:111:3
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:111:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/62]⎯
+
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt invalid JSON
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt invalid envelope timestamp
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt unexpected envelope field
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > preserves damaged receipt unexpected node id
+LibsqlError: SQLITE_ERROR: duplicate column name: replay_intent_source_run_id
+ ❯ mapSqliteError ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+    326|     if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+    327|       await convertHistoricalWebhookReceipts(tx);
+    328|     for (const statement of migration.sql) await tx.execute(statement);
+       |                                                     ^
+    329|     await tx.execute({
+    330|       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES …
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:137:3
+
+Caused by: SqliteError: duplicate column name: replay_intent_source_run_id
+ ❯ convertError ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:59:12
+ ❯ Database.prepare ../../node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:131:13
+ ❯ executeStmt ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28
+ ❯ Sqlite3Transaction.execute ../../node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:425:16
+ ❯ structuralMigrations src/sqlite/store-format.ts:328:53
+ ❯ migrateCurrentStore src/sqlite/store-format.ts:340:5
+ ❯ Object.migrate src/sqlite/db.ts:229:12
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:137:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SQLITE_ERROR', rawCode: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/62]⎯
+
+
+ Test Files  9 failed | 48 passed (57)
+      Tests  61 failed | 740 passed (801)
+   Start at  06:02:51
+   Duration  380.73s (tests 58%, import 39%, transform 2%, worker 1%)
+
+     Import  193 modules were evaluated 323 times · 128.86s total, 39% of tracked time
+             ~51.86s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.82% ( 2336/2388 )
+Branches     : 95.73% ( 1796/1876 )
+Functions    : 98.27% ( 513/522 )
+Lines        : 98.99% ( 2075/2096 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\infrastructure
+

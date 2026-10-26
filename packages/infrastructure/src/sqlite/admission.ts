@@ -2,6 +2,8 @@ import { JsonValueSchema, RunEventSchema } from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
+  RecoveryRefusedError,
+  EngineRequestError,
   assertAdmissionIdentity,
   assertWebhookClaim,
   childLinkEvent,
@@ -79,6 +81,19 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     if (!run) throw new AdmissionConflictError();
     return run;
   }
+  async findReplay(sourceRunId: string, nodeId: string, observedSeq: number) {
+    const [row] = await this.db
+      .select(rawRunColumns)
+      .from(runs)
+      .where(
+        and(
+          eq(runs.replayIntentSourceRunId, sourceRunId),
+          eq(runs.replayIntentNodeId, nodeId),
+          eq(runs.replayIntentObservedSeq, observedSeq),
+        ),
+      );
+    return row ? decodeRunRecord(row) : undefined;
+  }
   createPollItem(authored: RunAdmission) {
     return this.commit(authored, undefined, true);
   }
@@ -92,6 +107,30 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     const input = parseRunAdmission(authored);
     const poll = pollItem ? pollAdmissionIdentity(input) : undefined;
     const committed = await this.db.transaction(async (tx) => {
+      const replay = input.replayIntent;
+      const replayScope = replay
+        ? and(
+            eq(runs.replayIntentSourceRunId, replay.sourceRunId),
+            eq(runs.replayIntentNodeId, replay.nodeId),
+            eq(runs.replayIntentObservedSeq, replay.observedSeq),
+          )
+        : undefined;
+      if (replay) {
+        const [existing] = await tx.select(rawRunColumns).from(runs).where(replayScope);
+        if (existing)
+          return { run: decodeRunRecord(existing), event: undefined, linked: undefined };
+        const [source] = await tx
+          .select({ seq: runs.lastEventSeq, ownerId: runs.ownerId })
+          .from(runs)
+          .where(eq(runs.id, replay.sourceRunId));
+        if (!source || source.ownerId !== input.run.ownerId)
+          throw new EngineRequestError('RUN_NOT_FOUND', `run ${replay.sourceRunId} not found`);
+        if (source.seq !== replay.observedSeq)
+          throw new RecoveryRefusedError(
+            'RECOVERY_STALE',
+            'The run changed since it was shown. Refresh and review its current recovery choices.',
+          );
+      }
       if (poll) {
         const [runKey] = await tx
           .select({ id: runs.id })
@@ -241,7 +280,34 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         run = { ...input.run, lastEventSeq: 1 };
         event = validateGeneratedEvent(queuedEvent(input));
         if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);
-        await tx.insert(runs).values(runInsert(run, input.initialThread));
+        const values = {
+          ...runInsert(run, input.initialThread),
+          ...(replay
+            ? {
+                replayIntentSourceRunId: replay.sourceRunId,
+                replayIntentNodeId: replay.nodeId,
+                replayIntentObservedSeq: replay.observedSeq,
+              }
+            : {}),
+        };
+        if (replay) {
+          const inserted = await tx
+            .insert(runs)
+            .values(values)
+            .onConflictDoNothing({
+              target: [
+                runs.replayIntentSourceRunId,
+                runs.replayIntentNodeId,
+                runs.replayIntentObservedSeq,
+              ],
+            })
+            .returning({ id: runs.id });
+          if (!inserted.length) {
+            const [winner] = await tx.select(rawRunColumns).from(runs).where(replayScope);
+            if (!winner) throw new AdmissionConflictError();
+            return { run: decodeRunRecord(winner), event: undefined, linked: undefined };
+          }
+        } else await tx.insert(runs).values(values);
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });
       }

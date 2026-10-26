@@ -149,9 +149,7 @@ describe('child creation and finish across a process death (#320)', () => {
   it('a new outcome of the same child after a resume is recorded again', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });
     let calls = 0;
-    e.ports.scripts.respondWith(() =>
-      ++calls === 1 ? { ...result(3), state: 'definitely-not-started', exitCode: null } : result(0),
-    );
+    e.ports.scripts.respondWith(() => result(++calls === 1 ? 3 : 0));
     const child = e.publish(scriptChild('new-outcome child'));
     const failed = await e.runToIdle(
       e.publish(parentLoop('new-outcome parent', child.loopId)).loopId,
@@ -190,11 +188,7 @@ describe('child creation and finish across a process death (#320)', () => {
 
   it('an explicit retry records a second failed outcome of the same child', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });
-    e.ports.scripts.respondWith(() => ({
-      ...result(3),
-      state: 'definitely-not-started',
-      exitCode: null,
-    }));
+    e.ports.scripts.respondWith(() => result(3));
     const child = e.publish(scriptChild('failed-again child'));
     const failed = await e.runToIdle(
       e.publish(parentLoop('failed-again parent', child.loopId)).loopId,
@@ -211,11 +205,7 @@ describe('child creation and finish across a process death (#320)', () => {
   it('records a child independently retried while its parent was interrupted', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });
     e.manager.stop();
-    e.ports.scripts.respondWith(() => ({
-      ...result(3),
-      state: 'definitely-not-started',
-      exitCode: null,
-    }));
+    e.ports.scripts.respondWith(() => result(3));
     const child = e.publish(scriptChild('independent retry child'));
     const loop = e.publish(parentLoop('independent retry parent', child.loopId));
     let parentId = '';

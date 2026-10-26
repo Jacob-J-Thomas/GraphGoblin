@@ -366,6 +366,7 @@ export class FakeApi {
           {
             nodeId: run.failure?.nodeId ?? run.currentNodeId ?? 'start',
             label: 'Node',
+            effects: [],
             action: uncertain
               ? {
                   allowed: false,

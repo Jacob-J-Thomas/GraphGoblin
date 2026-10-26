@@ -6,6 +6,8 @@ import {
   UlidSchema,
   RunRecordSchema,
   RunEventSchema,
+  ReplayIntentSchema,
+  type ReplayIntent,
   type ContextThread,
   type JsonValue,
   type LoopVersionRecord,
@@ -32,6 +34,8 @@ export interface RunAdmission {
    * record never names a child that does not exist. Requires `run.parentRunId`.
    */
   parentNodeId?: string;
+  /** The fork and its observed intent are one atomic admission, never a source-log append. */
+  replayIntent?: ReplayIntent;
 }
 export interface WebhookInbound {
   id: string;
@@ -70,6 +74,12 @@ export interface WebhookReceipt {
 export interface TriggerAdmissionPort {
   events: EventAdmissionPort;
   create(input: RunAdmission, receiptId?: string): Promise<RunRecord>;
+  /** Finds an admitted fork, including after a lost commit acknowledgement. */
+  findReplay(
+    sourceRunId: string,
+    nodeId: string,
+    observedSeq: number,
+  ): Promise<RunRecord | undefined>;
   /** Atomic items-only key admission. Undefined means consumed/reserved, without ID reuse. */
   createPollItem(input: RunAdmission): Promise<RunRecord | undefined>;
   claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }>;
@@ -171,6 +181,21 @@ export function parseRunAdmission(value: unknown): RunAdmission {
   if (parentNodeId ? !parentNodeId.success || !parented : parented)
     throw new AdmissionConflictError();
   const { runId: _id, seq: _seq, ts: _ts, ...queued } = event.data;
+  const replayIntent =
+    raw.replayIntent === undefined ? undefined : ReplayIntentSchema.safeParse(raw.replayIntent);
+  if (
+    replayIntent &&
+    (!replayIntent.success ||
+      parented ||
+      stableStringify(initialThread.data.invocation.replayOf) !==
+        stableStringify({
+          runId: replayIntent.data.sourceRunId,
+          nodeId: replayIntent.data.nodeId,
+        }) ||
+      stableStringify(event.data.replayOf) !==
+        stableStringify(initialThread.data.invocation.replayOf))
+  )
+    throw new AdmissionConflictError();
   return {
     run: run.data,
     initialThread: initialThread.data,
@@ -178,6 +203,7 @@ export function parseRunAdmission(value: unknown): RunAdmission {
     pinnedLoopIds: [...(raw.pinnedLoopIds as string[])],
     ...(snapshot ? { snapshot } : {}),
     ...(parentNodeId?.success ? { parentNodeId: parentNodeId.data } : {}),
+    ...(replayIntent?.success ? { replayIntent: replayIntent.data } : {}),
   };
 }
 

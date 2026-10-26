@@ -460,6 +460,8 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'Fork a new run at a node, with the thread as it was just before that node',
+        description:
+          'Replay runs again from the selected node as a new run. Scripts, provider turns, child runs and deliveries on its path run again for that new run. Review recovery.replay[].effects for knowable nodes. The source effects, results, history and own recorded deliveries remain unchanged. Paths into the current uncertain script require explicit retryUncertainScript consent. The observed intent is deduplicated atomically with fork admission.',
         params: IdParams,
         body: RecoveryCommandSchema.extend({
           nodeId: SlugSchema.describe(

@@ -149,8 +149,8 @@ async function command(id: string, loopId: string, runId = '') {
   if (source.includes('recovery.observedSeq')) {
     const snapshot = RunSnapshotSchema.parse((await t.app.inject('/runs/' + runId)).json());
     if (path.pathname.endsWith('/replay')) {
-      expect(source).toMatch(/done/);
-      body = JSON.stringify({ nodeId: 'done', observedSeq: snapshot.recovery.observedSeq });
+      expect(source).toMatch(/summarise/);
+      body = JSON.stringify({ nodeId: 'summarise', observedSeq: snapshot.recovery.observedSeq });
     } else body = JSON.stringify({ observedSeq: snapshot.recovery.observedSeq });
   }
   const fromFile = source.includes('@start.json') || source.includes('-InFile start.json');
@@ -276,6 +276,7 @@ describe('executable guide examples', () => {
       const id = await summaryLoop();
       t.harness.script([{ finalText: summaryText }]);
       const source = await startSummary(id);
+      t.harness.script([{ finalText: summaryText }]);
       const response = await t.app.inject(await command(example, id, source.id));
       expect(response.statusCode, response.body).toBe(202);
       expect(response.json<{ run: RunRecord }>().run.id).not.toBe(source.id);
@@ -283,7 +284,7 @@ describe('executable guide examples', () => {
         status: 'succeeded',
         result: { summary: summaryText },
       });
-      expect(t.harness.started).toHaveLength(1);
+      expect(t.harness.started).toHaveLength(2);
       expect((await runSnapshot(source.id)).result).toEqual(source.result);
     },
   );

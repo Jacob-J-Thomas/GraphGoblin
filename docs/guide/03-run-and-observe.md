@@ -176,7 +176,7 @@ Child runs reconstruct like any other run: their first event, `run.queued`, carr
 
 ## Replay from a node
 
-To debug a node, fork a new run at it with the same input it had: the new run starts from the thread as it was just before that node first started, on the same pinned definition (a draft run's snapshot included), and nothing before the node runs again. Replay is available on terminal, non-cancelled history at a reached, eligible node. The source's execution state is retained; its history audits the exact requested fork ID. The inspector's **Replay...** picker explains each node's eligibility. Selections that could repeat consumed script, child, provider or return-delivery effects are refused, including loopback paths. Choose a node after that work; this example uses the summary loop's **done** exit so it uses the recorded summary instead of calling the provider again. In Bash:
+To debug a node, fork a new run at it with the same input it had: the fork starts from the recorded thread just before that node first started, on the same pinned definition. The source may be in any status. Nothing before the chosen node runs again unless the graph routes back to it. **Replay runs the path again for a new run:** scripts, provider turns, child runs and deliveries after that node run again. The inspector's picker names the effectful nodes that can be reached. The source's effects, result, history and own recorded deliveries stay unchanged; the fork performs its own exit delivery. A path into the current uncertain script requires an additional explicit confirmation. This example replays **summarise**, so it calls the provider again. In Bash:
 
 <!-- guide-example: replay-bash -->
 
@@ -186,7 +186,7 @@ SNAPSHOT=$(curl -sS "http://127.0.0.1:4747/runs/$RUN_ID")
 printf '%s\n' "$SNAPSHOT"
 SEQ=$(printf '%s' "$SNAPSHOT" | node -pe "JSON.parse(require('fs').readFileSync(0, 'utf8')).recovery.observedSeq")
 curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/replay" \
-  -H 'Content-Type: application/json' -d "{\"nodeId\":\"done\",\"observedSeq\":$SEQ}"
+  -H 'Content-Type: application/json' -d "{\"nodeId\":\"summarise\",\"observedSeq\":$SEQ}"
 ```
 
 In PowerShell:
@@ -197,14 +197,14 @@ In PowerShell:
 $runId = '<run-id>'
 $snapshot = Invoke-RestMethod -Uri "http://127.0.0.1:4747/runs/$runId"
 $snapshot.recovery | Format-List
-$body = @{ nodeId = 'done'; observedSeq = $snapshot.recovery.observedSeq } | ConvertTo-Json
+$body = @{ nodeId = 'summarise'; observedSeq = $snapshot.recovery.observedSeq } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
   -ContentType 'application/json' -Body $body
 ```
 
 The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId`, `nodeId` and the reviewed `observedSeq`, then `wait_for_run` using the new ID. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
 
-The new inspector shows its exact run ID and links its source. Repeat clicks and stale tabs cannot create a second fork from the same observed intent. A lost response requires inspecting the requested fork ID before reviewing any new choice. Earlier external effects are not undone, and recorded deliveries are never resent by replaying their exit.
+The new inspector shows its exact run ID and links its source. Repeat clicks and stale tabs cannot create a second fork from the same observed intent. A repeated Replay returns `RECOVERY_STALE` with the existing fork ID; open that fork instead. Admission and intent deduplication commit together, and the source log stays unchanged.
 
 ## Stream events and reconnect
 

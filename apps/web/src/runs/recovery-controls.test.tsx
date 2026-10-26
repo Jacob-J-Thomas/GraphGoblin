@@ -17,10 +17,11 @@ function fixture() {
       message: 'Server says this node was not reached.',
     },
     replay: [
-      { nodeId: 'done', label: 'Done', action: { allowed: true } },
+      { nodeId: 'done', label: 'Done', action: { allowed: true }, effects: [] },
       {
         nodeId: 'missing',
         label: 'Missing',
+        effects: [],
         action: {
           allowed: false,
           code: 'REPLAY_NODE_NOT_REACHED',
@@ -33,6 +34,46 @@ function fixture() {
   return { api, run, recovery };
 }
 describe('server-owned recovery controls (#256)', () => {
+  it('names repeated work and requires explicit consent for a path into the current uncertain script', async () => {
+    const { api, run, recovery } = fixture();
+    const user = userEvent.setup();
+    recovery.scriptConsent = { failureSeq: 7, nodeId: 'script' };
+    recovery.replay.push({
+      nodeId: 'begin',
+      label: 'Beginning',
+      action: {
+        allowed: false,
+        code: 'SCRIPT_CONSENT_REQUIRED',
+        message: 'This path runs the current uncertain script again.',
+      },
+      effects: [
+        { nodeId: 'script', label: 'Write marker', kind: 'script' },
+        { nodeId: 'infer', label: 'Think', kind: 'inference' },
+        { nodeId: 'sub', label: 'Child', kind: 'subloop' },
+        { nodeId: 'exit', label: 'Return', kind: 'delivery' },
+      ],
+    });
+    renderApp(`/runs/${run.id}`, api);
+    await user.click(await screen.findByRole('button', { name: 'Replay...' }));
+    const dialog = screen.getByRole('dialog', { name: 'Replay as a new run' });
+    await user.selectOptions(within(dialog).getByLabelText('Replay from node'), 'begin');
+    expect(within(dialog).getByRole('list', { name: 'Work that can run again' })).toHaveTextContent(
+      'Think (infer): provider turn',
+    );
+    expect(dialog).toHaveTextContent('Write marker (script): script');
+    expect(dialog).toHaveTextContent('Child (sub): child run');
+    expect(dialog).toHaveTextContent('Return (exit): delivery');
+    expect(within(dialog).getByRole('button', { name: 'Create replay run' })).toBeDisabled();
+    expect(api.callsTo('POST', `/runs/${run.id}/replay`)).toHaveLength(0);
+    await user.click(within(dialog).getByRole('checkbox', { name: /I explicitly allow/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create replay run' }));
+    await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/replay`)).toHaveLength(1));
+    expect(api.callsTo('POST', `/runs/${run.id}/replay`)[0]!.body).toEqual({
+      nodeId: 'begin',
+      observedSeq: 7,
+      retryUncertainScript: true,
+    });
+  });
   it('renders the server refusal and links its exact owning parent accessibly', async () => {
     const { api, run, recovery } = fixture();
     const parent = api.addRun({ status: 'failed' });

@@ -16,6 +16,7 @@ import {
   RunSnapshotSchema,
   RunRecoverySchema,
   RecoveryRefusalCodeSchema,
+  UlidSchema,
   RunStatusSchema,
   WaitSpecSchema,
 } from '@graphgoblin/contracts';
@@ -53,6 +54,7 @@ export const RecoveryConflictSchema = z.object({
   status: z.literal(409),
   code: RecoveryRefusalCodeSchema,
   detail: z.string(),
+  replayRunId: UlidSchema.optional(),
 });
 openApiRegistry.add(RecoveryConflictSchema, { id: 'RecoveryConflict' });
 export const RecoveryUnavailableSchema = RecoveryConflictSchema.extend({

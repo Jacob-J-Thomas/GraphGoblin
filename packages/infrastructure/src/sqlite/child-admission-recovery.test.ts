@@ -57,6 +57,9 @@ class DyingAdmission implements TriggerAdmissionPort {
   createPollItem(input: RunAdmission) {
     return this.inner.createPollItem(input);
   }
+  findReplay(...args: Parameters<TriggerAdmissionPort['findReplay']>) {
+    return this.inner.findReplay(...args);
+  }
   claim(input: WebhookClaim, intent: RunAdmission) {
     return this.inner.claim(input, intent);
   }

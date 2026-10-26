@@ -403,7 +403,7 @@ export function registerTools(
     {
       title: 'Replay a run from a node',
       description:
-        'Debug a run by re-running it from one node: starts a new run (a fork) on the same loop version with the same input, whose context thread is the original run as it was just before that node first started. The original execution state is retained; its history records the fork. Replay refuses consumed external work and recorded deliveries. Consult get_run.recovery for each node and pass its observedSeq. nodeId must be a node the original run reached (see read_run_events for node.started events). Returns the new run; call wait_for_run with its id to follow it.',
+        'Debug a run by re-running it from one node: starts a new run (a fork) on the same loop version with the same input, whose context thread is the original run as it was just before that node first started. The source effects, results, history and own recorded deliveries stay unchanged. The fork runs scripts, provider turns, child runs and deliveries on the chosen path again for the new run. Review get_run.recovery.replay[].effects for the knowable node names on possible paths, and pass observedSeq. A path into the current uncertain script additionally requires deliberate retryUncertainScript consent. A missing provider session may use Replay for a deliberate new attempt. Repeated intents return RECOVERY_STALE with the existing fork ID. nodeId must be a node the original run reached (see read_run_events for node.started events). Returns the new run; call wait_for_run with its id to follow it.',
       inputSchema: {
         runId,
         observedSeq: z.number().int().nonnegative(),

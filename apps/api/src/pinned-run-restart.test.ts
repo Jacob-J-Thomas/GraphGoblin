@@ -10,6 +10,7 @@ import {
   type LoopDefinitionInput,
   type RunEvent,
   type RunRecord,
+  type RunSnapshot,
 } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
@@ -102,7 +103,7 @@ describe('current-format runs through the API', () => {
         assert.equal(version.version, 1);
         assert.equal(version.publishedAt, '${FIXTURE_TS}');
         assert.equal(Object.hasOwn(version.definition.settings.defaults, 'harness'), false);
-        const replay = await app.inject({ method: 'POST', url: '/runs/' + runId + '/replay', payload: { nodeId: 'infer' } });
+        const replay = await app.inject({ method: 'POST', url: '/runs/' + runId + '/replay', payload: { nodeId: 'infer', observedSeq: (await app.inject('/runs/' + runId)).json().recovery.observedSeq } });
         assert.equal(replay.statusCode, 202, replay.body);
         await second.manager.waitForIdle();
         assert.equal((await second.repos.runs.get(replay.json().run.id)).status, 'succeeded');
@@ -163,7 +164,7 @@ describe('pinned child runs across a real API restart', () => {
         expect(response.ok, `${method} ${path}: ${response.status}`).toBe(true);
         return (await response.json()) as T;
       }
-      const run = (id: string) => call<RunRecord>('GET', `/runs/${id}`);
+      const run = (id: string) => call<RunSnapshot>('GET', `/runs/${id}`);
       async function publish(definition: LoopDefinitionInput) {
         const { loop } = await call<{ loop: { id: string } }>('POST', '/loops', { definition });
         const { version } = await call<{ version: { id: string } }>(
@@ -252,6 +253,7 @@ describe('pinned child runs across a real API restart', () => {
         `/runs/${original.id}/replay`,
         {
           nodeId: 'sub',
+          observedSeq: (await run(original.id)).recovery.observedSeq,
         },
       );
       expect((await finish(replay.id, childLoop.versionId, 'old')).id).not.toBe(originalChild.id);

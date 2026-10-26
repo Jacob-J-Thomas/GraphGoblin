@@ -176,6 +176,7 @@ export class RecoveryRefusedError extends Error {
   constructor(
     readonly code: RecoveryRefusalCode,
     message: string,
+    readonly replayRunId?: string,
   ) {
     super(message);
     this.name = 'RecoveryRefusedError';

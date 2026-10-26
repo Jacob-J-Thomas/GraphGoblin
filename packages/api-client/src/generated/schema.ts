@@ -1431,7 +1431,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Fork a new run at a node, with the thread as it was just before that node */
+        /**
+         * Fork a new run at a node, with the thread as it was just before that node
+         * @description Replay runs again from the selected node as a new run. Scripts, provider turns, child runs and deliveries on its path run again for that new run. Review recovery.replay[].effects for knowable nodes. The source effects, results, history and own recorded deliveries remain unchanged. Paths into the current uncertain script require explicit retryUncertainScript consent. The observed intent is deduplicated atomically with fork admission.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -2814,8 +2817,9 @@ export interface components {
             /** @constant */
             status: 409;
             /** @enum {string} */
-            code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+            code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
             detail: string;
+            replayRunId?: string | undefined;
         };
         RecoveryUnavailableInput: {
             type: string;
@@ -2825,6 +2829,7 @@ export interface components {
             /** @constant */
             code: "SHUTTING_DOWN";
             detail: string;
+            replayRunId?: string | undefined;
         };
         ClassifierModelSummaryInput: {
             id: string;
@@ -4249,9 +4254,10 @@ export interface components {
                 /** @constant */
                 allowed: false;
                 /** @enum {string} */
-                code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
                 message: string;
                 parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
             };
             replayDefault: {
                 /** @constant */
@@ -4260,9 +4266,10 @@ export interface components {
                 /** @constant */
                 allowed: false;
                 /** @enum {string} */
-                code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
                 message: string;
                 parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
             };
             replay: {
                 nodeId: string;
@@ -4274,10 +4281,17 @@ export interface components {
                     /** @constant */
                     allowed: false;
                     /** @enum {string} */
-                    code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                    code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
                     message: string;
                     parentRunId?: string | undefined;
+                    replayRunId?: string | undefined;
                 };
+                effects: {
+                    nodeId: string;
+                    label: string;
+                    /** @enum {string} */
+                    kind: "script" | "inference" | "subloop" | "delivery";
+                }[];
             }[];
             scriptConsent?: {
                 failureSeq: number;
@@ -4500,16 +4514,6 @@ export interface components {
             subloopVersions?: {
                 [key: string]: string;
             } | undefined;
-        } | {
-            runId: string;
-            seq: number;
-            /** Format: date-time */
-            ts: string;
-            /** @constant */
-            type: "run.replay_requested";
-            nodeId: string;
-            replayRunId: string;
-            observedSeq: number;
         } | {
             runId: string;
             seq: number;
@@ -5150,8 +5154,9 @@ export interface components {
             /** @constant */
             status: 409;
             /** @enum {string} */
-            code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+            code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
             detail: string;
+            replayRunId?: string | undefined;
         };
         RecoveryUnavailable: {
             type: string;
@@ -5161,6 +5166,7 @@ export interface components {
             /** @constant */
             code: "SHUTTING_DOWN";
             detail: string;
+            replayRunId?: string | undefined;
         };
         ClassifierModelSummary: {
             id: string;
@@ -6568,9 +6574,10 @@ export interface components {
                 /** @constant */
                 allowed: false;
                 /** @enum {string} */
-                code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
                 message: string;
                 parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
             };
             replayDefault: {
                 /** @constant */
@@ -6579,9 +6586,10 @@ export interface components {
                 /** @constant */
                 allowed: false;
                 /** @enum {string} */
-                code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
                 message: string;
                 parentRunId?: string | undefined;
+                replayRunId?: string | undefined;
             };
             replay: {
                 nodeId: string;
@@ -6593,10 +6601,17 @@ export interface components {
                     /** @constant */
                     allowed: false;
                     /** @enum {string} */
-                    code: "RUN_ACTIVE" | "RUN_PAUSED" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "EXTERNAL_EFFECT_CONSUMED" | "RECOVERY_STALE" | "SHUTTING_DOWN";
+                    code: "RUN_ACTIVE" | "RUN_FINISHED" | "RUN_CANCELLED" | "FAILURE_NOT_RESUMABLE" | "SCRIPT_CONSENT_REQUIRED" | "SESSION_RECOVERY_REQUIRED" | "PARENT_RECOVERY_REQUIRED" | "REPLAY_NODE_NOT_REACHED" | "DEFINITION_UNAVAILABLE" | "STATE_UNAVAILABLE" | "RECOVERY_STALE" | "SHUTTING_DOWN";
                     message: string;
                     parentRunId?: string | undefined;
+                    replayRunId?: string | undefined;
                 };
+                effects: {
+                    nodeId: string;
+                    label: string;
+                    /** @enum {string} */
+                    kind: "script" | "inference" | "subloop" | "delivery";
+                }[];
             }[];
             scriptConsent?: {
                 failureSeq: number;
@@ -6819,16 +6834,6 @@ export interface components {
             subloopVersions?: {
                 [key: string]: string;
             } | undefined;
-        } | {
-            runId: string;
-            seq: number;
-            /** Format: date-time */
-            ts: string;
-            /** @constant */
-            type: "run.replay_requested";
-            nodeId: string;
-            replayRunId: string;
-            observedSeq: number;
         } | {
             runId: string;
             seq: number;

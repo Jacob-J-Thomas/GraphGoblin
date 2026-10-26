@@ -61,7 +61,6 @@
             "type": "string",
             "enum": [
               "RUN_ACTIVE",
-              "RUN_PAUSED",
               "RUN_FINISHED",
               "RUN_CANCELLED",
               "FAILURE_NOT_RESUMABLE",
@@ -71,13 +70,16 @@
               "REPLAY_NODE_NOT_REACHED",
               "DEFINITION_UNAVAILABLE",
               "STATE_UNAVAILABLE",
-              "EXTERNAL_EFFECT_CONSUMED",
               "RECOVERY_STALE",
               "SHUTTING_DOWN"
             ]
           },
           "detail": {
             "type": "string"
+          },
+          "replayRunId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
           }
         },
         "required": [
@@ -107,6 +109,10 @@
           },
           "detail": {
             "type": "string"
+          },
+          "replayRunId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
           }
         },
         "required": [
@@ -5688,7 +5694,6 @@
                     "type": "string",
                     "enum": [
                       "RUN_ACTIVE",
-                      "RUN_PAUSED",
                       "RUN_FINISHED",
                       "RUN_CANCELLED",
                       "FAILURE_NOT_RESUMABLE",
@@ -5698,7 +5703,6 @@
                       "REPLAY_NODE_NOT_REACHED",
                       "DEFINITION_UNAVAILABLE",
                       "STATE_UNAVAILABLE",
-                      "EXTERNAL_EFFECT_CONSUMED",
                       "RECOVERY_STALE",
                       "SHUTTING_DOWN"
                     ]
@@ -5707,6 +5711,10 @@
                     "type": "string"
                   },
                   "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "replayRunId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
                   }
@@ -5746,7 +5754,6 @@
                     "type": "string",
                     "enum": [
                       "RUN_ACTIVE",
-                      "RUN_PAUSED",
                       "RUN_FINISHED",
                       "RUN_CANCELLED",
                       "FAILURE_NOT_RESUMABLE",
@@ -5756,7 +5763,6 @@
                       "REPLAY_NODE_NOT_REACHED",
                       "DEFINITION_UNAVAILABLE",
                       "STATE_UNAVAILABLE",
-                      "EXTERNAL_EFFECT_CONSUMED",
                       "RECOVERY_STALE",
                       "SHUTTING_DOWN"
                     ]
@@ -5765,6 +5771,10 @@
                     "type": "string"
                   },
                   "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "replayRunId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
                   }
@@ -5816,7 +5826,6 @@
                           "type": "string",
                           "enum": [
                             "RUN_ACTIVE",
-                            "RUN_PAUSED",
                             "RUN_FINISHED",
                             "RUN_CANCELLED",
                             "FAILURE_NOT_RESUMABLE",
@@ -5826,7 +5835,6 @@
                             "REPLAY_NODE_NOT_REACHED",
                             "DEFINITION_UNAVAILABLE",
                             "STATE_UNAVAILABLE",
-                            "EXTERNAL_EFFECT_CONSUMED",
                             "RECOVERY_STALE",
                             "SHUTTING_DOWN"
                           ]
@@ -5835,6 +5843,10 @@
                           "type": "string"
                         },
                         "parentRunId": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                        },
+                        "replayRunId": {
                           "type": "string",
                           "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
                         }
@@ -5847,12 +5859,43 @@
                       "additionalProperties": false
                     }
                   ]
+                },
+                "effects": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "nodeId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "script",
+                          "inference",
+                          "subloop",
+                          "delivery"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "nodeId",
+                      "label",
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               },
               "required": [
                 "nodeId",
                 "label",
-                "action"
+                "action",
+                "effects"
               ],
               "additionalProperties": false
             }
@@ -6833,52 +6876,6 @@
               "type",
               "versionId",
               "pinned"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "runId": {
-                "type": "string",
-                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-              },
-              "seq": {
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 9007199254740991
-              },
-              "ts": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "run.replay_requested"
-              },
-              "nodeId": {
-                "type": "string",
-                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
-              },
-              "replayRunId": {
-                "type": "string",
-                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-              },
-              "observedSeq": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "required": [
-              "runId",
-              "seq",
-              "ts",
-              "type",
-              "nodeId",
-              "replayRunId",
-              "observedSeq"
             ],
             "additionalProperties": false
           },
@@ -9864,7 +9861,6 @@
             "type": "string",
             "enum": [
               "RUN_ACTIVE",
-              "RUN_PAUSED",
               "RUN_FINISHED",
               "RUN_CANCELLED",
               "FAILURE_NOT_RESUMABLE",
@@ -9874,13 +9870,16 @@
               "REPLAY_NODE_NOT_REACHED",
               "DEFINITION_UNAVAILABLE",
               "STATE_UNAVAILABLE",
-              "EXTERNAL_EFFECT_CONSUMED",
               "RECOVERY_STALE",
               "SHUTTING_DOWN"
             ]
           },
           "detail": {
             "type": "string"
+          },
+          "replayRunId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
           }
         },
         "required": [
@@ -9911,6 +9910,10 @@
           },
           "detail": {
             "type": "string"
+          },
+          "replayRunId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
           }
         },
         "required": [
@@ -15653,7 +15656,6 @@
                     "type": "string",
                     "enum": [
                       "RUN_ACTIVE",
-                      "RUN_PAUSED",
                       "RUN_FINISHED",
                       "RUN_CANCELLED",
                       "FAILURE_NOT_RESUMABLE",
@@ -15663,7 +15665,6 @@
                       "REPLAY_NODE_NOT_REACHED",
                       "DEFINITION_UNAVAILABLE",
                       "STATE_UNAVAILABLE",
-                      "EXTERNAL_EFFECT_CONSUMED",
                       "RECOVERY_STALE",
                       "SHUTTING_DOWN"
                     ]
@@ -15672,6 +15673,10 @@
                     "type": "string"
                   },
                   "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "replayRunId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
                   }
@@ -15711,7 +15716,6 @@
                     "type": "string",
                     "enum": [
                       "RUN_ACTIVE",
-                      "RUN_PAUSED",
                       "RUN_FINISHED",
                       "RUN_CANCELLED",
                       "FAILURE_NOT_RESUMABLE",
@@ -15721,7 +15725,6 @@
                       "REPLAY_NODE_NOT_REACHED",
                       "DEFINITION_UNAVAILABLE",
                       "STATE_UNAVAILABLE",
-                      "EXTERNAL_EFFECT_CONSUMED",
                       "RECOVERY_STALE",
                       "SHUTTING_DOWN"
                     ]
@@ -15730,6 +15733,10 @@
                     "type": "string"
                   },
                   "parentRunId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "replayRunId": {
                     "type": "string",
                     "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
                   }
@@ -15781,7 +15788,6 @@
                           "type": "string",
                           "enum": [
                             "RUN_ACTIVE",
-                            "RUN_PAUSED",
                             "RUN_FINISHED",
                             "RUN_CANCELLED",
                             "FAILURE_NOT_RESUMABLE",
@@ -15791,7 +15797,6 @@
                             "REPLAY_NODE_NOT_REACHED",
                             "DEFINITION_UNAVAILABLE",
                             "STATE_UNAVAILABLE",
-                            "EXTERNAL_EFFECT_CONSUMED",
                             "RECOVERY_STALE",
                             "SHUTTING_DOWN"
                           ]
@@ -15800,6 +15805,10 @@
                           "type": "string"
                         },
                         "parentRunId": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                        },
+                        "replayRunId": {
                           "type": "string",
                           "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
                         }
@@ -15812,12 +15821,43 @@
                       "additionalProperties": false
                     }
                   ]
+                },
+                "effects": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "nodeId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "script",
+                          "inference",
+                          "subloop",
+                          "delivery"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "nodeId",
+                      "label",
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               },
               "required": [
                 "nodeId",
                 "label",
-                "action"
+                "action",
+                "effects"
               ],
               "additionalProperties": false
             }
@@ -16809,52 +16849,6 @@
               "type",
               "versionId",
               "pinned"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "runId": {
-                "type": "string",
-                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-              },
-              "seq": {
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 9007199254740991
-              },
-              "ts": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "type": {
-                "type": "string",
-                "const": "run.replay_requested"
-              },
-              "nodeId": {
-                "type": "string",
-                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
-              },
-              "replayRunId": {
-                "type": "string",
-                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-              },
-              "observedSeq": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "required": [
-              "runId",
-              "seq",
-              "ts",
-              "type",
-              "nodeId",
-              "replayRunId",
-              "observedSeq"
             ],
             "additionalProperties": false
           },
@@ -21999,6 +21993,7 @@
         "tags": [
           "runs"
         ],
+        "description": "Replay runs again from the selected node as a new run. Scripts, provider turns, child runs and deliveries on its path run again for that new run. Review recovery.replay[].effects for knowable nodes. The source effects, results, history and own recorded deliveries remain unchanged. Paths into the current uncertain script require explicit retryUncertainScript consent. The observed intent is deduplicated atomically with fork admission.",
         "requestBody": {
           "required": true,
           "content": {

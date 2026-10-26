@@ -80,12 +80,10 @@ export async function createThreadHistoryFixture(webDist?: string) {
         entered();
         await blocked;
       }
-      // Reconciliation needs a retryable failure without a consumed script effect (#256).
-      const stdout =
-        calls === 1 ? '' : JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
+      const stdout = JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
       return {
-        state: calls === 1 ? 'definitely-not-started' : 'completed',
-        exitCode: calls === 1 ? null : 0,
+        state: 'completed',
+        exitCode: calls === 1 ? 1 : 0,
         stdout,
         stderr: '',
         stdoutBytes: stdout.length,

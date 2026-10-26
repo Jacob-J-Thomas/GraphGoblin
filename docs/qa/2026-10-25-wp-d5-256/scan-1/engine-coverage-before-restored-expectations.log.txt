@@ -1,0 +1,89 @@
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/run-manager.test.ts (27 tests | 1 failed) 3466ms
+   ❯ failure and recovery (6)
+     × resumes a failed run from the failed node 261ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+ ❯ src/stored-definition.test.ts (5 tests | 1 failed) 437ms
+   ❯ stored definitions with an Event destination (#242) (5)
+     × refuses admission and replay, creating no run 56ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/run-manager.test.ts > failure and recovery > resumes a failed run from the failed node
+AssertionError: expected { code: 'SCRIPT_EXIT_CODE', …(5) } to match object { code: 'SCRIPT_START_FAILED', …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SCRIPT_START_FAILED",
++   "code": "SCRIPT_EXIT_CODE",
+    "nodeId": "script",
+    "resumable": true,
+  }
+
+ ❯ src/run-manager.test.ts:405:25
+    403|     const run = await engine.runToIdle(version.loopId);
+    404|     expect(run.status).toBe('failed');
+    405|     expect(run.failure).toMatchObject({
+       |                         ^
+    406|       code: 'SCRIPT_EXIT_CODE',
+    407|       nodeId: 'script',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/stored-definition.test.ts > stored definitions with an Event destination (#242) > refuses admission and replay, creating no run
+AssertionError: expected RecoveryRefusedError: The pinned definiti… { …(2) } to match object { code: 'RUN_ACTIVE' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "RUN_ACTIVE",
++ RecoveryRefusedError {
++   "code": "DEFINITION_UNAVAILABLE",
+  }
+
+ ❯ src/stored-definition.test.ts:119:68
+    117|     const version = stored(e, (await e.ports.loops.getVersion(ok.versi…
+    118|     await expect(e.start(version.loopId)).rejects.toBeInstanceOf(LoopU…
+    119|     await expect(e.manager.replay({ runId: ok.id, nodeId: 'ask' })).re…
+       |                                                                    ^
+    120|       code: 'RUN_ACTIVE',
+    121|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 57 passed (59)
+      Tests  2 failed | 1736 passed (1738)
+   Start at  05:52:02
+   Duration  286.95s (tests 53%, import 41%, transform 3%, worker 3%)
+
+     Import  148 modules were evaluated 229 times · 92.41s total, 41% of tracked time
+             ~32.69s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.77% ( 3535/3691 )
+Branches     : 91.13% ( 2880/3160 )
+Functions    : 97.43% ( 647/664 )
+Lines        : 97.01% ( 3222/3321 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\packages\engine
+

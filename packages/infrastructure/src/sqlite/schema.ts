@@ -67,6 +67,10 @@ export const runs = sqliteTable(
     loopId: text('loop_id').notNull(),
     versionId: text('version_id').notNull(),
     parentRunId: text('parent_run_id'),
+    // #256 intent identity; independent of #412's general replay-source relationship columns.
+    replayIntentSourceRunId: text('replay_intent_source_run_id'),
+    replayIntentNodeId: text('replay_intent_node_id'),
+    replayIntentObservedSeq: integer('replay_intent_observed_seq'),
     invocationId: text('invocation_id').notNull(),
     status: text('status').notNull(),
     currentNodeId: text('current_node_id'),
@@ -109,6 +113,15 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    uniqueIndex('runs_replay_intent_idx').on(
+      t.replayIntentSourceRunId,
+      t.replayIntentNodeId,
+      t.replayIntentObservedSeq,
+    ),
+    check(
+      'runs_replay_intent_complete',
+      sql`(${t.replayIntentSourceRunId} IS NULL AND ${t.replayIntentNodeId} IS NULL AND ${t.replayIntentObservedSeq} IS NULL) OR (${t.replayIntentSourceRunId} IS NOT NULL AND ${t.replayIntentNodeId} IS NOT NULL AND ${t.replayIntentObservedSeq} IS NOT NULL AND ${t.replayIntentObservedSeq} >= 0)`,
+    ),
     // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
     index('runs_version_idx').on(t.versionId),
   ],

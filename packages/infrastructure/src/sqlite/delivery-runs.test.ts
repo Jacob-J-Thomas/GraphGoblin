@@ -47,6 +47,10 @@ afterEach(() => handle.close());
 
 async function migrateHistoricalReturns() {
   // Restore a pre-0015 ledger prefix and remove the later index before replaying it.
+  await handle.client.execute('DROP INDEX runs_replay_intent_idx');
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_observed_seq');
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_node_id');
+  await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_source_run_id');
   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
   // A pre-0015 fixture must not retain the later targeted Event ledger.
   await handle.client.execute('DROP TABLE event_receipts');

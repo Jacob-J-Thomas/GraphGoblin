@@ -315,6 +315,10 @@ describe('model catalog source migration and repository', () => {
       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
       // Roll back the later schema too before replaying its shipped structural migrations.
       for (const statement of [
+        'DROP INDEX runs_replay_intent_idx',
+        'ALTER TABLE runs DROP COLUMN replay_intent_observed_seq',
+        'ALTER TABLE runs DROP COLUMN replay_intent_node_id',
+        'ALTER TABLE runs DROP COLUMN replay_intent_source_run_id',
         'DROP INDEX runs_loop_owner_history_idx',
         'DROP TRIGGER loop_versions_snapshot_immutable',
         'DROP TRIGGER loop_versions_snapshot_pinned',

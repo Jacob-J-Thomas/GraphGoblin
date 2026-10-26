@@ -221,6 +221,61 @@ function childStart() {
 type Scenario = { name: string; run(fixture: AdmissionContractFixture): Promise<void> };
 const scenarios: Scenario[] = [
   {
+    name: 'Replay admission deduplicates its observed intent atomically without changing the source',
+    async run(f) {
+      const { intent, ids } = inputs();
+      await f.admission.create(intent);
+      const before = await f.events(intent.run.id);
+      const fork = () => {
+        const next = structuredClone(intent);
+        next.run.id = ids.next();
+        next.run.invocationId = ids.next();
+        next.initialThread.run.id = next.run.id;
+        next.initialThread.invocation.id = next.run.invocationId;
+        const replayOf = { runId: intent.run.id, nodeId: 'hook' };
+        next.initialThread.invocation.replayOf = replayOf;
+        next.queued = { ...next.queued, initialThread: next.initialThread, replayOf };
+        next.replayIntent = { sourceRunId: intent.run.id, nodeId: 'hook', observedSeq: 1 };
+        return next;
+      };
+      const a = fork(),
+        b = fork();
+      const [first, repeated] = await Promise.all([f.admission.create(a), f.admission.create(b)]);
+      equal(first.id, repeated.id);
+      equal((await f.admission.findReplay(intent.run.id, 'hook', 1))?.id, first.id);
+      equal((await f.events(first.id)).length, 1);
+      equal(await f.events(first.id === a.run.id ? b.run.id : a.run.id), []);
+      equal(await f.events(intent.run.id), before);
+      equal((await f.run(intent.run.id))?.lastEventSeq, 1);
+    },
+  },
+  {
+    name: 'Failed Replay admission consumes nothing and rejects a stale source observation',
+    async run(f) {
+      const { intent, ids } = inputs();
+      await f.admission.create(intent);
+      const fork = structuredClone(intent);
+      fork.run.id = ids.next();
+      fork.run.invocationId = ids.next();
+      fork.initialThread.run.id = fork.run.id;
+      fork.initialThread.invocation.id = fork.run.invocationId;
+      const replayOf = { runId: intent.run.id, nodeId: 'hook' };
+      fork.initialThread.invocation.replayOf = replayOf;
+      fork.queued = { ...fork.queued, initialThread: fork.initialThread, replayOf };
+      fork.replayIntent = { sourceRunId: intent.run.id, nodeId: 'hook', observedSeq: 1 };
+      await f.failAt('create.event');
+      await rejects(() => f.admission.create(fork));
+      equal(await f.run(fork.run.id), undefined);
+      equal(await f.admission.findReplay(intent.run.id, 'hook', 1), undefined);
+      await f.failAt(undefined);
+      fork.replayIntent.observedSeq = 0;
+      await rejects(() => f.admission.create(fork));
+      fork.replayIntent.observedSeq = 1;
+      equal((await f.admission.create(fork)).id, fork.run.id);
+      equal((await f.events(intent.run.id)).length, 1);
+    },
+  },
+  {
     name: 'historical inbound-only keys are permanent across versions and isolated by owner/loop/node',
     async run(f) {
       const { claim, intent, ids } = inputs();

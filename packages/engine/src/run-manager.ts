@@ -1577,8 +1577,7 @@ export class RunManager {
   /**
    * Replay-at-node: fork a new run on the source's loop version and trigger envelope whose thread
    * is the source thread as it was just before `nodeId` first started, and which starts executing
-   * at `nodeId`. The fork has its own id and log. The source records the requested fork while
-   * retaining its execution state. Consumed external work cannot be repeated by the fork.
+   * at `nodeId`. The fork has its own id, log and effects; the source history is unchanged.
    */
   async replay(input: ReplayRunInput): Promise<RunRecord> {
     const observedSeq =
@@ -1601,10 +1600,14 @@ export class RunManager {
       !(
         eligibility.code === 'SCRIPT_CONSENT_REQUIRED' &&
         input.retryUncertainScript &&
-        recovery.scriptConsent?.nodeId === input.nodeId
+        recovery.scriptConsent
       )
     )
-      throw new RecoveryRefusedError(eligibility.code, eligibility.message);
+      throw new RecoveryRefusedError(
+        eligibility.code,
+        eligibility.message,
+        eligibility.replayRunId,
+      );
     const firstStart = events.find(
       (e): e is Extract<RunEvent, { type: 'node.started' }> =>
         e.type === 'node.started' && e.nodeId === input.nodeId,
@@ -1629,31 +1632,6 @@ export class RunManager {
     }
     const before = replayThread(initial, events, firstStart.seq - 1);
     const runId = this.ports.ids.next();
-    // A conditional durable claim consumes exactly this observed intent before admitting its
-    // fork. A lost admission acknowledgement cannot create another fork from a stale click.
-    try {
-      const claimed = await this.ports.events.append(
-        source.id,
-        [
-          {
-            type: 'run.replay_requested',
-            nodeId: input.nodeId,
-            replayRunId: runId,
-            observedSeq: recovery.observedSeq,
-          },
-        ],
-        { expectedLastSeq: recovery.observedSeq, requireRun: true },
-      );
-      if (!claimed.length)
-        throw new EngineRequestError('RUN_NOT_FOUND', `run ${source.id} not found`);
-    } catch (error) {
-      if (error instanceof AppendConflictError)
-        throw new RecoveryRefusedError(
-          'RECOVERY_STALE',
-          'The run changed since it was shown. Refresh and review its current recovery choices.',
-        );
-      throw error;
-    }
     const invocationId = this.ports.ids.next();
     const replayOf = { runId: source.id, nodeId: input.nodeId };
     // The fork keeps the trigger envelope (the input) but not the original caller's extra return
@@ -1694,23 +1672,47 @@ export class RunManager {
     // Admitted in the same critical section as run creation and loop deletion: a fork either
     // registers (and pins) before a deletion checks, which then refuses, or after it, when the
     // version it would run must still exist.
+    const replayIntent = {
+      sourceRunId: source.id,
+      nodeId: input.nodeId,
+      observedSeq: recovery.observedSeq,
+    };
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(source.versionId, source.loopId);
 
-      return this.ports.admission.create({
-        run,
-        initialThread: thread,
-        pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
-        queued: {
-          type: 'run.queued',
-          versionId: run.versionId,
-          pinned: run.pinned,
-          replayOf,
+      try {
+        return await this.ports.admission.create({
+          run,
+          replayIntent,
           initialThread: thread,
-          ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
-        },
-      });
+          pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
+          queued: {
+            type: 'run.queued',
+            versionId: run.versionId,
+            pinned: run.pinned,
+            replayOf,
+            initialThread: thread,
+            ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
+          },
+        });
+      } catch (error) {
+        // The commit may have succeeded before its acknowledgement was lost. The unique
+        // admitted intent finds that exact fork; no source audit or second fork is needed.
+        const existing = await this.ports.admission.findReplay(
+          source.id,
+          input.nodeId,
+          recovery.observedSeq,
+        );
+        if (!existing) throw error;
+        return existing;
+      }
     });
+    if (admitted.id !== runId)
+      throw new RecoveryRefusedError(
+        'RECOVERY_STALE',
+        `This Replay intent already created run ${admitted.id}. Open that run instead of submitting the same intent again.`,
+        admitted.id,
+      );
     this.enqueue(runId);
     return admitted;
   }

@@ -118,12 +118,12 @@ describe('recovery effect boundaries (#256)', () => {
       reader.stop();
     }
   });
-  it('replays after a consumed script without dispatching that script again; earlier nodes explain refusal', async () => {
+  it('replays the chosen script as new work, preserves the source and deduplicates admission', async () => {
     const e = await createTestEngine();
     e.ports.scripts.respondWith(() => result);
     const source = await e.runToIdle(
       e.publish(
-        singleNodeLoop('effect boundary', {
+        singleNodeLoop('script fork', {
           id: 'effect',
           kind: 'script',
           label: 'Effect',
@@ -131,27 +131,36 @@ describe('recovery effect boundaries (#256)', () => {
         }),
       ).loopId,
     );
-    const recovery = await e.manager.getRecovery(source.id);
-    expect(recovery.replay.find((n) => n.nodeId === 'effect')?.action).toMatchObject({
-      code: 'EXTERNAL_EFFECT_CONSUMED',
+    const before = JSON.stringify({
+      run: await e.manager.getRun(source.id),
+      events: e.events(source.id),
+      thread: await e.manager.getThread(source.id),
     });
+    const recovery = await e.manager.getRecovery(source.id);
+    const choice = recovery.replay.find((node) => node.nodeId === 'effect');
+    expect(choice?.action.allowed).toBe(true);
+    expect(choice?.effects).toContainEqual({ nodeId: 'effect', label: 'Effect', kind: 'script' });
     const fork = await e.manager.replay({
       runId: source.id,
-      nodeId: 'done',
+      nodeId: 'effect',
       observedSeq: recovery.observedSeq,
     });
     expect((await e.settle(fork.id)).status).toBe('succeeded');
-    expect(e.ports.scripts.calls).toHaveLength(1);
-    expect((await e.manager.getThread(fork.id))?.outputs['effect']).toEqual(
-      (await e.manager.getThread(source.id))?.outputs['effect'],
-    );
+    expect(e.ports.scripts.calls).toHaveLength(2);
+    expect(
+      JSON.stringify({
+        run: await e.manager.getRun(source.id),
+        events: e.events(source.id),
+        thread: await e.manager.getThread(source.id),
+      }),
+    ).toBe(before);
     const restarted = new RunManager(e.ports, e.settings);
     await expect(
-      restarted.replay({ runId: source.id, nodeId: 'done', observedSeq: recovery.observedSeq }),
-    ).rejects.toMatchObject({ code: 'RECOVERY_STALE' });
+      restarted.replay({ runId: source.id, nodeId: 'effect', observedSeq: recovery.observedSeq }),
+    ).rejects.toMatchObject({ code: 'RECOVERY_STALE', replayRunId: fork.id });
     e.manager.stop();
   });
-  it('refuses a graph path that loops back over an earlier external effect', async () => {
+  it('explains possible script work through a loopback without refusing Replay', async () => {
     const e = await createTestEngine();
     e.ports.scripts.respondWith(() => result);
     const loop = singleNodeLoop('loopback effect', {
@@ -181,9 +190,13 @@ describe('recovery effect boundaries (#256)', () => {
       { id: 'again', from: { node: 'gate', port: 'again' }, to: { node: 'effect' } },
     );
     const source = await e.runToIdle(e.publish(loop).loopId);
-    await expect(e.manager.replay({ runId: source.id, nodeId: 'gate' })).rejects.toMatchObject({
-      code: 'EXTERNAL_EFFECT_CONSUMED',
-    });
+    const choice = (await e.manager.getRecovery(source.id)).replay.find(
+      (node) => node.nodeId === 'gate',
+    );
+    expect(choice?.action.allowed).toBe(true);
+    expect(choice?.effects).toContainEqual({ nodeId: 'effect', label: 'Effect', kind: 'script' });
+    const fork = await e.manager.replay({ runId: source.id, nodeId: 'gate' });
+    expect((await e.settle(fork.id)).status).toBe('succeeded');
     expect(e.ports.scripts.calls).toHaveLength(1);
     e.manager.stop();
   });
@@ -252,12 +265,12 @@ describe('recovery effect boundaries (#256)', () => {
     expect((await e.manager.getRun(run.id))?.status).toBe('cancelled');
     e.manager.stop();
   });
-  it('refuses a completed failed script instead of repeating consumed work', async () => {
+  it('resumes a completed resumable script failure after the program is fixed', async () => {
     const e = await createTestEngine();
     e.ports.scripts.respondWith(() => ({ ...result, exitCode: 1 }));
     const run = await e.runToIdle(
       e.publish(
-        singleNodeLoop('completed failure', {
+        singleNodeLoop('fixed program', {
           id: 'effect',
           kind: 'script',
           label: 'Effect',
@@ -265,23 +278,14 @@ describe('recovery effect boundaries (#256)', () => {
         }),
       ).loopId,
     );
-    await expect(e.manager.resume(run.id)).rejects.toMatchObject({
-      code: 'EXTERNAL_EFFECT_CONSUMED',
-    });
-    // The typed exit failure still proves execution if optional provenance is unavailable.
-    const { script: _script, ...knownExit } = run.failure!;
-    await e.ports.runs.transition(run.id, ['failed'], { failure: knownExit });
-    expect((await e.manager.getRecovery(run.id)).resume).toMatchObject({
-      allowed: false,
-      code: 'EXTERNAL_EFFECT_CONSUMED',
-    });
-    await expect(e.manager.resume(run.id)).rejects.toMatchObject({
-      code: 'EXTERNAL_EFFECT_CONSUMED',
-    });
-    expect(e.ports.scripts.calls).toHaveLength(1);
+    expect((await e.manager.getRecovery(run.id)).resume.allowed).toBe(true);
+    e.ports.scripts.respondWith(() => result);
+    expect((await e.manager.resume(run.id)).id).toBe(run.id);
+    expect((await e.settle(run.id)).status).toBe('succeeded');
+    expect(e.ports.scripts.calls).toHaveLength(2);
     e.manager.stop();
   });
-  it('never resends a recorded return delivery through Replay', async () => {
+  it('retains the source delivery and performs the fork own delivery', async () => {
     const e = await createTestEngine();
     const loop = singleNodeLoop('recorded return', {
       id: 'work',
@@ -297,10 +301,14 @@ describe('recovery effect boundaries (#256)', () => {
     done.config.destinations = [{ kind: 'webhook', url: 'https://example.test/result' }];
     const run = await e.runToIdle(e.publish(loop).loopId);
     expect(e.events(run.id).some((event) => event.type === 'delivery.finished')).toBe(true);
-    await expect(e.manager.replay({ runId: run.id, nodeId: 'done' })).rejects.toMatchObject({
-      code: 'EXTERNAL_EFFECT_CONSUMED',
-    });
+    const before = structuredClone(e.events(run.id));
+    const fork = await e.manager.replay({ runId: run.id, nodeId: 'done' });
+    expect((await e.settle(fork.id)).status).toBe('succeeded');
+    expect(e.events(run.id)).toEqual(before);
     expect(e.events(run.id).filter((event) => event.type === 'delivery.attempted')).toHaveLength(1);
+    expect(e.events(fork.id).filter((event) => event.type === 'delivery.attempted')).toHaveLength(
+      1,
+    );
     e.manager.stop();
   });
 });

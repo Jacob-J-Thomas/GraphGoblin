@@ -161,12 +161,14 @@ test('two tabs Replay one observed intent into one separate linked run; repeat c
   const start = await request.post(`/loops/${loop}/runs`, { data: {} });
   const { run } = (await start.json()) as { run: RunRecord };
   await expect.poll(async () => (await read(request, run.id)).status).toBe('succeeded');
+  await expect.poll(async () => (await read(request, run.id)).finalizedAt).toBeTruthy();
+  const beforeHistory = await (await request.get(`/runs/${run.id}/events`)).json();
   const other = await context.newPage();
   for (const tab of [page, other]) {
     await tab.bringToFront();
     await tab.goto(`/app/runs/${run.id}`);
     await tab.getByRole('button', { name: 'Replay...', exact: true }).click();
-    await expect(tab.getByRole('dialog', { name: 'Replay as a new run' })).toContainText('new id');
+    await expect(tab.getByRole('dialog', { name: 'Replay as a new run' })).toContainText('new ID');
     await tab.getByLabel('Replay from node').selectOption('done');
   }
   let count = 0;
@@ -203,11 +205,7 @@ test('two tabs Replay one observed intent into one separate linked run; repeat c
   const history = (await (await request.get(`/runs/${run.id}/events`)).json()) as {
     items: { type: string; replayRunId?: string }[];
   };
-  expect(
-    history.items
-      .filter((event) => event.type === 'run.replay_requested')
-      .map((event) => event.replayRunId),
-  ).toEqual([fork.id]);
+  expect(history).toEqual(beforeHistory);
   const stale = await request.post(`/runs/${run.id}/replay`, {
     data: { observedSeq: source.recovery.observedSeq - 1, nodeId: 'done' },
   });
@@ -252,6 +250,8 @@ test('repeat browser clicks admit one Resume and one Replay intent and preserve 
   await page.bringToFront();
   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
   const before = await control(request, '/harness/requests');
+  await expect.poll(async () => (await read(request, source.id)).finalizedAt).toBeTruthy();
+  const beforeHistory = await (await request.get(`/runs/${source.id}/events`)).json();
   await page.getByRole('button', { name: 'Replay...', exact: true }).click();
   await page.getByLabel('Replay from node').selectOption('done');
   let replayRequests = 0;
@@ -282,7 +282,7 @@ test('repeat browser clicks admit one Resume and one Replay intent and preserve 
     items: { type: string }[];
   };
   expect(history.items.filter((event) => event.type === 'run.resumed')).toHaveLength(1);
-  expect(history.items.filter((event) => event.type === 'run.replay_requested')).toHaveLength(1);
+  expect(history).toEqual(beforeHistory);
 });
 
 /** A double click can race the pending render; duplicate requests must be refused clearly. */
@@ -298,7 +298,7 @@ async function oneAcceptedIntent(
     expect(response.status()).toBe(409);
     expect(await response.json()).toMatchObject({
       code: 'RECOVERY_STALE',
-      detail: expect.stringContaining('changed since it was shown'),
+      detail: expect.stringMatching(/changed since it was shown|already created run/),
     });
   }
 }

@@ -24,6 +24,10 @@ describe('SQLite history queries', () => {
   });
   afterEach(() => handle.close());
   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
+    await handle.client.execute('DROP INDEX runs_replay_intent_idx');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_observed_seq');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_node_id');
+    await handle.client.execute('ALTER TABLE runs DROP COLUMN replay_intent_source_run_id');
     await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
     await handle.client.execute('ALTER TABLE runs DROP COLUMN thread_snapshot_replay_state');
     const historyMigration = readMigrationFiles({

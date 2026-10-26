@@ -319,15 +319,6 @@ describe('child failures follow the inline rules (#251)', () => {
         expect((await e.ports.runs.get(child!.id))?.status).toBe('failed');
         return;
       }
-      if (inline.failure?.script?.state === 'completed') {
-        await expect(e.manager.resume(inline.id)).rejects.toMatchObject({
-          code: 'EXTERNAL_EFFECT_CONSUMED',
-        });
-        await expect(e.manager.resume(parent.id)).rejects.toMatchObject({
-          code: 'EXTERNAL_EFFECT_CONSUMED',
-        });
-        return;
-      }
       repair();
       await e.manager.resume(inline.id);
       const inlineAfter = await e.settle(inline.id);
@@ -457,11 +448,7 @@ describe('child failures follow the inline rules (#251)', () => {
 describe('repeat and recovery attempts (#251)', () => {
   const failingScript = (e: TestEngine, failures: number) => {
     let calls = 0;
-    e.ports.scripts.respondWith(() =>
-      ++calls <= failures
-        ? scriptResult(1, { state: 'definitely-not-started', exitCode: null })
-        : scriptResult(0),
-    );
+    e.ports.scripts.respondWith(() => (++calls <= failures ? scriptResult(1) : scriptResult(0)));
     return () => calls;
   };
   const scriptNode: TestNode = {
@@ -478,11 +465,11 @@ describe('repeat and recovery attempts (#251)', () => {
     const parent = await e.runToIdle(
       e.publish(parentOf('patient parent', childLoop.loopId)).loopId,
     );
-    expect(parent.failure).toMatchObject({ code: 'SCRIPT_START_FAILED', resumable: true });
+    expect(parent.failure).toMatchObject({ code: 'SCRIPT_EXIT_CODE', resumable: true });
     await e.manager.resume(parent.id);
     expect(await e.settle(parent.id)).toMatchObject({
       status: 'failed',
-      failure: { code: 'SCRIPT_START_FAILED', resumable: true, nodeId: 'sub' },
+      failure: { code: 'SCRIPT_EXIT_CODE', resumable: true, nodeId: 'sub' },
     });
     await e.manager.resume(parent.id);
     const done = await e.settle(parent.id);
@@ -529,7 +516,7 @@ describe('repeat and recovery attempts (#251)', () => {
     const [mid] = await e.ports.runs.listChildren(root.id);
     const [bottom] = await e.ports.runs.listChildren(mid!.id);
     for (const run of [root, mid!, bottom!])
-      expect(run.failure).toMatchObject({ code: 'SCRIPT_START_FAILED', resumable: true });
+      expect(run.failure).toMatchObject({ code: 'SCRIPT_EXIT_CODE', resumable: true });
     expect(root.failure?.details).toMatchObject({ childRunId: mid!.id, childNodeId: 'sub' });
     expect(mid!.failure?.details).toMatchObject({ childRunId: bottom!.id, childNodeId: 'work' });
     await e.manager.resume(root.id);
@@ -573,7 +560,7 @@ describe('repeat and recovery attempts (#251)', () => {
     recovered.stop();
     const failed = (await e.ports.runs.get(parent.id)) as RunRecord;
     expect(failed.failure).toMatchObject({
-      code: 'SCRIPT_START_FAILED',
+      code: 'SCRIPT_EXIT_CODE',
       resumable: true,
       nodeId: 'sub',
     });

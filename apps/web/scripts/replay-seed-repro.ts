@@ -73,7 +73,7 @@ try {
     // The source records fork requests; execution state and all other history stay unchanged.
     return JSON.stringify({
       record,
-      events: events.filter((event) => event.type !== 'run.replay_requested'),
+      events,
       snapshot: await container.repos.runs.getThreadCheckpoint(source.id),
       initial: await container.repos.runs.getInitialThread(source.id),
     });

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   ContextThread,
   RunRecord,
@@ -68,6 +68,57 @@ const transient: RunFailure = {
   nodeId: 'start',
 };
 describe('server recovery eligibility (#256)', () => {
+  it.each(['queued', 'running', 'waiting', 'paused', 'cancelled', 'succeeded'] as const)(
+    'scan1: Replay retains main eligibility for a reached node on a %s source',
+    async (status) => {
+      const source = await seeded(status);
+      const before = await t.container.ports.events.read(source.id);
+      const response = await t.app.inject({
+        method: 'POST',
+        url: `/runs/${source.id}/replay`,
+        payload: { nodeId: 'start', observedSeq: source.recovery.observedSeq },
+      });
+      expect(response.statusCode, response.body).toBe(202);
+      expect(response.json<{ run: RunRecord }>().run.id).not.toBe(source.id);
+      expect(await t.container.ports.events.read(source.id)).toEqual(before);
+    },
+  );
+  it('scan1: Resume permits a completed resumable script failure after the program is fixed', async () => {
+    const source = await seeded('failed', {
+      ...transient,
+      code: 'SCRIPT_EXIT_CODE',
+      script: { visitId: 'v', state: 'completed', exitCode: 7 },
+    });
+    const response = await t.app.inject({
+      method: 'POST',
+      url: `/runs/${source.id}/resume`,
+      payload: { observedSeq: source.recovery.observedSeq },
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json<RunRecord>().id).toBe(source.id);
+  });
+  it('scan1: lost fork admission acknowledgement finds the committed fork', async () => {
+    const source = await seeded('succeeded');
+    const create = t.container.ports.admission.create.bind(t.container.ports.admission);
+    let lost = false;
+    vi.spyOn(t.container.ports.admission, 'create').mockImplementation(async (...args) => {
+      const admitted = await create(...args);
+      if (!lost && args[0].initialThread.invocation.replayOf) {
+        lost = true;
+        throw new Error('controlled lost admission acknowledgement');
+      }
+      return admitted;
+    });
+    const response = await t.app.inject({
+      method: 'POST',
+      url: `/runs/${source.id}/replay`,
+      payload: { nodeId: 'start', observedSeq: source.recovery.observedSeq },
+    });
+    expect(response.statusCode, response.body).toBe(202);
+    const fork = response.json<{ run: RunRecord }>().run;
+    expect((await t.container.ports.runs.get(fork.id))?.id).toBe(fork.id);
+    expect((await t.container.ports.events.read(source.id)).at(-1)?.seq).toBe(source.lastEventSeq);
+  });
   it.each(['latest', 'captured'] as const)(
     'returns one recovery state with %s history during a concurrent retry',
     async (timing) => {
@@ -166,7 +217,6 @@ describe('server recovery eligibility (#256)', () => {
       const run = await seeded(status);
       expect(run.recovery.resume).toMatchObject({ allowed: false, code: 'RUN_ACTIVE' });
       await refusal(run, 'resume', 'RUN_ACTIVE');
-      await refusal(run, 'replay', 'RUN_ACTIVE');
     },
   );
   it.each(['succeeded', 'exhausted'] as const)(
@@ -179,18 +229,22 @@ describe('server recovery eligibility (#256)', () => {
   it('explains paused Replay, cancelled recovery and unsupported failures', async () => {
     const paused = await seeded('paused');
     expect(paused.recovery.resume.allowed).toBe(true);
-    await refusal(paused, 'replay', 'RUN_PAUSED');
+    expect(paused.recovery.replay.find((node) => node.nodeId === 'start')?.action.allowed).toBe(
+      true,
+    );
     const cancelled = await seeded('cancelled');
     await refusal(cancelled, 'resume', 'RUN_CANCELLED');
-    await refusal(cancelled, 'replay', 'RUN_CANCELLED');
+    expect(cancelled.recovery.replay.find((node) => node.nodeId === 'start')?.action.allowed).toBe(
+      true,
+    );
     const completed = await seeded('failed', {
       ...transient,
       code: 'SCRIPT_EXIT_CODE',
       script: { visitId: 'v', state: 'completed' },
     });
-    await refusal(completed, 'resume', 'EXTERNAL_EFFECT_CONSUMED');
+    expect(completed.recovery.resume.allowed).toBe(true);
     const knownExit = await seeded('failed', { ...transient, code: 'SCRIPT_EXIT_CODE' });
-    await refusal(knownExit, 'resume', 'EXTERNAL_EFFECT_CONSUMED');
+    expect(knownExit.recovery.resume.allowed).toBe(true);
     const failed = await seeded('failed', { ...transient, resumable: false });
     await refusal(failed, 'resume', 'FAILURE_NOT_RESUMABLE');
     await refusal(failed, 'replay', 'REPLAY_NODE_NOT_REACHED', 'done');
@@ -278,7 +332,9 @@ describe('server recovery eligibility (#256)', () => {
       resumable: false,
     });
     await refusal(missing, 'resume', 'SESSION_RECOVERY_REQUIRED');
-    await refusal(missing, 'replay', 'SESSION_RECOVERY_REQUIRED');
+    expect(missing.recovery.replay.find((node) => node.nodeId === 'start')?.action.allowed).toBe(
+      true,
+    );
     const uncertain = await seeded('failed', {
       ...transient,
       code: 'SCRIPT_OUTCOME_UNCERTAIN',
@@ -347,7 +403,7 @@ describe('server recovery eligibility (#256)', () => {
     const snapshot = (await t.app.inject(`/runs/${run.id}`)).json<Snapshot>();
     expect(snapshot.recovery.replay.find((node) => node.nodeId === 'start')?.action).toMatchObject({
       allowed: false,
-      code: 'EXTERNAL_EFFECT_CONSUMED',
+      code: 'SCRIPT_CONSENT_REQUIRED',
     });
     expect(snapshot.recovery.replay.find((node) => node.nodeId === 'effect')?.action).toMatchObject(
       {
@@ -355,7 +411,7 @@ describe('server recovery eligibility (#256)', () => {
         code: 'SCRIPT_CONSENT_REQUIRED',
       },
     );
-    await refusal(snapshot, 'replay', 'EXTERNAL_EFFECT_CONSUMED');
+    await refusal(snapshot, 'replay', 'SCRIPT_CONSENT_REQUIRED');
     await refusal(snapshot, 'replay', 'SCRIPT_CONSENT_REQUIRED', 'effect');
     const broadConsent = await t.app.inject({
       method: 'POST',
@@ -366,8 +422,8 @@ describe('server recovery eligibility (#256)', () => {
         retryUncertainScript: true,
       },
     });
-    expect(broadConsent.statusCode).toBe(409);
-    expect(broadConsent.json()).toMatchObject({ code: 'EXTERNAL_EFFECT_CONSUMED' });
+    expect(broadConsent.statusCode, broadConsent.body).toBe(202);
+    expect(broadConsent.json<{ run: RunRecord }>().run.id).not.toBe(run.id);
   });
   it('serializes two Resume clicks and refuses an old observation after another failure', async () => {
     const run = await seeded('failed', transient);
@@ -404,9 +460,10 @@ describe('server recovery eligibility (#256)', () => {
     expect(repeated.statusCode, repeated.body).toBe(409);
     expect(repeated.json()).toMatchObject({ code: 'RECOVERY_STALE' });
   });
-  it('claims one Replay per observed intent, records exact identities and preserves the source thread', async () => {
+  it('admits one Replay per observed intent, records exact identities and preserves source history', async () => {
     const run = await seeded('succeeded');
     const thread = await t.container.manager.getThread(run.id);
+    const sourceHistory = await t.container.repos.events.read(run.id);
     const command = () =>
       t.app.inject({
         method: 'POST',
@@ -423,12 +480,9 @@ describe('server recovery eligibility (#256)', () => {
     });
     expect(await t.container.manager.getThread(run.id)).toEqual(thread);
     await refusal(run, 'replay', 'RECOVERY_STALE');
-    expect((await t.container.repos.events.read(run.id)).at(-1)).toMatchObject({
-      type: 'run.replay_requested',
-      replayRunId: fork.id,
-    });
+    expect(await t.container.repos.events.read(run.id)).toEqual(sourceHistory);
   });
-  it('refuses a fork over consumed external work and refuses deleted runs', async () => {
+  it('allows a deliberate fork over recorded work and refuses deleted runs', async () => {
     let run = await seeded('failed', transient);
     await t.container.repos.events.append(run.id, [
       {
@@ -439,7 +493,7 @@ describe('server recovery eligibility (#256)', () => {
       },
     ]);
     run = (await t.app.inject(`/runs/${run.id}`)).json<Snapshot>();
-    await refusal(run, 'replay', 'EXTERNAL_EFFECT_CONSUMED');
+    expect(run.recovery.replay.find((node) => node.nodeId === 'start')?.action.allowed).toBe(true);
     await t.container.repos.loops.delete(run.loopId);
     const deleted = await t.app.inject({
       method: 'POST',

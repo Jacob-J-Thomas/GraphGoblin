@@ -9,6 +9,9 @@ export type RunRecordRow = Omit<
   | 'threadSnapshotReplayState'
   | 'result'
   | 'pinned'
+  | 'replayIntentSourceRunId'
+  | 'replayIntentNodeId'
+  | 'replayIntentObservedSeq'
 > & { result: JsonValue | undefined; pinned: RunPin };
 
 export function runRecordFromRow(row: RunRecordRow): RunRecord {

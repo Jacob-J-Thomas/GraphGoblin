@@ -1,0 +1,164 @@
+$ vitest run recovery-eligibility.test.ts --testNamePattern=scan1 --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d5-256/apps/api
+
+ ❯ src/recovery-eligibility.test.ts (26 tests | 8 failed | 18 skipped) 3391ms
+   ❯ server recovery eligibility (#256) (26)
+     × scan1: Replay retains main eligibility for a reached node on a queued source 1195ms
+     × scan1: Replay retains main eligibility for a reached node on a running source 289ms
+     × scan1: Replay retains main eligibility for a reached node on a waiting source 206ms
+     × scan1: Replay retains main eligibility for a reached node on a paused source 178ms
+     × scan1: Replay retains main eligibility for a reached node on a cancelled source 368ms
+     × scan1: Replay retains main eligibility for a reached node on a succeeded source 509ms
+     × scan1: Resume permits a completed resumable script failure after the program is fixed 224ms
+     × scan1: lost fork admission acknowledgement finds the committed fork 420ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Replay retains main eligibility for a reached node on a queued source
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Replay retains main eligibility for a reached node on a running source
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Replay retains main eligibility for a reached node on a waiting source
+AssertionError: {"type":"https://graphgoblin.dev/problems/run-active","title":"run active","status":409,"code":"RUN_ACTIVE","detail":"This run is still active. Pause it before continuing with Resume."}: expected 409 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 409
+
+ ❯ src/recovery-eligibility.test.ts:81:50
+     79|         payload: { nodeId: 'start', observedSeq: source.recovery.obser…
+     80|       });
+     81|       expect(response.statusCode, response.body).toBe(202);
+       |                                                  ^
+     82|       expect(response.json<{ run: RunRecord }>().run.id).not.toBe(sour…
+     83|       expect(await t.container.ports.events.read(source.id)).toEqual(b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Replay retains main eligibility for a reached node on a paused source
+AssertionError: {"type":"https://graphgoblin.dev/problems/run-paused","title":"run paused","status":409,"code":"RUN_PAUSED","detail":"This run is paused. Resume continues this existing run."}: expected 409 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 409
+
+ ❯ src/recovery-eligibility.test.ts:81:50
+     79|         payload: { nodeId: 'start', observedSeq: source.recovery.obser…
+     80|       });
+     81|       expect(response.statusCode, response.body).toBe(202);
+       |                                                  ^
+     82|       expect(response.json<{ run: RunRecord }>().run.id).not.toBe(sour…
+     83|       expect(await t.container.ports.events.read(source.id)).toEqual(b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Replay retains main eligibility for a reached node on a cancelled source
+AssertionError: {"type":"https://graphgoblin.dev/problems/run-cancelled","title":"run cancelled","status":409,"code":"RUN_CANCELLED","detail":"This run was cancelled; recovery is unavailable."}: expected 409 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 409
+
+ ❯ src/recovery-eligibility.test.ts:81:50
+     79|         payload: { nodeId: 'start', observedSeq: source.recovery.obser…
+     80|       });
+     81|       expect(response.statusCode, response.body).toBe(202);
+       |                                                  ^
+     82|       expect(response.json<{ run: RunRecord }>().run.id).not.toBe(sour…
+     83|       expect(await t.container.ports.events.read(source.id)).toEqual(b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Replay retains main eligibility for a reached node on a succeeded source
+AssertionError: expected [ { …(7) }, { …(5) }, { …(8) }, …(1) ] to deeply equal [ { …(7) }, { …(5) }, { …(8) } ]
+
+- Expected
++ Received
+
+@@ -82,6 +82,15 @@
+      "runId": "01M3Y7RKG0T1CJEYMFFXKYPVTM",
+      "seq": 3,
+      "ts": "2026-10-02T12:00:00.000Z",
+      "type": "node.started",
+    },
++   {
++     "nodeId": "start",
++     "observedSeq": 3,
++     "replayRunId": "01M3Y7RKG0T1CJEYMFFXKYPVTP",
++     "runId": "01M3Y7RKG0T1CJEYMFFXKYPVTM",
++     "seq": 4,
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "run.replay_requested",
++   },
+  ]
+
+ ❯ src/recovery-eligibility.test.ts:83:62
+     81|       expect(response.statusCode, response.body).toBe(202);
+     82|       expect(response.json<{ run: RunRecord }>().run.id).not.toBe(sour…
+     83|       expect(await t.container.ports.events.read(source.id)).toEqual(b…
+       |                                                              ^
+     84|     },
+     85|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: Resume permits a completed resumable script failure after the program is fixed
+AssertionError: {"type":"https://graphgoblin.dev/problems/external-effect-consumed","title":"external effect consumed","status":409,"code":"EXTERNAL_EFFECT_CONSUMED","detail":"The failed script already executed. Resume would repeat its external work; start a deliberate new execution instead."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ src/recovery-eligibility.test.ts:97:48
+     95|       payload: { observedSeq: source.recovery.observedSeq },
+     96|     });
+     97|     expect(response.statusCode, response.body).toBe(200);
+       |                                                ^
+     98|     expect(response.json<RunRecord>().id).toBe(source.id);
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/recovery-eligibility.test.ts > server recovery eligibility (#256) > scan1: lost fork admission acknowledgement finds the committed fork
+AssertionError: {"type":"https://graphgoblin.dev/problems/internal-error","title":"internal error","status":500,"code":"INTERNAL_ERROR","detail":"something went wrong on the server"}: expected 500 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 500
+
+ ❯ src/recovery-eligibility.test.ts:117:48
+    115|       payload: { nodeId: 'start', observedSeq: source.recovery.observe…
+    116|     });
+    117|     expect(response.statusCode, response.body).toBe(202);
+       |                                                ^
+    118|     const fork = response.json<{ run: RunRecord }>().run;
+    119|     expect((await t.container.ports.runs.get(fork.id))?.id).toBe(fork.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 18 skipped (26)
+   Start at  04:50:56
+   Duration  15.10s (import 42%, transform 34%, tests 23%)
+
+  Transform  transforming modules took 4.98s · 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d5-
+  │ 256\apps\api
+

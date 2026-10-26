@@ -387,14 +387,14 @@ describe('failure and recovery', () => {
   it('resumes a failed run from the failed node', async () => {
     const engine = await createTestEngine();
     engine.ports.scripts.respondWith(() => ({
-      exitCode: null,
+      exitCode: 1,
       stdout: '',
       stderr: 'boom',
       stdoutBytes: 0,
       stdoutOverflow: false,
       stderrBytes: 4,
       stderrOverflow: false,
-      state: 'definitely-not-started' as const,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -403,7 +403,7 @@ describe('failure and recovery', () => {
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('failed');
     expect(run.failure).toMatchObject({
-      code: 'SCRIPT_START_FAILED',
+      code: 'SCRIPT_EXIT_CODE',
       nodeId: 'script',
       resumable: true,
     });

@@ -6,7 +6,8 @@ import { Link, useNavigate } from 'react-router';
 import { useApi } from '../../api/context.js';
 import { keys } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
-import { Button, Dialog, HelpText, Select } from '../../components/ui/index.js';
+import { Button, Checkbox, Dialog, HelpText, Select } from '../../components/ui/index.js';
+import { ReplayConsequences } from './ReplayConsequences.js';
 import { errorMessage } from '../../lib/utils.js';
 
 /** Recovery decisions and their explanations always come from the server. */
@@ -16,12 +17,16 @@ export function RunControls({ run }: { run: RunSnapshot }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [nodeId, setNodeId] = useState('');
+  const [consent, setConsent] = useState(false);
   const [replaySeq, setReplaySeq] = useState(run.recovery.observedSeq);
   const refresh = () => void queryClient.invalidateQueries({ queryKey: keys.run(run.id) });
   const action = useMutation({
     mutationFn: (kind: 'cancel' | 'pause' | 'resume' | 'replay') =>
       kind === 'replay'
-        ? runs.replay(client, run.id, nodeId, { observedSeq: replaySeq })
+        ? runs.replay(client, run.id, nodeId, {
+            observedSeq: replaySeq,
+            ...(consent ? { retryUncertainScript: true } : {}),
+          })
         : kind === 'resume'
           ? runs.resume(client, run.id, { observedSeq: run.recovery.observedSeq })
           : runs[kind](client, run.id),
@@ -36,6 +41,8 @@ export function RunControls({ run }: { run: RunSnapshot }) {
   });
   const { resume, replay } = run.recovery;
   const selected = replay.find((node) => node.nodeId === nodeId);
+  const needsConsent =
+    selected && !selected.action.allowed && selected.action.code === 'SCRIPT_CONSENT_REQUIRED';
   // A second pointer click stays in the same intent even if a fast retry already failed again.
   // Use the browser's click count instead of introducing a debounce window; keyboard clicks are 0.
   const recover = (kind: 'resume' | 'replay', clickCount: number) => {
@@ -76,6 +83,7 @@ export function RunControls({ run }: { run: RunSnapshot }) {
           onClick={() => {
             action.reset();
             setReplaySeq(run.recovery.observedSeq);
+            setConsent(false);
             setNodeId(
               replay.find((node) => node.action.allowed)?.nodeId ?? replay[0]?.nodeId ?? '',
             );
@@ -113,7 +121,9 @@ export function RunControls({ run }: { run: RunSnapshot }) {
         footer={
           <>
             <Button
-              disabled={action.isPending || !selected?.action.allowed}
+              disabled={
+                action.isPending || !(selected?.action.allowed || (needsConsent && consent))
+              }
               onClick={(event) => recover('replay', event.detail)}
             >
               Create replay run
@@ -124,15 +134,16 @@ export function RunControls({ run }: { run: RunSnapshot }) {
           </>
         }
       >
-        <p>
-          Replay creates a separate run with a new id, linked to source run {run.id}. It starts from
-          the recorded state before the selected node. Earlier external effects are not undone.
-        </p>
+        <p>Source run {run.id}. The fork starts from recorded state before the selected node.</p>
+        <ReplayConsequences effects={selected?.effects ?? []} />
         <label htmlFor={`replay-node-${run.id}`}>Replay from node</label>
         <Select
           id={`replay-node-${run.id}`}
           value={nodeId}
-          onChange={(event) => setNodeId(event.target.value)}
+          onChange={(event) => {
+            setNodeId(event.target.value);
+            setConsent(false);
+          }}
           aria-describedby={`replay-reason-${run.id}`}
         >
           {replay.map((node) => (
@@ -150,6 +161,18 @@ export function RunControls({ run }: { run: RunSnapshot }) {
               ? 'No replay node selected.'
               : run.recovery.replayDefault.message}
         </p>
+        {needsConsent ? (
+          <label>
+            <Checkbox checked={consent} onChange={(event) => setConsent(event.target.checked)} />I
+            explicitly allow the current uncertain script to run again; its effect may already have
+            happened.
+          </label>
+        ) : null}
+        {selected && !selected.action.allowed && selected.action.replayRunId ? (
+          <Link to={`/runs/${selected.action.replayRunId}`}>
+            Open existing replay {selected.action.replayRunId}
+          </Link>
+        ) : null}
         {action.isError && open ? (
           <HelpText tone="bad" role="alert">
             {errorMessage(action.error)}

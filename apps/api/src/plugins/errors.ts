@@ -119,6 +119,8 @@ export function registerErrorHandler(app: FastifyInstance): void {
           error.code === 'SHUTTING_DOWN' ? 503 : 409,
           error.code,
           error.message,
+          undefined,
+          error.replayRunId ? { replayRunId: error.replayRunId } : {},
         );
       }
       if (error instanceof EngineRequestError) {

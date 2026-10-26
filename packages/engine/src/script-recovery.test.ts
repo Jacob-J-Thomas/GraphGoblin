@@ -153,16 +153,15 @@ describe('script dispatch recovery (#321)', () => {
             const recovery = await resumed.getRecovery(run.id);
             expect(recovery.replay.find((node) => node.nodeId === 'start')?.action).toMatchObject({
               allowed: false,
-              code: 'EXTERNAL_EFFECT_CONSUMED',
+              code: 'SCRIPT_CONSENT_REQUIRED',
             });
             await expect(
               resumed.replay({
                 runId: run.id,
                 nodeId: 'start',
                 observedSeq: recovery.observedSeq,
-                retryUncertainScript: true,
               }),
-            ).rejects.toMatchObject({ code: 'EXTERNAL_EFFECT_CONSUMED' });
+            ).rejects.toMatchObject({ code: 'SCRIPT_CONSENT_REQUIRED' });
             expect(e.ports.scripts.calls).toHaveLength(callsAtCrash);
           }
           await resumed.resume(

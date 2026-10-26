@@ -260,7 +260,6 @@ export type RunRecord = z.infer<typeof RunRecordSchema>;
 /** Present-tense recovery decisions; computed on reads, never stored in the run row. */
 export const RecoveryRefusalCodeSchema = z.enum([
   'RUN_ACTIVE',
-  'RUN_PAUSED',
   'RUN_FINISHED',
   'RUN_CANCELLED',
   'FAILURE_NOT_RESUMABLE',
@@ -270,7 +269,6 @@ export const RecoveryRefusalCodeSchema = z.enum([
   'REPLAY_NODE_NOT_REACHED',
   'DEFINITION_UNAVAILABLE',
   'STATE_UNAVAILABLE',
-  'EXTERNAL_EFFECT_CONSUMED',
   'RECOVERY_STALE',
   'SHUTTING_DOWN',
 ]);
@@ -282,6 +280,7 @@ export const RecoveryActionSchema = z.discriminatedUnion('allowed', [
     code: RecoveryRefusalCodeSchema,
     message: z.string(),
     parentRunId: UlidSchema.optional(),
+    replayRunId: UlidSchema.optional(),
   }),
 ]);
 export type RecoveryAction = z.infer<typeof RecoveryActionSchema>;
@@ -290,12 +289,29 @@ export const RecoveryCommandSchema = z.strictObject({
   retryUncertainScript: z.literal(true).optional(),
 });
 export type RecoveryCommand = z.infer<typeof RecoveryCommandSchema>;
+export const ReplayIntentSchema = z.strictObject({
+  sourceRunId: UlidSchema,
+  nodeId: SlugSchema,
+  observedSeq: z.number().int().nonnegative(),
+});
+export type ReplayIntent = z.infer<typeof ReplayIntentSchema>;
 export const RunRecoverySchema = z.strictObject({
   observedSeq: z.number().int().nonnegative(),
   resume: RecoveryActionSchema,
   replayDefault: RecoveryActionSchema,
   replay: z.array(
-    z.strictObject({ nodeId: SlugSchema, label: z.string(), action: RecoveryActionSchema }),
+    z.strictObject({
+      nodeId: SlugSchema,
+      label: z.string(),
+      action: RecoveryActionSchema,
+      effects: z.array(
+        z.strictObject({
+          nodeId: SlugSchema,
+          label: z.string(),
+          kind: z.enum(['script', 'inference', 'subloop', 'delivery']),
+        }),
+      ),
+    }),
   ),
   scriptConsent: z
     .strictObject({ failureSeq: z.number().int().positive(), nodeId: SlugSchema })

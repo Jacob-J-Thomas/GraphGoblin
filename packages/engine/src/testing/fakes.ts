@@ -72,7 +72,8 @@ import type {
   TimerPort,
   WorkspacePort,
 } from '../ports.js';
-import { AppendConflictError } from '../errors.js';
+import { AppendConflictError, RecoveryRefusedError } from '../errors.js';
+import { EngineRequestError } from '../run-manager.js';
 import { validateGeneratedEvent } from '../event-validation.js';
 import {
   AdmissionConflictError,
@@ -982,6 +983,15 @@ export type AdmissionWrite =
   | 'create.parent';
 
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+  private readonly replayIntents = new Map<string, string>();
+  findReplay(
+    sourceRunId: string,
+    nodeId: string,
+    observedSeq: number,
+  ): Promise<RunRecord | undefined> {
+    const id = this.replayIntents.get(JSON.stringify([sourceRunId, nodeId, observedSeq]));
+    return id ? this.runs.get(id) : Promise.resolve(undefined);
+  }
   readonly events: InMemoryEventAdmission;
   readonly receipts = new Map<string, WebhookReceipt>();
   readonly inbound = new Map<string, WebhookClaim['inbound']>();
@@ -1015,6 +1025,22 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     onCommitted?: () => void,
   ): Promise<RunRecord> {
     const input = parseRunAdmission(authored);
+    const replay = input.replayIntent;
+    const replayKey = replay
+      ? JSON.stringify([replay.sourceRunId, replay.nodeId, replay.observedSeq])
+      : undefined;
+    if (replay && replayKey) {
+      const existing = this.replayIntents.get(replayKey);
+      if (existing && this.runs.runs.has(existing)) return this.runs.runs.get(existing)!;
+      const source = this.runs.runs.get(replay.sourceRunId);
+      if (!source || source.ownerId !== input.run.ownerId)
+        throw new EngineRequestError('RUN_NOT_FOUND', `run ${replay.sourceRunId} not found`);
+      if ((this.eventStore.all(source.id).at(-1)?.seq ?? 0) !== replay.observedSeq)
+        throw new RecoveryRefusedError(
+          'RECOVERY_STALE',
+          'The run changed since it was shown. Refresh and review its current recovery choices.',
+        );
+    }
     const receipt = receiptId ? this.receipts.get(receiptId) : undefined;
     if (
       receiptId &&
@@ -1085,6 +1111,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     if (created) {
       if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
+      if (replayKey) this.replayIntents.set(replayKey, run.id);
       this.eventStore.commitQueued(queuedEvent(input));
       if (parentLink) {
         this.eventStore.commitNext(parentLink);

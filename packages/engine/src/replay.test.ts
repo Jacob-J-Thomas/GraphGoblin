@@ -1,5 +1,5 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
@@ -44,7 +44,7 @@ function linearLoop(): LoopDefinitionInput {
 }
 
 describe('replay-at-node', () => {
-  it('records the exact executable seed, keeps inherited counters and gates, and preserves source execution data while auditing the fork', async () => {
+  it('records the exact executable seed, keeps inherited counters and gates, and leaves the source byte-identical', async () => {
     const engine = await createTestEngine();
     try {
       const definition = linearLoop();
@@ -100,17 +100,7 @@ describe('replay-at-node', () => {
       expect(final?.counters.nodeVisits).toEqual({ start: 1, a: 3, b: 3, gate: 3, done: 1 });
       expect(final?.gates).toEqual(initial?.gates);
       expect(final?.run.iteration).toBe(initial?.run.iteration);
-      const after = JSON.parse(await sourceBytes()) as {
-        record: { lastEventSeq: number };
-        events: unknown[];
-      };
-      const prior = JSON.parse(before) as { record: { lastEventSeq: number }; events: unknown[] };
-      expect(after.events.pop()).toMatchObject({
-        type: 'run.replay_requested',
-        replayRunId: fork.id,
-      });
-      after.record.lastEventSeq = prior.record.lastEventSeq;
-      expect(after).toEqual(prior);
+      expect(await sourceBytes()).toBe(before);
     } finally {
       engine.manager.stop();
     }
@@ -171,7 +161,7 @@ describe('replay-at-node', () => {
     const thread = await engine.manager.getThread(fork.id);
     expect(thread?.counters.nodeVisits).toEqual({ start: 1, a: 1, b: 1, done: 1 });
     // The source run is untouched.
-    expect(engine.eventTypes(source.id).at(-1)).toBe('run.replay_requested');
+    expect(engine.eventTypes(source.id).at(-1)).toBe('return.delivered');
     expect((await engine.ports.runs.get(source.id))?.status).toBe('succeeded');
   });
 
@@ -194,7 +184,7 @@ describe('replay-at-node', () => {
     expect((await engine.settle(fork.id)).result).toEqual({ a: 1, b: 2 });
   });
 
-  it('forks a completed run, and rejects nodes the source never started', async () => {
+  it('forks a run that is still waiting, and rejects nodes the source never started', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
       singleNodeLoop('waits', {
@@ -206,11 +196,9 @@ describe('replay-at-node', () => {
     );
     const source = await engine.runToIdle(version.loopId);
     expect(source.status).toBe('waiting');
-    await engine.manager.provideInput(source.id, source.waiting!.waitId, 'source answer');
-    await engine.settle(source.id);
-    await expect(
-      engine.manager.replay({ runId: source.id, nodeId: 'never' }),
-    ).rejects.toMatchObject({ code: 'REPLAY_NODE_NOT_REACHED' });
+    await expect(engine.manager.replay({ runId: source.id, nodeId: 'done' })).rejects.toMatchObject(
+      { code: 'REPLAY_NODE_NOT_REACHED' },
+    );
     await expect(engine.manager.replay({ runId: source.id, nodeId: 'nope' })).rejects.toMatchObject(
       { code: 'REPLAY_NODE_NOT_REACHED' },
     );
@@ -226,10 +214,10 @@ describe('replay-at-node', () => {
       'yes',
     );
     expect((await engine.settle(fork.id)).status).toBe('succeeded');
-    expect((await engine.ports.runs.get(source.id))?.status).toBe('succeeded');
+    expect((await engine.ports.runs.get(source.id))?.status).toBe('waiting');
   });
 
-  it('refuses Replay over an already admitted child instead of duplicating that child', async () => {
+  it('re-executes a subloop node with a new child instead of copying children', async () => {
     const engine = await createTestEngine();
     const child = engine.publish(minimalChild(), { loopId: engine.loopId('child') });
     const parent = engine.publish(
@@ -245,9 +233,11 @@ describe('replay-at-node', () => {
     const sourceChildren = await engine.ports.runs.listChildren(source.id);
     expect(sourceChildren).toHaveLength(1);
 
-    await expect(engine.manager.replay({ runId: source.id, nodeId: 'sub' })).rejects.toMatchObject({
-      code: 'EXTERNAL_EFFECT_CONSUMED',
-    });
+    const fork = await engine.manager.replay({ runId: source.id, nodeId: 'sub' });
+    expect((await engine.settle(fork.id)).status).toBe('succeeded');
+    const forkChildren = await engine.ports.runs.listChildren(fork.id);
+    expect(forkChildren).toHaveLength(1);
+    expect(forkChildren[0]?.id).not.toBe(sourceChildren[0]?.id);
     expect(await engine.ports.runs.listChildren(source.id)).toHaveLength(1);
   });
 
@@ -279,6 +269,12 @@ describe('replay-at-node', () => {
 
     const version = engine.publish(linearLoop());
     const source = await engine.runToIdle(version.loopId, { n: 1 });
+
+    const spy = vi.spyOn(engine.ports.runs, 'getInitialThread').mockResolvedValueOnce(undefined);
+    await expect(engine.manager.replay({ runId: source.id, nodeId: 'b' })).rejects.toMatchObject({
+      code: 'STATE_UNAVAILABLE',
+    });
+    spy.mockRestore();
 
     // A version whose definition no longer has the node (drafts are edited in place).
     const record = engine.ports.loops.versions.get(version.id)!;
