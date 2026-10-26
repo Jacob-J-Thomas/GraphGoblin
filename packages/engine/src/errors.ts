@@ -40,6 +40,7 @@ export class RunFailureError extends Error {
       resumable?: boolean;
       details?: unknown;
       nodeId?: string;
+      script?: RunFailure['script'];
       inference?: RunFailure['inference'];
       missingSession?: RunFailure['missingSession'];
       /** Facts the failing visit learned, appended in the same write as `run.failed` (#398). */
@@ -57,6 +58,7 @@ export class RunFailureError extends Error {
       message: this.message,
       resumable: this.options.resumable ?? true,
       ...(id ? { nodeId: id } : {}),
+      ...(this.options.script ? { script: this.options.script } : {}),
       ...(this.options.inference ? { inference: this.options.inference } : {}),
       ...(this.options.missingSession ? { missingSession: this.options.missingSession } : {}),
       ...(this.options.details !== undefined

@@ -1,0 +1,60 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-integrate/packages/engine
+
+ ❯ src/script-stop.test.ts (1 test | 1 failed) 110ms
+   × force preserves its non-resumable stop cause and uncertain script provenance 108ms
+pnpm.cmd : 
+At line:37 char:105
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/script-stop.test.ts > force preserves its non-resumable stop cause and uncertain script provenance
+AssertionError: expected { …(5) } to match object { …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "RUN_INTERRUPTED_BY_STOP",
+-   "details": {
+-     "effectMayHaveHappened": true,
+-   },
+-   "resumable": false,
++   "code": "SCRIPT_OUTCOME_UNCERTAIN",
++   "resumable": true,
+    "script": {
+      "state": "outcome-uncertain",
+    },
+  }
+
+ ❯ src/script-stop.test.ts:22:55
+     20|   try {
+     21|     await e.manager.forceStop();
+     22|     expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+       |                                                       ^
+     23|       code: 'RUN_INTERRUPTED_BY_STOP', resumable: false,
+     24|       script: { state: 'outcome-uncertain' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:52:50
+   Duration  10.91s (transform 69%, import 30%, tests 1%)
+
+  Transform  transforming modules took 7.18s · 69% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-
+  │ integrate\packages\engine
+

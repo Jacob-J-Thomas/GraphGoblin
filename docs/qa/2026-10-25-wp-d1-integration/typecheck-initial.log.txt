@@ -1,0 +1,65 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:226
++ ... | Out-Null; pnpm.cmd typecheck *> (Join-Path $taskLogs 'typecheck-ini ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 3b13b5a8eacbc2d6
+@graphgoblin/contracts:typecheck: cache miss, executing df39f0481cb8e689
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing 43fa0072fa89289c
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache miss, executing 7a81db20467e25c6
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:typecheck: cache miss, executing d12f90be99f75d22
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing b256d880e3b4f092
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:build: cache miss, executing 4ed862a4a4bbb613
+@graphgoblin/adapter-codex:typecheck: cache miss, executing ab67f8d6ffad4db8
+@graphgoblin/adapter-jev:build: cache miss, executing fdeeac1794d87a05
+@graphgoblin/adapter-codex:build: cache miss, executing 5e89fde0094a8770
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 35734829930c7ed2
+@graphgoblin/infrastructure:typecheck: cache miss, executing 5016740ed27c33fa
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:typecheck: src/awaited-children.test.ts(734,59): error TS2345: Argument of type '() => Promise<{ exitCode: number; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: boolean; stderrOverflow: boolean; timedOut: boolean; }>' is not assignable to parameter of type '(request: ScriptRunRequest) => Promise<ScriptRunResult>'.
+@graphgoblin/engine:typecheck:   Type 'Promise<{ exitCode: number; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: boolean; stderrOverflow: boolean; timedOut: boolean; }>' is not assignable to type 'Promise<ScriptRunResult>'.
+@graphgoblin/engine:typecheck:     Property 'state' is missing in type '{ exitCode: number; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: boolean; stderrOverflow: boolean; timedOut: boolean; }' but required in type 'ScriptRunResult'.
+@graphgoblin/engine:typecheck: src/drain-regressions.test.ts(20,25): error TS2345: Argument of type '{ exitCode: null; timedOut: false; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' is not assignable to parameter of type 'ScriptRunResult | PromiseLike<ScriptRunResult>'.
+@graphgoblin/engine:typecheck:   Property 'state' is missing in type '{ exitCode: null; timedOut: false; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' but required in type 'ScriptRunResult'.
+@graphgoblin/engine:typecheck: src/drain-regressions.test.ts(141,37): error TS2741: Property 'state' is missing in type '{ exitCode: null; timedOut: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' but required in type 'ScriptRunResult'.
+@graphgoblin/engine:typecheck: src/drain-regressions.test.ts(276,25): error TS2345: Argument of type '{ exitCode: null; timedOut: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' is not assignable to parameter of type 'ScriptRunResult | PromiseLike<ScriptRunResult>'.
+@graphgoblin/engine:typecheck:   Property 'state' is missing in type '{ exitCode: null; timedOut: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' but required in type 'ScriptRunResult'.
+@graphgoblin/engine:typecheck: src/drain-regressions.test.ts(354,37): error TS2741: Property 'state' is missing in type '{ exitCode: null; timedOut: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' but required in type 'ScriptRunResult'.
+@graphgoblin/engine:typecheck: src/drain-regressions.test.ts(437,23): error TS2345: Argument of type '{ exitCode: null; timedOut: false; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; }' is not assignable to parameter of type 'ScriptRunResult | PromiseLike<ScriptRunResult>'.
+@graphgoblin/engine:typecheck:   Property 'state' is missing in type '{ exitCode: null; timedOut: false; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; }' but required in type 'ScriptRunResult'.
+@graphgoblin/engine:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/engine#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-integrate\packages\engine) 
+C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    7 successful, 12 total
+Cached:    0 cached, 12 total
+  Time:    46.232s 
+Failed:    @graphgoblin/engine#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

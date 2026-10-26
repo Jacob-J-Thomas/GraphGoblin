@@ -1,0 +1,12 @@
+{"name":"build","command":"pnpm.cmd build","exitCode":0,"seconds":2.71}
+{"name":"prepare","command":"pnpm.cmd exec node docs/qa/2026-10-22-wp-d1-321-qa/round-2/prepare-fixtures.mjs","exitCode":0,"seconds":0.3}
+{"name":"independent","command":"pnpm.cmd exec node docs/qa/2026-10-22-wp-d1-321-qa/round-2/independent.mjs","exitCode":0,"seconds":43.23}
+{"name":"recovery-process","command":"pnpm.cmd exec node --test docs/qa/2026-10-22-wp-d1-321-qa/round-2/recovery-process.integration.mjs","exitCode":0,"seconds":17.05}
+{"name":"restart","command":"pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-2/api.config.mts --maxWorkers=1","exitCode":0,"seconds":25.43}
+{"name":"edge","command":"pnpm.cmd --filter @graphgoblin/web exec playwright test -c ../../docs/qa/2026-10-22-wp-d1-321-qa/round-2/playwright.script-recovery.config.ts","exitCode":0,"seconds":12.1}
+{"name":"native-start","command":"pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/script-recovery.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-2/infrastructure.config.mts --maxWorkers=1","exitCode":0,"seconds":6.21}
+{"name":"mcp","command":"pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/describe.test.ts src/tools.test.ts --maxWorkers=1","exitCode":0,"seconds":4.21}
+{"name":"client-types","command":"pnpm.cmd exec tsc -p docs/qa/2026-10-22-wp-d1-321-qa/round-2/client-config.json","exitCode":0,"seconds":1.34}
+{"name":"typecheck","command":"pnpm.cmd typecheck","exitCode":0,"seconds":48.26}
+{"name":"mcp-wire","command":"pnpm.cmd exec node docs/qa/2026-10-22-wp-d1-321-qa/round-2/mcp-provenance.mjs","exitCode":0,"seconds":3.57}
+{"name":"format","command":"pnpm.cmd format:check","exitCode":0,"seconds":31.94}

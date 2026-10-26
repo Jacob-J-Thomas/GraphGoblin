@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 <repo>/apps/api
+
+child admission kill: delay=0ms snapshots=20518 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=20843 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=25ms snapshots=21508 children-at-kill=2 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ❯ src/child-creation-restart.test.ts (3 tests | 1 failed) 142789ms
+   ❯ child admission across a real API kill (#320) (3)
+     × kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit 68777ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/child-creation-restart.test.ts:22:1
+     20|
+     21| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     22| afterEach(async () => {
+       | ^
+     23|   for (const fixture of fixtures.splice(0)) {
+     24|     await fixture.dispose();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 5 passed (6)
+   Start at  01:28:00
+   Duration  147.23s (tests 97%, import 2%, transform 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  │ <user>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d1-
+  │ 321\apps\api
+System.Management.Automation.RemoteException

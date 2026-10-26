@@ -1,0 +1,94 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-integrate/packages/engine
+
+ ❯ src/child-creation.test.ts (7 tests | 1 failed) 952ms
+   ❯ child creation and finish across a process death (#320) (7)
+     × records a child independently retried while its parent was interrupted 231ms
+ ❯ src/drain-regressions.test.ts (11 tests | 1 failed) 1032ms
+   × force interrupts queued family children but preserves an independent queued run 73ms
+ ❯ src/awaited-children.test.ts (24 tests | 1 failed) 3924ms
+   ❯ awaiting a child across failures and restarts (#242) (12)
+     × each durable outcome of a parent carries the child completion it observed (#398) 130ms
+pnpm.cmd : 
+At line:2 char:105
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > each durable outcome of a 
+parent carries the child completion it observed (#398)
+AssertionError: expected [ 'child_run.finished', …(2) ] to deeply equal [ 'child_run.finished', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "child_run.finished",
+    "run.failed",
+-   "child_run.finished",
+    "run.failed",
+  ]
+
+ ❯ src/awaited-children.test.ts:831:21
+    829|     expect(e.events(kid!.id).filter((event) => event.type === 'run.res…
+    830|     // The resumed attempt observes the same completion and fails the …
+    831|     expect(pairs()).toEqual([
+       |                     ^
+    832|       'child_run.finished',
+    833|       'run.failed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > records a child 
+independently retried while its parent was interrupted
+AssertionError: expected [ { …(7) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/child-creation.test.ts:233:57
+    231|       await recovered.waitForIdle();
+    232|       expect((await recovered.getRun(parentId))?.status).toBe('failed'…
+    233|       expect(ofType(e, parentId, 'child_run.finished')).toHaveLength(2…
+       |                                                         ^
+    234|       expect(await e.ports.runs.listChildren(parentId)).toHaveLength(1…
+    235|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/drain-regressions.test.ts > force interrupts queued family children but preserves an independent queued run
+AdmissionConflictError: The saved admission identity does not match the existing run
+ ❯ parseRunAdmission src/admission.ts:172:11
+    170|   const parented = run.data.parentRunId !== undefined && run.data.pare…
+    171|   if (parentNodeId ? !parentNodeId.success || !parented : parented)
+    172|     throw new AdmissionConflictError();
+       |           ^
+    173|   const { runId: _id, seq: _seq, ts: _ts, ...queued } = event.data;
+    174|   return {
+ ❯ InMemoryTriggerAdmission.create src/testing/fakes.ts:1017:19
+ ❯ src/run-manager.ts:751:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed | 3 passed (6)
+      Tests  3 failed | 65 passed (68)
+   Start at  19:28:21
+   Duration  9.06s (import 45%, transform 31%, tests 24%)
+
+  Transform  transforming modules took 11.10s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-
+  │ integrate\packages\engine
+

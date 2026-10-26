@@ -11,6 +11,7 @@ import { Alert, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
+import { ScriptRecovery } from './inspector/ScriptRecovery.js';
 import { SessionRecoveryControls } from './inspector/SessionRecoveryControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
@@ -174,11 +175,21 @@ export function RunInspectorPage() {
               </div>
               <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
                 <RunControls run={run} />
+                <ScriptRecovery run={run} />
               </div>
             </header>
             {run.status === 'failed' && run.failure ? (
               <Alert title={`Failed: ${run.failure.code}`}>
-                {run.failure.message}
+                {run.failure.code === 'SCRIPT_OUTCOME_UNCERTAIN' ? (
+                  <p>
+                    The previous script attempt may already have produced its effect. Resume runs
+                    the script again and may repeat that effect.
+                  </p>
+                ) : run.failure.code === 'SCRIPT_START_FAILED' ? (
+                  <p>The script process did not start. Resume tries to start it again.</p>
+                ) : (
+                  run.failure.message
+                )}
                 {run.failure.resumable ? ' (resumable)' : ''}
                 <FailedChildLink details={run.failure.details} />
               </Alert>

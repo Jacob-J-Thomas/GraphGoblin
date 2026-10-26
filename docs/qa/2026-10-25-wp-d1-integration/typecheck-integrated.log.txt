@@ -1,0 +1,57 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:373
++ ... owup.log'); pnpm.cmd typecheck *> (Join-Path $taskLogs 'typecheck-int ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs df39f0481cb8e689
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 3b13b5a8eacbc2d6
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 7a81db20467e25c6
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 43fa0072fa89289c
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing f71640c31bcc41ff
+@graphgoblin/engine:build: cache hit, replaying logs 5e265239c6f536f8
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: cache miss, executing bd989f5b5f66861e
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 2af88e84bfaaa564
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache hit, replaying logs 6f8674157d4bd364
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 7def8bda45ca7996
+@graphgoblin/infrastructure:build: cache miss, executing c57f6d4dd2e608cb
+@graphgoblin/infrastructure:typecheck: cache miss, executing fa3603453c332bc7
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: cache miss, executing 670ea2a7ba21908c
+@graphgoblin/api:typecheck: cache miss, executing dd7a28800182b03b
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:typecheck: cache miss, executing 424a06ae4d87ae36
+@graphgoblin/api-client:build: cache miss, executing d98b348263718fd3
+@graphgoblin/engine:typecheck: src/script-stop.test.ts(10,7): error TS2740: Type 'Promise<unknown>' is missing the following properties from type 'ScriptRunResult': state, exitCode, stdout, stderr, and 5 more.
+@graphgoblin/engine:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-integrate\packages\engine) 
+C:\nvm4w\nodejs\pnpm.cmd run typecheck exited (2)
+
+ Tasks:    9 successful, 16 total
+Cached:    7 cached, 16 total
+  Time:    42.298s 
+Failed:    @graphgoblin/engine#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

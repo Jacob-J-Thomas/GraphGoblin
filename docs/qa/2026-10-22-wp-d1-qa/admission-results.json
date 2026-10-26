@@ -1,0 +1,299 @@
+[
+  {
+    "name": "historical inbound-only keys are permanent across versions and isolated by owner/loop/node",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "racing explicit keys have one pending intent and permanent failure does not reopen the key",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "ordinary create is atomic, canonical and idempotent; notification follows commit",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:45.816Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:45.854Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:45.890Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      }
+    ]
+  },
+  {
+    "name": "claim rollback at claim.inbound leaves no inbound, receipt, pin or key",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "claim rollback at claim.receipt leaves no inbound, receipt, pin or key",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "create rollback at create.run preserves the complete pending intent and same-ID recovery",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:46.826Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:46.886Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:46.918Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      }
+    ]
+  },
+  {
+    "name": "create rollback at create.event preserves the complete pending intent and same-ID recovery",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:47.056Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:47.075Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:47.096Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      }
+    ]
+  },
+  {
+    "name": "create rollback at create.receipt preserves the complete pending intent and same-ID recovery",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:47.290Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:47.316Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:47.333Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      }
+    ]
+  },
+  {
+    "name": "create rollback at create.link preserves the complete pending intent and same-ID recovery",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:47.470Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:47.511Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:47.532Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      }
+    ]
+  },
+  {
+    "name": "claim validates owner, immutable intent, keys and pins before any writes",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:47.744Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      }
+    ]
+  },
+  {
+    "name": "claim freezes caller objects and identical keyed content gets a distinct deduplicated receipt",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "pending keys reserve across webhook and poll, permanent failure releases poll pins",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "concurrent poll candidates consume one key and webhook sees the committed poll",
+    "pass": true,
+    "calls": []
+  },
+  {
+    "name": "Allow admits identical unkeyed raw bodies as distinct receipts and runs",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:48.579Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.615Z",
+        "runId": "00000000000000000000000009",
+        "result": "admitted"
+      }
+    ]
+  },
+  {
+    "name": "a draft snapshot commits with its run or not at all, and is never replaced",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:48.786Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.809Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.820Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.838Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.852Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.880Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.880Z",
+        "runId": "00000000000000000000000001",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      },
+      {
+        "ts": "2026-10-22T01:27:48.882Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      }
+    ]
+  },
+  {
+    "name": "a child commits with its parent's child_run.started or not at all (#320)",
+    "pass": true,
+    "calls": [
+      {
+        "ts": "2026-10-22T01:27:49.085Z",
+        "runId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.094Z",
+        "runId": "00000000000000000000000009",
+        "parentRunId": "00000000000000000000000001",
+        "parentNodeId": "sub",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.106Z",
+        "runId": "00000000000000000000000009",
+        "parentRunId": "00000000000000000000000001",
+        "parentNodeId": "sub",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.116Z",
+        "runId": "00000000000000000000000009",
+        "parentRunId": "00000000000000000000000001",
+        "parentNodeId": "sub",
+        "result": "refused"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.127Z",
+        "runId": "00000000000000000000000009",
+        "parentRunId": "00000000000000000000000001",
+        "parentNodeId": "sub",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.137Z",
+        "runId": "00000000000000000000000009",
+        "parentRunId": "00000000000000000000000001",
+        "parentNodeId": "sub",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.143Z",
+        "runId": "0000000000000000000000000B",
+        "parentRunId": "0000000000000000000000000C",
+        "parentNodeId": "sub",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.148Z",
+        "runId": "0000000000000000000000000B",
+        "parentNodeId": "sub",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.164Z",
+        "runId": "0000000000000000000000000B",
+        "parentRunId": "00000000000000000000000001",
+        "result": "admitted"
+      },
+      {
+        "ts": "2026-10-22T01:27:49.169Z",
+        "runId": "0000000000000000000000000B",
+        "parentRunId": "00000000000000000000000001",
+        "parentNodeId": "sub",
+        "result": "refused",
+        "code": "WEBHOOK_INTENT_CONFLICT"
+      }
+    ]
+  },
+  {
+    "name": "due selection is deterministic, nonnegative and bounded at five",
+    "pass": true,
+    "calls": []
+  }
+]

@@ -1,0 +1,56 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2 -- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/edge-cases.test.ts (29 tests | 1 failed) 12300ms
+   ❯ handler edge cases (6)
+     × subloop: exclusions, fresh injections, default custom patches, and absent results 5275ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/edge-cases.test.ts > handler edge cases > subloop: exclusions, fresh injections, default custom patches, 
+and absent results
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/edge-cases.test.ts:722:3
+    720|   });
+    721|
+    722|   it('subloop: exclusions, fresh injections, default custom patches, a…
+       |   ^
+    723|     const engine = await createTestEngine();
+    724|     const child = engine.publish({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 30 passed (31)
+      Tests  1 failed | 543 passed (544)
+   Start at  19:22:04
+   Duration  339.59s (import 49%, tests 25%, transform 25%, worker 1%)
+
+     Import  137 modules were evaluated 338 times · 279.35s total, 49% of tracked time
+             ~40.08s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.91% ( 2480/2559 )
+Branches     : 92.36% ( 1802/1951 )
+Functions    : 98.69% ( 453/459 )
+Lines        : 98.1% ( 2275/2319 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\engine
+

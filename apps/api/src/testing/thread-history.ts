@@ -80,6 +80,7 @@ export async function createThreadHistoryFixture(webDist?: string) {
       }
       const stdout = JSON.stringify([{ op: 'add', path: '/vars/completed', value: true }]);
       return {
+        state: 'completed',
         exitCode: calls === 1 ? 1 : 0,
         stdout,
         stderr: '',

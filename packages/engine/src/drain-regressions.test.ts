@@ -26,6 +26,7 @@ it('force retains ownership when its heartbeat probe termination is unconfirmed'
                   stderrBytes: 0,
                   stdoutOverflow: false,
                   stderrOverflow: false,
+                  state: 'outcome-uncertain' as const,
                   terminationUnconfirmed: true,
                 }),
               { once: true },
@@ -147,6 +148,7 @@ it('B3 an earlier unconfirmed script timeout does not block normal drain', async
     stderrBytes: 0,
     stdoutOverflow: false,
     stderrOverflow: false,
+    state: 'outcome-uncertain' as const,
     terminationUnconfirmed: true,
   }));
   const v = e.publish(
@@ -235,6 +237,7 @@ it('force interrupts queued family children but preserves an independent queued 
     loopId: v.loopId,
     source: 'subloop',
     parentRunId: parent.id,
+    parentNodeId: 'work',
   });
   await e.manager.forceStop();
   expect((await e.ports.runs.get(parent.id))?.failure?.code).toBe('RUN_INTERRUPTED_BY_STOP');
@@ -282,6 +285,7 @@ it.each(['script', 'heartbeat'] as const)(
                   stderrBytes: 0,
                   stdoutOverflow: false,
                   stderrOverflow: false,
+                  state: 'outcome-uncertain' as const,
                   terminationUnconfirmed: true,
                 });
             });
@@ -360,6 +364,7 @@ it('heartbeat unconfirmed timeout evidence still reaches the authored condition'
     stderrBytes: 0,
     stdoutOverflow: false,
     stderrOverflow: false,
+    state: 'outcome-uncertain' as const,
     terminationUnconfirmed: true,
   }));
   const v = e.publish(
@@ -435,6 +440,7 @@ it('a timer becoming due during force cleanup remains an unchanged durable park'
           return new Promise((resolve) => {
             release = () =>
               resolve({
+                state: 'completed',
                 exitCode: null,
                 timedOut: false,
                 stdout: '',

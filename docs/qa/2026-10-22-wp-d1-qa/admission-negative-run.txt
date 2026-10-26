@@ -1,0 +1,36 @@
+[
+  {
+    "ts": "2026-10-22T01:45:39.718Z",
+    "withParentNodeId": true,
+    "expected": "refused, no child row or queued event",
+    "actual": "refused",
+    "code": "WEBHOOK_INTENT_CONFLICT",
+    "message": "The saved admission identity does not match the existing run",
+    "childExists": false,
+    "parentExists": false,
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T01:45:39.730Z",
+    "withParentNodeId": false,
+    "expected": "refused, no child row or queued event",
+    "actual": "admitted",
+    "childExists": true,
+    "parentExists": false,
+    "pass": false
+  },
+  {
+    "ts": "2026-10-22T01:45:39.774Z",
+    "query": "child rows without a matching parent link",
+    "rows": [
+      {
+        "id": "00000000000000000000000008",
+        "parent_run_id": "00000000000000000000000009"
+      }
+    ]
+  },
+  {
+    "cleanup": "gg-qa-320-dICGfB",
+    "removed": true
+  }
+]

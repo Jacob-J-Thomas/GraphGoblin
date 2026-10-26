@@ -1,0 +1,27 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=json --outputFile= 
+'%USERPROFILE%\AppData\Local\Temp\gg-wp-d1-int-evidence\engine-coverage-verified.json'
+At line:2 char:381
++ ... client')) { pnpm.cmd --filter "@graphgoblin/$pkgName" test:coverage - ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...-verified.json':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+JSON report written to %USERPROFILE%/AppData/Local/Temp/gg-wp-d1-int-evidence/engine-coverage-verified.json
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.14% ( 3371/3506 )
+Branches     : 91.43% ( 2691/2943 )
+Functions    : 97.49% ( 622/638 )
+Lines        : 97.48% ( 3068/3147 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-
+  │ integrate\packages\engine
+

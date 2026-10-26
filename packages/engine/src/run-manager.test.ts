@@ -25,7 +25,9 @@ describe('a minimal run', () => {
     'guards raw coded exceptions at the manager boundary (%s)',
     async (code) => {
       const engine = await createTestEngine();
-      engine.ports.scripts.run = () =>
+      // Test the manager's raw-provider guard before dispatch. Script runner rejections after
+      // dispatch now have their own conservative SCRIPT_OUTCOME_UNCERTAIN disposition (#321).
+      engine.ports.workspace.resolve = () =>
         Promise.reject(
           Object.assign(new Error('private-marker'), { code, name: 'private-marker', status: 400 }),
         );
@@ -34,7 +36,7 @@ describe('a minimal run', () => {
           id: 'script',
           kind: 'script',
           label: 'Script',
-          config: { command: 'unused' },
+          config: { command: 'unused', cwd: 'workspace' },
         }),
       );
       const run = await engine.runToIdle(version.loopId);
@@ -392,6 +394,7 @@ describe('failure and recovery', () => {
       stdoutOverflow: false,
       stderrBytes: 4,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -412,6 +415,7 @@ describe('failure and recovery', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     await engine.manager.resume(run.id);

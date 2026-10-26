@@ -1,0 +1,241 @@
+START 2026-10-22T01:41:31.5143684Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/api test:coverage --config ../../docs/qa/2026-10-22-wp-d1-qa/api.config.mjs
+$ vitest run --coverage --config ../../docs/qa/2026-10-22-wp-d1-qa/api.config.mjs
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+ ? src/container.test.ts (27 tests | 1 failed) 110760ms
+   ? configuration admission before startup writes (3)
+     � reads existing manual catalog entries without changing database bytes or rows on invalid effort 32631ms
+ ? src/adversarial.test.ts (34 tests | 1 failed) 110254ms
+   ? adversarial API invariants (34)
+     � ADV-008: every advertised route against every scope 20973ms
+{"level":30,"time":1792633496190,"pid":43360,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5921"}
+{"level":30,"time":1792633496191,"pid":43360,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5921,"dataDir":"<temp>\\gg-qa-320-suite-api-process-zwMsj5","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792633496553,"pid":43360,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792633496633,"pid":43360,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":78.12709999999788,"msg":"request completed"}
+ ? src/routes/template-drafts.test.ts (23 tests | 1 failed) 179757ms
+   ? editable template starting points (18)
+     � creates independent review copies, keeps supplied names literal, and does not alter the package 20169ms
+ ? src/triggers/github-recipe.test.ts (5 tests | 1 failed) 44110ms
+   ? documented GitHub polling recipe with a controlled local CLI (5)
+     � curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20188ms
+ ? src/version-migration.test.ts (3 tests | 1 failed) 87356ms
+   ? migrated SQLite versions through the API (3)
+     � recovers a current-format pinned run across restart mid-run without migration 62737ms
+child admission kill: delay=0ms snapshots=62312 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=45103 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ? src/main.test.ts (9 tests | 2 failed | 4 skipped) 201728ms
+   ? built API entry and startup failures (6)
+     � serves authenticated requests using a binary-created key and refuses a competing process 60553ms
+     � dispatches the API-key and preflight CLIs with their real exit codes 60759ms
+child admission kill: delay=25ms snapshots=22466 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ? src/subloop-restart.test.ts (3 tests | 2 failed) 311278ms
+   ? awaited subloops across process death (#242) (3)
+     � a hard kill around child completion leaves every parent one continuation after restart 180821ms
+     � the built API recovers a child finished while down with one continuation per parent 93639ms
+System.Management.Automation.RemoteException
+??????? Failed Tests 9 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/adversarial.test.ts:178:3
+    176|   };
+    177|
+    178|   it('ADV-008: every advertised route against every scope', async () =�
+       |   ^
+    179|     const t = await app({ requireApiKey: true });
+    180|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+System.Management.Automation.RemoteException
+???????????????????????[1/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/container.test.ts > configuration admission before startup writes > reads existing manual catalog entries without changing database bytes or rows on invalid effort
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/container.test.ts:632:3
+    630|       await expect(access(join(dataDir, name))).rejects.toThrow();
+    631|   });
+    632|   it('reads existing manual catalog entries without changing database �
+       |   ^
+    633|     const valid = config();
+    634|     const first = await createContainer(valid, { startTimers: false });
+System.Management.Automation.RemoteException
+???????????????????????[2/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/main.test.ts:49:3
+     47|   }, 60_000);
+     48|
+     49|   it('serves authenticated requests using a binary-created key and ref�
+       |   ^
+     50|     const f = await fixture();
+     51|     const token = await f.createKey();
+System.Management.Automation.RemoteException
+???????????????????????[3/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c�
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+System.Management.Automation.RemoteException
+???????????????????????[4/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont�
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+System.Management.Automation.RemoteException
+???????????????????????[5/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+AssertionError: expected undefined to be 'waiting' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected:
+"waiting"
+System.Management.Automation.RemoteException
++ Received:
+undefined
+System.Management.Automation.RemoteException
+ ? src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+System.Management.Automation.RemoteException
+???????????????????????[6/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ? src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] �
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+System.Management.Automation.RemoteException
+???????????????????????[7/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/version-migration.test.ts > migrated SQLite versions through the API > recovers a current-format pinned run across restart mid-run without migration
+Error: Command failed: <user>\AppData\Roaming\nvm\v22.14.0\node.exe --import file:///<worktree>/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/loader.mjs --conditions=development --input-type=module -e 
+      import assert from 'node:assert/strict';
+      import { join } from 'node:path';
+      import { createContainer } from "file:///<worktree>/apps/api/src/container.ts";
+      import { buildApp } from "file:///<worktree>/apps/api/src/app.ts";
+      import { loadConfig } from "file:///<worktree>/apps/api/src/config.ts";
+      import { FakeHarness } from '@graphgoblin/engine/testing';
+      const definition = {"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"infer","label":"Infer","ui":{"x":0,"y":0},"kind":"inference","config":{"harness":"codex","session":{"policy":"fresh"},"prompt":{"template":"Hello"},"input":[],"harnessOptions":{"sandbox":"workspace-write","approval":"never"},"output":{"captureTranscript":"artifact","toMessages":"final","transforms":[]}}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"infer","port":"in"}},{"id":"e2","from":{"node":"infer","port":"out"},"to":{"node":"done","port":"in"}}]};
+      definition.nodes.splice(1, 0, { id: 'hold', kind: 'wait', label: 'Hold', config: { mode: 'input', prompt: 'Continue?' } });
+      definition.edges[0].to.node = 'hold';
+      definition.edges.push({ id: 'w2', from: { node: 'hold', port: 'out' }, to: { node: 'infer' } });
+      const config = loadConfig({
+        [redacted-key]: process.env.[redacted-key],
+        [redacted-key]: 'file:' + join(process.env.[redacted-key], 'restart.db').replaceAll(String.fromCharCode(92), '/'),
+        [redacted-key]: 'false', [redacted-key]: Buffer.alloc(32, 9).toString('base64'),
+      });
+      const harness = new FakeHarness();
+      const overrides = { harnesses: { codex: harness }, startTimers: false };
+      const loopId = 'K2MPZDJRA4Y61G972Z723C2E9T';
+      const versionId = 'TWR5TWE0ZRPM7ZMA3JVBB0V4SE';
+      const first = await createContainer(config, overrides);
+      await first.start();
+      let app = await buildApp(first, { logger: false });
+      let runId;
+      try {
+        await first.handle.client.batch([
+          { sql: 'INSERT INTO loops (id, owner_id, name, current_version_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', args: [loopId, 'local', 'legacy', versionId, '2026-10-02T12:00:00.000Z', '2026-10-02T12:00:00.000Z'] },
+          { sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, ?, ?, ?, ?)', args: [versionId, loopId, 'published', JSON.stringify(definition), '2026-10-02T12:00:00.000Z', '2026-10-02T12:00:00.000Z'] },
+        ], 'write');
+        const started = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/runs', payload: {} });
+        assert.equal(started.statusCode, 202, started.body);
+        runId = started.json().run.id;
+        await first.manager.waitForIdle();
+
+        assert.equal((await first.repos.runs.get(runId)).status, 'waiting');
+ Test Files  7 failed | 44 passed | 2 skipped (53)
+      } finally { await app.close(); await first.stop(); }
+      Tests  9 failed | 694 passed | 6 skipped (709)
+      const second = await createContainer(config, overrides);
+   Start at  20:41:33
+      try {
+   Duration  440.28s (tests 66%, import 29%, transform 5%)
+        await second.start();
+
+        app = await buildApp(second, { logger: false });
+        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { waitId: (await second.repos.runs.get(runId)).waiting.waitId, input: true } });
+        assert.equal(answered.statusCode, 200, answered.body);
+        await second.manager.waitForIdle();
+        const finished = await second.repos.runs.get(runId);
+        assert.equal(finished.status, 'succeeded');
+        assert.equal(finished.versionId, versionId);
+        assert.equal(harness.started.length, 1);
+        const version = await second.repos.loops.getVersion(versionId);
+        assert.equal(version.id, versionId);
+        assert.equal(version.version, 1);
+        assert.equal(version.publishedAt, '2026-10-02T12:00:00.000Z');
+        assert.equal(Object.hasOwn(version.definition.settings.defaults, 'harness'), false);
+        const replay = await app.inject({ method: 'POST', url: '/runs/' + runId + '/replay', payload: { nodeId: 'infer' } });
+        assert.equal(replay.statusCode, 202, replay.body);
+        await second.manager.waitForIdle();
+        assert.equal((await second.repos.runs.get(replay.json().run.id)).status, 'succeeded');
+        assert.equal(harness.started.length, 2);
+      } finally { await app.close(); await second.stop(); }
+      process.stdout.write('migration recovery succeeded');
+    
+System.Management.Automation.RemoteException
+???????????????????????[8/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/routes/template-drafts.test.ts > editable template starting points > creates independent review copies, keeps supplied names literal, and does not alter the package
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/routes/template-drafts.test.ts:70:57
+     68|   );
+     69|
+     70|   it.each(['starter', 'implementation', 'review', 'qa'])(
+       |                                                         ^
+     71|     'creates independent %s copies, keeps supplied names literal, and �
+     72|     async (kind) => {
+System.Management.Automation.RemoteException
+???????????????????????[9/10]?
+System.Management.Automation.RemoteException
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/triggers/github-recipe.test.ts:144:3
+    142| }
+    143| describe('documented GitHub polling recipe with a controlled local CLI�
+    144|   it('curates all pages, drains five then the tail, and retains seen k�
+       |   ^
+    145|     const fixtureData = await fixture();
+    146|     const { first, clock, id } = fixtureData;
+System.Management.Automation.RemoteException
+??????????????????????[10/10]?
+System.Management.Automation.RemoteException
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  � "pnpm recursive run" failed in C:
+[local path redacted]
+  � d1\apps\api
+System.Management.Automation.RemoteException
+END 2026-10-22T01:49:03.6003486Z EXIT 1

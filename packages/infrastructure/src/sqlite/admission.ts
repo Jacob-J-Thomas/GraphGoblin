@@ -4,6 +4,7 @@ import {
   AdmissionConflictError,
   assertAdmissionIdentity,
   assertWebhookClaim,
+  childLinkEvent,
   assertEventClaim,
   parseRunAdmission,
   pollAdmissionIdentity,
@@ -15,6 +16,7 @@ import {
   type WebhookReceipt,
   type WebhookFailureCode,
 } from '@graphgoblin/engine';
+import type { RunEvent } from '@graphgoblin/contracts';
 import { and, asc, eq, getTableColumns, lte, or, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { SqliteEventAdmission } from './event-admission.js';
@@ -56,7 +58,10 @@ function receiptOf(row: ReceiptRow): WebhookReceipt {
     ...(row.failureCode ? { failureCode: row.failureCode } : {}),
   };
 }
-/** Run row, first event, receipt state and inbound link commit together. */
+/**
+ * Run row, first event, receipt state and inbound link commit together; so does a child's link on
+ * its parent's log (#320).
+ */
 export class SqliteTriggerAdmission implements TriggerAdmissionPort {
   readonly events: SqliteEventAdmission;
   constructor(
@@ -124,7 +129,8 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
                   ),
                 )
                 .limit(1);
-        if (runKey || pendingKey || pendingEventKey) return { run: undefined, event: undefined };
+        if (runKey || pendingKey || pendingEventKey)
+          return { run: undefined, event: undefined, linked: undefined };
       }
       if (receiptId) {
         const [receipt] = await tx.select().from(receipts).where(eq(receipts.id, receiptId));
@@ -239,6 +245,50 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });
       }
+      // A child and its parent's record of it are one commit: neither exists without the other.
+      const link = childLinkEvent(input);
+      let linked: RunEvent | undefined;
+      if (link) {
+        const parentId = input.run.parentRunId as string;
+        const [parent] = await tx.select({ id: runs.id }).from(runs).where(eq(runs.id, parentId));
+        if (!parent) throw new AdmissionConflictError();
+        if (event) {
+          const [last] = await tx
+            .select({ max: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
+            .from(runEvents)
+            .where(eq(runEvents.runId, parentId));
+          linked = validateGeneratedEvent({
+            ...link,
+            runId: parentId,
+            seq: Number(last?.max ?? 0) + 1,
+            ts: input.run.createdAt,
+          });
+          await tx.insert(runEvents).values({
+            runId: parentId,
+            seq: linked.seq,
+            ts: linked.ts,
+            type: linked.type,
+            nodeId: link.nodeId,
+            payload: { childRunId: link.childRunId },
+          });
+          await tx.update(runs).set({ lastEventSeq: linked.seq }).where(eq(runs.id, parentId));
+        } else {
+          // The same child admitted again: its parent's link must already be there.
+          const [recorded] = await tx
+            .select({ seq: runEvents.seq })
+            .from(runEvents)
+            .where(
+              and(
+                eq(runEvents.runId, parentId),
+                eq(runEvents.type, 'child_run.started'),
+                eq(runEvents.nodeId, link.nodeId),
+                sql`json_extract(${runEvents.payload}, '$.childRunId') = ${link.childRunId}`,
+              ),
+            )
+            .limit(1);
+          if (!recorded) throw new AdmissionConflictError();
+        }
+      }
       if (receiptId) {
         const [receipt] = await tx
           .update(receipts)
@@ -251,9 +301,10 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           .set({ runIds: [run.id] })
           .where(eq(inboundEvents.id, receipt.inboundId));
       }
-      return { run, event };
+      return { run, event, linked };
     });
     if (committed.event) this.eventStore.notifyCommitted([committed.event]);
+    if (committed.linked) this.eventStore.notifyCommitted([committed.linked]);
     return committed.run;
   }
   async claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }> {

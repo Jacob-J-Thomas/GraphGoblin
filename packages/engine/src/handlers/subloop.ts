@@ -180,8 +180,8 @@ export const subloopHandler: NodeHandler<'subloop'> = {
   kind: 'subloop',
   async execute(ctx) {
     const { config } = ctx;
-    // The child this visit awaits: the child of its recorded park (woken or not), or one this
-    // visit already started before the park was recorded (the process died in between), so a
+    // The child this visit awaits: the child of its recorded park (woken or not), or the one this
+    // visit's `child_run.started` names (the process died before the park was recorded), so a
     // second one is never started (docs/05, crash recovery).
     const awaited = ctx.previousWait?.childRunId ?? (await childOfThisVisit(ctx));
     if (awaited) {
@@ -215,14 +215,16 @@ export const subloopHandler: NodeHandler<'subloop'> = {
     const triggerPayload = config.input.trigger
       ? toJson(await evaluateExpression(config.input.trigger.payload, view))
       : ctx.thread.invocation.trigger.payload;
+    // The child and this visit's `child_run.started` are one commit (#320): a crash leaves both or
+    // neither, so recovery finds this child above or starts the only one.
     const childRunId = await ctx.services.startChild({
+      nodeId: ctx.node.id,
       loopId: config.loopRef.loopId,
       version: config.loopRef.version,
       seed,
       triggerPayload,
       depthLimit: limit,
     });
-    await ctx.services.record({ type: 'child_run.started', nodeId: ctx.node.id, childRunId });
     return { kind: 'park', patch: [], wait: { nodeId: ctx.node.id, kind: 'child', childRunId } };
   },
 };
@@ -231,6 +233,18 @@ async function finishWithChild(
   ctx: NodeContext<'subloop'>,
   child: ChildOutcome,
 ): Promise<NodeResult> {
+  const events = await ctx.services.events();
+  // A wake durably names the observed child outcome before it can be consumed. A child retried
+  // independently while this parent was interrupted needs a fresh park/wake for its new outcome.
+  if (
+    child.terminalSeq === undefined ||
+    lastChildWakeSeq(events, child.runId) !== child.terminalSeq
+  )
+    return {
+      kind: 'park',
+      patch: [],
+      wait: { nodeId: ctx.node.id, kind: 'child', childRunId: child.runId },
+    };
   // The child's completion is written in the same append as this visit's own outcome: its
   // `node.finished`, its `run.failed` or its cancellation (#398). A process that dies first leaves
   // neither, so the re-executed visit records the completion exactly once, and a visit that never
@@ -242,21 +256,23 @@ async function finishWithChild(
     status: child.status,
     ...(child.outcome ? { outcome: child.outcome } : {}),
   };
+  const records = finishRecorded(events, child.runId, child.terminalSeq) ? [] : [completion];
   // Ordinary failure rules (#251): the child's execution error or cancellation is the parent's,
   // exactly as if the failing work had run inline. An authored outcome (Success, Failure or
   // Exhausted exit) is data for the output mapping.
-  if (child.status === 'cancelled') throw new ChildCancelledError(child.runId, [completion]);
+  if (child.status === 'cancelled') throw new ChildCancelledError(child.runId, records);
   if (child.failure) {
-    const { code, message, resumable, nodeId, details } = child.failure;
+    const { code, message, resumable, nodeId, details, script } = child.failure;
     throw new RunFailureError(code, `subloop child ${child.runId} failed: ${message}`, {
       nodeId: ctx.node.id,
       resumable,
+      ...(script ? { script } : {}),
       details: {
         childRunId: child.runId,
         ...(nodeId ? { childNodeId: nodeId } : {}),
         ...(details !== undefined ? { childDetails: details } : {}),
       },
-      records: [completion],
+      records,
     });
   }
   let patch: NodeResult['patch'];
@@ -268,15 +284,15 @@ async function finishWithChild(
     if (error instanceof RunFailureError)
       throw new RunFailureError(error.code, error.message, {
         ...error.options,
-        records: [completion, ...(error.options.records ?? [])],
+        records: [...records, ...(error.options.records ?? [])],
       });
     throw new RunFailureError('INTERNAL_ERROR', describeError(error), {
       resumable: true,
       details: error instanceof Error ? { name: error.name, stack: error.stack ?? null } : null,
-      records: [completion],
+      records,
     });
   }
-  return { kind: 'done', patch, route: 'out', records: [completion] };
+  return { kind: 'done', patch, route: 'out', records };
 }
 
 /**
@@ -292,6 +308,48 @@ function failedSinceAwaiting(events: readonly RunEvent[], nodeId: string): boole
       event.nodeId === nodeId
     )
       return false;
+  }
+  return false;
+}
+
+/** Outcome identity carried by an identity-bound child wake; the payload is ordinary JSON. */
+function childWakeSeq(event: RunEvent, childRunId: string): number | undefined {
+  if (event.type !== 'run.woken' || event.reason !== 'child') return undefined;
+  const payload = event.payload;
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    Array.isArray(payload) ||
+    payload.childRunId !== childRunId
+  )
+    return undefined;
+  return typeof payload.childFinishedSeq === 'number' ? payload.childFinishedSeq : undefined;
+}
+
+function lastChildWakeSeq(events: readonly RunEvent[], childRunId: string): number | undefined {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const seq = childWakeSeq(events[index] as RunEvent, childRunId);
+    if (seq !== undefined) return seq;
+  }
+  return undefined;
+}
+
+/** A finish belongs to the durable child-outcome identity observed by its preceding child wake. */
+function finishRecorded(
+  events: readonly RunEvent[],
+  childRunId: string,
+  terminalSeq: number,
+): boolean {
+  let observed: number | undefined;
+  for (const event of events) {
+    const seq = childWakeSeq(event, childRunId);
+    if (seq !== undefined) observed = seq;
+    if (
+      event.type === 'child_run.finished' &&
+      event.childRunId === childRunId &&
+      observed === terminalSeq
+    )
+      return true;
   }
   return false;
 }

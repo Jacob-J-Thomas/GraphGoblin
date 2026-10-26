@@ -12,7 +12,8 @@ import process from 'node:process';
 import console from 'node:console';
 import { Buffer } from 'node:buffer';
 const { fetch, AbortSignal } = globalThis;
-const dataDir = await mkdtemp(join(tmpdir(), 'gg-webhook-retry-'));
+const storePrefix = process.env.GG_TEST_STORE_PREFIX ?? 'gg-webhook-retry-';
+const dataDir = await mkdtemp(join(tmpdir(), storePrefix));
 let base;
 const received = [];
 let child;
@@ -304,6 +305,6 @@ try {
   receiver.closeAllConnections();
   await new Promise((ok) => receiver.close(ok));
   assert.equal(dirname(dataDir), resolve(tmpdir()));
-  assert.ok(basename(dataDir).startsWith('gg-webhook-retry-'));
+  assert.ok(basename(dataDir).startsWith(storePrefix));
   await rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 }

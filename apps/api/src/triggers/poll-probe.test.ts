@@ -7,6 +7,7 @@ const result: ScriptRunResult = {
   stderr: 'private process detail',
   stdoutBytes: 14,
   stderrBytes: 22,
+  state: 'completed' as const,
   timedOut: false,
   stdoutOverflow: false,
   stderrOverflow: false,

@@ -1,0 +1,42 @@
+START 2026-10-22T01:45:09.1528145Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts -t requires every hash-bound review --config ../../docs/qa/2026-10-22-wp-d1-qa/infrastructure.config.mjs
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/sqlite/upgrade.test.ts (26 tests | 1 failed | 25 skipped) 20169ms
+   ? definitions-only format-4 cutover (26)
+     � requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 20109ms
+System.Management.Automation.RemoteException
+??????? Failed Tests 1 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:230:3
+    228|     await refuses(handle, await request(handle), /admission intents/);
+    229|   });
+    230|   it('requires every hash-bound review, binds repeated nodes to their �
+       |   ^
+    231|     const handle = await fixture();
+    232|     const definition = frozenDefinition('llm', {
+System.Management.Automation.RemoteException
+????????????????????????[1/1]?
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 skipped (26)
+   Start at  20:45:15
+   Duration  62.64s (transform 40%, tests 33%, import 27%)
+
+  Transform  transforming modules took 24.28s � 40% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  � "pnpm recursive exec" failed in C:
+[local path redacted]
+  � d1\packages\infrastructure
+System.Management.Automation.RemoteException
+END 2026-10-22T01:46:19.3582402Z EXIT 1

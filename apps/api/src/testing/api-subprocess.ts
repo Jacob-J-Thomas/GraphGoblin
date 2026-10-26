@@ -194,6 +194,10 @@ export async function createApiProcessFixture(
       try {
         await Promise.all(children.map((child) => child.dispose()));
       } finally {
+        // libsql can retain closed native connections/statements until collection. On Windows
+        // those handles keep observer stores busy even after close(); API Vitest exposes gc,
+        // as it does for the other file-backed SQLite fixtures. Release them before removal.
+        globalThis.gc?.();
         // Native handles can take a moment to release on Windows; cleanup is best effort.
         await rm(dataDir, { recursive: true, force: true, maxRetries: 10 }).catch(() => undefined);
       }

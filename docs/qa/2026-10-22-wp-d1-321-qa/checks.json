@@ -1,0 +1,523 @@
+[
+  {
+    "name": "before dispatch: real kill then ordinary recovery",
+    "steps": "Park at input before script; kill API; restart same store; submit observed waitId.",
+    "expected": "No dispatch before input; succeeds with exactly one marker effect.",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZCARR3TY4N8JDDY12M04M",
+      "status": "succeeded",
+      "effects": 1
+    },
+    "evidence": "initial-results.json"
+  },
+  {
+    "name": "after effect and repeat kill during deliberate Resume",
+    "steps": "Observe marker while alive; hard kill; restart twice without consent; Resume; observe second marker; hard kill again; restart; explicitly Resume.",
+    "expected": "No automatic second effect; same visitId, fresh dispatchId per Resume; second interruption names second dispatch; final count 3.",
+    "status": "PASS",
+    "actual": {
+      "firstFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCFK26EX9ZHQ91YCX02QY",
+          "state": "outcome-uncertain"
+        }
+      },
+      "secondFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCTPP8MN333Q68XEEW60M",
+          "state": "outcome-uncertain"
+        }
+      },
+      "final": {
+        "id": "01M5GZCFGW41AJQGSKA81QD188",
+        "status": "succeeded"
+      },
+      "effects": 3,
+      "dispatches": [
+        {
+          "runId": "01M5GZCFGW41AJQGSKA81QD188",
+          "seq": 6,
+          "ts": "2026-10-22T04:54:50.211Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCFK26EX9ZHQ91YCX02QY"
+        },
+        {
+          "runId": "01M5GZCFGW41AJQGSKA81QD188",
+          "seq": 12,
+          "ts": "2026-10-22T04:55:01.591Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCTPP8MN333Q68XEEW60M"
+        },
+        {
+          "runId": "01M5GZCFGW41AJQGSKA81QD188",
+          "seq": 18,
+          "ts": "2026-10-22T04:55:07.936Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZD0X0VKSDB8AFHZZ1EZC7"
+        }
+      ]
+    },
+    "evidence": "initial-results.json"
+  },
+  {
+    "name": "recorded completion survives real kill",
+    "steps": "Complete marker; park at subsequent input; hard kill and restart; submit input.",
+    "expected": "Recorded script completion is retained; exactly one effect and one dispatch.",
+    "status": "PASS",
+    "actual": {
+      "effects": 1,
+      "dispatches": 1,
+      "landing": "post-completion wait (cursor already advanced)"
+    },
+    "evidence": "initial-results.json"
+  },
+  {
+    "name": "native API script missing",
+    "steps": "Start real missing script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_START_FAILED definitely-not-started, resumable; repaired command succeeds",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZP2YB6J41BYS3771928DK",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_START_FAILED",
+        "message": "The script process could not start. Resume tries to start it again.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZP2YB6J41BYS3771928DK:5",
+          "dispatchId": "01M5GZP2ZT8H05S7YGVHBAQJ6M",
+          "state": "definitely-not-started"
+        }
+      },
+      "repairResumed": true
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "native API script cmd",
+    "steps": "Start real cmd script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_START_FAILED definitely-not-started, resumable",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZP3E64G5KAN4JSYG4EZPZ",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_START_FAILED",
+        "message": "The script process could not start. Resume tries to start it again.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZP3E64G5KAN4JSYG4EZPZ:5",
+          "dispatchId": "01M5GZP3FAM16GY973JBAMNE33",
+          "state": "definitely-not-started"
+        }
+      },
+      "repairResumed": false
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "native API script nonzero",
+    "steps": "Start real nonzero script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_EXIT_CODE completed, exitCode 7",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZP3HGBX02S9AEVPEREJ3Y",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_EXIT_CODE",
+        "message": "script exited with code 7",
+        "nodeId": "script",
+        "resumable": true,
+        "details": {
+          "exitCode": 7,
+          "stderr": "",
+          "stdout": ""
+        },
+        "script": {
+          "visitId": "01M5GZP3HGBX02S9AEVPEREJ3Y:5",
+          "dispatchId": "01M5GZP3JPWSBBSG0QV3RSMZV7",
+          "state": "completed",
+          "exitCode": 7
+        }
+      },
+      "repairResumed": false
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "native API script timeout",
+    "steps": "Start real timeout script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_TIMEOUT",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZP3R6YQHSEHZFNG853Y1X",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_TIMEOUT",
+        "message": "script exceeded 1s",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZP3R6YQHSEHZFNG853Y1X:5",
+          "dispatchId": "01M5GZP3TFFZ7MC2M96GTCE0QE",
+          "state": "completed",
+          "exitCode": 0
+        }
+      },
+      "repairResumed": false
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "native API script cancel",
+    "steps": "Start real cancel script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "cancelled without failure",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZP8Z1A2PVMTS63470WKCJ",
+      "status": "cancelled"
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "Edge consent, Cancel, live Resume, retained timeline",
+    "steps": "Hard kill marker; open failed inspector in Edge; Recover script then Cancel; reopen then Resume with effect held; release after visible running.",
+    "expected": "Cancel leaves failed/count 1; Resume reaches count 2 and successful inspector without reload; earlier dispatch and failure remain readable.",
+    "status": "PASS",
+    "actual": {
+      "failure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZPGNFK6JXKZ86KSZTFBXD:5",
+          "dispatchId": "01M5GZPGPNAZ1CJNCH3V9AVA91",
+          "state": "outcome-uncertain"
+        }
+      },
+      "effects": 2,
+      "documentLoads": 0,
+      "dispatches": [
+        {
+          "runId": "01M5GZPGNFK6JXKZ86KSZTFBXD",
+          "seq": 6,
+          "ts": "2026-10-22T05:00:19.029Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZPGNFK6JXKZ86KSZTFBXD:5",
+          "dispatchId": "01M5GZPGPNAZ1CJNCH3V9AVA91"
+        },
+        {
+          "runId": "01M5GZPGNFK6JXKZ86KSZTFBXD",
+          "seq": 12,
+          "ts": "2026-10-22T05:00:26.192Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZPGNFK6JXKZ86KSZTFBXD:5",
+          "dispatchId": "01M5GZPQPFEN4YVE1GETKF6A1F"
+        }
+      ],
+      "browser": "155.0.4283.62"
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "Edge Replay forks and navigates",
+    "steps": "Create another uncertain run; Recover script then Replay.",
+    "expected": "New run ID; navigation to fork; source remains failed; second effect.",
+    "status": "PASS",
+    "actual": {
+      "sourceId": "01M5GZH15VEZCSW61JYNW6G30R",
+      "forkId": "01M5GZH568W4P9P1V63S8DRX6B",
+      "sourceStatus": "failed",
+      "forkStatus": "succeeded",
+      "effects": 2
+    },
+    "evidence": "initial-results.json"
+  },
+  {
+    "name": "Edge non-script failure hides recovery",
+    "steps": "Start mutate with invalid expression; open inspector.",
+    "expected": "Failed run has no Recover script button.",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZPRGSXAGN6SAJFM5KRPHE",
+      "status": "failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "expression failed: QA failure",
+        "nodeId": "mutation",
+        "resumable": true,
+        "details": {
+          "name": "ExpressionError",
+          "stack": "ExpressionError: expression failed: QA failure\n    at run (file:///<worktree>/packages/domain/dist/expression.js:123:15)\n    at async resolveValue (file:///<worktree>/packages/domain/dist/mutations.js:25:27)\n    at async planMutation (file:///<worktree>/packages/domain/dist/mutations.js:85:27)\n    at async applyMutations (file:///<worktree>/packages/domain/dist/mutations.js:221:22)\n    at async runMutations (file:///<worktree>/packages/engine/dist/handlers/common.js:176:24)\n    at async Object.execute (file:///<worktree>/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///<worktree>/packages/engine/dist/run-manager.js:1271:26)"
+        }
+      }
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "uncertain child propagates and parent inspector recovers same child",
+    "steps": "Hard kill API during child marker; restart; inspect parent; Recover script Resume parent.",
+    "expected": "Same child ID, child code and resumability; visible recovery; one knowingly repeated child effect.",
+    "status": "PASS",
+    "actual": {
+      "parentFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "subloop child 01M5GZH5KPCNDBQDDQ3HV64XCV failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "sub",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M5GZH5KPCNDBQDDQ3HV64XCV",
+          "childNodeId": "script"
+        }
+      },
+      "childFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZH5KPCNDBQDDQ3HV64XCV:5",
+          "dispatchId": "01M5GZH5N3BNGTN35RBWS9NZ9W",
+          "state": "outcome-uncertain"
+        }
+      },
+      "childId": "01M5GZH5KPCNDBQDDQ3HV64XCV",
+      "childStartCount": 1,
+      "status": "succeeded",
+      "effects": 2
+    },
+    "evidence": "initial-results.json"
+  },
+  {
+    "name": "MCP summary and explicit Resume tool contract",
+    "steps": "Call exported summary with actual API script failure and ordinary failure; list tools through in-memory MCP client/server.",
+    "expected": "Script summary carries script/resumable; ordinary summary omits them; resume_run describes explicit choice.",
+    "status": "PASS",
+    "actual": {
+      "scriptSummary": {
+        "code": "SCRIPT_EXIT_CODE",
+        "message": "script exited with code 7",
+        "script": {
+          "visitId": "01M5GZP3HGBX02S9AEVPEREJ3Y:5",
+          "dispatchId": "01M5GZP3JPWSBBSG0QV3RSMZV7",
+          "state": "completed",
+          "exitCode": 7
+        },
+        "resumable": true
+      },
+      "ordinarySummary": {
+        "code": "INTERNAL_ERROR",
+        "message": "expression failed: QA failure"
+      },
+      "resumeDescription": "Resume a paused run or a resumable failure. SCRIPT_START_FAILED means the script did not start; Resume tries again. SCRIPT_OUTCOME_UNCERTAIN means the previous script attempt may already have produced its effect; Resume runs it again and may repeat that effect. Resume uncertain scripts only when the user explicitly chooses to retry; offer replay_run or leave the failed run unchanged when they cancel recovery. A paused wait returns to waiting; other resumes continue running. Then call wait_for_run."
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "durable completion with lost cursor: storage fault and real kill",
+    "steps": "Install disposable SQLite triggers refusing script-to-done cursor update and error-disposition append; release real marker; verify durable node.finished and old script cursor; kill API; remove faults; restart.",
+    "expected": "Recovery advances recorded completion without dispatching script again; exactly one effect.",
+    "status": "PASS",
+    "actual": {
+      "preKill": {
+        "current_node_id": "script",
+        "status": "running"
+      },
+      "killed": {
+        "code": null,
+        "signal": "SIGKILL"
+      },
+      "postRecovery": {
+        "id": "01M5GZNY9P2QMTZGQF0XM4YG2F",
+        "status": "succeeded"
+      },
+      "effects": 1,
+      "dispatchCount": 1,
+      "faultInjection": "real SQLite BEFORE triggers in disposable store only"
+    },
+    "evidence": "corrected-results.json",
+    "evidenceRetention": {
+      "originalPath": "corrected-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/corrected-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 API/native/Edge/MCP observations; not recovered round-1 IDs or timestamps.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  },
+  {
+    "name": "Edge narrow keyboard consent and competing stale Resume",
+    "steps": "Use 375px viewport; keyboard open and Escape dialog; open a second tab on same failed run; issue concurrent explicit Resume requests while holding marker.",
+    "expected": "Dialog fits viewport; keyboard cancel leaves failed/count 1; only one resumed dispatch despite competing requests.",
+    "status": "PASS",
+    "actual": {
+      "dialogBox": {
+        "x": 0,
+        "y": 523,
+        "width": 375,
+        "height": 289
+      },
+      "effects": 2,
+      "requests": [
+        "accepted",
+        "POST /runs/01M5GZVQA84T3XDKH41H7B1TBK/resume: 409 {\"type\":\"https://graphgoblin.dev/problems/invalid-state\",\"title\":\"invalid state\",\"status\":409,\"code\":\"INVALID_STATE\",\"detail\":\"cannot resume a run that is running\"}"
+      ],
+      "dispatches": 2
+    },
+    "evidence": "independent-results.json",
+    "evidenceRetention": {
+      "originalPath": "independent-results.json",
+      "originalRevision": "0e6ab27e21caa9ec99b4088d92c8e1ebb88ba767",
+      "disposition": "original not kept",
+      "originalRecovered": false,
+      "replacement": {
+        "path": "round-2/independent-results.json",
+        "round": "round 2",
+        "kind": "later observation",
+        "scope": "Fresh round-2 independent matrix, including narrow/keyboard/concurrent-choice checks.",
+        "inHead": true
+      },
+      "limitation": "Later evidence does not authenticate the missing original transcript or its historical numbers."
+    }
+  }
+]

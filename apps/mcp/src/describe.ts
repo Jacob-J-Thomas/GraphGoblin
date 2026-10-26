@@ -136,7 +136,17 @@ export function summarizeRun(run: RunRecord) {
     iteration: run.iteration,
     ...(run.outcome ? { outcome: run.outcome } : {}),
     ...(run.waiting ? { waiting: run.waiting } : {}),
-    ...(run.failure ? { failure: { code: run.failure.code, message: run.failure.message } } : {}),
+    ...(run.failure
+      ? {
+          failure: {
+            code: run.failure.code,
+            message: run.failure.message,
+            ...(run.failure.script
+              ? { script: run.failure.script, resumable: run.failure.resumable }
+              : {}),
+          },
+        }
+      : {}),
     ...(run.parentRunId ? { parentRunId: run.parentRunId } : {}),
     createdAt: run.createdAt,
     ...(run.finishedAt ? { finishedAt: run.finishedAt } : {}),

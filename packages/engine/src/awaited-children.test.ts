@@ -520,6 +520,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
       stderrBytes: 0,
       stdoutOverflow: false,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     });
     let calls = 0;
@@ -727,6 +728,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
         stderrBytes: 0,
         stdoutOverflow: false,
         stderrOverflow: false,
+        state: 'completed' as const,
         timedOut: false,
       });
       let calls = 0;
@@ -785,7 +787,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     },
   );
 
-  it('each durable outcome of a parent carries the child completion it observed (#398)', async () => {
+  it('the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398)', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 3 });
     const leaf = e.publish(
       singleNodeLoop(
@@ -825,18 +827,13 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     await e.manager.waitForIdle();
     e.manager.stop();
     expect(e.events(kid!.id).filter((event) => event.type === 'run.resumed')).toHaveLength(0);
-    // The resumed attempt observes the same completion and fails the same way: one pair each.
-    expect(pairs()).toEqual([
-      'child_run.finished',
-      'run.failed',
-      'child_run.finished',
-      'run.failed',
-    ]);
-    const failed = e.events(parent.id).filter((event) => event.type === 'run.failed');
-    for (const event of failed) {
-      const before = e.events(parent.id).find((other) => other.seq === event.seq - 1);
-      expect(before?.type).toBe('child_run.finished');
-    }
+    // The retry has no new child terminal identity: reuse its committed completion.
+    expect(pairs()).toEqual(['child_run.finished', 'run.failed', 'run.failed']);
+    const finish = e.events(parent.id).find((event) => event.type === 'child_run.finished')!;
+    const firstFailure = e.events(parent.id).find((event) => event.type === 'run.failed')!;
+    expect(firstFailure.seq).toBe(finish.seq + 1);
+    const wakes = e.events(parent.id).filter((event) => event.type === 'run.woken');
+    expect(wakes).toHaveLength(1);
   });
 
   it.each([

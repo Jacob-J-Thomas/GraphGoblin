@@ -5,12 +5,15 @@ import { RunCancelledError, RunFailureError } from '../errors.js';
 import type { NodeHandler } from '../handler.js';
 import { jsonOrText, outputPatch, withTimeout } from './common.js';
 import { renderTemplate } from '@graphgoblin/domain';
+import { scriptVisit, SCRIPT_UNCERTAIN_MESSAGE } from './script-dispatch.js';
 
 const SECRET_PREFIX = 'secret:';
 
 export const scriptHandler: NodeHandler<'script'> = {
   kind: 'script',
   async execute(ctx) {
+    // Check before preparation: a missing workspace/secret must not hide a previous effect.
+    const visitId = scriptVisit(await ctx.services.events(), ctx.run.id, ctx.node.id);
     const { config } = ctx;
     const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
     const cwd = config.cwd === 'workspace' ? await ctx.services.workingDirectory() : config.cwd;
@@ -43,6 +46,14 @@ export const scriptHandler: NodeHandler<'script'> = {
           ? JSON.stringify(ctx.thread.lastOutput?.value ?? null)
           : undefined;
 
+    if (ctx.signal.aborted) throw new RunCancelledError();
+    const dispatchId = ctx.services.newId();
+    await ctx.services.record({
+      type: 'script.dispatched',
+      nodeId: ctx.node.id,
+      visitId,
+      dispatchId,
+    });
     const timeout = withTimeout(
       ctx.signal,
       config.timeoutSeconds,
@@ -59,6 +70,12 @@ export const scriptHandler: NodeHandler<'script'> = {
         ...(config.timeoutSeconds !== undefined ? { timeoutMs: config.timeoutSeconds * 1000 } : {}),
         signal: timeout.signal,
       });
+    } catch {
+      // An unclassified runner rejection cannot prove the command never executed.
+      throw new RunFailureError('SCRIPT_OUTCOME_UNCERTAIN', SCRIPT_UNCERTAIN_MESSAGE, {
+        nodeId: ctx.node.id,
+        script: { visitId, dispatchId, state: 'outcome-uncertain' },
+      });
     } finally {
       timeout.dispose();
     }
@@ -69,6 +86,7 @@ export const scriptHandler: NodeHandler<'script'> = {
         {
           nodeId: ctx.node.id,
           resumable: false,
+          script: { visitId, dispatchId, state: 'outcome-uncertain' },
           details: {
             interruptedByStop:
               timeout.signal.reason instanceof RunFailureError &&
@@ -78,11 +96,28 @@ export const scriptHandler: NodeHandler<'script'> = {
       );
     }
     if (ctx.signal.aborted) throw new RunCancelledError();
+    const script = {
+      visitId,
+      dispatchId,
+      state: result.state,
+      ...(result.exitCode !== null ? { exitCode: result.exitCode } : {}),
+    };
+    if (result.state !== 'completed') {
+      throw new RunFailureError(
+        result.state === 'definitely-not-started'
+          ? 'SCRIPT_START_FAILED'
+          : 'SCRIPT_OUTCOME_UNCERTAIN',
+        result.state === 'definitely-not-started'
+          ? 'The script process could not start. Resume tries to start it again.'
+          : SCRIPT_UNCERTAIN_MESSAGE,
+        { nodeId: ctx.node.id, script },
+      );
+    }
     if (result.timedOut || timeout.timedOut()) {
       throw new RunFailureError(
         'SCRIPT_TIMEOUT',
         `script exceeded ${config.timeoutSeconds ?? 0}s`,
-        { nodeId: ctx.node.id },
+        { nodeId: ctx.node.id, script },
       );
     }
 
@@ -100,6 +135,7 @@ export const scriptHandler: NodeHandler<'script'> = {
     if (!route) {
       throw new RunFailureError('SCRIPT_EXIT_CODE', `script exited with code ${exitCode}`, {
         nodeId: ctx.node.id,
+        script,
         details: {
           exitCode,
           stderr: result.stderr.slice(-4000),
@@ -117,7 +153,7 @@ export const scriptHandler: NodeHandler<'script'> = {
         throw new RunFailureError(
           'SCRIPT_EXIT_CODE',
           `script stdout is not a JSON patch: ${error instanceof Error ? error.message : String(error)}`,
-          { nodeId: ctx.node.id },
+          { nodeId: ctx.node.id, script },
         );
       }
       const checked = JsonPatchSchema.safeParse(parsed);
@@ -125,7 +161,7 @@ export const scriptHandler: NodeHandler<'script'> = {
         throw new RunFailureError(
           'SCRIPT_EXIT_CODE',
           `script stdout is not a valid JSON patch: ${checked.error.issues.map((i) => i.message).join('; ')}`,
-          { nodeId: ctx.node.id },
+          { nodeId: ctx.node.id, script },
         );
       }
       try {
@@ -134,7 +170,7 @@ export const scriptHandler: NodeHandler<'script'> = {
         throw new RunFailureError(
           'SCRIPT_EXIT_CODE',
           `script patch is outside the mutable regions: ${(error as MutationError).message}`,
-          { nodeId: ctx.node.id },
+          { nodeId: ctx.node.id, script },
         );
       }
       patch = checked.data;
