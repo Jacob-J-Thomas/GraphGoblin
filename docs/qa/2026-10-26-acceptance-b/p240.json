@@ -1,0 +1,80 @@
+{
+  "checks": [
+    {
+      "name": "paging under a type filter: first page + Load more equal the API listing order, no duplicates",
+      "ok": true,
+      "detail": {
+        "first": 100,
+        "loaded": 130,
+        "apiTotal": 130
+      }
+    },
+    {
+      "name": "arrivals while reading an older page: \"New events available\" shown; rows, scroll position and URL filter unchanged",
+      "ok": true,
+      "detail": {
+        "scrollBefore": 16436,
+        "scrollAfter": 16436,
+        "rows": 130,
+        "url": "/app/events?type=acc_alpha"
+      }
+    },
+    {
+      "name": "Refresh: newest matching page replaces the rows (3 new alpha first, no beta), filter kept in URL and chip, notice cleared",
+      "ok": true,
+      "detail": {
+        "refreshedRows": 100,
+        "typesShown": [
+          "acc_alpha"
+        ]
+      }
+    },
+    {
+      "name": "paging after Refresh continues with the new cursor: exactly the API order, no duplicates or gaps",
+      "ok": true,
+      "detail": {
+        "paged": 133,
+        "apiTotal": 133
+      }
+    },
+    {
+      "name": "Refresh failure: rows and filters kept, failure explained; availability-check failure explained",
+      "ok": true,
+      "detail": {
+        "status": "Cannot reach the GraphGoblin API\nThe app keeps working with what it has; saving, running, and live updates resume when the API is reachable again. | Refresh failed. Your current events are still shown. Refresh to try again. Could not check for new events. Refresh to try again. | All events loaded."
+      }
+    },
+    {
+      "name": "recovery: a later Refresh succeeds, clears the failure and brings the arrival in",
+      "ok": true,
+      "detail": {
+        "clicks": 1,
+        "ms": 1592,
+        "status": "Showing the newest events."
+      }
+    },
+    {
+      "name": "Clear type filter: URL loses only type, focus moves to Refresh, unfiltered rows include other types",
+      "ok": true,
+      "detail": {
+        "focused": "Refresh",
+        "unfilteredTypes": [
+          "acc_alpha",
+          "acc_beta"
+        ]
+      }
+    },
+    {
+      "name": "empty filtered result: explained; a first arrival is announced without inserting rows; Refresh shows it",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "name": "before filter: chip shown, rows match the API, later events are not announced, Refresh keeps both filters",
+      "ok": true,
+      "detail": {
+        "rows": 82
+      }
+    }
+  ]
+}

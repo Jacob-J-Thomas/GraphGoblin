@@ -1,0 +1,156 @@
+// Scenario A: the shipped default grace (GG_SHUTDOWN_GRACE_MS unset), headless waiting through
+// expiry, then Keep waiting in Edge and observation for longer than another full grace.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-a-default-grace');
+const dir = L.makeStore('a');
+const PORT = 6460;
+let g;
+let g2;
+let browser;
+const posts = [];
+try {
+  g = await L.startGateway({ dir, port: PORT, label: 'a1', rec });
+  const initial = (await g.call('/system/shutdown')).json;
+  rec.log('initial shutdown state', initial);
+  rec.check('A1 default grace is 300000 ms (five minutes) with GG_SHUTDOWN_GRACE_MS unset', initial.graceMs === 300000, initial.graceMs);
+  rec.check('A1 running gateway advertises no choices', initial.phase === 'running' && initial.choices.length === 0, initial);
+
+  const heldLoop = await L.publishLoop(g.call, L.scriptLoop('Default grace held work', L.heldScriptSource({ dir, name: 'held', maxMs: 25 * 60_000 })));
+  const parkLoop = await L.publishLoop(g.call, L.waitLoop('Default grace parked wait', 3600));
+  const parkRun = await L.startRun(g.call, parkLoop);
+  await L.waitFor(async () => (await g.call(`/runs/${parkRun}`)).json.status === 'waiting');
+  const heldRun = await L.startRun(g.call, heldLoop);
+  const scriptPid = Number(await L.waitFile(path.join(dir, 'held.pid')));
+  rec.log('work started', { heldRun, parkRun, scriptPid, parkStatus: (await g.call(`/runs/${parkRun}`)).json.status });
+
+  const drained = await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.log('POST drain', drained);
+  const startedAt = Date.parse(drained.json.startedAt);
+  rec.check('A2 drain accepted (202) and phase draining', drained.status === 202 && drained.json.phase === 'draining', drained.status);
+  rec.check('A2 choiceAt is startedAt + 300 s', Date.parse(drained.json.choiceAt) - startedAt === 300000, { startedAt: drained.json.startedAt, choiceAt: drained.json.choiceAt });
+  rec.check('A2 held script run is active work; the durable wait is not', drained.json.activeRunIds.includes(heldRun) && !drained.json.activeRunIds.includes(parkRun), drained.json.activeRunIds);
+  const refused = await g.call(`/loops/${heldLoop}/runs`, { method: 'POST', body: {} });
+  rec.check('A2 independent start refused while draining (503 SHUTTING_DOWN)', refused.status === 503, refused);
+
+  // Headless: nobody chooses anything. Poll until the gateway itself reports expiry.
+  let phase = 'draining';
+  let expiryAt;
+  const phases = [];
+  while (Date.now() - startedAt < 330_000) {
+    const s = (await g.call('/system/shutdown')).json;
+    if (s.phase !== phase || phases.length === 0) phases.push({ at: new Date().toISOString(), sinceStartMs: Date.now() - startedAt, phase: s.phase });
+    phase = s.phase;
+    if (phase === 'awaiting-choice') {
+      expiryAt = Date.now();
+      rec.log('awaiting-choice observed', { sinceStartMs: expiryAt - startedAt, state: s });
+      break;
+    }
+    if (!L.tasklistAlive(scriptPid)) rec.check('A3 script alive during grace', false, { at: Date.now() - startedAt });
+    await L.sleep(2000);
+  }
+  rec.log('phase timeline before expiry', phases);
+  rec.check('A3 phase stayed draining until expiry', phases.every((p) => p.phase === 'draining' || p.phase === 'awaiting-choice'), phases);
+  rec.check('A3 awaiting-choice reached about 300 s after drain (298-306 s window)', expiryAt && expiryAt - startedAt >= 298_000 && expiryAt - startedAt <= 306_000, expiryAt && expiryAt - startedAt);
+  const atExpiry = (await g.call('/system/shutdown')).json;
+  rec.check('A3 expiry offers wait and force', JSON.stringify(atExpiry.choices) === '["wait","force"]', atExpiry.choices);
+  rec.check('A3 expiry logged a warning naming keep waiting / force', /Shutdown grace elapsed: keep waiting or explicitly force/.test(g.readLog()), null);
+  rec.check('A3 expiry interrupted nothing: script process alive and run running', L.tasklistAlive(scriptPid) && (await g.call(`/runs/${heldRun}`)).json.status === 'running', { scriptPid });
+
+  // No UI and no choice for two more minutes: nothing is forced.
+  const idleUntil = Date.now() + 120_000;
+  let idleOk = true;
+  while (Date.now() < idleUntil) {
+    const s = (await g.call('/system/shutdown')).json;
+    if (s.phase !== 'awaiting-choice' || !L.tasklistAlive(scriptPid) || g.exitCode() !== null) idleOk = false;
+    await L.sleep(10_000);
+  }
+  rec.check('A4 with no UI and no choice, awaiting-choice persists 120 s with the work alive', idleOk, null);
+
+  browser = await L.launchEdge();
+  const context = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const page = await context.newPage();
+  L.watchShutdownRequests(page, posts);
+  await page.goto(g.origin + '/app/loops');
+  await page.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 20_000 });
+  await page.getByText(/The gateway grace period elapsed/).waitFor({ timeout: 20_000 });
+  await page.getByRole('link', { name: new RegExp(heldRun) }).waitFor({ timeout: 20_000 });
+  const expiryText = await L.noticeText(page);
+  rec.log('notice at expiry', expiryText);
+  await L.shot(page, 's-a-expiry-notice');
+  rec.check('A5 notice explains expiry and names the active run with its loop name', expiryText.includes('grace period elapsed') && expiryText.includes(`Default grace held work — ${heldRun}`), null);
+  rec.check('A5 notice does not list the durable wait run', !expiryText.includes(parkRun), null);
+  rec.check('A5 Keep waiting and Force stop offered', (await page.getByRole('button', { name: 'Keep waiting' }).count()) === 1 && (await page.getByRole('button', { name: 'Force stop', exact: true }).count()) === 1, null);
+  rec.check('A5 opening the page sent no shutdown POST', posts.filter((p) => p.method === 'POST').length === 0, posts);
+
+  await page.getByRole('button', { name: 'Keep waiting' }).click();
+  await L.waitFor(async () => (await g.call('/system/shutdown')).json.phase === 'draining', { timeoutMs: 10_000 });
+  const afterWait = (await g.call('/system/shutdown')).json;
+  const waitAt = Date.now();
+  rec.log('after Keep waiting', afterWait);
+  await page.getByText(/Waiting never starts a browser countdown/).waitFor({ timeout: 10_000 });
+  const waitingText = await L.noticeText(page);
+  rec.log('notice after Keep waiting', waitingText);
+  await L.shot(page, 's-a-after-keep-waiting');
+  rec.check('A6 Keep waiting sent exactly one POST from the browser', posts.filter((p) => p.method === 'POST').length === 1, posts.filter((p) => p.method === 'POST'));
+  rec.check('A6 gateway back to draining with choices still available', afterWait.phase === 'draining' && afterWait.choices.includes('force'), afterWait);
+  rec.check('A6 notice shows no countdown or timer text', !/\d+\s*(s|sec|seconds|min|minutes)\b.*(remaining|left)|countdown:/i.test(waitingText), waitingText);
+
+  // Observe for longer than another full default grace: no hidden kill timer, no second prompt.
+  const timeline = [];
+  let stable = true;
+  while (Date.now() - waitAt < 330_000) {
+    const s = (await g.call('/system/shutdown')).json;
+    const run = (await g.call(`/runs/${heldRun}`)).json;
+    const alive = L.tasklistAlive(scriptPid);
+    timeline.push({ sinceWaitS: Math.round((Date.now() - waitAt) / 1000), phase: s.phase, run: run.status, alive });
+    if (s.phase !== 'draining' || run.status !== 'running' || !alive) stable = false;
+    await L.sleep(15_000);
+  }
+  rec.log('timeline after Keep waiting', timeline);
+  rec.check('A7 330 s after Keep waiting (more than the 300 s grace): still draining, run running, script alive', stable, timeline.at(-1));
+  rec.check('A7 browser sent no further POST while observing', posts.filter((p) => p.method === 'POST').length === 1, posts.filter((p) => p.method === 'POST').length);
+  const gets = posts.filter((p) => p.method === 'GET').length;
+  rec.log('browser shutdown GETs while observing', { gets });
+
+  fs.writeFileSync(path.join(dir, 'held.release'), 'go');
+  const code = await g.waitExit(60_000);
+  rec.check('A8 released work completes and the gateway exits 0 by itself', code === 0, code);
+  rec.check('A8 lock released', !fs.existsSync(path.join(dir, 'graphgoblin.lock')), null);
+  await page.getByText('Gateway stopped or disconnected', { exact: true }).waitFor({ timeout: 20_000 });
+  await L.shot(page, 's-a-stopped');
+  rec.check('A8 browser reports stopped or disconnected', true, await L.noticeText(page));
+  rec.check('A8 server log: exactly two shutdown POSTs (operator drain + browser wait)', L.serverShutdownPosts(g.readLog()) === 2, L.serverShutdownPosts(g.readLog()));
+  await browser.close();
+  browser = undefined;
+
+  g2 = await L.startGateway({ dir, port: PORT, label: 'a2', rec });
+  const held = (await g2.call(`/runs/${heldRun}`)).json;
+  const park = (await g2.call(`/runs/${parkRun}`)).json;
+  rec.log('after restart', { held: { status: held.status, failure: held.failure }, park: { status: park.status, waiting: park.waiting } });
+  rec.check('A9 held run succeeded (normal completion, not interruption)', held.status === 'succeeded', held.status);
+  rec.check('A9 durable wait run still waiting after restart', park.status === 'waiting', park.status);
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('A9 restarted gateway drains to exit 0 (durable park does not hold drain)', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+  rec.check('A10 no process names the store after exit', L.storeProcesses(dir).length === 0, L.storeProcesses(dir));
+} catch (error) {
+  rec.check('A scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+    x?.copyLog(`s-a-gateway-${x.label}.log.txt`);
+  }
+  rec.finish({ shutdownRequestsFromBrowser: posts });
+  for (const p of L.storeProcesses(dir)) {
+    try {
+      process.kill(p.pid);
+    } catch {}
+  }
+  L.rmStore(dir);
+}

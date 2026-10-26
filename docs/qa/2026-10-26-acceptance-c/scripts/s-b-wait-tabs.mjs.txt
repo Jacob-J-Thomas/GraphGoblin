@@ -1,0 +1,207 @@
+// Scenario B: Edge tabs close/reload/navigate (not shutdown), expiry choice, Keep waiting,
+// repeated and stale actions, no hidden kill timer, and completion while a force dialog is open.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-b-wait-tabs');
+const dir = L.makeStore('b');
+const PORT = 6461;
+const GRACE = 15_000;
+let g;
+let g2;
+let browser;
+const posts = [];
+let operatorPosts = 0;
+try {
+  g = await L.startGateway({ dir, port: PORT, label: 'b1', env: { GG_SHUTDOWN_GRACE_MS: String(GRACE) }, rec });
+  const op = async (body, headers) => {
+    operatorPosts++;
+    return g.call('/system/shutdown', { method: 'POST', body, headers });
+  };
+  const heldLoop = await L.publishLoop(g.call, L.scriptLoop('Tab test held work', L.heldScriptSource({ dir, name: 'held', maxMs: 600_000 })));
+  const parkLoop = await L.publishLoop(g.call, L.waitLoop('Tab test parked wait', 3600));
+  const parkRun = await L.startRun(g.call, parkLoop);
+  await L.waitFor(async () => (await g.call(`/runs/${parkRun}`)).json.status === 'waiting');
+  const heldRun = await L.startRun(g.call, heldLoop);
+  const scriptPid = Number(await L.waitFile(path.join(dir, 'held.pid')));
+  rec.log('work started', { heldRun, parkRun, scriptPid });
+
+  // 1. Tabs closing while the gateway runs is not shutdown.
+  browser = await L.launchEdge();
+  let context = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const p1 = await context.newPage();
+  const p2 = await context.newPage();
+  L.watchShutdownRequests(p1, posts, 'p1');
+  L.watchShutdownRequests(p2, posts, 'p2');
+  await p1.goto(g.origin + '/app/loops');
+  await p2.goto(g.origin + `/app/runs/${heldRun}`);
+  await p1.getByRole('heading', { name: 'Loops', exact: true }).waitFor();
+  await L.sleep(1500);
+  rec.check('B1 running gateway shows no shutdown notice', (await p1.getByRole('region', { name: 'Gateway shutdown' }).count()) === 0, null);
+  rec.check('B1 no control in the browser starts a drain', (await p1.getByRole('button', { name: /drain|shut ?down|stop gateway/i }).count()) === 0, null);
+  await p2.close({ runBeforeUnload: true });
+  await L.sleep(1000);
+  let s = (await g.call('/system/shutdown')).json;
+  rec.check('B1 closing a tab while running: phase stays running', s.phase === 'running', s.phase);
+  await context.close();
+  await browser.close();
+  browser = undefined;
+  await L.sleep(1500);
+  s = (await g.call('/system/shutdown')).json;
+  rec.check('B1 closing every tab and the browser: phase running, run running, script alive', s.phase === 'running' && (await g.call(`/runs/${heldRun}`)).json.status === 'running' && L.tasklistAlive(scriptPid), s.phase);
+  rec.check('B1 server received no shutdown POST from tab closure', L.serverShutdownPosts(g.readLog()) === 0, L.serverShutdownPosts(g.readLog()));
+
+  // 2. Operator drain; the open page notices it.
+  browser = await L.launchEdge();
+  context = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const a = await context.newPage();
+  L.watchShutdownRequests(a, posts, 'a');
+  await a.goto(g.origin + '/app/loops');
+  await a.getByRole('heading', { name: 'Loops', exact: true }).waitFor();
+  await L.sleep(500);
+  const drained = await op({ action: 'drain' });
+  const drainAt = Date.now();
+  rec.log('operator drain', drained);
+  await a.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 15_000 });
+  rec.log('notice appeared after drain', { latencyMs: Date.now() - drainAt });
+  await a.getByRole('link', { name: new RegExp(heldRun) }).waitFor({ timeout: 10_000 });
+  const drainingText = await L.noticeText(a);
+  rec.log('draining notice', drainingText);
+  await L.shot(a, 's-b-draining-notice');
+  rec.check('B2 draining notice explains refused starts, finishing work, saved waits and queued recovery', /Independent starts are refused/.test(drainingText) && /Active work is finishing/.test(drainingText) && /Durable waits and paused runs remain saved/.test(drainingText), null);
+  rec.check('B2 draining notice names the active run with its loop name, not the parked wait', drainingText.includes(`Tab test held work — ${heldRun}`) && !drainingText.includes(parkRun), null);
+  rec.check('B2 notice says waiting never starts a browser countdown', /Waiting never starts a browser countdown/.test(drainingText), null);
+
+  // 3. Reload and navigation only observe.
+  await a.reload();
+  await a.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 15_000 });
+  await a.goto(g.origin + '/app/events');
+  await a.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 15_000 });
+  const b = await context.newPage();
+  L.watchShutdownRequests(b, posts, 'b');
+  await b.goto(g.origin + `/app/runs/${heldRun}`);
+  await b.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 15_000 });
+  await b.close({ runBeforeUnload: true });
+  await L.sleep(1000);
+  s = (await g.call('/system/shutdown')).json;
+  rec.check('B3 reload, navigation and closing a tab during drain leave the phase unchanged', s.phase === 'draining', s.phase);
+  rec.check('B3 browser sent no POST while reloading/navigating/closing', posts.filter((p) => p.method === 'POST').length === 0, posts.filter((p) => p.method === 'POST'));
+
+  // 4. Expiry offers the choice.
+  await L.waitFor(async () => (await g.call('/system/shutdown')).json.phase === 'awaiting-choice', { timeoutMs: GRACE + 10_000, intervalMs: 250 });
+  const expired = (await g.call('/system/shutdown')).json;
+  rec.log('expiry', { sinceDrainMs: Date.now() - drainAt, expired });
+  await a.getByText(/The gateway grace period elapsed/).waitFor({ timeout: 10_000 });
+  await L.shot(a, 's-b-expiry-notice');
+  rec.check('B4 expiry: awaiting-choice with wait and force; script alive', expired.phase === 'awaiting-choice' && JSON.stringify(expired.choices) === '["wait","force"]' && L.tasklistAlive(scriptPid), expired);
+  const staleToken = expired.controlToken;
+
+  // 5. Keep waiting in the browser; then stale and repeated actions through the API.
+  const c = await context.newPage();
+  L.watchShutdownRequests(c, posts, 'c');
+  await c.goto(g.origin + '/app/loops');
+  await c.getByRole('button', { name: 'Keep waiting' }).waitFor({ timeout: 10_000 });
+  await a.getByRole('button', { name: 'Keep waiting' }).click();
+  await L.waitFor(async () => (await g.call('/system/shutdown')).json.phase === 'draining', { timeoutMs: 10_000 });
+  const afterWait = (await g.call('/system/shutdown')).json;
+  rec.log('after browser Keep waiting', afterWait);
+  rec.check('B5 Keep waiting returns the gateway to draining with a new token', afterWait.phase === 'draining' && afterWait.controlToken !== staleToken, afterWait.controlToken);
+  const staleForce = await op({ action: 'force' }, { 'x-graphgoblin-shutdown-token': staleToken });
+  rec.log('stale force with the expiry token', staleForce);
+  rec.check('B5 a delayed force carrying the pre-wait token is refused with 409 current state', staleForce.status === 409 && staleForce.json.phase === 'draining', staleForce.status);
+  const staleWait = await op({ action: 'wait' }, { 'x-graphgoblin-shutdown-token': staleToken });
+  rec.check('B5 a stale wait is refused with 409 current state', staleWait.status === 409, staleWait.status);
+  const repeatWait = await op({ action: 'wait' });
+  rec.check('B5 a repeated unconditional wait is accepted and stays draining', repeatWait.status === 202 && repeatWait.json.phase === 'draining', repeatWait);
+  s = (await g.call('/system/shutdown')).json;
+  rec.check('B5 after stale/repeated actions the work is untouched', s.phase === 'draining' && L.tasklistAlive(scriptPid) && (await g.call(`/runs/${heldRun}`)).json.status === 'running', s.phase);
+
+  // 6. A force confirmation open in one tab is withdrawn when another tab keeps waiting.
+  await c.getByRole('button', { name: 'Force stop', exact: true }).waitFor({ timeout: 10_000 });
+  await L.sleep(2500); // let c observe the current token
+  await c.getByRole('button', { name: 'Force stop', exact: true }).click();
+  await c.getByRole('dialog').waitFor({ timeout: 5000 });
+  const dialogText = await c.getByRole('dialog').innerText();
+  rec.log('force confirmation in tab c', dialogText);
+  await L.shot(c, 's-b-force-confirmation-tab-c');
+  await a.getByRole('button', { name: 'Keep waiting' }).click();
+  const withdrawn = await L.waitFor(async () => (await c.getByRole('dialog').count()) === 0, { timeoutMs: 8000, intervalMs: 200 });
+  await L.shot(c, 's-b-confirmation-withdrawn-tab-c');
+  rec.check('B6 another tab keeping waiting withdraws the open force confirmation (fresh choice required)', withdrawn, null);
+  rec.check('B6 tab c sent no POST', posts.filter((p) => p.method === 'POST' && p.tab === 'c').length === 0, posts.filter((p) => p.method === 'POST'));
+
+  // 7. No hidden kill timer: observe four grace periods after the last wait.
+  const lastWait = Date.now();
+  const timeline = [];
+  let stable = true;
+  while (Date.now() - lastWait < 4 * GRACE + 2000) {
+    const st = (await g.call('/system/shutdown')).json;
+    const run = (await g.call(`/runs/${heldRun}`)).json;
+    const alive = L.tasklistAlive(scriptPid);
+    timeline.push({ sinceWaitS: Math.round((Date.now() - lastWait) / 1000), phase: st.phase, run: run.status, alive });
+    if (st.phase !== 'draining' || run.status !== 'running' || !alive) stable = false;
+    await L.sleep(3000);
+  }
+  rec.log('after-wait timeline', timeline);
+  rec.check('B7 62 s (four 15 s graces) after Keep waiting: still draining, no second expiry, run running, script alive', stable, timeline.at(-1));
+  const browserPosts = posts.filter((p) => p.method === 'POST');
+  rec.check('B7 the browser sent exactly the two Keep waiting POSTs that were clicked', browserPosts.length === 2, browserPosts);
+
+  // 8. Closing every tab during drain is not shutdown.
+  await context.close();
+  await browser.close();
+  browser = undefined;
+  await L.sleep(3000);
+  s = (await g.call('/system/shutdown')).json;
+  rec.check('B8 closing all tabs and the browser during drain: still draining, work alive', s.phase === 'draining' && L.tasklistAlive(scriptPid), s.phase);
+
+  // 9. Work finishes while a force confirmation is open.
+  browser = await L.launchEdge();
+  context = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const d = await context.newPage();
+  L.watchShutdownRequests(d, posts, 'd');
+  await d.goto(g.origin + '/app/loops');
+  await d.getByRole('button', { name: 'Force stop', exact: true }).click();
+  await d.getByRole('dialog').waitFor({ timeout: 5000 });
+  fs.writeFileSync(path.join(dir, 'held.release'), 'go');
+  const code = await g.waitExit(60_000);
+  rec.check('B9 work completed during the decision: gateway exits 0 on its own', code === 0, code);
+  await d.getByText('Gateway stopped or disconnected', { exact: true }).waitFor({ timeout: 20_000 });
+  rec.check('B9 the open force confirmation is withdrawn once the gateway is gone', (await d.getByRole('dialog').count()) === 0, null);
+  await L.shot(d, 's-b-completed-during-decision');
+  rec.log('notice after completion', await L.noticeText(d));
+  rec.check('B9 no force POST was sent', posts.filter((p) => p.method === 'POST').length === 2, posts.filter((p) => p.method === 'POST').length);
+  rec.check('B9 lock released', !fs.existsSync(path.join(dir, 'graphgoblin.lock')), null);
+  const serverPosts = L.serverShutdownPosts(g.readLog());
+  rec.check('B9 server-side POST count equals operator POSTs plus clicked browser choices', serverPosts === operatorPosts + 2, { serverPosts, operatorPosts, browserPosts: 2 });
+  await browser.close();
+  browser = undefined;
+
+  g2 = await L.startGateway({ dir, port: PORT, label: 'b2', env: { GG_SHUTDOWN_GRACE_MS: String(GRACE) }, rec });
+  const held = (await g2.call(`/runs/${heldRun}`)).json;
+  const park = (await g2.call(`/runs/${parkRun}`)).json;
+  rec.check('B10 after restart the held run succeeded', held.status === 'succeeded', held.status);
+  rec.check('B10 the durable wait run is still waiting', park.status === 'waiting', park.status);
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('B10 restarted gateway drains to exit 0', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+  rec.check('B11 no process names the store', L.storeProcesses(dir).length === 0, L.storeProcesses(dir));
+} catch (error) {
+  rec.check('B scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+    x?.copyLog(`s-b-gateway-${x.label}.log.txt`);
+  }
+  rec.finish({ shutdownRequestsFromBrowser: posts });
+  for (const p of L.storeProcesses(dir)) {
+    try {
+      process.kill(p.pid);
+    } catch {}
+  }
+  L.rmStore(dir);
+}

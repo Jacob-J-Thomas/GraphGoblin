@@ -1,0 +1,42 @@
+2026-10-26T07:07:39.146Z +3.3s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=0 is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too small: expected number to be >=1"}
+2026-10-26T07:07:42.426Z +6.5s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=-5 is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too small: expected number to be >=1"}
+2026-10-26T07:07:45.828Z +9.9s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=abc is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Invalid input: expected number, received NaN"}
+2026-10-26T07:07:49.079Z +13.2s CHECK PASS G0 GG_SHUTDOWN_GRACE_MS=2147483648 is refused at startup {"status":1,"excerpt":"Error: invalid configuration: GG_SHUTDOWN_GRACE_MS: Too big: expected number to be <=2147483647"}
+2026-10-26T07:07:53.946Z +18.1s gateway g1 listening {"pid":19372,"port":6467,"viaConsole":false}
+2026-10-26T07:07:56.645Z +20.8s provider work started {"run":"01M5VGK0PRTSATSE6HVXTQ13R5","cliPid":45408,"toolPid":14776,"tree":[{"pid":42588,"ppid":19372,"name":"conhost.exe","cmd":"\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"},{"pid":45408,"ppid":19372,"name":"tree-codex.exe","cmd":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-c-g-8ZdC3z\\tree-codex.exe exec --experimental-json --model gpt-6-luna --sandbox workspace-write --cd %USERPROFILE%\\App"},{"pid":14776,"ppid":45408,"name":"tree-codex.exe","cmd":"\"%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-c-g-8ZdC3z\\tree-codex.exe\" --tool-child"},{"pid":20876,"ppid":14776,"name":"conhost.exe","cmd":"\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"}]}
+2026-10-26T07:07:57.893Z +22.0s CHECK PASS G1 fake CLI and its tool child alive null
+2026-10-26T07:07:57.900Z +22.0s CHECK PASS G2 wait before any drain is refused with 409 current state 409
+2026-10-26T07:07:57.915Z +22.0s CHECK PASS G2 repeated drain is accepted idempotently (same drain, 202) {"first":"2026-10-26T07:07:57.903Z","second":"2026-10-26T07:07:57.903Z"}
+2026-10-26T07:07:57.916Z +22.0s CHECK PASS G2 force is available before the 10-minute grace expires ["wait","force"]
+2026-10-26T07:07:59.187Z +23.3s process sample during forcing {"at":"immediately after force responses","cli":false,"toolChild":true,"gateway":true}
+2026-10-26T07:07:59.187Z +23.3s two concurrent forces {"f1":{"status":202,"phase":"forcing"},"f2":{"status":202,"phase":"forcing"}}
+2026-10-26T07:07:59.188Z +23.3s CHECK PASS G3 concurrent duplicate forces are both acknowledged without error [202,202]
+2026-10-26T07:07:59.194Z +23.3s CHECK PASS G3 wait during force is refused (409) or the gateway is already gone; it cannot cancel the force 409
+2026-10-26T07:08:59.251Z +83.4s CHECK FAIL G4 force before expiry completes with exit 0 null
+2026-10-26T07:09:01.776Z +85.9s CHECK FAIL G4 provider CLI, its tool child and the gateway are gone after exit (tasklist) {"cli":false,"toolChild":true,"gateway":true}
+2026-10-26T07:09:05.832Z +90.0s CHECK FAIL G4 CIM: nothing names the store [{"pid":14776,"ppid":45408,"name":"tree-codex.exe"}]
+2026-10-26T07:09:11.565Z +95.7s CHECK FAIL G scenario completed without exception "Error: gateway exited during startup:\nError: another GraphGoblin process holds %USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-c-g-8ZdC3z\\graphgoblin.lock\n    at held (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/data-dir-lock.js:19:24)\n    at removeStale (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/data-dir-lock.js:43:15)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/data-dir-lock.js:50:9\n    at async acquireFile (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/data-dir-lock.js:47:18)\n    at async acquireDataDirLock (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/data-dir-lock.js:112:20)\n    at async createContainer (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/container.js:41:18)\n    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/main.js:46:23\n    at async main (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/acceptance-c/apps/api/dist/main.js:95:16)\n\n    at Module.startGateway (file:///%USERPROFILE%/AppData/Local/Temp/gg-acc-c-tools/lib.mjs:143:39)\n    at async file:///%USERPROFILE%/AppData/Local/Temp/gg-acc-c-tools/s-g-force-before-expiry.mjs:64:8"
+2026-10-26T07:09:41.606Z +125.7s DONE passed=10 failed=4
+node:fs:1948
+  binding.unlink(getValidatedPath(path));
+          ^
+
+Error: EBUSY: resource busy or locked, unlink '%USERPROFILE%\AppData\Local\Temp\gg-acc-c-g-8ZdC3z\graphgoblin.db'
+    at unlinkSync (node:fs:1948:11)
+    at _unlinkSync (node:internal/fs/rimraf:215:14)
+    at rimrafSync (node:internal/fs/rimraf:196:7)
+    at node:internal/fs/rimraf:254:9
+    at Array.forEach (<anonymous>)
+    at _rmdirSync (node:internal/fs/rimraf:251:7)
+    at rimrafSync (node:internal/fs/rimraf:194:7)
+    at Object.rmSync (node:fs:1239:10)
+    at Module.rmStore (file:///%USERPROFILE%/AppData/Local/Temp/gg-acc-c-tools/lib.mjs:420:6)
+    at file:///%USERPROFILE%/AppData/Local/Temp/gg-acc-c-tools/s-g-force-before-expiry.mjs:87:7 {
+  errno: -4082,
+  code: 'EBUSY',
+  syscall: 'unlink',
+  path: '%USERPROFILE%\\AppData\\Local\\Temp\\gg-acc-c-g-8ZdC3z\\graphgoblin.db'
+}
+
+Node.js v22.23.4
+exit=1

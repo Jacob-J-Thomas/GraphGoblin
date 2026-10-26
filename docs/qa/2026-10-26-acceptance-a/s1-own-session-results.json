@@ -1,0 +1,1941 @@
+{
+  "checks": [
+    {
+      "id": "33-cycle-codex-status",
+      "description": "codex own cycle succeeds",
+      "pass": true
+    },
+    {
+      "id": "33-cycle-codex-worker",
+      "description": "codex worker visit 1 fresh, visits 2-3 resume only the worker's visit-1 conversation",
+      "pass": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 4."
+        }
+      ]
+    },
+    {
+      "id": "33-cycle-codex-reviewer",
+      "description": "codex reviewer keeps its own separate conversation; worker never resumes a reviewer handle",
+      "pass": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 3."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 5."
+        }
+      ]
+    },
+    {
+      "id": "33-cycle-claude-status",
+      "description": "claude own cycle succeeds",
+      "pass": true
+    },
+    {
+      "id": "33-cycle-claude-worker",
+      "description": "claude worker visit 1 fresh, visits 2-3 resume only the worker's visit-1 conversation",
+      "pass": true,
+      "detail": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 0."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "conversationTurn": 2,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 2."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "conversationTurn": 3,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 4."
+        }
+      ]
+    },
+    {
+      "id": "33-cycle-claude-reviewer",
+      "description": "claude reviewer keeps its own separate conversation; worker never resumes a reviewer handle",
+      "pass": true,
+      "detail": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 1."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "conversationTurn": 2,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 3."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "conversationTurn": 3,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 5."
+        }
+      ]
+    },
+    {
+      "id": "33-fresh-reviewer",
+      "description": "worker resumes its own handle; fresh reviewer starts a new conversation every visit",
+      "pass": true,
+      "detail": {
+        "w": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 0."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+            "sessionId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 2."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+            "sessionId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+            "conversationTurn": 3,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 4."
+          }
+        ],
+        "r": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "cdb7232b-0d05-4c36-8960-9a1f64f212fb",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 1."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "0ea13559-2479-4cf3-a448-97a955c75bf9",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 3."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "3db361f5-ded1-421c-aa59-087f1fbe9cef",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 5."
+          }
+        ]
+      }
+    },
+    {
+      "id": "33-default-fresh",
+      "description": "an inference node with no authored session policy starts fresh on every visit",
+      "pass": true,
+      "detail": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "0c1e3c70-b609-40a8-94f7-7cb265dea910",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKXPF46JDMRYQAYEWQ3X1 task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "89e6249b-9c77-4083-99ef-3201bd7368fe",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKXPF46JDMRYQAYEWQ3X1 task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "75b7f76f-96c3-4dcb-a555-5dbdd9b3d79e",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKXPF46JDMRYQAYEWQ3X1 task. Loop messages so far: 4."
+        }
+      ]
+    },
+    {
+      "id": "33-previous-unchanged",
+      "description": "resume-previous still resumes the latest session in the run (the reviewer's), as before #33",
+      "pass": true,
+      "detail": {
+        "w": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "f00c448b-7842-42f3-b736-8b004ade0374",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 0."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "e90dfb40-a4c7-41c4-8eb6-d9a1e7ef0aba",
+            "sessionId": "e90dfb40-a4c7-41c4-8eb6-d9a1e7ef0aba",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 2."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "14ef3043-a2b3-42e1-a485-132033fb56e5",
+            "sessionId": "14ef3043-a2b3-42e1-a485-132033fb56e5",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 4."
+          }
+        ],
+        "r": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "e90dfb40-a4c7-41c4-8eb6-d9a1e7ef0aba",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 1."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "14ef3043-a2b3-42e1-a485-132033fb56e5",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 3."
+          },
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "99c61f70-56cb-4642-8d47-155564fcbca0",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 5."
+          }
+        ]
+      }
+    },
+    {
+      "id": "33-named-unchanged",
+      "description": "resume-named still shares one keyed conversation across nodes and across runs",
+      "pass": true,
+      "detail": {
+        "ids": [
+          "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde"
+        ]
+      }
+    },
+    {
+      "id": "33-parallel",
+      "description": "three concurrent runs: each worker resumes only its own run's worker handle",
+      "pass": true,
+      "detail": {
+        "workerIds": [
+          "580add7f-351f-4b7d-bdc4-de231ad5b6e8",
+          "e6129bcd-c7ab-4899-ad40-9baf7bdcfac3",
+          "f8b7f8c6-2426-46b9-9d3f-eb664165e095"
+        ],
+        "switches": 17
+      }
+    },
+    {
+      "id": "33-parallel-interleaved",
+      "description": "the three runs actually interleaved their turns",
+      "pass": true,
+      "detail": {
+        "switches": 17
+      }
+    },
+    {
+      "id": "33-replay-worker",
+      "description": "replay at worker: first worker and reviewer turns in the fork are fresh; no source handle is resumed",
+      "pass": true,
+      "detail": {
+        "w": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 0."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+            "sessionId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 2."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+            "sessionId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+            "conversationTurn": 3,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 4."
+          }
+        ],
+        "r": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 1."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+            "sessionId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 3."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+            "sessionId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+            "conversationTurn": 3,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 5."
+          }
+        ]
+      }
+    },
+    {
+      "id": "33-replay-reviewer",
+      "description": "replay at reviewer: first worker and reviewer turns in the fork are fresh; no source handle is resumed",
+      "pass": true,
+      "detail": {
+        "w": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "33c5248d-6001-47d4-bc08-b68efe81a727",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 2."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "33c5248d-6001-47d4-bc08-b68efe81a727",
+            "sessionId": "33c5248d-6001-47d4-bc08-b68efe81a727",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 4."
+          }
+        ],
+        "r": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 1."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+            "sessionId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 3."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+            "sessionId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+            "conversationTurn": 3,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "REVIEWER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 5."
+          }
+        ]
+      }
+    },
+    {
+      "id": "33-children",
+      "description": "each child run starts its same-id worker fresh and resumes only within itself; the parent worker resumes only its own handle",
+      "pass": true,
+      "detail": {
+        "parent": "01M5VFM73XBBXP07QW35A236J1",
+        "status": "succeeded",
+        "parentWorker": [
+          {
+            "harness": "codex",
+            "mode": "fresh",
+            "outcome": "answered",
+            "resumeId": null,
+            "sessionId": "96892ce7-c90f-44a5-8ad1-944b2be4e4c9",
+            "conversationTurn": 1,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM73XBBXP07QW35A236J1 task. Loop messages so far: 0."
+          },
+          {
+            "harness": "codex",
+            "mode": "resume",
+            "outcome": "answered",
+            "resumeId": "96892ce7-c90f-44a5-8ad1-944b2be4e4c9",
+            "sessionId": "96892ce7-c90f-44a5-8ad1-944b2be4e4c9",
+            "conversationTurn": 2,
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "prompt": "WORKER run=01M5VFM73XBBXP07QW35A236J1 task. Loop messages so far: 1."
+          }
+        ],
+        "children": [
+          {
+            "runId": "01M5VFM7X3GHPGK7JCW8A49NKM",
+            "worker": [
+              {
+                "harness": "codex",
+                "mode": "fresh",
+                "outcome": "answered",
+                "resumeId": null,
+                "sessionId": "b5a96cfb-0518-4fa6-8de9-ac4f9ed6aa52",
+                "conversationTurn": 1,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "prompt": "CHILDWORKER run=01M5VFM7X3GHPGK7JCW8A49NKM task. Loop messages so far: 2."
+              },
+              {
+                "harness": "codex",
+                "mode": "resume",
+                "outcome": "answered",
+                "resumeId": "b5a96cfb-0518-4fa6-8de9-ac4f9ed6aa52",
+                "sessionId": "b5a96cfb-0518-4fa6-8de9-ac4f9ed6aa52",
+                "conversationTurn": 2,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "prompt": "CHILDWORKER run=01M5VFM7X3GHPGK7JCW8A49NKM task. Loop messages so far: 3."
+              }
+            ]
+          },
+          {
+            "runId": "01M5VFM7G03Z45GV0TX15XNA89",
+            "worker": [
+              {
+                "harness": "codex",
+                "mode": "fresh",
+                "outcome": "answered",
+                "resumeId": null,
+                "sessionId": "58fb9a66-edfa-49c9-bfed-e11c25bfbaa9",
+                "conversationTurn": 1,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "prompt": "CHILDWORKER run=01M5VFM7G03Z45GV0TX15XNA89 task. Loop messages so far: 1."
+              },
+              {
+                "harness": "codex",
+                "mode": "resume",
+                "outcome": "answered",
+                "resumeId": "58fb9a66-edfa-49c9-bfed-e11c25bfbaa9",
+                "sessionId": "58fb9a66-edfa-49c9-bfed-e11c25bfbaa9",
+                "conversationTurn": 2,
+                "model": "gpt-6-luna",
+                "effort": "low",
+                "prompt": "CHILDWORKER run=01M5VFM7G03Z45GV0TX15XNA89 task. Loop messages so far: 2."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "evidence": {
+    "preflight": {
+      "items": [
+        {
+          "state": "ready",
+          "ok": true,
+          "version": "0.160.0",
+          "authenticated": true,
+          "problems": [],
+          "harness": "codex"
+        },
+        {
+          "state": "ready",
+          "ok": true,
+          "version": "2.1.287",
+          "authenticated": true,
+          "problems": [],
+          "authMethod": "claude.ai",
+          "supportedPolicies": [
+            {
+              "sandbox": "read-only",
+              "approval": "never",
+              "permissionMode": "dontAsk",
+              "tools": [
+                "Read",
+                "Glob",
+                "Grep"
+              ],
+              "authMethod": "claude.ai",
+              "boundary": "builtin-tools",
+              "network": "unconfined"
+            },
+            {
+              "sandbox": "danger-full-access",
+              "approval": "never",
+              "permissionMode": "dontAsk",
+              "tools": [
+                "Read",
+                "Glob",
+                "Grep",
+                "Edit",
+                "Write",
+                "Bash"
+              ],
+              "authMethod": "claude.ai",
+              "boundary": "unconfined",
+              "network": "unconfined"
+            }
+          ],
+          "models": [
+            {
+              "model": "claude-opus-5-5",
+              "efforts": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ]
+            },
+            {
+              "model": "claude-fable-5-1",
+              "efforts": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ]
+            },
+            {
+              "model": "claude-sonnet-5-5",
+              "efforts": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ]
+            },
+            {
+              "model": "claude-haiku-5-5",
+              "efforts": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max"
+              ]
+            }
+          ],
+          "harness": "claude"
+        }
+      ]
+    },
+    "catalogModels": [
+      {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "claude",
+        "model": "claude-haiku-5-5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "claude",
+        "model": "claude-sonnet-5-5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.5",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-sol",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-terra",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-sol",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6.1-sol",
+        "efforts": [
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "enabled": true
+      }
+    ],
+    "cycle-codex": {
+      "run": "succeeded",
+      "worker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 4."
+        }
+      ],
+      "reviewer": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 3."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKS147ZHK3DCFETGFFGYN task. Loop messages so far: 5."
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VFKS147ZHK3DCFETGFFGYN",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "3e569b88-9c4f-4a76-b8df-565889cf5cc4",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-26T06:50:51.584Z"
+        },
+        {
+          "runId": "01M5VFKS147ZHK3DCFETGFFGYN",
+          "nodeId": "reviewer",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "0fd2cceb-1e0e-4bc1-9077-5673b460f386",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-26T06:50:51.662Z"
+        }
+      ]
+    },
+    "cycle-claude": {
+      "run": "succeeded",
+      "worker": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 0."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "conversationTurn": 2,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 2."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "conversationTurn": 3,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 4."
+        }
+      ],
+      "reviewer": [
+        {
+          "harness": "claude",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "conversationTurn": 1,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 1."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "conversationTurn": 2,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 3."
+        },
+        {
+          "harness": "claude",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "conversationTurn": 3,
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKT5KW67PGP2TC1V5R7TT task. Loop messages so far: 5."
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "01M5VFKT5KW67PGP2TC1V5R7TT",
+          "nodeId": "worker",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "97d98a46-e460-4871-980d-05b9d18cecc6",
+          "status": "finished",
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "updatedAt": "2026-10-26T06:50:53.597Z"
+        },
+        {
+          "runId": "01M5VFKT5KW67PGP2TC1V5R7TT",
+          "nodeId": "reviewer",
+          "attempt": 1,
+          "harness": "claude",
+          "sessionId": "a16981ae-1be7-4f8b-9149-1ca8659691c4",
+          "status": "finished",
+          "model": "claude-opus-5-5",
+          "effort": "low",
+          "updatedAt": "2026-10-26T06:50:53.896Z"
+        }
+      ]
+    },
+    "own-worker-fresh-reviewer": {
+      "worker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+          "sessionId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+          "sessionId": "90194a8e-bcd5-491c-a818-16cddef9cf73",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 4."
+        }
+      ],
+      "reviewer": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "cdb7232b-0d05-4c36-8960-9a1f64f212fb",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "0ea13559-2479-4cf3-a448-97a955c75bf9",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 3."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "3db361f5-ded1-421c-aa59-087f1fbe9cef",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKWDHQMHC9X1PW1M2PBP9 task. Loop messages so far: 5."
+        }
+      ]
+    },
+    "existing-default": {
+      "worker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "0c1e3c70-b609-40a8-94f7-7cb265dea910",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKXPF46JDMRYQAYEWQ3X1 task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "89e6249b-9c77-4083-99ef-3201bd7368fe",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKXPF46JDMRYQAYEWQ3X1 task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "75b7f76f-96c3-4dcb-a555-5dbdd9b3d79e",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKXPF46JDMRYQAYEWQ3X1 task. Loop messages so far: 4."
+        }
+      ]
+    },
+    "existing-previous": {
+      "worker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "f00c448b-7842-42f3-b736-8b004ade0374",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "e90dfb40-a4c7-41c4-8eb6-d9a1e7ef0aba",
+          "sessionId": "e90dfb40-a4c7-41c4-8eb6-d9a1e7ef0aba",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "14ef3043-a2b3-42e1-a485-132033fb56e5",
+          "sessionId": "14ef3043-a2b3-42e1-a485-132033fb56e5",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 4."
+        }
+      ],
+      "reviewer": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "e90dfb40-a4c7-41c4-8eb6-d9a1e7ef0aba",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "14ef3043-a2b3-42e1-a485-132033fb56e5",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 3."
+        },
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "99c61f70-56cb-4642-8d47-155564fcbca0",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFKYYKMASJGEYBB4NQHZNA task. Loop messages so far: 5."
+        }
+      ]
+    },
+    "existing-named": {
+      "first": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM015R8H7SCFT30PE435Z task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM015R8H7SCFT30PE435Z task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM015R8H7SCFT30PE435Z task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 4,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM015R8H7SCFT30PE435Z task. Loop messages so far: 3."
+        }
+      ],
+      "second": [
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 5,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM0PM6RSN7JFB9FA907KZ task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 7,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM0PM6RSN7JFB9FA907KZ task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 6,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM0PM6RSN7JFB9FA907KZ task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "sessionId": "6d0ecf9d-bac9-4e3d-8f88-34e27e11dbde",
+          "conversationTurn": 8,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM0PM6RSN7JFB9FA907KZ task. Loop messages so far: 3."
+        }
+      ]
+    },
+    "parallel": {
+      "per": [
+        {
+          "runId": "01M5VFM1N79NYKC79GCF70HMD7",
+          "worker": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "580add7f-351f-4b7d-bdc4-de231ad5b6e8",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1N79NYKC79GCF70HMD7 task. Loop messages so far: 0."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "580add7f-351f-4b7d-bdc4-de231ad5b6e8",
+              "sessionId": "580add7f-351f-4b7d-bdc4-de231ad5b6e8",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1N79NYKC79GCF70HMD7 task. Loop messages so far: 2."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "580add7f-351f-4b7d-bdc4-de231ad5b6e8",
+              "sessionId": "580add7f-351f-4b7d-bdc4-de231ad5b6e8",
+              "conversationTurn": 3,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1N79NYKC79GCF70HMD7 task. Loop messages so far: 4."
+            }
+          ],
+          "reviewer": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "b091cfc9-d415-4ceb-9271-fb1ea5549d2c",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1N79NYKC79GCF70HMD7 task. Loop messages so far: 1."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "b091cfc9-d415-4ceb-9271-fb1ea5549d2c",
+              "sessionId": "b091cfc9-d415-4ceb-9271-fb1ea5549d2c",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1N79NYKC79GCF70HMD7 task. Loop messages so far: 3."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "b091cfc9-d415-4ceb-9271-fb1ea5549d2c",
+              "sessionId": "b091cfc9-d415-4ceb-9271-fb1ea5549d2c",
+              "conversationTurn": 3,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1N79NYKC79GCF70HMD7 task. Loop messages so far: 5."
+            }
+          ]
+        },
+        {
+          "runId": "01M5VFM1NB15FF5RC4F2XZFVDK",
+          "worker": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "e6129bcd-c7ab-4899-ad40-9baf7bdcfac3",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1NB15FF5RC4F2XZFVDK task. Loop messages so far: 0."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "e6129bcd-c7ab-4899-ad40-9baf7bdcfac3",
+              "sessionId": "e6129bcd-c7ab-4899-ad40-9baf7bdcfac3",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1NB15FF5RC4F2XZFVDK task. Loop messages so far: 2."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "e6129bcd-c7ab-4899-ad40-9baf7bdcfac3",
+              "sessionId": "e6129bcd-c7ab-4899-ad40-9baf7bdcfac3",
+              "conversationTurn": 3,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1NB15FF5RC4F2XZFVDK task. Loop messages so far: 4."
+            }
+          ],
+          "reviewer": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "30e47796-6e89-4e87-94d1-232701ac8539",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1NB15FF5RC4F2XZFVDK task. Loop messages so far: 1."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "30e47796-6e89-4e87-94d1-232701ac8539",
+              "sessionId": "30e47796-6e89-4e87-94d1-232701ac8539",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1NB15FF5RC4F2XZFVDK task. Loop messages so far: 3."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "30e47796-6e89-4e87-94d1-232701ac8539",
+              "sessionId": "30e47796-6e89-4e87-94d1-232701ac8539",
+              "conversationTurn": 3,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1NB15FF5RC4F2XZFVDK task. Loop messages so far: 5."
+            }
+          ]
+        },
+        {
+          "runId": "01M5VFM1NB15FF5RC4F2XZFVDN",
+          "worker": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "f8b7f8c6-2426-46b9-9d3f-eb664165e095",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1NB15FF5RC4F2XZFVDN task. Loop messages so far: 0."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "f8b7f8c6-2426-46b9-9d3f-eb664165e095",
+              "sessionId": "f8b7f8c6-2426-46b9-9d3f-eb664165e095",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1NB15FF5RC4F2XZFVDN task. Loop messages so far: 2."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "f8b7f8c6-2426-46b9-9d3f-eb664165e095",
+              "sessionId": "f8b7f8c6-2426-46b9-9d3f-eb664165e095",
+              "conversationTurn": 3,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "WORKER run=01M5VFM1NB15FF5RC4F2XZFVDN task. Loop messages so far: 4."
+            }
+          ],
+          "reviewer": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "6803a82d-34d6-4e64-98ff-ac212a47d4f3",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1NB15FF5RC4F2XZFVDN task. Loop messages so far: 1."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "6803a82d-34d6-4e64-98ff-ac212a47d4f3",
+              "sessionId": "6803a82d-34d6-4e64-98ff-ac212a47d4f3",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1NB15FF5RC4F2XZFVDN task. Loop messages so far: 3."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "6803a82d-34d6-4e64-98ff-ac212a47d4f3",
+              "sessionId": "6803a82d-34d6-4e64-98ff-ac212a47d4f3",
+              "conversationTurn": 3,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "REVIEWER run=01M5VFM1NB15FF5RC4F2XZFVDN task. Loop messages so far: 5."
+            }
+          ]
+        }
+      ],
+      "interleavingSwitches": 17,
+      "order": [
+        {
+          "ts": "2026-10-26T06:51:00.4848320Z",
+          "run": 0,
+          "pid": 40044
+        },
+        {
+          "ts": "2026-10-26T06:51:00.5495408Z",
+          "run": 1,
+          "pid": 12496
+        },
+        {
+          "ts": "2026-10-26T06:51:00.5675765Z",
+          "run": 2,
+          "pid": 47932
+        },
+        {
+          "ts": "2026-10-26T06:51:01.0116801Z",
+          "run": 0,
+          "pid": 23100
+        },
+        {
+          "ts": "2026-10-26T06:51:01.0889802Z",
+          "run": 2,
+          "pid": 1440
+        },
+        {
+          "ts": "2026-10-26T06:51:01.0899815Z",
+          "run": 1,
+          "pid": 58864
+        },
+        {
+          "ts": "2026-10-26T06:51:01.5392824Z",
+          "run": 0,
+          "pid": 16016
+        },
+        {
+          "ts": "2026-10-26T06:51:01.6478203Z",
+          "run": 2,
+          "pid": 44700
+        },
+        {
+          "ts": "2026-10-26T06:51:01.6795310Z",
+          "run": 1,
+          "pid": 39172
+        },
+        {
+          "ts": "2026-10-26T06:51:02.0312854Z",
+          "run": 0,
+          "pid": 26056
+        },
+        {
+          "ts": "2026-10-26T06:51:02.1711616Z",
+          "run": 2,
+          "pid": 23456
+        },
+        {
+          "ts": "2026-10-26T06:51:02.2040814Z",
+          "run": 1,
+          "pid": 47948
+        },
+        {
+          "ts": "2026-10-26T06:51:02.5434962Z",
+          "run": 0,
+          "pid": 44988
+        },
+        {
+          "ts": "2026-10-26T06:51:02.7240936Z",
+          "run": 2,
+          "pid": 30020
+        },
+        {
+          "ts": "2026-10-26T06:51:02.7572278Z",
+          "run": 1,
+          "pid": 22956
+        },
+        {
+          "ts": "2026-10-26T06:51:03.0502202Z",
+          "run": 0,
+          "pid": 53040
+        },
+        {
+          "ts": "2026-10-26T06:51:03.2213462Z",
+          "run": 2,
+          "pid": 9732
+        },
+        {
+          "ts": "2026-10-26T06:51:03.2530582Z",
+          "run": 1,
+          "pid": 26872
+        }
+      ]
+    },
+    "parallelSourceRun": "01M5VFM1N79NYKC79GCF70HMD7",
+    "replay-worker": {
+      "forkId": "01M5VFM59V2BAGZR9C7J16K89F",
+      "status": "succeeded",
+      "worker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+          "sessionId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+          "sessionId": "80fc4910-acc8-47a4-afc8-5724f7eded3d",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 4."
+        }
+      ],
+      "reviewer": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+          "sessionId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 3."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+          "sessionId": "b4b2048c-a59f-48a3-b9b8-744b9ce1d104",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM59V2BAGZR9C7J16K89F task. Loop messages so far: 5."
+        }
+      ],
+      "initialCounters": {
+        "nodeVisits": {
+          "start": 1
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      "finalCounters": {
+        "nodeVisits": {
+          "start": 1,
+          "worker": 3,
+          "reviewer": 3,
+          "again": 3,
+          "done": 1
+        },
+        "usage": {
+          "inputTokens": 6,
+          "outputTokens": 6,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    },
+    "replay-reviewer": {
+      "forkId": "01M5VFM5ZGMEF0DGP9D808NNSZ",
+      "status": "succeeded",
+      "worker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "33c5248d-6001-47d4-bc08-b68efe81a727",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 2."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "33c5248d-6001-47d4-bc08-b68efe81a727",
+          "sessionId": "33c5248d-6001-47d4-bc08-b68efe81a727",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 4."
+        }
+      ],
+      "reviewer": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 1."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+          "sessionId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 3."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+          "sessionId": "581a67a2-b151-4d38-a4c5-c01d5b63f2c9",
+          "conversationTurn": 3,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "REVIEWER run=01M5VFM5ZGMEF0DGP9D808NNSZ task. Loop messages so far: 5."
+        }
+      ],
+      "initialCounters": {
+        "nodeVisits": {
+          "start": 1,
+          "worker": 1
+        },
+        "usage": {
+          "inputTokens": 1,
+          "outputTokens": 1,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      "finalCounters": {
+        "nodeVisits": {
+          "start": 1,
+          "worker": 3,
+          "reviewer": 3,
+          "again": 3,
+          "done": 1
+        },
+        "usage": {
+          "inputTokens": 6,
+          "outputTokens": 6,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    },
+    "children": {
+      "parent": "01M5VFM73XBBXP07QW35A236J1",
+      "status": "succeeded",
+      "parentWorker": [
+        {
+          "harness": "codex",
+          "mode": "fresh",
+          "outcome": "answered",
+          "resumeId": null,
+          "sessionId": "96892ce7-c90f-44a5-8ad1-944b2be4e4c9",
+          "conversationTurn": 1,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM73XBBXP07QW35A236J1 task. Loop messages so far: 0."
+        },
+        {
+          "harness": "codex",
+          "mode": "resume",
+          "outcome": "answered",
+          "resumeId": "96892ce7-c90f-44a5-8ad1-944b2be4e4c9",
+          "sessionId": "96892ce7-c90f-44a5-8ad1-944b2be4e4c9",
+          "conversationTurn": 2,
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "prompt": "WORKER run=01M5VFM73XBBXP07QW35A236J1 task. Loop messages so far: 1."
+        }
+      ],
+      "children": [
+        {
+          "runId": "01M5VFM7X3GHPGK7JCW8A49NKM",
+          "worker": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "b5a96cfb-0518-4fa6-8de9-ac4f9ed6aa52",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "CHILDWORKER run=01M5VFM7X3GHPGK7JCW8A49NKM task. Loop messages so far: 2."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "b5a96cfb-0518-4fa6-8de9-ac4f9ed6aa52",
+              "sessionId": "b5a96cfb-0518-4fa6-8de9-ac4f9ed6aa52",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "CHILDWORKER run=01M5VFM7X3GHPGK7JCW8A49NKM task. Loop messages so far: 3."
+            }
+          ]
+        },
+        {
+          "runId": "01M5VFM7G03Z45GV0TX15XNA89",
+          "worker": [
+            {
+              "harness": "codex",
+              "mode": "fresh",
+              "outcome": "answered",
+              "resumeId": null,
+              "sessionId": "58fb9a66-edfa-49c9-bfed-e11c25bfbaa9",
+              "conversationTurn": 1,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "CHILDWORKER run=01M5VFM7G03Z45GV0TX15XNA89 task. Loop messages so far: 1."
+            },
+            {
+              "harness": "codex",
+              "mode": "resume",
+              "outcome": "answered",
+              "resumeId": "58fb9a66-edfa-49c9-bfed-e11c25bfbaa9",
+              "sessionId": "58fb9a66-edfa-49c9-bfed-e11c25bfbaa9",
+              "conversationTurn": 2,
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "prompt": "CHILDWORKER run=01M5VFM7G03Z45GV0TX15XNA89 task. Loop messages so far: 2."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "before (aa8b2348, pre-#186 round 2)": {
+    "phases": [
+      {
+        "name": "no inspector",
+        "fromSeq": 1,
+        "toSeq": 9389,
+        "seconds": 60.019,
+        "eventsPerSecond": 156.4,
+        "apiMemory": {
+          "privateMiB": 150.6,
+          "workingSetMiB": 150.2
+        }
+      },
+      {
+        "name": "inspector following live",
+        "fromSeq": 9769,
+        "toSeq": 24040,
+        "seconds": 90.026,
+        "eventsPerSecond": 158.5,
+        "jsHeapMiB": 103.03,
+        "apiMemory": {
+          "privateMiB": 154.4,
+          "workingSetMiB": 152.2
+        },
+        "requests": {
+          "GET /system/shutdown": 9,
+          "GET /runs/:id": 312,
+          "GET /runs/:id/thread": 1,
+          "GET /runs/:id/events": 1,
+          "GET /loops/:id/versions/:id": 1
+        }
+      },
+      {
+        "name": "inspector in history mode (Load older)",
+        "skipped": "no Load older control in this build"
+      },
+      {
+        "name": "inspector closed",
+        "fromSeq": 35882,
+        "toSeq": 40604,
+        "seconds": 30.021,
+        "eventsPerSecond": 157.3
+      }
+    ],
+    "requests": {
+      "GET /system/shutdown": 9,
+      "GET /runs/:id": 313,
+      "GET /runs/:id/thread": 1,
+      "GET /runs/:id/events": 1,
+      "GET /loops/:id/versions/:id": 1
+    },
+    "heap": [],
+    "apiMemory": []
+  },
+  "after (d42e859f, accepted main)": {
+    "phases": [
+      {
+        "name": "no inspector",
+        "fromSeq": 2,
+        "toSeq": 3996,
+        "seconds": 60.018,
+        "eventsPerSecond": 66.5,
+        "apiMemory": {
+          "privateMiB": 143,
+          "workingSetMiB": 144.3
+        }
+      },
+      {
+        "name": "inspector following live",
+        "fromSeq": 4234,
+        "toSeq": 5326,
+        "seconds": 90.087,
+        "eventsPerSecond": 12.1,
+        "jsHeapMiB": 10.07,
+        "apiMemory": {
+          "privateMiB": 177.3,
+          "workingSetMiB": 162.7
+        },
+        "requests": {
+          "GET /system/shutdown": 10,
+          "GET /runs/:id": 483,
+          "GET /runs/:id/thread": 482,
+          "GET /runs/:id/events": 1,
+          "GET /runs/:id/observation": 480,
+          "GET /loops/:id/versions/:id": 1,
+          "GET /runs/:id/thread?at=": 882
+        }
+      },
+      {
+        "name": "inspector in history mode (Load older)",
+        "fromSeq": 5331,
+        "toSeq": 12129,
+        "seconds": 45.004,
+        "eventsPerSecond": 151.1,
+        "jsHeapMiB": 10.42
+      },
+      {
+        "name": "inspector closed",
+        "fromSeq": 12139,
+        "toSeq": 16926,
+        "seconds": 30.013,
+        "eventsPerSecond": 159.5
+      }
+    ],
+    "requests": {
+      "GET /system/shutdown": 14,
+      "GET /runs/:id": 882,
+      "GET /runs/:id/thread": 881,
+      "GET /runs/:id/events": 2,
+      "GET /runs/:id/observation": 879,
+      "GET /loops/:id/versions/:id": 1,
+      "GET /runs/:id/thread?at=": 884
+    },
+    "heap": [],
+    "apiMemory": []
+  }
+}

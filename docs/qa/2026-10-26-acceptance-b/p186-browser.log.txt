@@ -1,0 +1,19 @@
+[2026-10-26T07:35:03.114Z] API started pid=21896 port=6457 scenario=success
+[2026-10-26T07:37:35.717Z] measure {"label":"finished ~2k events","serverLastSeq":2009,"heading":{"total":2009,"status":"complete"},"jsHeapUsedMiB":9.05,"domNodes":884,"timelineRowsMounted":80,"sessionStorageBytesUtf16":417276}
+[2026-10-26T07:38:07.219Z] measure {"label":"finished ~20k events","serverLastSeq":20009,"heading":{"total":20009,"status":"complete"},"jsHeapUsedMiB":10.05,"domNodes":884,"timelineRowsMounted":80,"sessionStorageBytesUtf16":420348}
+[2026-10-26T07:38:07.234Z] PASS finished 20k vs 2k events: heap within 25% (+2 MiB), Timeline <= 80 rows, session cache bounded, heading = lastSeq {"short":{"label":"finished ~2k events","serverLastSeq":2009,"heading":{"total":2009,"status":"complete"},"jsHeapUsedMiB":9.05,"domNodes":884,"timelineRowsMounted":80,"sessionStorageBytesUtf16":417276},"long":{"label":"finished ~20k events","serverLastSeq":20009,"heading":{"total":20009,"status":"complete"},"jsHeapUsedMiB":10.05,"domNodes":884,"timelineRowsMounted":80,"sessionStorageBytesUtf16":420348}}
+[2026-10-26T07:38:49.579Z] measure {"label":"live, caught up","serverLastSeq":3205,"heading":{"total":3205,"status":"live"},"jsHeapUsedMiB":9.16,"domNodes":873,"timelineRowsMounted":80,"sessionStorageBytesUtf16":417624}
+[2026-10-26T07:39:49.930Z] measure {"label":"live, +60 s","serverLastSeq":3891,"heading":{"total":3891,"status":"live"},"jsHeapUsedMiB":10.84,"domNodes":874,"timelineRowsMounted":80,"sessionStorageBytesUtf16":418066}
+[2026-10-26T07:39:49.930Z] PASS live inspector: <= 80 rows, bounded cache, heap stable over a minute of live growth {"m1":[3205,9.16],"m2":[3891,10.84]}
+[2026-10-26T07:39:55.257Z] FAIL Load older during execution: contiguous ascending rows, window stays put while the live count advances {"status":"running","tailFirst":3812,"older":[3381,3460],"headingBefore":3892,"headingAfter5s":4404,"followEnabled":true}
+[2026-10-26T07:39:56.249Z] PASS repeated Previous rows / Load older: contiguous, strictly older {"range":[2485,2564]}
+[2026-10-26T07:39:57.354Z] PASS Next rows after older browsing: contiguous {"range":[2565,2644]}
+[2026-10-26T07:39:57.695Z] PASS Go to event 137 during execution: row selected, "Thread at event 137", recorded JSON equals the API event {"seekRange":[58,137]}
+[2026-10-26T07:40:01.252Z] PASS reload restores the browsed window and history mode {"before":[58,137],"after":[58,137],"followEnabled":true}
+[2026-10-26T07:40:01.469Z] PASS Follow live returns to the contiguous tail {"tail":[5219,5220,5221]}
+[2026-10-26T07:40:01.701Z] API pid=21896 terminated
+[2026-10-26T07:40:13.375Z] API started pid=55468 port=6457 scenario=success
+[2026-10-26T07:40:17.507Z] PASS after a gateway restart the open inspector reconnects: heading = server lastSeq, contiguous tail ending at it, stream complete {"killedAt":5226,"last":5318,"outageShown":true,"tail":[5316,5317,5318]}
+[2026-10-26T07:40:17.603Z] measure {"label":"live run after restart and cancel","serverLastSeq":5318,"heading":{"total":5318,"status":"complete"},"jsHeapUsedMiB":9.85,"domNodes":713,"timelineRowsMounted":80,"sessionStorageBytesUtf16":206620}
+[2026-10-26T07:40:17.807Z] PASS history across the restart boundary is contiguous in the Timeline {"range":[5226,5305]}
+[2026-10-26T07:40:27.829Z] API pid=55468 terminated

@@ -1,0 +1,181 @@
+// Scenario C: explicit force from Edge over a script process tree, a blocking fake Codex turn,
+// a parent waiting on a running child, a durable wait and queued independent work; OS-level
+// process/resource release checks; restart and truthful recorded interruption.
+import fs from 'node:fs';
+import path from 'node:path';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-c-force');
+const dir = L.makeStore('c');
+const PORT = 6462;
+const GRACE = 10_000;
+let g;
+let g2;
+let browser;
+const posts = [];
+try {
+  const env = { ...L.fakeCodex(dir), GG_SHUTDOWN_GRACE_MS: String(GRACE), GG_MAX_CONCURRENT_RUNS: '3' };
+  g = await L.startGateway({ dir, port: PORT, label: 'c1', env, rec });
+  const treeLoop = await L.publishLoop(g.call, L.scriptLoop('Force tree script', L.heldScriptSource({ dir, name: 'tree', tree: true, maxMs: 300_000 })));
+  const harnessLoop = await L.publishLoop(g.call, L.inferenceLoop('Force harness turn'));
+  const childLoop = await L.publishLoop(g.call, L.scriptLoop('Force child', L.heldScriptSource({ dir, name: 'child', maxMs: 300_000 })));
+  const parentLoop = await L.publishLoop(g.call, L.parentLoop('Force parent', childLoop));
+  const parkLoop = await L.publishLoop(g.call, L.waitLoop('Force parked wait', 3600));
+  const quickLoop = await L.publishLoop(g.call, L.scriptLoop('Force queued independent', `process.stdout.write(JSON.stringify({ran:true}))`));
+
+  const parkRun = await L.startRun(g.call, parkLoop);
+  await L.waitFor(async () => (await g.call(`/runs/${parkRun}`)).json.status === 'waiting');
+  const treeRun = await L.startRun(g.call, treeLoop);
+  const harnessRun = await L.startRun(g.call, harnessLoop);
+  const parentRun = await L.startRun(g.call, parentLoop);
+  const treePid = Number(await L.waitFile(path.join(dir, 'tree.pid')));
+  const grandPid = Number(await L.waitFile(path.join(dir, 'tree.grandchild')));
+  const codexPid = Number(await L.waitFile(path.join(dir, 'harness.pid')));
+  const childPid = Number(await L.waitFile(path.join(dir, 'child.pid')));
+  const children = (await g.call(`/runs?parent=${parentRun}`)).json.items;
+  const childRun = children[0]?.id;
+  const queuedRun = await L.startRun(g.call, quickLoop);
+  await L.sleep(500);
+  const queuedBefore = (await g.call(`/runs/${queuedRun}`)).json.status;
+  const parentBefore = (await g.call(`/runs/${parentRun}`)).json.status;
+  const tree = L.descendants(g.pid);
+  rec.log('work started', { treeRun, harnessRun, parentRun, childRun, parkRun, queuedRun, queuedBefore, parentBefore, pids: { treePid, grandPid, codexPid, childPid } });
+  rec.log('gateway process tree before drain (CIM Win32_Process)', tree);
+  const treePids = tree.map((p) => p.pid);
+  rec.check('C0 OS tree shows script root, its grandchild, fake Codex CLI and child script under the gateway', [treePid, grandPid, codexPid, childPid].every((p) => treePids.includes(p)), null);
+  rec.check('C0 the independent run beyond capacity is queued', queuedBefore === 'queued', queuedBefore);
+
+  browser = await L.launchEdge();
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const a = await context.newPage();
+  const b = await context.newPage();
+  L.watchShutdownRequests(a, posts, 'a');
+  L.watchShutdownRequests(b, posts, 'b');
+  await a.goto(g.origin + `/app/runs/${harnessRun}`);
+  await b.goto(g.origin + '/app/loops');
+
+  const drained = await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.log('operator drain', drained);
+  const active = drained.json.activeRunIds;
+  rec.check('C1 active work lists the script, harness and child runs', [treeRun, harnessRun, childRun].every((id) => active.includes(id)), active);
+  rec.check('C1 the durable wait and the independent queued run are not force targets', !active.includes(parkRun) && !active.includes(queuedRun), active);
+  rec.log('parent listed as active?', { parentListed: active.includes(parentRun) });
+  await L.waitFor(async () => (await g.call('/system/shutdown')).json.phase === 'awaiting-choice', { timeoutMs: GRACE + 10_000, intervalMs: 250 });
+  await a.getByText(/The gateway grace period elapsed/).waitFor({ timeout: 10_000 });
+  for (const id of [treeRun, harnessRun, childRun]) await a.getByRole('link', { name: new RegExp(id) }).first().waitFor({ timeout: 10_000 });
+  const noticeText = await L.noticeText(a);
+  rec.log('notice at expiry', noticeText);
+  await L.shot(a, 's-c-expiry-notice');
+  rec.check('C2 notice names each active run with its pinned loop name', noticeText.includes(`Force tree script — ${treeRun}`) && noticeText.includes(`Force harness turn — ${harnessRun}`) && noticeText.includes(`Force child — ${childRun}`), null);
+  rec.check('C2 all work still alive at expiry', [treePid, grandPid, codexPid, childPid].every((p) => L.tasklistAlive(p)), null);
+
+  // Force confirmation, then Go back: nothing is sent.
+  await a.getByRole('button', { name: 'Force stop', exact: true }).click();
+  const dialog = a.getByRole('dialog');
+  await dialog.waitFor({ timeout: 5000 });
+  const dialogText = await dialog.innerText();
+  rec.log('force confirmation', dialogText);
+  await L.shot(a, 's-c-force-confirmation');
+  rec.check('C3 confirmation lists the runs, required children, uncertain effects and non-automatic recovery', [treeRun, harnessRun, childRun].every((id) => dialogText.includes(id)) && /including required children/.test(dialogText) && /External effects may be uncertain/.test(dialogText) && /does not automatically resume/.test(dialogText) && /Already saved waits and paused runs stay saved/.test(dialogText), null);
+  await dialog.getByRole('button', { name: 'Go back' }).click();
+  await L.sleep(1000);
+  const afterBack = (await g.call('/system/shutdown')).json;
+  rec.check('C3 Go back sends nothing and leaves the choice open', posts.filter((p) => p.method === 'POST').length === 0 && afterBack.phase === 'awaiting-choice', { posts: posts.length, phase: afterBack.phase });
+  const staleToken = afterBack.controlToken;
+
+  // Confirm force.
+  await a.getByRole('button', { name: 'Force stop', exact: true }).click();
+  await a.getByRole('dialog').getByRole('button', { name: 'Confirm force stop' }).click();
+  const forcedAt = Date.now();
+  const staleWait = await g.call('/system/shutdown', { method: 'POST', body: { action: 'wait' }, headers: { 'x-graphgoblin-shutdown-token': staleToken } }).catch((e) => ({ status: 'network-error', json: String(e) }));
+  rec.log('stale wait sent right after the browser force', staleWait);
+  rec.check('C4 a later stale Keep waiting cannot undo the force (409 or gateway already gone)', staleWait.status === 409 || staleWait.status === 'network-error', staleWait.status);
+  // Tab b still holds the expiry snapshot; its click after force must not change anything.
+  const bWait = b.getByRole('button', { name: 'Keep waiting' });
+  if (await bWait.count()) await bWait.click().catch(() => undefined);
+  const code = await g.waitExit(60_000);
+  rec.log('gateway exit after force', { code, afterMs: Date.now() - forcedAt });
+  rec.check('C4 force completes and the gateway exits 0', code === 0, code);
+  rec.check('C5 the lock is released', !fs.existsSync(path.join(dir, 'graphgoblin.lock')), null);
+  const liveAfter = Object.fromEntries([['treeRoot', treePid], ['grandchild', grandPid], ['fakeCodex', codexPid], ['childScript', childPid], ['gateway', g.pid]].map(([k, p]) => [k, L.tasklistAlive(p)]));
+  rec.log('tasklist after force', liveAfter);
+  rec.check('C5 tasklist: script root, grandchild, fake Codex CLI, child script and gateway are gone', Object.values(liveAfter).every((v) => v === false), liveAfter);
+  const leftovers = L.storeProcesses(dir);
+  rec.check('C5 CIM: no process command line names the store', leftovers.length === 0, leftovers);
+  await a.getByText('Gateway stopped or disconnected', { exact: true }).waitFor({ timeout: 20_000 });
+  await L.shot(a, 's-c-after-force');
+  rec.log('tab a after force', await L.noticeText(a));
+  await b.getByText(/Gateway stopped or disconnected|action outcome is unknown|Shutdown changed/).first().waitFor({ timeout: 20_000 }).catch(() => undefined);
+  rec.log('tab b after its late Keep waiting', await L.noticeText(b));
+  await L.shot(b, 's-c-tab-b-late-wait');
+  rec.log('browser shutdown POSTs', posts.filter((p) => p.method === 'POST'));
+  rec.check('C5 tab a sent exactly one POST (the confirmed force)', posts.filter((p) => p.method === 'POST' && p.tab === 'a').length === 1, null);
+  await browser.close();
+  browser = undefined;
+  const pidAfterForce = fs.readFileSync(path.join(dir, 'harness.pid'), 'utf8');
+
+  // Restart and inspect the durable record.
+  g2 = await L.startGateway({ dir, port: PORT, label: 'c2', env, rec });
+  const get = async (id) => (await g2.call(`/runs/${id}`)).json;
+  const [tr, hr, cr, pr, kr] = await Promise.all([treeRun, harnessRun, childRun, parentRun, parkRun].map(get));
+  rec.log('runs after restart', Object.fromEntries([['tree', tr], ['harness', hr], ['child', cr], ['parent', pr], ['park', kr]].map(([k, r]) => [k, { status: r.status, failure: r.failure, currentNodeId: r.currentNodeId }])));
+  const interrupted = (r, node) => r.status === 'failed' && r.failure?.code === 'RUN_INTERRUPTED_BY_STOP' && r.failure?.nodeId === node && r.failure?.resumable === false && r.failure?.details?.effectMayHaveHappened === true && r.failure?.details?.attempt === 1;
+  rec.check('C6 script run: RUN_INTERRUPTED_BY_STOP at node hold, attempt 1, non-resumable, effect may have happened', interrupted(tr, 'hold'), tr.failure);
+  rec.check('C6 harness run: RUN_INTERRUPTED_BY_STOP at node infer, attempt 1, non-resumable, effect may have happened', interrupted(hr, 'infer'), hr.failure);
+  rec.check('C6 child run: RUN_INTERRUPTED_BY_STOP at node hold', interrupted(cr, 'hold'), cr.failure);
+  rec.check('C6 durable wait run unchanged (waiting)', kr.status === 'waiting', kr.status);
+  const events = (await g2.call(`/runs/${treeRun}/events`)).json;
+  const evText = JSON.stringify(events);
+  rec.check('C6 script run events record run.failed RUN_INTERRUPTED_BY_STOP and no node success', evText.includes('RUN_INTERRUPTED_BY_STOP') && !/"type":"run.succeeded"/.test(evText), null);
+  rec.check('C6 interruption is not recorded as user cancellation', tr.status !== 'cancelled' && hr.status !== 'cancelled', null);
+  // Queued independent work recovers; parent settles after its child's interruption.
+  await L.waitFor(async () => ['succeeded', 'failed'].includes((await get(queuedRun)).status), { timeoutMs: 30_000 });
+  const qr = await get(queuedRun);
+  rec.check('C7 queued independent run was not interrupted and runs after restart', qr.status === 'succeeded', { status: qr.status, failure: qr.failure });
+  await L.waitFor(async () => ['succeeded', 'failed', 'cancelled'].includes((await get(parentRun)).status), { timeoutMs: 20_000 });
+  const pr2 = await get(parentRun);
+  rec.log('parent after restart settles', { status: pr2.status, failure: pr2.failure });
+  rec.check('C7 parent did not succeed with fabricated child output', pr2.status !== 'succeeded', pr2.status);
+  await L.sleep(2000);
+  rec.check('C8 no blind replay: the fake Codex CLI did not run again after restart', fs.readFileSync(path.join(dir, 'harness.pid'), 'utf8') === pidAfterForce && !L.storeProcesses(dir).some((p) => p.name === 'shutdown-codex.exe'), null);
+  rec.check('C8 no script re-ran after restart', !L.storeProcesses(dir).some((p) => p.name === 'node.exe' && p.pid !== g2.pid), L.storeProcesses(dir));
+  const resume = await g2.call(`/runs/${treeRun}/resume`, { method: 'POST', body: {} });
+  rec.log('explicit resume of an interrupted run', resume);
+  rec.check('C8 an interrupted run is not resumable through Resume', resume.status >= 400, resume.status);
+
+  // Inspector evidence after restart.
+  browser = await L.launchEdge();
+  const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+  const ins = await ctx2.newPage();
+  await ins.goto(g2.origin + `/app/runs/${treeRun}`);
+  await ins.getByText(/RUN_INTERRUPTED_BY_STOP|force-stop interrupted/i).first().waitFor({ timeout: 20_000 }).catch(() => undefined);
+  const insText = await ins.locator('body').innerText();
+  fs.writeFileSync(path.join(L.OUT, 's-c-inspector-after-restart.txt'), L.redact(insText));
+  await L.shot(ins, 's-c-inspector-after-restart');
+  rec.check('C9 inspector shows the interruption and possible external effects', /force-stop interrupted this run/i.test(insText) && /external effects may have happened|effect may have happened|may already have/i.test(insText), null);
+  rec.log('inspector buttons', await ins.getByRole('button').allInnerTexts());
+  await browser.close();
+  browser = undefined;
+
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('C10 restarted gateway drains to exit 0', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+  rec.check('C10 no process names the store', L.storeProcesses(dir).length === 0, L.storeProcesses(dir));
+} catch (error) {
+  rec.check('C scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+    x?.copyLog(`s-c-gateway-${x.label}.log.txt`);
+  }
+  rec.finish({ shutdownRequestsFromBrowser: posts });
+  for (const p of L.storeProcesses(dir)) {
+    try {
+      process.kill(p.pid);
+    } catch {}
+  }
+  L.rmStore(dir);
+}

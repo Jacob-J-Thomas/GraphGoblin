@@ -1,0 +1,324 @@
+{
+  "scenario": "s-h-cli-descendant",
+  "passed": 4,
+  "failed": 2,
+  "checks": [
+    {
+      "id": "H1 force releases or reports failure within 75 s (forcing does not persist indefinitely)",
+      "ok": false,
+      "detail": {
+        "s": 75,
+        "phase": "forcing",
+        "choices": [],
+        "active": [
+          "01M5VGVSZ2XZXHXGBG8RP2R1TD"
+        ],
+        "unconfirmed": [],
+        "cli": false,
+        "tool": true
+      }
+    },
+    {
+      "id": "H2 a further explicit force while forcing provides an exit path",
+      "ok": false,
+      "detail": {
+        "exit": null
+      }
+    },
+    {
+      "id": "H3 once the leftover child is killed the force completes (exit 0)",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "id": "H3 lock released",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "H4 run records RUN_INTERRUPTED_BY_STOP (non-resumable)",
+      "ok": true,
+      "detail": {
+        "code": "RUN_INTERRUPTED_BY_STOP",
+        "message": "Explicit force-stop interrupted this run; external effects may have happened",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "attempt": 1,
+          "effectMayHaveHappened": true
+        }
+      }
+    },
+    {
+      "id": "H4 restarted gateway drains to exit 0",
+      "ok": true,
+      "detail": 0
+    }
+  ],
+  "shutdownRequestsFromBrowser": [
+    {
+      "at": "2026-10-26T07:12:46.215Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:48.199Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:48.980Z",
+      "method": "POST",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:51.077Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:53.105Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:55.121Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:57.125Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:12:59.132Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:01.177Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:03.155Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:05.167Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:07.168Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:09.178Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:11.224Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:13.246Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:15.247Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:17.260Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:19.280Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:21.290Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:23.300Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:25.298Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:27.314Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:29.321Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:31.337Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:33.347Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:35.369Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:37.370Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:40.341Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:41.382Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:43.386Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:46.815Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:47.408Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:49.407Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:51.454Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:53.465Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:55.476Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:57.509Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:13:59.499Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:14:01.538Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:14:03.533Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:14:05.551Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:14:07.563Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:14:09.574Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    },
+    {
+      "at": "2026-10-26T07:14:11.576Z",
+      "method": "GET",
+      "tab": "h",
+      "page": "http://127.0.0.1:6467/app/runs/01M5VGVSZ2XZXHXGBG8RP2R1TD"
+    }
+  ]
+}

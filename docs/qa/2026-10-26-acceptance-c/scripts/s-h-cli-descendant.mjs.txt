@@ -1,0 +1,88 @@
+// Scenario H: explicit force while the provider CLI has started its own child process (controlled
+// fake Codex CLI variant `tree-codex.cs`, which starts a "tool" child like a CLI running a command;
+// the child inherits the CLI's inheritable handles, including the CLI's stdout pipe).
+// Question: does force verify release (or report force-failed), or does it wait indefinitely?
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import * as L from './lib.mjs';
+
+const rec = new L.Recorder('s-h-cli-descendant');
+const dir = L.makeStore('h');
+let g;
+let g2;
+let browser;
+const posts = [];
+try {
+  const target = path.join(dir, 'tree-codex.exe');
+  fs.copyFileSync(path.join(L.TOOLS, 'tree-codex.exe'), target);
+  const env = { GG_CODEX_BINARY: target, SHUTDOWN_FAKE_PID: path.join(dir, 'harness.pid'), GG_SHUTDOWN_GRACE_MS: '600000' };
+  g = await L.startGateway({ dir, port: 6467, label: 'h1', env, rec });
+  const loop = await L.publishLoop(g.call, L.inferenceLoop('Provider CLI with tool child'));
+  const run = await L.startRun(g.call, loop);
+  const cliPid = Number(await L.waitFile(path.join(dir, 'harness.pid')));
+  const toolPid = Number(await L.waitFile(path.join(dir, 'harness.pid.tool')));
+  rec.log('provider work started', { run, cliPid, toolPid, gatewayPid: g.pid, tree: L.descendants(g.pid) });
+
+  browser = await L.launchEdge();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const page = await ctx.newPage();
+  L.watchShutdownRequests(page, posts, 'h');
+  await page.goto(g.origin + `/app/runs/${run}`);
+  await g.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  await page.getByRole('heading', { name: 'Gateway is draining' }).waitFor({ timeout: 15_000 });
+  await L.sleep(2500);
+  await page.getByRole('button', { name: 'Force stop', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm force stop' }).click();
+  const forcedAt = Date.now();
+  const timeline = [];
+  while (Date.now() - forcedAt < 75_000 && g.exitCode() === null) {
+    const s = await g.call('/system/shutdown').catch(() => ({ json: { phase: 'unreachable' } }));
+    timeline.push({ s: Math.round((Date.now() - forcedAt) / 1000), phase: s.json.phase, choices: s.json.choices, active: s.json.activeRunIds, unconfirmed: s.json.unconfirmedRunIds, cli: L.tasklistAlive(cliPid), tool: L.tasklistAlive(toolPid) });
+    await L.sleep(5000);
+  }
+  rec.log('timeline after confirmed force', timeline);
+  const last = timeline.at(-1);
+  rec.check('H1 force releases or reports failure within 75 s (forcing does not persist indefinitely)', g.exitCode() !== null || last?.phase === 'force-failed', last);
+  const noticeDuring = await L.noticeText(page);
+  rec.log('notice while the force is pending', noticeDuring);
+  await L.shot(page, 's-h-force-pending-notice');
+  rec.log('buttons offered while forcing', await page.getByRole('region', { name: 'Gateway shutdown' }).getByRole('button').allInnerTexts());
+  const again = await g.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch((e) => ({ status: 'network-error', json: String(e) }));
+  rec.log('a further explicit force while forcing', { status: again.status, phase: again.json.phase, choices: again.json.choices });
+  await L.sleep(3000);
+  rec.check('H2 a further explicit force while forcing provides an exit path', g.exitCode() !== null || (await g.call('/system/shutdown')).json.phase !== 'forcing', { exit: g.exitCode() });
+  rec.log('log lines (non-request) so far', g.readLog().split(/\r?\n/).filter((l) => l && !/incoming request|request completed/.test(l)).map((l) => L.redact(l).slice(0, 400)));
+
+  // Operator cleanup of the leftover process with the OS tool, then observe the gateway.
+  const kill = spawnSync('taskkill', ['/PID', String(toolPid), '/F'], { windowsHide: true });
+  rec.log('taskkill of the CLI tool child', { status: kill.status, out: String(kill.stdout).trim() });
+  const code = await g.waitExit(30_000);
+  rec.log('gateway after the tool child was killed', { code, sinceForceS: Math.round((Date.now() - forcedAt) / 1000) });
+  rec.check('H3 once the leftover child is killed the force completes (exit 0)', code === 0, code);
+  rec.check('H3 lock released', !fs.existsSync(path.join(dir, 'graphgoblin.lock')), null);
+  await browser.close();
+  browser = undefined;
+  g.copyLog('s-h-gateway-h1.log.txt');
+  g2 = await L.startGateway({ dir, port: 6467, label: 'h2', env, rec });
+  const r = (await g2.call(`/runs/${run}`)).json;
+  rec.log('run after restart', { status: r.status, failure: r.failure });
+  rec.check('H4 run records RUN_INTERRUPTED_BY_STOP (non-resumable)', r.failure?.code === 'RUN_INTERRUPTED_BY_STOP' && r.failure?.resumable === false, r.failure);
+  await g2.call('/system/shutdown', { method: 'POST', body: { action: 'drain' } });
+  rec.check('H4 restarted gateway drains to exit 0', (await g2.waitExit(30_000)) === 0, g2.exitCode());
+  g2.copyLog('s-h-gateway-h2.log.txt');
+} catch (error) {
+  rec.check('H scenario completed without exception', false, String(error?.stack ?? error));
+} finally {
+  await browser?.close().catch(() => undefined);
+  for (const p of L.storeProcesses(dir)) spawnSync('taskkill', ['/PID', String(p.pid), '/F'], { windowsHide: true });
+  for (const x of [g, g2]) {
+    if (x && x.exitCode() === null) {
+      await x.call('/system/shutdown', { method: 'POST', body: { action: 'force' } }).catch(() => undefined);
+      await x.waitExit(30_000);
+    }
+    if (x && !fs.existsSync(path.join(L.OUT, `s-h-gateway-${x.label}.log.txt`))) x.copyLog(`s-h-gateway-${x.label}.log.txt`);
+  }
+  rec.finish({ shutdownRequestsFromBrowser: posts });
+  L.rmStore(dir);
+}

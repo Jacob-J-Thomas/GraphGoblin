@@ -1,0 +1,16 @@
+PASS 33-cycle-codex-status: codex own cycle succeeds
+PASS 33-cycle-codex-worker: codex worker visit 1 fresh, visits 2-3 resume only the worker's visit-1 conversation
+PASS 33-cycle-codex-reviewer: codex reviewer keeps its own separate conversation; worker never resumes a reviewer handle
+PASS 33-cycle-claude-status: claude own cycle succeeds
+PASS 33-cycle-claude-worker: claude worker visit 1 fresh, visits 2-3 resume only the worker's visit-1 conversation
+PASS 33-cycle-claude-reviewer: claude reviewer keeps its own separate conversation; worker never resumes a reviewer handle
+PASS 33-fresh-reviewer: worker resumes its own handle; fresh reviewer starts a new conversation every visit
+PASS 33-default-fresh: an inference node with no authored session policy starts fresh on every visit
+PASS 33-previous-unchanged: resume-previous still resumes the latest session in the run (the reviewer's), as before #33
+PASS 33-named-unchanged: resume-named still shares one keyed conversation across nodes and across runs
+PASS 33-parallel: three concurrent runs: each worker resumes only its own run's worker handle
+PASS 33-parallel-interleaved: the three runs actually interleaved their turns
+PASS 33-replay-worker: replay at worker: first worker and reviewer turns in the fork are fresh; no source handle is resumed
+PASS 33-replay-reviewer: replay at reviewer: first worker and reviewer turns in the fork are fresh; no source handle is resumed
+PASS 33-children: each child run starts its same-id worker fresh and resumes only within itself; the parent worker resumes only its own handle
+15/15 checks passed
