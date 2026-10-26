@@ -81,7 +81,7 @@ The `gates` job runs:
 1. Install with a frozen lockfile.
 2. Build every package and app (`pnpm build`).
 3. Reset, recovery, wait restart, prompt restart, webhook retry and current-format migration acceptance (`pnpm test:reset`, `pnpm test:recovery-process`, `pnpm test:wait-restart`, `pnpm test:prompt-restart`, `pnpm test:webhook-retry`, `pnpm test:upgrade`).
-4. Typecheck every package, test files included (`pnpm typecheck`).
+4. Typecheck every TypeScript package, test files included (`pnpm typecheck`; `tooling` is JavaScript and is covered by lint and its coverage gate).
 5. Lint and formatting (`pnpm lint`, `pnpm format:check`).
 6. Declared workspace layer rules (`pnpm check:layers`).
 7. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
