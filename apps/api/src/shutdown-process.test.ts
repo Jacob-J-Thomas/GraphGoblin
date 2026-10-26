@@ -9,11 +9,18 @@ const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] = [];
 afterEach(async () => {
   for (const f of fixtures.splice(0)) await f.dispose();
 }, 60_000);
+// A run given its own range through GG_TEST_PORT_START uses it; otherwise these cases keep theirs.
+const ports = process.env.GG_TEST_PORT_START
+  ? {
+      start: Number(process.env.GG_TEST_PORT_START),
+      count: Number(process.env.GG_TEST_PORT_COUNT ?? 100),
+    }
+  : { start: 5760, count: 10 };
 async function boot(env: NodeJS.ProcessEnv = {}) {
   const f = await createApiProcessFixture({
     prefix: 'gg-wp-c7-224-',
-    portStart: 5760,
-    portCount: 10,
+    portStart: ports.start,
+    portCount: ports.count,
   });
   fixtures.push(f);
   const token = await f.createKey();
@@ -88,9 +95,10 @@ it('native drain rechecks a wake during delivery cleanup and completes its requi
     req.resume();
     held = res;
   });
-  let receiverPort = 5760;
-  while (receiverPort <= 5769 && (await listening(receiverPort))) receiverPort++;
-  if (receiverPort > 5769) throw new Error('No disposable receiver port is free');
+  let receiverPort = ports.start;
+  const lastPort = ports.start + ports.count - 1;
+  while (receiverPort <= lastPort && (await listening(receiverPort))) receiverPort++;
+  if (receiverPort > lastPort) throw new Error('No disposable receiver port is free');
   await new Promise<void>((resolve, reject) => {
     receiver.once('error', reject);
     receiver.listen(receiverPort, '127.0.0.1', resolve);
