@@ -46,7 +46,9 @@ it('cancels without confirmation, freezes an explicit bulk selection while new h
   await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
   let dialog = await screen.findByRole('dialog');
   await within(dialog).findByRole('button', { name: 'Confirm delete-ready selection' });
-  expect(dialog).toHaveTextContent('This does not delete anything now');
+  expect(dialog).toHaveTextContent(
+    'permanently remove this history and its owned, unshared workspaces and artifacts',
+  );
   await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
   expect(api.calls.filter((call) => call.path === '/runs/deletion-eligibility')).toHaveLength(0);
   await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));

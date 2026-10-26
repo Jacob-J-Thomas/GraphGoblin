@@ -10,6 +10,61 @@
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface paths {
+    "/system/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cached capacity, bounded cleanup and reusable SQLite storage
+         * @description Observation only; never grants consent or starts cleanup. File-byte counts describe removed file lengths, not promised physical free space. SQLite reusable bytes are internal free pages, not OS-reclaimed storage.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            state: "adequate" | "pressure" | "no-eligible" | "unavailable";
+                            checkedAt: string | null;
+                            volumes: {
+                                /** @enum {string} */
+                                name: "data" | "database";
+                                totalBytes: number;
+                                availableBytes: number;
+                            }[];
+                            cleaning: boolean;
+                            deletedRuns: number;
+                            removedFileBytes: number;
+                            reusableDatabaseBytes: number;
+                            pendingResources: number;
+                            preservedResources: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/model-defaults": {
         parameters: {
             query?: never;

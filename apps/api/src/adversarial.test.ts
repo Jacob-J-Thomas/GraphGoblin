@@ -179,6 +179,7 @@ describe('adversarial API invariants', () => {
     'GET /system/preflight': 'system:read',
     'GET /system/model-defaults': 'system:read',
     'GET /system/shutdown': 'system:read',
+    'GET /system/storage': 'system:read',
     'POST /system/shutdown': 'system:write',
     'GET /harness/preflight': 'system:read',
   };

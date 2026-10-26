@@ -110,7 +110,7 @@ export function HistoryEligibility({ runIds }: { runIds: string[] }) {
         <div className="grid gap-3 text-sm">
           <p>
             {review?.action === 'mark'
-              ? 'Only the run IDs listed below become eligible for deletion under storage pressure. This does not delete anything now. New history stays retained. You can withdraw approval before cleanup.'
+              ? 'Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.'
               : 'These runs stay retained. Approval for related parent, child and replay history is also withdrawn so required records remain protected.'}
           </p>
           <p>

@@ -5,7 +5,11 @@ import { mkdir, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, isAbsolute, relative, sep } from 'node:path';
 import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
-import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
+import {
+  FsStorageCapacity,
+  OwnedRunResources,
+  type StorageCapacityPort,
+} from '@graphgoblin/infrastructure/fs';
 import {
   HttpProbes,
   HttpWebhookDelivery,
@@ -26,6 +30,8 @@ import {
   type SqliteRunRepository,
   SqliteDeliveryRunRepository,
   SqliteDeletionEligibility,
+  SqliteRunResources,
+  SqliteHistoryCleanup,
   SqliteSecrets,
   SqliteSessionRepository,
   SqliteSettings,
@@ -66,6 +72,7 @@ import { loadMasterKey } from './master-key.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
 import { TemplateCatalog } from './templates/catalog.js';
+import { HistoryCleanup } from './history-cleanup.js';
 /** The single owner of a 1.0 installation. Every table carries it so multi-tenancy is a data change, not a schema change. */
 export const LOCAL_OWNER = 'local';
 
@@ -76,6 +83,7 @@ export const JEV_SECRET = 'jev-api-key';
 export type SecretChangeHook = (ownerId: string, name: string) => Promise<void>;
 
 export interface ContainerOverrides {
+  storageCapacity?: StorageCapacityPort;
   templateCatalogRoot?: string;
   clock?: ClockPort;
   ids?: IdPort;
@@ -94,6 +102,7 @@ export interface ContainerOverrides {
 }
 
 export interface Container {
+  historyCleanup: HistoryCleanup;
   templates: { catalog: TemplateCatalog };
   config: ApiConfig;
   handle: DatabaseHandle;
@@ -273,6 +282,17 @@ export async function createContainer(
     ];
     const structured = overrides.structured ?? codex.structured;
 
+    const ownedResources = new OwnedRunResources(config.dataDir, new SqliteRunResources(db));
+    const historyCleanup = new HistoryCleanup(
+      overrides.storageCapacity ?? new FsStorageCapacity(),
+      new SqliteHistoryCleanup(db, ownedResources),
+      [
+        { name: 'data', path: config.dataDir },
+        ...(dbFile ? [{ name: 'database' as const, path: dirname(dbFile) }] : []),
+      ],
+      clock,
+      logger,
+    );
     const ports: EnginePorts = {
       clock,
       ids,
@@ -294,14 +314,14 @@ export async function createContainer(
       classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
       scripts: overrides.scripts ?? new ProcessScripts(),
-      workspace: new FsWorkspace(config.dataDir),
+      workspace: ownedResources.workspace,
       timers,
       probes: overrides.probes ?? new HttpProbes(),
       delivery: createReturnDelivery({
         webhooks: new HttpWebhookDelivery(clock),
         logger,
       }),
-      artifacts: new FsArtifactStore(config.dataDir),
+      artifacts: ownedResources.artifacts,
       secrets: ownerSecrets,
     };
     const templateCatalog = new TemplateCatalog(
@@ -347,6 +367,7 @@ export async function createContainer(
     });
 
     const prepareShutdown = (): void => {
+      void historyCleanup.stop();
       admissionClosed = true;
       manager.closeIndependentAdmission();
       cron.stop();
@@ -364,6 +385,7 @@ export async function createContainer(
     let disposing: Promise<void> | undefined;
     const dispose = (): Promise<void> => {
       disposing ??= (async () => {
+        await historyCleanup.stop();
         cron.stop();
         polls.stop();
         triggers.stop();
@@ -402,6 +424,7 @@ export async function createContainer(
     };
 
     return {
+      historyCleanup,
       templates,
       config,
       handle,
@@ -450,6 +473,7 @@ export async function createContainer(
             }
             await catalog.seed();
             await manager.start();
+            await historyCleanup.start(overrides.startTimers !== false);
             if (!admissionClosed) {
               triggers.start();
               await triggers.armAll();

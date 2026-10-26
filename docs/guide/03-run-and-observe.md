@@ -344,3 +344,11 @@ In **Runs**, select the exact run rows you want to review, then choose **Review 
 Active and paused runs, unfinished terminal work and history needed by retained parent, child or replay runs remain protected. Select required related history together; a protected record refuses the whole selection. Shared artifacts needed by retained history stay protected. Cancel or close the dialog to change nothing. If the selection changes while you review it, cancel and review again.
 
 Use **Withdraw delete-ready mark** before cleanup to keep the selected history; related parent, child and replay history becomes retained too. Resuming or creating new dependencies automatically withdraws affected older approvals. Deleting a loop is a separate explicit consent: its confirmation covers all of that loop's history. Its existing active-run and admission protections still apply; terminal runs do not need a delete-ready mark. Other loops' history stays, a surviving child's parent association is cleared, and the inspector explains a missing relative.
+
+### When storage is low
+
+Delete-ready approval can be consumed automatically while storage is low. Cleanup removes only confirmed, finalized history that no retained parent, child or replay run requires, together with positively owned, unshared resources. Review the permanent history/workspace/artifact consequence before confirming. Withdraw the mark before cleanup starts if you want to keep it. Age, success, failure and future-history preferences never approve deletion.
+
+The subtle storage notice links to Runs. If nothing eligible can be cleaned, it asks you to review history or free disk space; it never silently expands the selection or resets your store. Shared resources, links, pre-existing unproven files and retained artifacts stay protected. Older files may remain because their ownership cannot be proved. A failed/interrupted cleanup keeps its durable job for another pass. Large or unprovable resources can stay preserved even after their approved run history is gone.
+
+Removing SQLite history can make pages reusable without shrinking the database file. File-byte counts describe unlinked file lengths, not a guarantee about physical disk space. No automatic low-space compaction runs. Free additional disk space if the warning persists; GraphGoblin does not promise unlimited storage.

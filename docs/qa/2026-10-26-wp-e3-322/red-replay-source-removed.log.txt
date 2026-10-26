@@ -1,0 +1,67 @@
+pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts -t refuses replay admission --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (12 tests | 1 failed | 11 skipped) 222ms
+   × refuses replay admission if cleanup removed its source before the fork transaction 220ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > refuses replay admission if cleanup removed its source before the fork transaction
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "createdAt": "2026-10-02T12:00:00.000Z",
++   "id": "MJ7PCPN1C4ZBW44XA8HDV9RT2T",
++   "invocationId": "BX1Q169EZHEYXVCB3JDQKHC0WJ",
++   "iteration": 1,
++   "lastEventSeq": 1,
++   "loopId": "9WS7JEC71641JSER55W0AXM8CN",
++   "ownerId": "local",
++   "pinned": {
++     "classifiers": {},
++     "defaults": {
++       "owner": {
++         "byHarness": {},
++       },
++       "process": {
++         "byHarness": {},
++       },
++     },
++     "label": "Minimal v1",
++     "limits": {
++       "maxNodeVisits": 10,
++       "runDeadlineSeconds": null,
++       "structuredTimeoutMs": null,
++     },
++     "name": "Minimal",
++     "source": "published",
++     "version": 1,
++   },
++   "status": "queued",
++   "versionId": "H45H4SJKQEBKEJRRNSTZHJQ1P6",
+  }
+
+ ❯ src/sqlite/history-cleanup.test.ts:204:205
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  00:15:22
+   Duration  5.28s (import 58%, transform 37%, tests 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+
+EXIT 1

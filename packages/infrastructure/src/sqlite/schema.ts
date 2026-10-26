@@ -388,7 +388,37 @@ export const eventReceipts = sqliteTable(
   ],
 );
 
+/** Positive creation proof; pending rows survive removal of their owner's history. */
+export const runResources = sqliteTable(
+  'run_resources',
+  {
+    key: text('key').primaryKey(),
+    ownerRunId: text('owner_run_id').notNull(),
+    kind: text('kind', { enum: ['workspace', 'artifact'] }).notNull(),
+    path: text('path').notNull(),
+    identity: text('identity').notNull(),
+    approval: text('approval', { mode: 'json' }).$type<DeletionApproval>(),
+    pending: integer('pending', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [
+    index('run_resources_owner_idx').on(t.ownerRunId),
+    index('run_resources_pending_idx').on(t.pending, t.key),
+  ],
+);
+
+export const runResourceUses = sqliteTable(
+  'run_resource_uses',
+  {
+    runId: text('run_id').notNull(),
+    key: text('key').notNull(),
+    path: text('path').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.runId, t.key] }), index('run_resource_uses_key_idx').on(t.key)],
+);
+
 export const schema = {
+  runResources,
+  runResourceUses,
   webhookReceipts,
   eventReceipts,
   classifierModels,

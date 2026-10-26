@@ -1,0 +1,35 @@
+pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts src/sqlite/deletion-eligibility.test.ts src/sqlite/loop-deletion.test.ts src/sqlite/admission.test.ts --maxWorkers=2
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (15 tests | 1 failed) 37100ms
+   × preserves an entire workspace containing a hard link and bounds oversized inventories before removing files 31921ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > preserves an entire workspace containing a hard link and bounds oversized inventories before removing files
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/history-cleanup.test.ts:227:1
+    225| });
+    226|
+    227| it('preserves an entire workspace containing a hard link and bounds ov…
+       | ^
+    228|   const linked = await seed('linked'),
+    229|     large = await seed('large');
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 58 passed (59)
+   Start at  00:35:45
+   Duration  47.18s (tests 62%, import 26%, transform 12%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+
+EXIT 1

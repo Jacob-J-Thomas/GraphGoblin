@@ -33,7 +33,9 @@ test('individual review cancels safely, confirms persisted consent, and withdraw
   await page.getByRole('button', { name: 'Review delete-ready history' }).click();
   let dialog = page.getByRole('dialog');
   await expect(dialog).toContainText(id);
-  await expect(dialog).toContainText('This does not delete anything now');
+  await expect(dialog).toContainText(
+    'permanently remove this history and its owned, unshared workspaces and artifacts',
+  );
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   expect((await snapshot(request, url, id)).deletionApproval).toBeUndefined();
   await page.getByRole('button', { name: 'Review delete-ready history' }).click();

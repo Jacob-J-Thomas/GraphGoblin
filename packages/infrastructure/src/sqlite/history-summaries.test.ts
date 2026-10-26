@@ -25,6 +25,8 @@ describe('SQLite history queries', () => {
   afterEach(() => handle.close());
   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
     // Rewind migration 0021 together with the older ledger used by this historical fixture.
+    await handle.client.execute('DROP TABLE run_resource_uses');
+    await handle.client.execute('DROP TABLE run_resources');
     await handle.client.execute('DROP TRIGGER runs_deletion_activity');
     await handle.client.execute('DROP TRIGGER runs_deletion_dependency_insert');
     await handle.client.execute('DROP TRIGGER runs_deletion_revision');

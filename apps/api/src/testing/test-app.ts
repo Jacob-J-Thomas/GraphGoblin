@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { HarnessId, LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
+import type { StorageCapacityPort } from '@graphgoblin/infrastructure/fs';
 import {
   CapturingLogger,
   FakeClock,
@@ -39,6 +40,7 @@ export interface TestApp {
 }
 
 export interface TestAppOptions {
+  storageCapacity?: StorageCapacityPort;
   /** Distinguish disposable history-deletion fixtures from other API test data. */
   tempPrefix?: string;
   clock?: FakeClock;
@@ -67,6 +69,9 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const logger = new CapturingLogger();
   const clock = options.clock ?? new FakeClock();
   const container = await createContainer(config, {
+    storageCapacity: options.storageCapacity ?? {
+      read: () => Promise.resolve({ totalBytes: 100 * 1024 ** 3, availableBytes: 50 * 1024 ** 3 }),
+    },
     harnesses: options.harnesses ?? { codex: harness },
     deciders: [codex],
     ...(!options.realClassifiers ? { classifiers: new FakeClassifierRegistry(jev) } : {}),

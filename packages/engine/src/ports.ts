@@ -471,7 +471,7 @@ export interface ReturnDeliveryPort {
 
 export interface ArtifactStorePort {
   /** Publish complete bytes, or throw ArtifactStoreError(ARTIFACT_WRITE_FAILED). */
-  put(kind: string, content: string): Promise<{ ref: string; bytes: number }>;
+  put(kind: string, content: string, runId: string): Promise<{ ref: string; bytes: number }>;
   /** Undefined means missing/invalid reference; corrupt bytes throw ArtifactStoreError(ARTIFACT_CORRUPT). */
   get(ref: string): Promise<string | undefined>;
 }

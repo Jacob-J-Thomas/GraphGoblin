@@ -9,6 +9,8 @@ export * from './schema.js';
 export * from './runs.js';
 export * from './delivery-runs.js';
 export * from './deletion-eligibility.js';
+export * from './run-resources.js';
+export * from './history-cleanup.js';
 export * from './events.js';
 export * from './loops.js';
 export * from './sessions.js';

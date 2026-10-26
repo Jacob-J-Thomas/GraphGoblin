@@ -215,6 +215,8 @@ it('backfills indexed replay provenance from existing threads in the shipped mig
   const source = await seed('old-source');
   const fork = await seed('old-fork', 'failed', { replay: source });
   for (const statement of [
+    'DROP TABLE run_resource_uses',
+    'DROP TABLE run_resources',
     'DROP TRIGGER runs_deletion_activity',
     'DROP TRIGGER runs_deletion_relationship',
     'DROP TRIGGER runs_replay_source_update',
@@ -229,8 +231,12 @@ it('backfills indexed replay provenance from existing threads in the shipped mig
     await handle.client.execute(statement);
   const migration = readMigrationFiles({
     migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
-  }).at(-1)!;
+  }).find((entry) => entry.sql.some((statement) => statement.includes('ADD `deletion_approval`')))!;
   for (const statement of migration.sql) await handle.client.execute(statement);
+  const resources = readMigrationFiles({
+    migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
+  }).at(-1)!;
+  for (const statement of resources.sql) await handle.client.execute(statement);
   expect((await mark([source])).conflict).toBe('protected');
   expect((await mark([source, fork])).conflict).toBeNull();
   await runs.transition(fork, ['failed'], { status: 'queued' });

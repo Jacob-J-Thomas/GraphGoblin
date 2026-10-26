@@ -1,0 +1,43 @@
+pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/history-cleanup.test.ts -t refuses replay admission --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/packages/infrastructure
+
+ ❯ src/sqlite/history-cleanup.test.ts (12 tests | 1 failed | 10 skipped) 328ms
+   × refuses replay admission if cleanup removed its source before the fork transaction 110ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > refuses replay admission if cleanup removed its source before the fork transaction
+AssertionError: expected AdmissionConflictError: The saved admissi… { code: '…' } to match object { code: 'RUN_NOT_FOUND' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "RUN_NOT_FOUND",
++ AdmissionConflictError {
++   "code": "WEBHOOK_INTENT_CONFLICT",
+  }
+
+ ❯ src/sqlite/history-cleanup.test.ts:204:195
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed | 2 skipped (5)
+      Tests  1 failed | 6 passed | 55 skipped (62)
+   Start at  00:12:15
+   Duration  13.02s (import 76%, transform 17%, tests 7%)
+
+    Isolate  5 workers spawned · ~241ms startup each (spawn + environment, per file)
+             at least ~964ms faster with isolate: false — reuses workers across files instead of one per file
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\packages\infrastructure
+
+EXIT 1

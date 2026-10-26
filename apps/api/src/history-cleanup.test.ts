@@ -1,0 +1,320 @@
+import { afterEach, expect, it, vi } from 'vitest';
+import { writeFile, lstat, mkdtemp, rm } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import type { DeletionPreview, RunRecord, StorageStatus } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { singleNodeLoop, FakeClock, CapturingLogger } from '@graphgoblin/engine/testing';
+import { HistoryCleanup } from './history-cleanup.js';
+import { createTestApp, type TestApp } from './testing/test-app.js';
+
+let app: TestApp | undefined;
+const extraDirectories: string[] = [];
+afterEach(async () => {
+  await app?.close();
+  app = undefined;
+  globalThis.gc?.();
+  for (const path of extraDirectories.splice(0))
+    await rm(path, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  vi.useRealTimers();
+});
+
+it('exposes measured storage state without granting deletion consent', async () => {
+  app = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
+  const response = await app.app.inject('/system/storage');
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toMatchObject({ state: 'adequate', deletedRuns: 0, removedFileBytes: 0 });
+});
+
+it('requires system read permission to observe storage and exposes no deletion command', async () => {
+  app = await createTestApp({ tempPrefix: 'gg-wp-e3-', requireApiKey: true });
+  const reader = await app.container.repos.apiKeys.create('local', 'storage reader', [
+    'system:read',
+  ]);
+  const runsOnly = await app.container.repos.apiKeys.create('local', 'runs reader', ['runs:read']);
+  expect((await app.app.inject('/system/storage')).statusCode).toBe(401);
+  expect(
+    (
+      await app.app.inject({
+        url: '/system/storage',
+        headers: { authorization: `Bearer ${runsOnly.token}` },
+      })
+    ).statusCode,
+  ).toBe(403);
+  expect(
+    (
+      await app.app.inject({
+        url: '/system/storage',
+        headers: { authorization: `Bearer ${reader.token}` },
+      })
+    ).statusCode,
+  ).toBe(200);
+});
+
+const GiB = 1024 ** 3;
+async function controlled(free = 50 * GiB) {
+  let available = free;
+  const read = vi.fn(() => Promise.resolve({ totalBytes: 100 * GiB, availableBytes: available }));
+  app = await createTestApp({ tempPrefix: 'gg-wp-e3-', storageCapacity: { read } });
+  const current = app;
+  return {
+    api: current,
+    read,
+    poll: async (bytes: number, ms = 60_000) => {
+      available = bytes;
+      current.clock.advance(ms);
+      await current.container.historyCleanup.poll();
+    },
+  };
+}
+async function complete(t: TestApp, artifact = false) {
+  const definition = artifact
+    ? singleNodeLoop('Owned outputs', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: { prompt: { template: 'Hello' }, output: { captureTranscript: 'artifact' } },
+      })
+    : minimalLoop();
+  const loop = await t.publishLoop(definition);
+  const started = await t.app.inject({ method: 'POST', url: `/loops/${loop}/runs`, payload: {} });
+  expect(started.statusCode).toBe(202);
+  const run = started.json<{ run: RunRecord }>().run;
+  await t.idle();
+  return run;
+}
+async function mark(t: TestApp, runIds: string[]) {
+  const preview = await t.app.inject({
+    method: 'POST',
+    url: '/runs/deletion-eligibility/preview',
+    payload: { runIds },
+  });
+  const result = await t.app.inject({
+    method: 'POST',
+    url: '/runs/deletion-eligibility',
+    payload: {
+      runIds,
+      action: 'mark',
+      confirmed: true,
+      token: preview.json<DeletionPreview>().token,
+    },
+  });
+  expect(result.statusCode).toBe(200);
+}
+
+it('leaves approvals and files alone with adequate storage, measures at most once per minute and uses hysteresis', async () => {
+  const { api, poll, read } = await controlled();
+  const run = await complete(api);
+  await mark(api, [run.id]);
+  await poll(50 * GiB);
+  expect((await api.container.repos.runs.get(run.id))?.deletionApproval).toBeDefined();
+  const calls = read.mock.calls.length;
+  for (let i = 0; i < 5; i++) await api.app.inject('/system/storage');
+  await poll(0, 59_999);
+  expect(read).toHaveBeenCalledTimes(calls);
+  await poll(0, 1);
+  expect(api.container.historyCleanup.status()).toMatchObject({
+    state: 'pressure',
+    deletedRuns: 1,
+  });
+  await poll(1.5 * GiB);
+  expect(api.container.historyCleanup.status().state).toBe('no-eligible');
+  await poll(2 * GiB);
+  expect(api.container.historyCleanup.status().state).toBe('adequate');
+});
+
+it('warns with no eligible history and treats successful and failed retained runs identically', async () => {
+  const { api, poll } = await controlled();
+  const success = await complete(api),
+    failed = await complete(api);
+  await api.container.repos.runs.update(failed.id, { status: 'failed' });
+  await poll(0);
+  const status = (await api.app.inject('/system/storage')).json<StorageStatus>();
+  expect(status).toMatchObject({ state: 'no-eligible', deletedRuns: 0, removedFileBytes: 0 });
+  for (const run of [success, failed])
+    expect((await api.app.inject(`/runs/${run.id}`)).statusCode).toBe(200);
+  expect(api.logger.lines).toContainEqual(
+    expect.objectContaining({
+      level: 'warn',
+      msg: 'Storage pressure: cleanup is limited to confirmed eligible history',
+    }),
+  );
+});
+
+it('deletes disposable owned outputs and approved rows while retained shared artifacts remain retrievable', async () => {
+  const { api, poll } = await controlled();
+  api.harness.script([
+    { finalText: 'same bytes', items: [] },
+    { finalText: 'same bytes', items: [] },
+  ]);
+  const removed = await complete(api, true),
+    retained = await complete(api, true);
+  const workspace = api.harness.started[0]!.workingDirectory;
+  await writeFile(join(workspace, 'owned.txt'), 'owned output');
+  const artifact = (await api.container.manager.getThread(retained.id))!.artifacts[0]!;
+  const url = `/runs/${retained.id}/artifacts/${artifact.id}`;
+  const before = await api.app.inject(url);
+  expect(before.statusCode).toBe(200);
+  await mark(api, [removed.id]);
+  await poll(0);
+  expect((await api.app.inject(`/runs/${removed.id}`)).statusCode).toBe(404);
+  expect((await api.app.inject(url)).rawPayload).toEqual(before.rawPayload);
+  await expect(lstat(workspace)).rejects.toMatchObject({ code: 'ENOENT' });
+  const status = api.container.historyCleanup.status();
+  expect(status).toMatchObject({
+    deletedRuns: 1,
+    removedFileBytes: 12,
+    preservedResources: 1,
+    pendingResources: 1,
+  });
+  expect(status.reusableDatabaseBytes).toBeGreaterThanOrEqual(0);
+  await poll(0);
+  expect(api.container.historyCleanup.status()).toMatchObject({
+    state: 'no-eligible',
+    deletedRuns: 0,
+  });
+  expect((await api.app.inject(url)).statusCode).toBe(200);
+});
+
+it.each(['error', 'invalid'] as const)('fails closed when capacity is %s', async (scenario) => {
+  app = await createTestApp({
+    tempPrefix: 'gg-wp-e3-',
+    storageCapacity: {
+      read: () =>
+        scenario === 'error'
+          ? Promise.reject(new Error('unavailable'))
+          : Promise.resolve({ totalBytes: 0, availableBytes: -1 }),
+    },
+  });
+  expect((await app.app.inject('/system/storage')).json()).toMatchObject({
+    state: 'unavailable',
+    deletedRuns: 0,
+  });
+});
+
+it('starts no deletion after stop', async () => {
+  const { api, poll } = await controlled();
+  const run = await complete(api);
+  await mark(api, [run.id]);
+  await api.container.historyCleanup.stop();
+  await poll(0);
+  expect((await api.container.repos.runs.get(run.id))?.deletionApproval).toBeDefined();
+});
+
+it('awaits an in-flight capacity dependency on stop and deletes nothing after it settles', async () => {
+  let hold = false;
+  let release: ((value: { totalBytes: number; availableBytes: number }) => void) | undefined;
+  app = await createTestApp({
+    tempPrefix: 'gg-wp-e3-',
+    storageCapacity: {
+      read: () =>
+        hold
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 50 * GiB }),
+    },
+  });
+  const run = await complete(app);
+  await mark(app, [run.id]);
+  hold = true;
+  app.clock.advance(60_000);
+  const poll = app.container.historyCleanup.poll();
+  expect(release).toBeDefined();
+  let stopped = false;
+  const stop = app.container.historyCleanup.stop().then(() => {
+    stopped = true;
+  });
+  await Promise.resolve();
+  expect(stopped).toBe(false);
+  release!({ totalBytes: 100 * GiB, availableBytes: 0 });
+  await Promise.all([poll, stop]);
+  expect((await app.container.repos.runs.get(run.id))?.deletionApproval).toBeDefined();
+});
+
+it('schedules one pass per minute and cancels its timer on stop', async () => {
+  vi.useFakeTimers();
+  const clock = new FakeClock();
+  const read = vi.fn(() => Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 50 * GiB }));
+  const store = {
+    prepareBatch: vi.fn(() => Promise.resolve(0)),
+    reapBatch: vi.fn(() => Promise.resolve({ bytes: 0, preserved: 0, pending: 0 })),
+    reusableBytes: vi.fn(() => Promise.resolve(0)),
+  };
+  const cleanup = new HistoryCleanup(
+    { read },
+    store,
+    [{ name: 'data', path: 'unused' }],
+    clock,
+    new CapturingLogger(),
+  );
+  await cleanup.start(true);
+  expect(read).toHaveBeenCalledTimes(1);
+  clock.advance(60_000);
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(store.prepareBatch).not.toHaveBeenCalled();
+  await cleanup.stop();
+  clock.advance(60_000);
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(read).toHaveBeenCalledTimes(2);
+});
+
+it('observes an external SQLite volume through the public capacity port without exposing its path', async () => {
+  const external = await mkdtemp(join(tmpdir(), 'gg-wp-e3-'));
+  extraDirectories.push(external);
+  const read = vi.fn((path: string) =>
+    Promise.resolve({
+      totalBytes: 100 * GiB,
+      availableBytes: resolve(path) === resolve(external) ? 0 : 50 * GiB,
+    }),
+  );
+  app = await createTestApp({
+    tempPrefix: 'gg-wp-e3-',
+    env: { GG_DB_URL: `file:${join(external, 'history.db')}` },
+    storageCapacity: { read },
+  });
+  const response = await app.app.inject('/system/storage');
+  expect(response.json()).toMatchObject({
+    state: 'no-eligible',
+    volumes: [
+      { name: 'data', availableBytes: 50 * GiB },
+      { name: 'database', availableBytes: 0 },
+    ],
+  });
+  expect(response.body).not.toContain(external);
+  expect(read).toHaveBeenCalledTimes(2);
+});
+
+it('keeps immutable Event delivery provenance while removing approved run links', async () => {
+  const { api, poll } = await controlled();
+  const loopId = await api.publishLoop({
+    schemaVersion: 4,
+    name: 'Event cleanup',
+    nodes: [
+      {
+        id: 'start',
+        kind: 'trigger',
+        label: 'Start',
+        config: { type: 'event', eventType: 'ready' },
+      },
+      { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'trigger.payload' } },
+    ],
+    edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  });
+  expect(
+    (await api.app.inject({ method: 'POST', url: '/events', payload: { loopId, type: 'ready' } }))
+      .statusCode,
+  ).toBe(202);
+  await api.container.manager.waitForWebhookRecovery();
+  await api.idle();
+  const [run] = await api.container.repos.runs.list({ loopId });
+  await mark(api, [run!.id]);
+  await poll(0);
+  const events = (await api.app.inject('/events')).json<{
+    items: { runIds: string[]; delivery: { state: string } }[];
+  }>();
+  expect(events.items).toHaveLength(1);
+  expect(events.items[0]).toMatchObject({ runIds: [], delivery: { state: 'admitted' } });
+  expect((await api.app.inject(`/runs/${run!.id}`)).statusCode).toBe(404);
+});

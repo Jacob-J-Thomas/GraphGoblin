@@ -1,0 +1,45 @@
+pnpm --filter @graphgoblin/api exec vitest run src/history-cleanup.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-e3-187-322/apps/api
+
+ ❯ src/history-cleanup.test.ts (1 test | 1 failed) 923ms
+   × exposes measured storage state without granting deletion consent 921ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/history-cleanup.test.ts > exposes measured storage state without granting deletion consent
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/history-cleanup.test.ts:10:31
+      8|   app = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
+      9|   const response = await app.app.inject('/system/storage');
+     10|   expect(response.statusCode).toBe(200);
+       |                               ^
+     11|   expect(response.json()).toMatchObject({ state: 'adequate', deletedRu…
+     12| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  23:50:43
+   Duration  10.18s (import 53%, transform 37%, tests 9%)
+
+  Transform  transforming modules took 3.68s · 37% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e3-187-
+  │ 322\apps\api
+
+EXIT 1

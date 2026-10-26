@@ -11,7 +11,7 @@ afterEach(async () => {
 });
 
 it('serves exact verified transcript bytes, reports corruption explicitly, repairs on put and distinguishes missing content', async () => {
-  t = await createTestApp();
+  t = await createTestApp({ tempPrefix: 'gg-wp-e3-' });
   t.harness.script([
     { finalText: 'Hello, 世界 🧙', items: [{ id: 'note', type: 'message', summary: '世界' }] },
   ]);
@@ -40,7 +40,7 @@ it('serves exact verified transcript bytes, reports corruption explicitly, repai
   expect(corrupt.statusCode).toBe(500);
   expect(corrupt.json()).toMatchObject({ code: 'ARTIFACT_CORRUPT' });
   expect(corrupt.body).not.toContain('partial');
-  await t.container.ports.artifacts.put('transcript', good.body);
+  await t.container.ports.artifacts.put('transcript', good.body, run.id);
   const repaired = await t.app.inject({ method: 'GET', url });
   expect(repaired.statusCode).toBe(200);
   expect(repaired.rawPayload.equals(good.rawPayload)).toBe(true);
