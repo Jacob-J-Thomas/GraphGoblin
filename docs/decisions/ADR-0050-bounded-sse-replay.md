@@ -209,3 +209,50 @@ the fake API), `live-refresh.test.ts` (coalescing with fake timers), domain `rep
 most one refresh per elapsed 500 ms while following a fast run on the built product). The bounds
 are counts derived from elapsed time, never wall-clock thresholds. Before/after gateway rates and
 read counts are recorded in [the acceptance-fix evidence](../qa/2026-10-26-acceptance-fix-186/README.md).
+
+### Review round 1 (2026-10-26)
+
+Review of the fix (PR #418) found that one live-path read still grew with history and that two
+refresh orderings could leave the context stale or read it twice; behaviour QA added one display
+defect of the fix and three accessibility defects of round 2's Timeline.
+
+- **Bounded evidence lookups.** `/observation`'s latest gate scanned every decision newer than the
+  last one carrying gate evidence, all of them in an ungated cyclic loop, which is valid (review
+  measured 7.5, 27.4 and 302.5 ms at 99, 10,099 and 100,099 decisions). The fresh-session choices
+  scanned resumes the same way. Migration 0024 adds two partial indexes on `run_events (run_id,
+seq)`: one holding the decisions whose payload has gate evidence, one holding the resumes that
+  record a fresh-session choice. Both also hold rows whose JSON is malformed, so a read of the
+  newest one still reports the corruption instead of skipping it. Each read names its index and
+  repeats its condition word for word, so SQLite seeks the index (one entry for the gate, at most
+  20 for the choices) or fails loudly; it never falls back to a scan. A durable projection on the
+  run row was the alternative: it needs engine or repository writes on every decision and a
+  backfill, and loses the corruption report. An append now evaluates two type comparisons; only a
+  decision or a resume also parses its payload for the index condition. Measured on the built
+  product after the change: 5.8, 6.2 and 6.7 ms at 101, 10,101 and 100,101 ungated decisions.
+- **Reads that cover the change.** A refresh reads each read model with a request that starts
+  after the change. A request already in flight, such as the first load, may hold an older
+  snapshot, and invalidating a query that has no data yet reuses that request; so the refresh lets
+  it settle and then reads again. A failed read keeps its change pending for the next refresh a
+  later change requests, without retrying on its own.
+- **One refresh at a time, including the return to live.** Showing the current thread again after a
+  selection reads it through the same coalesced refreshes, so it never runs beside a refresh that a
+  live batch requested.
+- **The thread on screen stays while a selection is read.** Round 2 kept the previous selection's
+  result as the placeholder; once following live stopped reading selections, that was an older
+  selection the reader had left. The inspector now keeps whichever thread was on screen just
+  before, with its own label.
+- **Timeline accessibility (round 2's own window).** The polite region that announced "Showing
+  events X–Y" on every live append now says only "Following live." or "Following paused." with the
+  window, so it changes when the reader acts; the visible range text is unchanged. One row is in
+  the Tab order, so Tab and Shift+Tab leave the rows in one step (round 2's boundary Tab moved
+  through every retained row instead). Paging controls stay focusable while they cannot act
+  (`aria-disabled`), so Follow live keeps keyboard focus after it resumes following.
+
+The migration number follows the delivery plan: 0021 and 0022 belong to PR #412 and 0023 is reserved
+for #256. Whichever of these merges later renumbers its migration, restamps its journal time after
+the earlier ones and rechains its snapshot. Regression tests, each of which
+failed on the code before this round: infrastructure `evidence-index.test.ts` (query plans through
+Drizzle's public query logger), web `live-follow.test.tsx` (overtaken first read, serialized
+return, thread kept during a selection's read) and `Timeline.test.tsx` (announcements, Tab out,
+focus kept), and the Edge `e2e/live-follow.spec.ts` accessibility test. `live-refresh.test.ts`
+covers the scheduler's unread changes. Evidence: [review round 1](../qa/2026-10-26-acceptance-fix-186/README.md#review-round-1).

@@ -1,0 +1,40 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-ae61ad15bb76ad037/packages/infrastructure
+
+ ✓ src/sqlite/evidence-index.test.ts > finds the latest gate and fresh-session choices with one partial-index seek, however long the history (#186) 294ms
+ ✓ src/sqlite/evidence-index.test.ts > still reports a malformed newest evidence row instead of skipping it (#186) 56ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  07:57:30
+   Duration  3.97s (import 60%, transform 30%, tests 9%)
+
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/agent-ae61ad15bb76ad037/apps/web
+
+ ✓ src/runs/inspector/Timeline.test.tsx > preserves the ordinary accessible event name for an oversized payload marker 242ms
+ ✓ src/runs/inspector/Timeline.test.tsx > names an oversized marker with the pinned labels, not only its recorded IDs (#255) 36ms
+ ✓ src/runs/inspector/Timeline.test.tsx > names oversized markers of many small values with the pinned labels (#186 round 2 audit round 2 B1) 149ms
+ ✓ src/runs/inspector/Timeline.test.tsx > windows rows and carries keyboard focus across row boundaries, preserving selection and names 1456ms
+ ✓ src/runs/inspector/Timeline.test.tsx > keeps live rows at the end and exposes a sequence seek independently of loaded rows 605ms
+ ✓ src/runs/inspector/Timeline.test.tsx > announces pausing and browsing, not every live append (#186 QA) 880ms
+ ✓ src/runs/inspector/Timeline.test.tsx > leaves the row list in one Tab or Shift+Tab from any row (#186 QA) 532ms
+ ✓ src/runs/inspector/Timeline.test.tsx > keeps keyboard focus on Follow live once it resumes following (#186 QA) 407ms
+ ✓ src/runs/inspector/Timeline.test.tsx > ignores controls that cannot act, keeping them focusable (#186 QA) 640ms
+ ✓ src/runs/live-follow.test.tsx > follows a fast cycle live without historical thread reads, refreshing at most once per interval (#186) 3635ms
+ ✓ src/runs/live-refresh.test.ts > liveChanges > refreshes the thread after thread events and the evidence after evidence events only 4ms
+ ✓ src/runs/live-refresh.test.ts > createLiveRefresh > refreshes at once after a quiet interval and merges a burst into one trailing refresh 8ms
+ ✓ src/runs/live-refresh.test.ts > createLiveRefresh > never overlaps refreshes: changes during a slow refresh wait for it to finish 1ms
+ ✓ src/runs/live-refresh.test.ts > createLiveRefresh > keeps changes a refresh could not read for the next requested refresh, without retrying alone 1ms
+ ✓ src/runs/live-refresh.test.ts > createLiveRefresh > bounds refreshes by elapsed time, not by the event rate 6ms
+ ✓ src/runs/live-follow.test.tsx > refreshes only the run record while a node streams progress (#186) 3937ms
+ ✓ src/runs/live-follow.test.tsx > reads a selected completion exactly once and refreshes the hidden current thread only when shown again (#186) 2347ms
+ ✓ src/runs/live-follow.test.tsx > reads the context again when a live batch overtakes the first thread read (#186 review) 187ms
+ ✓ src/runs/live-follow.test.tsx > serializes the return to the current thread with the next live refresh (#186 review) 3993ms
+ ✓ src/runs/live-follow.test.tsx > keeps the thread on screen while a new selection is read, not an older selection (#186 QA) 810ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  07:57:36
+   Duration  23.94s (tests 51%, environment 25%, transform 8%, setup 8%, import 8%)
+
