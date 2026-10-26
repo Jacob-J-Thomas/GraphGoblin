@@ -154,6 +154,35 @@ The two native shutdown test files pinned ports 5760-5769, outside this run's al
 | `pnpm build`, then the seven `apps/api/src/shutdown-*.test.ts` files (API ports 6100-6149)                  | 28 passed. The 5 skipped are the Linux-only signal cases and the two cases that skip when this host confirms termination (D-015). All three new Windows console cases passed. |
 | `apps/web`: `pnpm exec playwright test e2e/shutdown.spec.ts` (Edge)                                         | 2/2 passed.                                                                                                                                                                   |
 
+## Behaviour QA observation O-1 (PR #417, HQ-2)
+
+**Observation.** The independent behaviour QA (`docs/qa/2026-10-26-pr417-qa/README.md`, O-1 and HQ-2) found a gap. A Codex inference node or LLM decision set to `max` and then switched to GPT-5.5 kept `max`, which is correct, but the editor only reported "Save failed" and the generic `EVALUATION_INVALID_CONFIGURATION` banner. Publish said "fix the issues below first", yet no node or field was marked. This PR made that state reachable by removing `max` from GPT-5.5.
+
+**Change.** The user's choice is still never changed.
+
+- **Effort field.** When the selected (or inherited) model is known, the field now gives a specific, accessible explanation as soon as the model changes. For example: "Effort max is not supported by GPT-5.5. Choose a supported effort or Default." The text comes from `unsupportedEffortMessage` in `apps/web/src/forms/fields/model.tsx`.
+- **Issue list.** The editor adds an `EFFORT_UNSUPPORTED` error at `config.effort` for each inference node and LLM decision whose explicit effort its model does not offer. It is computed by `apps/web/src/editor/effort-issues.ts` from the model catalog in `EditorPage`. An inherited model counts only once the owner and process defaults are known, as in the pickers.
+  - The API refuses to save such a draft, so its own check, which reads only a saved draft, never reported it.
+  - The issue appears in the node's badge, the dialog's issue list and the toolbar count, so the "fix the issues below first" message from Publish now points at the node.
+  - Choosing a supported effort or Default clears it. If the API reports the same node's unsupported effort for an already saved draft, the editor shows only its own, more specific issue.
+- **Docs.** `docs/guide/02-build-a-loop.md` and the #205 CHANGELOG bullet describe this.
+
+**Regression tests** (both fail without the change):
+
+- **Component test:** `apps/web/src/editor/effort-issues.test.tsx`, for an inference node and an LLM decision. It checks that `max` is kept after the switch, the field gives the explanation, the node's badge reads "1 issue on work" and lists the message, and the toolbar reads "1 error". Choosing `xhigh` or Default clears it. Unit cases cover the inherited-model and nothing-to-report paths.
+  - Without the editor wiring, both cases fail: `Unable to find an accessible element with the role "button" and name "1 issue on work"`.
+- **Edge case:** `apps/web/e2e/model-effort.spec.ts`, `${kind}: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen`. Against the real API it checks the explanation and the node badge, then that Publish's refusal leaves the node listed in the toolbar's issue list and that list opens the node. Choosing `xhigh` clears the issue and Publish succeeds.
+  - On a web build without the change, both cases fail at the field description: "This effort is not supported by the selected model. The saved choice stays until you change it." was shown instead of the explanation naming the model.
+- **Updated test:** one `model.test.tsx` case that matched the old generic text now expects the specific one.
+
+**Checks** (gates `o1-*`; before-fix output in `tests-o1-*-before.log.txt`):
+
+| Check                                                                     | Result                                                                                        |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `pnpm --filter @graphgoblin/web test:coverage`                            | 1,772 passed (147 files). Statements 98.09%, branches 94.82%, functions 98.12%, lines 98.92%. |
+| `apps/web`: `model-effort`, `model-picker`, `claude-harness` specs (Edge) | 38/38 passed, including the two new cases.                                                    |
+| Web lint, typecheck and `pnpm check:tokens`                               | Clean                                                                                         |
+
 ## Live provider checks for the orchestrator
 
 - **LP-1 (D-1).** On Windows, start the API in a terminal with the installed Codex login and this branch built, run a cheap inference that takes several seconds, press Ctrl+C once. Expected now: `GET /system/shutdown` reports `draining` with the run active, the run keeps going and completes, and the gateway then exits 0.
