@@ -5,6 +5,7 @@ Date: 2026-10-23. Status: Accepted implementation decision for #186 round 1.
 Revised 2026-10-24 after review: durable catch-up replaces overflow/gap failures.
 Round 3 bounds terminal confirmation with indexed lifecycle-tail reads.
 Round 4 confirms durable suffix delivery and adds authoritative stream completion.
+Amended 2026-10-26 after acceptance (D1): following a run live reads only bounded read models, coalesced.
 
 ## Context
 
@@ -132,3 +133,79 @@ Timeline row windowing mounts 80 rows without fixed-height assumptions or a new 
 Whole-history projections move to server reads: run record for status/position/result/failure/delivery; indexed latest evidence for exit/gate/finish and attempt following; #116 current thread for live context; exact historical thread and previous boundary for selection/patches. Domain replay state is carried across server pages, including unfinished starts and delayed duplicate completions. Node progress explicitly describes the retained window; older progress and exact values remain browsable. Browser replay and its 32-thread cache are removed rather than being fed truncated history.
 
 These are implementation parameters, not owner-approved budgets or execution caps. Round 2 implements the bolt's remaining browser scope; review, independent QA and integrated acceptance are separate delivery gates. Measurements and limits are recorded in [the round-2 evidence](../qa/2026-10-24-wp-e1-186-r2/README.md).
+
+## Round 2 acceptance fix: bounded live following (2026-10-26)
+
+### Context
+
+Independent acceptance of round 2 found that an inspector following a long run live starved the
+whole gateway (D1, High). On every 100 ms stream batch the inspector refreshed the run record,
+`/observation` and the current thread, and while the latest event was a completion its default
+selection also read `thread?at=N` and `thread?at=N-1`. `historicalThread` starts from the run's
+single stored checkpoint only when it precedes the boundary, and the executor rewrites that
+checkpoint after every node completion, so `at=N-1`, and any boundary already behind the newest
+completion, replayed the history from the admitted seed: 163 ms at about 2,000 events, 752 ms at
+10,000. On this fix's base build a cyclic run fell from 108.9 to 7.4 events/s while followed from
+about 5,200 events and from 98.9 to 1.4 events/s from about 10,100, and an unrelated run on the
+same gateway fell with it. No data or ordering was lost.
+
+### Decision
+
+- **The live path reads only bounded read models.** Following live reads the run record (one
+  row), `/observation` (indexed latest reads and at most 20 fresh-session rows) and #116's current
+  thread (the checkpoint boundary and the events after it). It never reads `thread?at`. The live
+  view's thread panel is always the current thread, whatever the latest event is. A completion's
+  exact before/after patch diff is read when the reader selects it, which pauses following: two
+  reads per selection, each replaying the history before its boundary from the latest checkpoint
+  at or before it, as docs/07 records for history mode.
+- **Refreshes are coalesced.** The first change after a quiet interval refreshes at once; later
+  changes within 500 ms, or while a refresh is in flight, merge into one trailing refresh. No
+  change is lost, refreshes never overlap and a slow gateway slows them instead of queueing them.
+  500 ms keeps status, evidence and the current thread visibly live and bounds a followed run to
+  at most two refreshes a second. It is an engineering parameter, not an owner-approved budget.
+- **A refresh reads only what its changes can affect.** The run record is read on every refresh.
+  `/observation` is read only after a lifecycle, cancellation-request, exit or decision event. The
+  current thread is read only after an event `replayThread` applies (domain `THREAD_EVENT_TYPES`:
+  node start and completion, decision, iteration change), and only while it is shown; a change
+  while a selected event's thread is shown is read once, when the current thread returns. A domain
+  test checks that every other contract event type leaves a replayed thread unchanged, so a new
+  thread-changing event type cannot be missed silently.
+
+### Alternatives considered
+
+- **Retained checkpoints near the tail.** A ring of recent completion checkpoints cannot promise
+  coverage: a fast loop completes several nodes between a stream batch and its read, so a lagging
+  reader still replays from the seed in exactly the workload that exposed D1. Uniform stride
+  checkpoints would bound every boundary read, but their storage grows with history length times
+  thread size (each stores the whole thread) and they add writes to the executor's completion
+  path; capping their number brings back unbounded reads beyond the retained span. Live following
+  does not need them; they remain a possible history-mode improvement.
+- **Computing the live completion diff in the browser from streamed events.** A patch records only
+  the new state, not the values it replaced. An exact diff needs an anchor thread with its boundary
+  sequence and domain replay state from the server, which would publish internal replay state, and
+  per-event patch application in the browser: the browser replay and thread cache round 2 removed
+  to bound browser memory.
+- **An API cache of recently read historical threads.** It cannot bound server memory while
+  guaranteeing coverage for large threads, and a missed entry replays from the seed again.
+
+### Consequences and verification
+
+Following a run live no longer starves the gateway: in the aligned measurement the followed run
+and its neighbour kept 111.3 and 107.9 events/s from about 5,000 and 10,000 events, against 124.9
+and 119.8 unobserved on the same shared host, with no `thread?at` read. The read rate depends on
+elapsed time rather than the run's event rate. The live view no longer shows a default-selected
+completion's historical thread or patch diff; the reader selects the completion to see it. Reads
+for a selected event are unchanged and remain proportional to the history before their boundary;
+they are user-paced, two per selection. The current-thread read decodes the events after the
+latest checkpoint, which belong to the visit in progress. It is issued only after thread-changing
+batches, so a node streaming progress costs the run-record read alone. No API route, contract,
+stored data or migration changes. The Timeline, retention, paging, slow-consumer recovery and
+reconnect are unchanged.
+
+Regression tests through public interfaces: web `live-follow.test.tsx` (read kinds and counts
+while the page follows a fast cycle and a progress stream, and a selection's exact reads, against
+the fake API), `live-refresh.test.ts` (coalescing with fake timers), domain `replay.test.ts`
+(`THREAD_EVENT_TYPES` is complete) and Edge `e2e/live-follow.spec.ts` (no `thread?at` read and at
+most one refresh per elapsed 500 ms while following a fast run on the built product). The bounds
+are counts derived from elapsed time, never wall-clock thresholds. Before/after gateway rates and
+read counts are recorded in [the acceptance-fix evidence](../qa/2026-10-26-acceptance-fix-186/README.md).

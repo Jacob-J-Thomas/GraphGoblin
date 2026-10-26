@@ -275,3 +275,14 @@ The same aged browser workload (`--passes=1000 --aged=2000 --profile=inspector -
 The host was shared: measured busy fraction 81.1% before and 75.4% after. These are workload observations, not a quiet-host causal latency result or SLA. Heap is sampled CDP JS heap without forced per-sample GC; first-row timing is an observation upper bound. The final candidate kept executing, reached the pre-navigation cursor in its rendered tail, and reported no browser errors. The browser retains at most 512 rows / 1 MiB estimated row JSON per run, and mounts at most 80 Timeline rows. Full values and server history remain complete. Raw samples, exact commands, projection sources and capture hashes are in [the round-2 evidence](qa/2026-10-24-wp-e1-186-r2/README.md).
 
 The required default Browser gate also discovers `e2e/script-recovery.spec.ts` (#321). Its serial test starts and stops its own built API on a disposable `gg-wp-d1-int-` store and a free port in 6320 to 6339, independently of the default E2E server. It kills the marker-producing script's API, verifies uncertainty after restart, cancels recovery without another effect, then explicitly resumes and follows running through success without reloading. A green default gate includes these checks; no separate config is needed.
+
+## Live following measurements (#186 acceptance fix, 2026-10-26)
+
+Acceptance found that an inspector following a long run live starved the gateway (D1). The fix's record, [docs/qa/2026-10-26-acceptance-fix-186](qa/2026-10-26-acceptance-fix-186/README.md), repeats the acceptance workload on the built product: two endless cyclic runs on one gateway, run A followed in Edge from about 5,000 and about 10,000 events, run B its unrelated neighbour. Rates are A's events per second (B's matched A's in every phase); reads are the inspector's API requests over the 30-second phase.
+
+| Build | No inspector (from ~3,200) | Following A (from ~5,000) | No inspector (from ~8,200) | Following A (from ~10,000) | `thread?at` reads while following |
+| ----- | -------------------------: | ------------------------: | -------------------------: | -------------------------: | --------------------------------: |
+| Base  |                      108.9 |                       7.4 |                       98.9 |                        1.4 |                          182 / 66 |
+| Fix   |                      124.9 |                     111.3 |                      119.8 |                      107.9 |                             0 / 0 |
+
+While following, the fix issued 59 reads each of `/runs/{id}`, `/observation` and `/thread` per 30 seconds (one refresh per 500 ms); the base issued 168 of each plus 182 `thread?at` reads at about 5,000 events. The host was shared; these are workload observations, not an SLA. The regression tests count reads against bounds derived from elapsed time, never wall-clock thresholds.
