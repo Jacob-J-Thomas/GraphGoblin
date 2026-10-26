@@ -317,10 +317,11 @@ Forced runs show `RUN_INTERRUPTED_BY_STOP`, the node and attempt, and possible e
 effects. They do not automatically resume. Inspect what happened before explicitly replaying.
 An unconfirmed termination caused by this force leaves the listener, store and lock held in
 `force-failed`. Inspect logs and native processes. For a Codex turn this is
-`HARNESS_TERMINATION_UNCONFIRMED`: the Codex CLI was stopped, but a process it started kept its
-output open for five seconds. GraphGoblin cannot reach that process, and its parent is gone, so
-find it by its command line (for example in Task Manager's Details tab with the Command line
-column shown) and end it yourself, before or after **Force exit**. A further force request or deliberate later
+`HARNESS_TERMINATION_UNCONFIRMED`: GraphGoblin asked the Codex CLI to stop, but the turn did not
+end within five seconds. Usually a process the CLI started still holds its output open; the CLI
+itself or that process may still be running, and GraphGoblin cannot reach a process the CLI
+started. Find any remaining process by its command line (for example in Task Manager's Details
+tab with the Command line column shown) and end it yourself, before or after **Force exit**. A further force request or deliberate later
 signal exits with code 1 after a 100 ms response-flush allowance, retains the failure and leaves
 the lock for next-start reclamation. Earlier unconfirmed failures appear in `unconfirmedRunIds`
 but do not trap a later normal stop. A drain observation failure uses `drain-failed`; invalid
