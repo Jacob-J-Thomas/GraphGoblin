@@ -29,12 +29,10 @@ import {
   reconcileThread,
   exportLoop,
   importLoop,
-  LoopFormatUpgradeRequiredError,
+  LoopFormatUnsupportedError,
   LoopImportError,
   stableHash,
   validateLoop,
-  upgradeExportCurrent,
-  upgradeLoopCurrent,
   type ValidationIssue,
 } from '@graphgoblin/domain';
 
@@ -570,42 +568,18 @@ export class FakeApi {
     ],
     [
       'POST /loops/import',
-      async (call) => {
+      (call) => {
         try {
-          let input = call.body;
-          let notices: { code: string; path: string; message: string }[] = [];
-          if (
-            typeof input === 'object' &&
-            input !== null &&
-            (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
-              ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
-          ) {
-            const converted =
-              'formatVersion' in input
-                ? await upgradeExportCurrent(input)
-                : await upgradeLoopCurrent(input);
-            if (!converted.ok)
-              return problem(
-                400,
-                converted.issues.some((issue) => issue.kind === 'pending')
-                  ? 'LOOP_FORMAT_UPGRADE_REQUIRED'
-                  : 'LOOP_IMPORT_SOURCE_INVALID',
-                'Use graphgoblin-upgrade export with --resolutions resolutions.json and the reported v3 item ids and hashes. See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
-                { issues: converted.issues, reviewItems: converted.reviewItems },
-              );
-            input = converted.value;
-            notices = converted.notices;
-          }
-          const imported = importLoop(input);
+          const imported = importLoop(call.body);
           const loop = this.addLoop(imported.definition);
           return json(
-            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues, notices },
+            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },
             201,
           );
         } catch (error) {
-          if (error instanceof LoopFormatUpgradeRequiredError)
-            return problem(400, error.code, error.message);
-          if (!(error instanceof LoopImportError)) throw error;
+          // The API maps every domain error, including LOOP_FORMAT_UNSUPPORTED, to a 400 problem.
+          if (!(error instanceof LoopImportError || error instanceof LoopFormatUnsupportedError))
+            throw error;
           return problem(400, error.code, error.message, error.details);
         }
       },

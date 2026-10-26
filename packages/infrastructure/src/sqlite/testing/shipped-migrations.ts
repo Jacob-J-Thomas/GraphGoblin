@@ -1,5 +1,5 @@
 /** Test-only SQL migration fixture: deliberately incomplete/invalid legacy rows are not deployable stores.
- * Production startup and offline upgrade guards remain tested separately; this helper exercises
+ * The startup guard refuses these pre-baseline stores (tested separately); this helper exercises
  * the shipped historical SQL itself without pretending those fixtures passed admission. */
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

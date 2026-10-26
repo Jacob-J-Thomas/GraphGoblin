@@ -1,8 +1,6 @@
 import { Alert, Button } from '../components/ui/index.js';
 import type { DeviceCopy } from './save-status.js';
 import type { useResolveConflict } from './useResolveConflict.js';
-import { UNRECONCILED_DEVICE_TOKEN } from '../drafts/local-drafts.js';
-import { useEditorStore } from './store.js';
 
 const KEPT: Record<DeviceCopy, string> = {
   device: 'are kept on this device',
@@ -22,20 +20,10 @@ export function ConflictNotice({
   resolve: ReturnType<typeof useResolveConflict>;
   device: DeviceCopy;
 }) {
-  const converted = useEditorStore((state) => state.baseToken === UNRECONCILED_DEVICE_TOKEN);
   return (
-    <Alert
-      tone="warn"
-      title={
-        converted
-          ? 'This device draft was converted to format 4'
-          : 'The draft changed on the server'
-      }
-    >
-      {converted
-        ? 'Its old server token is no longer valid. Choose the server draft or explicitly overwrite it with this converted copy.'
-        : 'Another tab or device saved this loop’s draft after this editor loaded it.'}{' '}
-      Your changes {KEPT[device]} and nothing was overwritten.{' '}
+    <Alert tone="warn" title="The draft changed on the server">
+      Another tab or device saved this loop’s draft after this editor loaded it. Your changes{' '}
+      {KEPT[device]} and nothing was overwritten.{' '}
       <span className="mt-2 flex flex-wrap gap-2">
         <Button
           size="sm"

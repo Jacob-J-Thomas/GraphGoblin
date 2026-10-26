@@ -41,7 +41,7 @@ import {
   SqliteWebhookEndpoints,
   databaseFilePath,
   openDatabase,
-  guardDatabaseUpgrade,
+  guardCurrentStore,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
 import {
@@ -69,6 +69,7 @@ import { acquireDataDirLock } from './data-dir-lock.js';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
+import { explainStoreRefusal } from './store-refusal.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
 import { TemplateCatalog } from './templates/catalog.js';
@@ -178,13 +179,19 @@ export async function createContainer(
     }
     // GG_DB_URL may point outside the data directory; create the database file's directory too.
     const dbFile = databaseFilePath(config.dbUrl);
+    // An unsupported store stops startup with the data directory, the found and required formats
+    // and the explicit reset command; nothing is converted or removed (ADR-0042).
+    const refuseStore = explainStoreRefusal({
+      dataDir: config.dataDir,
+      ...(dbFile ? { databaseFile: dbFile } : {}),
+    });
     // Validate catalog semantics without a mutable SQLite connection or any startup writes.
     let startupCatalog = DEFAULT_MODEL_CATALOG;
     let startupReadiness: 'fresh' | 'current' | undefined;
     if (dbFile && existsSync(dbFile)) {
       const readonlyClient = openReadOnlyDatabaseClient(dbFile);
       try {
-        const state = await guardDatabaseUpgrade(readonlyClient);
+        const state = await guardCurrentStore(readonlyClient).catch(refuseStore);
         startupReadiness = state;
         if (state === 'current') {
           const stored = await new SqliteModelCatalog(databaseView(readonlyClient)).list();
@@ -217,7 +224,7 @@ export async function createContainer(
     const handle = openDatabase({ url: config.dbUrl });
     opened = handle;
     const { db } = handle;
-    startupReadiness ??= await guardDatabaseUpgrade(handle.client);
+    startupReadiness ??= await guardCurrentStore(handle.client).catch(refuseStore);
     // A data-directory lock cannot protect a database reached through GG_DB_URL elsewhere.
     const databaseRelativePath = dbFile
       ? relative(await realpath(config.dataDir), await realpath(dbFile))
@@ -463,9 +470,11 @@ export async function createContainer(
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
-            await handle.migrate({
-              skipDefinitionValidation: preflightProtected && startupReadiness === 'current',
-            });
+            await handle
+              .migrate({
+                skipDefinitionValidation: preflightProtected && startupReadiness === 'current',
+              })
+              .catch(refuseStore);
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);

@@ -1,0 +1,104 @@
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK
+
+=== Format-3 store ===
+$ node apps/api/dist/main.js 
+exit code: 1; 2748 ms
+--- format 3: start stderr ---
+GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\format3.
+  Database: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\format3\graphgoblin.db
+  Found:    format 3
+  Requires: format 4
+  Reason:   The store is format 3; this build reads only format 4
+No stored data was changed. This build does not convert stores from other formats.
+To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):
+  node apps/api/dist/main.js --reset --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\format3"
+--- end format 3: start stderr ---
+PASS: format 3: startup exits 1 (1)
+PASS: format 3: reason (The store is format 3; this build reads only format 4)
+PASS: format 3: the documented message, exactly, with no stack trace
+PASS: format 3: no stored byte changed (the -shm index excepted, as documented) ({"removed":["F graphgoblin.db-shm 32768B sha256=7548e40b76c4a10d19ace267a7c2fe1b89ba5b1deba1528bbb0c643dce2f1926 mtime=1792983504686603500 ino=4222124658463053"],"added":["F graphgoblin.db-shm 32768B sha256=6b31eb8a7b4fdd1e9aa5b288dde3cf9db593c0d773d841faba24ff3a81431965 mtime=1792983507600023100 ino=4222124658463053"]})
+format 3: -shm changed: true
+$ node apps/api/dist/main.js --preflight
+exit code: 1; 3069 ms
+--- format 3: preflight stdout ---
+GraphGoblin preflight
+
+  STATUS  CHECK           DETAIL
+  ok      Node.js         Node 22.23.4
+  ok      Data directory  %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\format3 is writable
+  ok      Master key      read from %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\format3\master.key
+  FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\format3"
+  ok      Harness codex   codex 0.160.0 is installed and logged in
+  ok      Harness claude  claude 2.1.308 is installed and logged in
+  WARN    Jev             not checked until the database is migrated; Jev is optional
+  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start
+
+1 failed, 1 warning(s): fix the failed checks before starting
+--- end format 3: preflight stdout ---
+PASS: format 3: --preflight exits 1 (1)
+PASS: format 3: --preflight reports a failed Database check naming the reset dry run
+PASS: format 3: --preflight changed no stored byte ({"removed":["F graphgoblin.db-shm 32768B sha256=6b31eb8a7b4fdd1e9aa5b288dde3cf9db593c0d773d841faba24ff3a81431965 mtime=1792983507600023100 ino=4222124658463053"],"added":["F graphgoblin.db-shm 32768B sha256=6b31eb8a7b4fdd1e9aa5b288dde3cf9db593c0d773d841faba24ff3a81431965 mtime=1792983509770640900 ino=4222124658463053"]})
+PASS: format 3: run workspace, artifacts and master.key untouched by start and preflight (before d92999311df316ab after d92999311df316ab)
+
+=== Unmarked store (no gg_upgrade_state table) ===
+unmarked store tables: ["__drizzle_migrations","api_keys","classifier_models","event_receipts","harness_sessions","inbound_events","loop_versions","loops","model_catalog","run_events","runs","schedules","secrets","settings","timers","webhook_endpoints","webhook_receipts"]
+$ node apps/api/dist/main.js 
+exit code: 1; 2058 ms
+--- unmarked: start stderr ---
+GraphGoblin did not start: this build cannot open the store in data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\unmarked.
+  Database: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\unmarked\graphgoblin.db
+  Found:    no valid format marker
+  Requires: format 4
+  Reason:   The store has no format marker; an older GraphGoblin build wrote it
+No stored data was changed. This build does not convert stores from other formats.
+To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):
+  node apps/api/dist/main.js --reset --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\unmarked"
+--- end unmarked: start stderr ---
+PASS: unmarked: startup exits 1 (1)
+PASS: unmarked: reason (The store has no format marker; an older GraphGoblin build wrote it)
+PASS: unmarked: the documented message, exactly, with no stack trace
+PASS: unmarked: no stored byte changed (the -shm index excepted, as documented) ({"removed":["F graphgoblin.db-shm 32768B sha256=ca88e57397bf66e25076607105347b2170b1374eefff4e601ff82e9545614594 mtime=1792983514591510000 ino=12384898981404865"],"added":["F graphgoblin.db-shm 32768B sha256=6c5fb610cc5d73520c6123beefbe1cfbb95f3c61220561db328b24866b45d5fe mtime=1792983518716275300 ino=12384898981404865"]})
+unmarked: -shm changed: true
+$ node apps/api/dist/main.js --preflight
+exit code: 1; 2911 ms
+--- unmarked: preflight stdout ---
+GraphGoblin preflight
+
+  STATUS  CHECK           DETAIL
+  ok      Node.js         Node 22.23.4
+  ok      Data directory  %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\unmarked is writable
+  ok      Master key      read from %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\unmarked\master.key
+  FAIL    Database        The store has no format marker; an older GraphGoblin build wrote it. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c07-5PCacK\unmarked"
+  ok      Harness codex   codex 0.160.0 is installed and logged in
+  ok      Harness claude  claude 2.1.308 is installed and logged in
+  WARN    Jev             not checked until the database is migrated; Jev is optional
+  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start
+
+1 failed, 1 warning(s): fix the failed checks before starting
+--- end unmarked: preflight stdout ---
+PASS: unmarked: --preflight exits 1 (1)
+PASS: unmarked: --preflight reports a failed Database check naming the reset dry run
+PASS: unmarked: --preflight changed no stored byte ({"removed":["F graphgoblin.db-shm 32768B sha256=6c5fb610cc5d73520c6123beefbe1cfbb95f3c61220561db328b24866b45d5fe mtime=1792983518716275300 ino=12384898981404865"],"added":["F graphgoblin.db-shm 32768B sha256=6c5fb610cc5d73520c6123beefbe1cfbb95f3c61220561db328b24866b45d5fe mtime=1792983520803353900 ino=12384898981404865"]})
+PASS: unmarked: run workspace, artifacts and master.key untouched by start and preflight (before af59d6b266651b8e after af59d6b266651b8e)
+
+=== Imports of another format (fresh API on port 6344) ===
+PASS: fresh API starts ()
+POST /loops/import (export envelope, formatVersion 3) -> 400 {"type":"https://graphgoblin.dev/problems/loop-format-unsupported","title":"loop format unsupported","status":400,"code":"LOOP_FORMAT_UNSUPPORTED","detail":"This loop export is format 3; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.","errors":{"foundFormat":3,"requiredFormat":4}}
+PASS: export envelope, formatVersion 3: 400 LOOP_FORMAT_UNSUPPORTED with foundFormat 3, requiredFormat 4 and the documented detail
+POST /loops/import (bare format-2 definition) -> 400 {"type":"https://graphgoblin.dev/problems/loop-format-unsupported","title":"loop format unsupported","status":400,"code":"LOOP_FORMAT_UNSUPPORTED","detail":"This loop definition is format 2; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.","errors":{"foundFormat":2,"requiredFormat":4}}
+PASS: bare format-2 definition: 400 LOOP_FORMAT_UNSUPPORTED with foundFormat 2, requiredFormat 4 and the documented detail
+POST /loops/import (bare format-2 definition with a format-2 node shape) -> 400 {"type":"https://graphgoblin.dev/problems/loop-format-unsupported","title":"loop format unsupported","status":400,"code":"LOOP_FORMAT_UNSUPPORTED","detail":"This loop definition is format 2; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.","errors":{"foundFormat":2,"requiredFormat":4}}
+PASS: bare format-2 definition with a format-2 node shape: 400 LOOP_FORMAT_UNSUPPORTED with foundFormat 2, requiredFormat 4 and the documented detail
+POST /loops/import (format-4 envelope holding a format-3 loop) -> 400 {"type":"https://graphgoblin.dev/problems/loop-format-unsupported","title":"loop format unsupported","status":400,"code":"LOOP_FORMAT_UNSUPPORTED","detail":"This loop export is format 3; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.","errors":{"foundFormat":3,"requiredFormat":4}}
+PASS: format-4 envelope holding a format-3 loop: 400 LOOP_FORMAT_UNSUPPORTED with foundFormat 3, requiredFormat 4 and the documented detail
+POST /loops/import (export envelope, formatVersion 5 (newer)) -> 400 {"type":"https://graphgoblin.dev/problems/loop-format-unsupported","title":"loop format unsupported","status":400,"code":"LOOP_FORMAT_UNSUPPORTED","detail":"This loop export is format 5; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.","errors":{"foundFormat":5,"requiredFormat":4}}
+PASS: export envelope, formatVersion 5 (newer): 400 LOOP_FORMAT_UNSUPPORTED with foundFormat 5, requiredFormat 4 and the documented detail
+POST /loops/import (formatVersion "3" as a string) -> 400 {"type":"https://graphgoblin.dev/problems/loop-import-error","title":"loop import error","status":400,"code":"LOOP_IMPORT_ERROR","detail":"document is neither a loop export nor a loop definition","errors":{"errors":["formatVersion: Invalid input: expected 4","exportedAt: Invalid ISO datetime","loop.schemaVersion: Invalid input: expected 4","loop.name: Invalid input: expected string, received undef
+PASS: a non-numeric formatVersion is refused with 400 (not converted) (LOOP_IMPORT_ERROR)
+PASS: nothing was saved by the refused imports (0)
+POST /loops/import (current format control) -> 201
+PASS: control: a current-format export imports (201) (201)
+PASS: API drains and exits 0
+PASS: the store holds exactly the one control loop (1)
+
+SUMMARY c07-format-refusal: 27 passed, 0 failed

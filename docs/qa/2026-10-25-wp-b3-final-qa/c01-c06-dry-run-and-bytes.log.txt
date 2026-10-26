@@ -1,0 +1,207 @@
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs
+
+=== Populate a current store through the built API (port 6340) ===
+PASS: API starts on an empty data directory ()
+PASS: POST /loops creates the loop (201)
+PASS: POST /loops/:id/runs starts run 1 (202)
+PASS: run 01M5V1YATND8M874NM9CJY685R finished (succeeded)
+PASS: POST /loops/:id/runs starts run 2 (202)
+PASS: run 01M5V1YCDTDB5E4CPXT9DR84X2 finished (succeeded)
+runs: [["01M5V1YCDTDB5E4CPXT9DR84X2","succeeded"],["01M5V1YATND8M874NM9CJY685R","succeeded"]]
+PASS: API drains and exits 0 (0)
+data directory after the API stopped: ["artifacts","graphgoblin.db","graphgoblin.db-shm","graphgoblin.db-wal","master.key","workspaces"]
+workspaces: ["01M5V1YATND8M874NM9CJY685R","01M5V1YCDTDB5E4CPXT9DR84X2"]
+artifacts: ["transcript"]
+store marker: [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]; runs 2; loops 1
+
+=== Add non-run entries and links ===
+master.key sha256 ff0b2affd5d3bb8872e5529d0c8f0fb2a573f8083d58100170b5d893cec603d2
+--- tree before the dry run (tree hash c44dd6709263721b059c97aa5647eac46153ea779c0e7b533f5998573e080fc3) ---
+D data/ mtime=1792983126140168600 ino=3096224751583942
+D data/artifacts/ mtime=1792983118112735200 ino=1407374891321677
+D data/artifacts/transcript/ mtime=1792983118122764200 ino=1407374891321680
+F data/artifacts/transcript/d96f60fcfebb09bf23725ccd303e00e05d1dc877900f9e8f4cb9b938692ae685 149B sha256=d96f60fcfebb09bf23725ccd303e00e05d1dc877900f9e8f4cb9b938692ae685 mtime=1792983118114248400 ino=7036874425534821
+F data/graphgoblin.db 4096B sha256=e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa mtime=1792983113862732800 ino=3940649681715958
+F data/graphgoblin.db-shm 32768B sha256=12cb919814326f3cd700a926c8f9bf84901331ea59256271edf817fed46371ca mtime=1792983113868782600 ino=7881299355665258
+F data/graphgoblin.db-wal 1124792B sha256=80de562fa600c3351b8b66dfb9b80ac12ec8293b93626596361c17cd594f85bc mtime=1792983118712737700 ino=6755399448822612
+F data/master.key 44B sha256=ff0b2affd5d3bb8872e5529d0c8f0fb2a573f8083d58100170b5d893cec603d2 mtime=1792983113842185800 ino=14073748843299636
+F data/notes.txt 23B sha256=3c5adeb7c172d0d559c670fdbe41f860c89f19b005eb8b410d5017267565d34a mtime=1792983126140168600 ino=18577348470676258
+D data/user-folder/ mtime=1792983126141168400 ino=14636698796727088
+F data/user-folder/a.txt 25B sha256=87d2ddca5524e1cfe43c70ec073c25a9d1093a68190c3909c8b743ee8ced9e76 mtime=1792983126141168400 ino=4222124658432819
+D data/workspaces/ mtime=1792983126139170000 ino=10414574146062587
+D data/workspaces/01M5V1YATND8M874NM9CJY685R/ mtime=1792983126132127500 ino=15199648750143748
+L data/workspaces/01M5V1YATND8M874NM9CJY685R/repo -> %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\outside-repo ino=15199648750148368
+D data/workspaces/01M5V1YATND8M874NM9CJY685R/src/ mtime=1792983126131128200 ino=14918173773437676
+F data/workspaces/01M5V1YATND8M874NM9CJY685R/src/out.txt 10B sha256=a4c7b520c630ff81aedaa02cea522154f941d2f8e4469c766f1fdd9daa5f65fe mtime=1792983126131128200 ino=5066549588564748
+L data/workspaces/01M5V1YCDTDB5E4CPXT9DR84X2 -> %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\outside-run2 ino=13229323913169393
+L data/workspaces/linked-notes -> %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\outside-notes ino=4222124658432800
+D data/workspaces/my-notes/ mtime=1792983126138154300 ino=4503599635143446
+F data/workspaces/my-notes/keep.txt 31B sha256=0170b9afc1520de48d295ec6b82c8f66535da4f32404c1307ffd61793fc5a811 mtime=1792983126138154300 ino=4785074611854111
+D outside-notes/ mtime=1792983126128127000 ino=7318349402249568
+F outside-notes/notes.md 28B sha256=dfa559683f78cde8ed088d3da927adf792aeda1db7e2fff202d61f6930a1f270 mtime=1792983126128127000 ino=6192449495407297
+D outside-repo/ mtime=1792983126126127800 ino=11258999076192987
+D outside-repo/src/ mtime=1792983126127127400 ino=17169973587122426
+F outside-repo/src/precious.txt 33B sha256=b229289c288b986a1ff082c7e4072c4ece2c22d35cd03b53a68b02e6eb40639e mtime=1792983126127127400 ino=18577348470675713
+D outside-run2/ mtime=1792983126130127600 ino=6755399448828615
+F outside-run2/linked-run.txt 43B sha256=d8ecb3402e5faf8e626a8419b2bce1bd6f16111d8ca2872a46c84978450b748a mtime=1792983126130127600 ino=4503599635143402
+--- end tree before the dry run (tree hash c44dd6709263721b059c97aa5647eac46153ea779c0e7b533f5998573e080fc3) ---
+
+=== Check 1: dry run without --data-dir, then with --data-dir ===
+$ node apps/api/dist/main.js --reset   [GG_DATA_DIR=%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data]
+exit code: 0; 9690 ms
+--- dry run stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data\graphgoblin.db (format 4, the current format)
+
+Removes:
+  workspaces/01M5V1YATND8M874NM9CJY685R  run workspace            1 file, 2 directories, 1 link, 10 B
+  workspaces/01M5V1YCDTDB5E4CPXT9DR84X2  run workspace            0 files, 1 link, 0 B
+  artifacts                              artifacts                1 file, 2 directories, 149 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 1.1 MB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  notes.txt                              not part of the store
+  user-folder                            not part of the store
+  workspaces/linked-notes                not a stored run ID
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 5 files, 4 directories, 2 links, 1.1 MB in 6 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data"
+--- end dry run stdout ---
+PASS: dry run exits 0 (0)
+PASS: dry run changes no byte (sha256, size, mtime, inode of every entry incl. directories) (before c44dd6709263721b after c44dd6709263721b)
+$ node apps/api/dist/main.js --reset --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data
+exit code: 0; 11878 ms
+--- dry run with --data-dir stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data\graphgoblin.db (format 4, the current format)
+
+Removes:
+  workspaces/01M5V1YATND8M874NM9CJY685R  run workspace            1 file, 2 directories, 1 link, 10 B
+  workspaces/01M5V1YCDTDB5E4CPXT9DR84X2  run workspace            0 files, 1 link, 0 B
+  artifacts                              artifacts                1 file, 2 directories, 149 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 1.1 MB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  notes.txt                              not part of the store
+  user-folder                            not part of the store
+  workspaces/linked-notes                not a stored run ID
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 5 files, 4 directories, 2 links, 1.1 MB in 6 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data"
+--- end dry run with --data-dir stdout ---
+PASS: dry run with --data-dir exits 0 (0)
+PASS: second dry run changes no byte (before c44dd6709263721b after c44dd6709263721b)
+tree hash before c44dd6709263721b059c97aa5647eac46153ea779c0e7b533f5998573e080fc3; after c44dd6709263721b059c97aa5647eac46153ea779c0e7b533f5998573e080fc3
+PASS: manifest removes run workspace 01M5V1YATND8M874NM9CJY685R
+PASS: manifest removes run workspace 01M5V1YCDTDB5E4CPXT9DR84X2
+PASS: the junction run workspace is listed as one link
+PASS: manifest removes artifacts
+PASS: manifest removes the database
+PASS: manifest lists graphgoblin.db-wal exactly when it exists ({"exists":true})
+PASS: manifest lists graphgoblin.db-shm exactly when it exists ({"exists":true})
+PASS: manifest lists graphgoblin.db-journal exactly when it exists ({"exists":false})
+PASS: the lock is the last Removes line (  graphgoblin.lock                       the reset's own lock     removed last, on release)
+PASS: manifest keeps master.key
+PASS: manifest keeps notes.txt
+PASS: manifest keeps user-folder
+PASS: manifest keeps workspaces/my-notes
+PASS: manifest keeps workspaces/linked-notes
+PASS: master.key is kept as the secret-store key
+PASS: no run workspace is under Keeps
+PASS: dry run prints the confirmed command naming the data directory
+
+=== Check 6: confirmed reset, then byte preservation ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data
+exit code: 0; 13708 ms
+--- confirmed reset stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data\graphgoblin.db (format 4, the current format)
+
+Removes:
+  workspaces/01M5V1YATND8M874NM9CJY685R  run workspace            1 file, 2 directories, 1 link, 10 B
+  workspaces/01M5V1YCDTDB5E4CPXT9DR84X2  run workspace            0 files, 1 link, 0 B
+  artifacts                              artifacts                1 file, 2 directories, 149 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 1.1 MB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  notes.txt                              not part of the store
+  user-folder                            not part of the store
+  workspaces/linked-notes                not a stored run ID
+  workspaces/my-notes                    not a stored run ID
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 5 files, 4 directories, 2 links, 1.1 MB in 6 items.
+
+Removing:
+  removed workspaces/01M5V1YATND8M874NM9CJY685R (1 file, 2 directories, 1 link, 10 B)
+  removed workspaces/01M5V1YCDTDB5E4CPXT9DR84X2 (0 files, 1 link, 0 B)
+  removed artifacts (1 file, 2 directories, 149 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 1.1 MB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\data.
+--- end confirmed reset stdout ---
+PASS: confirmed reset exits 0 (0)
+PASS: prints Reset complete.
+--- tree after the confirmed reset (tree hash 413d727646bcbaced5444d6c15dde94c9dae8a23386d8f09c97feaf3dd450d63) ---
+D data/ mtime=1792983161466319700 ino=3096224751583942
+F data/master.key 44B sha256=ff0b2affd5d3bb8872e5529d0c8f0fb2a573f8083d58100170b5d893cec603d2 mtime=1792983113842185800 ino=14073748843299636
+F data/notes.txt 23B sha256=3c5adeb7c172d0d559c670fdbe41f860c89f19b005eb8b410d5017267565d34a mtime=1792983126140168600 ino=18577348470676258
+D data/user-folder/ mtime=1792983126141168400 ino=14636698796727088
+F data/user-folder/a.txt 25B sha256=87d2ddca5524e1cfe43c70ec073c25a9d1093a68190c3909c8b743ee8ced9e76 mtime=1792983126141168400 ino=4222124658432819
+D data/workspaces/ mtime=1792983161427174600 ino=10414574146062587
+L data/workspaces/linked-notes -> %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c01-UD7eNs\outside-notes ino=4222124658432800
+D data/workspaces/my-notes/ mtime=1792983126138154300 ino=4503599635143446
+F data/workspaces/my-notes/keep.txt 31B sha256=0170b9afc1520de48d295ec6b82c8f66535da4f32404c1307ffd61793fc5a811 mtime=1792983126138154300 ino=4785074611854111
+D outside-notes/ mtime=1792983126128127000 ino=7318349402249568
+F outside-notes/notes.md 28B sha256=dfa559683f78cde8ed088d3da927adf792aeda1db7e2fff202d61f6930a1f270 mtime=1792983126128127000 ino=6192449495407297
+D outside-repo/ mtime=1792983126126127800 ino=11258999076192987
+D outside-repo/src/ mtime=1792983126127127400 ino=17169973587122426
+F outside-repo/src/precious.txt 33B sha256=b229289c288b986a1ff082c7e4072c4ece2c22d35cd03b53a68b02e6eb40639e mtime=1792983126127127400 ino=18577348470675713
+D outside-run2/ mtime=1792983126130127600 ino=6755399448828615
+F outside-run2/linked-run.txt 43B sha256=d8ecb3402e5faf8e626a8419b2bce1bd6f16111d8ca2872a46c84978450b748a mtime=1792983126130127600 ino=4503599635143402
+--- end tree after the confirmed reset (tree hash 413d727646bcbaced5444d6c15dde94c9dae8a23386d8f09c97feaf3dd450d63) ---
+PASS: master.key is byte-identical
+PASS: every kept entry and every link target is byte-identical (records incl. mtime and inode) (before 6ea11fe9e9d1a4ae after 6ea11fe9e9d1a4ae)
+PASS: kept junction workspaces/linked-notes still points at its target
+PASS: both run workspaces are gone (the junction one as a link)
+PASS: the junction targets still hold their files
+data directory after reset: ["master.key","notes.txt","user-folder","workspaces"]
+PASS: only kept entries remain at the root
+
+=== Fresh start after the reset (port 6340) ===
+PASS: API starts on the reset directory ()
+GET /loops -> 200 {"items":[]}
+PASS: fresh store has no loops
+PASS: fresh API drains and exits 0
+PASS: master.key reused unchanged by the fresh store
+fresh store marker: [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]; runs 0; loops 0
+
+SUMMARY c01-c06-dry-run-and-bytes: 40 passed, 0 failed

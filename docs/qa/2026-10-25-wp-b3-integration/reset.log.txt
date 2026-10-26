@@ -1,0 +1,67 @@
+pnpm.cmd : $ node --test tooling/scripts/reset.acceptance.mjs
+At line:2 char:296
++ ... gradeExit); pnpm.cmd test:reset *> $env:TEMP\gg-wp-b3-int-reset.log;  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node --test t....acceptance.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+TAP version 13
+# --- dry run output ---
+# GraphGoblin reset (dry run: nothing is removed)
+# Data directory: %USERPROFILE%\\AppData\\Local\\Temp\\gg-reset-acceptance-Jeb9Vh\\data
+# Database:       %USERPROFILE%\\AppData\\Local\\Temp\\gg-reset-acceptance-Jeb9Vh\\data\\graphgoblin.db (format 3; this build requires format 4)
+# Removes:
+#   workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B
+#   artifacts                              artifacts                1 file, 2 directories, 13 B
+#   graphgoblin.db                         database                 1 file, 4.0 KB
+#   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+#   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+#   graphgoblin.lock                       the reset's own lock     removed last, on release
+# Keeps:
+#   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+#   workspaces/my-notes                    not a stored run ID
+#   Browser device drafts stay in each browser; discard them from the loop editor.
+# Total removed: 5 files, 4 directories, 1 link, 337.8 KB in 5 items.
+# Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+#   node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\\AppData\\Local\\Temp\\gg-reset-acceptance-Jeb9Vh\\data"
+# --- end ---
+# --- confirmed output ---
+# GraphGoblin reset
+# Data directory: %USERPROFILE%\\AppData\\Local\\Temp\\gg-reset-acceptance-Jeb9Vh\\data
+# Database:       %USERPROFILE%\\AppData\\Local\\Temp\\gg-reset-acceptance-Jeb9Vh\\data\\graphgoblin.db (format 3; this build requires format 4)
+# Removes:
+#   workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B
+#   artifacts                              artifacts                1 file, 2 directories, 13 B
+#   graphgoblin.db                         database                 1 file, 4.0 KB
+#   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 301.8 KB
+#   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+#   graphgoblin.lock                       the reset's own lock     removed last, on release
+# Keeps:
+#   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+#   workspaces/my-notes                    not a stored run ID
+#   Browser device drafts stay in each browser; discard them from the loop editor.
+# Total removed: 5 files, 4 directories, 1 link, 337.8 KB in 5 items.
+# Removing:
+#   removed workspaces/01JRESETACCEPTANCEAAAAAAAA (1 file, 2 directories, 1 link, 10 B)
+#   removed artifacts (1 file, 2 directories, 13 B)
+#   removed graphgoblin.db (1 file, 4.0 KB)
+#   removed graphgoblin.db-wal (1 file, 301.8 KB)
+#   removed graphgoblin.db-shm (1 file, 32.0 KB)
+#   removed graphgoblin.lock
+# Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\\AppData\\Local\\Temp\\gg-reset-acceptance-Jeb9Vh\\data.
+# --- end ---
+# Subtest: the built API refuses an older store, lists and then performs an explicit reset, and starts fresh
+ok 1 - the built API refuses an older store, lists and then performs an explicit reset, and starts fresh
+  ---
+  duration_ms: 76111.3952
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76453.4548

@@ -1,0 +1,501 @@
+{
+  "kind": "healthy-current",
+  "dataDirectory": "%TEMP%\\gg-qa-266-r3-wal-raUfpD\\healthy-current",
+  "sourceDirectory": "%TEMP%\\gg-qa-266-r3-wal-raUfpD\\healthy-current-source",
+  "metadata": {
+    "kind": "healthy-current",
+    "mutation": "UPDATE model_catalog SET display_name = 'Independent QA WAL catalog entry' WHERE harness = 'codex' AND model = 'gpt-6-luna'",
+    "rowsAffected": 1,
+    "ledgerBefore": 15,
+    "ledgerAfter": 15,
+    "format": 4,
+    "pendingMigrations": 0,
+    "catalog": [
+      {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "displayName": "Claude Fable 5.1"
+      },
+      {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "displayName": "Claude Opus 5.5"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.5",
+        "displayName": "GPT-5.5"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "displayName": "GPT-5.6 Luna"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-sol",
+        "displayName": "GPT-5.6 Sol"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-terra",
+        "displayName": "GPT-5.6 Terra"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "displayName": "GPT-6 Astra"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "displayName": "Independent QA WAL catalog entry"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-sol",
+        "displayName": "GPT-6 Sol"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6.1-sol",
+        "displayName": "GPT-6.1 Sol"
+      }
+    ]
+  },
+  "initial": {
+    "graphgoblin.db": {
+      "present": true,
+      "bytes": 262144,
+      "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+    },
+    "graphgoblin.db-wal": {
+      "present": true,
+      "bytes": 4152,
+      "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+    },
+    "graphgoblin.db-shm": {
+      "present": true,
+      "bytes": 32768,
+      "sha256": "870db8723ed6fef7e3e8197f37642c858892fb1e83ee814d3bd0bf455561e6ff"
+    }
+  },
+  "preflight": {
+    "result": {
+      "code": 1,
+      "signal": null,
+      "killed": false,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-r3-wal-raUfpD\\healthy-current is writable\n  WARN    Master key      %TEMP%\\gg-qa-266-r3-wal-raUfpD\\healthy-current\\master.key does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)\n  ok      Database        reachable and migrated\n  FAIL    Harness codex   Codex CLI is not logged in; run `codex login`\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured\n  ok      Default model   gpt-6-luna (codex) is in the model catalog\n\n1 failed, 2 warning(s): fix the failed checks before starting\n",
+      "stderr": "",
+      "elapsedMs": 2741
+    },
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "870db8723ed6fef7e3e8197f37642c858892fb1e83ee814d3bd0bf455561e6ff"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "29268c424b93cd96a0bb4f07eae6476cb81d36282ac1e724e290aa04f54a64ac"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": true,
+      "shmChanged": true
+    }
+  },
+  "controlledPreflight": {
+    "result": {
+      "code": 0,
+      "signal": null,
+      "killed": false,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-r3-wal-raUfpD\\healthy-current is writable\n  WARN    Master key      %TEMP%\\gg-qa-266-r3-wal-raUfpD\\healthy-current\\master.key does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)\n  ok      Database        reachable and migrated\n  ok      Harness codex   codex 0.0.0-qa-readiness is installed and logged in\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured\n  ok      Default model   gpt-6-luna (codex) is in the model catalog\n\n0 failed, 2 warning(s): ready to start\n",
+      "stderr": "",
+      "elapsedMs": 2589
+    },
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "29268c424b93cd96a0bb4f07eae6476cb81d36282ac1e724e290aa04f54a64ac"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "29268c424b93cd96a0bb4f07eae6476cb81d36282ac1e724e290aa04f54a64ac"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": true,
+      "shmChanged": false
+    }
+  },
+  "guard": {
+    "result": {
+      "code": 0,
+      "signal": null,
+      "killed": false,
+      "stdout": "{\"accepted\":true,\"state\":\"current\",\"pendingMigrations\":0,\"catalog\":[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-opus-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Opus 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"Independent QA WAL catalog entry\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"minimal\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true}]}",
+      "stderr": "",
+      "elapsedMs": 1291
+    },
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "29268c424b93cd96a0bb4f07eae6476cb81d36282ac1e724e290aa04f54a64ac"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "29268c424b93cd96a0bb4f07eae6476cb81d36282ac1e724e290aa04f54a64ac"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": true,
+      "shmChanged": false
+    },
+    "value": {
+      "accepted": true,
+      "state": "current",
+      "pendingMigrations": 0,
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "displayName": "Claude Fable 5.1",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "high",
+          "enabled": true
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "displayName": "Claude Opus 5.5",
+          "efforts": ["low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "high",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "displayName": "GPT-5.5",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "displayName": "GPT-5.6 Luna",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "low",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "displayName": "GPT-5.6 Sol",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "displayName": "GPT-5.6 Terra",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "displayName": "GPT-6 Astra",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "displayName": "Independent QA WAL catalog entry",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "low",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "displayName": "GPT-6 Sol",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "displayName": "GPT-6.1 Sol",
+          "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+          "defaultEffort": "medium",
+          "enabled": true
+        }
+      ]
+    }
+  },
+  "startup": {
+    "health": {
+      "status": 200,
+      "body": {
+        "status": "ok"
+      }
+    },
+    "catalog": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "harness": "claude",
+            "model": "claude-fable-5-1",
+            "source": "harness",
+            "displayName": "Claude Fable 5.1",
+            "efforts": ["low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "high",
+            "enabled": true
+          },
+          {
+            "harness": "claude",
+            "model": "claude-opus-5-5",
+            "source": "harness",
+            "displayName": "Claude Opus 5.5",
+            "efforts": ["low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "high",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.5",
+            "source": "harness",
+            "displayName": "GPT-5.5",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.6-luna",
+            "source": "harness",
+            "displayName": "GPT-5.6 Luna",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "low",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.6-sol",
+            "source": "harness",
+            "displayName": "GPT-5.6 Sol",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-5.6-terra",
+            "source": "harness",
+            "displayName": "GPT-5.6 Terra",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6-astra",
+            "source": "harness",
+            "displayName": "GPT-6 Astra",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6-luna",
+            "source": "harness",
+            "displayName": "GPT-6 Luna",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "low",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6-sol",
+            "source": "harness",
+            "displayName": "GPT-6 Sol",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true
+          },
+          {
+            "harness": "codex",
+            "model": "gpt-6.1-sol",
+            "source": "harness",
+            "displayName": "GPT-6.1 Sol",
+            "efforts": ["minimal", "low", "medium", "high", "xhigh", "max"],
+            "defaultEffort": "medium",
+            "enabled": true
+          }
+        ]
+      }
+    },
+    "stdout": "",
+    "stderr": "",
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "4bde612009cd056928c647ff4463785b85ccea159897aedbb2ddae221abeac6f"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "29268c424b93cd96a0bb4f07eae6476cb81d36282ac1e724e290aa04f54a64ac"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 16512,
+        "sha256": "641de9088d01545f5f38fd97a410929326b958f220410ffc8376b94faa7500cd"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "abcd691ff3d4cec9113c98ca8ea108b10f7668166e39df3092bb34def96891c9"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": false,
+      "shmChanged": true
+    },
+    "note": "A supported full startup seeds/refreshes its catalog and opens a writable connection. Byte preservation is required of its preceding read-only guard, measured separately."
+  },
+  "checks": [
+    {
+      "check": "preflight preserves DB/WAL and all three files",
+      "pass": true
+    },
+    {
+      "check": "healthy CLI exit 0, migrated database and stored default model",
+      "pass": true,
+      "controlledCodexReadiness": true
+    },
+    {
+      "check": "controlled preflight preserves DB/WAL and all three files",
+      "pass": true
+    },
+    {
+      "check": "startup read-only guard accepts current, pending migrations 0, catalog listed, bytes intact",
+      "pass": true
+    },
+    {
+      "check": "built API starts healthy and serves model catalog",
+      "pass": true
+    }
+  ]
+}

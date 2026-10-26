@@ -9,7 +9,6 @@ import {
   rememberLocalDraft,
   saveLocalDraft,
   subscribeDeviceStorage,
-  UNRECONCILED_DEVICE_TOKEN,
 } from '../drafts/local-drafts.js';
 import { markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
@@ -71,7 +70,7 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
  * After the server accepted a save: advance the loop's token, whether or not the editor that sent
  * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
  * since the save started takes `token` only when it shares that save's request base; unrelated
- * or converted device work retains its base and explicit reconciliation requirement.
+ * device work retains its base and explicit reconciliation requirement.
  * The server holds the draft whether or not this device can record that: a device storage failure
  * is reported as its own notice (`deviceStorageProblem`), never as a save still pending.
  */
@@ -94,8 +93,6 @@ export function draftConflict(error: unknown): { serverToken: string | undefined
 
 export const CONFLICT_MESSAGE =
   'The draft changed on the server (another tab or device saved it). Nothing is saved to the server until you choose.';
-export const CONVERSION_CONFLICT_MESSAGE =
-  'This device draft was converted to format 4. Its old server token is no longer valid. Nothing is saved to the server until you reload or explicitly overwrite with this copy.';
 
 /**
  * Debounced autosave. Every edit is mirrored to IndexedDB at once, so nothing is lost offline or
@@ -180,12 +177,7 @@ export function useAutosave(
           const conflict = draftConflict(error);
           if (conflict) {
             now.setConflict(conflict);
-            setSaveState(
-              'conflict',
-              baseToken === UNRECONCILED_DEVICE_TOKEN
-                ? CONVERSION_CONFLICT_MESSAGE
-                : CONFLICT_MESSAGE,
-            );
+            setSaveState('conflict', CONFLICT_MESSAGE);
           } else if (isOfflineError(error)) {
             setSaveState('offline');
             // A save can be the first request to notice an outage. Refresh the active loop

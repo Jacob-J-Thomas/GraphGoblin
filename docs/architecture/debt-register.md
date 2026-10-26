@@ -4,7 +4,7 @@ Companion to the [architecture snapshot](README.md); written for issue #163 agai
 
 ## Register
 
-Format-4 preparation adds frozen v3 parsers (`packages/contracts/src/upgrade-v3.ts`) beside the frozen v2 parsers (`packages/contracts/src/upgrade-v2.ts`). Both remain offline-only root exports relevant to D10; its bundle measurements below describe the earlier `c379f80` snapshot and exclude the v3 capture.
+Historical format-4 preparation added frozen v3 parsers beside the frozen v2 parsers. Both were retired by [ADR-0042](../decisions/ADR-0042-explicit-resets-replace-conversion.md); they are no longer exports or bundle inputs. D10's bundle measurements below describe the earlier `c379f80` snapshot and exclude the later v3 capture.
 
 #164 step 04 (PR #196) resolved four items on the integration branch:
 

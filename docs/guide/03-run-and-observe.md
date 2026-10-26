@@ -138,7 +138,7 @@ When **Input requested** appears, answer the prompt using the generated form and
 
 Use **Pause** to request a hold; an executing node can finish before the next node is held. **Resume** appears for paused runs. A run paused while it was waiting (for input, a signal, a timer, or a child run) goes back to that same wait with its deadlines intact; a timer that came due meanwhile fires right after the resume. **Cancel run** persists a cancellation request and stops work cooperatively; wait for cancelled status and remember that cancellation does not undo filesystem or external side effects.
 
-The current UI hides controls on terminal runs. After fixing an external cause of a resumable failure, use `resume_run` through MCP or this API request. In Bash:
+On a failed run the inspector offers recovery only where it explains the choice: **Recover script** for an uncertain script (see [Act on failure reasons](#act-on-failure-reasons)) and **Start fresh session for <node>** for a missing provider session ([troubleshooting](07-troubleshooting.md)). For any other resumable failure, after fixing its external cause, use `resume_run` through MCP or this API request. In Bash:
 
 <!-- guide-example: resume-bash -->
 
@@ -161,7 +161,7 @@ Windows PowerShell gives a POST without a body a form content type, which the AP
 
 Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_STATE`.
 
-Editing the loop does not change a failed run's pinned config. For a config or graph fix, publish a corrected version and start a new run. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. Follow resumed failed runs through API snapshots and event pages or MCP; the current inspector retains its original terminal event and does not restart its live subscription.
+Editing the loop does not change a failed run's pinned config. For a config or graph fix, publish a corrected version and start a new run. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt.
 
 Child runs reconstruct like any other run: their first event, `run.queued`, carries the thread the parent seeded (`initialThread`), so the inspector shows inherited messages and values at every event. Runs recorded before that field existed start from empty collections; `GET /runs/{id}/thread` always returns the server's current thread.
 
@@ -189,7 +189,7 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
 
 The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
 
-> After 1.0: A replay button in the run inspector. Use the API or MCP until then.
+> The inspector offers **Replay** from the failed node inside **Recover script**. For any other run, replay through the API or MCP.
 
 ## Stream events and reconnect
 

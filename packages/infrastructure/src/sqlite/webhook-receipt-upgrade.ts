@@ -1,22 +1,15 @@
 import {
   WebhookDeliverySchema,
-  V3RunEventSchema,
+  PreJournalWebhookDeliveredReceiptSchema as deliveredReceipt,
+  PreJournalWebhookFailedReceiptSchema as failedReceipt,
   type WebhookDelivery,
 } from '@graphgoblin/contracts';
 import type { Transaction } from '@libsql/client';
-import { tableBatches } from './upgrade-scan.js';
+import { tableBatches } from './readiness.js';
 
-// Frozen migration identity, independent of the live webhook policy.
+// Frozen current-format migration identity and receipt shape from before #246. These two
+// webhook receipts are all 0015 rewrites; no historical definition/conversion contract is needed.
 export const WEBHOOK_JOURNAL_MIGRATION_TIME = 1792454400000;
-
-const deliveredReceipt = V3RunEventSchema.options.find(
-  (schema): schema is Extract<typeof schema, { shape: { type: { value: 'return.delivered' } } }> =>
-    schema.shape.type.value === 'return.delivered',
-)!;
-const failedReceipt = V3RunEventSchema.options.find(
-  (schema): schema is Extract<typeof schema, { shape: { type: { value: 'return.failed' } } }> =>
-    schema.shape.type.value === 'return.failed',
-)!;
 const envelope = { runId: true, seq: true, ts: true, type: true } as const;
 const receipts = [
   { schema: deliveredReceipt, payload: deliveredReceipt.omit(envelope) },
@@ -28,7 +21,7 @@ const receipts = [
  * Validate the payload separately so stored envelope fields cannot hide unexpected evidence.
  */
 export async function convertHistoricalWebhookReceipts(tx: Transaction): Promise<void> {
-  for await (const batch of tableBatches(tx, 'run_events', undefined, {
+  for await (const batch of tableBatches(tx, 'run_events', {
     where: "type IN ('return.delivered','return.failed')",
   })) {
     for (const row of batch) {
@@ -51,7 +44,6 @@ export async function convertHistoricalWebhookReceipts(tx: Transaction): Promise
       });
       if (!parsed.success) continue;
       const originalPayload = payload as typeof parsedPayload.data;
-      if (originalPayload.channel.kind !== 'webhook') continue;
       const event = parsed.data;
       const failed = event.type === 'return.failed';
       // Validation can normalize a URL. Keep the validated input channel verbatim, like the old

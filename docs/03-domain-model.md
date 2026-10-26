@@ -74,7 +74,7 @@ An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the 
 
 Trigger nodes store `config.type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
 Both webhook signing variants use `type: 'webhook'`. Current configs and exports
-reject `subtype`; old exports are converted only by the format-4 offline upgrade.
+reject `subtype`; exports in an older format are refused, not converted (ADR-0042).
 
 Validation rules enforced by `domain` before a version can be published:
 
@@ -88,7 +88,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
+Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Historical conversion stages have been retired; older stores, exports and device drafts are refused under ADR-0042. Thread format remains 1.
 
 ## Inference context and session identity (#33)
 
@@ -155,7 +155,7 @@ future attempt to execute it fails with `SUBLOOP_NOT_FOUND`.
 
 `SqliteRunRepository.deleteOrphans()` transactionally deletes runs whose version or loop no
 longer exists, using the same run-owned cleanup. It is an offline maintenance operation for
-the later format-4 cutover; the current offline upgrade is unchanged. See
+cleanup of damaged history; nothing runs it automatically. See
 [ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
 
 ## Webhook delivery records (#246)

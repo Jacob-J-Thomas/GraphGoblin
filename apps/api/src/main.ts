@@ -5,6 +5,8 @@ import { bundledWebDist, loadConfig } from './config.js';
 import { runCreateApiKeyCli } from './create-api-key.js';
 import { createContainer } from './container.js';
 import { runPreflightCli } from './preflight.js';
+import { runResetCli } from './reset/reset.js';
+import { StoreRefusedError } from './store-refusal.js';
 
 /** Process entry point: configure, migrate, recover runs, listen, and shut down cleanly. */
 export async function main(): Promise<{
@@ -113,15 +115,18 @@ export async function main(): Promise<{
 
 const invokedDirectly = process.argv[1] !== undefined && /main\.(js|ts)$/.test(process.argv[1]);
 if (invokedDirectly) {
-  // `--preflight` prints the first-run checks and `--create-api-key` mints a key; both exit
-  // without starting the server (docs/11).
+  // `--preflight` prints the first-run checks, `--create-api-key` mints a key and `--reset`
+  // lists (or, confirmed, removes) the store; each exits without starting the server (docs/11).
   const run = process.argv.includes('--preflight')
     ? runPreflightCli().then((code) => process.exit(code))
     : process.argv.includes('--create-api-key')
       ? runCreateApiKeyCli().then((code) => process.exit(code))
-      : main();
+      : process.argv.includes('--reset')
+        ? runResetCli().then((code) => process.exit(code))
+        : main();
   run.catch((error: unknown) => {
-    console.error(error);
+    // A store refusal is a complete operator explanation; a stack trace would only bury it.
+    console.error(error instanceof StoreRefusedError ? error.message : error);
     process.exit(1);
   });
 }

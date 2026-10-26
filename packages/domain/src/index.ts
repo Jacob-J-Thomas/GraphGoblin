@@ -21,16 +21,6 @@ export * from './replay.js';
 export * from './regex-safety.js';
 export * from './model-resolution.js';
 export * from './readiness.js';
-export * from './upgrade.js';
-export * from './upgrade-current.js';
-export {
-  upgradeLoopToV3,
-  upgradeExportToV3,
-  validateUpgradeV3Resolutions,
-  type UpgradeV3Resolutions,
-} from './upgrade-v2-v3.js';
-export * from './convert-v3-v4/index.js';
-
 export * from './poll-items.js';
 export * from './json-value.js';
 export * from './retired-destinations.js';

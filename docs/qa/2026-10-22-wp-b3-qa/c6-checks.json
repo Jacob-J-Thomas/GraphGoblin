@@ -1,0 +1,14 @@
+[
+  {
+    "id": "c6-retired-event-boundary",
+    "steps": "Create/publish two loops, stop API, edit one published exit to event, restart, get details, start runs on both.",
+    "expected": "Store starts; affected loop detail and start return LOOP_UPGRADE_REQUIRED; healthy loop executes successfully.",
+    "actual": {
+      "retiredDetail": 409,
+      "retiredStart": 409,
+      "healthyRun": "succeeded",
+      "otherInvalidExit": 1
+    },
+    "status": "PASS"
+  }
+]

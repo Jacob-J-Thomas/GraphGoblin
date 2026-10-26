@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "reason": "Original QA watchdog was 60s, below product STORE_READ_TIMEOUT_MS=120000. Only this inconclusive case is repeated, with a 300s watchdog; original evidence retained.",
+  "durationMs": 30150,
+  "store": "%TEMP%\\gg-qa-266-20261021-targeted-qqlx1z\\data",
+  "dry": {
+    "code": 0,
+    "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: %TEMP%\\gg-qa-266-20261021-targeted-qqlx1z\\data\nDatabase:       %TEMP%\\gg-qa-266-20261021-targeted-qqlx1z\\data\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JQA266RUNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 289.7 KB\n  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 5 files, 4 directories, 1 link, 325.7 KB in 5 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"%TEMP%\\gg-qa-266-20261021-targeted-qqlx1z\\data\"\n",
+    "stderr": ""
+  },
+  "before": [
+    ["data", "directory"],
+    ["data/artifacts", "directory"],
+    ["data/artifacts/text", "directory"],
+    [
+      "data/artifacts/text/abc123",
+      "9938be87d35f2a7a2b80237e8dc71806b209aaea8252f12c1b12949f61d40476"
+    ],
+    ["data/graphgoblin.db", "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"],
+    ["data/graphgoblin.db-shm", "306ddd5744aabb670ee9ee238bc387fd4fcfdad7807c3af30275c12b158f0c54"],
+    ["data/graphgoblin.db-wal", "ed2f366c28ce7b4f982e8cabd1a6378a33868e202d220dd9acd5a28c953c7486"],
+    ["data/master.key", "10f76ce356b2749fbeb7c49530ae8d558221d2841f9096bfb1821d6744a6065c"],
+    ["data/workspaces", "directory"],
+    ["data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA", "directory"],
+    [
+      "data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA/repo",
+      "link",
+      "%TEMP%\\gg-qa-266-20261021-targeted-qqlx1z\\outside"
+    ],
+    ["data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src", "directory"],
+    [
+      "data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src/out.txt",
+      "a4c7b520c630ff81aedaa02cea522154f941d2f8e4469c766f1fdd9daa5f65fe"
+    ],
+    ["data/workspaces/my-notes", "directory"],
+    [
+      "data/workspaces/my-notes/keep.txt",
+      "11e7e42ccff85a95b10409f7a45e0c579f8b79110058a1262dc48cf2e1e2bb9c"
+    ],
+    ["outside", "directory"],
+    ["outside/src", "directory"],
+    ["outside/src/precious.txt", "1979b6648adabc9a829e8332ed56b7407e1f051bacd1a7ba66e8f9a01ac85a25"]
+  ],
+  "after": [
+    ["data", "directory"],
+    ["data/artifacts", "directory"],
+    ["data/artifacts/text", "directory"],
+    [
+      "data/artifacts/text/abc123",
+      "9938be87d35f2a7a2b80237e8dc71806b209aaea8252f12c1b12949f61d40476"
+    ],
+    ["data/graphgoblin.db", "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"],
+    ["data/graphgoblin.db-shm", "306ddd5744aabb670ee9ee238bc387fd4fcfdad7807c3af30275c12b158f0c54"],
+    ["data/graphgoblin.db-wal", "ed2f366c28ce7b4f982e8cabd1a6378a33868e202d220dd9acd5a28c953c7486"],
+    ["data/master.key", "10f76ce356b2749fbeb7c49530ae8d558221d2841f9096bfb1821d6744a6065c"],
+    ["data/workspaces", "directory"],
+    ["data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA", "directory"],
+    [
+      "data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA/repo",
+      "link",
+      "%TEMP%\\gg-qa-266-20261021-targeted-qqlx1z\\outside"
+    ],
+    ["data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src", "directory"],
+    [
+      "data/workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src/out.txt",
+      "a4c7b520c630ff81aedaa02cea522154f941d2f8e4469c766f1fdd9daa5f65fe"
+    ],
+    ["data/workspaces/my-notes", "directory"],
+    [
+      "data/workspaces/my-notes/keep.txt",
+      "11e7e42ccff85a95b10409f7a45e0c579f8b79110058a1262dc48cf2e1e2bb9c"
+    ],
+    ["outside", "directory"],
+    ["outside/src", "directory"],
+    ["outside/src/precious.txt", "1979b6648adabc9a829e8332ed56b7407e1f051bacd1a7ba66e8f9a01ac85a25"]
+  ]
+}

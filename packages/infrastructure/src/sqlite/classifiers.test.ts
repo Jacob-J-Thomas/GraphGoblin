@@ -153,7 +153,7 @@ describe('classifier repository', () => {
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
         // Count shipped entries, including the new owner/history index, after this fixture.
         expect(await handle.pendingMigrations()).toBe(shippedSqlMigrationCount() - count);
-        await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+        await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);
         expect(

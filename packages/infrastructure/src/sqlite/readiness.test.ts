@@ -2,7 +2,7 @@ import { afterEach, expect, it } from 'vitest';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
-import { guardDatabaseUpgrade } from './upgrade.js';
+import { guardCurrentStore } from './store-format.js';
 import { currentStoreReadiness, SHIPPED_MIGRATIONS } from './readiness.js';
 
 const handles: DatabaseHandle[] = [];
@@ -20,8 +20,8 @@ it.each(['X Sig', 'X-Sig', '', 'x'.repeat(129), 'x\nbad'])(
       args: [header, FIXTURE_TS],
     });
     const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
-    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
+    await expect(guardCurrentStore(handle.client)).rejects.toMatchObject({
+      code: 'STORE_UNSUPPORTED',
       message: expect.stringContaining('signing headers'),
     });
     expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
@@ -51,13 +51,13 @@ it.each([
   await handle.client.execute(sql);
   const statements: string[] = [];
   await expect(
-    guardDatabaseUpgrade({
+    guardCurrentStore({
       execute: (query) => {
         statements.push(typeof query === 'string' ? query : query.sql);
         return handle.client.execute(query);
       },
     }),
-  ).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  ).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
   expect(statements.every((sql) => /^(SELECT|PRAGMA (table_info|index_list))/i.test(sql))).toBe(
     true,
   );
@@ -78,13 +78,13 @@ it('refuses malformed stored definitions before any startup write', async () => 
   });
   const statements: string[] = [];
   await expect(
-    guardDatabaseUpgrade({
+    guardCurrentStore({
       execute: (query) => {
         statements.push(typeof query === 'string' ? query : query.sql);
         return handle.client.execute(query);
       },
     }),
-  ).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  ).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
   expect(statements.some((sql) => /journal_mode|busy_timeout/i.test(sql))).toBe(false);
 });
 
@@ -140,10 +140,10 @@ it.each([8, 9, 10, 11, 12])(
     const handle = await through(index);
     const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
     const schema = (await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
-    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
+    await expect(guardCurrentStore(handle.client)).rejects.toMatchObject({
+      code: 'STORE_UNSUPPORTED',
     });
-    await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
     expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
       before,
     );
@@ -156,11 +156,13 @@ it('refuses a head ledger with missing additive structure after a no-op migratio
   const handle = await openMemoryDatabase();
   handles.push(handle);
   await handle.client.execute('DROP TABLE classifier_models');
-  await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-    code: 'DATA_UPGRADE_REQUIRED',
+  await expect(guardCurrentStore(handle.client)).rejects.toMatchObject({
+    code: 'STORE_UNSUPPORTED',
   });
   const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
-  await expect(handle.migrate()).rejects.toThrow('Missing current-store table: classifier_models');
+  await expect(handle.migrate()).rejects.toThrow(
+    'The format-4 store is damaged: missing table classifier_models',
+  );
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(before);
 });
 it('requires the shipped baseline constraint names as well as their expressions', async () => {
@@ -171,8 +173,8 @@ it('requires the shipped baseline constraint names as well as their expressions'
   if (typeof ddl !== 'string') throw new Error('Expected table SQL');
   await handle.client.execute('DROP TABLE webhook_receipts');
   await handle.client.execute(ddl.replace('webhook_receipt_status_check', 'wrong_constraint'));
-  await expect(guardDatabaseUpgrade(handle.client)).rejects.toThrow(
-    'Stored constraints are incomplete',
+  await expect(guardCurrentStore(handle.client)).rejects.toThrow(
+    'The format-4 store is damaged: incomplete constraints in webhook_receipts',
   );
 });
 import { cp, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
@@ -219,7 +221,7 @@ it('refuses a complete format-3 marker at 0011 without applying cutover SQL', as
   await handle.client.execute('UPDATE gg_upgrade_state SET format_version=3');
   const before = (await handle.client.execute('SELECT * FROM gg_upgrade_state')).rows;
   const schema = (await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
-  await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
   expect((await handle.client.execute('SELECT * FROM gg_upgrade_state')).rows).toEqual(before);
   expect((await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows).toEqual(
     schema,

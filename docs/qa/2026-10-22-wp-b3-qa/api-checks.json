@@ -1,0 +1,132 @@
+[
+  {
+    "id": "format3-startup",
+    "steps": "Run built API over seeded format-3 store.",
+    "expected": "Exit 1 with exact found/required format and reset instruction; no DB/WAL or unrelated bytes changed.",
+    "actual": {
+      "code": 1,
+      "stdout": "",
+      "stderr": "GraphGoblin did not start: this build cannot open the store in data directory %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe.\n  Database: %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\\graphgoblin.db\n  Found:    format 3\n  Requires: format 4\n  Reason:   The store is format 3; this build reads only format 4\nNo stored data was changed. This build does not convert stores from other formats.\nTo keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\"\n",
+      "killed": false,
+      "durationMs": 1897
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "format3-preflight",
+    "steps": "Run built API --preflight.",
+    "expected": "Exit 1 with failed Database line and format-3 reset guidance.",
+    "actual": {
+      "code": 1,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe is writable\n  ok      Master key      read from %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\\master.key\n  FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\"\n  FAIL    Harness codex   Codex CLI is not logged in; run `codex login`\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start\n\n2 failed, 1 warning(s): fix the failed checks before starting\n",
+      "stderr": "",
+      "killed": false,
+      "durationMs": 2767
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "recipe-dry-and-wrong-target",
+    "steps": "Hash data and linked target; dry reset, missing --data-dir confirmation and wrong disposable target.",
+    "expected": "Dry exit 0, missing target exit 2, wrong target exit 1; dry/refused bytes identical.",
+    "actual": {
+      "dry": {
+        "code": 0,
+        "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\nDatabase:       %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JQA266RUNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 289.7 KB\n  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 5 files, 4 directories, 1 link, 325.7 KB in 5 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"%TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe\"\n",
+        "stderr": "",
+        "durationMs": 3449
+      },
+      "missing": {
+        "code": 2,
+        "stdout": "",
+        "stderr": "--yes needs --data-dir <path> naming the data directory to reset\nusage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)\n",
+        "killed": false,
+        "durationMs": 2005
+      },
+      "wrong": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: --data-dir names %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe-outside, but this environment's data directory is %TEMP%\\gg-qa-266-r2-api-usjZZU\\recipe (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory\nNothing was changed.\n",
+        "killed": false,
+        "durationMs": 2084
+      },
+      "identical": true
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "recipe-confirmed-reset",
+    "steps": "Confirm exact configured target; compare survivors and outside repository target.",
+    "expected": "Only manifest removed; master.key, notes and target behind junction preserved.",
+    "actual": {
+      "code": 0,
+      "survivors": [
+        "master.key",
+        "workspaces",
+        "workspaces/my-notes",
+        "workspaces/my-notes/keep.txt"
+      ],
+      "linkedTargetPreserved": true
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "fresh-start-and-lock",
+    "steps": "Start a new built process at 5652, list loops, attempt both reset modes while it owns store.",
+    "expected": "Healthy empty current store; dry and confirmed reset exit 1 with live-lock refusal and no byte change.",
+    "actual": {
+      "empty": true,
+      "dryCode": 1,
+      "confirmedCode": 1,
+      "identical": true
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "old-export-import",
+    "steps": "POST format-3 export; list loops.",
+    "expected": "400 LOOP_FORMAT_UNSUPPORTED with found=3 required=4; no loop created.",
+    "actual": {
+      "status": 400,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-format-unsupported",
+        "title": "loop format unsupported",
+        "status": 400,
+        "code": "LOOP_FORMAT_UNSUPPORTED",
+        "detail": "This loop export is format 3; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.",
+        "errors": {
+          "foundFormat": 3,
+          "requiredFormat": 4
+        }
+      }
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "c6-retired-event-boundary",
+    "steps": "Create/publish two loops, stop API, edit one published exit to event, restart, get details, start runs on both.",
+    "expected": "Store starts; affected loop detail and start return LOOP_UPGRADE_REQUIRED; healthy loop executes successfully.",
+    "status": "FAIL",
+    "actual": "TypeError: Cannot read properties of undefined (reading 'status')\n    at file:///<worktree>/docs/qa/2026-10-22-wp-b3-qa/api-qa.mjs:18:1955\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Object.check (file:///<worktree>/docs/qa/2026-10-22-wp-b3-qa/qa-lib.mjs:24:138)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-b3-qa/api-qa.mjs:18:1"
+  },
+  {
+    "id": "truncated-migration-ledger",
+    "steps": "Seed complete current structure; stop seed process; delete final ledger row only; hash; invoke built API and preflight.",
+    "expected": "Both refuse with behind the store structure before migrations/key creation; DB and WAL unchanged.",
+    "status": "FAIL",
+    "actual": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    [\n      'graphgoblin.db',\n      'sha256',\n+     '25c003b531f7efb24eef92daf66021aaf6e0aeb03b05359aa38bc2f5835e1260'\n-     '1893672c2920e9494c49df84d1a5381bae04046aae6da8001c3381505da87780'\n    ],\n-   [\n-     'graphgoblin.db-shm',\n-     'SQLite shared-memory index'\n-   ],\n-   [\n-     'graphgoblin.db-wal',\n-     'sha256',\n-     '175e25db08a68f4adc0b41394a904c60168e5e6afeb2dfb7f2d7f20ca286ed58'\n-   ]\n  ]\n\n    at file:///<worktree>/docs/qa/2026-10-22-wp-b3-qa/api-qa.mjs:19:1478\n    at async Object.check (file:///<worktree>/docs/qa/2026-10-22-wp-b3-qa/qa-lib.mjs:24:138)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-b3-qa/api-qa.mjs:19:1"
+  },
+  {
+    "id": "built-reset-usage",
+    "steps": "Invoke built CLI --reset --help, which prints strict reset usage without starting API.",
+    "expected": "Usage advertises reset only; no converter option/tool.",
+    "actual": {
+      "code": 2,
+      "stdout": "",
+      "stderr": "unknown option --help\nusage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)\n",
+      "killed": false,
+      "durationMs": 1867
+    },
+    "status": "PASS"
+  }
+]

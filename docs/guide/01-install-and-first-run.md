@@ -2,7 +2,7 @@
 
 ## Check prerequisites
 
-Install Git, Node 22 LTS (22.x), pnpm, and the Codex CLI. The repository pins pnpm 12.8.1 and the Codex SDK to 0.160.0. The API runs Codex turns through the CLI bundled with that SDK; you need your own Codex CLI to log in and, for the [Codex plugin](05-mcp-and-codex-plugin.md), version 0.117.0 or newer (verified with 0.160.0). Claude Code is an optional, separately installed harness for native Windows only; GraphGoblin does not install or bundle its CLI. Check the standard prerequisites in PowerShell or Bash:
+Install Git, Node 22 LTS (22.22.2 or later), pnpm, and the Codex CLI. The repository pins pnpm 12.8.1 and the Codex SDK to 0.160.0. The API runs Codex turns through the CLI bundled with that SDK; you need your own Codex CLI to log in and, for the [Codex plugin](05-mcp-and-codex-plugin.md), version 0.117.0 or newer (verified with 0.160.0). Claude Code is an optional, separately installed harness for native Windows only; GraphGoblin does not install or bundle its CLI. Check the standard prerequisites in PowerShell or Bash:
 
 ```powershell
 git --version
@@ -15,7 +15,7 @@ codex login status
 
 PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`. Bash blocks use `pnpm` and `codex`.
 
-Select Node 22 on PATH for the whole shell before installing, building or starting GraphGoblin. Confirm `node --version` reports `v22.x`; root `devEngines.runtime` enforces `^22` with `onFail: error`, so every pnpm command refuses other majors. Restart a running instance from a Node 22 shell; Settings → Preflight reports Node as failed under any other major. `.nvmrc` selects 22 for version managers; CI uses the latest 22.x. See [ADR-0040](../decisions/ADR-0040-node-22-runtime-baseline.md) for the baseline and dependency patch-floor qualification gap.
+Select Node 22.22.2 or later on PATH for the whole shell before installing, building or starting GraphGoblin. Confirm `node --version` reports `v22.22.2` or later; root `devEngines.runtime` enforces `^22.22.2` with `onFail: error`, so every pnpm command refuses an older Node 22 and other majors (several development dependencies need 22.22.2). The built app itself runs on any Node 22: restart a running instance from a Node 22 shell; Settings → Preflight reports Node as failed under any other major. `.nvmrc` selects 22 for version managers; CI uses the latest 22.x. See [ADR-0040](../decisions/ADR-0040-node-22-runtime-baseline.md) and [ADR-0058](../decisions/ADR-0058-node-22-patch-floor-for-development.md).
 
 Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
 

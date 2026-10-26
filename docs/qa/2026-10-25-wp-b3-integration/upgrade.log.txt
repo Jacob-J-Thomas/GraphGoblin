@@ -1,0 +1,29 @@
+pnpm.cmd : $ node --test tooling/scripts/upgrade.acceptance.mjs
+At line:2 char:105
++ ...  $env:PATH; pnpm.cmd test:upgrade *> $env:TEMP\gg-wp-b3-int-upgrade.l ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node --test t....acceptance.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+TAP version 13
+# Subtest: fresh and earlier current-format stores start; ordinary migrations preserve data and receipts
+ok 1 - fresh and earlier current-format stores start; ordinary migrations preserve data and receipts
+  ---
+  duration_ms: 98965.776
+  type: 'test'
+  ...
+# Subtest: format-3 and unmarked stores refuse startup with exit 1 and the reset guidance
+ok 2 - format-3 and unmarked stores refuse startup with exit 1 and the reset guidance
+  ---
+  duration_ms: 37783.2471
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 140219.6123

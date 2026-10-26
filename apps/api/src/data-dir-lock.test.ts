@@ -4,7 +4,7 @@ import { access, readFile, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { acquireDataDirLock } from './data-dir-lock.js';
+import { acquireDataDirLock, dataDirLockState } from './data-dir-lock.js';
 
 let dataDir: string;
 let path: string;
@@ -187,5 +187,33 @@ describe('data-directory ownership', () => {
     await writeFile(file, 'keep');
     await expect(acquireDataDirLock(file)).rejects.toThrow();
     expect(await readFile(file, 'utf8')).toBe('keep');
+  });
+});
+
+describe('reading the lock state without acquiring it', () => {
+  it('reports a free directory, a stale lock and a malformed reclamation guard without touching them', async () => {
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'free' });
+    const child = spawnSync(process.execPath, ['-e', '']);
+    const stale = JSON.stringify({ pid: child.pid });
+    await writeFile(path, stale);
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'free' });
+    expect(await readFile(path, 'utf8')).toBe(stale);
+    await writeFile(`${path}.reclaim`, 'interrupted reclamation');
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path: `${path}.reclaim` });
+    expect(await readFile(`${path}.reclaim`, 'utf8')).toBe('interrupted reclamation');
+  });
+
+  it('reports a live owner, and this process while it holds or acquires the lock', async () => {
+    await writeFile(path, JSON.stringify({ pid: process.pid + 1 }));
+    vi.spyOn(process, 'kill').mockReturnValue(true);
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+    vi.restoreAllMocks();
+    await unlink(path);
+    const acquiring = acquireDataDirLock(dataDir);
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path: `${path}.reclaim` });
+    const lock = await acquiring;
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'held', path });
+    await lock.release();
+    expect(await dataDirLockState(dataDir)).toEqual({ state: 'free' });
   });
 });

@@ -1,0 +1,232 @@
+Regression control at dca4272b8f7549d778f077d180e298643396b693: the committed script ../c03-live-and-stale-lock.mjs, run unchanged with Node v22.23.4 first on PATH. The script writes its log beside itself; this copy was moved here and the committed original log restored.
+
+base: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0
+
+=== Live lock: a running API (port 6341) ===
+PASS: API starts ()
+PASS: POST /loops creates the loop (201)
+PASS: POST /loops/:id/runs starts run 1 (202)
+PASS: run 01M5VAARHA4R85HQVV66AC3PDA finished (succeeded)
+lock while running: {"pid":58320,"startedAt":"2026-10-26T05:18:31.020Z","token":"f2473cd8-002e-494c-ab6d-2b26f7a798a8"}
+$ node apps/api/dist/main.js --reset
+exit code: 1; 2853 ms
+--- dry run while running stderr ---
+reset refused: another GraphGoblin process holds %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.lock; stop it before resetting
+Nothing was changed.
+--- end dry run while running stderr ---
+PASS: dry run while running: exit 1 (1)
+PASS: dry run while running: names the held lock
+PASS: dry run while running: nothing outside the live database files changed (before 46b55f0728a6f55f after 46b55f0728a6f55f)
+PASS: dry run while running: database and run workspace still present
+PASS: dry run while running: the live lock is unchanged
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+exit code: 1; 3058 ms
+--- confirmed reset while running stderr ---
+reset refused: another GraphGoblin process holds %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.lock; stop it before resetting
+Nothing was changed.
+--- end confirmed reset while running stderr ---
+PASS: confirmed reset while running: exit 1 (1)
+PASS: confirmed reset while running: names the held lock
+PASS: confirmed reset while running: nothing outside the live database files changed (before 46b55f0728a6f55f after 46b55f0728a6f55f)
+PASS: confirmed reset while running: database and run workspace still present
+PASS: confirmed reset while running: the live lock is unchanged
+PASS: the running API is still healthy after the refused resets (200)
+
+=== Stale lock: kill the API hard (taskkill /F) ===
+stale lock: {"pid":58320,"startedAt":"2026-10-26T05:18:31.020Z","token":"f2473cd8-002e-494c-ab6d-2b26f7a798a8"}; pid 58320 alive: false
+PASS: the lock names a dead process
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0
+exit code: 1; 2687 ms
+--- wrong --data-dir stderr ---
+reset refused: --data-dir names %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0, but this environment's data directory is %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory
+Nothing was changed.
+--- end wrong --data-dir stderr ---
+PASS: wrong --data-dir: exit 1 (1)
+PASS: wrong --data-dir: the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+$ node apps/api/dist/main.js --reset --yes
+exit code: 2; 2530 ms
+--- usage error (--yes alone) stderr ---
+--yes needs --data-dir <path> naming the data directory to reset
+usage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)
+--- end usage error (--yes alone) stderr ---
+PASS: usage error (--yes alone): exit 2 (2)
+PASS: usage error (--yes alone): the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data   [{"GG_DB_URL":"file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c03-ZLlQo0/data/artifacts"}]
+exit code: 1; 2761 ms
+--- database named artifacts stderr ---
+reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first
+Nothing was changed.
+--- end database named artifacts stderr ---
+PASS: database named artifacts: exit 1 (1)
+PASS: database named artifacts: the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data   [{"GG_DB_URL":"file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c03-ZLlQo0/outside.db"}]
+exit code: 1; 2899 ms
+--- database outside the data directory stderr ---
+reset refused: the database %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\outside.db is outside the data directory %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory
+Nothing was changed.
+--- end database outside the data directory stderr ---
+PASS: database outside the data directory: exit 1 (1)
+PASS: database outside the data directory: the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data   [{"GG_DB_URL":":memory:"}]
+exit code: 1; 2529 ms
+--- database :memory: stderr ---
+reset refused: GG_DB_URL does not name a local database file; a reset removes only files inside the data directory
+Nothing was changed.
+--- end database :memory: stderr ---
+PASS: database :memory:: exit 1 (1)
+PASS: database :memory:: the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data   [{"GG_DB_URL":"file:%USERPROFILE%/AppData/Local/Temp/gg-qa-b3-int-c03-ZLlQo0/data/workspaces/01M5VAARHA4R85HQVV66AC3PDA"}]
+exit code: 1; 3218 ms
+--- database inside workspaces/ (the run workspace directory) stderr ---
+reset refused: the database workspaces/01M5VAARHA4R85HQVV66AC3PDA is inside workspaces/, which a reset removes; move it first
+Nothing was changed.
+--- end database inside workspaces/ (the run workspace directory) stderr ---
+PASS: database inside workspaces/ (the run workspace directory): exit 1 (1)
+PASS: database inside workspaces/ (the run workspace directory): the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+$ node apps/api/dist/main.js --reset
+exit code: 0; 6743 ms
+--- dry run (not a refusal; must also leave the stale lock) stdout ---
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.db (format 4, the current format)
+
+Removes:
+  workspaces/01M5VAARHA4R85HQVV66AC3PDA  run workspace            0 files, 1 directory, 0 B
+  artifacts                              artifacts                1 file, 2 directories, 149 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 744.4 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 4 files, 3 directories, 780.5 KB in 5 items.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "%USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data"
+--- end dry run (not a refusal; must also leave the stale lock) stdout ---
+PASS: dry run (not a refusal; must also leave the stale lock): exit 0 (0)
+PASS: dry run (not a refusal; must also leave the stale lock): the stale lock, its guard and every other byte are unchanged (before a6a1dffc0fd2c0e8 after a6a1dffc0fd2c0e8)
+
+=== A malformed lock record counts as held ===
+$ node apps/api/dist/main.js --reset
+exit code: 1; 3265 ms
+--- dry run with a malformed lock stderr ---
+reset refused: another GraphGoblin process holds %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.lock; stop it before resetting
+Nothing was changed.
+--- end dry run with a malformed lock stderr ---
+PASS: refused as held (1)
+PASS: malformed lock left in place
+
+=== A lock naming a live process that is not GraphGoblin counts as held ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+exit code: 1; 2635 ms
+--- confirmed with a live foreign pid stderr ---
+reset refused: another GraphGoblin process holds %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.lock; stop it before resetting
+Nothing was changed.
+--- end confirmed with a live foreign pid stderr ---
+PASS: refused as held (1)
+
+=== Confirmed reset takes over the stale lock ===
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+exit code: 0; 16194 ms
+--- confirmed with a stale lock stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.db (format 4, the current format)
+
+Removes:
+  workspaces/01M5VAARHA4R85HQVV66AC3PDA  run workspace            0 files, 1 directory, 0 B
+  artifacts                              artifacts                1 file, 2 directories, 149 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 744.4 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 4 files, 3 directories, 780.5 KB in 5 items.
+
+Removing:
+  removed workspaces/01M5VAARHA4R85HQVV66AC3PDA (0 files, 1 directory, 0 B)
+  removed artifacts (1 file, 2 directories, 149 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 744.4 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data.
+--- end confirmed with a stale lock stdout ---
+PASS: completes (0)
+PASS: no lock or guard file remains (["master.key","workspaces"])
+data directory after: ["master.key","workspaces"]
+
+=== An API started while a confirmed reset is removing is refused by the reset lock ===
+PASS: POST /loops creates the loop (201)
+PASS: POST /loops/:id/runs starts run 1 (202)
+PASS: run 01M5VACHFYRSM2H3THDZE03VXQ finished (succeeded)
+$ node apps/api/dist/main.js --reset --yes --data-dir %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+exit code: 0; 64365 ms
+--- confirmed reset racing an API start stdout ---
+GraphGoblin reset
+
+Data directory: %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data
+Database:       %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.db (format 4, the current format)
+
+Removes:
+  workspaces/01M5VACHFYRSM2H3THDZE03VXQ  run workspace            3000 files, 2 directories, 45.8 KB
+  artifacts                              artifacts                1 file, 2 directories, 149 B
+  graphgoblin.db                         database                 1 file, 4.0 KB
+  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 744.4 KB
+  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+  graphgoblin.lock                       the reset's own lock     removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 3004 files, 4 directories, 826.3 KB in 5 items.
+
+Removing:
+  removed workspaces/01M5VACHFYRSM2H3THDZE03VXQ (3000 files, 2 directories, 45.8 KB)
+  removed artifacts (1 file, 2 directories, 149 B)
+  removed graphgoblin.db (1 file, 4.0 KB)
+  removed graphgoblin.db-wal (1 file, 744.4 KB)
+  removed graphgoblin.db-shm (1 file, 32.0 KB)
+  removed graphgoblin.lock
+Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data.
+--- end confirmed reset racing an API start stdout ---
+--- timeline ---
+42220 ms: Removing:
+42220-42228 ms: [hook ran: started API pid 32368]
+64292 ms:   removed workspaces/01M5VACHFYRSM2H3THDZE03VXQ (3000 files, 2 directories, 45.8 KB)
+64296 ms:   removed artifacts (1 file, 2 directories, 149 B)
+64297 ms:   removed graphgoblin.db (1 file, 4.0 KB)
+64299 ms:   removed graphgoblin.db-wal (1 file, 744.4 KB)
+64301 ms:   removed graphgoblin.db-shm (1 file, 32.0 KB)
+64302 ms:   removed graphgoblin.lock
+64302 ms: Reset complete. The next start creates a new, empty format-4 store in %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data.
+--- end timeline ---
+--- API started during the reset ---
+exit 1
+Error: another GraphGoblin process holds %USERPROFILE%\AppData\Local\Temp\gg-qa-b3-int-c03-ZLlQo0\data\graphgoblin.lock
+    at held (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/data-dir-lock.js:19:24)
+    at removeStale (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/data-dir-lock.js:54:15)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/data-dir-lock.js:73:9
+    at async acquireFile (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/data-dir-lock.js:70:18)
+    at async acquireDataDirLock (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/data-dir-lock.js:135:20)
+    at async createContainer (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/container.js:42:18)
+    at async file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/main.js:48:23
+    at async main (file:///%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/qa-b3-integrated/apps/api/dist/main.js:97:16)
+--- end API started during the reset ---
+PASS: the API refuses to start while the reset holds the lock (1)
+PASS: the reset completes (0)
+data directory after: ["master.key","workspaces"]
+PASS: no database was created by the refused API
+
+SUMMARY c03-live-and-stale-lock: 41 passed, 0 failed

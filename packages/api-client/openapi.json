@@ -19180,6 +19180,7 @@
         "tags": [
           "loops"
         ],
+        "description": "Imports a current-format export or bare definition. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.",
         "requestBody": {
           "required": true,
           "content": {
@@ -19243,36 +19244,12 @@
                         ],
                         "additionalProperties": false
                       }
-                    },
-                    "notices": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "code": {
-                            "type": "string"
-                          },
-                          "path": {
-                            "type": "string"
-                          },
-                          "message": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "code",
-                          "path",
-                          "message"
-                        ],
-                        "additionalProperties": false
-                      }
                     }
                   },
                   "required": [
                     "loop",
                     "draft",
-                    "issues",
-                    "notices"
+                    "issues"
                   ],
                   "additionalProperties": false
                 }
