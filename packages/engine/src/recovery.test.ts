@@ -435,12 +435,13 @@ describe('subloops (review finding 3)', () => {
       const spy = vi
         .spyOn(e.ports.events, 'append')
         .mockImplementation(async (id, drafts, options) => {
-          const out = await append(id, drafts, options);
-          if (drafts.some((d) => d.type === 'child_run.started')) {
+          // The child and the parent's `child_run.started` are committed by admission (#320); the
+          // process dies before the park is recorded.
+          if (drafts.some((d) => d.type === 'run.waiting' && d.nodeId === 'sub')) {
             blocked = true;
             return hang();
           }
-          return out;
+          return append(id, drafts, options);
         });
       const r = await e.start(pv.loopId);
       await vi.waitFor(() => expect(blocked).toBe(true));

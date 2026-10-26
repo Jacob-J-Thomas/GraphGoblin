@@ -1,0 +1,53 @@
+$ vitest run --coverage -- --maxWorkers=2 --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts
+
+ RUN  v5.0.3 <repo>/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792651121889,"pid":33120,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5664"}
+{"level":30,"time":1792651121890,"pid":33120,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5664,"dataDir":"<user>\\AppData\\Local\\Temp\\gg-qa-321-r3-coverage-0117298b94f44b43bed856c014483031\\gg-api-process-h1tFFn","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792651121946,"pid":33120,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792651121953,"pid":33120,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.291199999999662,"msg":"request completed"}
+child admission kill: delay=0ms snapshots=20319 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+child admission kill: delay=5ms snapshots=20681 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=25ms snapshots=20804 children-at-kill=2 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ❯ src/child-creation-restart.test.ts (3 tests | 1 failed) 142477ms
+   ❯ child admission across a real API kill (#320) (3)
+     × kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit 74567ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/child-creation-restart.test.ts:22:1
+     20|
+     21| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     22| afterEach(async () => {
+       | ^
+     23|   for (const fixture of fixtures.splice(0)) {
+     24|     await fixture.dispose();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed | 51 passed | 2 skipped (54)
+      Tests  1 failed | 705 passed | 6 skipped (712)
+   Start at  01:38:34
+   Duration  148.10s (tests 75%, import 22%, transform 3%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  │ <user>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d1-
+  │ 321\apps\api
+System.Management.Automation.RemoteException

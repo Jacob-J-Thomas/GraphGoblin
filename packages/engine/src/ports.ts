@@ -23,6 +23,7 @@ import type {
   RunEvent,
   RunRecord,
   RunStatus,
+  ScriptExecutionState,
   Usage,
   WorkingDirectorySpec,
   WebhookAttemptResult,
@@ -384,6 +385,8 @@ export interface ScriptRunRequest {
 }
 
 export interface ScriptRunResult {
+  /** Proven start refusal, unknown disposition, or observed process termination. */
+  state: ScriptExecutionState;
   /** Tree termination failed or close was not observed by the native cleanup deadline. */
   terminationUnconfirmed?: true;
   exitCode: number | null;

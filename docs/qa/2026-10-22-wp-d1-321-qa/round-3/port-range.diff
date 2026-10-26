@@ -1,0 +1,17 @@
+diff --git a/apps/api/src/script-restart.test.ts b/apps/api/src/script-restart.test.ts
+index 89088826..1c9cad86 100644
+--- a/apps/api/src/script-restart.test.ts
++++ b/apps/api/src/script-restart.test.ts
+@@ -39,9 +39,11 @@ describe('script effects across a real API kill (#321)', () => {
+   it.each(['before-dispatch', 'after-dispatch', 'after-completion'] as const)(
+     '%s never repeats an effect without an explicit resume',
+     async (boundary) => {
++      // A range of its own: test files run in parallel, and sharing child-creation-restart's
++      // range raced its probe-then-bind (EADDRINUSE on the CI runner).
+       const fixture = await createApiProcessFixture({
+         directoryPrefix: 'gg-wp-d1-script-',
+-        portRange: [5910, 5919],
++        portRange: [5930, 5939],
+       });
+       fixtures.push(fixture);
+       const marker = join(fixture.dataDir, 'marker');

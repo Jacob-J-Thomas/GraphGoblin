@@ -293,6 +293,7 @@ describe('heartbeat node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const scripted = engine.publish(

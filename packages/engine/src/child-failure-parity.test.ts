@@ -19,8 +19,52 @@ const scriptResult = (exitCode: number, extra: Partial<ScriptRunResult> = {}): S
   stderrBytes: exitCode === 0 ? 0 : 4,
   stdoutOverflow: false,
   stderrOverflow: false,
+  state: 'completed' as const,
   timedOut: false,
   ...extra,
+});
+
+it('retains an uncertain child script dispatch on the parent and retries only on explicit Resume', async () => {
+  const e = await createTestEngine();
+  e.ports.scripts.respondWith(() =>
+    scriptResult(0, { state: 'outcome-uncertain', exitCode: null }),
+  );
+  const childVersion = e.publish(
+    single('uncertain child', {
+      id: 'work',
+      kind: 'script',
+      label: 'Work',
+      config: { command: 'effect' },
+    }),
+  );
+  const parentVersion = e.publish(parentOf('uncertain parent', childVersion.loopId));
+  try {
+    const parent = await e.runToIdle(parentVersion.loopId);
+    const [child] = await e.ports.runs.listChildren(parent.id);
+    expect(child?.failure?.script).toMatchObject({ state: 'outcome-uncertain' });
+    expect(parent.failure).toMatchObject({
+      code: 'SCRIPT_OUTCOME_UNCERTAIN',
+      script: child!.failure!.script,
+    });
+    expect(e.ports.scripts.calls).toHaveLength(1);
+    e.manager.stop();
+    const restarted = new RunManager(e.ports, e.settings);
+    try {
+      await restarted.start();
+      await restarted.waitForIdle();
+      expect(e.ports.scripts.calls).toHaveLength(1);
+      e.ports.scripts.respondWith(() => scriptResult(0));
+      await restarted.resume(parent.id);
+      await restarted.waitForIdle();
+      expect((await e.ports.runs.get(parent.id))?.status).toBe('succeeded');
+      expect(e.ports.scripts.calls).toHaveLength(2);
+      expect(await e.ports.runs.listChildren(parent.id)).toHaveLength(1);
+    } finally {
+      restarted.stop();
+    }
+  } finally {
+    e.manager.stop();
+  }
 });
 
 /** start -> work -> done (exit returning the work output), for decisions through route `ok`. */

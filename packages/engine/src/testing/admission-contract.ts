@@ -195,6 +195,29 @@ function draftStart(): ReturnType<typeof inputs> & { snapshot: LoopVersionRecord
   return { ...base, snapshot };
 }
 
+/** A manual start, and a subloop child of it whose admission links it on the parent's log. */
+function childStart() {
+  const base = inputs();
+  const { intent, ids } = base;
+  intent.initialThread.invocation.source = 'manual.api';
+  intent.initialThread.invocation.trigger.kind = 'manual';
+  delete intent.initialThread.invocation.trigger.dedupeKey;
+  const child = structuredClone(intent);
+  child.run.id = ids.next();
+  child.run.invocationId = ids.next();
+  child.run.parentRunId = intent.run.id;
+  child.initialThread.run = { ...child.initialThread.run, id: child.run.id };
+  child.initialThread.run.parentRunId = intent.run.id;
+  child.initialThread.invocation = {
+    ...child.initialThread.invocation,
+    id: child.run.invocationId,
+    source: 'subloop',
+  };
+  child.queued.initialThread = child.initialThread;
+  child.parentNodeId = 'sub';
+  return { ...base, parent: intent, child };
+}
+
 type Scenario = { name: string; run(fixture: AdmissionContractFixture): Promise<void> };
 const scenarios: Scenario[] = [
   {
@@ -463,6 +486,69 @@ const scenarios: Scenario[] = [
       delete missing.snapshot;
       equal(await f.admission.create(missing), run);
       equal(await f.version(snapshot.id), snapshot);
+    },
+  },
+  {
+    name: "a child commits with its parent's child_run.started or not at all (#320)",
+    async run(f) {
+      const { parent, child, ids } = childStart();
+      const admittedParent = await f.admission.create(parent);
+      const parentLog = await f.events(admittedParent.id);
+      const notifications: RunEvent[] = [];
+      f.subscribe(parent.run.id, (event) => {
+        notifications.push(event);
+      });
+      for (const write of ['create.run', 'create.event', 'create.parent'] as const) {
+        await f.failAt(write);
+        await rejects(() => f.admission.create(child));
+        equal(await f.run(child.run.id), undefined);
+        equal(await f.events(child.run.id), []);
+        equal(await f.events(parent.run.id), parentLog);
+      }
+      equal(notifications, []);
+      await f.failAt(undefined);
+      const admitted = await f.admission.create(child);
+      const link = {
+        type: 'child_run.started',
+        nodeId: 'sub',
+        childRunId: admitted.id,
+        runId: parent.run.id,
+        seq: parentLog.length + 1,
+        ts: child.run.createdAt,
+      };
+      equal(await f.events(parent.run.id), [...parentLog, link]);
+      equal((await f.run(parent.run.id))?.lastEventSeq, link.seq);
+      equal((await f.events(admitted.id)).length, 1);
+      equal(notifications, [link]);
+      // The same child again is the same commit, never a second link.
+      equal(await f.admission.create(structuredClone(child)), admitted);
+      equal((await f.events(parent.run.id)).length, parentLog.length + 1);
+      equal(notifications.length, 1);
+      // A link needs its parent run, and a parent run needs a node to link from.
+      const orphan = structuredClone(child);
+      orphan.run.id = ids.next();
+      orphan.initialThread.run.id = orphan.run.id;
+      orphan.queued.initialThread = orphan.initialThread;
+      orphan.run.parentRunId = ids.next();
+      orphan.initialThread.run.parentRunId = orphan.run.parentRunId;
+      await rejects(() => f.admission.create(orphan));
+      equal(await f.run(orphan.run.id), undefined);
+      const unparented = structuredClone(orphan);
+      delete unparented.run.parentRunId;
+      delete unparented.initialThread.run.parentRunId;
+      await rejects(() => f.admission.create(unparented));
+      equal(await f.run(orphan.run.id), undefined);
+      // Every child names its parent's node: a parented admission without one is refused, so no
+      // child can exist without its parent's record of it (the independent QA's finding).
+      const unlinked = structuredClone(orphan);
+      unlinked.run.parentRunId = parent.run.id;
+      unlinked.initialThread.run.parentRunId = parent.run.id;
+      delete unlinked.parentNodeId;
+      await rejects(() => f.admission.create(unlinked));
+      equal(await f.run(unlinked.run.id), undefined);
+      // The same child admitted again must name the node whose link it committed with.
+      await rejects(() => f.admission.create({ ...child, parentNodeId: 'other' }));
+      equal((await f.events(parent.run.id)).length, parentLog.length + 1);
     },
   },
   {

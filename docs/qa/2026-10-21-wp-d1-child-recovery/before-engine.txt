@@ -1,0 +1,107 @@
+
+ RUN  v5.0.3 <local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine
+
+ ❯ src/child-creation.test.ts (5 tests | 3 failed) 959ms
+   ❯ child creation and finish across a process death (#320) (5)
+     × a death after the child finish is recorded and before the node completes records it once 323ms
+     × a death after a failed child finish is recorded and before the parent fails records it once 146ms
+     × retrying the parent output mapping does not record an unchanged child outcome again 102ms
+pnpm.cmd : 
+At line:17 char:3
++   pnpm.cmd --filter @graphgoblin/engine exec vitest run src/child-cre ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > a death after the child 
+finish is recorded and before the node completes records it once
+AssertionError: expected [ { …(8) }, { …(8) } ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/child-creation.test.ts:124:55
+    122|     );
+    123|     expect(await e.ports.runs.get(parentId)).toMatchObject({ status: '…
+    124|     expect(ofType(e, parentId, 'child_run.finished')).toHaveLength(1);
+       |                                                       ^
+    125|     expect(await e.ports.runs.listChildren(parentId)).toHaveLength(1);
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > a death after a failed 
+child finish is recorded and before the parent fails records it once
+AssertionError: expected [ { …(7) }, { …(7) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,15 @@
+      "seq": 10,
+      "status": "failed",
+      "ts": "2026-10-02T12:00:00.000Z",
+      "type": "child_run.finished",
+    },
++   {
++     "childRunId": "00000000000000000000000003",
++     "nodeId": "sub",
++     "runId": "00000000000000000000000001",
++     "seq": 13,
++     "status": "failed",
++     "ts": "2026-10-02T12:00:00.000Z",
++     "type": "child_run.finished",
++   },
+  ]
+
+ ❯ src/child-creation.test.ts:142:55
+    140|       failure: { code: 'SCRIPT_EXIT_CODE', nodeId: 'sub' },
+    141|     });
+    142|     expect(ofType(e, parentId, 'child_run.finished')).toEqual([
+       |                                                       ^
+    143|       expect.objectContaining({ status: 'failed' }),
+    144|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > retrying the parent 
+output mapping does not record an unchanged child outcome again
+AssertionError: expected [ { …(8) }, { …(8) } ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/child-creation.test.ts:186:56
+    184|     await e.manager.resume(failed.id);
+    185|     expect((await e.settle(failed.id)).status).toBe('failed');
+    186|     expect(ofType(e, failed.id, 'child_run.finished')).toHaveLength(1);
+       |                                                        ^
+    187|     expect(await e.ports.runs.listChildren(failed.id)).toHaveLength(1);
+    188|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  18:27:04
+   Duration  25.81s (transform 81%, import 15%, tests 4%)
+
+  Transform  transforming modules took 20.18s · 81% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\engine
+

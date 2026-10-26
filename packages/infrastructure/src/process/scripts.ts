@@ -79,29 +79,45 @@ export class ProcessScripts implements ScriptPort {
   }
 
   run(request: ScriptRunRequest): Promise<ScriptRunResult> {
-    if (request.signal.aborted)
-      return Promise.resolve({
-        exitCode: null,
-        timedOut: false,
-        stdout: '',
-        stderr: '',
-        stdoutBytes: 0,
-        stderrBytes: 0,
-        stdoutOverflow: false,
-        stderrOverflow: false,
-      });
+    const notStarted: ScriptRunResult = {
+      state: 'definitely-not-started',
+      exitCode: null,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      timedOut: false,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+    };
+    // Do not spawn and then kill a command whose cancellation is already known.
+    if (request.signal.aborted) return Promise.resolve(notStarted);
     const stdout = new BoundedOutputCapture(request.maxStdoutBytes ?? this.maxOutputBytes);
     const stderr = new BoundedOutputCapture(request.maxStderrBytes ?? this.maxOutputBytes);
     return new Promise((resolve) => {
-      const child = this.spawnImpl(request.command, request.args, {
-        cwd: request.cwd,
-        env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
-        stdio: ['pipe', 'pipe', 'pipe'],
-        windowsHide: true,
-        detached: this.platform !== 'win32',
-        shell: false,
-      });
+      let child: ChildProcess;
+      try {
+        child = this.spawnImpl(request.command, request.args, {
+          cwd: request.cwd,
+          env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
+          stdio: ['pipe', 'pipe', 'pipe'],
+          windowsHide: true,
+          detached: this.platform !== 'win32',
+          shell: false,
+        });
+      } catch {
+        // Node rejects some commands synchronously (notably .cmd/.bat with EINVAL).
+        resolve({
+          ...notStarted,
+          stderr: request.maxStderrBytes === undefined ? 'spawn failed: PROCESS_START_FAILED' : '',
+        });
+        return;
+      }
 
+      let spawned = false;
+      child.once('spawn', () => {
+        spawned = true;
+      });
       let timedOut = false;
       let settled = false;
       let killing: Promise<boolean> | undefined;
@@ -119,10 +135,10 @@ export class ProcessScripts implements ScriptPort {
       const kill = (): void => {
         if (settled || killing) return;
         // Five seconds bounds acknowledgement of explicit native termination, not normal drain.
-        cleanupTimer = setTimeout(() => finish(null, false, true), 5000);
+        cleanupTimer = setTimeout(() => finish(null, 'outcome-uncertain', true), 5000);
         killing = killTree(child, this.platform, this.spawnImpl);
         void killing.then((confirmed) => {
-          if (!confirmed) finish(null, false, true);
+          if (!confirmed) finish(null, 'outcome-uncertain', true);
           else {
             treeConfirmed = true;
             if (closed) finish(closeCode);
@@ -139,7 +155,7 @@ export class ProcessScripts implements ScriptPort {
       const onAbort = (): void => kill();
       const finish = (
         exitCode: number | null,
-        spawnFailed = false,
+        state: ScriptRunResult['state'] = 'completed',
         terminationUnconfirmed = false,
       ): void => {
         if (settled) return;
@@ -149,6 +165,7 @@ export class ProcessScripts implements ScriptPort {
         request.signal.removeEventListener('abort', onAbort);
         const errorText = stderr.text();
         resolve({
+          state,
           exitCode,
           ...(terminationUnconfirmed ? { terminationUnconfirmed: true as const } : {}),
           timedOut,
@@ -156,7 +173,7 @@ export class ProcessScripts implements ScriptPort {
           stdoutBytes: stdout.byteLength,
           stderrBytes: stderr.byteLength,
           stderr:
-            spawnFailed && request.maxStderrBytes === undefined
+            state === 'definitely-not-started' && request.maxStderrBytes === undefined
               ? `${errorText}${errorText ? '\n' : ''}spawn failed: PROCESS_START_FAILED`
               : errorText,
           stderrOverflow: stderr.overflow,
@@ -165,7 +182,8 @@ export class ProcessScripts implements ScriptPort {
       };
 
       child.on('error', () => {
-        finish(null, true);
+        if (spawned) kill();
+        finish(null, spawned ? 'outcome-uncertain' : 'definitely-not-started');
       });
       child.on('close', (code) => {
         closed = true;

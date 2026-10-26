@@ -287,6 +287,8 @@ See [inference recovery](05-execution-engine.md#inference-submission-and-recover
 
 ## Run events (Decided kinds, Draft payloads)
 
+Script execution records `script.dispatched { nodeId, visitId, dispatchId }` before calling the process runner. A script failure's optional `script` provenance records `{ visitId, dispatchId?, state, exitCode? }`, where `state` is `definitely-not-started`, `outcome-uncertain`, or `completed`. `SCRIPT_START_FAILED` and `SCRIPT_OUTCOME_UNCERTAIN` are resumable failures; the latter requires an explicit retry choice because the previous attempt may already have produced its effect (05).
+
 Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and typed fields. Transcripts and other output payloads use artifact references. `harness.turn.prompt` is an exception: the whole rendered prompt is stored inline, without a schema size limit or automatic artifact offloading. It can enlarge the event log; it shares the run's private access and deletion boundary. `run.queued.initialThread` is also inline (05).
 
 | Type                                                                 | Payload                                                                                                                               |

@@ -1,0 +1,908 @@
+{
+  "before": {
+    "ts": "2026-10-22T01:36:17.837Z",
+    "runs": [
+      {
+        "id": "00000000000000000000000005",
+        "parent_run_id": null,
+        "status": "failed",
+        "current_node_id": "sub",
+        "waiting": "{\"nodeId\":\"sub\",\"kind\":\"child\",\"childRunId\":\"01M5GM0X9G69BARCPZEA9A8M3C\",\"startedSeq\":5,\"waitId\":\"00000000000000000000000005:5\"}",
+        "result": null,
+        "failure": "{\"code\":\"EXPRESSION_ERROR\",\"message\":\"custom output mapping did not produce a JSON patch: Invalid input: expected array, received string\",\"nodeId\":\"sub\",\"resumable\":true}"
+      },
+      {
+        "id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "parent_run_id": "00000000000000000000000005",
+        "status": "succeeded",
+        "current_node_id": null,
+        "waiting": null,
+        "result": "\"child output\"",
+        "failure": null
+      }
+    ],
+    "events": [
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 1,
+        "type": "run.queued",
+        "node_id": null,
+        "payload": {
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA parent",
+            "label": "QA parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        "ts": "2026-10-02T12:00:00.000Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 2,
+        "type": "run.started",
+        "node_id": null,
+        "payload": {
+          "attempt": 1
+        },
+        "ts": "2026-10-22T01:36:13.548Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 3,
+        "type": "node.started",
+        "node_id": "start",
+        "payload": {
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        "ts": "2026-10-22T01:36:13.572Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 4,
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": {
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:13.597Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:13.597Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 0
+        },
+        "ts": "2026-10-22T01:36:13.599Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 5,
+        "type": "node.started",
+        "node_id": "sub",
+        "payload": {
+          "kind": "subloop",
+          "attempt": 1,
+          "configHash": "63f1559b1565bd74"
+        },
+        "ts": "2026-10-22T01:36:16.621Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 6,
+        "type": "child_run.started",
+        "node_id": "sub",
+        "payload": {
+          "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C"
+        },
+        "ts": "2026-10-22T01:36:16.688Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 7,
+        "type": "run.waiting",
+        "node_id": "sub",
+        "payload": {
+          "wait": {
+            "waitId": "00000000000000000000000005:5",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C",
+            "startedSeq": 5
+          }
+        },
+        "ts": "2026-10-22T01:36:16.773Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 8,
+        "type": "run.woken",
+        "node_id": "sub",
+        "payload": {
+          "reason": "child",
+          "payload": {
+            "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C",
+            "childFinishedSeq": 8,
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        },
+        "ts": "2026-10-22T01:36:17.648Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 9,
+        "type": "node.started",
+        "node_id": "sub",
+        "payload": {
+          "kind": "subloop",
+          "attempt": 2,
+          "configHash": "63f1559b1565bd74"
+        },
+        "ts": "2026-10-22T01:36:17.743Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 10,
+        "type": "child_run.finished",
+        "node_id": "sub",
+        "payload": {
+          "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C",
+          "outcome": "success",
+          "status": "succeeded"
+        },
+        "ts": "2026-10-22T01:36:17.767Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 11,
+        "type": "run.failed",
+        "node_id": null,
+        "payload": {
+          "failure": {
+            "code": "EXPRESSION_ERROR",
+            "message": "custom output mapping did not produce a JSON patch: Invalid input: expected array, received string",
+            "nodeId": "sub",
+            "resumable": true
+          }
+        },
+        "ts": "2026-10-22T01:36:17.790Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 1,
+        "type": "run.queued",
+        "node_id": null,
+        "payload": {
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA input leaf",
+            "label": "QA input leaf v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5GM0X9G69BARCPZEA9A8M3C",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "parentRunId": "00000000000000000000000005",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5GM0X9GVG57P27VEK9P5ZDW",
+              "source": "subloop",
+              "caller": {
+                "kind": "run",
+                "id": "00000000000000000000000005"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-22T01:36:16.688Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {
+              "start": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:13.597Z"
+              }
+            },
+            "lastOutput": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-22T01:36:13.597Z"
+            },
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        "ts": "2026-10-22T01:36:16.688Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 2,
+        "type": "run.started",
+        "node_id": null,
+        "payload": {
+          "attempt": 1
+        },
+        "ts": "2026-10-22T01:36:17.008Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 3,
+        "type": "node.started",
+        "node_id": "start",
+        "payload": {
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        "ts": "2026-10-22T01:36:17.116Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 4,
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": {
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:17.482Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:17.482Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 0
+        },
+        "ts": "2026-10-22T01:36:17.482Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 5,
+        "type": "node.started",
+        "node_id": "done",
+        "payload": {
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "f66e342dc89f712a"
+        },
+        "ts": "2026-10-22T01:36:17.562Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 6,
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": {
+          "outcome": "success"
+        },
+        "ts": "2026-10-22T01:36:17.587Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 7,
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": {
+          "patch": [],
+          "durationMs": 6
+        },
+        "ts": "2026-10-22T01:36:17.587Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 8,
+        "type": "run.finished",
+        "node_id": null,
+        "payload": {
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "child output"
+        },
+        "ts": "2026-10-22T01:36:17.587Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 9,
+        "type": "return.delivered",
+        "node_id": null,
+        "payload": {
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        },
+        "ts": "2026-10-22T01:36:17.608Z"
+      }
+    ],
+    "gaps": []
+  },
+  "after": {
+    "ts": "2026-10-22T01:36:18.086Z",
+    "runs": [
+      {
+        "id": "00000000000000000000000005",
+        "parent_run_id": null,
+        "status": "running",
+        "current_node_id": "sub",
+        "waiting": "{\"nodeId\":\"sub\",\"kind\":\"child\",\"childRunId\":\"01M5GM0X9G69BARCPZEA9A8M3C\",\"startedSeq\":5,\"waitId\":\"00000000000000000000000005:5\"}",
+        "result": null,
+        "failure": null
+      },
+      {
+        "id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "parent_run_id": "00000000000000000000000005",
+        "status": "succeeded",
+        "current_node_id": null,
+        "waiting": null,
+        "result": "\"child output\"",
+        "failure": null
+      }
+    ],
+    "events": [
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 1,
+        "type": "run.queued",
+        "node_id": null,
+        "payload": {
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA parent",
+            "label": "QA parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        "ts": "2026-10-02T12:00:00.000Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 2,
+        "type": "run.started",
+        "node_id": null,
+        "payload": {
+          "attempt": 1
+        },
+        "ts": "2026-10-22T01:36:13.548Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 3,
+        "type": "node.started",
+        "node_id": "start",
+        "payload": {
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        "ts": "2026-10-22T01:36:13.572Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 4,
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": {
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:13.597Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:13.597Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 0
+        },
+        "ts": "2026-10-22T01:36:13.599Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 5,
+        "type": "node.started",
+        "node_id": "sub",
+        "payload": {
+          "kind": "subloop",
+          "attempt": 1,
+          "configHash": "63f1559b1565bd74"
+        },
+        "ts": "2026-10-22T01:36:16.621Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 6,
+        "type": "child_run.started",
+        "node_id": "sub",
+        "payload": {
+          "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C"
+        },
+        "ts": "2026-10-22T01:36:16.688Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 7,
+        "type": "run.waiting",
+        "node_id": "sub",
+        "payload": {
+          "wait": {
+            "waitId": "00000000000000000000000005:5",
+            "nodeId": "sub",
+            "kind": "child",
+            "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C",
+            "startedSeq": 5
+          }
+        },
+        "ts": "2026-10-22T01:36:16.773Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 8,
+        "type": "run.woken",
+        "node_id": "sub",
+        "payload": {
+          "reason": "child",
+          "payload": {
+            "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C",
+            "childFinishedSeq": 8,
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        },
+        "ts": "2026-10-22T01:36:17.648Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 9,
+        "type": "node.started",
+        "node_id": "sub",
+        "payload": {
+          "kind": "subloop",
+          "attempt": 2,
+          "configHash": "63f1559b1565bd74"
+        },
+        "ts": "2026-10-22T01:36:17.743Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 10,
+        "type": "child_run.finished",
+        "node_id": "sub",
+        "payload": {
+          "childRunId": "01M5GM0X9G69BARCPZEA9A8M3C",
+          "outcome": "success",
+          "status": "succeeded"
+        },
+        "ts": "2026-10-22T01:36:17.767Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 11,
+        "type": "run.failed",
+        "node_id": null,
+        "payload": {
+          "failure": {
+            "code": "EXPRESSION_ERROR",
+            "message": "custom output mapping did not produce a JSON patch: Invalid input: expected array, received string",
+            "nodeId": "sub",
+            "resumable": true
+          }
+        },
+        "ts": "2026-10-22T01:36:17.790Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 12,
+        "type": "run.resumed",
+        "node_id": null,
+        "payload": {
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        "ts": "2026-10-22T01:36:17.884Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 13,
+        "type": "node.started",
+        "node_id": "sub",
+        "payload": {
+          "kind": "subloop",
+          "attempt": 3,
+          "configHash": "63f1559b1565bd74"
+        },
+        "ts": "2026-10-22T01:36:18.028Z"
+      },
+      {
+        "run_id": "00000000000000000000000005",
+        "seq": 14,
+        "type": "run.failed",
+        "node_id": null,
+        "payload": {
+          "failure": {
+            "code": "EXPRESSION_ERROR",
+            "message": "custom output mapping did not produce a JSON patch: Invalid input: expected array, received string",
+            "nodeId": "sub",
+            "resumable": true
+          }
+        },
+        "ts": "2026-10-22T01:36:18.064Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 1,
+        "type": "run.queued",
+        "node_id": null,
+        "payload": {
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA input leaf",
+            "label": "QA input leaf v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5GM0X9G69BARCPZEA9A8M3C",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "parentRunId": "00000000000000000000000005",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5GM0X9GVG57P27VEK9P5ZDW",
+              "source": "subloop",
+              "caller": {
+                "kind": "run",
+                "id": "00000000000000000000000005"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-22T01:36:16.688Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {
+              "start": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:13.597Z"
+              }
+            },
+            "lastOutput": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-22T01:36:13.597Z"
+            },
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        "ts": "2026-10-22T01:36:16.688Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 2,
+        "type": "run.started",
+        "node_id": null,
+        "payload": {
+          "attempt": 1
+        },
+        "ts": "2026-10-22T01:36:17.008Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 3,
+        "type": "node.started",
+        "node_id": "start",
+        "payload": {
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        "ts": "2026-10-22T01:36:17.116Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 4,
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": {
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:17.482Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-22T01:36:17.482Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 0
+        },
+        "ts": "2026-10-22T01:36:17.482Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 5,
+        "type": "node.started",
+        "node_id": "done",
+        "payload": {
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "f66e342dc89f712a"
+        },
+        "ts": "2026-10-22T01:36:17.562Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 6,
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": {
+          "outcome": "success"
+        },
+        "ts": "2026-10-22T01:36:17.587Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 7,
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": {
+          "patch": [],
+          "durationMs": 6
+        },
+        "ts": "2026-10-22T01:36:17.587Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 8,
+        "type": "run.finished",
+        "node_id": null,
+        "payload": {
+          "status": "succeeded",
+          "outcome": "success",
+          "result": "child output"
+        },
+        "ts": "2026-10-22T01:36:17.587Z"
+      },
+      {
+        "run_id": "01M5GM0X9G69BARCPZEA9A8M3C",
+        "seq": 9,
+        "type": "return.delivered",
+        "node_id": null,
+        "payload": {
+          "channel": {
+            "kind": "caller"
+          },
+          "target": "run.result"
+        },
+        "ts": "2026-10-22T01:36:17.608Z"
+      }
+    ],
+    "gaps": []
+  },
+  "apiLogs": [
+    "{\"level\":30,\"time\":1792632976050,\"pid\":31772,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:5920\"}",
+    "{\"level\":30,\"time\":1792632976051,\"pid\":31772,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":5920,\"dataDir\":\"<disposable-store>\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}"
+  ]
+}

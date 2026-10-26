@@ -95,6 +95,11 @@ export function descriptionParts(event: RunEvent): DescriptionPart[] {
       return [`iteration ${event.from} → ${event.to} at `, { node: event.targetNodeId }];
     case 'node.started':
       return [{ node: event.nodeId }, ` (${event.kind}) attempt ${event.attempt}`];
+    case 'script.dispatched':
+      return [
+        { node: event.nodeId },
+        `: script dispatch ${event.dispatchId} (visit ${event.visitId})`,
+      ];
     case 'node.finished':
       return [
         { node: event.nodeId },

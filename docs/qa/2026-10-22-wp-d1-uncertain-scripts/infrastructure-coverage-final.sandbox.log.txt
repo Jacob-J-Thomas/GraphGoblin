@@ -1,0 +1,35 @@
+Round 4; HEAD 113953db00d0f82f8e5ee9c0371eb44f2198191e; Node v22.14.0
+Command: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --config '%TEMP%/gg-wp-d1-r4-ilRK7y\infrastructure.config.mjs' --maxWorkers=1 --coverage.reportOnFailure
+Started: 2026-10-22T20:40:34.103Z
+
+$ vitest run --coverage --config '<local>\AppData\Local\Temp\gg-wp-d1-r4-ilRK7y\infrastructure.config.mjs' --maxWorkers=1 --coverage.reportOnFailure
+failed to load config from <local>\AppData\Local\Temp\gg-wp-d1-r4-ilRK7y\infrastructure.config.mjs
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: EPERM: operation not permitted, open '<local>\node_modules\.vite-temp\infrastructure.config.mjs.timestamp-1792701638052-6a5476a94a5fd.mjs'
+    at async open (node:internal/fs/promises:638:25)
+    at async Object.writeFile (node:internal/fs/promises:1212:14)
+    at async loadConfigFromBundledFile (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:38130:3)
+    at async bundleAndLoadConfigFile (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:37978:21)
+    at async loadConfigFromFile (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:37938:42)
+    at async resolveConfig (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:37540:22)
+    at async resolveConfig$1 (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:14851:25)
+    at async createVitest (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/cli-api.C4x4GGip.js:26:17)
+    at async prepareVitest (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/cli-api.C4x4GGip.js:421:14)
+    at async startVitest (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/cli-api.C4x4GGip.js:340:14) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'open',
+  path: '<local>\\node_modules\\.vite-temp\\infrastructure.config.mjs.timestamp-1792701638052-6a5476a94a5fd.mjs'
+}
+
+
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\infrastructure
+
+
+Finished: 2026-10-22T20:40:38.455Z; exitCode: 1

@@ -1,0 +1,70 @@
+pnpm.cmd : $ turbo run typecheck
+At line:10 char:169
++ ... rbo/cache'; pnpm.cmd typecheck *> "$env:TEMP\gg-wp-d1-int-evidence\ty ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs df39f0481cb8e689
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 3b13b5a8eacbc2d6
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 7a81db20467e25c6
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 43fa0072fa89289c
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache hit, replaying logs 561029d8000a28c5
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache hit, replaying logs de2b06f454d13e1f
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing 0eea5b2a61015b0d
+@graphgoblin/adapter-jev:typecheck: cache hit, replaying logs 441ef762ab7bd642
+@graphgoblin/infrastructure:build: cache miss, executing db93d67cc60885ad
+@graphgoblin/adapter-jev:build: cache hit, replaying logs ff9b44410900b0f3
+@graphgoblin/adapter-codex:typecheck: cache hit, replaying logs 06b8bf0e539a51d4
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs f9c09e72436a9d42
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing df800657f54a0787
+@graphgoblin/api:typecheck: cache miss, executing bb2d35da6c514f8a
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 2b7b71e4e83743a9
+@graphgoblin/api-client:typecheck: cache miss, executing 2adda01414d56f7a
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: cache miss, executing b8adc5b41f0edba2
+@graphgoblin/mcp:typecheck: cache miss, executing 784962f557a23e21
+@graphgoblin/mcp:build: cache miss, executing 2be7f7b9e575e0b5
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 30d972f0d797a622
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: src/script-persistence-restart.test.ts(43,5): error TS2353: Object literal may only specify known properties, and 'portRange' does not exist in type '{ prefix?: string; portStart?: number; portCount?: number; }'.
+@graphgoblin/api:typecheck: src/script-restart.test.ts(46,9): error TS2353: Object literal may only specify known properties, and 'portRange' does not exist in type '{ prefix?: string; portStart?: number; portCount?: number; }'.
+@graphgoblin/api:typecheck: src/shutdown-controller.test.ts(8,37): error TS2741: Property 'state' is missing in type '{ exitCode: null; timedOut: true; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' but required in type 'ScriptRunResult'.
+@graphgoblin/api:typecheck: src/shutdown-controller.test.ts(54,25): error TS2345: Argument of type '{ exitCode: null; timedOut: false; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' is not assignable to parameter of type 'ScriptRunResult | PromiseLike<ScriptRunResult>'.
+@graphgoblin/api:typecheck:   Property 'state' is missing in type '{ exitCode: null; timedOut: false; stdout: string; stderr: string; stdoutBytes: number; stderrBytes: number; stdoutOverflow: false; stderrOverflow: false; terminationUnconfirmed: true; }' but required in type 'ScriptRunResult'.
+@graphgoblin/api:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/api#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-integrate\apps\api) C:\nvm4w\nodejs\pnpm.cmd 
+run typecheck exited (2)
+
+ Tasks:    17 successful, 20 total
+Cached:    10 cached, 20 total
+  Time:    4m38.608s 
+Failed:    @graphgoblin/api#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { event } from '../__fixtures__/fake-api.js';
+import { event, runRecord } from '../__fixtures__/fake-api.js';
 import { ApiProvider, createAppClient } from '../api/context.js';
 import {
   markApiReachable,
@@ -388,4 +388,84 @@ describe('run stream reachability', () => {
     act(() => options().onError?.(new Error('invalid event frame'), 0));
     expect(useReachability.getState().apiReachable).toBe(true);
   });
+});
+
+describe('explicit script recovery follows resumed attempts (#321)', () => {
+  it.each(['running', 'succeeded'] as const)(
+    'follows an explicit Resume observed as %s without reload or cached-terminal shortcuts',
+    async (status) => {
+      vi.useFakeTimers();
+      const failure = {
+        code: 'SCRIPT_OUTCOME_UNCERTAIN' as const,
+        message: 'uncertain',
+        resumable: true,
+      };
+      let history = [event(runId, 1, 'run.failed', { failure })];
+      let snapshot = runRecord({ id: runId, status: 'failed', failure, lastEventSeq: 1 });
+      const client = createAppClient('http://graphgoblin.test', (request) => {
+        const url = new URL(request.url);
+        if (url.pathname.endsWith('/observation'))
+          return Promise.resolve(
+            Response.json({ lifecycle: history.at(-1), freshSessionChoices: [] }),
+          );
+        if (url.pathname.endsWith('/events')) {
+          const after = Number(url.searchParams.get('after') ?? 0);
+          const items = history.filter((entry) => entry.seq > after);
+          return Promise.resolve(
+            Response.json({ items, nextAfter: items.at(-1)?.seq ?? after, hasMore: false }),
+          );
+        }
+        return Promise.resolve(Response.json(snapshot));
+      });
+      const complete: (() => void)[] = [];
+      subscribe.mockImplementation(() => ({
+        lastSeq: 0,
+        done: new Promise<void>((resolve) => complete.push(resolve)),
+        close: vi.fn(),
+      }));
+      useRunEventStore.getState().append(runId, ...history);
+      const view = mountStream(client);
+      expect(options().after).toBe(1);
+      expect(view.result.current.status).toBe('connecting');
+      await act(async () => {
+        complete[0]!();
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(view.result.current.status).toBe('finished');
+      history = [
+        ...history,
+        event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'owner' } }),
+      ];
+      if (status === 'succeeded')
+        history.push(event(runId, 3, 'run.finished', { status, outcome: 'success' }));
+      snapshot = runRecord({ id: runId, status, lastEventSeq: history.at(-1)!.seq });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      expect(options(1).after).toBe(history.at(-1)!.seq);
+      // Even a fast resumed terminal still needs authoritative stream.complete.
+      expect(view.result.current.status).toBe('connecting');
+      if (status === 'running') {
+        const finished = event(runId, 3, 'run.finished', {
+          status: 'succeeded',
+          outcome: 'success',
+        });
+        history.push(finished);
+        snapshot = runRecord({ id: runId, status: 'succeeded', lastEventSeq: 3 });
+        await act(async () => {
+          await emit(1, finished);
+          await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+        });
+        expect(view.result.current.status).toBe('live');
+      }
+      await act(async () => {
+        complete[1]!();
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(view.result.current.status).toBe('finished');
+      expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2, 3]);
+      expect(subscribe).toHaveBeenCalledTimes(2);
+    },
+  );
 });

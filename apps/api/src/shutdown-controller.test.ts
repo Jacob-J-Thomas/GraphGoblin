@@ -14,6 +14,7 @@ it('B3 reports an earlier unconfirmed timeout but completes a normal stop', asyn
     stderrBytes: 0,
     stdoutOverflow: false,
     stderrOverflow: false,
+    state: 'outcome-uncertain',
     terminationUnconfirmed: true,
   }));
   const v = e.publish(
@@ -60,6 +61,7 @@ it('B3 force failure offers an explicit nonzero exit acknowledgement, retaining 
                   stderrBytes: 0,
                   stdoutOverflow: false,
                   stderrOverflow: false,
+                  state: 'outcome-uncertain',
                   terminationUnconfirmed: true,
                 }),
               { once: true },

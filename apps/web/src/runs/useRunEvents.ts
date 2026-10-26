@@ -201,7 +201,7 @@ export function useRunEvents(
       flush();
       subscription?.close();
     };
-    // `onEvents` is a notification hook; re-subscribing when it changes identity would churn the stream.
+    // `onEvents` is a notification hook; followRunAttempts follows resumed runs from the cursor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, queryClient, runId, apiKey]);
 

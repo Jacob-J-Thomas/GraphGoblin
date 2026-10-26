@@ -1,0 +1,38 @@
+START 2026-10-22T02:52:09.0969741Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts -t kills the process tree on timeout --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/infrastructure.config.mjs
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ G�� src/process/scripts.test.ts (39 tests | 1 failed | 38 skipped) 15029ms
+   G�� ProcessScripts (36)
+     +� kills the process tree on timeout 15025ms
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻ Failed Tests 1 GĻGĻGĻGĻGĻGĻGĻ
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ G�� src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[1/1]GĻ
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  21:52:13
+   Duration  16.33s (tests 98%, transform 1%, import 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  +� "pnpm recursive exec" failed in C:
+[local path redacted]
+  G�� d1\packages\infrastructure
+System.Management.Automation.RemoteException
+END 2026-10-22T02:52:30.0880132Z EXIT 1

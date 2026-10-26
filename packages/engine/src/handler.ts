@@ -27,6 +27,8 @@ export interface WakeInfo {
 }
 
 export interface ChildStartRequest {
+  /** The subloop node whose visit starts the child; the parent's link names it. */
+  nodeId: string;
   loopId: string;
   version: 'latest' | number;
   seed: Pick<Partial<ContextThread>, 'messages' | 'vars' | 'artifacts' | 'outputs' | 'lastOutput'>;
@@ -41,6 +43,8 @@ export interface ChildOutcome {
   result?: JsonValue;
   /** The child's runtime failure; absent for an authored Failure exit, which is an outcome. */
   failure?: RunFailure;
+  /** Sequence of the terminal event that supplies this outcome; absent while unfinished. */
+  terminalSeq?: number;
   thread?: ContextThread;
 }
 
@@ -56,7 +60,11 @@ export interface HandlerServices {
     model?: string,
     effort?: Effort,
   ): Promise<{ model: string; effort: Effort }>;
-  /** Start a child run and return its id. The parent then parks on it. */
+  /**
+   * Start a child run and return its id. The child and this run's `child_run.started` commit
+   * together (#320), so the visit's child is in the log before this returns. The parent then parks
+   * on it.
+   */
   startChild(request: ChildStartRequest): Promise<string>;
   /** Read a finished child's outcome and final thread. */
   childOutcome(childRunId: string): Promise<ChildOutcome>;

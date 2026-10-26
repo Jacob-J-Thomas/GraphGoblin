@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 <local>/apps/api
+
+stdout | src/script-restart.test.ts > script effects across a real API kill (#321) > after-dispatch never repeats an effect without an explicit resume
+{"boundary":"after-dispatch","markerCount":2,"status":"succeeded"}
+
+ ❯ src/script-restart.test.ts (3 tests | 1 failed) 48453ms
+   ❯ script effects across a real API kill (#321) (3)
+     × after-dispatch never repeats an effect without an explicit resume 15574ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/sc ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/script-restart.test.ts > script effects across a real API kill (#321) > after-dispatch never repeats an 
+effect without an explicit resume
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/script-restart.test.ts:78:31
+     76|         const recovered = await get();
+     77|         console.log(JSON.stringify({ boundary, markerCount: await coun…
+     78|         expect(await count()).toBe(1);
+       |                               ^
+     79|         expect(recovered.failure).toMatchObject({ code: 'SCRIPT_OUTCOM…
+     80|         expect(recovered.failure?.message).toMatch(/may already have p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  20:25:02
+   Duration  51.23s (tests 95%, transform 3%, import 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\apps\api
+

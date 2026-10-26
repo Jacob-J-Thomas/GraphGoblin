@@ -2,6 +2,8 @@
 
 The separate-process recovery check runs with `pnpm build` followed by `pnpm test:recovery-process`. It starts the built API against disposable mixed healthy/damaged SQLite history and removes its temporary data directory on success.
 
+`apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.
+
 ## Coverage policy (Decided)
 
 - Unit tests must cover more than 90% of lines and more than 90% of branches in every package, including `apps/web`. Thresholds are set in each package's Vitest config and enforced in CI. A package below threshold fails the build.
@@ -158,7 +160,7 @@ History remains complete and resident; reads page 256 events with yields. Normal
 hashes match at all three sizes, and full replay matches each stored checkpoint. Rank 2's unused
 thread decoding did not reproduce: the current metadata projection already excludes thread
 columns, so it is unchanged. The separate burst/paced append controls measure commit at
-45–50% of inclusive append time and sequence lookup at 7–8%, without changing append behavior.
+45â€“50% of inclusive append time and sequence lookup at 7â€“8%, without changing append behavior.
 Their complete live-plus-reconnect payload hashes and file-backed lost-finalization-marker
 recovery checks pass. These observations do not define an SLA or a quiet-host speed guarantee.
 
@@ -269,3 +271,5 @@ The same aged browser workload (`--passes=1000 --aged=2000 --profile=inspector -
 | Pre-navigation target sequence                |                  3744 |                 3724 |
 
 The host was shared: measured busy fraction 81.1% before and 75.4% after. These are workload observations, not a quiet-host causal latency result or SLA. Heap is sampled CDP JS heap without forced per-sample GC; first-row timing is an observation upper bound. The final candidate kept executing, reached the pre-navigation cursor in its rendered tail, and reported no browser errors. The browser retains at most 512 rows / 1 MiB estimated row JSON per run, and mounts at most 80 Timeline rows. Full values and server history remain complete. Raw samples, exact commands, projection sources and capture hashes are in [the round-2 evidence](qa/2026-10-24-wp-e1-186-r2/README.md).
+
+The required default Browser gate also discovers `e2e/script-recovery.spec.ts` (#321). Its serial test starts and stops its own built API on a disposable `gg-wp-d1-int-` store and a free port in 6320 to 6339, independently of the default E2E server. It kills the marker-producing script's API, verifies uncertainty after restart, cancels recovery without another effect, then explicitly resumes and follows running through success without reloading. A green default gate includes these checks; no separate config is needed.

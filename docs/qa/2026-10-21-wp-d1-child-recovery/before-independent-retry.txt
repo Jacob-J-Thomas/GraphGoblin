@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 <local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine
+
+ ❯ src/child-creation.test.ts (7 tests | 1 failed | 6 skipped) 2192ms
+   ❯ child creation and finish across a process death (#320) (7)
+     × records a child independently retried while its parent was interrupted 2189ms
+pnpm.cmd : 
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/child-creat ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > records a child 
+independently retried while its parent was interrupted
+AssertionError: expected [ { …(7) } ] to have a length of 2 but got 1
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ src/child-creation.test.ts:229:57
+    227|       await recovered.waitForIdle();
+    228|       expect((await recovered.getRun(parentId))?.status).toBe('failed'…
+    229|       expect(ofType(e, parentId, 'child_run.finished')).toHaveLength(2…
+       |                                                         ^
+    230|       expect(await e.ports.runs.listChildren(parentId)).toHaveLength(1…
+    231|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  18:49:41
+   Duration  79.73s (transform 82%, import 15%, tests 3%)
+
+  Transform  transforming modules took 63.40s · 82% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\engine
+

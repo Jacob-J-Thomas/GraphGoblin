@@ -603,6 +603,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -645,6 +646,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -669,6 +671,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
@@ -682,6 +685,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(/not a JSON patch/);
@@ -693,6 +697,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
@@ -752,6 +757,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).result).toEqual({ retried: true });
@@ -763,6 +769,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const plain = await withSecret.runToIdle(v2.loopId);
@@ -775,6 +782,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 3,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).failure).toMatchObject({
@@ -789,6 +797,7 @@ describe('script node', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: true,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).failure?.code).toBe('SCRIPT_TIMEOUT');

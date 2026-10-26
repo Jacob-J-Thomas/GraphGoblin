@@ -1,0 +1,150 @@
+{
+  "bolt": 320,
+  "branch": "codex-wp-d1-child-recovery",
+  "base": "48ecf6e7",
+  "inheritedHead": "6bc37e2cd3d88b48a15920c334874253ad15bbc9",
+  "node": "v22.14.0",
+  "delivery": "uncommitted; independent review and QA pending",
+  "checks": [
+    {
+      "command": "pnpm.cmd build",
+      "exitCode": 0,
+      "log": "build-final.txt"
+    },
+    {
+      "command": "pnpm.cmd typecheck",
+      "exitCode": 0,
+      "log": "typecheck-final.txt"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine typecheck",
+      "exitCode": 0,
+      "log": "engine-typecheck-final.txt"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api typecheck",
+      "exitCode": 0,
+      "log": "api-typecheck-final.txt"
+    },
+    {
+      "command": "pnpm.cmd lint",
+      "exitCode": 0,
+      "log": "lint-verified.txt"
+    },
+    {
+      "command": "pnpm.cmd check:layers",
+      "exitCode": 0,
+      "log": "layers-final.txt"
+    },
+    {
+      "command": "pnpm.cmd check:deps",
+      "exitCode": 0,
+      "log": "deps-final.txt",
+      "note": "Existing drizzle.config.ts orphan warning"
+    },
+    {
+      "command": "pnpm.cmd check:docs",
+      "exitCode": 0,
+      "log": "docs-final.txt"
+    },
+    {
+      "command": "pnpm.cmd format:check",
+      "exitCode": 0,
+      "log": "format-check.txt"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+      "exitCode": 1,
+      "log": "engine-coverage-final.txt",
+      "passed": 543,
+      "failed": 1,
+      "lines": 98.1,
+      "branches": 92.36,
+      "note": "5-second compound-case timeout; unchanged isolated case passes"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+      "exitCode": 1,
+      "log": "infrastructure-coverage.txt",
+      "passed": 624,
+      "failed": 8,
+      "lines": 98.42,
+      "branches": 94.47,
+      "note": "Seven D-015 native cases; one upgrade timeout also fails in isolation at 20 and 60 seconds"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --coverage.reportOnFailure",
+      "exitCode": 1,
+      "log": "api-coverage.txt",
+      "passed": 702,
+      "failed": 1,
+      "skipped": 6,
+      "lines": 97.83,
+      "branches": 92.9,
+      "note": "C6 one-second setup poll and cleanup hook; unchanged isolated case passes. All three new native cases pass."
+    },
+    {
+      "command": "pnpm.cmd test:recovery-process",
+      "exitCode": 0,
+      "log": "recovery-process.txt",
+      "passed": 1
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/child-admission-recovery.test.ts src/sqlite/admission-contract.test.ts --maxWorkers=1",
+      "exitCode": 0,
+      "log": "sqlite-final.txt",
+      "passed": 23
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/edge-cases.test.ts --maxWorkers=1 -t \u0027subloop: exclusions, fresh injections\u0027",
+      "exitCode": 0,
+      "log": "engine-edge-isolated.txt",
+      "passed": 1
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers=1 -t \u0027parent interrupted mid-wake\u0027",
+      "exitCode": 0,
+      "log": "subloop-midwake-isolated.txt",
+      "passed": 1
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1 -t \u0027refuses changed source, damaged SQL/ledger\u0027",
+      "exitCode": 1,
+      "log": "upgrade-isolated.txt",
+      "failed": 1
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1 --testTimeout=60000 -t \u0027refuses changed source, damaged SQL/ledger\u0027",
+      "exitCode": 1,
+      "log": "upgrade-diagnostic-60s.txt",
+      "failed": 1
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts src/process/scripts.test.ts src/claude/process.test.ts --maxWorkers=1 -t \u0027QA-LIMIT-001|kills on deadline and output overflow|does not spawn for an already aborted|kills and closes a real process cancelled|kills the process tree on timeout|kills the process when the signal aborts\u0027",
+      "exitCode": 1,
+      "log": "native-isolated.txt",
+      "failed": 6
+    }
+  ],
+  "nativeChildAdmission": {
+    "passed": 3,
+    "parentVisits": 72,
+    "unlinkedChildrenObserved": 0,
+    "childrenPerParent": 1,
+    "childFinishesPerParent": 1,
+    "snapshotsByDelayMs": {
+      "0": 36973,
+      "5": 28030,
+      "25": 16162
+    },
+    "newStoreRemovalAsserted": true
+  },
+  "openItems": [
+    "Independent Claude review, independent QA and authoritative CI",
+    "Upgrade isolation timeout remains unresolved; D-015 native checks require external environment",
+    "Automatic approval review blocked cleanup of gg-child-admission-gUVE9d",
+    "Native fixture EBUSY cleanup at gg-claude-process-N8hTZB; CIM inspection denied",
+    "Shared C6 fixture candidates gg-api-process-V9vDMa and gg-api-process-5tvf4I preserved for ownership reconciliation",
+    "#321 and its owner QA README follow after #320 review"
+  ]
+}

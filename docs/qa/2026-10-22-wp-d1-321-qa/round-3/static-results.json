@@ -1,0 +1,25 @@
+{
+  "head": "a44744f11d5c37000fe8354754fb3d8a82e3a4fa",
+  "status": "PASS",
+  "steps": "Diff against 23f809ea; search portRange and literal ports under apps/api; inspect shared allocator.",
+  "expected": "Only script restart file changes; 5930–5939 has no other API source declaration.",
+  "actual": {
+    "changedFiles": ["apps/api/src/script-restart.test.ts"],
+    "newRange": [5930, 5939],
+    "childRange": [5910, 5919],
+    "defaultRange": [5600, 5699],
+    "newRangeHits": ["apps/api\\src\\script-restart.test.ts:46:        portRange: [5930, 5939],"],
+    "previousRuntimeChanges": [
+      "apps/api/src/script-restart.test.ts",
+      "packages/engine/src/admission.ts",
+      "packages/engine/src/testing/admission-contract.ts"
+    ],
+    "anchorNote": "The two admission files already differ at 23f809ea; they are not changed by this port-fix commit."
+  },
+  "environment": {
+    "node": "v22.14.0",
+    "pnpm": "12.8.1",
+    "availableParallelism": 12
+  },
+  "fixtureNote": "freePort closes its probe before the API child binds. The new range separates this pair, but is not a cross-process port reservation."
+}

@@ -1,0 +1,121 @@
+{
+  "base": "ccb69b812b04a4128a671c581a5c731de5bd3def",
+  "node": "v22.14.0",
+  "branch": "codex-wp-d1-child-recovery",
+  "committed": false,
+  "packages": {
+    "engine": {
+      "log": "coverage-engine.log.txt",
+      "skipped": 0,
+      "failed": 0,
+      "passed": 560
+    },
+    "api": {
+      "log": "coverage-api-admitted.log.txt",
+      "failure": "QA-321-01: afterEach Hook timed out in 60000ms; child cardinality passed",
+      "skipped": 6,
+      "failed": 1,
+      "passed": 708
+    },
+    "mcp": {
+      "log": "coverage-mcp.log.txt",
+      "skipped": 0,
+      "failed": 0,
+      "passed": 44
+    }
+  },
+  "coverage": "coverage.json",
+  "before": {
+    "engine": {
+      "log": "before-engine.log.txt",
+      "failed": 5,
+      "passed": 11
+    },
+    "api": {
+      "log": "before-api.log.txt",
+      "failed": 3,
+      "passed": 0
+    }
+  },
+  "after": {
+    "engine": {
+      "log": "engine-fixed.log.txt",
+      "failed": 0,
+      "passed": 16
+    },
+    "api": {
+      "log": "api-fixed.log.txt",
+      "failed": 0,
+      "passed": 3
+    }
+  },
+  "gates": [
+    {
+      "command": "pnpm.cmd typecheck",
+      "tasks": 20,
+      "log": "typecheck.log.txt",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd build",
+      "tasks": 11,
+      "log": "build.log.txt",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd lint",
+      "tasks": 11,
+      "log": "lint.log.txt",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd check:layers",
+      "log": "layers.log.txt",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd check:deps",
+      "warnings": 2,
+      "log": "deps.log.txt",
+      "exit": 0
+    },
+    {
+      "passed": 1,
+      "command": "pnpm.cmd test:recovery-process",
+      "log": "recovery-process.log.txt",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd format:check",
+      "log": "format.log.txt",
+      "exit": 1,
+      "reason": "3 protected QA Markdown files; unchanged per brief"
+    }
+  ],
+  "isolation": {
+    "passed": 1,
+    "fullRunRemainsRed": true,
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/child-creation-restart.test.ts -t \u0027kill 0ms\u0027 --config $apiConfig",
+    "exit": 0,
+    "skipped": 2,
+    "log": "isolate-child-zero.log.txt"
+  },
+  "web": "unchanged; conditional web coverage and browser gate not required",
+  "resourceConfig": "resource-config.json",
+  "retainedInventory": "retained-stores.json",
+  "manualDirectoryDeletion": false,
+  "independentReview": "pending",
+  "independentQA": "pending",
+  "formatDiagnostic": {
+    "command": "pnpm.cmd format:check --log-level debug",
+    "reason": "same 3 protected files plus new bundle-validation JSON, subsequently formatted",
+    "log": "format-debug.log.txt",
+    "exit": 1
+  },
+  "changedFilesFormat": {
+    "command": "pnpm.cmd exec prettier --check \u003cchanged .ts/.md/.json files\u003e",
+    "rootGateRemainsRed": true,
+    "log": "format-changed.log.txt",
+    "exit": 0
+  }
+}

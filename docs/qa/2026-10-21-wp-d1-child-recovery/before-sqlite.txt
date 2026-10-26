@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 <local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/packages/infrastructure
+
+ ❯ src/sqlite/child-admission-recovery.test.ts (6 tests | 2 failed | 4 skipped) 10432ms
+   ❯ child creation across a process death (#320) (6)
+     × a death right after the child is admitted recovers that child, never a second one 7004ms
+     × a death between recording the child finish and the node finish records it once 3426ms
+pnpm.cmd : 
+At line:20 char:3
++   pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/s ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/child-admission-recovery.test.ts > child creation across a process death (#320) > a death right 
+after the child is admitted recovers that child, never a second one
+AssertionError: expected [ '00000000000000000000000007', …(1) ] to deeply equal [ '00000000000000000000000007' ]
+
+- Expected
++ Received
+
+  [
+    "00000000000000000000000007",
++   "00000000000000000000000001",
+  ]
+
+ ❯ src/sqlite/child-admission-recovery.test.ts:309:47
+    307|
+    308|     const { parent: done, children, log } = await recover(url, parent.…
+    309|     expect(children.map((child) => child.id)).toEqual([admitted!.id]);
+       |                                               ^
+    310|     expect(children[0]).toMatchObject({ status: 'succeeded', parentRun…
+    311|     expect(linksIn(log).map((event) => event.childRunId)).toEqual([adm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/sqlite/child-admission-recovery.test.ts > child creation across a process death (#320) > a death between 
+recording the child finish and the node finish records it once
+AssertionError: expected [ { …(8) }, { …(8) } ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/sqlite/child-admission-recovery.test.ts:409:72
+    407|     const { log, children } = await recover(url, parent.id);
+    408|     expect(children).toHaveLength(1);
+    409|     expect(log.filter((event) => event.type === 'child_run.finished'))…
+       |                                                                        ^
+    410|     expect(log.filter((event) => event.type === 'run.finished')).toHav…
+    411|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 skipped (6)
+   Start at  18:27:37
+   Duration  35.69s (transform 45%, tests 30%, import 25%)
+
+  Transform  transforming modules took 15.55s · 45% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\infrastructure
+

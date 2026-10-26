@@ -59,6 +59,7 @@ describe('probe and script output contracts', () => {
       exitCode: 0,
       stdout: '\u{1f98e}',
       stderr: '',
+      state: 'completed' as const,
       timedOut: false,
       stdoutBytes: 4,
       stderrBytes: 0,

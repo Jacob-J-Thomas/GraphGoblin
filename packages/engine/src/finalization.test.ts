@@ -231,6 +231,7 @@ for (const source of [
         stderrBytes: 0,
         stdoutOverflow: false,
         stderrOverflow: false,
+        state: 'completed' as const,
         timedOut: source === 'script-timeout',
       });
       def = singleNodeLoop(source, {

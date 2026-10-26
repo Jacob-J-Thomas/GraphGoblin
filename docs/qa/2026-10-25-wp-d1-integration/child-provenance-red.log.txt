@@ -1,0 +1,57 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-integrate/packages/engine
+
+ ❯ src/child-failure-parity.test.ts (14 tests | 1 failed | 13 skipped) 144ms
+   × retains an uncertain child script dispatch on the parent and retries only on explicit Resume 142ms
+pnpm.cmd : 
+At line:2 char:292
++ ... ance.log'); pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/child-failure-parity.test.ts > retains an uncertain child script dispatch on the parent and retries only on 
+explicit Resume
+AssertionError: expected { …(5) } to match object { …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "SCRIPT_OUTCOME_UNCERTAIN",
+-   "script": {
+-     "dispatchId": "00000000000000000000000005",
+-     "state": "outcome-uncertain",
+-     "visitId": "00000000000000000000000003:5",
+-   },
+  }
+
+ ❯ src/child-failure-parity.test.ts:45:28
+     43|     const [child] = await e.ports.runs.listChildren(parent.id);
+     44|     expect(child?.failure?.script).toMatchObject({ state: 'outcome-unc…
+     45|     expect(parent.failure).toMatchObject({
+       |                            ^
+     46|       code: 'SCRIPT_OUTCOME_UNCERTAIN',
+     47|       script: child!.failure!.script,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  20:27:41
+   Duration  15.25s (transform 79%, import 19%, tests 1%)
+
+  Transform  transforming modules took 10.40s · 79% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-
+  │ integrate\packages\engine
+

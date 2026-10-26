@@ -141,6 +141,7 @@ jobs:
           ## Functional browser gate
 
           Selected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.
+          This includes `script-recovery.spec.ts`: an isolated built API, kill/restart uncertainty, explicit retry consent, and resumed-run observation.
           The test step and report record the executed result, including any setup failure.
           The real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.
 

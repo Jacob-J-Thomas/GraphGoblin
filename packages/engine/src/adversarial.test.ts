@@ -589,6 +589,10 @@ describe('adversarial engine invariants', () => {
     const [kid] = await e.ports.runs.listChildren(r.id);
     // The child finishes but its parent is never told (the process died first).
     e.manager.stop();
+    // A completed child has a durable terminal event before its row changes, as in production.
+    await e.ports.events.append(kid!.id, [
+      { type: 'run.finished', status: 'succeeded', outcome: 'success' },
+    ]);
     await e.ports.runs.update(kid!.id, { status: 'succeeded', outcome: 'success' });
     const recovered = new RunManager(e.ports, e.settings);
     await recovered.start();

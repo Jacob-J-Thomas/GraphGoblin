@@ -1,0 +1,101 @@
+
+ RUN  v5.0.3 <local>/packages/engine
+
+ ❯ src/script-recovery.test.ts (9 tests | 1 failed) 992ms
+   ❯ script dispatch recovery (#321) (9)
+     × recovers before-dispatch twice, preserving evidence and requiring consent for an unknown effect 127ms
+ ❯ src/handlers/script-dispatch.test.ts (7 tests | 4 failed) 66ms
+   ❯ script visit and attempt boundaries (7)
+     × generic failure cannot dispose the current dispatch 20ms
+     × different-visit failure cannot dispose the current dispatch 2ms
+     × different-dispatch failure cannot dispose the current dispatch 1ms
+     × refuses an unfinished pre-change visit without a dispatch marker 1ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/script-recovery.test.ts > script dispatch recovery (#321) > recovers before-dispatch twice, preserving 
+evidence and requiring consent for an unknown effect
+AssertionError: expected [ { command: 'effect', …(5) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/script-recovery.test.ts:124:39
+    122|       const recovered = (await e.ports.runs.get(run.id))!;
+    123|       if (boundary === 'dispatch-ack' || boundary === 'before-dispatch…
+    124|         expect(e.ports.scripts.calls).toHaveLength(0);
+       |                                       ^
+    125|         expect(recovered.failure).toMatchObject({
+    126|           code: 'SCRIPT_OUTCOME_UNCERTAIN',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/handlers/script-dispatch.test.ts > script visit and attempt boundaries > generic failure cannot dispose the 
+current dispatch
+ FAIL  src/handlers/script-dispatch.test.ts > script visit and attempt boundaries > different-visit failure cannot 
+dispose the current dispatch
+ FAIL  src/handlers/script-dispatch.test.ts > script visit and attempt boundaries > different-dispatch failure cannot 
+dispose the current dispatch
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/handlers/script-dispatch.test.ts:45:96
+     43|           state: 'completed',
+     44|         } } };
+     45|       expect(() => scriptVisit(log(started, dispatched, unrelated, sta…
+       |                                                                                                ^
+     46|     },
+     47|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/handlers/script-dispatch.test.ts > script visit and attempt boundaries > refuses an unfinished pre-change 
+visit without a dispatch marker
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/handlers/script-dispatch.test.ts:49:90
+     47|   );
+     48|   it('refuses an unfinished pre-change visit without a dispatch marker…
+     49|     expect(() => scriptVisit(log(started, { ...started, attempt: 2 }),…
+       |                                                                                          ^
+     50|   });
+     51|   it('retains the first start through attempts and failures, then star…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 11 passed (16)
+   Start at  13:18:44
+   Duration  18.10s (transform 66%, import 26%, tests 7%, worker 1%)
+
+  Transform  transforming modules took 9.84s · 66% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\engine
+
